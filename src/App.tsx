@@ -1699,16 +1699,17 @@ export function App() {
   // Handle Follow
   const handleOpenShare = async (video: VideoReview) => {
     setActiveShareVideo(video);
+    const newSharesCount = (video.sharesCount || video.shares || 0) + 1;
     setVideos(prev => prev.map(v => {
       if (v.id === video.id) {
-        return { ...v, shares: (v.shares || 0) + 1 };
+        return { ...v, shares: newSharesCount, sharesCount: newSharesCount };
       }
       return v;
     }));
     try {
       if (db) {
         const vidRef = doc(db, "videoReviews", video.id);
-        setDoc(vidRef, { shares: (video.shares || 0) + 1 }, { merge: true }).catch(() => {});
+        setDoc(vidRef, { shares: newSharesCount, sharesCount: newSharesCount }, { merge: true }).catch(() => {});
       }
     } catch (e) {}
 
