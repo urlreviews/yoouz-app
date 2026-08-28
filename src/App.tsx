@@ -2513,7 +2513,7 @@ export function App() {
   return (
     <div
       id="copo-app-root"
-      className="flex w-screen h-[100dvh] overflow-hidden bg-zinc-100 text-zinc-900 font-sans select-none antialiased relative"
+      className="flex w-screen h-[100dvh] overflow-hidden bg-zinc-950 text-white font-sans select-none antialiased relative"
     >
       {/* 1. Left Section: Business/Place Details Panel OR Creator Profile Panel OR Standard Navigation Sidebar */}
        {isPlaceView ? (
@@ -2650,7 +2650,7 @@ export function App() {
       )}
 
       {/* 2. Main Stage Content Switcher */}
-      <div className={`flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950 md:bg-zinc-50 ${activeSection === "business" ? "" : "pb-mobile-nav"}`}>
+      <div className={`flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950 md:bg-zinc-950 ${activeSection === "business" ? "" : "pb-mobile-nav"}`}>
         {/* If in Feed View (Home, Clubs) or Place / Creator drawer views: Display center video player */}
         {(isPlaceView || isCreatorView || activeSection === "home" || activeSection === "clubs") && (
             <CopoVideoPlayer
@@ -3025,7 +3025,7 @@ export function App() {
 
             {/* Profile View (Unauthenticated Only) */}
             {activeSection === "profile" && !currentUser && (
-              <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-white flex flex-col justify-between pb-32 md:pb-6" >
+              <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-900 flex flex-col justify-between pb-32 md:pb-6" >
                 <CopoAuthPrompt
                   intent="profile"
                   onOpenHelp={() => setActiveSection('more')}

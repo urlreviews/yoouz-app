@@ -85,8 +85,8 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             className="flex items-center gap-3 cursor-pointer group"
           >
             {/* Yoouz Official Star Logo */}
-            <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#1a73e8] shadow-[0_4px_14px_rgba(26,115,232,0.4)] border border-white/10 shrink-0">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+            <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-white shadow-[0_4px_14px_rgba(255,255,255,0.15)] border border-white/20 shrink-0">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
@@ -95,7 +95,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 <span className="text-white text-xl font-black tracking-tight font-['Google_Sans',sans-serif]">
                   Yoouz
                 </span>
-                <span className="px-1.5 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/30 text-[9px] text-blue-400 font-bold uppercase tracking-wider">
+                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-300 font-bold uppercase tracking-wider">
                   Beta
                 </span>
               </div>
@@ -122,35 +122,35 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             {currentUser ? (
               <div
                 onClick={() => handleNavClick("profile")}
-                className="p-3.5 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800/80 shadow-md transition-all active:scale-[0.98] cursor-pointer group"
+                className="p-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-md transition-all active:scale-[0.98] cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
                   {currentUser.avatar ? (
                     <img
                       src={currentUser.avatar}
                       alt={currentUser.name}
-                      className="w-12 h-12 rounded-xl object-cover ring-2 ring-blue-500/30 shrink-0"
+                      className="w-12 h-12 rounded-xl object-cover ring-2 ring-zinc-700 shrink-0"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0">
                       {currentUser.name?.charAt(0).toUpperCase() || "U"}
                     </div>
                   )}
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <h4 className="text-sm font-bold text-white truncate group-hover:text-blue-400 transition-colors">
+                      <h4 className="text-sm font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                         {currentUser.name}
                       </h4>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0 fill-blue-400/20" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-zinc-300 shrink-0 fill-zinc-800" />
                     </div>
                     <p className="text-[11px] text-zinc-400 truncate">
                       {currentUser.email || ""}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        <Sparkles className="w-2.5 h-2.5" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700">
+                        <Sparkles className="w-2.5 h-2.5 text-zinc-400" />
                         Community Reviewer
                       </span>
                     </div>
@@ -159,20 +159,20 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                   <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors shrink-0" />
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-xs">
+                <div className="mt-3 pt-2.5 border-t border-zinc-800 flex items-center justify-between text-xs">
                   <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-blue-400" />
+                    <User className="w-3.5 h-3.5 text-zinc-400" />
                     View & Manage Profile
                   </span>
-                  <span className="text-[11px] font-semibold text-blue-400 group-hover:text-blue-300">
+                  <span className="text-[11px] font-semibold text-white group-hover:text-zinc-200">
                     Open &rarr;
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-950/60 to-zinc-900 border border-blue-500/30 shadow-md text-left">
+              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-md text-left">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  <Sparkles className="w-4 h-4 text-zinc-300" />
                   <h4 className="text-sm font-bold text-white">Join the Community</h4>
                 </div>
                 <p className="text-xs text-zinc-400 mb-3">
@@ -183,9 +183,9 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                     if (onOpenAuth) onOpenAuth("drawer");
                     onClose();
                   }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-bold shadow-lg shadow-blue-500/25 transition-all cursor-pointer active:scale-95"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold shadow-md shadow-white/10 transition-all cursor-pointer active:scale-95"
                 >
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-4 h-4 text-zinc-950" />
                   <span>Sign In / Register</span>
                 </button>
               </div>
@@ -203,12 +203,12 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClick={() => handleNavClick("home")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                 activeSection === "home"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                  ? "bg-zinc-900 text-white font-bold border border-zinc-800"
                   : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Home className="w-4 h-4 text-blue-400" />
+                <Home className="w-4 h-4 text-zinc-300" />
                 <span>Home Feed</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-600" />
@@ -224,10 +224,10 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <Search className="w-4 h-4 text-amber-400" />
+                <Search className="w-4 h-4 text-zinc-300" />
                 <span>Search Websites & Places</span>
               </div>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono border border-zinc-700">
                 URL
               </span>
             </button>
@@ -237,12 +237,12 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClick={() => handleNavClick("discover")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                 activeSection === "discover"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                  ? "bg-zinc-900 text-white font-bold border border-zinc-800"
                   : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Compass className="w-4 h-4 text-purple-400" />
+                <Compass className="w-4 h-4 text-zinc-300" />
                 <span>Discover Creators & Spots</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-600" />
@@ -253,12 +253,12 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClick={() => handleNavClick("following")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                 activeSection === "following"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                  ? "bg-zinc-900 text-white font-bold border border-zinc-800"
                   : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <UserPlus className="w-4 h-4 text-emerald-400" />
+                <UserPlus className="w-4 h-4 text-zinc-300" />
                 <span>Following</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-600" />
@@ -269,16 +269,16 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClick={() => handleNavClick("messages")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                 activeSection === "messages"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                  ? "bg-zinc-900 text-white font-bold border border-zinc-800"
                   : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-cyan-400" />
+                <Mail className="w-4 h-4 text-zinc-300" />
                 <span>Direct Messages</span>
               </div>
               {unreadMessagesCount > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-blue-500 text-white font-bold text-[10px]">
+                <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-white font-bold text-[10px] border border-zinc-700">
                   {unreadMessagesCount}
                 </span>
               ) : (
@@ -291,16 +291,16 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClick={() => handleNavClick("notifications")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                 activeSection === "notifications"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                  ? "bg-zinc-900 text-white font-bold border border-zinc-800"
                   : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Bell className="w-4 h-4 text-rose-400" />
+                <Bell className="w-4 h-4 text-zinc-300" />
                 <span>Notifications</span>
               </div>
               {unreadNotifsCount > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold text-[10px]">
+                <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-white font-bold text-[10px] border border-zinc-700">
                   {unreadNotifsCount}
                 </span>
               ) : (
@@ -313,12 +313,12 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClick={() => handleNavClick("bookmarks")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                 activeSection === "bookmarks"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                  ? "bg-zinc-900 text-white font-bold border border-zinc-800"
                   : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Bookmark className="w-4 h-4 text-amber-400" />
+                <Bookmark className="w-4 h-4 text-zinc-300" />
                 <span>Saved Bookmarks</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-600" />
@@ -329,15 +329,15 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClick={() => handleNavClick("business")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                 activeSection === "business"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                  ? "bg-zinc-900 text-white font-bold border border-zinc-800"
                   : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Shield className="w-4 h-4 text-emerald-400" />
+                <Shield className="w-4 h-4 text-zinc-300" />
                 <span>For Businesses & Owners</span>
               </div>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-bold border border-zinc-700">
                 PRO
               </span>
             </button>
@@ -350,9 +350,9 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 if (onOpenCreateModal) onOpenCreateModal();
                 onClose();
               }}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-500/25 border border-blue-400/20 transition-all cursor-pointer active:scale-95"
+              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-sm shadow-lg shadow-white/10 border border-white/20 transition-all cursor-pointer active:scale-95"
             >
-              <Video className="w-4 h-4 shrink-0" />
+              <Video className="w-4 h-4 shrink-0 text-zinc-950" />
               <span>Record Video Review</span>
             </button>
           </div>
@@ -368,12 +368,12 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClick={() => handleNavClick("more")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                 activeSection === "more"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                  ? "bg-zinc-900 text-white font-bold border border-zinc-800"
                   : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Shield className="w-4 h-4 text-blue-400" />
+                <Shield className="w-4 h-4 text-zinc-300" />
                 <span>Trust Protocol & Guidelines</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-600" />
@@ -420,7 +420,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <User className="w-4 h-4 text-blue-400" />
+                  <User className="w-4 h-4 text-zinc-300" />
                   <span>Edit Profile</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-zinc-600" />
@@ -432,10 +432,10 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                   if (onSignOut) onSignOut();
                   onClose();
                 }}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <LogOut className="w-4 h-4 text-red-400" />
+                  <LogOut className="w-4 h-4 text-zinc-400" />
                   <span>Sign Out</span>
                 </div>
               </button>
@@ -472,7 +472,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 href="https://youtube.com"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:border-red-500/30 transition-all cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
                 title="YouTube"
               >
                 <Youtube className="w-4 h-4" />
@@ -481,7 +481,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 href="https://x.com"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-white/30 transition-all cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
                 title="X (Twitter)"
               >
                 <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
@@ -492,7 +492,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 href="https://tiktok.com"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-cyan-400 hover:border-cyan-400/30 transition-all cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
                 title="TikTok"
               >
                 <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
@@ -503,7 +503,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 href="https://instagram.com"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-pink-500 hover:border-pink-500/30 transition-all cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
                 title="Instagram"
               >
                 <Instagram className="w-4 h-4" />
@@ -512,7 +512,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-blue-400 hover:border-blue-400/30 transition-all cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
                 title="LinkedIn"
               >
                 <Linkedin className="w-4 h-4" />

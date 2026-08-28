@@ -269,30 +269,28 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
   );
 
   return (
-    <div className="w-full h-full min-h-0 flex-1 overflow-y-auto bg-zinc-950 flex flex-col antialiased text-white selection:bg-blue-900/30 selection:text-blue-400 copo-business-auth-landing">
+    <div className="w-full h-full min-h-0 flex-1 overflow-y-auto bg-zinc-950 flex flex-col antialiased text-white selection:bg-zinc-800 selection:text-white copo-business-auth-landing">
       
       {/* 1. Refined Minimal Header */}
-      <header className="w-full h-16 bg-zinc-900 border-b border-zinc-800/80 px-6 flex items-center justify-between shadow-2xs shrink-0 z-30">
+      <header className="w-full h-16 bg-zinc-900 border-b border-zinc-800 px-6 flex items-center justify-between shadow-2xs shrink-0 z-30">
         <div 
           onClick={() => onNavigate('home')}
           className="flex items-center gap-2.5 cursor-pointer group"
         >
-          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#1a73e8] shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform text-white">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-white text-zinc-950 shadow-sm group-hover:scale-105 transition-transform">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-zinc-950">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-lg text-white font-['Google_Sans',sans-serif] tracking-tight">Yoouz</span>
-            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-400 text-[10.5px] font-bold uppercase tracking-wider border border-blue-900/50">
+            <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10.5px] font-bold uppercase tracking-wider border border-zinc-700">
               Business
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
-          
-
           <button
             onClick={() => onNavigate('home')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 text-xs font-medium transition-colors cursor-pointer"
@@ -317,7 +315,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
         </div>
 
         {/* Card */}
-        <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800/90 shadow-xl shadow-zinc-200/40 p-6 sm:p-8 transition-all">
+        <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 shadow-xl p-6 sm:p-8 transition-all">
           
           {/* STEP 1: EMAIL INPUT */}
           {step === 'email' && (
@@ -335,7 +333,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@yourcompany.com"
-                    className="w-full pl-10 pr-4 py-3 bg-zinc-950 focus:bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8] transition-all"
+                    className="w-full pl-10 pr-4 py-3 bg-zinc-950 focus:bg-zinc-900 border border-zinc-750 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600 transition-all"
                   />
                 </div>
               </div>
@@ -350,7 +348,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   <button
                     type="button"
                     onClick={() => setStep('select_place')}
-                    className="text-blue-400 text-xs font-semibold shrink-0 hover:underline cursor-pointer"
+                    className="text-white text-xs font-semibold shrink-0 hover:underline cursor-pointer"
                   >
                     Change
                   </button>
@@ -358,8 +356,8 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               )}
 
               {errorMessage && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
+                  <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
               )}
@@ -367,7 +365,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               <button
                 type="submit"
                 disabled={isLoading || !email}
-                className="w-full py-3.5 bg-[#1a73e8] hover:bg-[#1557b0] disabled:bg-zinc-800 disabled:text-zinc-400 text-white rounded-xl text-sm font-bold shadow-md shadow-blue-600/15 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                className="w-full py-3.5 bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
               >
                 {isLoading ? (
                   <>
@@ -395,8 +393,8 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               </div>
 
               {previewCode && (
-                <div className="p-2.5 bg-blue-50/80 border border-blue-900/50/80 rounded-xl flex items-center justify-between text-xs">
-                  <span className="text-blue-700 font-medium">Demo test code:</span>
+                <div className="p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-between text-xs">
+                  <span className="text-zinc-400 font-medium">Demo test code:</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -404,7 +402,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       setOtpDigits(digits);
                       verifyCode(previewCode);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-[#1a73e8] text-white text-xs font-mono font-bold hover:bg-blue-700 cursor-pointer shadow-2xs"
+                    className="px-2.5 py-1 rounded-lg bg-zinc-800 text-white text-xs font-mono font-bold hover:bg-zinc-700 cursor-pointer border border-zinc-700 shadow-2xs"
                   >
                     Auto-fill: {previewCode}
                   </button>
@@ -422,14 +420,14 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       value={digit}
                       onChange={(e) => handleDigitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(idx, e)}
-                      className="w-10 sm:w-11 h-12 text-center text-xl font-mono font-bold bg-zinc-950 focus:bg-zinc-900 border border-zinc-800 focus:border-[#1a73e8] rounded-xl text-white focus:outline-hidden transition-all"
+                      className="w-10 sm:w-11 h-12 text-center text-xl font-mono font-bold bg-zinc-950 focus:bg-zinc-900 border border-zinc-750 rounded-xl text-white focus:outline-hidden transition-all"
                     />
                   ))}
                 </div>
 
                 {errorMessage && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
+                  <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
+                    <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
                     <span>{errorMessage}</span>
                   </div>
                 )}
@@ -438,14 +436,14 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   <button
                     type="button"
                     onClick={() => { setStep('email'); setErrorMessage(null); }}
-                    className="px-4 py-3 bg-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                    className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-zinc-700"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={isLoading || otpDigits.some(d => !d)}
-                    className="flex-1 py-3 bg-[#1a73e8] hover:bg-[#1557b0] disabled:bg-zinc-800 disabled:text-zinc-400 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/15 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 py-3 bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {isLoading ? (
                       <>
@@ -478,7 +476,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search venue name..."
-                  className="w-full pl-9 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]"
+                  className="w-full pl-9 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600"
                 />
                 <Building2 className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
@@ -492,7 +490,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       setSelectedPlace(p);
                       setStep('email');
                     }}
-                    className="w-full p-2.5 text-left rounded-xl hover:bg-blue-900/30 border border-zinc-800 hover:border-blue-900/50 flex items-center justify-between text-xs transition-colors cursor-pointer"
+                    className="w-full p-2.5 text-left rounded-xl hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 flex items-center justify-between text-xs transition-colors cursor-pointer"
                   >
                     <div className="truncate pr-2">
                       <span className="font-bold text-white block truncate">{p.name}</span>
@@ -506,7 +504,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               <button
                 type="button"
                 onClick={() => setStep('email')}
-                className="w-full py-2 bg-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-zinc-700"
               >
                 Cancel
               </button>
@@ -521,19 +519,19 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
           <div className="flex flex-wrap items-center justify-center gap-2">
             <button
               onClick={() => handleLaunchDemo('rustic')}
-              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-blue-300 hover:bg-blue-900/30 text-xs font-medium text-zinc-300 hover:text-blue-400 transition-all cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer shadow-2xs"
             >
               The Rustic Spoon
             </button>
             <button
               onClick={() => handleLaunchDemo('london')}
-              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-blue-300 hover:bg-blue-900/30 text-xs font-medium text-zinc-300 hover:text-blue-400 transition-all cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer shadow-2xs"
             >
               Londontrustedtherapy
             </button>
             <button
               onClick={() => handleLaunchDemo('ups')}
-              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-blue-300 hover:bg-blue-900/30 text-xs font-medium text-zinc-300 hover:text-blue-400 transition-all cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer shadow-2xs"
             >
               ups.com
             </button>

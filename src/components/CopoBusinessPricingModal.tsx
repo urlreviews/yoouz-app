@@ -78,14 +78,14 @@ export const CopoBusinessPricingModal: React.FC<CopoBusinessPricingModalProps> =
             </div>
 
             {/* Pro Plan */}
-            <div className={`rounded-[24px] p-8 flex flex-col h-full relative ${currentPlan === 'pro' ? 'bg-[#1a73e8]/10 ring-2 ring-[#1a73e8]' : 'bg-white/[0.04] hover:bg-white/[0.06] transition-colors ring-1 ring-[#1a73e8]/50'}`}>
+            <div className={`rounded-[24px] p-8 flex flex-col h-full relative ${currentPlan === 'pro' ? 'bg-white/[0.08] ring-2 ring-white' : 'bg-white/[0.04] hover:bg-white/[0.06] transition-colors ring-1 ring-zinc-750'}`}>
               {currentPlan !== 'pro' && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1a73e8] text-white text-[10px] font-black uppercase tracking-widest py-1.5 px-4 rounded-full shadow-lg shadow-[#1a73e8]/20">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-zinc-950 text-[10px] font-black uppercase tracking-widest py-1.5 px-4 rounded-full shadow-lg">
                   Most Popular
                 </div>
               )}
               <div className="mb-6">
-                <Zap className="w-8 h-8 text-[#4285F4] mb-4" />
+                <Zap className="w-8 h-8 text-zinc-300 mb-4" />
                 <h3 className="text-2xl font-black text-white">Pro</h3>
                 <div className="mt-3 flex items-baseline gap-1.5">
                   <span className="text-[40px] font-black text-white leading-none">$149</span>
@@ -108,7 +108,7 @@ export const CopoBusinessPricingModal: React.FC<CopoBusinessPricingModalProps> =
                   'Download Videos for Social Media'
                 ].map((feature, i) => (
                   <li key={i} className="flex gap-3 text-[14px] text-zinc-300 font-medium items-start">
-                    <Check className="w-5 h-5 text-[#4285F4] shrink-0 mt-0.5" /> 
+                    <Check className="w-5 h-5 text-white shrink-0 mt-0.5" /> 
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -116,19 +116,16 @@ export const CopoBusinessPricingModal: React.FC<CopoBusinessPricingModalProps> =
               <button 
                 disabled={currentPlan === 'pro'}
                 onClick={() => onSelectPlan('pro')}
-                className={`w-full py-4 rounded-xl font-bold text-[14px] transition-all flex items-center justify-center ${currentPlan === 'pro' ? 'bg-[#1a73e8]/20 text-[#4285F4] cursor-not-allowed' : 'bg-[#1a73e8] text-white hover:bg-[#1557b0] shadow-lg shadow-[#1a73e8]/20'}`}
+                className={`w-full py-4 rounded-xl font-bold text-[14px] transition-all flex items-center justify-center ${currentPlan === 'pro' ? 'bg-white/[0.05] text-zinc-500 cursor-not-allowed' : 'bg-white text-zinc-950 hover:bg-zinc-200 shadow-lg'}`}
               >
                 {currentPlan === 'none' ? 'Claim & Upgrade to Pro' : currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
               </button>
             </div>
 
             {/* Premium Plan */}
-            <div className={`rounded-[24px] p-8 flex flex-col h-full bg-[#1e1e1e] ring-1 ring-white/[0.05] relative overflow-hidden shadow-2xl`}>
-              {/* Subtle orange glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#f59e0b]/10 blur-[80px] rounded-full pointer-events-none" />
-              
+            <div className={`rounded-[24px] p-8 flex flex-col h-full bg-[#18181b] ring-1 ring-zinc-800 relative overflow-hidden shadow-2xl`}>
               <div className="mb-6 relative z-10">
-                <Star className="w-8 h-8 text-[#f59e0b] mb-4" />
+                <Star className="w-8 h-8 text-zinc-300 mb-4" />
                 <h3 className="text-2xl font-black text-white">Premium</h3>
                 <div className="mt-3 flex items-baseline gap-1.5">
                   <span className="text-[40px] font-black text-white leading-none">$299</span>
@@ -150,7 +147,7 @@ export const CopoBusinessPricingModal: React.FC<CopoBusinessPricingModalProps> =
                   'CRM Integrations (Shopify, Salesforce)'
                 ].map((feature, i) => (
                   <li key={i} className="flex gap-3 text-[14px] text-zinc-300 font-medium items-start">
-                    <Check className="w-5 h-5 text-[#f59e0b] shrink-0 mt-0.5" /> 
+                    <Check className="w-5 h-5 text-white shrink-0 mt-0.5" /> 
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -158,7 +155,7 @@ export const CopoBusinessPricingModal: React.FC<CopoBusinessPricingModalProps> =
               <button 
                 disabled={currentPlan === 'premium'}
                 onClick={() => onSelectPlan('premium')}
-                className={`relative z-10 w-full py-4 rounded-xl font-bold text-[14px] transition-all flex items-center justify-center ${currentPlan === 'premium' ? 'bg-[#f59e0b]/20 text-[#f59e0b] cursor-not-allowed' : 'bg-white text-black hover:bg-zinc-200 shadow-xl'}`}
+                className={`relative z-10 w-full py-4 rounded-xl font-bold text-[14px] transition-all flex items-center justify-center ${currentPlan === 'premium' ? 'bg-white/[0.05] text-zinc-500 cursor-not-allowed' : 'bg-white text-black hover:bg-zinc-200 shadow-xl'}`}
               >
                 {currentPlan === 'none' ? 'Claim & Upgrade to Premium' : currentPlan === 'premium' ? 'Current Plan' : 'Upgrade to Premium'}
               </button>

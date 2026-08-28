@@ -379,9 +379,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       return (
         <main
           id="copo-loading-feed-container"
-          className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-100 p-0 md:p-3"
+          className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 p-0 md:p-3"
         >
-          <div className="w-full h-full md:w-full md:max-w-[400px] lg:w-[420px] lg:max-w-none md:h-[92vh] md:max-h-[880px] bg-zinc-900 md:rounded-3xl overflow-hidden md:shadow-2xl md:border md:border-zinc-800 flex flex-col justify-between p-6 animate-pulse relative">
+          <div className="w-full h-full md:w-[440px] lg:w-[480px] xl:w-[500px] md:h-[92vh] md:max-h-[890px] bg-zinc-900 md:rounded-3xl overflow-hidden md:shadow-2xl md:border md:border-zinc-800 flex flex-col justify-between p-6 animate-pulse relative">
             <div className="flex justify-between items-start z-10 w-full pt-12 md:pt-4">
               <div className="h-7 w-36 bg-white/20 rounded-full" />
               <div className="h-10 w-10 bg-white/20 rounded-full" />
@@ -404,26 +404,26 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     return (
       <main
         id="copo-empty-feed-container"
-        className="flex-1 h-full flex items-center justify-center relative p-3 overflow-hidden bg-zinc-100"
+        className="flex-1 h-full flex items-center justify-center relative p-3 overflow-hidden bg-zinc-950"
       >
-        <div className="relative w-full max-w-[340px] sm:max-w-[380px] md:max-w-[400px] h-[85vh] max-h-[850px] bg-white rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-xl border border-zinc-200">
-          <div className="w-20 h-20 rounded-[28px] bg-[#1a73e8] shadow-[0_8px_24px_rgba(26,115,232,0.4)] flex items-center justify-center text-white mb-6">
+        <div className="relative w-full max-w-[360px] sm:max-w-[380px] h-[80vh] max-h-[680px] bg-zinc-900 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-2xl border border-zinc-800 text-white">
+          <div className="w-20 h-20 rounded-[28px] bg-zinc-800 border border-zinc-700 shadow-xl flex items-center justify-center text-white mb-6">
             <Video className="w-10 h-10 text-white" />
           </div>
-          <span className="inline-block px-3 py-1 bg-[#e8f0fe] text-[#1a73e8] border border-[#d2e3fc] rounded-full text-xs font-semibold uppercase tracking-wider mb-3">
+          <span className="inline-block px-3 py-1 bg-white/10 text-white border border-white/20 rounded-full text-xs font-semibold uppercase tracking-wider mb-3">
             Real Users Only
           </span>
-          <h2 className="text-xl font-bold text-zinc-900 mb-2">
+          <h2 className="text-xl font-bold text-white mb-2">
             No Video Reviews Yet
           </h2>
-          <p className="text-sm text-zinc-500 max-w-[280px] mb-8 leading-relaxed">
+          <p className="text-sm text-zinc-400 max-w-[280px] mb-8 leading-relaxed">
             Record the first authentic 60-second video review for any business or place!
           </p>
           {onOpenCreateModal && (
             <button
               id="copo-empty-state-record-btn"
               onClick={onOpenCreateModal}
-              className="flex items-center gap-2 px-6 py-3 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium rounded-full shadow-lg shadow-[#1a73e8]/25 active:scale-95 transition-all text-sm"
+              className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-zinc-200 text-black font-bold rounded-full shadow-lg active:scale-95 transition-all text-sm cursor-pointer"
             >
               <Video className="w-4 h-4" />
               Record Video Review
@@ -437,13 +437,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   return (
     <main
       id="copo-main-feed-container"
-      className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-100 select-none"
+      className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 select-none"
     >
-      <div className="w-full h-full md:h-auto md:w-full md:max-w-[400px] lg:w-auto lg:max-w-none flex items-center md:justify-center gap-4 relative md:max-h-[98vh] md:p-3">
+      <div className="w-full h-full md:h-auto md:w-auto flex items-center md:justify-center gap-4 relative md:max-h-[95vh] md:p-3">
         {/* Scroll Snap Feed Container */}
         <div
           ref={containerRef}
-          className="w-full h-full md:h-[92vh] md:max-h-[880px] overflow-y-scroll snap-y snap-mandatory touch-pan-y no-scrollbar hide-scrollbar [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4"
+          className="w-full h-full md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y no-scrollbar hide-scrollbar [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {videos.map((vid, idx) => {
@@ -496,7 +496,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-prev-video"
             onClick={handlePrev}
-            className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-zinc-300 flex items-center justify-center text-zinc-800 hover:bg-white hover:text-zinc-950 hover:border-zinc-400 hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
+            className="w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 flex items-center justify-center text-zinc-200 hover:bg-zinc-800 hover:text-white hover:border-zinc-500 hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
             title="Previous Video (Up Arrow)"
           >
             <ChevronUp className="w-6 h-6 stroke-[2.5]" />
@@ -505,7 +505,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-next-video"
             onClick={handleNext}
-            className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-zinc-300 flex items-center justify-center text-zinc-800 hover:bg-white hover:text-zinc-950 hover:border-zinc-400 hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
+            className="w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 flex items-center justify-center text-zinc-200 hover:bg-zinc-800 hover:text-white hover:border-zinc-500 hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
             title="Next Video (Down Arrow)"
           >
             <ChevronDown className="w-6 h-6 stroke-[2.5]" />
@@ -576,14 +576,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       setEditingReviewVideo(moreMenuVideo);
                       setMoreMenuVideo(null);
                     }}
-                    className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all text-left font-semibold text-sm cursor-pointer shadow-sm"
+                    className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-all text-left font-semibold text-sm cursor-pointer shadow-sm"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center text-white shrink-0">
                       <Edit3 className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-bold text-amber-200">Edit Star Rating & Review</div>
-                      <div className="text-xs text-amber-400/80 font-normal">
+                      <div className="font-bold text-white">Edit Star Rating & Review</div>
+                      <div className="text-xs text-zinc-400 font-normal">
                         Update your score ({moreMenuVideo.rating.toFixed(1)} ★) & place rating
                       </div>
                     </div>
@@ -756,7 +756,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             <div className="p-6 space-y-6">
               {/* Target Place Information */}
               <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/50">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center shrink-0">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -842,12 +842,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               </div>
 
               {/* Note on live recalculation */}
-              <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="w-3 h-3 text-blue-400" />
+              <div className="p-3.5 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-full bg-zinc-700 text-white flex items-center justify-center shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 text-white" />
                 </div>
-                <p className="text-xs text-blue-200/90 leading-relaxed font-normal">
-                  Changing your rating will automatically recalculate the overall average score for <strong className="font-semibold text-blue-100">{formatBusinessName(editingReviewVideo.placeName) || "this business"}</strong> across all verified reviews.
+                <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                  Changing your rating will automatically recalculate the overall average score for <strong className="font-semibold text-white">{formatBusinessName(editingReviewVideo.placeName) || "this business"}</strong> across all verified reviews.
                 </p>
               </div>
 
@@ -883,21 +883,21 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       setIsSavingEdit(false);
                     }
                   }}
-                  className="flex-1 py-3.5 rounded-2xl bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold text-sm transition-all shadow-lg shadow-[#1a73e8]/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-3.5 rounded-2xl bg-white hover:bg-zinc-200 text-black font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isSavingEdit ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin text-black" />
                       <span>Saving...</span>
                     </>
                   ) : saveSuccess ? (
                     <>
-                      <Check className="w-4 h-4 text-emerald-300" />
+                      <Check className="w-4 h-4 text-black" />
                       <span>Updated!</span>
                     </>
                   ) : (
                     <>
-                      <Star className="w-4 h-4 fill-white text-white" />
+                      <Star className="w-4 h-4 fill-black text-black" />
                       <span>Save Rating</span>
                     </>
                   )}

@@ -136,7 +136,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                     className="py-3.5 bg-[#000000] border border-white/[0.08] hover:bg-white/[0.04] text-white rounded-xl font-bold flex items-center justify-center transition-colors cursor-pointer"
                   >
                     <span className="flex items-center gap-1.5 text-base">
-                      <span className="text-[#4285F4]">G</span> Pay
+                      <span className="text-white">G</span> Pay
                     </span>
                   </button>
                 </div>
@@ -161,7 +161,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@yourcompany.com (optional in demo)"
-                    className="w-full bg-[#000000] border border-white/[0.08] rounded-xl px-4 py-3.5 text-[13px] text-white placeholder-zinc-600 focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] transition-all"
+                    className="w-full bg-[#000000] border border-white/[0.08] rounded-xl px-4 py-3.5 text-[13px] text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all"
                   />
                 </div>
 
@@ -179,7 +179,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                     </div>
                   </div>
                   
-                  <div className="bg-[#000000] border border-white/[0.08] rounded-xl overflow-hidden focus-within:border-[#1a73e8] focus-within:ring-1 focus-within:ring-[#1a73e8] transition-all">
+                  <div className="bg-[#000000] border border-white/[0.08] rounded-xl overflow-hidden focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 transition-all">
                     <div className="relative border-b border-white/[0.08]">
                       <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
                       <input 
@@ -222,7 +222,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                 {/* Terms Box */}
                 <div className="bg-[#000000] border border-white/[0.04] rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <ShieldCheck className="w-4 h-4 text-zinc-400" />
                     <span className="text-[12px] font-bold text-white">30-Day Money Back & Auto-Renewal</span>
                   </div>
                   <p className="text-[11px] text-zinc-500 leading-relaxed font-medium">
@@ -234,7 +234,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="w-full py-4 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-xl text-[14px] font-bold shadow-lg shadow-[#1a73e8]/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
+                  className="w-full py-4 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-[14px] font-bold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
                 >
                   {isProcessing ? (
                     <><Loader2 className="w-5 h-5 animate-spin" /> Processing Payment...</>

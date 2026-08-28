@@ -18,7 +18,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   website,
   logoUrl,
   bannerUrl,
-  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white bg-white shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-black/10",
+  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-zinc-800 bg-zinc-900 shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10",
   imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]",
   fallbackTextClassName = "font-black text-2xl sm:text-3xl text-white drop-shadow-md"
 }) => {
@@ -98,7 +98,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       .join(" ");
 
     return (
-      <div className={`${fallbackBgClass} bg-gradient-to-br from-[#1a73e8] via-indigo-600 to-blue-700 flex items-center justify-center shadow-inner`}>
+      <div className={`${fallbackBgClass} bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center shadow-inner border border-zinc-700/60`}>
         <span className={fallbackTextClassName}>
           {getInitials()}
         </span>

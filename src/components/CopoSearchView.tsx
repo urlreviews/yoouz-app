@@ -163,30 +163,30 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     : [];
 
   return (
-    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 md:bg-white text-white md:text-zinc-900 flex flex-col items-center p-6 pt-10 pb-[calc(env(safe-area-inset-bottom,16px)+88px)] select-none">
+    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center p-6 pt-10 pb-[calc(env(safe-area-inset-bottom,16px)+88px)] select-none">
       {!searchedPlace ? (
         <div className="w-full max-w-2xl flex flex-col items-center animate-in fade-in zoom-in duration-500 mt-[10vh]">
           {/* Central Logo / Icon */}
-          <div className="w-16 h-16 bg-blue-500/10 md:bg-blue-50 border border-blue-500/20 md:border-blue-100 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in">
-            <Globe className="w-8 h-8 text-[#60a5fa] md:text-[#1a73e8]" strokeWidth={1.5} />
+          <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in text-zinc-300">
+            <Globe className="w-8 h-8 text-zinc-300" strokeWidth={1.5} />
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white md:text-zinc-900 tracking-tight text-center mb-3">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
             Review Any Business or Website
           </h1>
           
-          <p className="text-zinc-400 md:text-zinc-500 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
+          <p className="text-zinc-400 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
             Paste a business URL below to see short video reviews or record your own.
           </p>
 
           <form onSubmit={(e) => handleSearch(e)} className="w-full max-w-lg flex flex-col items-center">
-            <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 md:bg-white border border-zinc-800 md:border-zinc-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 md:focus-within:ring-blue-100 transition-all">
+            <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-600 focus-within:ring-2 focus-within:ring-white/10 transition-all">
               <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-zinc-400 group-focus-within:text-[#1a73e8] transition-colors" />
+                <Search className="h-5 w-5 text-zinc-400 group-focus-within:text-white transition-colors" />
               </div>
               <input
                 type="text"
-                className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-500 md:placeholder:text-zinc-400 text-white md:text-zinc-900"
+                className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-500 text-white"
                 placeholder="example.com"
                 value={query}
                 onChange={(e) => {
@@ -201,7 +201,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     setQuery("");
                     setErrorMsg("");
                   }}
-                  className="absolute inset-y-0 right-[5.5rem] flex items-center text-zinc-400 hover:text-zinc-200 md:hover:text-zinc-600 transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-[5.5rem] flex items-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
                   title="Clear search query"
                 >
                   <span className="text-xl font-medium leading-none">×</span>
@@ -211,7 +211,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="h-9 px-5 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] disabled:bg-[#1a73e8]/70 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
+                  className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-400 disabled:cursor-not-allowed text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
                 >
                   {isSearching ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -224,8 +224,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           </form>
 
           {errorMsg && (
-            <div className="mt-6 text-xs font-medium text-red-400 md:text-red-500 bg-red-950/40 md:bg-red-50 border border-red-800/50 md:border-red-100 rounded-xl py-2.5 px-3.5 flex items-start gap-2 animate-fade-in leading-relaxed max-w-md text-center">
-              <span className="font-bold text-red-500 md:text-red-600 mt-0.5">⚠️</span>
+            <div className="mt-6 text-xs font-medium text-red-400 bg-red-950/40 border border-red-800/50 rounded-xl py-2.5 px-3.5 flex items-start gap-2 animate-fade-in leading-relaxed max-w-md text-center">
+              <span className="font-bold text-red-500 mt-0.5">⚠️</span>
               <span>{errorMsg}</span>
             </div>
           )}
@@ -234,24 +234,22 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         <div className="w-full max-w-4xl flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500">
           <button 
             onClick={() => { setSearchedPlace(null); setQuery(""); }}
-            className="mb-8 text-zinc-400 md:text-zinc-500 hover:text-white md:hover:text-zinc-900 flex items-center gap-2 font-medium transition-colors self-start cursor-pointer"
+            className="mb-8 text-zinc-400 hover:text-white flex items-center gap-2 font-medium transition-colors self-start cursor-pointer"
           >
             ← Search another business or website
           </button>
 
-          <div className="w-full bg-zinc-900 md:bg-white rounded-3xl border border-zinc-800 md:border-zinc-200 shadow-xl overflow-hidden mb-8">
-            {/* Top Hero Banner Canvas - Large Facebook-style Preview */}
-            <div className="w-full h-64 sm:h-80 bg-zinc-950 md:bg-zinc-100 relative overflow-hidden flex items-center justify-center group">
+          <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 shadow-xl overflow-hidden mb-8">
+            {/* Top Hero Banner Canvas */}
+            <div className="w-full h-64 sm:h-80 bg-zinc-950 relative overflow-hidden flex items-center justify-center group">
               {(searchedPlace.bannerUrl || searchedPlace.ogImage) ? (
                 <>
-                  {/* Foreground Banner Image - High quality object-cover */}
                   <img 
                     src={searchedPlace.bannerUrl || searchedPlace.ogImage} 
                     alt="Banner" 
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-60"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                      // If the banner fails, we show the fallback gradient
                       const target = e.target as HTMLElement;
                       const parent = target.parentElement;
                       if (parent) {
@@ -261,12 +259,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       target.style.display = "none";
                     }}
                   />
-                  {/* Subtle overlay for better logo/text contrast if needed */}
-                  <div className="absolute inset-0 bg-black/5 z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent z-10" />
                   
-                  {/* Banner Fallback (hidden by default) */}
-                  <div className="banner-fallback absolute inset-0 bg-gradient-to-r from-[#1a73e8] via-indigo-800 to-slate-900 hidden items-center justify-center">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/20 via-transparent to-black/30" />
+                  {/* Banner Fallback */}
+                  <div className="banner-fallback absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-800 to-black hidden items-center justify-center">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/30" />
                     <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest z-10">
                       <Globe className="w-4 h-4" />
                       <span>Verified Web Listing</span>
@@ -275,8 +272,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 </>
               ) : (
                 /* Fallback Gradient Canvas for websites without any image */
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1a73e8] via-indigo-800 to-slate-900 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/20 via-transparent to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-800 to-black flex items-center justify-center">
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/30" />
                   <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest z-10">
                     <Globe className="w-4 h-4" />
                     <span>Verified Web Listing</span>
@@ -293,27 +290,27 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 website={searchedPlace.website}
                 logoUrl={searchedPlace.logoUrl}
                 bannerUrl={searchedPlace.bannerUrl || searchedPlace.ogImage}
-                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 md:border-white bg-zinc-900 md:bg-white shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10 md:ring-black/10"
+                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 bg-zinc-900 shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10"
               />
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                 <div>
-                  <h2 className="text-3xl font-extrabold text-white md:text-zinc-900 mb-2">{formatBusinessName(searchedPlace.name)}</h2>
-                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-[#60a5fa] md:text-[#1a73e8] hover:underline flex items-center gap-1.5 font-medium">
-                    <Globe className="w-4 h-4" />
+                  <h2 className="text-3xl font-extrabold text-white mb-2">{formatBusinessName(searchedPlace.name)}</h2>
+                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline flex items-center gap-1.5 font-medium text-sm">
+                    <Globe className="w-4 h-4 text-zinc-400" />
                     {searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}
                   </a>
                   {searchedPlace.description && (
-                    <p className="text-zinc-300 md:text-zinc-600 mt-4 max-w-2xl text-sm leading-relaxed">
+                    <p className="text-zinc-300 mt-4 max-w-2xl text-sm leading-relaxed">
                       {searchedPlace.description}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                  className="shrink-0 bg-[#1a73e8] text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2"
+                  className="shrink-0 bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-3 rounded-full font-bold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <Video className="w-5 h-5" />
+                  <Video className="w-5 h-5 text-zinc-950" />
                   Record Review
                 </button>
               </div>
@@ -321,9 +318,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           </div>
 
           <div className="w-full">
-            <h3 className="text-xl font-bold text-white md:text-zinc-900 mb-6 flex items-center gap-2">
-              <Play className="w-5 h-5 text-[#60a5fa] md:text-[#1a73e8] fill-current" />
-              Video Reviews ({placeVideos.length})
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <Play className="w-5 h-5 text-white fill-current" />
+              <span>Video Reviews ({placeVideos.length})</span>
             </h3>
             
             {placeVideos.length > 0 ? (
@@ -332,7 +329,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <div 
                     key={video.id}
                     onClick={() => onSelectVideo(video.id)}
-                    className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group bg-zinc-900 border border-zinc-800 md:border-transparent"
+                    className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group bg-zinc-900 border border-zinc-800"
                   >
                     <CopoVideoThumbnail
                       video={video}
@@ -342,7 +339,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3">
                        <div className="flex items-center gap-1 mb-1">
                           {[...Array(5)].map((_, i) => (
-                             <Star key={i} className={`w-3 h-3 ${i < video.rating ? "text-yellow-400 fill-current" : "text-white/30"}`} />
+                             <Star key={i} className={`w-3 h-3 ${i < video.rating ? "text-white fill-current" : "text-zinc-600"}`} />
                           ))}
                        </div>
                        <p className="text-white text-xs font-medium line-clamp-2">{video.caption}</p>
@@ -351,17 +348,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="w-full py-10 bg-zinc-900 md:bg-zinc-50 border border-zinc-800 md:border-zinc-200 rounded-2xl flex flex-col items-center justify-center text-center">
+              <div className="w-full py-10 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-center">
                 <div className="flex gap-1.5 mb-4">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-8 h-8 text-zinc-700 md:text-zinc-300" strokeWidth={1.5} />
+                    <Star key={i} className="w-8 h-8 text-zinc-700" strokeWidth={1.5} />
                   ))}
                 </div>
-                <h4 className="text-lg font-bold text-white md:text-zinc-900">No reviews yet</h4>
-                <p className="text-zinc-400 md:text-zinc-500 text-sm mt-1 mb-6">Be the first to share your experience with this website!</p>
+                <h4 className="text-lg font-bold text-white">No reviews yet</h4>
+                <p className="text-zinc-400 text-sm mt-1 mb-6">Be the first to share your experience with this website!</p>
                 <button
                   onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                  className="bg-zinc-800 md:bg-white border-2 border-[#1a73e8] text-blue-400 md:text-[#1a73e8] px-5 py-2.5 rounded-full font-bold shadow-sm hover:bg-zinc-700 md:hover:bg-blue-50 transition-colors"
+                  className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2.5 rounded-full font-bold shadow-sm transition-colors cursor-pointer"
                 >
                   Record the first review
                 </button>

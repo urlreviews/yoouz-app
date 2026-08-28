@@ -50,13 +50,13 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
           }}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-3.5 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-all placeholder:text-zinc-400 font-medium text-zinc-200"
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-3.5 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-zinc-600 transition-all placeholder:text-zinc-500 font-medium text-zinc-200"
         />
         {options.length > 0 && (
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-zinc-400 hover:text-zinc-400 transition-colors cursor-pointer"
+            className="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
           >
             <ChevronDown
               className={`w-4 h-4 transition-transform duration-200 ${
@@ -87,12 +87,12 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
                     }}
                     className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
                       isSelected
-                        ? "bg-blue-950/50 text-blue-400 font-semibold"
+                        ? "bg-zinc-800 text-white font-bold"
                         : "text-zinc-300 hover:bg-zinc-800"
                     }`}
                   >
                     <span>{option}</span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                    {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                   </button>
                 );
               })

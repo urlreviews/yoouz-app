@@ -355,28 +355,28 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   return (
     <div
       id="yoouz-more-view-container"
-      className="flex-1 w-full h-full bg-zinc-950 md:bg-[#f8fafd] overflow-y-auto font-sans text-white md:text-zinc-900 pb-[calc(env(safe-area-inset-bottom,16px)+88px)] md:pb-24 select-none selection:bg-[#1a73e8]/20 selection:text-[#1a73e8]"
+      className="flex-1 w-full h-full bg-zinc-950 overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+88px)] md:pb-24 select-none selection:bg-[#1a73e8]/20 selection:text-[#1a73e8]"
     >
       {/* Top Banner / Google-grade Header */}
-      <header className="bg-zinc-900/90 md:bg-white/90 border-b border-zinc-800 md:border-zinc-200/80 sticky top-0 z-20 backdrop-blur-md">
+      <header className="bg-zinc-900/90 border-b border-zinc-800 sticky top-0 z-20 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => onNavigate("home")}
-                className="w-9 h-9 rounded-full bg-zinc-800 md:bg-zinc-100 hover:bg-zinc-700 md:hover:bg-zinc-200 text-zinc-300 md:text-zinc-700 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm"
+                className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm"
                 title="Back to Feed"
               >
                 <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
               </button>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 md:bg-blue-50 border border-blue-500/20 md:border-blue-200/60 text-blue-400 md:text-[#1a73e8] text-[11px] font-black tracking-wide uppercase">
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-[#38bdf8] text-[11px] font-black tracking-wide uppercase">
                     Yoouz Hub
                   </span>
                   <span className="text-xs text-zinc-400 font-semibold">• Trust, Verification & Support</span>
                 </div>
-                <h1 className="text-xl sm:text-3xl font-black text-white md:text-zinc-950 tracking-tight mt-0.5">
+                <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight mt-0.5">
                   Knowledge & Trust Center
                 </h1>
               </div>
@@ -386,22 +386,22 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
               <button
                 onClick={() => onNavigate("search")}
-                className="px-3.5 py-1.5 rounded-full bg-zinc-800 md:bg-zinc-100 hover:bg-zinc-700 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Search className="w-3.5 h-3.5 text-zinc-400 md:text-zinc-500" />
+                <Search className="w-3.5 h-3.5 text-zinc-400" />
                 <span>Search</span>
               </button>
               <button
                 onClick={() => onNavigate("discover")}
-                className="px-3.5 py-1.5 rounded-full bg-zinc-800 md:bg-zinc-100 hover:bg-zinc-700 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Compass className="w-3.5 h-3.5 text-zinc-400 md:text-zinc-500" />
+                <Compass className="w-3.5 h-3.5 text-zinc-400" />
                 <span>Discover</span>
               </button>
               {currentUser && (
                 <button
                   onClick={() => onNavigate("profile")}
-                  className="px-3.5 py-1.5 rounded-full bg-blue-500/20 md:bg-blue-50 hover:bg-blue-500/30 md:hover:bg-blue-100 text-blue-400 md:text-[#1a73e8] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                  className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <User className="w-3.5 h-3.5" />
                   <span>My Profile</span>
@@ -417,7 +417,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         {/* 1. Account Section: Shown if signed in */}
         {currentUser && (
           <section aria-label="Account Overview">
-            <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 border border-zinc-800 md:border-zinc-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="relative shrink-0">
                   <img
@@ -426,22 +426,22 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80"
                     }
                     alt={currentUser.name || "User Avatar"}
-                    className="w-14 h-14 rounded-2xl object-cover border-2 border-blue-500/40 md:border-[#1a73e8]/30 shadow-xs"
+                    className="w-14 h-14 rounded-2xl object-cover border border-zinc-700 shadow-xs"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#1a73e8] text-white rounded-full flex items-center justify-center shadow-xs">
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white text-zinc-950 rounded-full flex items-center justify-center shadow-xs">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </div>
                 </div>
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-lg font-black text-white md:text-zinc-950 truncate">{currentUser.name || "Reviewer"}</h2>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-950/60 md:bg-emerald-50 border border-emerald-800/60 md:border-emerald-200 text-emerald-400 md:text-emerald-700 text-[10px] font-black tracking-wide uppercase flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3" />
+                    <h2 className="text-lg font-black text-white truncate">{currentUser.name || "Reviewer"}</h2>
+                    <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[10px] font-black tracking-wide uppercase flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-zinc-300" />
                       Verified
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-400 md:text-zinc-500 font-medium truncate">{currentUser.email}</p>
+                  <p className="text-xs text-zinc-400 font-medium truncate">{currentUser.email}</p>
                   <p className="text-[11px] text-zinc-400 font-medium">
                     Verified Member • Active Contributor
                   </p>
@@ -451,14 +451,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-wrap">
                 <button
                   onClick={() => onNavigate("profile")}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-zinc-800 md:bg-zinc-100 hover:bg-zinc-700 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-800 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <User className="w-3.5 h-3.5 text-zinc-400 md:text-zinc-600" />
+                  <User className="w-3.5 h-3.5 text-zinc-400" />
                   <span>Edit Profile</span>
                 </button>
                 <button
                   onClick={onSignOut}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-zinc-800 md:border-zinc-200 hover:bg-red-950/40 md:hover:bg-red-50 hover:border-red-800 md:hover:border-red-200 text-red-400 md:text-zinc-700 md:hover:text-red-600 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-zinc-800 hover:bg-red-950/40 hover:border-red-800 text-red-400 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
@@ -470,13 +470,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
         {/* 2. Top-Level Tab Switcher (Google Material Design Style) */}
         <section aria-label="Knowledge Navigation">
-          <div className="bg-zinc-900 md:bg-white rounded-2xl p-1.5 border border-zinc-800 md:border-zinc-200/90 shadow-2xs flex items-center gap-1 overflow-x-auto no-scrollbar">
+          <div className="bg-zinc-900 rounded-2xl p-1.5 border border-zinc-800 shadow-2xs flex items-center gap-1 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab("about")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "about"
-                  ? "bg-[#1a73e8] text-white shadow-sm"
-                  : "text-zinc-400 md:text-zinc-600 hover:text-white md:hover:text-zinc-950 hover:bg-zinc-800 md:hover:bg-zinc-50"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Info className="w-4 h-4" />
@@ -485,10 +485,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <button
               onClick={() => setActiveTab("faq")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "faq"
-                  ? "bg-[#1a73e8] text-white shadow-sm"
-                  : "text-zinc-400 md:text-zinc-600 hover:text-white md:hover:text-zinc-950 hover:bg-zinc-800 md:hover:bg-zinc-50"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <HelpCircle className="w-4 h-4" />
@@ -497,10 +497,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <button
               onClick={() => setActiveTab("business")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "business"
-                  ? "bg-[#1a73e8] text-white shadow-sm"
-                  : "text-zinc-400 md:text-zinc-600 hover:text-white md:hover:text-zinc-950 hover:bg-zinc-800 md:hover:bg-zinc-50"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Building2 className="w-4 h-4" />
@@ -509,10 +509,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <button
               onClick={() => setActiveTab("security")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "security"
-                  ? "bg-[#1a73e8] text-white shadow-sm"
-                  : "text-zinc-400 md:text-zinc-600 hover:text-white md:hover:text-zinc-950 hover:bg-zinc-800 md:hover:bg-zinc-50"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Shield className="w-4 h-4" />
@@ -525,10 +525,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 setSubmitSuccess(false);
                 setSubmitError("");
               }}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "contact"
-                  ? "bg-[#1a73e8] text-white shadow-sm"
-                  : "text-zinc-400 md:text-zinc-600 hover:text-white md:hover:text-zinc-950 hover:bg-zinc-800 md:hover:bg-zinc-50"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Mail className="w-4 h-4" />
@@ -544,51 +544,51 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {/* ========================================================= */}
           {activeTab === "about" && (
             <div className="space-y-6 animate-in fade-in duration-200 text-left">
-              {/* Hero Banner: Proof of Presence (Clean Google-Grade Light Card) */}
-              <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 sm:p-8 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-6">
+              {/* Hero Banner: Proof of Presence */}
+              <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="space-y-3 max-w-3xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 md:bg-blue-50 border border-blue-500/20 md:border-blue-200 text-blue-400 md:text-[#1a73e8] text-[11px] font-black uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>The Yoouz Standard</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-white md:text-zinc-950 tracking-tight leading-snug">
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
                     Proof of Presence. Real People. Verified Places.
                   </h2>
-                  <p className="text-xs sm:text-sm text-zinc-400 md:text-zinc-600 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
                     Traditional text reviews are vulnerable to bot networks, fake accounts, and AI-generated reviews. Yoouz creates authentic trust by capturing short 60-second video reviews recorded exclusively through live device cameras.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                  <div className="bg-zinc-800/80 md:bg-blue-50/70 p-5 rounded-2xl border border-zinc-700/60 md:border-blue-150/70 space-y-2">
-                    <div className="w-8 h-8 rounded-xl bg-blue-500/20 md:bg-blue-100 flex items-center justify-center text-blue-400 md:text-blue-600">
+                  <div className="bg-zinc-800/80 p-5 rounded-2xl border border-zinc-700/60 space-y-2">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Video className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-400 md:text-blue-700 block">Strict Rule</span>
-                    <h4 className="text-sm font-black text-white md:text-zinc-950">Live Front-Camera Only</h4>
-                    <p className="text-xs text-zinc-400 md:text-zinc-600 leading-relaxed">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Strict Rule</span>
+                    <h4 className="text-sm font-black text-white">Live Front-Camera Only</h4>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
                       No pre-recorded MP4 uploads or stock footage. Real customers capturing authentic experiences.
                     </p>
                   </div>
 
-                  <div className="bg-zinc-800/80 md:bg-amber-50/70 p-5 rounded-2xl border border-zinc-700/60 md:border-amber-150/70 space-y-2">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 md:bg-amber-100 flex items-center justify-center text-amber-400 md:text-amber-700">
+                  <div className="bg-zinc-800/80 p-5 rounded-2xl border border-zinc-700/60 space-y-2">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Lock className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 md:text-amber-700 block">Pillar 2</span>
-                    <h4 className="text-sm font-black text-white md:text-zinc-950">60-Second Focus</h4>
-                    <p className="text-xs text-zinc-400 md:text-zinc-600 leading-relaxed">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Pillar 2</span>
+                    <h4 className="text-sm font-black text-white">60-Second Focus</h4>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
                       Concise, high-impact video reviews that deliver immediate value in under one minute.
                     </p>
                   </div>
 
-                  <div className="bg-zinc-800/80 md:bg-emerald-50/70 p-5 rounded-2xl border border-zinc-700/60 md:border-emerald-150/70 space-y-2">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 md:bg-emerald-100 flex items-center justify-center text-emerald-400 md:text-emerald-700">
+                  <div className="bg-zinc-800/80 p-5 rounded-2xl border border-zinc-700/60 space-y-2">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Users className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 md:text-emerald-700 block">Pillar 3</span>
-                    <h4 className="text-sm font-black text-white md:text-zinc-950">3-Way Dialogue</h4>
-                    <p className="text-xs text-zinc-400 md:text-zinc-600 leading-relaxed">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Pillar 3</span>
+                    <h4 className="text-sm font-black text-white">3-Way Dialogue</h4>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
                       Living comment threads connecting Reviewers, curious Viewers, and Verified Place Owners.
                     </p>
                   </div>
@@ -598,69 +598,69 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               {/* 4 Bento Cards: Core Pillars */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Bento 1: No Fake Accounts */}
-                <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-4 hover:border-zinc-700 md:hover:border-zinc-300 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 md:bg-blue-50 border border-blue-500/20 md:border-blue-100 flex items-center justify-center text-blue-400 md:text-[#1a73e8]">
+                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
                     <Video className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white md:text-zinc-950">Immutable Face & Voice Identity</h3>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed font-normal">
+                    <h3 className="text-base font-black text-white">Immutable Face & Voice Identity</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
                       Every reviewer builds an open visual review portfolio. Consistent face, verified voice, and historical timeline give viewers immediate confidence that reviews are authored by genuine people.
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-blue-400 md:text-[#1a73e8]">
-                    <ShieldCheck className="w-4 h-4" />
+                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
+                    <ShieldCheck className="w-4 h-4 text-zinc-300" />
                     <span>Audit Any Reviewer Profile Instantly</span>
                   </div>
                 </div>
 
                 {/* Bento 2: Living Discussions */}
-                <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-4 hover:border-zinc-700 md:hover:border-zinc-300 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 md:bg-indigo-50 border border-indigo-500/20 md:border-indigo-100 flex items-center justify-center text-indigo-400 md:text-indigo-600">
+                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
                     <MessageSquare className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white md:text-zinc-950">Interactive Community Dialogue</h3>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed font-normal">
+                    <h3 className="text-base font-black text-white">Interactive Community Dialogue</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
                       Reviews shouldn't be dead one-way monologues. Viewers can ask real-time questions ('Is there outdoor seating?', 'How was the service?'), and the community answers collaboratively.
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-indigo-400 md:text-indigo-600">
-                    <Users className="w-4 h-4" />
+                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
+                    <Users className="w-4 h-4 text-zinc-300" />
                     <span>Crowdsourced Community Validation</span>
                   </div>
                 </div>
 
                 {/* Bento 3: Verified Business Ownership */}
-                <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-4 hover:border-zinc-700 md:hover:border-zinc-300 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 md:bg-emerald-50 border border-emerald-500/20 md:border-emerald-100 flex items-center justify-center text-emerald-400 md:text-emerald-600">
+                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
                     <Building2 className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white md:text-zinc-950">Official Domain Verification</h3>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed font-normal">
+                    <h3 className="text-base font-black text-white">Official Domain Verification</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
                       Business owners can claim their base domain page, respond with verified owner badges, and pin helpful solutions or updates at the top of customer review threads.
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-emerald-400 md:text-emerald-600">
-                    <BadgeCheck className="w-4 h-4" />
+                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
+                    <BadgeCheck className="w-4 h-4 text-zinc-300" />
                     <span>Verified Owner Pinned Responses</span>
                   </div>
                 </div>
 
                 {/* Bento 4: Zero Paid Deletions */}
-                <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-4 hover:border-zinc-700 md:hover:border-zinc-300 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 md:bg-amber-50 border border-amber-500/20 md:border-amber-100 flex items-center justify-center text-amber-400 md:text-amber-600">
+                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
                     <Lock className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white md:text-zinc-950">No Pay-to-Remove Extortion</h3>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed font-normal">
+                    <h3 className="text-base font-black text-white">No Pay-to-Remove Extortion</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
                       Unlike legacy review sites that pressure businesses into costly subscriptions to suppress negative feedback, Yoouz guarantees all verified reviews stay transparent and tamper-free.
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-amber-400 md:text-amber-600">
-                    <CheckCircle2 className="w-4 h-4" />
+                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
+                    <CheckCircle2 className="w-4 h-4 text-zinc-300" />
                     <span>100% Equal Rules for All</span>
                   </div>
                 </div>
@@ -674,7 +674,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {activeTab === "faq" && (
             <div className="space-y-6 animate-in fade-in duration-200 text-left">
               {/* Search & Category Filter Bar */}
-              <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-4">
+              <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4">
                 <div className="relative">
                   <Search className="w-5 h-5 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
@@ -682,12 +682,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search FAQs, guidelines, or topics..."
-                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 focus:bg-zinc-800/80 md:focus:bg-white focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/15 text-sm font-semibold outline-none transition-all text-white md:text-zinc-900 placeholder:text-zinc-500"
+                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-sm font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-zinc-700 md:bg-zinc-200 hover:bg-zinc-600 md:hover:bg-zinc-300 flex items-center justify-center text-zinc-300 md:text-zinc-600 transition-colors cursor-pointer"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-300 transition-colors cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -711,8 +711,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       onClick={() => setFaqCategoryFilter(cat.id as any)}
                       className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
                         faqCategoryFilter === cat.id
-                          ? "bg-[#1a73e8] text-white shadow-xs"
-                          : "bg-zinc-800 md:bg-zinc-100 hover:bg-zinc-700 md:hover:bg-zinc-200 text-zinc-300 md:text-zinc-700"
+                          ? "bg-white text-black shadow-xs font-extrabold"
+                          : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white"
                       }`}
                     >
                       {cat.label}
@@ -722,12 +722,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               </div>
 
               {/* FAQ Accordion List */}
-              <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 border border-zinc-800 md:border-zinc-200 shadow-xs divide-y divide-zinc-800 md:divide-zinc-100">
+              <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs divide-y divide-zinc-800">
                 {filteredFaqs.length === 0 ? (
                   <div className="py-12 text-center space-y-3">
-                    <HelpCircle className="w-10 h-10 text-zinc-500 md:text-zinc-300 mx-auto" />
-                    <h3 className="text-base font-bold text-zinc-300 md:text-zinc-800">No matching questions found</h3>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 max-w-sm mx-auto">
+                    <HelpCircle className="w-10 h-10 text-zinc-500 mx-auto" />
+                    <h3 className="text-base font-bold text-zinc-300">No matching questions found</h3>
+                    <p className="text-xs text-zinc-400 max-w-sm mx-auto">
                       Try searching with different keywords, or reach out directly to our support desk.
                     </p>
                     <button
@@ -735,7 +735,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         setSearchQuery("");
                         setFaqCategoryFilter("all");
                       }}
-                      className="px-4 py-2 rounded-xl bg-zinc-800 md:bg-zinc-100 hover:bg-zinc-700 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-800 font-bold text-xs transition-all cursor-pointer inline-flex"
+                      className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition-all cursor-pointer inline-flex"
                     >
                       Clear Search Filter
                     </button>
@@ -750,7 +750,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                           className="w-full flex items-center justify-between text-left cursor-pointer group gap-4"
                         >
                           <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-blue-400 md:text-[#1a73e8]">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
                               {faq.category === "reviewers"
                                 ? "Reviewers"
                                 : faq.category === "business"
@@ -759,13 +759,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                                 ? "Trust Model"
                                 : "Technical"}
                             </span>
-                            <h3 className="font-extrabold text-sm sm:text-base text-white md:text-zinc-900 group-hover:text-blue-400 md:group-hover:text-[#1a73e8] transition-colors leading-snug">
+                            <h3 className="font-extrabold text-sm sm:text-base text-white group-hover:text-zinc-300 transition-colors leading-snug">
                               {faq.question}
                             </h3>
                           </div>
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
-                              isOpen ? "bg-blue-500/20 md:bg-blue-50 text-blue-400 md:text-[#1a73e8]" : "bg-zinc-800 md:bg-zinc-100 text-zinc-400 group-hover:bg-zinc-700 md:group-hover:bg-zinc-200"
+                              isOpen ? "bg-white text-black" : "bg-zinc-800 text-zinc-400 group-hover:bg-zinc-700"
                             }`}
                           >
                             <ChevronDown
@@ -775,8 +775,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         </button>
 
                         {isOpen && (
-                          <div className="mt-3 pt-2 text-xs sm:text-sm text-zinc-300 md:text-zinc-600 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
-                            <p className="bg-zinc-800 md:bg-zinc-50 p-4 rounded-2xl border border-zinc-700 md:border-zinc-150/70">{faq.answer}</p>
+                          <div className="mt-3 pt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
+                            <p className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800">{faq.answer}</p>
                           </div>
                         )}
                       </div>
@@ -793,48 +793,48 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {activeTab === "business" && (
             <div className="space-y-8 animate-in fade-in duration-200 text-left">
               {/* Business Overview Hero */}
-              <div className="bg-zinc-900 md:bg-white rounded-3xl p-8 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-6">
+              <div className="bg-zinc-900 rounded-3xl p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="space-y-2 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 md:bg-emerald-50 border border-emerald-500/20 md:border-emerald-200 text-emerald-400 md:text-emerald-700 text-[11px] font-black uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
                     <Building2 className="w-3.5 h-3.5" />
                     <span>Business Verification Portal</span>
                   </div>
-                  <h2 className="text-xl sm:text-3xl font-black text-white md:text-zinc-950 tracking-tight">
+                  <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
                     Claim Your Business Domain & Engage Directly
                   </h2>
-                  <p className="text-xs sm:text-sm text-zinc-400 md:text-zinc-600 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
                     Verify ownership of your base website domain (e.g., yourcompany.com) or local place profile to access creator tools, official owner badges, and community response features.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                  <div className="p-5 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 space-y-2">
-                    <BadgeCheck className="w-6 h-6 text-emerald-400 md:text-emerald-600" />
-                    <h4 className="font-bold text-sm text-white md:text-zinc-900">Verified Owner Badge</h4>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed">
-                      Stand out with a distinguished blue checkmark and official business owner badge on all comment threads.
+                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
+                    <BadgeCheck className="w-6 h-6 text-white" />
+                    <h4 className="font-bold text-sm text-white">Verified Owner Badge</h4>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Stand out with a distinguished badge and official business owner designation on all comment threads.
                     </p>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 space-y-2">
-                    <MessageSquare className="w-6 h-6 text-blue-400 md:text-[#1a73e8]" />
-                    <h4 className="font-bold text-sm text-white md:text-zinc-900">Pinned Solutions</h4>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed">
+                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
+                    <MessageSquare className="w-6 h-6 text-white" />
+                    <h4 className="font-bold text-sm text-white">Pinned Solutions</h4>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
                       Pin an official response at the top of any review discussion to clarify updates or resolve questions.
                     </p>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 space-y-2">
-                    <ExternalLink className="w-6 h-6 text-indigo-400 md:text-indigo-600" />
-                    <h4 className="font-bold text-sm text-white md:text-zinc-900">Embed Trust Feeds</h4>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed">
+                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
+                    <ExternalLink className="w-6 h-6 text-white" />
+                    <h4 className="font-bold text-sm text-white">Embed Trust Feeds</h4>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
                       Easily embed genuine customer video review carousels onto your landing page to increase conversions.
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-zinc-800 md:border-zinc-150 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-zinc-400 md:text-zinc-500 font-medium">
+                <div className="pt-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-xs text-zinc-400 font-medium">
                     Ready to verify your domain? Contact our verification team with your domain details.
                   </p>
                   <button
@@ -842,9 +842,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       setActiveTab("contact");
                       setContactCategory("verification");
                     }}
-                    className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/15 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <BadgeCheck className="w-4 h-4" />
+                    <BadgeCheck className="w-4 h-4 text-black" />
                     <span>Request Domain Verification</span>
                   </button>
                 </div>
@@ -858,19 +858,19 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {activeTab === "security" && (
             <div className="space-y-6 animate-in fade-in duration-200 text-left">
               {/* Google OAuth & Security Overview Card */}
-              <div className="bg-zinc-900 md:bg-white rounded-3xl p-8 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-6">
+              <div className="bg-zinc-900 rounded-3xl p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 md:bg-blue-50 border border-blue-500/20 md:border-blue-100 flex items-center justify-center text-blue-400 md:text-[#1a73e8] shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white shrink-0">
                     <Lock className="w-6 h-6" />
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black text-white md:text-zinc-950">Privacy, Security & Legal Compliance</h3>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 md:bg-emerald-50 text-emerald-400 md:text-emerald-700 border border-emerald-500/20 md:border-emerald-200 text-[10px] font-black uppercase tracking-wider">
+                      <h3 className="text-lg font-black text-white">Privacy, Security & Legal Compliance</h3>
+                      <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-black uppercase tracking-wider">
                         Google Verified
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-zinc-400 md:text-zinc-500 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
                       Yoouz is built with privacy-first standards. We use Google OAuth for secure passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce San Francisco, California USA governing jurisdiction.
                     </p>
                   </div>
@@ -878,46 +878,46 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                 {/* Legal Documents Direct Access */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="p-5 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 space-y-3 flex flex-col justify-between">
+                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 flex flex-col justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 md:text-emerald-700 bg-emerald-500/10 md:bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-500/20 md:border-emerald-200">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
                           Updated Aug 24, 2026
                         </span>
-                        <ShieldCheck className="w-4 h-4 text-emerald-400 md:text-emerald-600" />
+                        <ShieldCheck className="w-4 h-4 text-white" />
                       </div>
-                      <h4 className="text-sm font-black text-white md:text-zinc-900 pt-1">Privacy Policy</h4>
-                      <p className="text-xs text-zinc-400 md:text-zinc-500 leading-normal">
+                      <h4 className="text-sm font-black text-white pt-1">Privacy Policy</h4>
+                      <p className="text-xs text-zinc-400 leading-normal">
                         Covers Google profile data handling, real-time camera/mic usage, zero password storage, zero data selling, and your right to data deletion.
                       </p>
                     </div>
                     <button
                       onClick={() => onOpenLegal ? onOpenLegal("privacy") : null}
-                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-700 md:bg-white hover:bg-zinc-600 md:hover:bg-zinc-100 text-white md:text-zinc-900 border border-zinc-600 md:border-zinc-300 hover:border-zinc-500 md:hover:border-zinc-400 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
-                      <FileText className="w-3.5 h-3.5 text-blue-400 md:text-[#1a73e8]" />
+                      <FileText className="w-3.5 h-3.5 text-white" />
                       <span>Read Privacy Policy</span>
                     </button>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 space-y-3 flex flex-col justify-between">
+                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 flex flex-col justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 md:text-blue-700 bg-blue-500/10 md:bg-blue-50 px-2 py-0.5 rounded-full border border-blue-500/20 md:border-blue-200">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
                           Updated Aug 24, 2026
                         </span>
-                        <Scale className="w-4 h-4 text-blue-400 md:text-[#1a73e8]" />
+                        <Scale className="w-4 h-4 text-white" />
                       </div>
-                      <h4 className="text-sm font-black text-white md:text-zinc-900 pt-1">Terms & Conditions</h4>
-                      <p className="text-xs text-zinc-400 md:text-zinc-500 leading-normal">
+                      <h4 className="text-sm font-black text-white pt-1">Terms & Conditions</h4>
+                      <p className="text-xs text-zinc-400 leading-normal">
                         Covers live recording standards, anti-scraping rules, business streaming licenses, limitation of liability, and San Francisco, CA jurisdiction.
                       </p>
                     </div>
                     <button
                       onClick={() => onOpenLegal ? onOpenLegal("terms") : null}
-                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-700 md:bg-white hover:bg-zinc-600 md:hover:bg-zinc-100 text-white md:text-zinc-900 border border-zinc-600 md:border-zinc-300 hover:border-zinc-500 md:hover:border-zinc-400 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
-                      <FileText className="w-3.5 h-3.5 text-blue-400 md:text-[#1a73e8]" />
+                      <FileText className="w-3.5 h-3.5 text-white" />
                       <span>Read Terms & Conditions</span>
                     </button>
                   </div>
@@ -925,44 +925,44 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                 {/* 4 Pillars Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="p-4 rounded-2xl bg-zinc-800/60 md:bg-zinc-50/70 border border-zinc-700/60 md:border-zinc-200/80 space-y-1">
+                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Authentication</span>
-                    <h4 className="text-xs font-black text-white md:text-zinc-900">Google OAuth 2.0 Security</h4>
-                    <p className="text-[11px] text-zinc-400 md:text-zinc-500 leading-normal">
+                    <h4 className="text-xs font-black text-white">Google OAuth 2.0 Security</h4>
+                    <p className="text-[11px] text-zinc-400 leading-normal">
                       We never store passwords. All logins use trusted Google Sign-In with cryptographic access tokens and encrypted HTTPS transport.
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-zinc-800/60 md:bg-zinc-50/70 border border-zinc-700/60 md:border-zinc-200/80 space-y-1">
+                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Recording Privacy</span>
-                    <h4 className="text-xs font-black text-white md:text-zinc-900">Real-Time Camera Only</h4>
-                    <p className="text-[11px] text-zinc-400 md:text-zinc-500 leading-normal">
+                    <h4 className="text-xs font-black text-white">Real-Time Camera Only</h4>
+                    <p className="text-[11px] text-zinc-400 leading-normal">
                       Camera and microphone data are accessed strictly during active recording. We never access photo libraries or pre-recorded storage.
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-zinc-800/60 md:bg-zinc-50/70 border border-zinc-700/60 md:border-zinc-200/80 space-y-1">
+                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Zero Data Selling</span>
-                    <h4 className="text-xs font-black text-white md:text-zinc-900">No Selling or Renting</h4>
-                    <p className="text-[11px] text-zinc-400 md:text-zinc-500 leading-normal">
+                    <h4 className="text-xs font-black text-white">No Selling or Renting</h4>
+                    <p className="text-[11px] text-zinc-400 leading-normal">
                       We never sell, rent, or trade your personal data to third parties. Data is shared solely with trusted cloud infrastructure providers.
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-zinc-800/60 md:bg-zinc-50/70 border border-zinc-700/60 md:border-zinc-200/80 space-y-1">
+                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Legal Jurisdiction</span>
-                    <h4 className="text-xs font-black text-white md:text-zinc-900">San Francisco, California, USA</h4>
-                    <p className="text-[11px] text-zinc-400 md:text-zinc-500 leading-normal">
+                    <h4 className="text-xs font-black text-white">San Francisco, California, USA</h4>
+                    <p className="text-[11px] text-zinc-400 leading-normal">
                       Platform terms and privacy policies are governed by the laws of the State of California, USA with jurisdiction in San Francisco, CA.
                     </p>
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-800 md:border-zinc-150 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="text-xs text-zinc-400 md:text-zinc-500 font-medium">
-                    Software Build: <strong className="text-white md:text-zinc-800">Yoouz Cloud v2.0 (Stable Release)</strong> • Contact: <a href="mailto:support@yoouz.com" className="text-blue-400 md:text-[#1a73e8] hover:underline font-bold">support@yoouz.com</a>
+                <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-xs text-zinc-400 font-medium">
+                    Software Build: <strong className="text-white">Yoouz Cloud v2.0 (Stable Release)</strong> • Contact: <a href="mailto:support@yoouz.com" className="text-white underline hover:text-zinc-300 font-bold">support@yoouz.com</a>
                   </div>
-                  <div className="px-3 py-1 rounded-full bg-emerald-500/10 md:bg-emerald-50 text-emerald-400 md:text-emerald-700 border border-emerald-500/20 md:border-emerald-200 text-[11px] font-bold flex items-center gap-1.5 w-fit">
+                  <div className="px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-bold flex items-center gap-1.5 w-fit">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span>All Systems Operational</span>
                   </div>
@@ -971,21 +971,21 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
               {/* Danger Zone: Account Deletion (Only for signed in user) */}
               {currentUser && (
-                <div className="bg-zinc-900 md:bg-white rounded-3xl p-8 border border-rose-900/50 md:border-rose-200 shadow-xs space-y-4">
+                <div className="bg-zinc-900 rounded-3xl p-8 border border-rose-900/50 shadow-xs space-y-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-rose-500/10 md:bg-rose-50 border border-rose-500/20 md:border-rose-100 flex items-center justify-center text-rose-400 md:text-rose-600 shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
                       <Trash2 className="w-6 h-6" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-base font-black text-white md:text-zinc-950">Danger Zone: Delete Account Profile</h3>
-                      <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed">
+                      <h3 className="text-base font-black text-white">Danger Zone: Delete Account Profile</h3>
+                      <p className="text-xs text-zinc-400 leading-relaxed">
                         Permanently erase your user profile details, bio, avatar, and cached session information. This action cannot be reversed.
                       </p>
                     </div>
                   </div>
 
-                  <div className="border-t border-rose-900/40 md:border-rose-100 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 font-medium">
+                  <div className="border-t border-rose-900/40 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <p className="text-xs text-zinc-400 font-medium">
                       Confirming will sign you out immediately and purge your profile record.
                     </p>
                     <button
@@ -1007,22 +1007,22 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {/* TAB 5: CONTACT SUPPORT DESK */}
           {/* ========================================================= */}
           {activeTab === "contact" && (
-            <div className="bg-zinc-900 md:bg-white rounded-3xl p-6 sm:p-8 border border-zinc-800 md:border-zinc-200 shadow-xs space-y-6 text-left animate-in fade-in duration-200">
+            <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6 text-left animate-in fade-in duration-200">
               {submitSuccess ? (
                 /* Success Confirmation State */
                 <div className="text-center py-10 px-4 space-y-4 animate-in fade-in duration-200">
-                  <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 md:bg-emerald-50 border border-emerald-500/20 md:border-emerald-200 flex items-center justify-center text-emerald-400 md:text-emerald-600 mx-auto shadow-xs">
+                  <div className="w-16 h-16 rounded-3xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white mx-auto shadow-xs">
                     <Check className="w-8 h-8 stroke-[3]" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-xl font-black text-white md:text-zinc-950">Inquiry Received Successfully</h3>
-                    <p className="text-xs sm:text-sm text-zinc-400 md:text-zinc-500 max-w-md mx-auto leading-relaxed">
+                    <h3 className="text-xl font-black text-white">Inquiry Received Successfully</h3>
+                    <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
                       Thank you for contacting Yoouz. Your message has been logged securely in our support queue. Our team reviews all requests within 24 hours.
                     </p>
                   </div>
                   <button
                     onClick={() => setSubmitSuccess(false)}
-                    className="py-3 px-6 rounded-2xl bg-zinc-800 md:bg-zinc-900 hover:bg-zinc-700 md:hover:bg-zinc-800 text-white font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-2"
+                    className="py-3 px-6 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs transition-all cursor-pointer inline-flex items-center gap-2"
                   >
                     <span>Send Another Inquiry</span>
                   </button>
@@ -1030,15 +1030,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               ) : (
                 /* Contact Form */
                 <form onSubmit={handleContactSubmit} className="space-y-5">
-                  <div className="space-y-1 border-b border-zinc-800 md:border-zinc-150 pb-4">
-                    <h3 className="text-lg font-black text-white md:text-zinc-950">Official Yoouz Support Desk</h3>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 font-medium">
+                  <div className="space-y-1 border-b border-zinc-800 pb-4">
+                    <h3 className="text-lg font-black text-white">Official Yoouz Support Desk</h3>
+                    <p className="text-xs text-zinc-400 font-medium">
                       Submit support inquiries, business domain claim requests, or report community guideline infractions.
                     </p>
                   </div>
 
                   {submitError && (
-                    <div className="p-4 rounded-2xl bg-red-950/40 md:bg-red-50 border border-red-800 md:border-red-200 text-red-400 md:text-red-700 text-xs font-semibold flex items-center gap-2.5">
+                    <div className="p-4 rounded-2xl bg-red-950/40 border border-red-800 text-red-400 text-xs font-semibold flex items-center gap-2.5">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{submitError}</span>
                     </div>
@@ -1046,7 +1046,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 md:text-zinc-500 block px-1">
+                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
                         Your Full Name *
                       </label>
                       <input
@@ -1055,12 +1055,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactName}
                         onChange={(e) => setContactName(e.target.value)}
                         placeholder="e.g. Sarah Jenkins"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 focus:bg-zinc-800/80 md:focus:bg-white focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/15 text-xs font-semibold outline-none transition-all text-white md:text-zinc-900 placeholder:text-zinc-500"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 md:text-zinc-500 block px-1">
+                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
                         Email Address *
                       </label>
                       <input
@@ -1069,20 +1069,20 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactEmail}
                         onChange={(e) => setContactEmail(e.target.value)}
                         placeholder="e.g. sarah@example.com"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 focus:bg-zinc-800/80 md:focus:bg-white focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/15 text-xs font-semibold outline-none transition-all text-white md:text-zinc-900 placeholder:text-zinc-500"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 md:text-zinc-500 block px-1">
+                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
                         Category *
                       </label>
                       <select
                         value={contactCategory}
                         onChange={(e) => setContactCategory(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 focus:bg-zinc-800/80 md:focus:bg-white focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/15 text-xs font-bold outline-none transition-all text-white md:text-zinc-900"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-bold outline-none transition-all text-white"
                       >
                         <option value="support">General Account / Technical Support</option>
                         <option value="verification">Business / Domain Ownership Verification</option>
@@ -1092,7 +1092,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 md:text-zinc-500 block px-1">
+                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
                         Website Domain (Optional)
                       </label>
                       <input
@@ -1100,13 +1100,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactDomain}
                         onChange={(e) => setContactDomain(e.target.value)}
                         placeholder="e.g. yourcompany.com"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 focus:bg-zinc-800/80 md:focus:bg-white focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/15 text-xs font-semibold outline-none transition-all text-white md:text-zinc-900 placeholder:text-zinc-500"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 md:text-zinc-500 block px-1">
+                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
                       Message Details *
                     </label>
                     <textarea
@@ -1115,13 +1115,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       value={contactMessage}
                       onChange={(e) => setContactMessage(e.target.value)}
                       placeholder="Describe your inquiry or request in detail..."
-                      className="w-full px-4 py-3 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 focus:bg-zinc-800/80 md:focus:bg-white focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/15 text-xs font-semibold outline-none transition-all resize-none leading-relaxed text-white md:text-zinc-900 placeholder:text-zinc-500"
+                      className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all resize-none leading-relaxed text-white placeholder:text-zinc-500"
                     />
                   </div>
 
                   {/* Drag-and-Drop Attachments */}
                   <div className="space-y-2">
-                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 md:text-zinc-500 block px-1">
+                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
                       Attach Screenshots or Verification Proof (Optional)
                     </label>
 
@@ -1132,8 +1132,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       onClick={() => fileInputRef.current?.click()}
                       className={`border-2 border-dashed rounded-3xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
                         dragOver
-                          ? "border-[#1a73e8] bg-blue-500/10 md:bg-blue-50/50"
-                          : "border-zinc-700 md:border-zinc-200 bg-zinc-800/60 md:bg-zinc-50 hover:bg-zinc-800 md:hover:bg-zinc-100/50 hover:border-zinc-600 md:hover:border-zinc-300"
+                          ? "border-white bg-zinc-800"
+                          : "border-zinc-800 bg-zinc-950 hover:bg-zinc-900 hover:border-zinc-700"
                       }`}
                     >
                       <input
@@ -1144,12 +1144,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         accept=".png,.jpg,.jpeg,.webp,.pdf,.txt,.doc,.docx"
                         className="hidden"
                       />
-                      <div className="w-10 h-10 rounded-2xl bg-zinc-800 md:bg-white border border-zinc-700 md:border-zinc-200 flex items-center justify-center text-zinc-300 md:text-zinc-500 shadow-2xs">
-                        <UploadCloud className="w-5 h-5 text-blue-400 md:text-[#1a73e8]" />
+                      <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 shadow-2xs">
+                        <UploadCloud className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-zinc-200 md:text-zinc-800">
-                          Drag & drop files here, or <span className="text-blue-400 md:text-[#1a73e8] underline">browse files</span>
+                        <p className="text-xs font-bold text-zinc-200">
+                          Drag & drop files here, or <span className="text-white underline">browse files</span>
                         </p>
                         <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
                           PNG, JPG, WEBP, PDF or DOC (Max 3 files, up to 2MB each)
@@ -1163,23 +1163,23 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         {attachedFiles.map((file, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center justify-between p-2.5 rounded-2xl bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 text-xs gap-2"
+                            className="flex items-center justify-between p-2.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-xs gap-2"
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               {file.type.startsWith("image/") ? (
                                 <img
                                   src={file.base64}
                                   alt="preview"
-                                  className="w-8 h-8 rounded-lg object-cover shrink-0 border border-zinc-700 md:border-zinc-200"
+                                  className="w-8 h-8 rounded-lg object-cover shrink-0 border border-zinc-800"
                                   referrerPolicy="no-referrer"
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-lg bg-zinc-700 md:bg-zinc-100 flex items-center justify-center text-zinc-300 md:text-zinc-500 shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-400 shrink-0">
                                   <FileText className="w-4 h-4" />
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-white md:text-zinc-800 truncate">{file.name}</p>
+                                <p className="text-[11px] font-bold text-white truncate">{file.name}</p>
                                 <p className="text-[9px] text-zinc-400 font-bold">
                                   {(file.size / 1024).toFixed(0)} KB
                                 </p>
@@ -1191,7 +1191,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                                 e.stopPropagation();
                                 handleRemoveFile(idx);
                               }}
-                              className="w-6 h-6 rounded-full hover:bg-zinc-700 md:hover:bg-zinc-200 flex items-center justify-center text-zinc-400 md:text-zinc-500 transition-colors cursor-pointer shrink-0"
+                              className="w-6 h-6 rounded-full hover:bg-zinc-800 flex items-center justify-center text-zinc-400 transition-colors cursor-pointer shrink-0"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1205,11 +1205,11 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full sm:w-auto py-3 px-8 rounded-2xl bg-[#1a73e8] hover:bg-[#1557b0] disabled:bg-zinc-800 md:disabled:bg-zinc-300 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-97"
+                      className="w-full sm:w-auto py-3 px-8 rounded-2xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-black text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-97"
                     >
                       {isSubmitting ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                           <span>Submitting...</span>
                         </>
                       ) : (
@@ -1224,13 +1224,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         </section>
 
         {/* 4. Google-Standard Footer */}
-        <footer className="pt-10 border-t border-zinc-800 md:border-zinc-200/80 text-center space-y-4 text-xs text-zinc-400 md:text-zinc-500">
+        <footer className="pt-10 border-t border-zinc-800 text-center space-y-4 text-xs text-zinc-400">
           <div className="flex items-center justify-center gap-3">
             <a
               href="https://youtube.com"
               target="_blank"
               rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 md:bg-white hover:bg-red-950/40 md:hover:bg-red-50 border border-zinc-800 md:border-zinc-200 text-zinc-400 md:text-zinc-500 hover:text-red-400 md:hover:text-red-600 flex items-center justify-center transition-all shadow-3xs cursor-pointer"
+              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
               title="YouTube"
             >
               <Youtube className="w-4 h-4" />
@@ -1239,7 +1239,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               href="https://x.com"
               target="_blank"
               rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 md:bg-white hover:bg-zinc-800 md:hover:bg-zinc-100 border border-zinc-800 md:border-zinc-200 text-zinc-400 md:text-zinc-600 hover:text-white md:hover:text-zinc-950 flex items-center justify-center transition-all shadow-3xs cursor-pointer"
+              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
               title="X"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
@@ -1250,7 +1250,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               href="https://tiktok.com"
               target="_blank"
               rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 md:bg-white hover:bg-zinc-800 md:hover:bg-zinc-100 border border-zinc-800 md:border-zinc-200 text-zinc-400 md:text-zinc-600 hover:text-white md:hover:text-zinc-950 flex items-center justify-center transition-all shadow-3xs cursor-pointer"
+              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
               title="TikTok"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
@@ -1261,7 +1261,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               href="https://instagram.com"
               target="_blank"
               rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 md:bg-white hover:bg-pink-950/40 md:hover:bg-pink-50 border border-zinc-800 md:border-zinc-200 text-zinc-400 md:text-zinc-500 hover:text-pink-400 md:hover:text-pink-600 flex items-center justify-center transition-all shadow-3xs cursor-pointer"
+              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
               title="Instagram"
             >
               <Instagram className="w-4 h-4" />
@@ -1270,24 +1270,24 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               href="https://linkedin.com"
               target="_blank"
               rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 md:bg-white hover:bg-blue-950/40 md:hover:bg-blue-50 border border-zinc-800 md:border-zinc-200 text-zinc-400 md:text-zinc-500 hover:text-blue-400 md:hover:text-[#0077b5] flex items-center justify-center transition-all shadow-3xs cursor-pointer"
+              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
               title="LinkedIn"
             >
               <Linkedin className="w-4 h-4" />
             </a>
           </div>
 
-          <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-400 md:text-zinc-500 pt-1 flex-wrap">
+          <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-400 pt-1 flex-wrap">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : null}
-              className="hover:text-white md:hover:text-zinc-900 underline cursor-pointer bg-transparent border-none p-0"
+              className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
             >
               Terms & Conditions
             </button>
             <span>•</span>
             <button
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : null}
-              className="hover:text-white md:hover:text-zinc-900 underline cursor-pointer bg-transparent border-none p-0"
+              className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
             >
               Privacy Policy
             </button>
@@ -1297,17 +1297,17 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 setActiveTab("contact");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="hover:text-white md:hover:text-zinc-900 underline cursor-pointer bg-transparent border-none p-0"
+              className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
             >
               Support Desk
             </button>
           </div>
 
           <div className="space-y-1 text-center font-medium">
-            <p className="text-[11px] font-bold text-zinc-500 md:text-zinc-400 uppercase tracking-wider">
+            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
               Yoouz Trust Network • San Francisco, CA
             </p>
-            <p className="text-[11px] text-zinc-500 md:text-zinc-400">
+            <p className="text-[11px] text-zinc-500">
               © 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews..
             </p>
           </div>
@@ -1317,15 +1317,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       {/* Delete Confirmation Modal */}
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-zinc-900 md:bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 md:border-zinc-200 space-y-5 animate-in zoom-in-95 duration-150 text-center">
-            <div className="w-14 h-14 rounded-full bg-rose-500/10 md:bg-rose-50 border border-rose-500/20 md:border-rose-100 flex items-center justify-center text-rose-400 md:text-rose-600 mx-auto">
+          <div className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-5 animate-in zoom-in-95 duration-150 text-center">
+            <div className="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-lg font-black text-white md:text-zinc-950">Confirm Profile Deletion</h3>
-              <p className="text-xs text-zinc-400 md:text-zinc-500 font-medium leading-relaxed">
-                This is a permanent operation. To delete profile <strong className="text-white md:text-zinc-900">{currentUser?.email}</strong>, please type <strong className="text-white md:text-zinc-900 select-all">DELETE</strong> below.
+              <h3 className="text-lg font-black text-white">Confirm Profile Deletion</h3>
+              <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                This is a permanent operation. To delete profile <strong className="text-white">{currentUser?.email}</strong>, please type <strong className="text-white select-all">DELETE</strong> below.
               </p>
             </div>
 
@@ -1334,14 +1334,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               value={deleteInputText}
               onChange={(e) => setDeleteInputText(e.target.value)}
               placeholder="Type DELETE to confirm"
-              className="w-full bg-zinc-800 md:bg-zinc-50 border border-zinc-700 md:border-zinc-200 rounded-xl px-3.5 py-2.5 text-xs text-center font-bold tracking-widest text-white md:text-zinc-900 focus:outline-none focus:border-rose-500"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-center font-bold tracking-widest text-white focus:outline-none focus:border-rose-500"
             />
 
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setIsDeleteConfirmOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-700 md:border-zinc-200 text-zinc-300 md:text-zinc-700 text-xs font-bold hover:bg-zinc-800 md:hover:bg-zinc-100 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1359,7 +1359,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     setIsDeleting(false);
                   }
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-zinc-800 md:disabled:bg-zinc-100 disabled:text-zinc-500 md:disabled:text-zinc-400 text-white text-xs font-bold shadow-md shadow-rose-600/15 transition-all cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs font-bold shadow-md shadow-rose-600/15 transition-all cursor-pointer"
               >
                 {isDeleting ? "Deleting..." : "Permanently Delete"}
               </button>

@@ -83,8 +83,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
       if (avatar && !avatar.includes("dicebear") && !avatar.includes("unsplash")) {
         return avatar;
       }
-      const isBiz = (name || "").toLowerCase().includes("biz") || (handle || "").toLowerCase().includes("louis");
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=${isBiz ? "059669" : "1a73e8"}&color=fff&bold=true&size=128`;
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=27272a&color=fff&bold=true&size=128`;
     };
 
     // 1. Add reviewers from real video reviews
@@ -252,13 +251,13 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
   return (
     <div
       id="copo-discover-root"
-      className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 md:bg-white text-white md:text-zinc-900 flex flex-col items-center p-4 sm:p-6 pt-6 sm:pt-10 pb-20 select-none"
+      className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center p-4 sm:p-6 pt-6 sm:pt-10 pb-20 select-none"
     >
       {onNavigateHome && (
         <div className="w-full max-w-3xl flex justify-start mb-2">
           <button
             onClick={onNavigateHome}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 md:bg-zinc-100 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-300 md:text-zinc-700 text-xs font-bold transition-colors cursor-pointer border border-zinc-800 md:border-zinc-200 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-bold transition-colors cursor-pointer border border-zinc-800 active:scale-95"
             title="Back to Feed"
           >
             <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
@@ -270,33 +269,33 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
       <div className="w-full max-w-3xl flex flex-col items-center animate-in fade-in zoom-in duration-500 mt-[2vh] sm:mt-[4vh]">
         
         {/* Central Logo / Icon */}
-        <div className="w-16 h-16 bg-zinc-900 md:bg-blue-50 border border-zinc-800 md:border-blue-100 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in shrink-0">
-          <Users className="w-8 h-8 text-[#1a73e8]" strokeWidth={1.5} />
+        <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in shrink-0">
+          <Users className="w-8 h-8 text-white" strokeWidth={1.5} />
         </div>
         
-        <h1 className="text-3xl md:text-4xl font-extrabold text-white md:text-zinc-900 tracking-tight text-center mb-6">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-6">
           Discover Reviewers
         </h1>
 
         {/* Search Bar - styled exactly like the Search page */}
         <div className="w-full max-w-xl mb-12">
-          <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 md:bg-white border border-zinc-800 md:border-zinc-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 md:focus-within:ring-blue-100 transition-all">
+          <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-500/20 transition-all">
             <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-zinc-500 md:text-zinc-400 group-focus-within:text-[#1a73e8] transition-colors" />
+              <Search className="h-5 w-5 text-zinc-500 group-focus-within:text-white transition-colors" />
             </div>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search reviewer by name..."
-              className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-500 md:placeholder:text-zinc-400 text-white md:text-zinc-900"
+              className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-500 text-white"
               autoFocus
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="absolute inset-y-0 right-24 flex items-center text-zinc-400 hover:text-zinc-200 md:hover:text-zinc-600 transition-colors cursor-pointer"
+                className="absolute inset-y-0 right-24 flex items-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
                 title="Clear search query"
               >
                 <span className="text-xl font-medium leading-none">×</span>
@@ -305,7 +304,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
             <div className="absolute inset-y-0 right-1.5 flex items-center">
               <button
                 type="button"
-                className="h-9 px-5 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
+                className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
               >
                 Search
               </button>
@@ -316,12 +315,12 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         {/* Reviewers List */}
         {query.trim().length > 0 && (
           <div className="w-full text-left animate-in fade-in slide-in-from-bottom-3 duration-300">
-            <div className="flex items-center justify-between text-xs font-bold text-zinc-400 md:text-zinc-500 uppercase tracking-wider mb-4 px-2">
+            <div className="flex items-center justify-between text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 px-2">
               <span className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-blue-500 md:text-blue-600" />
+                <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
                 Search Results ({displayedReviewers.length})
               </span>
-            <span className="text-zinc-500 md:text-zinc-400 hidden sm:block font-medium">Tap card to view profile</span>
+            <span className="text-zinc-400 hidden sm:block font-medium">Tap card to view profile</span>
           </div>
 
           {displayedReviewers.length > 0 ? (
@@ -331,7 +330,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                   <div
                     key={`reviewer-card-${reviewer.author.name}-${idx}`}
                     onClick={() => onOpenCreator(reviewer.author)}
-                    className="bg-zinc-900 md:bg-white rounded-2xl border border-zinc-800 md:border-zinc-200 hover:border-blue-500 md:hover:border-blue-300 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between gap-4 group"
+                    className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between gap-4 group"
                   >
                     {/* Left: Avatar + Name + Metadata */}
                     <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -339,49 +338,49 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                         <img
                           src={reviewer.author.avatar}
                           alt={reviewer.author.name}
-                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 md:border-zinc-100 group-hover:scale-105 transition-transform"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 group-hover:scale-105 transition-transform"
                           referrerPolicy="no-referrer"
                         />
                         {reviewer.author.isVerified && (
-                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-[#1a73e8] text-white rounded-full flex items-center justify-center ring-2 ring-zinc-900 md:ring-white">
+                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-zinc-800 text-white rounded-full flex items-center justify-center ring-2 ring-zinc-900">
                             <CheckCircle className="w-3 h-3 fill-current" />
                           </div>
                         )}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="text-sm sm:text-base font-bold text-white md:text-zinc-900 truncate group-hover:text-[#1a73e8] transition-colors">
+                          <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                             {reviewer.author.name}
                           </h3>
                           {reviewer.author.isVerified && (
-                            <span className="text-[9px] font-black bg-blue-950/60 md:bg-blue-50 text-blue-400 md:text-[#1a73e8] px-1.5 py-0.5 rounded border border-blue-800/40 md:border-blue-100 shrink-0 uppercase">
+                            <span className="text-[9px] font-black bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700 shrink-0 uppercase">
                               Verified
                             </span>
                           )}
                         </div>
                         
                         {reviewer.author.location ? (
-                          <p className="text-xs text-zinc-400 md:text-zinc-500 font-semibold flex items-center gap-1 mb-1 truncate">
-                            <MapPin className="w-3.5 h-3.5 text-pink-500 shrink-0" />
+                          <p className="text-xs text-zinc-400 font-semibold flex items-center gap-1 mb-1 truncate">
+                            <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                             <span>{reviewer.author.location}</span>
                           </p>
                         ) : (
-                          <p className="text-xs text-zinc-500 md:text-zinc-400 font-medium mb-1 truncate">
+                          <p className="text-xs text-zinc-400 font-medium mb-1 truncate">
                             Local Contributor
                           </p>
                         )}
                         
                         {reviewer.count > 0 ? (
-                          <div className="flex items-center gap-2 text-[11px] font-semibold text-zinc-400 md:text-zinc-500">
-                            <span className="flex items-center gap-0.5 text-amber-400 md:text-amber-600">
-                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <div className="flex items-center gap-2 text-[11px] font-semibold text-zinc-400">
+                            <span className="flex items-center gap-0.5 text-white">
+                              <Star className="w-3 h-3 fill-white text-white" />
                               {reviewer.avgRating}
                             </span>
                             <span>•</span>
                             <span>{reviewer.count} {reviewer.count === 1 ? "video review" : "video reviews"}</span>
                           </div>
                         ) : (
-                          <p className="text-[11px] text-zinc-500 md:text-zinc-400 font-medium mt-0.5">
+                          <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
                             Community Reviewer • 0 reviews
                           </p>
                         )}
@@ -389,7 +388,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                     </div>
 
                     {/* Right: Navigation Indicator */}
-                    <div className="shrink-0 flex items-center pl-2 text-zinc-500 md:text-zinc-400 group-hover:text-[#1a73e8] transition-colors">
+                    <div className="shrink-0 flex items-center pl-2 text-zinc-400 group-hover:text-white transition-colors">
                       <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </div>
@@ -397,11 +396,11 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
               })}
             </div>
           ) : (
-            <div className="bg-zinc-900 md:bg-white rounded-2xl border border-zinc-800 md:border-zinc-200 p-8 text-center shadow-sm">
-              <p className="text-sm font-bold text-white md:text-zinc-800 mb-1">
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8 text-center shadow-sm">
+              <p className="text-sm font-bold text-white mb-1">
                 No reviewers found matching "{query}"
               </p>
-              <p className="text-xs text-zinc-400 md:text-zinc-500">
+              <p className="text-xs text-zinc-400">
                 Try searching by their name.
               </p>
             </div>

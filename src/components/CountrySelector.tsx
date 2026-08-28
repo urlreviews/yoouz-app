@@ -40,7 +40,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
           setIsOpen(!isOpen);
           setSearch("");
         }}
-        className="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm hover:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-all text-left cursor-pointer"
+        className="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm hover:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-zinc-700 transition-all text-left cursor-pointer"
       >
         <div className="flex items-center gap-2 text-zinc-200">
           {selectedInfo?.flag ? (
@@ -102,15 +102,15 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
                     }}
                     className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
                       isSelected
-                        ? "bg-blue-950/50 text-blue-400 font-semibold"
-                        : "text-zinc-300 hover:bg-zinc-800"
+                        ? "bg-zinc-800 text-white font-semibold"
+                        : "text-zinc-300 hover:bg-zinc-850"
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{info.flag || "🌐"}</span>
                       <span>{country}</span>
                     </div>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                    {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                   </button>
                 );
               })

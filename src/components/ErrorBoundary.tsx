@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen w-full bg-zinc-950 text-white flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-500 border border-blue-500/30 flex items-center justify-center mb-4 text-2xl font-bold">
+          <div className="w-16 h-16 rounded-2xl bg-zinc-900 text-white border border-zinc-800 flex items-center justify-center mb-4 text-2xl font-bold">
             !
           </div>
           <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
               this.setState({ hasError: false, error: null });
               window.location.reload();
             }}
-            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all cursor-pointer shadow-lg shadow-blue-600/30"
+            className="px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all cursor-pointer shadow-lg"
           >
             Reload Application
           </button>

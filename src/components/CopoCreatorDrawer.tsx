@@ -173,10 +173,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       : (recordedFaceThumbnail || author.avatar));
 
   if (!effectiveAvatar || effectiveAvatar.includes("unsplash") || effectiveAvatar.includes("dicebear")) {
-    const isBizRiv = (author.name || "").toLowerCase().includes("biz") || (author.name || "").toLowerCase().includes("louis");
-    effectiveAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=${isBizRiv ? "059669" : "1a73e8"}&color=fff&bold=true&size=128`;
+    effectiveAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff&bold=true&size=128`;
   }
-
 
   let effectiveBanner = isOwner && currentUser?.banner 
     ? currentUser.banner 
@@ -330,7 +328,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       <aside
         id="google-maps-creator-panel"
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full md:w-[350px] lg:w-[430px] h-[100dvh] md:h-[100dvh] bg-zinc-950 md:bg-white text-white md:text-zinc-900 flex flex-col shadow-none md:shadow-lg border-r border-zinc-800 md:border-zinc-200 shrink-0 overflow-hidden animate-in slide-in-from-bottom md:slide-in-from-left duration-200 select-none overscroll-contain transition-transform"
+        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full md:w-[350px] lg:w-[430px] h-[100dvh] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white md:text-white flex flex-col shadow-none md:shadow-lg border-r border-zinc-800 md:border-zinc-800 shrink-0 overflow-hidden animate-in slide-in-from-bottom md:slide-in-from-left duration-200 select-none overscroll-contain transition-transform"
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
@@ -346,15 +344,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         {/* Top Header Banner */}
         <div 
           {...swipeProps}
-          className="relative h-44 w-full bg-zinc-950 md:bg-gradient-to-r md:from-blue-600 md:via-indigo-600 md:to-blue-800 shrink-0 touch-pan-y"
+          className="relative h-44 w-full bg-zinc-900 shrink-0 touch-pan-y"
         >
           {effectiveBanner && (
             <img src={effectiveBanner} className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
           )}
-          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-black/40" />
 
           {/* Verified Top Contributor Badge */}
-          <div className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-[#1a73e8] text-[11px] font-bold text-white flex items-center gap-1.5 shadow-md">
+          <div className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-black/70 border border-white/10 backdrop-blur-xs text-[11px] font-bold text-white flex items-center gap-1.5 shadow-md">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Yoouz Top Reviewer</span>
           </div>
@@ -368,7 +366,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 triggerHaptic("light");
                 handleShare();
               }}
-              className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-white/95 shadow-md flex items-center justify-center text-zinc-100 md:text-zinc-800 hover:bg-zinc-850 md:hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-700/60 md:border-zinc-200"
+              className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md shadow-md flex items-center justify-center text-zinc-100 hover:bg-black/80 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/15"
               title="Share Profile"
             >
               <Share2 className="w-4 h-4" />
@@ -382,7 +380,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   triggerHaptic("light");
                   onOpenReport(author);
                 }}
-                className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-white/95 shadow-md flex items-center justify-center text-zinc-300 md:text-zinc-600 hover:text-red-400 md:hover:text-red-600 hover:bg-zinc-850 md:hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-700/60 md:border-zinc-200"
+                className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md shadow-md flex items-center justify-center text-zinc-300 hover:text-white hover:bg-black/80 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/15"
                 title="Report creator"
               >
                 <Flag className="w-4 h-4" />
@@ -395,22 +393,22 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <button
                   id="btn-creator-profile-settings"
                   onClick={() => setIsSettingsMenuOpen((prev) => !prev)}
-                  className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-white/95 shadow-md flex items-center justify-center text-zinc-100 md:text-zinc-800 hover:bg-zinc-850 md:hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-700/60 md:border-zinc-200"
+                  className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md shadow-md flex items-center justify-center text-zinc-100 hover:bg-black/80 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/15"
                   title="Account & Settings"
                 >
                   <MoreVertical className="w-4 h-4" />
                 </button>
 
                 {isSettingsMenuOpen && (
-                  <div className="absolute right-0 top-11 w-52 bg-zinc-900 md:bg-white rounded-2xl shadow-xl border border-zinc-800 md:border-zinc-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 top-11 w-52 bg-zinc-900 rounded-2xl shadow-xl border border-zinc-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                     <button
                       onClick={() => {
                         setIsSettingsMenuOpen(false);
                         setIsEditModalOpen(true);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 md:text-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                     >
-                      <Edit3 className="w-4 h-4 text-zinc-400 md:text-zinc-500" />
+                      <Edit3 className="w-4 h-4 text-zinc-400" />
                       <span>Edit Profile</span>
                     </button>
 
@@ -419,9 +417,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         setIsSettingsMenuOpen(false);
                         handleShare();
                       }}
-                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 md:text-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                     >
-                      <Share2 className="w-4 h-4 text-zinc-400 md:text-zinc-500" />
+                      <Share2 className="w-4 h-4 text-zinc-400" />
                       <span>Share Profile Link</span>
                     </button>
 
@@ -431,9 +429,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           setIsSettingsMenuOpen(false);
                           onSignOut();
                         }}
-                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 md:text-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <LogOut className="w-4 h-4 text-zinc-400 md:text-zinc-500" />
+                        <LogOut className="w-4 h-4 text-zinc-400" />
                         <span>Sign Out</span>
                       </button>
                     )}
@@ -449,7 +447,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 triggerHaptic("light");
                 onClose();
               }}
-              className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-white/95 shadow-md flex items-center justify-center text-zinc-100 md:text-zinc-800 hover:bg-zinc-850 md:hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-700/60 md:border-zinc-200"
+              className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md shadow-md flex items-center justify-center text-zinc-100 hover:bg-black/80 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/15"
               title="Close creator profile"
             >
               <X className="w-5 h-5" />
@@ -457,9 +455,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
 
           {/* Avatar overlapping bottom of banner */}
-          <div className="absolute -bottom-7 left-6 w-20 h-20 rounded-full border-4 border-zinc-950 md:border-white bg-zinc-950 md:bg-white shadow-lg overflow-hidden group">
+          <div className="absolute -bottom-7 left-6 w-20 h-20 rounded-full border-4 border-zinc-950 bg-zinc-950 shadow-lg overflow-hidden group">
             <img
-              src={effectiveAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=1a73e8&color=fff`}
+              src={effectiveAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
               alt={author.name}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
@@ -477,21 +475,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         </div>
 
         {/* Creator Details Header */}
-        <div className="px-6 pt-10 pb-4 bg-zinc-950 md:bg-white border-b border-zinc-800 md:border-zinc-200">
+        <div className="px-6 pt-10 pb-4 bg-zinc-950 border-b border-zinc-800">
           <div className="flex items-start justify-between">
             <div className="min-w-0 pr-2 pt-1">
-              <h2 className="text-xl font-black text-white md:text-zinc-900 tracking-tight leading-tight flex flex-wrap items-center gap-1.5">
+              <h2 className="text-xl font-black text-white tracking-tight leading-tight flex flex-wrap items-center gap-1.5">
                 <span className="break-words max-w-full" style={{ wordBreak: 'break-word' }}>{isOwner && currentUser ? currentUser.name : author.name}</span>
-                <CheckCircle className="w-4 h-4 fill-[#1a73e8] text-white shrink-0 mt-0.5" />
+                <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0 mt-0.5" />
               </h2>
               {isOwner && currentUser?.location ? (
-                <p className="text-xs text-zinc-400 md:text-zinc-500 font-semibold flex items-center gap-1 mt-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-pink-500 shrink-0" />
+                <p className="text-xs text-zinc-400 font-semibold flex items-center gap-1 mt-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                   <span>{currentUser.location}</span>
                 </p>
               ) : author?.location ? (
-                <p className="text-xs text-zinc-400 md:text-zinc-500 font-semibold flex items-center gap-1 mt-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-pink-500 shrink-0" />
+                <p className="text-xs text-zinc-400 font-semibold flex items-center gap-1 mt-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                   <span>{author.location}</span>
                 </p>
               ) : null}
@@ -502,7 +500,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <button
                   id="btn-edit-profile-action"
                   onClick={() => setIsEditModalOpen(true)}
-                  className="px-4 py-2 rounded-full font-bold text-xs bg-white md:bg-zinc-900 text-zinc-950 md:text-white hover:bg-zinc-100 md:hover:bg-zinc-800 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-full font-bold text-xs bg-white text-zinc-950 hover:bg-zinc-200 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>Edit Profile</span>
@@ -513,13 +511,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     onClick={() => onToggleFollow(author.name)}
                     className={`px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer ${
                       author.isFollowed
-                        ? "bg-zinc-900 md:bg-zinc-100 text-zinc-200 md:text-zinc-800 border border-zinc-800 md:border-zinc-300 hover:bg-zinc-850 md:hover:bg-zinc-200"
-                        : "bg-[#1a73e8] text-white hover:bg-[#1557b0]"
+                        ? "bg-zinc-900 text-zinc-200 border border-zinc-800 hover:bg-zinc-800"
+                        : "bg-white text-zinc-950 hover:bg-zinc-200"
                     }`}
                   >
                     {author.isFollowed ? (
                       <>
-                        <UserCheck className="w-3.5 h-3.5 text-emerald-400 md:text-emerald-600" />
+                        <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
                         <span>Following</span>
                       </>
                     ) : (
@@ -533,7 +531,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   {onStartChat && (
                     <button
                       onClick={() => onStartChat(author.name, author.name, effectiveAvatar)}
-                      className="px-4 py-2 rounded-full font-bold text-xs bg-zinc-900 md:bg-white text-blue-400 md:text-[#1a73e8] border border-zinc-800 md:border-zinc-300 hover:bg-zinc-850 md:hover:bg-zinc-50 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                      className="px-4 py-2 rounded-full font-bold text-xs bg-zinc-900 text-zinc-200 border border-zinc-800 hover:bg-zinc-800 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
                       <span>Message</span>
@@ -545,77 +543,77 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
 
           {/* Stats Bar */}
-          <div className="flex items-center gap-6 mt-4 pt-4 border-t border-zinc-850 md:border-zinc-100 text-sm">
+          <div className="flex items-center gap-6 mt-4 pt-4 border-t border-zinc-800 text-sm">
             <div>
-              <span className="font-black text-white md:text-zinc-950">
+              <span className="font-black text-white">
                 {(author.followersCount || 0) + (author.isFollowed ? 1 : 0)}
               </span>
-              <span className="text-zinc-400 md:text-zinc-500 ml-1 text-xs font-semibold">Followers</span>
+              <span className="text-zinc-400 ml-1 text-xs font-semibold">Followers</span>
             </div>
             <div>
-              <span className="font-black text-white md:text-zinc-950">{authorVideos.length}</span>
-              <span className="text-zinc-400 md:text-zinc-500 ml-1 text-xs font-semibold">Reviews</span>
+              <span className="font-black text-white">{authorVideos.length}</span>
+              <span className="text-zinc-400 ml-1 text-xs font-semibold">Reviews</span>
             </div>
             <div>
-              <span className="font-black text-white md:text-zinc-950">{totalLikes}</span>
-              <span className="text-zinc-400 md:text-zinc-500 ml-1 text-xs font-semibold">Likes</span>
+              <span className="font-black text-white">{totalLikes}</span>
+              <span className="text-zinc-400 ml-1 text-xs font-semibold">Likes</span>
             </div>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-zinc-950 md:bg-zinc-50 p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto bg-zinc-950 p-4 space-y-4">
           {/* Bio Card */}
-          <div className="bg-zinc-900 md:bg-white rounded-[24px] p-4.5 shadow-xs border border-zinc-800 md:border-zinc-200 space-y-3.5">
+          <div className="bg-zinc-900 rounded-[24px] p-4.5 shadow-xs border border-zinc-800 space-y-3.5">
             <div className="flex items-start justify-between">
-              <h3 className="text-[11px] font-black uppercase tracking-wider text-zinc-500 md:text-zinc-400">
+              <h3 className="text-[11px] font-black uppercase tracking-wider text-zinc-500">
                 Reviewer Bio
               </h3>
               {isOwner && (
                 <button 
                   onClick={() => setIsEditModalOpen(true)}
-                  className="text-blue-400 md:text-[#1a73e8] hover:underline text-xs font-bold cursor-pointer"
+                  className="text-zinc-300 hover:text-white hover:underline text-xs font-bold cursor-pointer"
                 >
                   Edit
                 </button>
               )}
             </div>
-            <p className="text-zinc-300 md:text-zinc-800 text-xs leading-relaxed font-medium">
+            <p className="text-zinc-300 text-xs leading-relaxed font-medium">
               {isOwner && currentUser?.bio
                 ? currentUser.bio
                 : author.bio || (author as any).bio || "Food explorer linking real businesses and authentic video reviews."}
             </p>
 
-            <div className="pt-2.5 border-t border-zinc-800 md:border-zinc-100 grid grid-cols-2 gap-2.5">
-              <div className="bg-zinc-950/60 md:bg-zinc-50 p-2.5 rounded-xl border border-zinc-800/80 md:border-zinc-100">
-                <span className="text-[9px] font-bold text-zinc-500 md:text-zinc-400 uppercase tracking-wider block mb-0.5">Average Rating Given</span>
-                <span className="text-xs font-black text-white md:text-zinc-950 flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <div className="pt-2.5 border-t border-zinc-800 grid grid-cols-2 gap-2.5">
+              <div className="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block mb-0.5">Average Rating Given</span>
+                <span className="text-xs font-black text-white flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-white text-white" />
                   {avgRating} ⭐
                 </span>
               </div>
-              <div className="bg-zinc-950/60 md:bg-zinc-50 p-2.5 rounded-xl border border-zinc-800/80 md:border-zinc-100">
-                <span className="text-[9px] font-bold text-zinc-500 md:text-zinc-400 uppercase tracking-wider block mb-0.5">Total Reviews</span>
-                <span className="text-xs font-black text-white md:text-zinc-950 flex items-center gap-1">
-                  <Video className="w-3.5 h-3.5 text-blue-400 md:text-blue-600" />
+              <div className="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block mb-0.5">Total Reviews</span>
+                <span className="text-xs font-black text-white flex items-center gap-1">
+                  <Video className="w-3.5 h-3.5 text-zinc-400" />
                   {authorVideos.length} {authorVideos.length === 1 ? "Video" : "Videos"}
                 </span>
               </div>
             </div>
 
-            <div className="pt-1.5 border-t border-zinc-800 md:border-zinc-100 flex items-center gap-2 text-blue-400 md:text-[#1a73e8]">
-              <div className="w-4 h-4 rounded-full bg-blue-950/60 md:bg-blue-50 flex items-center justify-center">
-                <ShieldCheck className="w-3 h-3 text-blue-400 md:text-[#1a73e8]" />
+            <div className="pt-1.5 border-t border-zinc-800 flex items-center gap-2 text-zinc-300">
+              <div className="w-4 h-4 rounded-full bg-zinc-800 flex items-center justify-center">
+                <ShieldCheck className="w-3 h-3 text-zinc-300" />
               </div>
-              <span className="text-[11px] font-bold text-zinc-300 md:text-zinc-700">Yoouz Verified Top Contributor</span>
+              <span className="text-[11px] font-bold text-zinc-300">Yoouz Verified Top Contributor</span>
             </div>
           </div>
 
           {/* TikTok-Style 3-Column Video Reviews Grid */}
           <div className="pt-2">
             {/* Grid Tabs Header */}
-            <div className="flex items-center justify-center border-b border-zinc-800 md:border-zinc-200 mb-2">
-              <div className="flex items-center gap-1 py-2 px-6 border-b-2 border-white md:border-zinc-900 text-white md:text-zinc-900 font-bold text-xs">
+            <div className="flex items-center justify-center border-b border-zinc-800 mb-2">
+              <div className="flex items-center gap-1 py-2 px-6 border-b-2 border-white text-white font-bold text-xs">
                 <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
                   <path d="M3 4h4v16H3V4zm7 0h4v16h-4V4zm7 0h4v16h-4V4z" />
                 </svg>
@@ -626,7 +624,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
 
             {authorVideos.length === 0 ? (
-              <div className="bg-zinc-900 md:bg-white rounded-2xl p-6 text-center border border-zinc-800 md:border-zinc-200 text-zinc-400 md:text-zinc-500 text-xs">
+              <div className="bg-zinc-900 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-400 text-xs">
                 No video reviews published yet.
               </div>
             ) : (
@@ -646,9 +644,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       onClick={() => {
                         onSelectVideo(v.id);
                       }}
-                      className={`relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-2xs ring-1 ring-zinc-800 md:ring-zinc-200/50 ${
+                      className={`relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-2xs ring-1 ring-zinc-800 ${
                         isCurrentActive
-                          ? "ring-2 ring-[#1a73e8]"
+                          ? "ring-2 ring-white"
                           : "hover:opacity-90"
                       }`}
                     >
@@ -663,8 +661,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25 pointer-events-none" />
 
                       {/* Top Left: Star Rating */}
-                      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-xs text-[9px] font-black text-amber-400 flex items-center gap-0.5 shadow-xs">
-                        <Star className="w-2.5 h-2.5 fill-amber-400" />
+                      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs">
+                        <Star className="w-2.5 h-2.5 fill-white text-white" />
                         <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                       </div>
 
@@ -694,16 +692,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           onClick={() => setIsDeleteAccountModalOpen(false)}
         >
           <div
-            className="bg-zinc-900 md:bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 md:border-zinc-200 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-4 animate-in fade-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-2xl bg-red-950/50 md:bg-red-50 text-red-400 md:text-red-600 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-300 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="text-base font-black text-white md:text-zinc-900">Delete Profile & Account?</h3>
-              <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed">
+              <h3 className="text-base font-black text-white">Delete Profile & Account?</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
                 This will permanently delete your Yoouz profile, saved places, and reviewer account. This action cannot be undone.
               </p>
             </div>
@@ -712,7 +710,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsDeleteAccountModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-800 md:border-zinc-200 text-xs font-bold text-zinc-300 md:text-zinc-700 hover:bg-zinc-800 md:hover:bg-zinc-50 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-xs font-bold text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -724,7 +722,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     await onDeleteProfile();
                   }
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer border border-zinc-700"
               >
                 Delete Account
               </button>
@@ -736,68 +734,68 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       {/* Edit Profile Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-zinc-900 md:bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-zinc-800 md:border-zinc-200 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto no-scrollbar" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-zinc-800 md:border-zinc-100 pb-3">
+          <div className="bg-zinc-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-zinc-800 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto no-scrollbar" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div>
-                <h3 className="text-lg font-black text-white md:text-zinc-950">Edit Profile</h3>
-                <p className="text-[11px] text-zinc-400 md:text-zinc-500 font-medium">Update your public profile details</p>
+                <h3 className="text-lg font-black text-white">Edit Profile</h3>
+                <p className="text-[11px] text-zinc-400 font-medium">Update your public profile details</p>
               </div>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-zinc-400 hover:text-zinc-200 md:hover:text-zinc-600 hover:bg-zinc-800 md:hover:bg-zinc-100 p-1.5 rounded-full transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-800 p-1.5 rounded-full transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSaveProfile} className="space-y-4">
               {/* Profile Photo Uploader */}
               <div className="flex flex-col items-center gap-3">
                 <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-blue-600 shadow-md relative">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-700 shadow-md relative">
                     <img src={editAvatar || currentUser?.avatar} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" referrerPolicy="no-referrer" />
                     <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                       <Camera className="w-6 h-6" />
                     </div>
                   </div>
-                  <button type="button" className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-colors cursor-pointer"><Camera className="w-3.5 h-3.5" /></button>
+                  <button type="button" className="absolute bottom-0 right-0 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"><Camera className="w-3.5 h-3.5" /></button>
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
                 <div className="text-center">
-                  <span className="text-xs font-bold text-zinc-200 md:text-zinc-700">Profile Picture</span>
+                  <span className="text-xs font-bold text-zinc-200">Profile Picture</span>
                   <p className="text-[10px] text-zinc-400">Click to upload a custom JPG or PNG</p>
                 </div>
-                {avatarError && <p className="text-xs text-red-400 md:text-red-500 font-semibold">{avatarError}</p>}
+                {avatarError && <p className="text-xs text-zinc-300 font-semibold">{avatarError}</p>}
               </div>
 
               {/* Banner Photo Uploader */}
               <div className="flex flex-col items-center gap-3">
                 <div className="relative group cursor-pointer w-full" onClick={() => bannerInputRef.current?.click()}>
-                  <div className="w-full h-32 rounded-2xl overflow-hidden border-2 border-indigo-600 shadow-md relative bg-zinc-950 md:bg-zinc-100">
+                  <div className="w-full h-32 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950">
                     {editBanner || currentUser?.banner ? (
                       <img src={editBanner || currentUser?.banner} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" referrerPolicy="no-referrer" />
                     ) : (
-                      <div className="w-full h-full bg-zinc-950 md:bg-gradient-to-r md:from-blue-600 md:via-indigo-600 md:to-blue-800" />
+                      <div className="w-full h-full bg-zinc-900" />
                     )}
                     <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                       <Camera className="w-6 h-6" />
                     </div>
                   </div>
-                  <button type="button" className="absolute bottom-2 right-2 p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition-colors cursor-pointer"><Camera className="w-3.5 h-3.5" /></button>
+                  <button type="button" className="absolute bottom-2 right-2 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"><Camera className="w-3.5 h-3.5" /></button>
                   <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={handleBannerChange} />
                 </div>
                 <div className="text-center">
-                  <span className="text-xs font-bold text-zinc-200 md:text-zinc-700">Cover Banner</span>
+                  <span className="text-xs font-bold text-zinc-200">Cover Banner</span>
                   <p className="text-[10px] text-zinc-400">Click to upload a custom JPG or PNG</p>
                 </div>
-                {bannerError && <p className="text-xs text-red-400 md:text-red-500 font-semibold">{bannerError}</p>}
+                {bannerError && <p className="text-xs text-zinc-300 font-semibold">{bannerError}</p>}
               </div>
               {/* Name Field (Read-only) */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 md:text-zinc-500">Name</label>
-                <div className="px-4 py-3 bg-zinc-950 md:bg-zinc-50 border border-zinc-800 md:border-zinc-200 rounded-2xl">
-                  <span className="text-sm font-semibold text-zinc-300 md:text-zinc-600">{currentUser?.name || "Reviewer"}</span>
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">Name</label>
+                <div className="px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl">
+                  <span className="text-sm font-semibold text-zinc-300">{currentUser?.name || "Reviewer"}</span>
                 </div>
               </div>
 
               {/* Bio Field */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 md:text-zinc-500">Bio</label>
+                  <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">Bio</label>
                   <span className="text-[10px] font-bold text-zinc-400">{editBio.length} / 160</span>
                 </div>
                 <textarea 
@@ -805,13 +803,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   onChange={(e) => setEditBio(e.target.value.slice(0, 160))} 
                   rows={3} 
                   placeholder="Introduce yourself to other reviewers! What are your favorite places, foods, or hobbies?"
-                  className="w-full bg-zinc-950 md:bg-zinc-50 border border-zinc-800 md:border-zinc-200 rounded-2xl p-4 text-sm text-white md:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-all placeholder:text-zinc-500 md:placeholder:text-zinc-400" 
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500" 
                 />
               </div>
 
               {/* Structured Location Fields */}
               <div className="space-y-3">
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 md:text-zinc-500 block mb-1">Location</label>
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 block mb-1">Location</label>
                 
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">Country</span>
@@ -903,21 +901,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </div>
 
               {/* Actions & Buttons */}
-              <div className="flex gap-3 pt-3 border-t border-zinc-800 md:border-zinc-100">
-                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 py-3 rounded-2xl border border-zinc-800 md:border-zinc-200 text-sm font-bold text-zinc-300 md:text-zinc-700 hover:bg-zinc-800 md:hover:bg-zinc-50 transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 py-3 rounded-2xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors cursor-pointer">Save Changes</button>
+              <div className="flex gap-3 pt-3 border-t border-zinc-800">
+                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 py-3 rounded-2xl border border-zinc-800 text-sm font-bold text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">Cancel</button>
+                <button type="submit" className="flex-1 py-3 rounded-2xl bg-white text-zinc-950 text-sm font-bold hover:bg-zinc-200 transition-colors cursor-pointer">Save Changes</button>
               </div>
 
-              {/* Account Management & Danger Zone (Industry Standard Best Practice) */}
+              {/* Account Management & Danger Zone */}
               {onDeleteProfile && (
-                <div className="pt-3 border-t border-zinc-800 md:border-zinc-100 space-y-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500 md:text-zinc-400 block">
+                <div className="pt-3 border-t border-zinc-800 space-y-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500 block">
                     Account Management
                   </span>
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-red-950/40 md:bg-red-50/70 border border-red-900/50 md:border-red-100">
+                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800">
                     <div className="space-y-0.5 pr-2">
-                      <p className="text-xs font-bold text-red-200 md:text-red-950">Delete Profile & Account</p>
-                      <p className="text-[11px] text-red-300/80 md:text-red-700/80 leading-snug">
+                      <p className="text-xs font-bold text-zinc-200">Delete Profile & Account</p>
+                      <p className="text-[11px] text-zinc-400 leading-snug">
                         Permanently remove your profile, videos, and review data.
                       </p>
                     </div>
@@ -927,7 +925,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         setIsEditModalOpen(false);
                         setIsDeleteAccountModalOpen(true);
                       }}
-                      className="px-3.5 py-2 rounded-xl bg-zinc-900 md:bg-white border border-red-800 md:border-red-200 text-red-400 md:text-red-600 hover:bg-red-600 hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
+                      className="px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
                     >
                       Delete
                     </button>

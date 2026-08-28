@@ -559,7 +559,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   // Unauthenticated Gating View
   if (!currentUser) {
     return (
-      <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-white flex flex-col justify-between pb-32 md:pb-6" >
+      <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-900 flex flex-col justify-between pb-32 md:pb-6" >
         <CopoAuthPrompt
           intent="messages"
           onOpenHelp={onOpenHelp}
@@ -572,7 +572,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   }
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-50 text-white md:text-zinc-900 p-3 sm:p-4 md:p-8 flex flex-col select-none" >
+    <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-950 text-white md:text-white p-3 sm:p-4 md:p-8 flex flex-col select-none" >
       
       {/* Toast alert banner */}
       {toastMessage && (
@@ -585,27 +585,27 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col space-y-4 md:space-y-6">
         
         {/* Header section matching Google Maps & TikTok Vibe with Sub-Tabs */}
-        <div className="flex flex-col gap-3 bg-zinc-900 md:bg-white p-4 sm:p-5 rounded-3xl border border-zinc-800 md:border-zinc-200/80 shadow-xs shrink-0">
+        <div className="flex flex-col gap-3 bg-zinc-900 md:bg-zinc-900 p-4 sm:p-5 rounded-3xl border border-zinc-800 md:border-zinc-800 shadow-xs shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               {onNavigateHome && (
                 <button
                   onClick={onNavigateHome}
-                  className="w-9 h-9 rounded-full bg-zinc-950 md:bg-zinc-100 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-300 md:text-zinc-700 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800 md:border-zinc-200"
+                  className="w-9 h-9 rounded-full bg-zinc-950 md:bg-zinc-900 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-300 md:text-zinc-300 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800 md:border-zinc-800"
                   title="Back to Feed"
                 >
                   <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
                 </button>
               )}
-              <div className="inline-flex items-center p-1 bg-zinc-950 md:bg-zinc-100/90 rounded-2xl border border-zinc-800 md:border-zinc-200">
+              <div className="inline-flex items-center p-1 bg-zinc-950 md:bg-zinc-900/90 rounded-2xl border border-zinc-800 md:border-zinc-800">
                 <button
                   id="tab-inbox-messages"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-zinc-800 md:bg-white text-blue-400 md:text-[#1a73e8] shadow-xs cursor-pointer transition-all"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-white text-black shadow-xs cursor-pointer transition-all"
                 >
-                  <Mail className="w-4 h-4 text-blue-400 md:text-[#1a73e8]" />
+                  <Mail className="w-4 h-4 text-black" />
                   <span>Messages</span>
                   {unreadCount > 0 && (
-                    <span className="min-w-[18px] h-[18px] px-1 text-[10px] rounded-full bg-[#1a73e8] text-white flex items-center justify-center font-bold">
+                    <span className="min-w-[18px] h-[18px] px-1 text-[10px] rounded-full bg-zinc-950 text-white flex items-center justify-center font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -615,7 +615,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <button
                     id="tab-inbox-notifications"
                     onClick={onNavigateToNotifications}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 md:text-zinc-600 hover:text-white md:hover:text-zinc-950 hover:bg-zinc-800/60 md:hover:bg-white/60 cursor-pointer transition-all"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer transition-all"
                   >
                     <Sparkles className="w-4 h-4 text-zinc-400" />
                     <span>Activity</span>
@@ -629,26 +629,26 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-4 bg-zinc-950 md:bg-zinc-50 border border-zinc-800 md:border-zinc-150 rounded-2xl px-4 py-2 shrink-0">
-              <div className="text-center border-r border-zinc-800 md:border-zinc-200 pr-4">
+            <div className="hidden sm:flex items-center gap-4 bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 shrink-0">
+              <div className="text-center border-r border-zinc-800 pr-4">
                 <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Unread</p>
-                <p className="text-sm font-black text-[#1a73e8]">{unreadCount}</p>
+                <p className="text-sm font-black text-white">{unreadCount}</p>
               </div>
               <div className="text-center pl-1">
                 <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total Chats</p>
-                <p className="text-sm font-black text-white md:text-zinc-950">{messages.length}</p>
+                <p className="text-sm font-black text-white">{messages.length}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Master Chat Dashboard Frame */}
-        <div className="flex-1 bg-zinc-900 md:bg-white rounded-3xl border border-zinc-800 md:border-zinc-200/80 shadow-sm flex overflow-hidden min-h-[500px] h-[calc(100vh-210px)] relative">
+        <div className="flex-1 bg-zinc-900 rounded-3xl border border-zinc-800 shadow-sm flex overflow-hidden min-h-[500px] h-[calc(100vh-210px)] relative">
           
           {/* Threads Column (Hidden on mobile if viewing active thread) */}
-          <div className={`w-full md:w-80 border-r border-zinc-800 md:border-zinc-200 flex flex-col bg-zinc-950 md:bg-white shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
+          <div className={`w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-950 shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
             {/* Search thread input and New Chat button */}
-            <div className="p-3 sm:p-4 border-b border-zinc-800 md:border-zinc-150 flex items-center gap-2">
+            <div className="p-3 sm:p-4 border-b border-zinc-800 flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
                 <input
@@ -656,7 +656,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   placeholder="Search chats..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-zinc-900 md:bg-zinc-50 text-xs text-white md:text-zinc-900 placeholder-zinc-500 md:placeholder-zinc-400 pl-9 pr-3 py-2 rounded-xl border border-zinc-800 md:border-zinc-200 focus:outline-none focus:border-[#1a73e8] focus:bg-zinc-800 md:focus:bg-white transition-all font-medium"
+                  className="w-full bg-zinc-900 text-xs text-white placeholder-zinc-500 pl-9 pr-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-white focus:bg-zinc-800 transition-all font-medium"
                 />
               </div>
               <button
@@ -665,7 +665,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   setNewChatSearch("");
                   setShowNewChatModal(true);
                 }}
-                className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-sm shrink-0 transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-white hover:bg-zinc-200 text-black flex items-center justify-center shadow-sm shrink-0 transition-colors cursor-pointer"
                 title="Start new message"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -673,12 +673,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             </div>
 
             {/* List of active threads */}
-            <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/60 md:divide-zinc-100">
+            <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/60">
               {filteredThreads.length === 0 ? (
                 <div className="p-8 text-center text-zinc-400 space-y-3 mt-4">
-                  <Mail className="w-8 h-8 text-zinc-600 md:text-zinc-300 mx-auto" />
+                  <Mail className="w-8 h-8 text-zinc-600 mx-auto" />
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-white md:text-zinc-800">No conversations yet</p>
+                    <p className="text-xs font-bold text-white">No conversations yet</p>
                     <p className="text-[11px] text-zinc-500">Connect and message other community reviewers.</p>
                   </div>
                   <button
@@ -687,7 +687,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       setNewChatSearch("");
                       setShowNewChatModal(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1a73e8] text-white text-xs font-bold shadow-xs hover:bg-[#1557b0] transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-black text-xs font-bold shadow-xs hover:bg-zinc-200 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Start a Message</span>
@@ -710,8 +710,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       onClick={() => setSelectedThreadId(thread.id)}
                       className={`p-3.5 sm:p-4 flex items-center gap-3.5 cursor-pointer transition-all relative ${
                         isActive
-                          ? "bg-blue-950/60 md:bg-[#e8f0fe]/75 border-l-4 border-blue-500 md:border-[#1a73e8]"
-                          : "hover:bg-zinc-900 md:hover:bg-zinc-50 border-l-4 border-transparent"
+                          ? "bg-zinc-900 border-l-4 border-white"
+                          : "hover:bg-zinc-900/60 border-l-4 border-transparent"
                       }`}
                     >
                       <div
@@ -722,16 +722,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                       >
                         <img
-                          src={thread.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(thread.senderName || "User")}&background=1a73e8&color=fff`}
+                          src={thread.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(thread.senderName || "User")}&background=27272a&color=fff`}
                           alt={thread.senderName}
-                          className="w-11 h-11 rounded-full object-cover border border-zinc-800 md:border-zinc-200"
+                          className="w-11 h-11 rounded-full object-cover border border-zinc-800"
                         />
                         {threadBlocked ? (
-                          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-red-500 ring-2 ring-zinc-950 md:ring-white flex items-center justify-center text-white" title="Blocked user">
+                          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-red-500 ring-2 ring-zinc-950 flex items-center justify-center text-white" title="Blocked user">
                             <X className="w-2.5 h-2.5" />
                           </span>
                         ) : (
-                          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-zinc-950 md:ring-white" />
+                          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-zinc-400 ring-2 ring-zinc-950" />
                         )}
                       </div>
                       
@@ -743,25 +743,25 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               e.stopPropagation();
                               handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar);
                             }}
-                            className={`text-xs font-black truncate flex items-center gap-1.5 hover:opacity-80 cursor-pointer text-left transition-opacity ${isActive ? "text-blue-400 md:text-[#1a73e8]" : "text-white md:text-zinc-900"}`}
+                            className={`text-xs font-black truncate flex items-center gap-1.5 hover:opacity-80 cursor-pointer text-left transition-opacity ${isActive ? "text-white" : "text-zinc-200"}`}
                           >
                             <span>{thread.senderName}</span>
                             {threadBlocked && (
-                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-950/60 md:bg-red-100 text-red-400 md:text-red-600">
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-950/60 text-red-400">
                                 Blocked
                               </span>
                             )}
                           </button>
                           <span className="text-[10px] text-zinc-400 font-bold shrink-0">{formatRecordedDate(thread.timestamp, thread.createdAtMs)}</span>
                         </div>
-                        <p className={`text-[11px] truncate ${isUnread ? "text-white md:text-zinc-950 font-black" : "text-zinc-400 md:text-zinc-500 font-medium"}`}>
+                        <p className={`text-[11px] truncate ${isUnread ? "text-white font-black" : "text-zinc-400 font-medium"}`}>
                           {thread.lastMessage}
                         </p>
                       </div>
 
-                      {/* Blue badge for unread count */}
+                      {/* White badge for unread count */}
                       {isUnread && (
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#1a73e8] shrink-0" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
                       )}
                     </div>
                   );
@@ -771,11 +771,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
           </div>
 
           {/* Chat Content Panel (Full on mobile when thread active, or split on md+) */}
-          <div className={`flex-1 flex-col justify-between bg-zinc-950 md:bg-zinc-50/40 relative ${isMobileThreadViewOpen ? "flex" : "hidden md:flex"}`}>
+          <div className={`flex-1 flex-col justify-between bg-zinc-950 relative ${isMobileThreadViewOpen ? "flex" : "hidden md:flex"}`}>
             {activeThread ? (
               <>
                 {/* Active Chat Header */}
-                <div className="p-3 sm:p-4 border-b border-zinc-800 md:border-zinc-200 flex items-center justify-between bg-zinc-900 md:bg-white shrink-0">
+                <div className="p-3 sm:p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900 shrink-0">
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     {/* Mobile Back to List Button */}
                     <button
@@ -792,9 +792,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                     >
                       <img
-                        src={activeThread.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeThread.senderName || "User")}&background=1a73e8&color=fff`}
+                        src={activeThread.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeThread.senderName || "User")}&background=27272a&color=fff`}
                         alt={activeThread.senderName}
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800 md:border-zinc-200"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800"
                       />
                     </button>
 
@@ -802,20 +802,20 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar)}
-                        className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-white md:text-zinc-950 hover:text-blue-400 md:hover:text-[#1a73e8] cursor-pointer text-left transition-colors"
+                        className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-white hover:text-zinc-300 cursor-pointer text-left transition-colors"
                       >
                         <span className="truncate">{activeThread.senderName}</span>
-                        <CheckCircle2 className="w-4 h-4 fill-[#1a73e8] text-white shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
                       </button>
                       <div className="flex items-center gap-2 mt-0.5">
                         {isSenderBlocked ? (
-                          <span className="text-[10px] text-red-400 md:text-red-600 font-bold flex items-center gap-1">
+                          <span className="text-[10px] text-red-400 font-bold flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                             <span>Blocked by you</span>
                           </span>
                         ) : (
-                          <span className="text-[10px] text-emerald-400 md:text-emerald-600 font-bold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-[10px] text-zinc-400 font-bold flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                             <span>Active on Yoouz</span>
                           </span>
                         )}
@@ -828,7 +828,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <button
                       id="btn-chat-options-menu"
                       onClick={() => setIsOptionsOpen(!isOptionsOpen)}
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white md:hover:text-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-100 transition-colors"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white md:hover:text-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-800 transition-colors"
                       title="Chat options & safety"
                     >
                       <MoreVertical className="w-4 h-4" />
@@ -836,12 +836,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                     {/* Options Dropdown Menu */}
                     {isOptionsOpen && (
-                      <div className="absolute right-0 top-10 w-56 bg-zinc-900 md:bg-white rounded-2xl border border-zinc-800 md:border-zinc-200/90 shadow-xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute right-0 top-10 w-56 bg-zinc-900 md:bg-zinc-900 rounded-2xl border border-zinc-800 md:border-zinc-800 shadow-xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
                         {/* Report option */}
                         <button
                           id="btn-report-chat-user"
                           onClick={handleReportAction}
-                          className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-300 md:text-zinc-700 hover:bg-zinc-800 md:hover:bg-zinc-50 hover:text-red-400 md:hover:text-red-600 flex items-center gap-2.5 transition-colors cursor-pointer"
+                          className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-300 md:text-zinc-300 hover:bg-zinc-800 md:hover:bg-zinc-800 hover:text-red-400 md:hover:text-red-600 flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
                           <Flag className="w-4 h-4 text-red-500" />
                           <span>Report User or Messages</span>
@@ -855,7 +855,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               handleUnblockUserAction();
                               setIsOptionsOpen(false);
                             }}
-                            className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-300 md:text-zinc-700 hover:bg-zinc-800 md:hover:bg-zinc-50 hover:text-emerald-400 md:hover:text-emerald-600 flex items-center gap-2.5 transition-colors cursor-pointer"
+                            className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-300 md:text-zinc-300 hover:bg-zinc-800 md:hover:bg-zinc-800 hover:text-emerald-400 md:hover:text-emerald-600 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <ShieldCheck className="w-4 h-4 text-emerald-500" />
                             <span>Unblock {activeThread.senderName}</span>
@@ -867,14 +867,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               setIsOptionsOpen(false);
                               setShowBlockConfirmModal(true);
                             }}
-                            className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-300 md:text-zinc-700 hover:bg-zinc-800 md:hover:bg-zinc-50 hover:text-red-400 md:hover:text-red-600 flex items-center gap-2.5 transition-colors cursor-pointer"
+                            className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-300 md:text-zinc-300 hover:bg-zinc-800 md:hover:bg-zinc-800 hover:text-red-400 md:hover:text-red-600 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
-                            <UserX className="w-4 h-4 text-zinc-400 md:text-zinc-500" />
+                            <UserX className="w-4 h-4 text-zinc-400 md:text-zinc-400" />
                             <span>Block {activeThread.senderName}</span>
                           </button>
                         )}
 
-                        <div className="my-1 border-t border-zinc-800 md:border-zinc-100" />
+                        <div className="my-1 border-t border-zinc-800 md:border-zinc-800" />
 
                         {/* Delete Conversation */}
                         <button
@@ -924,18 +924,18 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         <img
                           src={activeThread.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeThread.senderName || "User")}&background=1a73e8&color=fff`}
                           alt={activeThread.senderName}
-                          className="w-8 h-8 rounded-full object-cover border border-zinc-800 md:border-zinc-200"
+                          className="w-8 h-8 rounded-full object-cover border border-zinc-800 md:border-zinc-800"
                         />
                       </button>
                       <div className="space-y-1 max-w-md">
                         <button
                           type="button"
                           onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar)}
-                          className="text-[10px] text-zinc-400 font-bold hover:text-blue-400 md:hover:text-[#1a73e8] cursor-pointer transition-colors"
+                          className="text-[10px] text-zinc-400 font-bold hover:text-white cursor-pointer transition-colors"
                         >
                           {activeThread.senderName} · {formatRecordedDate(activeThread.timestamp, activeThread.createdAtMs)}
                         </button>
-                        <div className="bg-zinc-900 md:bg-white p-3.5 rounded-2xl rounded-tl-none text-xs text-zinc-100 md:text-zinc-800 border border-zinc-800 md:border-zinc-150 shadow-2xs leading-relaxed">
+                        <div className="bg-zinc-900 md:bg-zinc-900 p-3.5 rounded-2xl rounded-tl-none text-xs text-zinc-100 md:text-zinc-200 border border-zinc-800 md:border-zinc-800 shadow-2xs leading-relaxed">
                           <p>{activeThread.lastMessage}</p>
                         </div>
                       </div>
@@ -960,7 +960,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           <img
                             src={msg.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || "User")}&background=1a73e8&color=fff`}
                             alt={msg.senderName}
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800 md:border-zinc-200"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800 md:border-zinc-800"
                           />
                         </button>
                         <div className={`flex flex-col space-y-1 max-w-sm sm:max-w-md ${msg.isMe ? "items-end text-right" : "items-start text-left"}`}>
@@ -973,7 +973,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                 handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar);
                               }
                             }}
-                            className="text-[10px] text-zinc-400 font-bold hover:text-blue-400 md:hover:text-[#1a73e8] cursor-pointer transition-colors"
+                            className="text-[10px] text-zinc-400 font-bold hover:text-white cursor-pointer transition-colors"
                           >
                             {msg.isMe ? "You" : msg.senderName} · {formatRecordedDate(msg.timestamp, msg.createdAtMs)}
                           </button>
@@ -982,8 +982,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               msg.videoThumbnail ? "w-[260px] sm:w-[280px]" : "w-fit max-w-full"
                             } ${
                               msg.isMe
-                                ? "bg-[#1a73e8] text-white rounded-tr-none text-left"
-                                : "bg-zinc-900 md:bg-white text-zinc-100 md:text-zinc-800 rounded-tl-none text-left border border-zinc-800 md:border-zinc-150"
+                                ? "bg-white text-black rounded-tr-none text-left font-medium"
+                                : "bg-zinc-900 text-zinc-200 rounded-tl-none text-left border border-zinc-800"
                             }`}
                           >
                             <p className="px-1">{msg.text}</p>
@@ -992,7 +992,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             {msg.videoThumbnail ? (
                               <div
                                 onClick={() => handleOpenVideoCard(msg.videoId)}
-                                className="mt-2.5 bg-zinc-950 rounded-xl overflow-hidden shadow-sm cursor-pointer group/card border border-zinc-800 md:border-black/10 w-full"
+                                className="mt-2.5 bg-zinc-950 rounded-xl overflow-hidden shadow-sm cursor-pointer group/card border border-zinc-800 w-full"
                               >
                                 <div className="relative aspect-[4/5] bg-zinc-900">
                                   <img
@@ -1012,10 +1012,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                     </div>
                                   </div>
                                 </div>
-                                <div className="px-3 py-2.5 bg-zinc-900 md:bg-white flex items-center justify-between gap-2 border-t border-zinc-800 md:border-zinc-100">
+                                <div className="px-3 py-2.5 bg-zinc-900 flex items-center justify-between gap-2 border-t border-zinc-800">
                                   <div className="flex items-center gap-1.5">
-                                    <Film className="w-3.5 h-3.5 text-blue-400 md:text-[#1a73e8]" />
-                                    <span className="text-[11px] font-bold text-white md:text-zinc-800">Watch Video Review</span>
+                                    <Film className="w-3.5 h-3.5 text-zinc-300" />
+                                    <span className="text-[11px] font-bold text-white">Watch Video Review</span>
                                   </div>
                                 </div>
                               </div>
@@ -1028,7 +1028,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                   {/* Render shared video preview if it is configured at the thread level */}
                   {activeThread.videoPreviewUrl && (!activeThread.history || activeThread.history.length === 0) ? (
-                    <div className="ml-10 max-w-xs rounded-2xl overflow-hidden border border-zinc-800 md:border-zinc-200 bg-zinc-900 md:bg-white shadow-2xs">
+                    <div className="ml-10 max-w-xs rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 shadow-2xs">
                       <div className="relative aspect-[16/10]">
                         <img
                           src={activeThread.videoPreviewUrl}
@@ -1037,19 +1037,19 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         />
                         <div
                           onClick={() => handleOpenVideoCard()}
-                          className="absolute inset-0 m-auto w-11 h-11 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-[#1a73e8] hover:scale-105 cursor-pointer transition-all shadow-sm"
+                          className="absolute inset-0 m-auto w-11 h-11 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-zinc-800 hover:scale-105 cursor-pointer transition-all shadow-sm"
                         >
                           <Play className="w-4 h-4 fill-white translate-x-0.5" />
                         </div>
                       </div>
-                      <div className="p-3 bg-zinc-900 md:bg-zinc-50 text-[11px] text-zinc-300 md:text-zinc-700 font-bold flex items-center justify-between border-t border-zinc-800 md:border-zinc-150">
-                        <span className="flex items-center gap-1.5 text-white md:text-zinc-800">
-                          <Video className="w-4 h-4 text-blue-400 md:text-[#1a73e8]" />
+                      <div className="p-3 bg-zinc-950 text-[11px] text-zinc-300 font-bold flex items-center justify-between border-t border-zinc-800">
+                        <span className="flex items-center gap-1.5 text-white">
+                          <Video className="w-4 h-4 text-zinc-300" />
                           <span>Video Recommendation</span>
                         </span>
                         <button
                           onClick={() => handleOpenVideoCard()}
-                          className="text-blue-400 md:text-[#1a73e8] hover:underline flex items-center gap-0.5"
+                          className="text-zinc-300 hover:text-white hover:underline flex items-center gap-0.5"
                         >
                           <span>Play</span>
                           <ChevronRight className="w-3 h-3" />
@@ -1064,17 +1064,17 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 {/* Enhanced "Recommend a Local Spot / Video" Tray */}
                 <div className="px-3 sm:px-4 shrink-0 relative">
                   {showQuickRecommend && (
-                    <div className="absolute bottom-2 left-3 right-3 sm:left-4 sm:right-4 bg-zinc-900 md:bg-white border border-zinc-800 md:border-zinc-200 rounded-3xl p-4 shadow-2xl animate-in slide-in-from-bottom duration-200 z-20 space-y-3.5 max-h-[380px] flex flex-col">
+                    <div className="absolute bottom-2 left-3 right-3 sm:left-4 sm:right-4 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 shadow-2xl animate-in slide-in-from-bottom duration-200 z-20 space-y-3.5 max-h-[380px] flex flex-col">
                       <div className="flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" />
-                          <h5 className="text-xs font-black text-white md:text-zinc-900">
+                          <Sparkles className="w-4 h-4 text-white" />
+                          <h5 className="text-xs font-black text-white">
                             Share a Recommendation with {activeThread.senderName}
                           </h5>
                         </div>
                         <button
                           onClick={() => setShowQuickRecommend(false)}
-                          className="p-1 rounded-full hover:bg-zinc-800 md:hover:bg-zinc-100 text-zinc-400 hover:text-white md:hover:text-zinc-600 font-bold"
+                          className="p-1 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -1088,7 +1088,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           placeholder="Search your uploaded reviews..."
                           value={recommendSearch}
                           onChange={(e) => setRecommendSearch(e.target.value)}
-                          className="w-full bg-zinc-950 md:bg-zinc-50 text-xs text-white md:text-zinc-900 placeholder-zinc-500 md:placeholder-zinc-400 pl-8 pr-3 py-2 rounded-xl border border-zinc-800 md:border-zinc-200 focus:outline-none focus:border-[#1a73e8] font-medium"
+                          className="w-full bg-zinc-950 text-xs text-white placeholder-zinc-500 pl-8 pr-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-white/50 font-medium"
                         />
                       </div>
 
@@ -1096,8 +1096,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                         {filteredUserVideosForRecommend.length === 0 ? (
                           <div className="p-6 text-center text-zinc-400 space-y-1.5">
-                            <Film className="w-7 h-7 mx-auto text-zinc-600 md:text-zinc-300" />
-                            <p className="text-xs font-bold text-white md:text-zinc-600">No recorded reviews yet</p>
+                            <Film className="w-7 h-7 mx-auto text-zinc-600" />
+                            <p className="text-xs font-bold text-white">No recorded reviews yet</p>
                             <p className="text-[10px] text-zinc-400">
                               You haven't recorded any video reviews to share.
                             </p>
@@ -1116,10 +1116,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                   );
                                   setShowQuickRecommend(false);
                                 }}
-                                className="p-2.5 bg-zinc-950 md:bg-zinc-50 hover:bg-zinc-800 md:hover:bg-blue-50/70 border border-zinc-800 md:border-zinc-200/80 hover:border-[#1a73e8] rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
+                                className="p-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800 md:border-zinc-200">
+                                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
                                     <img
                                       src={resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"}
                                       alt={vid.placeName}
@@ -1139,16 +1139,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                     </div>
                                   </div>
                                   <div className="min-w-0">
-                                    <h6 className="text-xs font-black text-white md:text-zinc-900 group-hover:text-[#1a73e8] truncate">
+                                    <h6 className="text-xs font-black text-white group-hover:text-white truncate">
                                       {vid.placeName}
                                     </h6>
-                                    <p className="text-[10px] text-zinc-400 md:text-zinc-500 truncate flex items-center gap-1 mt-0.5">
+                                    <p className="text-[10px] text-zinc-400 truncate flex items-center gap-1 mt-0.5">
                                       <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
                                       <span>{vid.rating || 5} · {vid.author?.name || "Verified Review"}</span>
                                     </p>
                                   </div>
                                 </div>
-                                <span className="px-2.5 py-1 bg-[#1a73e8] text-white rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
+                                <span className="px-2.5 py-1 bg-white text-black rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
                                   Share
                                 </span>
                               </div>
@@ -1163,7 +1163,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 {/* Message input area */}
                 <form
                   onSubmit={handleSendForm}
-                  className="p-3 sm:p-4 border-t border-zinc-800 md:border-zinc-200 bg-zinc-900 md:bg-white flex items-center gap-2 shrink-0"
+                  className="p-3 sm:p-4 border-t border-zinc-800 bg-zinc-900 flex items-center gap-2 shrink-0"
                 >
                   <button
                     type="button"
@@ -1171,8 +1171,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     title="Recommend a Place or Video Review"
                     className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                       showQuickRecommend
-                        ? "bg-blue-500/20 md:bg-blue-50 text-blue-400 md:text-[#1a73e8] border border-blue-500/40 md:border-blue-200"
-                        : "bg-zinc-800 md:bg-zinc-50 hover:bg-zinc-700 md:hover:bg-zinc-100 text-zinc-300 md:text-zinc-600 border border-zinc-700 md:border-zinc-200"
+                        ? "bg-white text-black border border-white"
+                        : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700"
                     }`}
                   >
                     <MapPin className="w-4 h-4" />
@@ -1188,26 +1188,26 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         ? `You have blocked ${activeThread.senderName}`
                         : `Write a message to ${activeThread.senderName}...`
                     }
-                    className="flex-1 bg-zinc-800 md:bg-zinc-50 disabled:bg-zinc-900 md:disabled:bg-zinc-100 disabled:text-zinc-500 md:disabled:text-zinc-400 text-white md:text-zinc-900 placeholder-zinc-500 md:placeholder-zinc-400 text-xs sm:text-sm px-4 py-2.5 rounded-full border border-zinc-700 md:border-zinc-200 focus:outline-none focus:border-[#1a73e8] focus:bg-zinc-800 md:focus:bg-white transition-all font-medium"
+                    className="flex-1 bg-zinc-800 disabled:bg-zinc-900 disabled:text-zinc-500 text-white placeholder-zinc-500 text-xs sm:text-sm px-4 py-2.5 rounded-full border border-zinc-700 focus:outline-none focus:border-white/50 transition-all font-medium"
                   />
                   
                   <button
                     type="submit"
                     disabled={!replyText.trim() || isSenderBlocked}
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#1a73e8] disabled:opacity-40 text-white flex items-center justify-center hover:bg-blue-700 transition-colors shadow-xs shrink-0 cursor-pointer"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-zinc-200 disabled:opacity-40 text-black flex items-center justify-center transition-colors shadow-xs shrink-0 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
                   </button>
                 </form>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-zinc-950 md:bg-zinc-50/50 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-blue-500/10 md:bg-blue-50 text-blue-400 md:text-[#1a73e8] flex items-center justify-center">
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-zinc-950 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center">
                   <Mail className="w-8 h-8" />
                 </div>
                 <div className="max-w-md space-y-2">
-                  <p className="text-base font-bold text-white md:text-zinc-800 font-['Google_Sans',sans-serif]">Your Local Guides Inbox</p>
-                  <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed">
+                  <p className="text-base font-bold text-white font-['Google_Sans',sans-serif]">Your Local Guides Inbox</p>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
                     Select a conversation from the sidebar to message verified reviewers, ask questions, or share restaurant recommendations.
                   </p>
                 </div>
@@ -1222,16 +1222,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       {/* Block Confirmation Modal Dialog */}
       {showBlockConfirmModal && activeThread && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-zinc-900 md:bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-zinc-800 md:border-zinc-200 animate-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/10 md:bg-red-50 text-red-500 md:text-red-600 flex items-center justify-center mx-auto">
+          <div className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-zinc-800 animate-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
               <UserX className="w-6 h-6" />
             </div>
             
             <div className="text-center space-y-1.5">
-              <h3 className="text-base font-black text-white md:text-zinc-900">
+              <h3 className="text-base font-black text-white">
                 Block {activeThread.senderName}?
               </h3>
-              <p className="text-xs text-zinc-400 md:text-zinc-500 leading-relaxed">
+              <p className="text-xs text-zinc-400 leading-relaxed">
                 They will not be able to message you or see your direct chat history. You can unblock them at any time.
               </p>
             </div>
@@ -1240,7 +1240,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowBlockConfirmModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-700 md:border-zinc-250 text-zinc-300 md:text-zinc-700 font-bold text-xs hover:bg-zinc-800 md:hover:bg-zinc-50 transition-colors"
+                className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 font-bold text-xs hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>
@@ -1259,21 +1259,21 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       {/* Start New Chat / Message Modal */}
       {showNewChatModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-zinc-900 md:bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-zinc-800 md:border-zinc-200 animate-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-            <div className="flex items-center justify-between border-b border-zinc-800 md:border-zinc-150 pb-3">
+          <div className="bg-zinc-900 rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-zinc-800 animate-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-500/15 text-[#1a73e8] flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-full bg-zinc-800 text-white flex items-center justify-center font-bold">
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white md:text-zinc-900">New Direct Message</h3>
+                  <h3 className="text-sm font-black text-white">New Direct Message</h3>
                   <p className="text-[10px] text-zinc-400">Message community members and creators</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowNewChatModal(false)}
-                className="w-7 h-7 rounded-full bg-zinc-800 md:bg-zinc-100 text-zinc-400 hover:text-white md:hover:text-zinc-900 flex items-center justify-center cursor-pointer transition-colors"
+                className="w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1288,15 +1288,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 value={newChatSearch}
                 onChange={(e) => setNewChatSearch(e.target.value)}
                 autoFocus
-                className="w-full bg-zinc-950 md:bg-zinc-50 text-xs text-white md:text-zinc-900 placeholder-zinc-500 md:placeholder-zinc-400 pl-9 pr-3 py-2 rounded-xl border border-zinc-800 md:border-zinc-200 focus:outline-none focus:border-[#1a73e8] font-medium"
+                className="w-full bg-zinc-950 text-xs text-white placeholder-zinc-500 pl-9 pr-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-white/50 font-medium"
               />
             </div>
 
             {/* List of members */}
-            <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/50 md:divide-zinc-100 min-h-[220px] max-h-[360px] pr-1">
+            <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/50 min-h-[220px] max-h-[360px] pr-1">
               {filteredRecipients.length === 0 ? (
                 <div className="p-8 text-center text-zinc-500 space-y-2">
-                  <User className="w-8 h-8 mx-auto text-zinc-600 md:text-zinc-300" />
+                  <User className="w-8 h-8 mx-auto text-zinc-600" />
                   <p className="text-xs font-semibold">No members found</p>
                 </div>
               ) : (
@@ -1304,16 +1304,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <div
                     key={`recip-${recipient.id}`}
                     onClick={() => handleStartNewUserChat(recipient)}
-                    className="p-3 flex items-center justify-between gap-3 hover:bg-zinc-800/60 md:hover:bg-zinc-50 rounded-2xl cursor-pointer transition-colors group"
+                    className="p-3 flex items-center justify-between gap-3 hover:bg-zinc-800/60 rounded-2xl cursor-pointer transition-colors group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <img
                         src={recipient.avatar}
                         alt={recipient.name}
-                        className="w-10 h-10 rounded-full object-cover border border-zinc-800 md:border-zinc-200 shrink-0"
+                        className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
                       />
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-white md:text-zinc-900 truncate group-hover:text-blue-400 md:group-hover:text-[#1a73e8] transition-colors">
+                        <p className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">
                           {recipient.name}
                         </p>
                         
@@ -1322,7 +1322,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                     <button
                       type="button"
-                      className="px-3 py-1 rounded-xl bg-zinc-800 md:bg-zinc-100 group-hover:bg-[#1a73e8] text-zinc-300 md:text-zinc-700 group-hover:text-white text-[11px] font-bold transition-colors cursor-pointer shrink-0"
+                      className="px-3 py-1 rounded-xl bg-zinc-800 group-hover:bg-white text-zinc-300 group-hover:text-black text-[11px] font-bold transition-colors cursor-pointer shrink-0"
                     >
                       Chat
                     </button>
@@ -1331,11 +1331,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               )}
             </div>
 
-            <div className="pt-2 border-t border-zinc-800 md:border-zinc-150 flex justify-end">
+            <div className="pt-2 border-t border-zinc-800 flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowNewChatModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white md:hover:text-zinc-800 cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white cursor-pointer"
               >
                 Close
               </button>
@@ -1347,16 +1347,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       {/* Delete Conversation Confirmation Modal */}
       {showDeleteConfirmModal && activeThread && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-zinc-200 animate-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+          <div className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-zinc-800 animate-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
             
             <div className="text-center space-y-1.5">
-              <h3 className="text-base font-black text-zinc-900">
+              <h3 className="text-base font-black text-white">
                 Delete this conversation?
               </h3>
-              <p className="text-xs text-zinc-500 leading-relaxed">
+              <p className="text-xs text-zinc-400 leading-relaxed">
                 This will delete the chat thread with {activeThread.senderName}. This action cannot be undone.
               </p>
             </div>
@@ -1365,7 +1365,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirmModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-250 text-zinc-700 font-bold text-xs hover:bg-zinc-50 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 font-bold text-xs hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>

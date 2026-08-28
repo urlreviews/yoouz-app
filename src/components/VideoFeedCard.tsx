@@ -453,7 +453,7 @@ return () => {
       id={`copo-video-card-${video.id}`}
       onClick={handleCardClick}
       onDoubleClick={handleDoubleTapLike}
-      className="snap-start snap-always shrink-0 relative w-full h-full md:w-full md:max-w-[400px] lg:w-[420px] lg:max-w-none md:h-[92vh] md:max-h-[880px] bg-black md:rounded-3xl overflow-hidden md:shadow-2xl md:border md:border-zinc-800 select-none flex flex-col justify-between cursor-pointer group"
+      className="snap-start snap-always shrink-0 relative w-full h-full md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-between cursor-pointer group"
     >
       {/* Video Container */}
       <div
@@ -539,7 +539,7 @@ return () => {
       {isActive && (
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/20 z-40 pointer-events-none">
           <div
-            className="h-full bg-blue-500 transition-[width] duration-150 ease-linear shadow-[0_0_8px_rgba(59,130,246,0.8)]"
+            className="h-full bg-white transition-[width] duration-150 ease-linear shadow-[0_0_8px_rgba(255,255,255,0.8)]"
             style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
           />
         </div>
@@ -617,12 +617,12 @@ return () => {
               <div className="flex items-end justify-center gap-[2px] w-5 h-5 relative">
                 {isPlaying ? (
                   <>
-                    <div className="w-[3px] bg-emerald-400 rounded-full animate-[equalizer_0.8s_ease-in-out_infinite] h-2"></div>
-                    <div className="w-[3px] bg-emerald-400 rounded-full animate-[equalizer_0.8s_ease-in-out_infinite_0.2s] h-4"></div>
-                    <div className="w-[3px] bg-emerald-400 rounded-full animate-[equalizer_0.8s_ease-in-out_infinite_0.4s] h-3"></div>
+                    <div className="w-[3px] bg-white rounded-full animate-[equalizer_0.8s_ease-in-out_infinite] h-2"></div>
+                    <div className="w-[3px] bg-white rounded-full animate-[equalizer_0.8s_ease-in-out_infinite_0.2s] h-4"></div>
+                    <div className="w-[3px] bg-white rounded-full animate-[equalizer_0.8s_ease-in-out_infinite_0.4s] h-3"></div>
                   </>
                 ) : (
-                  <Volume2 className="w-5 h-5 text-emerald-400" />
+                  <Volume2 className="w-5 h-5 text-white" />
                 )}
               </div>
             )}
@@ -703,13 +703,13 @@ return () => {
             >
               <span className="whitespace-nowrap truncate leading-tight">By {safeAuthor.name}</span>
               {safeAuthor.isVerified && (
-                <CheckCircle className="w-3.5 h-3.5 fill-blue-500 text-black inline shrink-0" />
+                <CheckCircle className="w-3.5 h-3.5 fill-white text-black inline shrink-0" />
               )}
             </button>
 
             {safeAuthor.location && (
               <div className="flex items-center gap-1 text-[11px] font-bold text-white/95 drop-shadow-sm leading-none shrink-0 w-fit">
-                <MapPin className="w-3 h-3 text-pink-500 shrink-0" />
+                <MapPin className="w-3 h-3 text-zinc-300 shrink-0" />
                 <span>{safeAuthor.location}</span>
               </div>
             )}
@@ -768,11 +768,11 @@ return () => {
           <div className="relative group/avatar">
             <button
               onClick={() => onOpenCreator(safeAuthor)}
-              className="w-11 h-11 rounded-full p-0.5 border-2 border-white/30 hover:border-blue-500 overflow-hidden bg-black transition-colors cursor-pointer"
+              className="w-11 h-11 rounded-full p-0.5 border-2 border-white/30 hover:border-white overflow-hidden bg-black transition-colors cursor-pointer"
               title={`View ${safeAuthor.name} Profile`}
             >
               <img
-                src={safeAuthor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor.name || "User")}&background=1a73e8&color=fff`}
+                src={safeAuthor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`}
                 alt={safeAuthor.name}
                 className="w-full h-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
@@ -785,10 +785,10 @@ return () => {
                   triggerHaptic("medium");
                   onToggleFollow(safeAuthor.name);
                 }}
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#1a73e8] text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
                 title="Follow"
               >
-                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <Plus className="w-3.5 h-3.5 stroke-[3] text-zinc-950" />
               </button>
             )}
           </div>

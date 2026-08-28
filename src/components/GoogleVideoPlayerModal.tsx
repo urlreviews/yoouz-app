@@ -301,24 +301,24 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
               <img
                 src={currentReview.author.avatar}
                 alt={currentReview.author.name}
-                className="w-9 h-9 rounded-full object-cover border border-white/30 group-hover:border-[#1a73e8] transition-all"
+                className="w-9 h-9 rounded-full object-cover border border-white/30 group-hover:border-white transition-all"
                 referrerPolicy="no-referrer"
               />
               <div>
-                <h4 className="font-semibold text-sm flex items-center gap-1 group-hover:text-[#8ab4f8] transition-colors">
+                <h4 className="font-semibold text-sm flex items-center gap-1 group-hover:text-zinc-200 transition-colors">
                   {currentReview.author.name}
                   {currentReview.author.isVerified && (
-                    <CheckCircle className="w-3.5 h-3.5 fill-[#1a73e8] text-white" />
+                    <CheckCircle className="w-3.5 h-3.5 fill-white text-black" />
                   )}
                 </h4>
                 <div className="flex items-center gap-1.5 text-[11px] text-zinc-300">
-                  <div className="flex items-center text-[#fbbc04]">
+                  <div className="flex items-center text-amber-400">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
                         className={`w-3 h-3 ${
                           i < currentReview.rating
-                            ? "fill-[#fbbc04] text-[#fbbc04]"
+                            ? "fill-amber-400 text-amber-400"
                             : "text-zinc-500 fill-zinc-500"
                         }`}
                       />
@@ -335,7 +335,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
 
             {/* Dish Badge */}
             {currentReview.dishOrItem && (
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#1a73e8]/90 text-xs font-semibold text-white">
+              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold text-white border border-white/20">
                 <Tag className="w-3 h-3" />
                 <span>{currentReview.dishOrItem}</span>
               </div>
@@ -356,11 +356,11 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
               <div
                 className={`w-11 h-11 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${
                   currentReview.isLiked
-                    ? "bg-[#1a73e8] text-white scale-110"
+                    ? "bg-white text-black scale-110"
                     : "bg-black/50 text-white hover:bg-black/70"
                 }`}
               >
-                <ThumbsUp className={`w-5 h-5 ${currentReview.isLiked ? "fill-white" : ""}`} />
+                <ThumbsUp className={`w-5 h-5 ${currentReview.isLiked ? "fill-black" : ""}`} />
               </div>
               <span className="text-[11px] font-bold mt-1 drop-shadow">
                 {currentReview.likes + (currentReview.isLiked ? 1 : 0)}

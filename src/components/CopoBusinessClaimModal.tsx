@@ -267,7 +267,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
         {/* Top Header */}
         <div className="px-6 py-5 border-b border-zinc-800 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shadow-sm shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-zinc-800 text-white flex items-center justify-center shadow-sm shrink-0 border border-zinc-700">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
@@ -275,7 +275,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                 <h3 className="font-extrabold text-lg text-white font-['Google_Sans',sans-serif]">
                   Verify Business Listing
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-blue-900/30 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-[10px] font-bold text-zinc-300 uppercase tracking-wider border border-zinc-700">
                   Merchant Access
                 </span>
               </div>
@@ -286,7 +286,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-800 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -298,13 +298,13 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
           {/* Target Business Selection Card */}
           <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800/80 flex items-center justify-between">
             <div className="flex items-center gap-3 truncate">
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
                 {targetPlace.name?.charAt(0) || 'B'}
               </div>
               <div className="truncate">
                 <div className="font-bold text-sm text-white flex items-center gap-1.5 truncate">
                   <span>{targetPlace.name}</span>
-                  <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+                  <ShieldCheck className="w-4 h-4 text-zinc-400 shrink-0" />
                 </div>
                 <div className="text-[11px] text-zinc-500 truncate">
                   {targetPlace.address || 'Verified Business Venue'}
@@ -314,7 +314,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
 
             <button
               onClick={() => setShowPlaceSearch(!showPlaceSearch)}
-              className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-bold rounded-xl border border-zinc-800 transition-colors shrink-0 cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 transition-colors shrink-0 cursor-pointer shadow-2xs"
             >
               {showPlaceSearch ? 'Cancel' : 'Switch Venue'}
             </button>
@@ -328,7 +328,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search venue name or address..."
-                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]"
+                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600"
               />
               <div className="max-h-40 overflow-y-auto space-y-1">
                 {filteredPlaces.slice(0, 5).map((p) => (
@@ -339,7 +339,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                       setWebsiteUrl(p.website || '');
                       setShowPlaceSearch(false);
                     }}
-                    className="w-full px-3 py-2 text-left hover:bg-blue-900/30 rounded-xl text-xs flex items-center justify-between transition-colors"
+                    className="w-full px-3 py-2 text-left hover:bg-zinc-800 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer"
                   >
                     <div className="truncate">
                       <span className="font-bold text-zinc-200 block truncate">{p.name}</span>
@@ -358,22 +358,22 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               onClick={() => setActiveTab('email')}
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'email' 
-                  ? 'bg-zinc-900 text-white shadow-sm border border-zinc-800/60' 
-                  : 'text-zinc-500 hover:text-zinc-200'
+                  ? 'bg-zinc-900 text-white shadow-sm border border-zinc-700' 
+                  : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <Mail className="w-4 h-4 text-blue-400" />
+              <Mail className="w-4 h-4 text-zinc-300" />
               <span>Email Verification</span>
             </button>
             <button
               onClick={() => setActiveTab('meta_tag')}
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'meta_tag' 
-                  ? 'bg-zinc-900 text-white shadow-sm border border-zinc-800/60' 
-                  : 'text-zinc-500 hover:text-zinc-200'
+                  ? 'bg-zinc-900 text-white shadow-sm border border-zinc-700' 
+                  : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <Code className="w-4 h-4 text-purple-600" />
+              <Code className="w-4 h-4 text-zinc-300" />
               <span>Website Meta Tag</span>
             </button>
           </div>
@@ -395,7 +395,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                         value={businessEmail}
                         onChange={(e) => setBusinessEmail(e.target.value)}
                         placeholder="e.g. contact@business.com"
-                        className="w-full pl-10 pr-4 py-3 bg-zinc-950 focus:bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8] font-medium"
+                        className="w-full pl-10 pr-4 py-3 bg-zinc-950 focus:bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600 font-medium"
                       />
                     </div>
                     <p className="text-[11px] text-zinc-500 mt-1">
@@ -404,8 +404,8 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                   </div>
 
                   {emailError && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
+                    <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
+                      <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
                       <span>{emailError}</span>
                     </div>
                   )}
@@ -413,7 +413,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                   <button
                     type="submit"
                     disabled={isSendingEmail || !businessEmail}
-                    className="w-full py-3.5 bg-[#1a73e8] hover:bg-[#1557b0] disabled:bg-zinc-300 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3.5 bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {isSendingEmail ? (
                       <>
@@ -431,23 +431,23 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               ) : (
                 /* Step 2: Enter 6-digit code */
                 <div className="space-y-4 animate-in fade-in">
-                  <div className="p-4 bg-blue-900/30/80 border border-blue-200/80 rounded-2xl space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-blue-400">
-                      <Check className="w-4 h-4" />
+                  <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-white">
+                      <Check className="w-4 h-4 text-zinc-300" />
                       <span>Verification Code Sent</span>
                     </div>
                     <p className="text-[11.5px] text-zinc-400 leading-relaxed">
                       We sent a verification code to <strong className="text-white">{businessEmail}</strong>. Enter the 6-digit code below:
                     </p>
                     {previewCode && (
-                      <div className="pt-2 flex items-center justify-between border-t border-blue-200/60">
-                        <span className="text-[10px] text-blue-700 font-bold">Demo Mode Test Code:</span>
+                      <div className="pt-2 flex items-center justify-between border-t border-zinc-800">
+                        <span className="text-[10px] text-zinc-400 font-bold">Demo Mode Test Code:</span>
                         <button
                           type="button"
                           onClick={() => {
                             setOtpCode(previewCode);
                           }}
-                          className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-mono font-bold hover:bg-blue-700 cursor-pointer"
+                          className="px-2 py-0.5 rounded-md bg-zinc-800 text-white text-[10px] font-mono font-bold hover:bg-zinc-700 cursor-pointer border border-zinc-700"
                         >
                           Auto-fill: {previewCode}
                         </button>
@@ -467,13 +467,13 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                         value={otpCode}
                         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                         placeholder="123456"
-                        className="w-full text-center tracking-[8px] font-mono text-xl py-3 bg-zinc-950 focus:bg-zinc-900 border border-zinc-700 rounded-xl text-white focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8] font-bold"
+                        className="w-full text-center tracking-[8px] font-mono text-xl py-3 bg-zinc-950 focus:bg-zinc-900 border border-zinc-700 rounded-xl text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600 font-bold"
                       />
                     </div>
 
                     {emailError && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
+                      <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
+                        <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
                         <span>{emailError}</span>
                       </div>
                     )}
@@ -482,14 +482,14 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setEmailSentSuccess(false)}
-                        className="px-4 py-3 bg-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-zinc-700"
                       >
                         Back
                       </button>
                       <button
                         type="submit"
                         disabled={isVerifyingCode || otpCode.length < 6}
-                        className="flex-1 py-3 bg-[#1a73e8] hover:bg-[#1557b0] disabled:bg-zinc-300 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="flex-1 py-3 bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
                         {isVerifyingCode ? (
                           <>
@@ -514,12 +514,12 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
           {activeTab === 'meta_tag' && (
             <div className="space-y-4">
               <div className="text-xs text-zinc-400 leading-relaxed">
-                Add this verification meta tag to the <code className="text-blue-400 font-mono bg-blue-900/30 px-1 py-0.5 rounded">&lt;head&gt;</code> section of your website homepage:
+                Add this verification meta tag to the <code className="text-zinc-200 font-mono bg-zinc-800 px-1 py-0.5 rounded border border-zinc-700">&lt;head&gt;</code> section of your website homepage:
               </div>
 
               {/* Tag Box with 1-click Copy */}
-              <div className="p-3.5 bg-zinc-900 rounded-2xl text-[11px] font-mono text-zinc-200 border border-zinc-800 relative group select-all">
-                <span className="block pr-12 text-blue-400 break-all">
+              <div className="p-3.5 bg-zinc-950 rounded-2xl text-[11px] font-mono text-zinc-200 border border-zinc-800 relative group select-all">
+                <span className="block pr-12 text-zinc-300 break-all">
                   {expectedTagString}
                 </span>
                 <button
@@ -531,7 +531,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                   }}
                   className="absolute right-2 top-2 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all border border-zinc-700"
                 >
-                  {copiedTag ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedTag ? <Check className="w-3.5 h-3.5 text-zinc-300" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedTag ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
@@ -548,20 +548,20 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     placeholder="https://therusticspoon-nyc.com"
-                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 focus:bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-purple-600 font-medium"
+                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 focus:bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600 font-medium"
                   />
                 </div>
               </div>
 
               {tagError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
+                  <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
                   <span>{tagError}</span>
                 </div>
               )}
 
               {tagSuccess && (
-                <div className="p-3 bg-emerald-900/30 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-700 font-bold">
+                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-white font-bold">
                   <Check className="w-4 h-4 shrink-0" />
                   <span>Website HTML meta tag verified! Unlocking portal...</span>
                 </div>
@@ -571,7 +571,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                 type="button"
                 onClick={handleVerifyWebsiteTag}
                 disabled={isCheckingTag || !websiteUrl}
-                className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 disabled:bg-zinc-300 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isCheckingTag ? (
                   <>

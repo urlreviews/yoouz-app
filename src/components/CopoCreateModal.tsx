@@ -1149,9 +1149,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
         {/* STEP 1: PLACE & RATING SELECTION (Responsive Light/Dark) */}
         {step === 1 && selectedPlace && (
-          <div className="flex flex-col h-full w-full bg-zinc-950 md:bg-white relative z-[260]">
+          <div className="flex flex-col h-full w-full bg-zinc-950 md:bg-zinc-900 relative z-[260]">
             {/* Step 1 Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 md:border-zinc-200 bg-zinc-900/50 md:bg-zinc-50/80 backdrop-blur-sm shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 md:border-zinc-800 bg-zinc-900/50 md:bg-zinc-950/80 backdrop-blur-sm shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-900/25">
                   <Video className="w-5 h-5 stroke-[2.5]" />
@@ -1159,12 +1159,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 <div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h2 className="text-lg font-bold text-white md:text-zinc-900">Record Video Review</h2>
+                      <h2 className="text-lg font-bold text-white md:text-white">Record Video Review</h2>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/20 md:bg-blue-100 text-blue-400 md:text-blue-700 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
                         Step 1 of 2
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 font-medium">
+                    <p className="text-xs text-zinc-400 md:text-zinc-400 font-medium">
                       Rate your experience & proceed to camera
                     </p>
                   </div>
@@ -1172,7 +1172,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="w-9 h-9 rounded-full bg-zinc-800 md:bg-zinc-200 hover:bg-zinc-700 md:hover:bg-zinc-300 flex items-center justify-center text-zinc-300 md:text-zinc-600 transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-full bg-zinc-800 md:bg-zinc-200 hover:bg-zinc-700 md:hover:bg-zinc-300 flex items-center justify-center text-zinc-300 md:text-zinc-400 transition-colors cursor-pointer"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -1190,29 +1190,29 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
               {/* Responsive Place Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-100 md:text-zinc-800 flex items-center gap-1.5">
+                <label className="text-sm font-bold text-zinc-100 md:text-zinc-200 flex items-center gap-1.5">
                   <MapPin className="w-4 h-4 text-blue-500" />
                   <span>Selected Business</span>
                 </label>
                 
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-blue-900/10 md:bg-blue-50/50 border border-blue-500/20 md:border-blue-200 shadow-lg md:shadow-sm">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-blue-900/10 md:bg-blue-950/40/50 border border-blue-500/20 md:border-blue-200 shadow-lg ">
                   <CopoBrandLogo
                     domain={selectedPlace.brandDomain}
                     name={selectedPlace.name}
                     website={selectedPlace.website}
                     logoUrl={selectedPlace.logoUrl || selectedPlace.avatarUrl}
                     bannerUrl={selectedPlace.bannerUrl || selectedPlace.ogImage}
-                    className="w-14 h-14 rounded-xl border border-zinc-800 md:border-zinc-200 bg-white overflow-hidden flex items-center justify-center p-1 shrink-0"
+                    className="w-14 h-14 rounded-xl border border-zinc-800 md:border-zinc-800 bg-white overflow-hidden flex items-center justify-center p-1 shrink-0"
                     imageClassName="w-full h-full object-contain rounded-lg"
                     fallbackTextClassName="font-bold text-xl text-zinc-900"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-white md:text-zinc-900 text-sm truncate">{formatBusinessName(selectedPlace.name)}</h4>
-                    <p className="text-xs text-zinc-400 md:text-zinc-500 truncate">{selectedPlace.brandDomain || selectedPlace.website || selectedPlace.address || selectedPlace.city}</p>
+                    <h4 className="font-bold text-white md:text-white text-sm truncate">{formatBusinessName(selectedPlace.name)}</h4>
+                    <p className="text-xs text-zinc-400 md:text-zinc-400 truncate">{selectedPlace.brandDomain || selectedPlace.website || selectedPlace.address || selectedPlace.city}</p>
                   </div>
                   <button
                     onClick={() => setSelectedPlace(null)}
-                    className="shrink-0 text-xs font-bold text-blue-400 md:text-blue-600 hover:text-blue-300 md:hover:text-blue-700 px-3 py-2 bg-zinc-900 md:bg-white rounded-xl border border-zinc-800 md:border-zinc-200 hover:border-zinc-700 md:hover:border-zinc-300 transition-all cursor-pointer shadow-sm"
+                    className="shrink-0 text-xs font-bold text-zinc-300 hover:text-white px-3 py-2 bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer shadow-sm"
                   >
                     Change
                   </button>
@@ -1220,15 +1220,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               </div>
 
               {/* Star Rating Section */}
-              <div className="p-6 rounded-3xl bg-zinc-900 md:bg-zinc-50 border border-zinc-800 md:border-zinc-200 space-y-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="p-6 rounded-3xl bg-zinc-900 md:bg-zinc-950 border border-zinc-800 md:border-zinc-800 space-y-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center justify-between">
                   <div className="text-left">
-                    <h3 className="text-sm font-bold text-white md:text-zinc-900">Your Rating</h3>
-                    <p className="text-[11px] text-zinc-500 md:text-zinc-500 font-medium">Tap stars to rate your experience</p>
+                    <h3 className="text-sm font-bold text-white md:text-white">Your Rating</h3>
+                    <p className="text-[11px] text-zinc-500 md:text-zinc-400 font-medium">Tap stars to rate your experience</p>
                   </div>
                   <div className={`px-3 py-1.5 rounded-full font-black text-[9px] uppercase tracking-[0.1em] transition-all duration-300 ${
                     rating === 0
-                      ? "bg-zinc-800 md:bg-zinc-200 text-zinc-500 md:text-zinc-500 border border-zinc-700 md:border-zinc-300"
+                      ? "bg-zinc-800 md:bg-zinc-200 text-zinc-500 md:text-zinc-400 border border-zinc-700 md:border-zinc-700"
                       : "bg-amber-500/20 md:bg-amber-100 text-amber-400 md:text-amber-600 border border-amber-500/30 md:border-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
                   }`}>
                     {rating === 0 ? "Select Star Rating" : getRatingLabel(rating)}
@@ -1257,10 +1257,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             </div>
 
             {/* Step 1 Footer */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800 md:border-zinc-200 bg-zinc-900 md:bg-white shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800 md:border-zinc-800 bg-zinc-900 md:bg-zinc-900 shrink-0">
               <button
                 onClick={() => setSelectedPlace(null)}
-                className="px-4 py-2.5 rounded-xl text-zinc-400 md:text-zinc-500 hover:bg-zinc-800 md:hover:bg-zinc-100 font-bold text-sm transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-zinc-400 md:text-zinc-400 hover:bg-zinc-800 md:hover:bg-zinc-800 font-bold text-sm transition-colors cursor-pointer"
               >
                 Back
               </button>
@@ -1278,7 +1278,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   setStep(2);
                   startCamera();
                 }}
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-lg shadow-blue-900/30 transition-all cursor-pointer flex items-center gap-2 active:scale-95 group"
+                className="px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-sm shadow-lg transition-all cursor-pointer flex items-center gap-2 active:scale-95 group"
               >
                 <span>Proceed to Camera</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -1374,15 +1374,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   <button
                     type="button"
                     onClick={togglePlay}
-                    className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-[#1a73e8] text-white flex items-center justify-center shadow-2xl transition-all pointer-events-auto cursor-pointer border-2 border-white/30 hover:scale-110 active:scale-90 ${
+                    className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-white text-black flex items-center justify-center shadow-2xl transition-all pointer-events-auto cursor-pointer border-2 border-white/30 hover:scale-110 active:scale-90 ${
                       isPlaying ? "opacity-0 hover:opacity-80" : "opacity-100 scale-100"
                     }`}
                     title={isPlaying ? "Pause" : "Play Recording"}
                   >
                     {isPlaying ? (
-                      <Pause className="w-8 h-8 fill-white" />
+                      <Pause className="w-8 h-8 fill-black" />
                     ) : (
-                      <Play className="w-8 h-8 fill-white ml-1" />
+                      <Play className="w-8 h-8 fill-black ml-1" />
                     )}
                   </button>
                 </div>
@@ -1404,7 +1404,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                           playbackVideoRef.current.currentTime = time;
                         }
                       }}
-                      className="w-full h-1.5 bg-white/30 rounded-lg appearance-none cursor-pointer accent-[#1a73e8]"
+                      className="w-full h-1.5 bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
                     />
                   </div>
 
@@ -1438,17 +1438,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
                   {/* Upload Progress Bar (when publishing) */}
                   {isPublishing && (
-                    <div className="w-full space-y-1.5 bg-black/60 p-3 rounded-2xl border border-white/10">
+                    <div className="w-full space-y-1.5 bg-zinc-900 p-3 rounded-2xl border border-zinc-800">
                       <div className="flex justify-between text-xs font-bold text-white">
                         <span className="flex items-center gap-2">
-                          <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                           Publishing authentic review...
                         </span>
                         <span>{uploadProgress}%</span>
                       </div>
                       <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300 rounded-full"
+                          className="h-full bg-white transition-all duration-300 rounded-full"
                           style={{ width: `${uploadProgress}%` }}
                         />
                       </div>
@@ -1471,13 +1471,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       type="button"
                       onClick={handlePublish}
                       disabled={isPublishing || (!recordedVideoBlob && !recordedVideoUrl)}
-                      className={`flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-[#1a73e8] to-[#1557b0] hover:from-[#1557b0] hover:to-[#0d47a1] text-white font-bold text-sm shadow-xl shadow-blue-500/30 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 ${
+                      className={`flex-1 py-3.5 rounded-2xl bg-white hover:bg-zinc-200 text-black font-bold text-sm shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 ${
                         isPublishing ? "opacity-60 cursor-not-allowed" : ""
                       }`}
                     >
                       {isPublishing ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                           <span>Publishing live...</span>
                         </>
                       ) : (
@@ -1587,7 +1587,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 {countdown !== null && (
                   <div className="absolute inset-0 bg-black/70 backdrop-blur-md flex flex-col items-center justify-center z-40 animate-fadeIn select-none">
                     <p className="text-white font-bold text-sm uppercase tracking-widest mb-3">Get Ready!</p>
-                    <div className="w-24 h-24 rounded-full bg-[#1a73e8] text-white flex items-center justify-center text-5xl font-black shadow-2xl animate-bounce">
+                    <div className="w-24 h-24 rounded-full bg-white text-zinc-950 flex items-center justify-center text-5xl font-black shadow-2xl animate-bounce">
                       {countdown}
                     </div>
                   </div>
@@ -1607,7 +1607,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 {!cameraActive && !recordedVideoUrl && countdown === null && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-black z-20">
                     <div className="flex flex-col items-center gap-4">
-                      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm font-bold tracking-wide">Starting secure camera...</p>
                     </div>
                   </div>

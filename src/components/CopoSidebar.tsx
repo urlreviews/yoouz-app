@@ -62,7 +62,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
       {/* 1. Desktop Left Sidebar (Expanded - lg and above) */}
       <aside
         id="copo-desktop-sidebar"
-        className="hidden lg:flex flex-col w-64 h-[100dvh] shrink-0 bg-white border-r border-zinc-200 px-4 py-6 justify-between select-none z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]"
+        className="hidden lg:flex flex-col w-64 h-[100dvh] shrink-0 bg-zinc-950 border-r border-zinc-800/80 px-4 py-6 justify-between select-none z-30 shadow-none text-white"
       >
         <div className="flex flex-col gap-6">
           {/* Official Yoouz Logo */}
@@ -71,21 +71,21 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             onClick={() => onSelectSection("home")}
             className="flex items-center gap-3 px-3 py-2 cursor-pointer group"
           >
-            <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-[#1a73e8] shadow-[0_4px_12px_rgba(26,115,232,0.35)] group-hover:shadow-[0_6px_16px_rgba(26,115,232,0.45)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-white/10">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+            <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white shadow-[0_4px_16px_rgba(255,255,255,0.15)] group-hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-white/20">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
             <div className="flex flex-col justify-center pt-0.5 min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-zinc-900 text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+                <span className="text-white text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
                   Yoouz
                 </span>
-                <span className="px-1.5 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[9px] text-[#1a73e8] font-black uppercase tracking-wider scale-90 origin-left">
+                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-300 font-black uppercase tracking-wider scale-90 origin-left">
                   Beta
                 </span>
               </div>
-              <span className="text-[11.5px] text-zinc-500 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
+              <span className="text-[11.5px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
                 Real People. Real Reviews.
               </span>
             </div>
@@ -105,12 +105,12 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     key={item.id}
                     id={`nav-btn-${item.id}`}
                     onClick={() => onSelectSection(item.id)}
-                    className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full font-medium text-[15px] transition-all duration-150 text-left cursor-pointer ${
+                    className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full font-medium text-[15px] transition-all duration-150 text-left cursor-pointer group ${
                       item.isDarkBlue
-                        ? "bg-[#1a73e8] text-white hover:bg-[#1557b0] shadow-md shadow-[#1a73e8]/25 font-semibold my-1 mt-4"
+                        ? "bg-white text-zinc-950 hover:bg-zinc-200 shadow-md shadow-white/10 font-bold my-1 mt-4 active:scale-95"
                         : isActive
-                        ? "bg-[#e8f0fe] text-[#1a73e8] font-semibold"
-                        : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
+                        ? "bg-zinc-900 border border-zinc-800 text-white font-bold shadow-xs"
+                        : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
                     }`}
                   >
                     <div className="relative flex items-center justify-center">
@@ -119,19 +119,19 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                           src={currentUser!.avatar}
                           alt={currentUser!.name || "Profile"}
                           className={`w-5 h-5 rounded-full object-cover shrink-0 ring-1.5 ${
-                            isActive ? "ring-[#1a73e8]" : "ring-zinc-300"
+                            isActive ? "ring-white" : "ring-zinc-700"
                           }`}
                           referrerPolicy="no-referrer"
                         />
                       ) : (
                         <Icon
-                          className={`w-5 h-5 shrink-0 ${
-                            item.isDarkBlue ? "text-white" : isActive ? "text-[#1a73e8]" : "text-zinc-500"
+                          className={`w-5 h-5 shrink-0 transition-colors ${
+                            item.isDarkBlue ? "text-zinc-950" : isActive ? "text-white" : "text-zinc-400 group-hover:text-white"
                           }`}
                         />
                       )}
                       {item.hasDot && (
-                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#1a73e8] ring-2 ring-white" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
                       )}
                     </div>
                     <span className="truncate flex-1">
@@ -139,7 +139,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     </span>
                     
                     {item.badge && item.badge > 0 ? (
-                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-[#1a73e8] text-white">
+                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
                         {item.badge}
                       </span>
                     ) : null}
@@ -151,13 +151,13 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
         </div>
 
         {/* Footer & Social Media Channels */}
-        <div className="px-3 pt-4 border-t border-zinc-200 text-xs text-zinc-500 flex flex-col gap-3">
+        <div className="px-3 pt-4 border-t border-zinc-800/80 text-xs text-zinc-400 flex flex-col gap-3">
           <div className="flex items-center gap-1.5">
             <a
               href="https://youtube.com"
               target="_blank"
               rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-50 hover:bg-red-50 border border-zinc-200 hover:border-red-200 text-zinc-500 hover:text-red-600 flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
+              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
               title="YouTube"
             >
               <Youtube className="w-3.5 h-3.5" strokeWidth={2} />
@@ -166,7 +166,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               href="https://x.com"
               target="_blank"
               rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-400 text-zinc-600 hover:text-zinc-950 flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
+              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
               title="X"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
@@ -177,7 +177,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               href="https://tiktok.com"
               target="_blank"
               rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-400 text-zinc-600 hover:text-zinc-950 flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
+              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
               title="TikTok"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
@@ -188,7 +188,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               href="https://instagram.com"
               target="_blank"
               rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-50 hover:bg-pink-50 border border-zinc-200 hover:border-pink-200 text-zinc-500 hover:text-pink-600 flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
+              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
               title="Instagram"
             >
               <Instagram className="w-3.5 h-3.5" strokeWidth={2} />
@@ -197,7 +197,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               href="https://linkedin.com"
               target="_blank"
               rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-50 hover:bg-blue-50 border border-zinc-200 hover:border-blue-200 text-zinc-500 hover:text-[#0077b5] flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
+              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
               title="LinkedIn"
             >
               <Linkedin className="w-3.5 h-3.5" strokeWidth={2} />
@@ -206,43 +206,43 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               href="https://facebook.com"
               target="_blank"
               rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-50 hover:bg-blue-50 border border-zinc-200 hover:border-blue-200 text-zinc-500 hover:text-[#1877f2] flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
+              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
               title="Facebook"
             >
               <Facebook className="w-3.5 h-3.5" strokeWidth={2} />
             </a>
           </div>
-          <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-zinc-400">
+          <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-zinc-500">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
-              className="hover:text-zinc-600 transition-colors cursor-pointer bg-transparent border-none p-0"
+              className="hover:text-zinc-300 transition-colors cursor-pointer bg-transparent border-none p-0"
             >
               Privacy
             </button>
             <span>•</span>
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : onSelectSection("more")}
-              className="hover:text-zinc-600 transition-colors cursor-pointer bg-transparent border-none p-0"
+              className="hover:text-zinc-300 transition-colors cursor-pointer bg-transparent border-none p-0"
             >
               Terms
             </button>
           </div>
-          <p className="text-[11px] text-zinc-400">© 2026 Yoouz • All rights reserved.</p>
+          <p className="text-[11px] text-zinc-500">© 2026 Yoouz • All rights reserved.</p>
         </div>
       </aside>
 
       {/* 2. Tablet Left Rail (Collapsed - md to lg) */}
       <aside
         id="copo-tablet-rail"
-        className="hidden md:flex lg:hidden flex-col w-[76px] h-[100dvh] shrink-0 bg-white border-r border-zinc-200 py-6 items-center justify-between select-none z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]"
+        className="hidden md:flex lg:hidden flex-col w-[76px] h-[100dvh] shrink-0 bg-zinc-950 border-r border-zinc-800/80 py-6 items-center justify-between select-none z-30 shadow-none text-white"
       >
         <div className="flex flex-col gap-6 items-center w-full">
           {/* Logo Icon Only */}
           <div
             onClick={() => onSelectSection("home")}
-            className="flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-[#1a73e8] shadow-[0_4px_12px_rgba(26,115,232,0.35)] cursor-pointer hover:-translate-y-0.5 transition-all duration-300"
+            className="flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white shadow-[0_4px_16px_rgba(255,255,255,0.15)] cursor-pointer hover:-translate-y-0.5 transition-all duration-300 border border-white/20"
           >
-            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>
@@ -262,10 +262,10 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     onClick={() => onSelectSection(item.id)}
                     className={`relative flex items-center justify-center w-12 h-12 mx-auto rounded-full transition-all duration-150 cursor-pointer ${
                       item.isDarkBlue
-                        ? "bg-[#1a73e8] hover:bg-[#1557b0] text-white shadow-md shadow-[#1a73e8]/25 my-1 mt-4"
+                        ? "bg-white hover:bg-zinc-200 text-zinc-950 shadow-md shadow-white/10 my-1 mt-4"
                         : isActive
-                        ? "bg-[#e8f0fe]"
-                        : "hover:bg-zinc-100"
+                        ? "bg-zinc-800 text-white shadow-xs"
+                        : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
                     }`}
                     title={item.label}
                   >
@@ -275,23 +275,23 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                           src={currentUser!.avatar}
                           alt={currentUser!.name || "Profile"}
                           className={`w-7 h-7 rounded-full object-cover shrink-0 ring-2 ${
-                            isActive ? "ring-[#1a73e8]" : "ring-zinc-300"
+                            isActive ? "ring-white" : "ring-zinc-700"
                           }`}
                           referrerPolicy="no-referrer"
                         />
                       ) : (
                         <Icon
                           className={`w-[22px] h-[22px] shrink-0 ${
-                            item.isDarkBlue ? "text-white" : isActive ? "text-[#1a73e8]" : "text-zinc-500"
+                            item.isDarkBlue ? "text-zinc-950" : isActive ? "text-white" : "text-zinc-400"
                           }`}
                         />
                       )}
                       {item.hasDot && (
-                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#1a73e8] ring-2 ring-white" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
                       )}
                     </div>
                     {item.badge && item.badge > 0 ? (
-                      <span className="absolute -top-1 -right-1 min-w[18px] h-[18px] flex items-center justify-center px-1 text-[9px] font-bold rounded-full bg-[#1a73e8] text-white ring-2 ring-white">
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[9px] font-bold rounded-full bg-zinc-800 text-white border border-zinc-700 ring-2 ring-zinc-950">
                         {item.badge > 9 ? "9+" : item.badge}
                       </span>
                     ) : null}
@@ -346,7 +346,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             }}
             className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "search" || activeSection === "discover"
-                ? "text-[#38bdf8]"
+                ? "text-white"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -354,7 +354,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               <Search
                 className={`w-[22px] h-[22px] transition-transform duration-200 ${
                   activeSection === "search" || activeSection === "discover"
-                    ? "scale-110 stroke-[2.5] text-[#38bdf8]"
+                    ? "scale-110 stroke-[2.5] text-white"
                     : "stroke-[1.8] text-zinc-400"
                 }`}
               />
@@ -362,7 +362,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             <span
               className={`text-[10px] tracking-tight mt-1 ${
                 activeSection === "search" || activeSection === "discover"
-                  ? "font-bold text-[#38bdf8]"
+                  ? "font-bold text-white"
                   : "font-medium text-zinc-400"
               }`}
             >
@@ -382,10 +382,9 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 }
               }}
               aria-label="Record 60-Second Video Review"
-              className="group relative flex items-center justify-center w-[52px] h-[52px] rounded-full bg-gradient-to-tr from-[#1a73e8] via-[#2b83fc] to-[#4285f4] text-white shadow-[0_8px_20px_rgba(26,115,232,0.5)] border-[3px] border-zinc-950 active:scale-95 transition-all duration-200 hover:shadow-[0_10px_25px_rgba(26,115,232,0.65)] cursor-pointer"
+              className="group relative flex items-center justify-center w-[52px] h-[52px] rounded-full bg-white text-zinc-950 shadow-[0_8px_20px_rgba(255,255,255,0.2)] border-[3px] border-zinc-950 active:scale-95 transition-all duration-200 hover:bg-zinc-200 cursor-pointer"
             >
-              <div className="absolute inset-0 rounded-full bg-white opacity-0 group-active:opacity-20 transition-opacity" />
-              <Video className="w-[24px] h-[24px] stroke-[2.2] animate-pulse" />
+              <Video className="w-[24px] h-[24px] stroke-[2.2] text-zinc-950" />
             </button>
             <span className="text-[9px] tracking-tight mt-1 font-bold text-zinc-300">
               Record
@@ -398,7 +397,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             onClick={() => onSelectSection("messages")}
             className={`relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "messages" || activeSection === "notifications"
-                ? "text-[#38bdf8]"
+                ? "text-white"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -406,12 +405,12 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               <Mail
                 className={`w-[22px] h-[22px] transition-transform duration-200 ${
                   activeSection === "messages" || activeSection === "notifications"
-                    ? "scale-110 stroke-[2.5] text-[#38bdf8]"
+                    ? "scale-110 stroke-[2.5] text-white"
                     : "stroke-[1.8] text-zinc-400"
                 }`}
               />
               {(unreadMessagesCount + unreadNotifsCount) > 0 && (
-                <span className="absolute -top-1 -right-2 min-w-[17px] h-[17px] flex items-center justify-center px-1 text-[9px] font-extrabold rounded-full bg-red-500 text-white border-2 border-zinc-950 shadow-sm animate-in zoom-in-75">
+                <span className="absolute -top-1 -right-2 min-w-[17px] h-[17px] flex items-center justify-center px-1 text-[9px] font-extrabold rounded-full bg-white text-zinc-950 border-2 border-zinc-950 shadow-sm animate-in zoom-in-75">
                   {(unreadMessagesCount + unreadNotifsCount) > 9 ? "9+" : (unreadMessagesCount + unreadNotifsCount)}
                 </span>
               )}
@@ -419,7 +418,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             <span
               className={`text-[10px] tracking-tight mt-1 ${
                 activeSection === "messages" || activeSection === "notifications"
-                  ? "font-bold text-[#38bdf8]"
+                  ? "font-bold text-white"
                   : "font-medium text-zinc-400"
               }`}
             >
@@ -433,7 +432,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             onClick={() => onSelectSection("profile")}
             className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "profile" || activeSection === "more"
-                ? "text-[#38bdf8]"
+                ? "text-white"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -443,7 +442,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 alt={currentUser.name || "Profile"}
                 className={`w-[22px] h-[22px] rounded-full object-cover ring-2 transition-all ${
                   activeSection === "profile" || activeSection === "more"
-                    ? "ring-[#38bdf8] scale-110"
+                    ? "ring-white scale-110"
                     : "ring-zinc-700"
                 }`}
                 referrerPolicy="no-referrer"
@@ -452,14 +451,14 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               <User
                 className={`w-[22px] h-[22px] transition-transform duration-200 ${
                   activeSection === "profile" || activeSection === "more"
-                    ? "scale-110 stroke-[2.5] text-[#38bdf8]"
+                    ? "scale-110 stroke-[2.5] text-white"
                     : "stroke-[1.8] text-zinc-400"
                 }`}
               />
             )}
             <span
               className={`text-[10px] tracking-tight mt-1 ${
-                activeSection === "profile" || activeSection === "more" ? "font-bold text-[#38bdf8]" : "font-medium text-zinc-400"
+                activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-400"
               }`}
             >
               {currentUser?.name ? currentUser.name.split(" ")[0] : "Profile"}

@@ -77,10 +77,10 @@ export const GlobalUploadToast: React.FC = () => {
             {up.isError ? (
               <XCircle className="w-8 h-8 text-red-500" />
             ) : up.isComplete ? (
-              <CheckCircle className="w-8 h-8 text-emerald-500" />
+              <CheckCircle className="w-8 h-8 text-white" />
             ) : (
               <div className="relative flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
                 <Video className="w-3 h-3 text-white absolute" />
               </div>
             )}
@@ -91,7 +91,7 @@ export const GlobalUploadToast: React.FC = () => {
                 {up.isError ? "Upload Failed" : up.isComplete ? "Published!" : "Uploading Video"}
               </p>
               {!up.isComplete && !up.isError && (
-                <span className="text-xs font-medium text-blue-400">{up.percent}%</span>
+                <span className="text-xs font-medium text-zinc-300">{up.percent}%</span>
               )}
             </div>
             <p className="text-xs text-zinc-400 truncate">{up.statusText}</p>
@@ -99,7 +99,7 @@ export const GlobalUploadToast: React.FC = () => {
             {!up.isComplete && !up.isError && (
               <div className="w-full h-1.5 bg-zinc-800 rounded-full mt-2 overflow-hidden">
                 <div 
-                  className="h-full bg-blue-500 transition-all duration-300 ease-out rounded-full"
+                  className="h-full bg-white transition-all duration-300 ease-out rounded-full"
                   style={{ width: `${up.percent}%` }}
                 />
               </div>

@@ -56,12 +56,12 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
     >
       {/* Left Search Bar matching Google Maps UI */}
       <div className="flex items-center gap-2 pointer-events-auto w-full md:w-[412px]">
-        <div className="w-full h-12 bg-white rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.2),0_-1px_0px_rgba(0,0,0,0.02)] flex items-center px-3 border border-transparent hover:border-gray-200 focus-within:border-blue-500 transition-all">
+        <div className="w-full h-12 bg-zinc-900 rounded-2xl shadow-xl flex items-center px-3 border border-zinc-800 hover:border-zinc-700 focus-within:border-white transition-all">
           {/* Hamburger or Back Arrow */}
           <button
             id="btn-google-menu"
             onClick={onToggleSidebar}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[#5f6368] hover:bg-gray-100 transition-colors shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
             title={isSidebarOpen ? "Collapse panel" : "Menu"}
           >
             {isSidebarOpen ? (
@@ -80,26 +80,26 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Paste business website URL..."
-            className="flex-1 bg-transparent text-[#202124] text-[15px] font-normal px-3 outline-none placeholder-[#70757a]"
+            className="flex-1 bg-transparent text-white text-[15px] font-normal px-3 outline-none placeholder-zinc-500"
           />
 
           {/* Clear X button if typed */}
           {searchQuery && (
             <button
               onClick={() => onSearchChange("")}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[#5f6368] hover:bg-gray-100 transition-colors"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           )}
 
           {/* Vertical divider */}
-          <div className="h-6 w-[1px] bg-[#dadce0] mx-1" />
+          <div className="h-6 w-[1px] bg-zinc-800 mx-1" />
 
           {/* Search Glass Button */}
           <button
             id="btn-search-trigger"
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[#1a73e8] hover:bg-blue-50 transition-colors shrink-0"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white hover:bg-zinc-800 transition-colors shrink-0"
             title="Search"
           >
             <Search className="w-5 h-5" />
@@ -109,10 +109,10 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
           <button
             id="btn-google-directions"
             onClick={onOpenDirections}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[#1a73e8] hover:bg-blue-50 transition-colors shrink-0"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white hover:bg-zinc-800 transition-colors shrink-0"
             title="Directions"
           >
-            <Navigation className="w-5 h-5 fill-[#1a73e8]" />
+            <Navigation className="w-5 h-5 fill-white" />
           </button>
         </div>
       </div>
@@ -126,13 +126,13 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
               key={pill.id}
               id={`pill-${pill.id}`}
               onClick={() => onSelectFilter(isSelected ? "all" : pill.id)}
-              className={`h-9 px-3.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 shadow-sm transition-all whitespace-nowrap border ${
+              className={`h-9 px-3.5 rounded-full text-[13px] font-bold flex items-center gap-1.5 shadow-sm transition-all whitespace-nowrap border ${
                 isSelected
-                  ? "bg-[#1a73e8] text-white border-[#1a73e8]"
-                  : "bg-white text-[#3c4043] border-[#dadce0] hover:bg-[#f8f9fa] hover:border-[#bdc1c6]"
+                  ? "bg-white text-black border-white"
+                  : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 hover:text-white"
               }`}
             >
-              <span className={isSelected ? "text-white" : "text-[#5f6368]"}>{pill.icon}</span>
+              <span className={isSelected ? "text-black" : "text-zinc-400"}>{pill.icon}</span>
               <span>{pill.label}</span>
             </button>
           );
@@ -143,20 +143,20 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
       <div className="flex items-center gap-2 pointer-events-auto shrink-0">
         <button
           onClick={onOpenRecord}
-          className="hidden sm:flex items-center gap-1.5 h-10 px-3.5 rounded-full bg-white border border-[#dadce0] text-[#1a73e8] hover:bg-blue-50 text-[13px] font-medium shadow-sm transition-all"
+          className="hidden sm:flex items-center gap-1.5 h-10 px-3.5 rounded-full bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 text-[13px] font-bold shadow-sm transition-all"
         >
-          <Camera className="w-4 h-4 text-[#1a73e8]" />
+          <Camera className="w-4 h-4 text-white" />
           <span>Record Video Review</span>
         </button>
 
-        <div className="w-10 h-10 rounded-full bg-white border border-[#dadce0] flex items-center justify-center text-[#5f6368] hover:bg-gray-50 shadow-sm cursor-pointer">
+        <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 shadow-sm cursor-pointer">
           <Grid className="w-5 h-5" />
         </div>
 
         {/* User Google Avatar 'J' */}
         <div
           id="google-user-avatar"
-          className="w-10 h-10 rounded-full bg-[#e37400] border-2 border-white text-white font-medium text-base flex items-center justify-center shadow-md cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all"
+          className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 text-white font-bold text-base flex items-center justify-center shadow-md cursor-pointer hover:border-white transition-all"
           title="Google Account: 4samet@gmail.com"
         >
           J
