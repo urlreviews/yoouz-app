@@ -1,0 +1,6 @@
+            {/* Business Dashboard View */}
+            {activeSection === "business" && (
+              <CopoBusinessDashboardView 
+                onNavigate={setActiveSection}
+              />
+            )}

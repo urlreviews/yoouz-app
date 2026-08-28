@@ -1,0 +1,201 @@
+
+                          <textarea
+                            value={inviteBodyText}
+                            onChange={(e) => setInviteBodyText(e.target.value)}
+                            rows={3}
+                            placeholder="Type the message sent to your customers..."
+                            className="w-full bg-white border border-zinc-300 rounded-xl p-3 text-xs text-zinc-800 leading-relaxed focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]/20 focus:border-[#1a73e8]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Interactive Customer Email Invite Preview */}
+                      <div>
+                        <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                          <span>Live Invitation Template Preview</span>
+                          <span className="text-[#1a73e8] font-extrabold">From: invites@yoouz.com</span>
+                        </div>
+
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-zinc-200/90 text-xs space-y-3 font-sans">
+                          <div className="border-b border-zinc-200 pb-2 flex items-center justify-between">
+                            <div>
+                              <span className="text-zinc-400 text-[10px]">Subject: </span>
+                              <span className="font-bold text-zinc-800">{inviteSubject || `How was your experience with ${currentPlace.name}?`}</span>
+                            </div>
+                            <span className="text-[9px] bg-blue-100 text-[#1a73e8] font-bold px-2 py-0.5 rounded-md">
+                              Live Preview
+                            </span>
+                          </div>
+
+                          <div className="bg-white rounded-xl p-4 border border-zinc-200/80 space-y-3 shadow-2xs">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-[#1a73e8] text-white flex items-center justify-center font-bold text-xs">
+                                ★
+                              </div>
+                              <div>
+                                <div className="font-bold text-zinc-900 text-xs">{currentPlace.name}</div>
+                                <div className="text-[10px] text-zinc-400">Official Customer Feedback Portal</div>
+                              </div>
+                            </div>
+
+                            {/* Greeting Indicator Notice */}
+                            {inviteGreetingStyle === 'smart_tag' && (
+                              <div className="text-[10px] font-semibold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1.5">
+                                <span className="font-bold">Dynamic Name Tag:</span>
+                                <span>"Hi Sarah," shown below as sample. Replaced with customer's real first name or "Hi there," automatically.</span>
+                              </div>
+                            )}
+
+                            <p className="text-zinc-700 text-[11px] leading-relaxed">
+                              {inviteGreetingStyle === 'smart_tag' && <strong className="text-zinc-900 font-bold">Hi Sarah, </strong>}
+                              {inviteGreetingStyle === 'generic' && <strong className="text-zinc-900 font-bold">Hello, </strong>}
+                              {inviteBodyText
+                                .replace(/\{business_name\}/g, currentPlace.name)
+                                .replace(/\{first_name\}/g, 'Sarah') || `Thank you for choosing ${currentPlace.name}! Tap below to record your 60-second video review.`}
+                            </p>
+
+                            {/* Incentive Option Toggle */}
+                            {includeIncentive && (
+                              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                                <span>{incentiveText}</span>
+                              </div>
+                            )}
+
+                            <div className="pt-1">
+                              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1a73e8] text-white font-bold text-xs shadow-sm">
+                                <Video className="w-3.5 h-3.5" />
+                                Record 60s Video Review
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Incentive Config Toggle */}
+                      <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2">
+                        <label className="flex items-center justify-between cursor-pointer">
+                          <span className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                            Include Customer Perk / Discount Note
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={includeIncentive}
+                            onChange={(e) => setIncludeIncentive(e.target.checked)}
+                            className="w-4 h-4 text-[#1a73e8] rounded-md border-zinc-300 focus:ring-[#1a73e8]"
+                          />
+                        </label>
+                        {includeIncentive && (
+                          <input
+                            type="text"
+                            value={incentiveText}
+                            onChange={(e) => setIncentiveText(e.target.value)}
+                            className="w-full bg-white border border-zinc-300 rounded-lg p-2 text-xs text-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-amber-500/20"
+                          />
+                        )}
+                      </div>
+
+                      {/* Dispatch Action Buttons */}
+                      {inviteChannel === 'email' ? (
+                        <div className="space-y-3">
+                          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                            <div className="flex items-start gap-3">
+                              <Mail className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                              <div>
+                                <h4 className="text-sm font-bold text-blue-900 leading-tight mb-1">Send from your own email</h4>
+                                <p className="text-xs text-blue-800/80 leading-relaxed">
+                                  To ensure 100% deliverability and avoid spam folders, we recommend sending these templates directly from your own business email account (like Gmail or Outlook).
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {emailSendResult && (
+                            <div className="p-3 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span>{emailSendResult.message}</span>
+                            </div>
+                          )}
+
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                              type="button"
+                              onClick={handleCopyTemplate}
+                              className="flex-1 py-3 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800"
+                            >
+                              <Copy className="w-4 h-4" />
+                              Copy Email Template
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleOpenEmailClient}
+                              className="flex-1 py-3 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer bg-zinc-900 hover:bg-black text-white"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Open in Email App
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-xs font-bold text-zinc-700">
+                              Phone Numbers for WhatsApp / SMS
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setCustomerEmails('+12125550199, +12125550188')}
+                              className="text-[10px] font-bold text-[#1a73e8] hover:underline cursor-pointer"
+                            >
+                              + Paste Sample List
+                            </button>
+                          </div>
+
+                          <textarea
+                            value={customerEmails}
+                            onChange={(e) => setCustomerEmails(e.target.value)}
+                            placeholder="+12125550199, +12125550188"
+                            rows={3}
+                            className="w-full bg-zinc-50 border border-zinc-300 rounded-xl p-3 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]/20 focus:border-[#1a73e8] font-mono"
+                          />
+
+                          {emailSendResult && (
+                            <div className={`p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
+                              emailSendResult.success ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
+                            }`}>
+                              {emailSendResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />}
+                              <span>{emailSendResult.message}</span>
+                            </div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={deprecatedHandleSendEmails}
+                            disabled={isSendingEmails || !customerEmails.trim()}
+                            className="w-full py-3 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 text-white"
+                          >
+                            {isSendingEmails ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            <span>
+                              {isSendingEmails ? 'Dispatching Requests...' : 'Generate WhatsApp Invites'}
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: VIDEO CALL-TO-ACTION (CTA) */}
+            {activeTab === 'cta' && (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h2 className="text-xl font-extrabold text-zinc-900">Custom Video Call-To-Action (CTA) Studio</h2>
+                        <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#1a73e8] border border-blue-200 text-[10px] font-extrabold uppercase tracking-wider">
+                          Universal Business Suite
+                        </span>

@@ -1,0 +1,1207 @@
+<BusinessVideoPlayerModalProps>
+<HTMLVideoElement>
+<HTMLInputElement>
+<div className="absolute top-3 inset-x-3 z-20 flex items-center justify-between pointer-events-none">
+<div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-bold text-white/90 border border-white/10 flex items-center gap-1.5 shadow-sm">
+<span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+<span>
+</span>
+</div>
+<X className="w-4 h-4" />
+</button>
+</div>
+<div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 animate-in zoom-in-75 fade-out duration-300">
+<div className="w-16 h-16 rounded-full bg-black/75 backdrop-blur-md flex items-center justify-center text-white shadow-2xl border border-white/20">
+<Play className="w-8 h-8 fill-current ml-1" />
+<Pause className="w-8 h-8 fill-current" />
+</div>
+</div>
+<div className="flex items-center gap-2">
+</div>
+<div className="flex items-center justify-between text-white text-xs font-semibold">
+<div className="flex items-center gap-2.5">
+<Pause className="w-4 h-4 fill-current" />
+<Play className="w-4 h-4 fill-current" />
+</button>
+<span className="font-mono text-[11px] text-zinc-300">
+</span>
+</div>
+<div className="flex items-center gap-2">
+<VolumeX className="w-4 h-4 text-red-400" />
+<Volume2 className="w-4 h-4 text-white" />
+</button>
+</div>
+</div>
+</div>
+</div>
+<div className="p-4 bg-zinc-900 border-t border-zinc-800 text-white space-y-3 select-none overflow-y-auto">
+<div className="flex items-center justify-between">
+<div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-300 font-bold flex items-center justify-center text-xs group-hover:bg-[#1a73e8] group-hover:text-white transition-colors shrink-0">
+</div>
+<div className="truncate min-w-0">
+<span className="font-bold text-xs text-zinc-100 group-hover:text-[#1a73e8] transition-colors block truncate">
+</span>
+<span className="text-[10px] text-zinc-400 block truncate">
+</span>
+</div>
+</button>
+<div className="flex items-center gap-1 text-amber-400 text-xs font-bold shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+<Star className="w-3.5 h-3.5 fill-current" />
+<span>
+</span>
+</div>
+</div>
+<div className="text-[11px] text-[#1a73e8] font-semibold flex items-center gap-1">
+<span>
+</span>
+<span className="text-zinc-200">
+</span>
+</div>
+<p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed italic bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800">
+</p>
+<div className="bg-blue-950/60 border border-blue-800/80 rounded-xl p-3 space-y-1 text-white">
+<div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-400">
+<BadgeCheck className="w-3.5 h-3.5 text-[#1a73e8]" />
+<span>
+</span>
+</div>
+<p className="text-xs text-blue-100 font-medium italic">
+</p>
+</div>
+<div className="pt-2 border-t border-zinc-800 flex flex-col gap-2">
+<Eye className="w-3.5 h-3.5" />
+<span>
+</span>
+</button>
+<div className="flex gap-2">
+<Globe className="w-3.5 h-3.5 text-zinc-400" />
+<span className="truncate">
+</span>
+<ExternalLink className="w-3 h-3 text-zinc-400 shrink-0" />
+</a>
+<MessageSquare className="w-3.5 h-3.5 text-[#1a73e8]" />
+<span>
+</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<CopoBusinessDashboardViewProps>
+<BusinessTab>
+<string>
+<BusinessSession | null>
+<BusinessSession>
+<number | null>
+<string[]>
+<string | null>
+<Record<string, string>
+<Record<string, boolean>
+<VideoReview | null>
+<string>
+<string[]>
+<string[]>
+<string | null>
+<div id="yoouz-widget"\n  data-place-id="${selectedPlaceId}"\n  data-theme="${embedTheme}"\n  data-star-filter="${embedStarFilter}"\n  data-show-stars="${embedShowStars}"\n  data-show-verified="${embedShowVerifiedBadge}"\n  data-show-trust-header="${embedShowTrustHeader}"${pinnedAttr}${hiddenAttr}>
+</div>
+<script src="https://cdn.yoouz.com/embed/v2.js" async defer>
+</script>
+<string, string>
+<div className="w-screen h-screen flex bg-[#f8fafd] select-none antialiased overflow-hidden font-sans text-zinc-900">
+<aside className="w-64 lg:w-72 bg-white border-r border-zinc-200/80 flex flex-col justify-between shrink-0 select-none overflow-y-auto hidden md:flex z-50">
+<div className="flex flex-col">
+<div className="h-20 px-6 flex items-center shrink-0">
+<div className="w-[42px] h-[42px] rounded-[14px] bg-[#1a73e8] flex items-center justify-center shadow-sm group-hover:shadow group-hover:-translate-y-0.5 transition-all">
+<Star className="w-5 h-5 text-white fill-white" />
+</div>
+<span className="text-[23px] font-black tracking-tight text-zinc-900 hidden sm:block">
+</span>
+<span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200 text-[10px] font-bold uppercase tracking-wider text-zinc-600 hidden sm:block">
+</span>
+</div>
+</div>
+<div className="p-3 space-y-1 mt-2">
+<div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">
+</div>
+<Icon className={`w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-[#1a73e8]' : 'text-zinc-500'}`} />
+<span className="truncate flex-1">
+</span>
+</span>
+</span>
+</button>
+</div>
+<div className="bg-zinc-50/80 border border-zinc-200/80 rounded-2xl p-4 mt-6">
+<div className="flex items-center gap-2 text-xs font-bold text-zinc-900 mb-1.5">
+<div className="w-5 h-5 rounded-md bg-blue-100/70 text-[#1a73e8] flex items-center justify-center">
+<Sparkles className="w-3 h-3" />
+</div>
+<span>
+</span>
+</div>
+<p className="text-[11px] text-zinc-500 mb-3 leading-relaxed">
+</p>
+<FileText className="w-3.5 h-3.5 text-zinc-500" />
+<span>
+</span>
+</button>
+</div>
+</div>
+</aside>
+<div className="flex-1 flex flex-col overflow-hidden relative">
+<header className="w-full h-14 bg-white border-b border-zinc-100 px-4 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 z-40 relative">
+<div className="flex items-center">
+<div className="relative">
+<div className="w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0">
+<img src={currentPlace.logoUrl} className="w-4 h-4 object-contain" />
+<Building2 className="w-3.5 h-3.5 text-[#1a73e8]" />
+</div>
+<div className="hidden sm:flex items-center gap-2.5">
+<div className="flex flex-col">
+<span className="font-bold text-zinc-900 text-xs leading-tight">
+</span>
+<span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest leading-tight block">
+</span>
+</div>
+<ChevronDown className={`w-3.5 h-3.5 text-zinc-500 transition-transform ${showLocationDropdown ? 'rotate-180' : ''}`} />
+</div>
+</button>
+<div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-zinc-200 py-2 z-50">
+<div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+</div>
+<div className="max-h-64 overflow-y-auto">
+<div className="w-10 h-10 rounded-full bg-white border border-zinc-200 flex items-center justify-center shrink-0 p-1.5">
+<img src={place.logoUrl} className="w-full h-full object-contain" />
+<Building2 className="w-5 h-5 text-zinc-400" />
+</div>
+<div className="flex-1 min-w-0">
+<div className="font-bold text-zinc-900 text-[15px] truncate">
+</div>
+<div className="text-[11px] text-zinc-500 truncate mt-0.5">
+</div>
+</div>
+<Check className="w-5 h-5 text-[#1a73e8] shrink-0" />
+</button>
+</div>
+<div className="p-2 border-t border-zinc-100 mt-2">
+<Building2 className="w-4 h-4" />
+</button>
+</div>
+</div>
+</div>
+</div>
+<div className="flex items-center gap-2 sm:gap-3 shrink-0">
+<Sparkles className="w-4 h-4 text-amber-300" />
+</button>
+<div className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 cursor-pointer rounded-full transition-colors">
+<Shield className="w-4 h-4 text-[#1a73e8]" />
+<span className="text-xs font-bold text-zinc-700 tracking-wide">
+</span>
+<div className="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-0.5" />
+</div>
+<button className="hidden xl:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-bold transition-all shrink-0">
+<Eye className="w-4 h-4 text-zinc-500" />
+</button>
+<button onClick={() =>
+<ArrowLeft className="w-4 h-4" />
+</button>
+<div className="w-px h-4 bg-zinc-200 mx-1 hidden sm:block" />
+<div className="relative">
+<Bell className="w-4 h-4" />
+<span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-zinc-100" />
+</button>
+<div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-zinc-200 py-2 z-50">
+<div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
+<span className="font-bold text-zinc-900 text-[13px]">
+</span>
+<span className="text-[10px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-full">
+</span>
+</div>
+<div className="max-h-80 overflow-y-auto">
+<div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+<MessageSquare className="w-4 h-4 text-[#1a73e8]" />
+</div>
+<div>
+<div className="text-sm font-bold text-zinc-900">
+</div>
+<div className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+</div>
+<div className="text-[10px] font-bold text-[#1a73e8] mt-2 uppercase tracking-wider">
+</div>
+</div>
+</div>
+<div className="p-8 text-center">
+<div className="w-12 h-12 bg-zinc-50 rounded-full flex items-center justify-center mx-auto mb-3">
+<Bell className="w-5 h-5 text-zinc-400" />
+</div>
+<div className="text-sm font-bold text-zinc-900">
+</div>
+<div className="text-xs text-zinc-500 mt-1">
+</div>
+</div>
+</div>
+</div>
+</div>
+<HelpCircle className="w-4 h-4" />
+</button>
+<div className="relative ml-1">
+<div className="w-6 h-6 rounded-full bg-[#1a73e8] text-white flex items-center justify-center text-[10px] font-bold overflow-hidden shrink-0">
+<img src={currentUser.avatar} className="w-full h-full object-cover" />
+</div>
+<ChevronDown className={`w-3.5 h-3.5 text-zinc-500 shrink-0 transition-transform ${showAccountDropdown ? 'rotate-180' : ''}`} />
+</button>
+<div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-zinc-200 py-2 z-50">
+<div className="px-4 py-3 border-b border-zinc-100 mb-2">
+<div className="font-bold text-zinc-900 truncate">
+</div>
+<div className="text-xs text-zinc-500 truncate">
+</div>
+</div>
+<Settings className="w-4 h-4 text-zinc-400" />
+</button>
+<CreditCard className="w-4 h-4 text-zinc-400" />
+</button>
+<div className="h-px bg-zinc-100 my-2" />
+<LogOut className="w-4 h-4 text-red-500" />
+</button>
+</div>
+</div>
+</div>
+</header>
+<main className="flex-1 overflow-y-auto bg-[#f8fafd] p-4 sm:p-6 lg:p-8">
+<div className="max-w-6xl mx-auto space-y-6">
+<div className="flex md:hidden items-center gap-2 overflow-x-auto pb-2 border-b border-zinc-200 scrollbar-none">
+</button>
+</div>
+<div className="space-y-6 animate-in fade-in duration-200">
+<div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div>
+<div className="flex items-center gap-2 mb-1">
+<h1 className="text-2xl font-black text-zinc-900 tracking-tight">
+<span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+<CheckCircle2 className="w-3.5 h-3.5" />
+</span>
+</div>
+<p className="text-xs sm:text-sm text-zinc-500 font-medium">
+</p>
+</div>
+<div className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200/70">
+</button>
+</div>
+</div>
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<div className="flex items-center justify-between mb-3">
+<div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
+<stat.icon className="w-5 h-5" />
+</div>
+<span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+<TrendingUp className="w-3 h-3" />
+</span>
+</div>
+<div>
+<div className="flex items-baseline justify-between">
+<div className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight">
+</div>
+<svg className="w-16 h-6 overflow-visible" viewBox="0 0 60 20">
+</svg>
+</div>
+<div className="text-xs font-semibold text-zinc-500 mt-1">
+</div>
+</div>
+</div>
+</div>
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div className="lg:col-span-2 bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs flex flex-col justify-between">
+<div>
+<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+<div>
+<div className="flex items-center gap-2">
+<h3 className="text-base font-bold text-zinc-900">
+<span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+<TrendingUp className="w-3 h-3" />
+</span>
+</div>
+<p className="text-xs text-zinc-500 mt-0.5">
+</p>
+</div>
+<div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200/80 self-start sm:self-auto">
+</button>
+</div>
+</div>
+<div className="relative w-full h-64 select-none pt-2">
+<span className="font-extrabold text-sm text-white">
+</span>
+<span className="text-[10px] text-zinc-400 font-medium">
+</span>
+</div>
+<defs>
+<linearGradient id="metricGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" stopColor={chartData.color} stopOpacity="0.28" />
+<stop offset="100%" stopColor={chartData.color} stopOpacity="0.01" />
+</linearGradient>
+</defs>
+<line x1="0" y1="40" x2="700" y2="40" stroke="#f1f5f9" strokeDasharray="4 4" strokeWidth="1" />
+<line x1="0" y1="90" x2="700" y2="90" stroke="#f1f5f9" strokeDasharray="4 4" strokeWidth="1" />
+<line x1="0" y1="140" x2="700" y2="140" stroke="#f1f5f9" strokeDasharray="4 4" strokeWidth="1" />
+<line x1="0" y1="190" x2="700" y2="190" stroke="#e2e8f0" strokeWidth="1.5" />
+<path d={areaD} fill="url(#metricGradient)" />
+<g key={idx} className="cursor-pointer">
+</g>
+</svg>
+</div>
+<div className="flex justify-between text-[11px] font-medium text-zinc-400 mt-2 px-2 border-t border-zinc-100 pt-2">
+<span>
+</span>
+<span>
+</span>
+<span>
+</span>
+<span>
+</span>
+<span>
+</span>
+</div>
+</div>
+</div>
+<div className="space-y-4">
+<div className="bg-linear-to-br from-blue-600 to-indigo-700 rounded-3xl p-5 text-white shadow-md relative overflow-hidden">
+<Sparkles className="w-6 h-6 text-blue-200 mb-3" />
+<h4 className="font-extrabold text-lg mb-1">
+<p className="text-xs text-blue-100 mb-4 leading-relaxed">
+</p>
+<QrCode className="w-4 h-4" />
+</button>
+</div>
+<div className="bg-white rounded-3xl border border-zinc-200/80 p-5 shadow-xs">
+<div className="flex items-center gap-2 mb-2 text-zinc-900 font-bold text-sm">
+<Code className="w-4 h-4 text-[#1a73e8]" />
+<span>
+</span>
+</div>
+<p className="text-xs text-zinc-500 mb-3 leading-relaxed">
+</p>
+</button>
+</div>
+</div>
+</div>
+<div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs">
+<div className="flex items-center justify-between mb-4">
+<div>
+<h3 className="text-base font-bold text-zinc-900">
+<p className="text-xs text-zinc-500">
+</p>
+</div>
+<ChevronRight className="w-3.5 h-3.5" />
+</button>
+</div>
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div>
+<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/30 flex flex-col justify-between p-2.5 text-white">
+<div className="flex items-center justify-between">
+<span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-1 border border-white/20">
+<Video className="w-2.5 h-2.5 text-red-400" />
+</span>
+<span className="px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[9px] font-mono text-zinc-200">
+</span>
+</div>
+<div className="self-center w-9 h-9 rounded-full bg-[#1a73e8] text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+<Play className="w-4 h-4 fill-current ml-0.5" />
+</div>
+<span className="text-[10px] font-semibold text-amber-300 truncate">
+</span>
+</div>
+</div>
+<div className="flex items-center justify-between gap-2 mb-2">
+<div className="truncate flex-1 min-w-0">
+<div className="text-xs font-bold text-zinc-900 group-hover:text-[#1a73e8] transition-colors truncate">
+</div>
+<div className="text-[10px] text-zinc-400 truncate">
+</div>
+</div>
+</button>
+<div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold shrink-0 border border-amber-200/50">
+</div>
+</div>
+<div className="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100">
+<div className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">
+<Sparkles className="w-2.5 h-2.5 text-[#1a73e8]" />
+<span>
+</span>
+</div>
+<p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed italic">
+</p>
+</div>
+</div>
+<div className="flex items-center justify-between pt-2.5 border-t border-zinc-100 text-[11px] text-zinc-500">
+<span className="font-semibold text-zinc-700">
+</span>
+<Play className="w-3.5 h-3.5 fill-current" />
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div className="space-y-6 animate-in fade-in duration-200">
+<div className="bg-zinc-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-lg border border-zinc-700 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
+<span className="flex items-center gap-2">
+<Sparkles className="w-4 h-4 text-amber-400" />
+</span>
+</button>
+</div>
+<div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div>
+<h2 className="text-xl font-bold text-zinc-900">
+<div className="flex items-center gap-3 mt-1 flex-wrap text-xs text-zinc-500">
+<span>
+</span>
+<span className="text-zinc-300">
+</span>
+<span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+</span>
+<span className="font-bold text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded-md">
+</span>
+</div>
+</div>
+<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+<div className="relative flex-1 min-w-[200px]">
+<Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+</button>
+</div>
+<div className="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl border border-zinc-200 shrink-0">
+</button>
+</div>
+</div>
+</div>
+<div className="space-y-4">
+<div className="flex flex-col md:flex-row gap-5 items-start">
+<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-3 text-white">
+<div className="flex items-center justify-between gap-1">
+<span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[10px] font-black text-white flex items-center gap-1 border border-white/20">
+<Video className="w-2.5 h-2.5 text-red-400" />
+</span>
+<span className="px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[10px] font-mono text-zinc-200">
+</span>
+</div>
+<div className="self-center w-11 h-11 rounded-full bg-[#1a73e8] text-white flex items-center justify-center shadow-lg border border-white/40 group-hover:scale-110 transition-transform">
+<Play className="w-5 h-5 fill-current ml-0.5" />
+</div>
+<div>
+<span className="text-[10px] font-bold text-amber-300 block line-clamp-1">
+</span>
+<span className="text-[9px] text-zinc-300 flex items-center gap-1">
+<Sparkles className="w-2.5 h-2.5 text-blue-400" />
+</span>
+</div>
+</div>
+</div>
+<div className="flex-1 min-w-0 space-y-4 w-full">
+<div className="flex items-start justify-between gap-4 flex-wrap sm:flex-nowrap">
+<div className="min-w-0">
+<div className="flex items-center gap-2 flex-wrap">
+<span className="font-bold text-sm text-zinc-900 group-hover:text-[#1a73e8] transition-colors truncate">
+</span>
+<span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-black tracking-wide flex items-center gap-1 shadow-2xs">
+<Pin className="w-2.5 h-2.5 fill-current" />
+</span>
+<span className="px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-700 text-[10px] font-bold flex items-center gap-1">
+<EyeOff className="w-2.5 h-2.5" />
+</span>
+</div>
+<div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-500 flex-wrap">
+<div className="flex text-amber-500">
+<Star key={i} className="w-3.5 h-3.5 fill-current" />
+</div>
+<span>
+</span>
+<span>
+</span>
+<span>
+</span>
+<span className="font-semibold text-zinc-800 bg-amber-50 text-amber-900 px-2 py-0.5 rounded-md text-[11px] border border-amber-200/60">
+</span>
+</div>
+</div>
+</button>
+<div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
+<Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current' : ''}`} />
+<span>
+</span>
+</button>
+<Eye className="w-3.5 h-3.5" />
+<EyeOff className="w-3.5 h-3.5" />
+<span>
+</span>
+</button>
+<Play className="w-3.5 h-3.5 fill-current" />
+<span>
+</span>
+</button>
+</div>
+</div>
+<div className="bg-zinc-50/90 rounded-2xl p-3.5 border border-zinc-200/80 space-y-1">
+<div className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+<Sparkles className="w-3.5 h-3.5 text-[#1a73e8]" />
+<span>
+</span>
+</div>
+<p className="text-xs text-zinc-700 leading-relaxed font-medium italic">
+</p>
+</div>
+<div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-4">
+<div className="flex items-center justify-between mb-1.5">
+<div className="flex items-center gap-1.5 text-xs font-bold text-[#1a73e8]">
+<BadgeCheck className="w-4 h-4" />
+<span>
+</span>
+</div>
+<div className="flex items-center gap-2">
+</button>
+<span className="text-zinc-300">
+</span>
+</button>
+</div>
+</div>
+<p className="text-xs text-zinc-700 leading-relaxed">
+</p>
+</div>
+<div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-200 space-y-3">
+<div className="flex items-center gap-2 text-xs font-bold text-zinc-800">
+<MessageSquare className="w-4 h-4 text-[#1a73e8]" />
+<span>
+</span>
+</div>
+<div className="flex items-center justify-end gap-2">
+</button>
+<Send className="w-3.5 h-3.5" />
+</button>
+</div>
+</div>
+<div className="pt-1">
+<MessageSquare className="w-3.5 h-3.5" />
+</button>
+</div>
+<div className="pt-2 border-t border-zinc-100">
+<MessageCircle className="w-3.5 h-3.5 text-zinc-400" />
+<span>
+</span>
+</button>
+<div className="mt-3 space-y-3 bg-zinc-50/80 p-4 rounded-2xl border border-zinc-200/80">
+<p className="text-xs text-zinc-400 italic">
+</p>
+<div key={comment.id} className="flex items-start gap-3 bg-white p-3 rounded-xl border border-zinc-100">
+<div className="flex-1 min-w-0 space-y-1">
+<div className="flex items-center justify-between">
+<div className="flex items-center gap-1.5">
+<span className="text-xs font-bold text-zinc-800">
+</span>
+<span className="bg-blue-100 text-[#1a73e8] text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+</span>
+</div>
+<span className="text-[10px] text-zinc-400">
+</span>
+</div>
+<p className="text-xs text-zinc-700 leading-relaxed">
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div className="max-w-4xl max-h-[85vh] flex flex-col bg-white rounded-3xl border border-zinc-200/80 shadow-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+<div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between shrink-0">
+<div>
+<h2 className="text-xl font-black text-zinc-900">
+<p className="text-sm text-zinc-500 mt-0.5">
+</p>
+</div>
+<div className="flex items-center gap-2">
+<span className="px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 text-xs font-bold">
+</span>
+</div>
+</div>
+<div className="flex-1 overflow-y-auto flex flex-col items-center justify-center py-20 px-6 text-center">
+<div className="w-16 h-16 rounded-full bg-zinc-50 flex items-center justify-center mb-4">
+<MessageSquare className="w-8 h-8 text-zinc-300" />
+</div>
+<h3 className="text-lg font-bold text-zinc-900 mb-1">
+<p className="text-sm text-zinc-500 max-w-sm">
+</p>
+</div>
+</div>
+<div className="max-w-5xl bg-white rounded-3xl border border-zinc-200/80 shadow-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+<div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between">
+<div>
+<h2 className="text-xl font-black text-zinc-900">
+<p className="text-sm text-zinc-500 mt-0.5">
+</p>
+</div>
+<div className="flex items-center gap-2">
+<span className="px-3 py-1.5 rounded-xl bg-zinc-100 text-zinc-800 text-sm font-bold">
+</span>
+</div>
+</div>
+<div className="p-12 flex flex-col items-center justify-center text-center">
+<div className="w-16 h-16 rounded-full bg-zinc-50 flex items-center justify-center mb-4">
+<Users className="w-8 h-8 text-zinc-300" />
+</div>
+<h3 className="text-lg font-bold text-zinc-900 mb-1">
+<p className="text-sm text-zinc-500 max-w-sm mb-6">
+</p>
+<button onClick={() =>
+</button>
+</div>
+</div>
+<div className="space-y-6 animate-in fade-in duration-200">
+<div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs">
+<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+<div>
+<h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+<span>
+</span>
+<span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#1a73e8] border border-blue-200 text-xs font-extrabold uppercase tracking-wide">
+</span>
+<p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+</p>
+</div>
+<div className="flex items-center gap-2">
+<span className="px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold flex items-center gap-1.5">
+<Pin className="w-3.5 h-3.5 fill-current" />
+</span>
+<span className="px-3 py-1 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-700 text-xs font-bold flex items-center gap-1.5">
+<EyeOff className="w-3.5 h-3.5" />
+</span>
+</div>
+</div>
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div className="space-y-4">
+<div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-200/80 space-y-4">
+<div>
+<label className="text-xs font-bold text-zinc-800 block mb-2">
+</label>
+<div className="grid grid-cols-3 gap-2">
+</button>
+</div>
+</div>
+<div>
+<label className="text-xs font-bold text-zinc-800 block mb-2">
+</label>
+<div className="grid grid-cols-3 gap-2">
+</button>
+</div>
+</div>
+<div>
+<label className="text-xs font-bold text-zinc-800 block mb-2 flex items-center justify-between">
+<span>
+</span>
+<span className="text-[10px] text-zinc-400 font-normal uppercase tracking-wider">
+</span>
+</label>
+<div className="flex items-center gap-2 flex-wrap">
+<div className="relative flex items-center shrink-0 ml-1">
+<div className="w-px h-5 bg-zinc-200 mr-3" />
+<div className="w-full h-full rounded-full" style={{ backgroundColor: embedAccentColor }} />
+<div className="w-full h-full rounded-full bg-gradient-to-tr from-pink-500 via-purple-500 to-blue-500 opacity-80" />
+</label>
+</div>
+</div>
+</div>
+<div className="pt-2 border-t border-zinc-200">
+<label className="text-xs font-bold text-zinc-800 block mb-2 flex items-center justify-between">
+<span>
+</span>
+<span className="text-[10px] text-zinc-400 font-normal">
+</span>
+</label>
+<option value="all">
+</option>
+<option value="5">
+</option>
+<option value="4plus">
+</option>
+<option value="3plus">
+</option>
+<option value="pinned_only">
+</option>
+</select>
+</div>
+<div className="space-y-2 pt-2 border-t border-zinc-200">
+<label className="flex items-center justify-between text-xs font-semibold text-zinc-700 cursor-pointer">
+<span className="flex items-center gap-1.5">
+<Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+</span>
+</label>
+<label className="flex items-center justify-between text-xs font-semibold text-zinc-700 cursor-pointer">
+<span>
+</span>
+</label>
+<label className="flex items-center justify-between text-xs font-semibold text-zinc-700 cursor-pointer">
+<span className="flex items-center gap-1.5">
+<BadgeCheck className="w-3.5 h-3.5 text-[#1a73e8]" />
+</span>
+</label>
+</div>
+<div className="pt-2 border-t border-zinc-200 space-y-2">
+<div className="flex items-center justify-between">
+<span className="text-xs font-bold text-zinc-800 flex items-center gap-1">
+<Pin className="w-3.5 h-3.5 text-amber-500" />
+</span>
+<span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md">
+</span>
+</div>
+<div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+<div className="flex items-center gap-2 min-w-0">
+<span className="text-amber-500 font-bold text-[11px] shrink-0">
+</span>
+<span className="truncate text-[11px]">
+</span>
+</div>
+<div className="flex items-center gap-1 shrink-0">
+</button>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div className="bg-zinc-900 rounded-2xl p-4 text-white font-mono text-xs space-y-3 shadow-md">
+<div className="flex items-center justify-between text-zinc-400 text-[11px]">
+<div className="flex items-center gap-2">
+</button>
+</button>
+</div>
+<Check className="w-3.5 h-3.5 text-emerald-400" />
+<Copy className="w-3.5 h-3.5" />
+<span>
+</span>
+</button>
+</div>
+<div className="overflow-x-auto text-[11px] text-zinc-300 py-1 leading-relaxed">
+<code>
+<div id="yoouz-widget"\n  data-place-id="${selectedPlaceId}"\n  data-theme="${embedTheme}"\n  data-layout="${embedLayout}"\n  data-accent="${embedAccentColor}"\n  data-star-filter="${embedStarFilter}"\n  data-show-stars="${embedShowStars}"\n  data-show-verified="${embedShowVerifiedBadge}"\n  data-show-trust-header="${embedShowTrustHeader}"${pinnedVideoIds.length >
+</div>
+<script src="https://cdn.yoouz.com/embed/v2.js" async defer>
+</script>
+</code>
+<code>
+<iframe src="https://yoouz.com/embed/widget?placeId=${selectedPlaceId}&theme=${embedTheme}&layout=${embedLayout}&accent=${encodeURIComponent(embedAccentColor)}" \n  width="100%" height="480" frameborder="0" loading="lazy" allow="autoplay; encrypted-media">
+</iframe>
+</code>
+</div>
+</div>
+</div>
+<div className="lg:col-span-2 bg-zinc-100/90 rounded-3xl p-6 border border-zinc-200 flex flex-col justify-between">
+<div>
+<div className="flex items-center justify-between mb-4">
+<span className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+<Globe className="w-3.5 h-3.5 text-[#1a73e8]" />
+</span>
+<div className="flex items-center gap-2">
+<span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
+</span>
+<span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+</span>
+</div>
+</div>
+<div className="flex items-center gap-3">
+</div>
+<div>
+<div className="flex items-center gap-2 flex-wrap">
+<span className="font-extrabold text-base tracking-tight">
+</span>
+<BadgeCheck className="w-3.5 h-3.5 fill-current" />
+</span>
+</div>
+<div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
+<div className="flex items-center gap-1">
+<span className="font-black text-amber-500">
+</span>
+<div className="flex text-amber-400">
+<Star key={i} className="w-3.5 h-3.5 fill-current" />
+</div>
+</div>
+<span className="text-zinc-300">
+</span>
+<span className="text-zinc-600 font-medium">
+<strong className="text-zinc-900">
+</strong>
+<strong style={{ color: embedAccentColor }}>
+</strong>
+</span>
+</div>
+</div>
+</div>
+<Video className="w-3.5 h-3.5" />
+<span>
+</span>
+</a>
+</div>
+<div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+<div className="flex items-center gap-2">
+</div>
+<div>
+<div className="text-sm font-black flex items-center gap-1">
+<BadgeCheck className="w-3.5 h-3.5" style={{ color: embedAccentColor }} />
+</div>
+<div className="text-[11px] text-amber-500 flex items-center gap-1 font-bold">
+<span>
+</span>
+</div>
+</div>
+</div>
+<span className="text-[10px] text-zinc-400 font-mono">
+</span>
+</div>
+<div className="py-12 text-center text-zinc-400 space-y-2">
+<AlertCircle className="w-8 h-8 mx-auto text-zinc-300" />
+<p className="text-xs font-semibold">
+</p>
+<p className="text-[11px]">
+</p>
+</div>
+<div className="relative bg-zinc-100/80 rounded-2xl p-8 border border-dashed border-zinc-300 flex flex-col items-center justify-center min-h-[220px]">
+<span className="text-xs text-zinc-400 font-semibold mb-2">
+</span>
+<div className="absolute bottom-4 right-4 bg-white rounded-2xl p-3 shadow-xl border border-zinc-200 flex items-center gap-3 animate-bounce cursor-pointer hover:scale-105 transition-transform" onClick={() =>
+<div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0">
+<img src={displayableWidgetVideos[0].thumbnailUrl} alt="Review" className="w-full h-full object-cover" />
+<div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white">
+<Play className="w-4 h-4 fill-current" />
+</div>
+</div>
+<div className="min-w-0 pr-2">
+<div className="text-xs font-bold text-zinc-900 truncate">
+</div>
+<div className="text-[10px] text-zinc-500 truncate">
+</div>
+</div>
+</div>
+</div>
+<div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+<div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black shadow-md flex items-center gap-1 z-10">
+<Pin className="w-2.5 h-2.5 fill-current" />
+</div>
+<div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-amber-400 text-[10px] font-bold flex items-center gap-0.5 z-10">
+</div>
+<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-white">
+<span className="text-[10px] font-bold leading-tight line-clamp-1">
+</span>
+<span className="text-[9px] text-zinc-300">
+</span>
+</div>
+<Play className="w-4 h-4 fill-current ml-0.5" />
+</div>
+</div>
+</div>
+<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+<div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black shadow-md flex items-center gap-1 z-10">
+<Pin className="w-2.5 h-2.5 fill-current" />
+</div>
+<div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-amber-400 text-[10px] font-bold flex items-center gap-0.5 z-10">
+</div>
+<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-white">
+<span className="text-[10px] font-bold leading-tight line-clamp-1">
+</span>
+<span className="text-[9px] text-zinc-300">
+</span>
+</div>
+<Play className="w-4 h-4 fill-current ml-0.5" />
+</div>
+</div>
+</div>
+</div>
+</div>
+<div className="text-[11px] text-zinc-400 mt-6 text-center flex items-center justify-center gap-1.5">
+<Sparkles className="w-3 h-3 text-amber-500" />
+<span>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div className="space-y-6 animate-in fade-in duration-200">
+<div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-3xl p-6 text-white shadow-md relative overflow-hidden">
+<div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+<div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<div className="flex items-center gap-2 mb-2">
+<span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] font-extrabold uppercase tracking-wider">
+</span>
+<span className="text-zinc-400 text-xs">
+</span>
+</div>
+<h2 className="text-2xl font-black text-white tracking-tight">
+<p className="text-xs text-zinc-300 mt-1 max-w-2xl leading-relaxed">
+</p>
+</div>
+<Check className="w-4 h-4 text-emerald-400" />
+<Copy className="w-4 h-4 text-blue-300" />
+<span>
+</span>
+</button>
+</div>
+</div>
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs flex flex-col justify-between space-y-6">
+<div className="space-y-5">
+<div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+<div className="flex items-center gap-2.5 text-zinc-900 font-extrabold text-lg">
+<div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1a73e8] border border-blue-100 flex items-center justify-center">
+<QrCode className="w-5 h-5" />
+</div>
+<div>
+<h2>
+<p className="text-[11px] text-zinc-500 font-normal">
+</p>
+</div>
+</div>
+<span className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-2 py-1 rounded-md">
+</span>
+</div>
+<div className="space-y-3">
+<div>
+<label className="block text-xs font-bold text-zinc-800 mb-1.5">
+</label>
+<div className="grid grid-cols-3 gap-2">
+<span>
+</span>
+<span className="truncate">
+</span>
+</button>
+</div>
+</div>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label className="block text-xs font-bold text-zinc-700 mb-1">
+</label>
+</div>
+<div>
+<label className="block text-xs font-bold text-zinc-700 mb-1">
+</label>
+</div>
+</div>
+</div>
+<div className="relative pt-2">
+<div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center mb-2">
+</div>
+<div className="bg-gradient-to-b from-white via-blue-50/40 to-slate-100 border-2 border-zinc-300 rounded-3xl p-6 flex flex-col items-center justify-center text-center max-w-xs mx-auto shadow-xl relative overflow-hidden">
+<div className="w-20 h-1.5 bg-zinc-300/80 rounded-full mb-4 shadow-inner" />
+<div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-blue-100 text-[#1a73e8] text-[9px] font-extrabold uppercase">
+</div>
+<div className="w-12 h-12 rounded-2xl bg-[#1a73e8] text-white flex items-center justify-center mb-2 shadow-md border border-blue-300/40">
+<Star className="w-6 h-6 fill-white" />
+</div>
+<h3 className="font-black text-zinc-900 text-base tracking-tight">
+<div className="flex items-center gap-1 text-amber-500 text-xs font-bold my-1">
+<span>
+</span>
+<div className="flex text-amber-400">
+<span key={idx}>
+</span>
+</div>
+<span className="text-zinc-400 text-[10px] font-normal">
+</span>
+</div>
+<p className="text-[11px] text-zinc-500 max-w-[200px] mb-3 leading-snug">
+</p>
+<div className="bg-white p-3.5 rounded-2xl shadow-lg border border-zinc-200 relative group">
+<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div className="w-8 h-8 rounded-full bg-[#1a73e8] border-2 border-white text-white flex items-center justify-center font-black text-xs shadow-md">
+</div>
+</div>
+</div>
+<span className="text-[10px] font-extrabold text-[#1a73e8] mt-4 uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+</span>
+</div>
+<div className="w-64 h-64 mx-auto rounded-full bg-gradient-to-br from-blue-600 via-[#1a73e8] to-indigo-700 p-1 shadow-2xl flex flex-col items-center justify-center text-center text-white relative">
+<div className="w-full h-full rounded-full border-2 border-dashed border-white/40 p-4 flex flex-col items-center justify-center bg-zinc-900/10 backdrop-blur-xs">
+<span className="text-[10px] font-black tracking-widest uppercase text-blue-200 mb-1">
+</span>
+<div className="bg-white p-2.5 rounded-2xl shadow-xl">
+</div>
+<span className="text-[9px] font-bold text-white mt-2 max-w-[150px] leading-tight">
+</span>
+</div>
+</div>
+<div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 max-w-sm mx-auto shadow-xs font-mono text-zinc-800 text-center space-y-2">
+<div className="text-xs font-bold tracking-widest uppercase border-b border-dashed border-amber-300 pb-2">
+</div>
+<div className="flex items-center justify-center gap-4 py-1">
+<div className="bg-white p-2 rounded-xl border border-zinc-300">
+</div>
+<div className="text-left max-w-[160px]">
+<div className="text-[11px] font-bold text-zinc-900 leading-tight">
+</div>
+<div className="text-[9px] text-zinc-600 mt-1">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-zinc-100">
+<Download className="w-4 h-4" />
+</button>
+<Printer className="w-4 h-4 text-amber-400" />
+</button>
+</div>
+</div>
+<div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs flex flex-col justify-between space-y-6">
+<div className="space-y-5">
+<div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+<div className="flex items-center gap-2.5 text-zinc-900 font-extrabold text-lg">
+<div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1a73e8] border border-blue-100 flex items-center justify-center">
+<Mail className="w-5 h-5" />
+</div>
+<div>
+<h2>
+<p className="text-[11px] text-zinc-500 font-normal">
+</p>
+</div>
+</div>
+<div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-xl">
+</button>
+</button>
+</div>
+</div>
+<div className="space-y-3 bg-zinc-50/80 p-4 rounded-2xl border border-zinc-200/80">
+<div className="flex items-center justify-between">
+<label className="block text-xs font-bold text-zinc-800">
+</label>
+<span className="text-[10px] text-zinc-400 font-medium">
+</span>
+</div>
+<div className="space-y-1.5 pt-1">
+<label className="block text-[11px] font-bold text-zinc-700">
+</label>
+<div className="grid grid-cols-3 gap-2">
+<div className="text-xs font-bold">
+</div>
+<div className={`text-[9px] ${inviteGreetingStyle === g.id ? 'text-blue-100' : 'text-zinc-400'}`}>
+</div>
+</button>
+</div>
+</div>
+<div className="space-y-1.5 pt-1">
+<div className="flex items-center justify-between">
+<label className="block text-[11px] font-bold text-zinc-700">
+</label>
+<div className="flex items-center gap-1">
+</button>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div>
+<div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+<span>
+</span>
+<span className="text-[#1a73e8] font-extrabold">
+</span>
+</div>
+<div className="bg-slate-50 rounded-2xl p-4 border border-zinc-200/90 text-xs space-y-3 font-sans">
+<div className="border-b border-zinc-200 pb-2 flex items-center justify-between">
+<div>
+<span className="text-zinc-400 text-[10px]">
+</span>
+<span className="font-bold text-zinc-800">
+</span>
+</div>
+<span className="text-[9px] bg-blue-100 text-[#1a73e8] font-bold px-2 py-0.5 rounded-md">
+</span>
+</div>
+<div className="bg-white rounded-xl p-4 border border-zinc-200/80 space-y-3 shadow-2xs">
+<div className="flex items-center gap-2">
+<div className="w-7 h-7 rounded-lg bg-[#1a73e8] text-white flex items-center justify-center font-bold text-xs">
+</div>
+<div>
+<div className="font-bold text-zinc-900 text-xs">
+</div>
+<div className="text-[10px] text-zinc-400">
+</div>
+</div>
+</div>
+<div className="text-[10px] font-semibold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1.5">
+<span className="font-bold">
+</span>
+<span>
+</span>
+</div>
+<p className="text-zinc-700 text-[11px] leading-relaxed">
+<strong className="text-zinc-900 font-bold">
+</strong>
+<strong className="text-zinc-900 font-bold">
+</strong>
+</p>
+<div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold flex items-center gap-2">
+<Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+<span>
+</span>
+</div>
+<div className="pt-1">
+<span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1a73e8] text-white font-bold text-xs shadow-sm">
+<Video className="w-3.5 h-3.5" />
+</span>
+</div>
+</div>
+</div>
+</div>
+<div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2">
+<label className="flex items-center justify-between cursor-pointer">
+<span className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
+<Sparkles className="w-3.5 h-3.5 text-amber-500" />
+</span>
+</label>
+</div>
+</div>
+</div>
+<div className="space-y-3">
+<div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+<div className="flex items-start gap-3">
+<Mail className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+<div>
+<h4 className="text-sm font-bold text-blue-900 leading-tight mb-1">
+<p className="text-xs text-blue-800/80 leading-relaxed">
+</p>
+</div>
+</div>
+</div>
+<div className="p-3 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-2">
+<CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+<span>
+</span>
+</div>
+<div className="flex flex-col sm:flex-row gap-3">
+<Copy className="w-4 h-4" />
+</button>
+<ExternalLink className="w-4 h-4" />
+</button>
+</div>
+</div>
+<div className="space-y-3">
+<div className="flex items-center justify-between">
+<label className="block text-xs font-bold text-zinc-700">
+</label>
+</button>
+</div>
+<CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+<AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+<span>
+</span>
+</div>
+<Loader2 className="w-4 h-4 animate-spin" />
+<Send className="w-4 h-4" />
+<span>
+</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>

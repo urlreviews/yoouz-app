@@ -1,0 +1,11 @@
+{
+  "name": "Reviuz",
+  "description": "Premium video review platform for authentic local business discovery.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

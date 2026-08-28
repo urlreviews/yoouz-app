@@ -1,0 +1,13 @@
+  const navItems = [
+    { id: "home" as NavSection, label: "Home", icon: Home },
+    { id: "search" as NavSection, label: "Search", icon: Search, hasDot: true },
+    { id: "discover" as NavSection, label: "Discover", icon: Compass },
+    { id: "following" as NavSection, label: "Following", icon: UserPlus },
+    { id: "messages" as NavSection, label: "Messages", icon: Mail, badge: unreadMessagesCount },
+    { id: "notifications" as NavSection, label: "Notifications", icon: Bell, badge: unreadNotifsCount },
+    { id: "bookmarks" as NavSection, label: "Bookmarks", icon: Bookmark },
+    { id: "pricing" as NavSection, label: "For Businesses", icon: Shield, hasDot: true },
+    { id: "profile" as NavSection, label: "Profile", icon: User },
+    { id: "more" as NavSection, label: "More", icon: Menu },
+    { id: "record_review" as NavSection, label: "Record Review", icon: Video, isDarkBlue: true }
+  ];

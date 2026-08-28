@@ -1,0 +1,13 @@
+            {/* Pricing View */}
+            {activeSection === "pricing" && (
+              <div className="flex-1 bg-zinc-50 flex items-center justify-center p-4">
+                 <CopoBusinessPricingModal 
+                    currentPlan="basic"
+                    onSelectPlan={(plan) => {
+                      alert(`Redirecting to upgrade flow for ${plan} plan...`);
+                      setActiveSection("home");
+                    }}
+                    onClose={() => setActiveSection("home")}
+                 />
+              </div>
+            )}

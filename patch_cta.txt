@@ -1,0 +1,23 @@
+          </div>
+          
+          {/* CTA Row */}
+          <div className="px-5 py-4 border-b border-zinc-100">
+            {hasUpgraded ? (
+              <a 
+                href={hasGenuineWebsite ? place.website : "#"} 
+                target="_blank" 
+                rel="noreferrer"
+                className="w-full py-3 bg-[#1a73e8] hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all block text-center"
+              >
+                Book Now
+              </a>
+            ) : isUserOwner ? (
+              <button 
+                onClick={() => setIsPricingModalOpen(true)}
+                className="w-full py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold text-sm rounded-xl border border-zinc-200 flex items-center justify-center gap-2 transition-all"
+              >
+                <Lock className="w-4 h-4 text-zinc-500" />
+                Unlock "Book Now" Button
+              </button>
+            ) : null}
+          </div>

@@ -1,0 +1,11 @@
+      {isPricingModalOpen && (
+        <CopoBusinessPricingModal 
+          currentPlan={subscriptionPlan}
+          onSelectPlan={(plan) => {
+            // Placeholder: Typically this would route to a checkout process (e.g. Stripe)
+            alert(`Redirecting to upgrade flow for ${plan} plan...`);
+            setIsPricingModalOpen(false);
+          }}
+          onClose={() => setIsPricingModalOpen(false)}
+        />
+      )}

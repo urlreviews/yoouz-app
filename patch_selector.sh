@@ -1,0 +1,6 @@
+sed -i 's/className="flex items-center gap-3 pl-1.5 pr-4 h-\[44px\] rounded-full border border-zinc-200 hover:bg-zinc-50 transition-all text-left bg-white shadow-xs"/className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-zinc-100 hover:bg-zinc-200 transition-all text-left shrink-0"/g' src/components/CopoBusinessDashboardView.tsx
+sed -i 's/className="w-\[36px\] h-\[36px\] rounded-full bg-blue-50 flex items-center justify-center shrink-0"/className="w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0"/g' src/components/CopoBusinessDashboardView.tsx
+sed -i 's/<Building2 className="w-4 h-4 text-\[#1a73e8\]" \/>/<Building2 className="w-3.5 h-3.5 text-\[#1a73e8\]" \/>/g' src/components/CopoBusinessDashboardView.tsx
+sed -i 's/className="hidden sm:flex items-center gap-4"/className="hidden sm:flex items-center gap-2.5"/g' src/components/CopoBusinessDashboardView.tsx
+sed -i 's/className="font-bold text-zinc-900 text-\[14px\] leading-tight mb-0.5"/className="font-bold text-zinc-900 text-xs leading-tight"/g' src/components/CopoBusinessDashboardView.tsx
+sed -i 's/className="text-\[10px\] text-zinc-500 font-bold uppercase tracking-widest leading-tight block"/className="text-\[9px\] text-zinc-500 font-bold uppercase tracking-widest leading-tight block"/g' src/components/CopoBusinessDashboardView.tsx

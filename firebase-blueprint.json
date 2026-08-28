@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string" },
+        "lastLogin": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email"]
+    },
+    "video": {
+      "title": "Video",
+      "description": "A recorded video review",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "placeId": { "type": "string" },
+        "url": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "placeId", "url"]
+    },
+    "place": {
+      "title": "Place",
+      "description": "A location or business",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "chat": {
+      "title": "Chat Thread",
+      "description": "A private messaging conversation thread",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderAvatar": { "type": "string" },
+        "lastMessage": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "unreadCount": { "type": "integer" },
+        "videoPreviewUrl": { "type": "string" },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "senderName": { "type": "string" },
+              "senderAvatar": { "type": "string" },
+              "text": { "type": "string" },
+              "timestamp": { "type": "string" },
+              "isMe": { "type": "boolean" },
+              "videoThumbnail": { "type": "string" },
+              "videoId": { "type": "string" }
+            },
+            "required": ["id", "senderName", "senderAvatar", "text", "timestamp", "isMe"]
+          }
+        },
+        "participants": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["id", "senderId", "senderName", "senderAvatar", "lastMessage", "timestamp", "unreadCount"]
+    },
+    "notification": {
+      "title": "Notification",
+      "description": "Activity alerts for likes, comments, follows, shares, and messages",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "recipientEmail": { "type": "string" },
+        "recipientHandle": { "type": "string" },
+        "recipientId": { "type": "string" },
+        "type": { "type": "string", "enum": ["like", "comment", "follow", "repost", "message"] },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "isRead": { "type": "boolean" },
+        "videoId": { "type": "string" },
+        "videoThumbnail": { "type": "string" },
+        "placeName": { "type": "string" }
+      },
+      "required": ["id", "type", "text", "isRead"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "user" },
+      "description": "User profile records"
+    },
+    "/videos/{videoId}": {
+      "schema": { "$ref": "video" },
+      "description": "Collection of all video reviews"
+    },
+    "/videoReviews/{videoId}": {
+      "schema": { "$ref": "video" },
+      "description": "Video reviews collection with full metadata"
+    },
+    "/places/{placeId}": {
+      "schema": { "$ref": "place" },
+      "description": "Collection of places"
+    },
+    "/chats/{chatId}": {
+      "schema": { "$ref": "chat" },
+      "description": "Collection of private messaging threads"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "notification" },
+      "description": "Collection of user activity notifications"
+    }
+  }
+}

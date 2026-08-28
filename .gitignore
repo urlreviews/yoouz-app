@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.npm/
+.cache/
+.vscode/
+.idea/
+.config/
+.git-credentials
+.env*
+!.env.example

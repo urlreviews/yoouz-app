@@ -1,0 +1,534 @@
+L2900 B:1 P:1 - {activeTab === 'qr_invites' && (
+L2901 B:1 P:1 - <div className="space-y-6 animate-in fade-in duration-200">
+L2902 B:1 P:1 - 
+L2903 B:1 P:1 - {/* Header Banner */}
+L2904 B:1 P:1 - <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-3xl p-6 text-white shadow-md relative overflow-hidden">
+L2905 B:1 P:1 - <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+L2906 B:1 P:1 - <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+L2907 B:1 P:1 - <div>
+L2908 B:1 P:1 - <div className="flex items-center gap-2 mb-2">
+L2909 B:1 P:1 - <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] font-extrabold uppercase tracking-wider">
+L2910 B:1 P:1 - Google Business Partner Tools
+L2911 B:1 P:1 - </span>
+L2912 B:1 P:1 - <span className="text-zinc-400 text-xs">• Real-Time Sync Active</span>
+L2913 B:1 P:1 - </div>
+L2914 B:1 P:1 - <h2 className="text-2xl font-black text-white tracking-tight">Merchant QR & Customer Review Campaign Studio</h2>
+L2915 B:1 P:1 - <p className="text-xs text-zinc-300 mt-1 max-w-2xl leading-relaxed">
+L2916 B:1 P:1 - Design print-ready acrylic table tents, window stickers, and automated review invitations that lead guests straight to your 1-tap video review recorder.
+L2917 B:1 P:1 - </p>
+L2918 B:1 P:1 - </div>
+L2919 B:1 P:1 - 
+L2920 B:1 P:1 - <button
+L2921 B:1 P:1 - type="button"
+L2922 B:3 P:1 - onClick={() => {
+L2923 B:3 P:1 - const link = `https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`;
+L2924 B:3 P:1 - navigator.clipboard.writeText(link);
+L2925 B:3 P:1 - setQrLinkCopied(true);
+L2926 B:3 P:1 - setTimeout(() => setQrLinkCopied(false), 2500);
+L2927 B:1 P:1 - }}
+L2928 B:1 P:1 - className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shrink-0"
+L2929 B:1 P:1 - >
+L2930 B:1 P:1 - {qrLinkCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-blue-300" />}
+L2931 B:1 P:1 - <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Review Link'}</span>
+L2932 B:1 P:1 - </button>
+L2933 B:1 P:1 - </div>
+L2934 B:1 P:1 - </div>
+L2935 B:1 P:1 - 
+L2936 B:1 P:1 - <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+L2937 B:1 P:1 - 
+L2938 B:1 P:1 - {/* Left: Table QR Standee Studio */}
+L2939 B:1 P:1 - <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs flex flex-col justify-between space-y-6">
+L2940 B:1 P:1 - <div className="space-y-5">
+L2941 B:1 P:1 - <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+L2942 B:1 P:1 - <div className="flex items-center gap-2.5 text-zinc-900 font-extrabold text-lg">
+L2943 B:1 P:1 - <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1a73e8] border border-blue-100 flex items-center justify-center">
+L2944 B:1 P:1 - <QrCode className="w-5 h-5" />
+L2945 B:1 P:1 - </div>
+L2946 B:1 P:1 - <div>
+L2947 B:1 P:1 - <h2>Table QR Standee Studio</h2>
+L2948 B:1 P:1 - <p className="text-[11px] text-zinc-500 font-normal">Physical in-venue print collateral</p>
+L2949 B:1 P:1 - </div>
+L2950 B:1 P:1 - </div>
+L2951 B:1 P:1 - <span className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-2 py-1 rounded-md">
+L2952 B:1 P:1 - Format: {qrStandeeStyle.replace('_', ' ').toUpperCase()}
+L2953 B:1 P:1 - </span>
+L2954 B:1 P:1 - </div>
+L2955 B:1 P:1 - 
+L2956 B:1 P:1 - {/* Controls */}
+L2957 B:1 P:1 - <div className="space-y-3">
+L2958 B:1 P:1 - {/* Style Format Switcher */}
+L2959 B:1 P:1 - <div>
+L2960 B:1 P:1 - <label className="block text-xs font-bold text-zinc-800 mb-1.5">Standee Format</label>
+L2961 B:1 P:1 - <div className="grid grid-cols-3 gap-2">
+L2962 B:2 P:1 - {[
+L2963 B:2 P:1 - { id: 'acrylic_standee', label: 'Table Tent (A6)', icon: '📐' },
+L2964 B:2 P:1 - { id: 'decal_badge', label: 'Window Sticker', icon: '🏷️' },
+L2965 B:2 P:1 - { id: 'receipt_card', label: 'Receipt Footer', icon: '🧾' },
+L2966 B:2 P:3 - ].map(s => (
+L2967 B:2 P:3 - <button
+L2968 B:2 P:3 - key={s.id}
+L2969 B:2 P:3 - type="button"
+L2970 B:2 P:3 - onClick={() => setQrStandeeStyle(s.id as any)}
+L2971 B:4 P:3 - className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
+L2972 B:4 P:3 - qrStandeeStyle === s.id
+L2973 B:4 P:3 - ? 'bg-[#1a73e8] text-white border-[#1a73e8] shadow-xs'
+L2974 B:4 P:3 - : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+L2975 B:2 P:3 - }`}
+L2976 B:2 P:3 - >
+L2977 B:2 P:3 - <span>{s.icon}</span>
+L2978 B:2 P:3 - <span className="truncate">{s.label}</span>
+L2979 B:2 P:3 - </button>
+L2980 B:1 P:1 - ))}
+L2981 B:1 P:1 - </div>
+L2982 B:1 P:1 - </div>
+L2983 B:1 P:1 - 
+L2984 B:1 P:1 - {/* Heading & Table Label Text */}
+L2985 B:1 P:1 - <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+L2986 B:1 P:1 - <div>
+L2987 B:1 P:1 - <label className="block text-xs font-bold text-zinc-700 mb-1">Printed Callout Heading</label>
+L2988 B:1 P:1 - <input
+L2989 B:1 P:1 - type="text"
+L2990 B:1 P:1 - value={qrCustomHeading}
+L2991 B:1 P:1 - onChange={(e) => setQrCustomHeading(e.target.value)}
+L2992 B:1 P:1 - className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-bold text-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]/20"
+L2993 B:1 P:1 - />
+L2994 B:1 P:1 - </div>
+L2995 B:1 P:1 - <div>
+L2996 B:1 P:1 - <label className="block text-xs font-bold text-zinc-700 mb-1">Table / Zone Label (Optional)</label>
+L2997 B:1 P:1 - <input
+L2998 B:1 P:1 - type="text"
+L2999 B:1 P:1 - value={qrTableLabel}
+L3000 B:1 P:1 - onChange={(e) => setQrTableLabel(e.target.value)}
+L3001 B:1 P:1 - placeholder="e.g. Table #4"
+L3002 B:1 P:1 - className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-bold text-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]/20"
+L3003 B:1 P:1 - />
+L3004 B:1 P:1 - </div>
+L3005 B:1 P:1 - </div>
+L3006 B:1 P:1 - </div>
+L3007 B:1 P:1 - 
+L3008 B:1 P:1 - {/* Live Visual Standee Mockup Preview */}
+L3009 B:1 P:1 - <div className="relative pt-2">
+L3010 B:1 P:1 - <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center mb-2">
+L3011 B:1 P:1 - Print Preview ({qrStandeeStyle.replace('_', ' ')})
+L3012 B:1 P:1 - </div>
+L3013 B:1 P:1 - 
+L3014 B:2 P:2 - {qrStandeeStyle === 'acrylic_standee' && (
+L3015 B:2 P:2 - <div className="bg-gradient-to-b from-white via-blue-50/40 to-slate-100 border-2 border-zinc-300 rounded-3xl p-6 flex flex-col items-center justify-center text-center max-w-xs mx-auto shadow-xl relative overflow-hidden">
+L3016 B:2 P:2 - {/* Decorative Top Acrylic Lip */}
+L3017 B:2 P:2 - <div className="w-20 h-1.5 bg-zinc-300/80 rounded-full mb-4 shadow-inner" />
+L3018 B:2 P:2 - 
+L3019 B:3 P:3 - {qrTableLabel && (
+L3020 B:3 P:3 - <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-blue-100 text-[#1a73e8] text-[9px] font-extrabold uppercase">
+L3021 B:3 P:3 - {qrTableLabel}
+L3022 B:3 P:3 - </div>
+L3023 B:2 P:2 - )}
+L3024 B:2 P:2 - 
+L3025 B:2 P:2 - <div className="w-12 h-12 rounded-2xl bg-[#1a73e8] text-white flex items-center justify-center mb-2 shadow-md border border-blue-300/40">
+L3026 B:2 P:2 - <Star className="w-6 h-6 fill-white" />
+L3027 B:2 P:2 - </div>
+L3028 B:2 P:2 - 
+L3029 B:2 P:2 - <h3 className="font-black text-zinc-900 text-base tracking-tight">{currentPlace.name}</h3>
+L3030 B:2 P:2 - <div className="flex items-center gap-1 text-amber-500 text-xs font-bold my-1">
+L3031 B:2 P:2 - <span>4.9</span>
+L3032 B:2 P:2 - <div className="flex text-amber-400">
+L3033 B:3 P:4 - {'★★★★★'.split('').map((s, idx) => (
+L3034 B:3 P:4 - <span key={idx}>{s}</span>
+L3035 B:2 P:2 - ))}
+L3036 B:2 P:2 - </div>
+L3037 B:2 P:2 - <span className="text-zinc-400 text-[10px] font-normal">({placeVideos.length} Video Reviews)</span>
+L3038 B:2 P:2 - </div>
+L3039 B:2 P:2 - 
+L3040 B:2 P:2 - <p className="text-[11px] text-zinc-500 max-w-[200px] mb-3 leading-snug">
+L3041 B:2 P:2 - Scan with your camera app to record your 1-tap video review
+L3042 B:2 P:2 - </p>
+L3043 B:2 P:2 - 
+L3044 B:2 P:2 - <div className="bg-white p-3.5 rounded-2xl shadow-lg border border-zinc-200 relative group">
+L3045 B:2 P:2 - <QRCodeCanvas
+L3046 B:2 P:2 - id="yoouz-qr-code"
+L3047 B:2 P:2 - value={`https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`}
+L3048 B:2 P:2 - size={150}
+L3049 B:2 P:2 - level="H"
+L3050 B:2 P:2 - includeMargin={true}
+L3051 B:2 P:2 - />
+L3052 B:2 P:2 - <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+L3053 B:2 P:2 - <div className="w-8 h-8 rounded-full bg-[#1a73e8] border-2 border-white text-white flex items-center justify-center font-black text-xs shadow-md">
+L3054 B:2 P:2 - ★
+L3055 B:2 P:2 - </div>
+L3056 B:2 P:2 - </div>
+L3057 B:2 P:2 - </div>
+L3058 B:2 P:2 - 
+L3059 B:2 P:2 - <span className="text-[10px] font-extrabold text-[#1a73e8] mt-4 uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+L3060 B:2 P:2 - {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
+L3061 B:2 P:2 - </span>
+L3062 B:2 P:2 - </div>
+L3063 B:1 P:1 - )}
+L3064 B:1 P:1 - 
+L3065 B:2 P:2 - {qrStandeeStyle === 'decal_badge' && (
+L3066 B:2 P:2 - <div className="w-64 h-64 mx-auto rounded-full bg-gradient-to-br from-blue-600 via-[#1a73e8] to-indigo-700 p-1 shadow-2xl flex flex-col items-center justify-center text-center text-white relative">
+L3067 B:2 P:2 - <div className="w-full h-full rounded-full border-2 border-dashed border-white/40 p-4 flex flex-col items-center justify-center bg-zinc-900/10 backdrop-blur-xs">
+L3068 B:2 P:2 - <span className="text-[10px] font-black tracking-widest uppercase text-blue-200 mb-1">{currentPlace.name}</span>
+L3069 B:2 P:2 - 
+L3070 B:2 P:2 - <div className="bg-white p-2.5 rounded-2xl shadow-xl">
+L3071 B:2 P:2 - <QRCodeCanvas
+L3072 B:2 P:2 - id="yoouz-qr-code"
+L3073 B:2 P:2 - value={`https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`}
+L3074 B:2 P:2 - size={110}
+L3075 B:2 P:2 - level="H"
+L3076 B:2 P:2 - includeMargin={true}
+L3077 B:2 P:2 - />
+L3078 B:2 P:2 - </div>
+L3079 B:2 P:2 - 
+L3080 B:2 P:2 - <span className="text-[9px] font-bold text-white mt-2 max-w-[150px] leading-tight">
+L3081 B:2 P:2 - {qrCustomHeading}
+L3082 B:2 P:2 - </span>
+L3083 B:2 P:2 - </div>
+L3084 B:2 P:2 - </div>
+L3085 B:1 P:1 - )}
+L3086 B:1 P:1 - 
+L3087 B:2 P:2 - {qrStandeeStyle === 'receipt_card' && (
+L3088 B:2 P:2 - <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 max-w-sm mx-auto shadow-xs font-mono text-zinc-800 text-center space-y-2">
+L3089 B:2 P:2 - <div className="text-xs font-bold tracking-widest uppercase border-b border-dashed border-amber-300 pb-2">
+L3090 B:2 P:2 - *** THANK YOU FOR VISITING {currentPlace.name.toUpperCase()} ***
+L3091 B:2 P:2 - </div>
+L3092 B:2 P:2 - <div className="flex items-center justify-center gap-4 py-1">
+L3093 B:2 P:2 - <div className="bg-white p-2 rounded-xl border border-zinc-300">
+L3094 B:2 P:2 - <QRCodeCanvas
+L3095 B:2 P:2 - id="yoouz-qr-code"
+L3096 B:2 P:2 - value={`https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`}
+L3097 B:2 P:2 - size={90}
+L3098 B:2 P:2 - level="H"
+L3099 B:2 P:2 - includeMargin={true}
+L3100 B:2 P:2 - />
+L3101 B:2 P:2 - </div>
+L3102 B:2 P:2 - <div className="text-left max-w-[160px]">
+L3103 B:2 P:2 - <div className="text-[11px] font-bold text-zinc-900 leading-tight">
+L3104 B:2 P:2 - {qrCustomHeading}
+L3105 B:2 P:2 - </div>
+L3106 B:2 P:2 - <div className="text-[9px] text-zinc-600 mt-1">
+L3107 B:2 P:2 - Scan QR on receipt to publish your video review.
+L3108 B:2 P:2 - </div>
+L3109 B:2 P:2 - </div>
+L3110 B:2 P:2 - </div>
+L3111 B:2 P:2 - </div>
+L3112 B:1 P:1 - )}
+L3113 B:1 P:1 - </div>
+L3114 B:1 P:1 - </div>
+L3115 B:1 P:1 - 
+L3116 B:1 P:1 - {/* Export Actions */}
+L3117 B:1 P:1 - <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-zinc-100">
+L3118 B:1 P:1 - <button
+L3119 B:1 P:1 - type="button"
+L3120 B:1 P:1 - onClick={downloadQRCode}
+L3121 B:1 P:1 - className="py-3 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-xl text-xs font-bold shadow-md shadow-[#1a73e8]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+L3122 B:1 P:1 - >
+L3123 B:1 P:1 - <Download className="w-4 h-4" />
+L3124 B:1 P:1 - Download High-Res PNG
+L3125 B:1 P:1 - </button>
+L3126 B:1 P:1 - 
+L3127 B:1 P:1 - <button
+L3128 B:1 P:1 - type="button"
+L3129 B:1 P:1 - onClick={() => setShowPrintModal(true)}
+L3130 B:1 P:1 - className="py-3 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+L3131 B:1 P:1 - >
+L3132 B:1 P:1 - <Printer className="w-4 h-4 text-amber-400" />
+L3133 B:1 P:1 - Print Standee Sheet (PDF)
+L3134 B:1 P:1 - </button>
+L3135 B:1 P:1 - </div>
+L3136 B:1 P:1 - </div>
+L3137 B:1 P:1 - 
+L3138 B:1 P:1 - {/* Right: Direct Review Request Campaign Dispatcher */}
+L3139 B:1 P:1 - <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs flex flex-col justify-between space-y-6">
+L3140 B:1 P:1 - <div className="space-y-5">
+L3141 B:1 P:1 - <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+L3142 B:1 P:1 - <div className="flex items-center gap-2.5 text-zinc-900 font-extrabold text-lg">
+L3143 B:1 P:1 - <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1a73e8] border border-blue-100 flex items-center justify-center">
+L3144 B:1 P:1 - <Mail className="w-5 h-5" />
+L3145 B:1 P:1 - </div>
+L3146 B:1 P:1 - <div>
+L3147 B:1 P:1 - <h2>Direct Review Requests</h2>
+L3148 B:1 P:1 - <p className="text-[11px] text-zinc-500 font-normal">Automated email & WhatsApp invites</p>
+L3149 B:1 P:1 - </div>
+L3150 B:1 P:1 - </div>
+L3151 B:1 P:1 - 
+L3152 B:1 P:1 - {/* Channel Selector */}
+L3153 B:1 P:1 - <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-xl">
+L3154 B:1 P:1 - <button
+L3155 B:1 P:1 - type="button"
+L3156 B:1 P:1 - onClick={() => setInviteChannel('email')}
+L3157 B:3 P:1 - className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+L3158 B:3 P:1 - inviteChannel === 'email' ? 'bg-white text-zinc-900 shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'
+L3159 B:1 P:1 - }`}
+L3160 B:1 P:1 - >
+L3161 B:1 P:1 - Email
+L3162 B:1 P:1 - </button>
+L3163 B:1 P:1 - <button
+L3164 B:1 P:1 - type="button"
+L3165 B:1 P:1 - onClick={() => setInviteChannel('whatsapp')}
+L3166 B:3 P:1 - className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+L3167 B:3 P:1 - inviteChannel === 'whatsapp' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'
+L3168 B:1 P:1 - }`}
+L3169 B:1 P:1 - >
+L3170 B:1 P:1 - WhatsApp Link
+L3171 B:1 P:1 - </button>
+L3172 B:1 P:1 - </div>
+L3173 B:1 P:1 - </div>
+L3174 B:1 P:1 - 
+L3175 B:1 P:1 - {/* Customizable Invitation Message Editor */}
+L3176 B:1 P:1 - <div className="space-y-3 bg-zinc-50/80 p-4 rounded-2xl border border-zinc-200/80">
+L3177 B:1 P:1 - <div className="flex items-center justify-between">
+L3178 B:1 P:1 - <label className="block text-xs font-bold text-zinc-800">
+L3179 B:1 P:1 - {inviteChannel === 'email' ? 'Email Subject Line' : 'WhatsApp Notification Title'}
+L3180 B:1 P:1 - </label>
+L3181 B:1 P:1 - <span className="text-[10px] text-zinc-400 font-medium">Fully customizable for any business</span>
+L3182 B:1 P:1 - </div>
+L3183 B:1 P:1 - <input
+L3184 B:1 P:1 - type="text"
+L3185 B:1 P:1 - value={inviteSubject}
+L3186 B:1 P:1 - onChange={(e) => setInviteSubject(e.target.value)}
+L3187 B:1 P:1 - placeholder={`How was your experience with ${currentPlace.name}?`}
+L3188 B:1 P:1 - className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]/20 focus:border-[#1a73e8]"
+L3189 B:1 P:1 - />
+L3190 B:1 P:1 - 
+L3191 B:1 P:1 - {/* Greeting Format Selector */}
+L3192 B:1 P:1 - <div className="space-y-1.5 pt-1">
+L3193 B:1 P:1 - <label className="block text-[11px] font-bold text-zinc-700">Customer Greeting Format</label>
+L3194 B:1 P:1 - <div className="grid grid-cols-3 gap-2">
+L3195 B:2 P:1 - {[
+L3196 B:2 P:1 - { id: 'smart_tag', label: 'Hi {first_name},', sub: 'Replaces per recipient' },
+L3197 B:2 P:1 - { id: 'generic', label: 'Hello,', sub: 'Same for everyone' },
+L3198 B:2 P:1 - { id: 'none', label: 'Custom / None', sub: 'No prefix added' }
+L3199 B:2 P:3 - ].map(g => (
+L3200 B:2 P:3 - <button
+L3201 B:2 P:3 - key={g.id}
+L3202 B:2 P:3 - type="button"
+L3203 B:2 P:3 - onClick={() => setInviteGreetingStyle(g.id as any)}
+L3204 B:4 P:3 - className={`p-2 rounded-xl border text-left cursor-pointer transition-all ${
+L3205 B:4 P:3 - inviteGreetingStyle === g.id
+L3206 B:4 P:3 - ? 'bg-[#1a73e8] text-white border-[#1a73e8] shadow-2xs'
+L3207 B:4 P:3 - : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+L3208 B:2 P:3 - }`}
+L3209 B:2 P:3 - >
+L3210 B:2 P:3 - <div className="text-xs font-bold">{g.label}</div>
+L3211 B:2 P:3 - <div className={`text-[9px] ${inviteGreetingStyle === g.id ? 'text-blue-100' : 'text-zinc-400'}`}>
+L3212 B:2 P:3 - {g.sub}
+L3213 B:2 P:3 - </div>
+L3214 B:2 P:3 - </button>
+L3215 B:1 P:1 - ))}
+L3216 B:1 P:1 - </div>
+L3217 B:1 P:1 - </div>
+L3218 B:1 P:1 - 
+L3219 B:1 P:1 - {/* Full Message Body Editor */}
+L3220 B:1 P:1 - <div className="space-y-1.5 pt-1">
+L3221 B:1 P:1 - <div className="flex items-center justify-between">
+L3222 B:1 P:1 - <label className="block text-[11px] font-bold text-zinc-700">Custom Invitation Text Body</label>
+L3223 B:1 P:1 - <div className="flex items-center gap-1">
+L3224 B:1 P:1 - <button
+L3225 B:1 P:1 - type="button"
+L3226 B:1 P:1 - onClick={() => setInviteBodyText(prev => prev + ' {first_name}')}
+L3227 B:1 P:1 - className="px-2 py-0.5 rounded-md bg-blue-50 text-[#1a73e8] hover:bg-blue-100 text-[9px] font-bold cursor-pointer border border-blue-200"
+L3228 B:1 P:1 - >
+L3229 B:1 P:1 - + {'{first_name}'}
+L3230 B:1 P:1 - </button>
+L3231 B:1 P:1 - <button
+L3232 B:1 P:1 - type="button"
+L3233 B:1 P:1 - onClick={() => setInviteBodyText(prev => prev + ' {business_name}')}
+L3234 B:1 P:1 - className="px-2 py-0.5 rounded-md bg-blue-50 text-[#1a73e8] hover:bg-blue-100 text-[9px] font-bold cursor-pointer border border-blue-200"
+L3235 B:1 P:1 - >
+L3236 B:1 P:1 - + {'{business_name}'}
+L3237 B:1 P:1 - </button>
+L3238 B:1 P:1 - </div>
+L3239 B:1 P:1 - </div>
+L3240 B:1 P:1 - 
+L3241 B:1 P:1 - <textarea
+L3242 B:1 P:1 - value={inviteBodyText}
+L3243 B:1 P:1 - onChange={(e) => setInviteBodyText(e.target.value)}
+L3244 B:1 P:1 - rows={3}
+L3245 B:1 P:1 - placeholder="Type the message sent to your customers..."
+L3246 B:1 P:1 - className="w-full bg-white border border-zinc-300 rounded-xl p-3 text-xs text-zinc-800 leading-relaxed focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]/20 focus:border-[#1a73e8]"
+L3247 B:1 P:1 - />
+L3248 B:1 P:1 - </div>
+L3249 B:1 P:1 - </div>
+L3250 B:1 P:1 - 
+L3251 B:1 P:1 - {/* Interactive Customer Email Invite Preview */}
+L3252 B:1 P:1 - <div>
+L3253 B:1 P:1 - <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+L3254 B:1 P:1 - <span>Live Invitation Template Preview</span>
+L3255 B:1 P:1 - <span className="text-[#1a73e8] font-extrabold">From: invites@yoouz.com</span>
+L3256 B:1 P:1 - </div>
+L3257 B:1 P:1 - 
+L3258 B:1 P:1 - <div className="bg-slate-50 rounded-2xl p-4 border border-zinc-200/90 text-xs space-y-3 font-sans">
+L3259 B:1 P:1 - <div className="border-b border-zinc-200 pb-2 flex items-center justify-between">
+L3260 B:1 P:1 - <div>
+L3261 B:1 P:1 - <span className="text-zinc-400 text-[10px]">Subject: </span>
+L3262 B:1 P:1 - <span className="font-bold text-zinc-800">{inviteSubject || `How was your experience with ${currentPlace.name}?`}</span>
+L3263 B:1 P:1 - </div>
+L3264 B:1 P:1 - <span className="text-[9px] bg-blue-100 text-[#1a73e8] font-bold px-2 py-0.5 rounded-md">
+L3265 B:1 P:1 - Live Preview
+L3266 B:1 P:1 - </span>
+L3267 B:1 P:1 - </div>
+L3268 B:1 P:1 - 
+L3269 B:1 P:1 - <div className="bg-white rounded-xl p-4 border border-zinc-200/80 space-y-3 shadow-2xs">
+L3270 B:1 P:1 - <div className="flex items-center gap-2">
+L3271 B:1 P:1 - <div className="w-7 h-7 rounded-lg bg-[#1a73e8] text-white flex items-center justify-center font-bold text-xs">
+L3272 B:1 P:1 - ★
+L3273 B:1 P:1 - </div>
+L3274 B:1 P:1 - <div>
+L3275 B:1 P:1 - <div className="font-bold text-zinc-900 text-xs">{currentPlace.name}</div>
+L3276 B:1 P:1 - <div className="text-[10px] text-zinc-400">Official Customer Feedback Portal</div>
+L3277 B:1 P:1 - </div>
+L3278 B:1 P:1 - </div>
+L3279 B:1 P:1 - 
+L3280 B:1 P:1 - {/* Greeting Indicator Notice */}
+L3281 B:2 P:2 - {inviteGreetingStyle === 'smart_tag' && (
+L3282 B:2 P:2 - <div className="text-[10px] font-semibold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1.5">
+L3283 B:2 P:2 - <span className="font-bold">Dynamic Name Tag:</span>
+L3284 B:2 P:2 - <span>"Hi Sarah," shown below as sample. Replaced with customer's real first name or "Hi there," automatically.</span>
+L3285 B:2 P:2 - </div>
+L3286 B:1 P:1 - )}
+L3287 B:1 P:1 - 
+L3288 B:1 P:1 - <p className="text-zinc-700 text-[11px] leading-relaxed">
+L3289 B:1 P:1 - {inviteGreetingStyle === 'smart_tag' && <strong className="text-zinc-900 font-bold">Hi Sarah, </strong>}
+L3290 B:1 P:1 - {inviteGreetingStyle === 'generic' && <strong className="text-zinc-900 font-bold">Hello, </strong>}
+L3291 B:2 P:1 - {inviteBodyText
+L3292 B:2 P:1 - .replace(/\{business_name\}/g, currentPlace.name)
+L3293 B:1 P:1 - .replace(/\{first_name\}/g, 'Sarah') || `Thank you for choosing ${currentPlace.name}! Tap below to record your 60-second video review.`}
+L3294 B:1 P:1 - </p>
+L3295 B:1 P:1 - 
+L3296 B:1 P:1 - {/* Incentive Option Toggle */}
+L3297 B:2 P:2 - {includeIncentive && (
+L3298 B:2 P:2 - <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold flex items-center gap-2">
+L3299 B:2 P:2 - <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+L3300 B:2 P:2 - <span>{incentiveText}</span>
+L3301 B:2 P:2 - </div>
+L3302 B:1 P:1 - )}
+L3303 B:1 P:1 - 
+L3304 B:1 P:1 - <div className="pt-1">
+L3305 B:1 P:1 - <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1a73e8] text-white font-bold text-xs shadow-sm">
+L3306 B:1 P:1 - <Video className="w-3.5 h-3.5" />
+L3307 B:1 P:1 - Record 60s Video Review
+L3308 B:1 P:1 - </span>
+L3309 B:1 P:1 - </div>
+L3310 B:1 P:1 - </div>
+L3311 B:1 P:1 - </div>
+L3312 B:1 P:1 - </div>
+L3313 B:1 P:1 - 
+L3314 B:1 P:1 - {/* Incentive Config Toggle */}
+L3315 B:1 P:1 - <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2">
+L3316 B:1 P:1 - <label className="flex items-center justify-between cursor-pointer">
+L3317 B:1 P:1 - <span className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
+L3318 B:1 P:1 - <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+L3319 B:1 P:1 - Include Customer Perk / Discount Note
+L3320 B:1 P:1 - </span>
+L3321 B:1 P:1 - <input
+L3322 B:1 P:1 - type="checkbox"
+L3323 B:1 P:1 - checked={includeIncentive}
+L3324 B:1 P:1 - onChange={(e) => setIncludeIncentive(e.target.checked)}
+L3325 B:1 P:1 - className="w-4 h-4 text-[#1a73e8] rounded-md border-zinc-300 focus:ring-[#1a73e8]"
+L3326 B:1 P:1 - />
+L3327 B:1 P:1 - </label>
+L3328 B:2 P:2 - {includeIncentive && (
+L3329 B:2 P:2 - <input
+L3330 B:2 P:2 - type="text"
+L3331 B:2 P:2 - value={incentiveText}
+L3332 B:2 P:2 - onChange={(e) => setIncentiveText(e.target.value)}
+L3333 B:2 P:2 - className="w-full bg-white border border-zinc-300 rounded-lg p-2 text-xs text-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-amber-500/20"
+L3334 B:2 P:2 - />
+L3335 B:1 P:1 - )}
+L3336 B:1 P:1 - </div>
+L3337 B:1 P:1 - 
+L3338 B:1 P:1 - </div>
+L3339 B:1 P:1 - </div>
+L3340 B:1 P:1 - 
+L3341 B:1 P:1 - {/* Dispatch Action Buttons */}
+L3342 B:2 P:2 - {inviteChannel === 'email' ? (
+L3343 B:2 P:2 - <div className="space-y-3">
+L3344 B:2 P:2 - <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+L3345 B:2 P:2 - <div className="flex items-start gap-3">
+L3346 B:2 P:2 - <Mail className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+L3347 B:2 P:2 - <div>
+L3348 B:2 P:2 - <h4 className="text-sm font-bold text-blue-900 leading-tight mb-1">Send from your own email</h4>
+L3349 B:2 P:2 - <p className="text-xs text-blue-800/80 leading-relaxed">
+L3350 B:2 P:2 - To ensure 100% deliverability and avoid spam folders, we recommend sending these templates directly from your own business email account (like Gmail or Outlook).
+L3351 B:2 P:2 - </p>
+L3352 B:2 P:2 - </div>
+L3353 B:2 P:2 - </div>
+L3354 B:2 P:2 - </div>
+L3355 B:2 P:2 - 
+L3356 B:3 P:3 - {emailSendResult && (
+L3357 B:3 P:3 - <div className="p-3 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-2">
+L3358 B:3 P:3 - <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+L3359 B:3 P:3 - <span>{emailSendResult.message}</span>
+L3360 B:3 P:3 - </div>
+L3361 B:2 P:2 - )}
+L3362 B:2 P:2 - 
+L3363 B:2 P:2 - <div className="flex flex-col sm:flex-row gap-3">
+L3364 B:2 P:2 - <button
+L3365 B:2 P:2 - type="button"
+L3366 B:2 P:2 - onClick={handleCopyTemplate}
+L3367 B:2 P:2 - className="flex-1 py-3 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800"
+L3368 B:2 P:2 - >
+L3369 B:2 P:2 - <Copy className="w-4 h-4" />
+L3370 B:2 P:2 - Copy Email Template
+L3371 B:2 P:2 - </button>
+L3372 B:2 P:2 - <button
+L3373 B:2 P:2 - type="button"
+L3374 B:2 P:2 - onClick={handleOpenEmailClient}
+L3375 B:2 P:2 - className="flex-1 py-3 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer bg-zinc-900 hover:bg-black text-white"
+L3376 B:2 P:2 - >
+L3377 B:2 P:2 - <ExternalLink className="w-4 h-4" />
+L3378 B:2 P:2 - Open in Email App
+L3379 B:2 P:2 - </button>
+L3380 B:2 P:2 - </div>
+L3381 B:2 P:2 - </div>
+L3382 B:2 P:2 - ) : (
+L3383 B:2 P:2 - <div className="space-y-3">
+L3384 B:2 P:2 - <div className="flex items-center justify-between">
+L3385 B:2 P:2 - <label className="block text-xs font-bold text-zinc-700">
+L3386 B:2 P:2 - Phone Numbers for WhatsApp / SMS
+L3387 B:2 P:2 - </label>
+L3388 B:2 P:2 - <button
+L3389 B:2 P:2 - type="button"
+L3390 B:2 P:2 - onClick={() => setCustomerEmails('+12125550199, +12125550188')}
+L3391 B:2 P:2 - className="text-[10px] font-bold text-[#1a73e8] hover:underline cursor-pointer"
+L3392 B:2 P:2 - >
+L3393 B:2 P:2 - + Paste Sample List
+L3394 B:2 P:2 - </button>
+L3395 B:2 P:2 - </div>
+L3396 B:2 P:2 - 
+L3397 B:2 P:2 - <textarea
+L3398 B:2 P:2 - value={customerEmails}
+L3399 B:2 P:2 - onChange={(e) => setCustomerEmails(e.target.value)}
+L3400 B:2 P:2 - placeholder="+12125550199, +12125550188"
+L3401 B:2 P:2 - rows={3}
+L3402 B:2 P:2 - className="w-full bg-zinc-50 border border-zinc-300 rounded-xl p-3 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-[#1a73e8]/20 focus:border-[#1a73e8] font-mono"
+L3403 B:2 P:2 - />
+L3404 B:2 P:2 - 
+L3405 B:3 P:3 - {emailSendResult && (
+L3406 B:5 P:3 - <div className={`p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
+L3407 B:5 P:3 - emailSendResult.success ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
+L3408 B:3 P:3 - }`}>
+L3409 B:3 P:3 - {emailSendResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />}
+L3410 B:3 P:3 - <span>{emailSendResult.message}</span>
+L3411 B:3 P:3 - </div>
+L3412 B:2 P:2 - )}
+L3413 B:2 P:2 - 
+L3414 B:2 P:2 - <button
+L3415 B:2 P:2 - type="button"
+L3416 B:2 P:2 - onClick={deprecatedHandleSendEmails}
+L3417 B:2 P:2 - disabled={isSendingEmails || !customerEmails.trim()}
+L3418 B:2 P:2 - className="w-full py-3 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 text-white"
+L3419 B:2 P:2 - >
+L3420 B:2 P:2 - {isSendingEmails ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+L3421 B:2 P:2 - <span>
+L3422 B:2 P:2 - {isSendingEmails ? 'Dispatching Requests...' : 'Generate WhatsApp Invites'}
+L3423 B:2 P:2 - </span>
+L3424 B:2 P:2 - </button>
+L3425 B:2 P:2 - </div>
+L3426 B:1 P:1 - )}
+L3427 B:1 P:1 - </div>
+L3428 B:1 P:1 - 
+L3429 B:1 P:1 - </div>
+L3430 B:1 P:1 - </div>
+L3431 B:1 P:1 - </div>
+L3432 B:0 P:0 - )}
+L3433 B:0 P:0 - 

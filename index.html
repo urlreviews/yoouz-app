@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a73e8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Yoouz" />
+    <title>Yoouz - Real Video Reviews by Real People | Authentic Business Reviews</title>
+    <meta name="description" content="Yoouz is the #1 authentic video review network. Discover local businesses, restaurants, cafes, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews." />
+    <meta name="keywords" content="Yoouz, video reviews, authentic customer reviews, real video reviews, genuine video reviews, business video reviews, restaurant video reviews, product video reviews, local place video reviews, honest customer feedback, video testimonials, verified video ratings, 60 second video reviews, search places, google maps video reviews" />
+    <meta name="author" content="Yoouz" />
+    <meta name="publisher" content="Yoouz" />
+    <link rel="canonical" href="https://yoouz.com" />
+    <script>
+      // Automatic forward from staging/share subdomain to official custom domain
+      if (window.location.hostname === 'reviuzo.ai.studio') {
+        window.location.replace('https://yoouz.com' + window.location.pathname + window.location.search + window.location.hash);
+      }
+    </script>
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Favicon & Touch Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="shortcut icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Yoouz" />
+    <meta property="og:title" content="Yoouz - Real Video Reviews by Real People" />
+    <meta property="og:description" content="Discover local businesses, restaurants, cafes, and websites with 100% authentic 60-second video reviews recorded by real customers. Zero fake text reviews." />
+    <meta property="og:url" content="https://yoouz.com" />
+    <meta property="og:image" content="/api/og-image?title=Yoouz&subtitle=Real+people.+Real+places.&badge=Authentic+60s+Video+Reviews" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Yoouz - Authentic 60s Video Reviews for Every Business" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Yoouz" />
+    <meta name="twitter:creator" content="@Yoouz" />
+    <meta name="twitter:title" content="Yoouz - Real Video Reviews by Real People" />
+    <meta name="twitter:description" content="Discover local businesses and places with 100% authentic 60-second video reviews recorded by real customers. Zero fake text reviews." />
+    <meta name="twitter:image" content="/api/og-image?title=Yoouz&subtitle=Real+people.+Real+places.&badge=Authentic+60s+Video+Reviews" />
+
+    <!-- Structured Data (JSON-LD) for Search Engines (Google, Bing, Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://yoouz.com/#website",
+          "url": "https://yoouz.com",
+          "name": "Yoouz",
+          "description": "Authentic 60-second video reviews for local businesses, restaurants, and products by real customers.",
+          "publisher": {
+            "@id": "https://yoouz.com/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://yoouz.com/search?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://yoouz.com/#organization",
+          "name": "Yoouz",
+          "url": "https://yoouz.com",
+          "logo": "https://yoouz.com/icon-512.png",
+          "slogan": "Real People. Real Reviews.",
+          "description": "The authentic video review platform connecting customers with trusted business recommendations.",
+          "sameAs": [
+            "https://twitter.com/yoouz",
+            "https://instagram.com/yoouz",
+            "https://youtube.com/@yoouz",
+            "https://tiktok.com/@yoouz"
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Yoouz Video Reviews",
+          "url": "https://yoouz.com",
+          "applicationCategory": "SocialNetworkingApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        }
+      ]
+    }
+    </script>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body class="h-full bg-[#0a0a0c] text-[#202124] font-['Roboto',Arial,sans-serif] antialiased select-none overscroll-none">
+    <div id="root" class="h-full">
+      <!-- Lightweight splash loader for instant feedback -->
+      <div id="app-splash-loader" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:'Google Sans',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+        <div style="width:76px;height:76px;background:#1a73e8;border-radius:22px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:0 8px 24px rgba(26,115,232,0.28);border:1px solid rgba(255,255,255,0.2);">
+          <svg viewBox="0 0 24 24" width="38" height="38" fill="#ffffff">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+          </svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:26px;font-weight:900;color:#18181b;letter-spacing:-0.03em;">Yoouz</span>
+          <span style="padding:2px 6px;border-radius:9999px;background:#eff6ff;border:1px solid #dbeafe;font-size:10px;font-weight:900;color:#1a73e8;text-transform:uppercase;letter-spacing:0.05em;">Beta</span>
+        </div>
+        <div style="font-size:13px;font-weight:500;color:#71717a;margin-top:6px;letter-spacing:-0.01em;">Real People. Real Reviews.</div>
+        <div style="width:100px;height:3px;background:#f4f4f5;border-radius:10px;margin-top:28px;overflow:hidden;position:relative;">
+          <div style="position:absolute;top:0;left:0;height:100%;width:45%;background:#1a73e8;border-radius:10px;animation:splash-progress 1.2s infinite ease-in-out;"></div>
+        </div>
+        <style>
+          @keyframes splash-progress {
+            0% { left: -45%; }
+            100% { left: 100%; }
+          }
+        </style>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Instantly dismiss splash once React executes or DOM is ready
+      function hideSplash() {
+        const loader = document.getElementById('app-splash-loader');
+        if (loader && loader.dataset.dismissed !== 'true') {
+          loader.dataset.dismissed = 'true';
+          loader.style.opacity = '0';
+          loader.style.pointerEvents = 'none';
+          loader.style.transition = 'opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+          setTimeout(() => {
+            if (loader.parentNode) loader.parentNode.removeChild(loader);
+          }, 300);
+        }
+      }
+      window.__dismissAppSplash = hideSplash;
+      if (document.readyState === 'complete') {
+        setTimeout(hideSplash, 50);
+      } else {
+        window.addEventListener('DOMContentLoaded', hideSplash);
+        window.addEventListener('load', hideSplash);
+      }
+      setTimeout(hideSplash, 1500); // Fail-safe max timeout
+    </script>
+  </body>
+</html>
+
