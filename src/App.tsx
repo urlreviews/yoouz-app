@@ -51,6 +51,29 @@ import {
 } from "./lib/socialSync";
 
 export function App() {
+  // 0. Cache-Busting & Smart Sync Logic
+  useEffect(() => {
+    // Current App Version Timestamp (Updated: 2026-08-28-13:35-v1.0.4)
+    const APP_VERSION = "2026-08-28-13-35-v1.0.4"; 
+    try {
+      const savedVersion = localStorage.getItem("yoouz_app_version");
+      if (savedVersion && savedVersion !== APP_VERSION) {
+        localStorage.setItem("yoouz_app_version", APP_VERSION);
+        console.log("🚀 [Yoouz] Update detected. Refreshing for latest experience...");
+        window.location.reload();
+      } else {
+        localStorage.setItem("yoouz_app_version", APP_VERSION);
+      }
+      
+      // Safety: Purge old service workers to prevent aggressive caching
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          for(let reg of registrations) reg.unregister();
+        });
+      }
+    } catch (e) {}
+  }, []);
+
   // Fast local storage state setup without page reload
   useEffect(() => {
     // Preserved: Do not clear user videos or data
