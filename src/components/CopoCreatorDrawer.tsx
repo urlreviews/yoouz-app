@@ -478,9 +478,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         <div className="px-6 pt-10 pb-4 bg-zinc-950 border-b border-zinc-800">
           <div className="flex items-start justify-between">
             <div className="min-w-0 pr-2 pt-1">
-              <h2 className="text-xl font-black text-white tracking-tight leading-tight flex flex-wrap items-center gap-1.5">
-                <span className="break-words max-w-full" style={{ wordBreak: 'break-word' }}>{isOwner && currentUser ? currentUser.name : author.name}</span>
-                <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0 mt-0.5" />
+              <h2 className="text-xl font-black text-white tracking-tight leading-tight">
+                {(() => {
+                  const name = (isOwner && currentUser ? currentUser.name : author.name) || "";
+                  const words = name.split(" ");
+                  const lastWord = words.pop();
+                  return (
+                    <>
+                      {words.length > 0 && <span>{words.join(" ")} </span>}
+                      <span className="whitespace-nowrap inline-flex items-center gap-1.5 align-bottom">
+                        <span className="break-words max-w-full" style={{ wordBreak: 'break-word' }}>{lastWord}</span>
+                        <CheckCircle className="w-4 h-4 fill-white text-black shrink-0 mt-0.5" />
+                      </span>
+                    </>
+                  );
+                })()}
               </h2>
               {isOwner && currentUser?.location ? (
                 <p className="text-xs text-zinc-400 font-semibold flex items-center gap-1 mt-1.5">

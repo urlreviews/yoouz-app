@@ -101,10 +101,10 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
           </div>
 
           <div>
-            <h4 className="font-medium text-[14px] text-white leading-tight flex items-center gap-1">
-              {review.author.name}
+            <h4 className="font-medium text-[14px] text-white leading-tight flex items-center gap-1 min-w-0">
+              <span className="truncate">{review.author.name}</span>
               {review.author.isVerified && (
-                <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950" />
+                <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
               )}
             </h4>
             <p className="text-[12px] text-zinc-400 leading-tight flex items-center gap-1.5 mt-0.5">

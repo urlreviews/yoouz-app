@@ -455,7 +455,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             </span>
                             {details.rating && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-300 font-black text-[11px] sm:text-xs">
-                                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white text-white inline shrink-0" />
+                                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-400 inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
                             )}
@@ -469,7 +469,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             </span>
                             {details.rating && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-300 font-black text-[11px] sm:text-xs">
-                                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white text-white inline shrink-0" />
+                                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-400 inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
                             )}

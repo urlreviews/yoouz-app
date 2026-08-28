@@ -25,6 +25,7 @@ import {
   Info,
   Sparkles,
   Camera,
+  CheckCircle,
   CheckCircle2,
   Image as ImageIcon,
   SlidersHorizontal,
@@ -512,13 +513,24 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       <div className="px-6 pt-14 pb-3 bg-zinc-950 md:bg-zinc-900">
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="min-w-0 flex-1 pr-2">
-            <h2 className="text-2xl font-bold text-white md:text-white tracking-tight leading-tight [overflow-wrap:anywhere] flex items-center flex-wrap gap-x-1.5">
-              <span>{formatBusinessName(place.name)}</span>
-              {isClaimed && (
-                <span title="Verified Business" className="inline-flex">
-                  <CheckCircle2 className="w-5 h-5 fill-white text-zinc-950 shrink-0" />
-                </span>
-              )}
+            <h2 className="text-2xl font-bold text-white md:text-white tracking-tight leading-tight [overflow-wrap:anywhere]">
+              {(() => {
+                const name = formatBusinessName(place.name) || "";
+                if (!isClaimed) return <span>{name}</span>;
+                const words = name.split(" ");
+                const lastWord = words.pop();
+                return (
+                  <>
+                    {words.length > 0 && <span>{words.join(" ")} </span>}
+                    <span className="whitespace-nowrap inline-flex items-center gap-1.5 align-bottom">
+                      <span>{lastWord}</span>
+                      <span title="Verified Business" className="inline-flex">
+                        <CheckCircle className="w-5 h-5 fill-white text-black shrink-0" />
+                      </span>
+                    </span>
+                  </>
+                );
+              })()}
             </h2>
           </div>
 
@@ -556,7 +568,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   key={i}
                   className={`w-3.5 h-3.5 ${
                     i < Math.floor(dynamicAvgRating)
-                      ? "fill-zinc-300 text-zinc-300"
+                      ? "fill-amber-400 text-amber-400"
                       : "text-zinc-700"
                   }`}
                 />
@@ -826,7 +838,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                             {/* Rating Badge */}
                             <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs border border-white/10">
-                              <Star className="w-2.5 h-2.5 fill-white text-white" />
+                              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                               <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                             </div>
 
@@ -1132,7 +1144,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                         {/* Rating Badge */}
                         <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs border border-white/10">
-                          <Star className="w-2.5 h-2.5 fill-white text-white" />
+                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                           <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                         </div>
 

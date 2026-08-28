@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Globe, Loader2, Play, Video, Star } from "lucide-react";
+import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName } from "../utils/placeUtils";
@@ -290,12 +290,29 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 website={searchedPlace.website}
                 logoUrl={searchedPlace.logoUrl}
                 bannerUrl={searchedPlace.bannerUrl || searchedPlace.ogImage}
-                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 bg-zinc-900 shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10"
+                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 bg-white shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10"
               />
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                 <div>
-                  <h2 className="text-3xl font-extrabold text-white mb-2">{formatBusinessName(searchedPlace.name)}</h2>
+                  <h2 className="text-3xl font-extrabold text-white mb-2">
+                    {(() => {
+                      const name = formatBusinessName(searchedPlace.name) || "";
+                      const words = name.split(" ");
+                      const lastWord = words.pop();
+                      return (
+                        <>
+                          {words.length > 0 && <span>{words.join(" ")} </span>}
+                          <span className="whitespace-nowrap inline-flex items-center gap-2 align-bottom">
+                            <span>{lastWord}</span>
+                            <span title="Verified Business" className="inline-flex">
+                              <CheckCircle className="w-6 h-6 fill-white text-black shrink-0" />
+                            </span>
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </h2>
                   <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline flex items-center gap-1.5 font-medium text-sm">
                     <Globe className="w-4 h-4 text-zinc-400" />
                     {searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}
@@ -339,7 +356,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3">
                        <div className="flex items-center gap-1 mb-1">
                           {[...Array(5)].map((_, i) => (
-                             <Star key={i} className={`w-3 h-3 ${i < video.rating ? "text-white fill-current" : "text-zinc-600"}`} />
+                             <Star key={i} className={`w-3 h-3 ${i < video.rating ? "text-amber-400 fill-amber-400" : "text-zinc-600"}`} />
                           ))}
                        </div>
                        <p className="text-white text-xs font-medium line-clamp-2">{video.caption}</p>

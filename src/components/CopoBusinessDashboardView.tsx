@@ -3523,7 +3523,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     <div className="space-y-0.5">
                                       <div className="flex items-center gap-1 font-bold text-white text-[12px] drop-shadow-md">
                                         <span className="truncate">By {previewAuthorName}</span>
-                                        <CheckCircle className="w-3 h-3 fill-white text-zinc-950 shrink-0" />
+                                        <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
                                       </div>
                                       <div className="flex items-center gap-1.5">
                                         <div className="flex items-center gap-0.5">
@@ -3560,7 +3560,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                           name={currentPlace.name}
                                           website={currentPlace.website}
                                           logoUrl={(currentPlace as any).logoUrl || (currentPlace as any).icon}
-                                          className="w-5 h-5 rounded bg-zinc-950 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs"
+                                          className="w-5 h-5 rounded bg-white overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs border border-zinc-200/20"
                                           imageClassName="w-full h-full object-contain rounded-[3px]"
                                           fallbackTextClassName="font-extrabold text-[9px] text-white"
                                         />
@@ -3633,7 +3633,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       className="w-full h-full object-cover"
                                       referrerPolicy="no-referrer"
                                     />
-                                    <div className="absolute -bottom-2 left-3 w-10 h-10 rounded-lg bg-zinc-950 border border-zinc-800 text-white p-0.5 shadow-sm">
+                                    <div className="absolute -bottom-2 left-3 w-10 h-10 rounded-lg bg-white border border-black/10 text-black p-0.5 shadow-sm">
                                       <CopoBrandLogo
                                         domain={currentPlace.website}
                                         name={currentPlace.name}
@@ -3706,7 +3706,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <div>
                               <strong className="text-white font-semibold">Speaker & Rating:</strong> Viewers see who filmed the review{' '}
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 font-medium text-[10px] my-0.5">
-                                By Author <CheckCircle className="w-2.5 h-2.5 text-white fill-white inline" />
+                                By Author <CheckCircle className="w-2.5 h-2.5 text-black fill-white inline" />
                               </span>{' '}
                               and their 5-star score.
                             </div>

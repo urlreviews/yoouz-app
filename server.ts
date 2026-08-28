@@ -4593,15 +4593,9 @@ Return JSON:
   // Dynamic Social Sharing Meta Tags & Open Graph Card Generator Engine
   app.get(['/api/og-image/icon', '/favicon.svg'], (_req: any, res: any) => {
     const iconSvg = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="blueGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#1A73E8"/>
-          <stop offset="1" stop-color="#0B57D0"/>
-        </linearGradient>
-      </defs>
-      <rect width="512" height="512" rx="160" fill="url(#blueGrad)"/>
-      <g transform="translate(100, 100) scale(13)">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round" />
+      <rect width="512" height="512" rx="140" fill="#18181b"/>
+      <g transform="translate(86, 86) scale(14.166)">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
       </g>
     </svg>`;
     res.setHeader('Content-Type', 'image/svg+xml');
@@ -5025,20 +5019,30 @@ Sitemap: ${protocol}://${host}/sitemap.xml
       // Default / Homepage Platform Banner
       mainContentSvg = `
         <!-- Main Headline -->
-        <text x="72" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="56" font-weight="900" fill="#f4f4f5" letter-spacing="-1.5">
-          Real People. Real Reviews.
-        </text>
+        <g transform="translate(72, 220)">
+          <!-- Yoouz Logo SVG (Star) -->
+          <g transform="translate(0, -50)">
+            <rect width="64" height="64" rx="20" fill="#ffffff" />
+            <path d="M32 14l4.5 9 10 1-7 7 1.5 10-9-4.5-9 4.5 1.5-10-7-7 10-1 4.5-9z" fill="#09090b" />
+          </g>
+          <text x="84" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="56" font-weight="900" fill="#f4f4f5" letter-spacing="-1.5">
+            Yoouz
+          </text>
+        </g>
 
         <!-- Subtitle -->
-        <text x="72" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#a1a1aa">
+        <text x="72" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="800" fill="#f4f4f5" letter-spacing="-0.5">
+          Real People. Real Reviews.
+        </text>
+        <text x="72" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#a1a1aa">
           The #1 authentic 60-second video review network for local places,
         </text>
-        <text x="72" y="312" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#a1a1aa">
+        <text x="72" y="352" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#a1a1aa">
           restaurants &amp; online businesses. Zero fake text reviews.
         </text>
 
         <!-- 3 Feature Pills -->
-        <g transform="translate(72, 380)">
+        <g transform="translate(72, 420)">
           <!-- Pill 1 -->
           <g>
             <rect width="180" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>

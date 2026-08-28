@@ -244,7 +244,7 @@ export const CopoRecordReviewView: React.FC<CopoRecordReviewViewProps> = ({
                 website={searchedPlace.website}
                 logoUrl={searchedPlace.logoUrl}
                 bannerUrl={searchedPlace.bannerUrl || searchedPlace.ogImage}
-                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-900 bg-zinc-900 shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10"
+                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-900 bg-white shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10"
               />
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">

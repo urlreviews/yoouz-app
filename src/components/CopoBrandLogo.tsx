@@ -18,7 +18,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   website,
   logoUrl,
   bannerUrl,
-  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-zinc-800 bg-zinc-900 shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10",
+  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-zinc-800 bg-white shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10",
   imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]",
   fallbackTextClassName = "font-black text-2xl sm:text-3xl text-white drop-shadow-md"
 }) => {

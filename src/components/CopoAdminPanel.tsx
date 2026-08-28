@@ -947,7 +947,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="text-3xl font-black text-white">{metrics.totalVideos}</div>
                   <div className="flex items-center gap-2 text-xs text-zinc-400 mt-2">
                     <span className="text-zinc-300 font-semibold flex items-center gap-0.5">
-                      <Star className="w-3 h-3 fill-white text-white" /> {metrics.avgRating}
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {metrics.avgRating}
                     </span>
                     <span>Avg Customer Rating</span>
                   </div>
@@ -1029,7 +1029,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <h4 className="font-bold text-sm text-white truncate">{v.placeName}</h4>
                             <p className="text-xs text-zinc-400 truncate">by {v.author?.name || "Reviewer"}</p>
                             <div className="flex items-center gap-1 text-[11px] text-zinc-300 mt-0.5">
-                              <Star className="w-3 h-3 fill-white text-white" /> {v.rating} Stars
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {v.rating} Stars
                             </div>
                           </div>
                         </div>
@@ -1506,7 +1506,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-between p-3">
                           <div className="flex justify-end">
                             <span className="px-2 py-0.5 rounded-md bg-black/60 backdrop-blur text-[11px] font-bold text-white flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-white text-white" /> {video.rating}
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {video.rating}
                             </span>
                           </div>
                           <div>
@@ -1626,7 +1626,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </td>
                           <td className="p-4">
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold text-xs">
-                              <Star className="w-3.5 h-3.5 fill-white text-white" /> {v.rating}
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {v.rating}
                             </span>
                           </td>
                           <td className="p-4 text-xs text-zinc-400">
@@ -2296,7 +2296,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold text-xs flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 fill-white text-white" /> {previewVideo.rating} Stars
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {previewVideo.rating} Stars
                     </span>
                     <span className="text-xs text-zinc-400 font-mono">ID: {previewVideo.id}</span>
                   </div>

@@ -436,9 +436,11 @@ return () => {
     }
   };
 
+  const isExplicitVideoUrl = window.location.pathname.includes('/video/') || window.location.pathname.startsWith('/v/');
+
   return (
     <>
-      {isActive && (
+      {isActive && isExplicitVideoUrl && (
         <SEOTags 
           title={`${video.author.name} at ${formatBusinessName(video.placeName)} | Yoouz`}
           description={video.caption || `Check out ${video.author.name}'s video review of ${formatBusinessName(video.placeName)} on Yoouz.`}
@@ -751,8 +753,11 @@ return () => {
               imageClassName="w-full h-full object-contain rounded-[5px] [image-rendering:-webkit-optimize-contrast]"
               fallbackTextClassName="font-extrabold text-sm text-white"
             />
-            <div className="flex flex-col justify-center min-w-0 flex-1 leading-snug">
-              <span className="whitespace-normal leading-tight line-clamp-2 font-bold text-white group-hover:text-zinc-200 transition-colors">{formatBusinessName(video?.placeName) || "Business Place"}</span>
+            <div className="flex items-center min-w-0 flex-1 gap-1.5">
+              <span className="truncate leading-tight font-bold text-white group-hover:text-zinc-200 transition-colors">
+                {formatBusinessName(video?.placeName) || "Business Place"}
+              </span>
+              <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
             </div>
             <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
           </button>

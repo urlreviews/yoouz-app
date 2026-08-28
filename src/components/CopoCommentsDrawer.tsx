@@ -391,7 +391,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
             <div className="p-4 bg-gradient-to-br from-blue-950/40 md:from-blue-50/90 via-sky-950/30 md:via-sky-50/50 to-indigo-950/20 md:to-indigo-50/40 border border-blue-800/60 md:border-blue-200/80 rounded-2xl space-y-2.5 shadow-2xs animate-in fade-in slide-in-from-top-1 duration-250">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-900 md:bg-zinc-900 border border-blue-800 md:border-blue-200 flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-full overflow-hidden bg-white border border-blue-800 md:border-blue-200 flex items-center justify-center shrink-0 p-0.5">
                     <CopoBrandLogo
                       domain={video.placeWebsite}
                       name={video.placeName}

@@ -270,7 +270,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   website={searchedPlace.website}
                   logoUrl={searchedPlace.logoUrl}
                   bannerUrl={searchedPlace.bannerUrl}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-zinc-800 bg-zinc-900 shadow-xl overflow-hidden p-1.5 flex items-center justify-center relative ring-1 ring-white/10"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-zinc-800 bg-white shadow-xl overflow-hidden p-1.5 flex items-center justify-center relative ring-1 ring-white/10"
                   imageClassName="w-full h-full object-contain rounded-lg"
                   fallbackTextClassName="font-black text-xl text-white drop-shadow-sm"
                 />

@@ -502,7 +502,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             website={place.website || place.address}
                             logoUrl={place.logoUrl || place.avatarUrl}
                             bannerUrl={place.bannerUrl || place.ogImage}
-                            className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm"
+                            className="w-12 h-12 rounded-xl bg-white border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm p-1"
                             imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
                             fallbackTextClassName="font-bold text-lg text-zinc-300"
                           />
@@ -557,7 +557,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             website={place.website || place.address}
                             logoUrl={place.logoUrl || place.avatarUrl}
                             bannerUrl={place.bannerUrl || place.ogImage}
-                            className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm"
+                            className="w-12 h-12 rounded-xl bg-white border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm p-1"
                             imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
                             fallbackTextClassName="font-bold text-lg text-zinc-300"
                           />
