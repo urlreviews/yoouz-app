@@ -17,8 +17,7 @@ import {
   Facebook,
   Video,
   Shield,
-  Download,
-  Cloud
+  Download
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 
@@ -149,43 +148,6 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               );
             })}
           </nav>
-
-          {/* Cloud Sync Button */}
-          <button
-            onClick={async () => {
-              try {
-                const cached = localStorage.getItem("yoouz_cached_videos_v16") || localStorage.getItem("copo_videos");
-                if (!cached) {
-                  alert("No local videos found to sync.");
-                  return;
-                }
-                const parsed = JSON.parse(cached);
-                if (!Array.isArray(parsed) || parsed.length === 0) {
-                  alert("No local videos found to sync.");
-                  return;
-                }
-                let count = 0;
-                for (const v of parsed) {
-                  if (v && v.id) {
-                    const res = await fetch(`/api/nosql/videoReviews/${v.id}`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ data: v })
-                    });
-                    if (res.ok) count++;
-                  }
-                }
-                alert(`Successfully synced ${count} video(s) to cloud! Refreshing page...`);
-                window.location.reload();
-              } catch (err) {
-                alert("Sync error: " + err);
-              }
-            }}
-            className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium text-xs rounded-xl border border-emerald-200 transition-all cursor-pointer shadow-3xs"
-          >
-            <Cloud className="w-4 h-4 text-emerald-600" />
-            <span>Sync Videos to Cloud</span>
-          </button>
         </div>
 
         {/* Footer & Social Media Channels */}
