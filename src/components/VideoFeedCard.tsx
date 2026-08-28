@@ -465,7 +465,7 @@ return () => {
           ref={videoRef}
           id={`video-element-${video.id}`}
           src={isActive || isNear ? currentSource : undefined}
-          preload={isActive ? "auto" : "metadata"}
+          preload={isActive || isNear ? "auto" : "metadata"}
           autoPlay={false}
           playsInline
           webkit-playsinline="true"
@@ -528,7 +528,7 @@ return () => {
         <img
           src={posterUrl}
           alt={video.caption || formatBusinessName(video.placeName) || "Video review poster"}
-          className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
+          className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-150 z-10 ${
             isActive && isPlaying ? "opacity-0" : "opacity-100"
           }`}
           referrerPolicy="no-referrer"

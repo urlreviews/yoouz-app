@@ -263,7 +263,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       },
       {
         root: container,
-        threshold: 0.55
+        threshold: 0.45
       }
     );
 
@@ -448,7 +448,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            const isCardNear = idx === currentIndex + 1;
+            // Preload 3 videos ahead and 1 video behind for instant transitions
+            const isCardNear = (idx >= currentIndex - 1 && idx <= currentIndex + 3);
 
             return (
               <VideoFeedCard
