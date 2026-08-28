@@ -5264,7 +5264,9 @@ Sitemap: ${protocol}://${host}/sitemap.xml
     app.use(express.static(distPath, {
       setHeaders: (res, filePath) => {
         if (filePath.endsWith('.html')) {
-          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
         }
       }
     }));
@@ -5276,7 +5278,9 @@ Sitemap: ${protocol}://${host}/sitemap.xml
         const finalHtml = injectOpenGraphTags(indexTemplate, meta);
         res.status(200).set({ 
           'Content-Type': 'text/html',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }).end(finalHtml);
       } catch (err) {
         res.status(200).set({

@@ -53,14 +53,15 @@ import {
 export function App() {
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
-    // Current App Version Timestamp (Updated: 2026-08-28-13:35-v1.0.4)
-    const APP_VERSION = "2026-08-28-13-35-v1.0.4"; 
+    // Current App Version Timestamp (Updated: 2026-08-28-14:00-SUPER-FORCE)
+    const APP_VERSION = "2026-08-28-14-00-SUPER-FORCE"; 
     try {
       const savedVersion = localStorage.getItem("yoouz_app_version");
       if (savedVersion && savedVersion !== APP_VERSION) {
         localStorage.setItem("yoouz_app_version", APP_VERSION);
-        console.log("🚀 [Yoouz] Update detected. Refreshing for latest experience...");
+        console.log("🚀 [Yoouz] Super-Force Update detected. Hard-refreshing for latest experience...");
         window.location.reload();
+        return;
       } else {
         localStorage.setItem("yoouz_app_version", APP_VERSION);
       }
