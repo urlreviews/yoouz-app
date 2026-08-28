@@ -43,10 +43,10 @@ jobs:
       - name: Deploy to Cloud Run (Backend)
         run: |
           gcloud auth configure-docker --quiet
-          docker build -t gcr.io/gen-lang-client-0669185519/yoouz-app .
-          docker push gcr.io/gen-lang-client-0669185519/yoouz-app
-          gcloud run deploy yoouz-app \
-            --image gcr.io/gen-lang-client-0669185519/yoouz-app \
+          docker build -t gcr.io/gen-lang-client-0669185519/yoouz .
+          docker push gcr.io/gen-lang-client-0669185519/yoouz
+          gcloud run deploy yoouz \
+            --image gcr.io/gen-lang-client-0669185519/yoouz \
             --platform managed \
             --region europe-west1 \
             --allow-unauthenticated
