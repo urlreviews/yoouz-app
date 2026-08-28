@@ -235,11 +235,17 @@ export function App() {
 
         // Pathname parsing for elite SEO routes
         if (!videoParam) {
-          const vMatch = pathname.match(/^\/(v|review)\/([^\/]+)/);
-          if (vMatch) videoParam = vMatch[2];
+          const userVideoMatch = pathname.match(/^\/@([^\/]+)\/video\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)\/video\/([^\/]+)/);
+          if (userVideoMatch) {
+            creatorParam = userVideoMatch[1];
+            videoParam = userVideoMatch[2];
+          } else {
+            const vMatch = pathname.match(/^\/(v|video|review)\/([^\/]+)/);
+            if (vMatch) videoParam = vMatch[2];
+          }
         }
         if (!creatorParam) {
-          const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/);
+          const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)/);
           if (cMatch) {
             creatorParam = cMatch[1];
           }

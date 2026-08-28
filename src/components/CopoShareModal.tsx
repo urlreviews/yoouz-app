@@ -44,9 +44,21 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   
   if (!isOpen) return null;
 
+  const getCleanHandle = (author?: any) => {
+    if (!author) return "user";
+    const raw = (author.handle || author.name || "user")
+      .replace(/^@+/, "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9_-]/g, "")
+      .replace(/-+/g, "-");
+    return raw || "user";
+  };
+
   const shareUrl = isVideoMode && video
-    ? `${window.location.origin}/@${video.author?.name || video.author?.name?.replace(/\s+/g, "").toLowerCase() || "user"}/video/${video.id}`
-    : (explicitShareUrl || window.location.origin);
+    ? `${window.location.origin}/@${getCleanHandle(video.author)}/video/${video.id}`
+    : (explicitShareUrl ? explicitShareUrl.trim().replace(/\s+/g, "%20") : window.location.origin);
 
   const title = isVideoMode && video
     ? `${video.author.name}'s 60s review of ${video.placeName || "Business"}`
@@ -210,8 +222,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 onClick={handleCopy}
                 className={`px-4 py-2.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                   copied
-                    ? "bg-emerald-600 text-white"
-                    : "bg-white text-black hover:bg-zinc-200"
+                    ? "bg-zinc-800 text-white border border-zinc-700"
+                    : "bg-white text-zinc-950 hover:bg-zinc-200"
                 }`}
               >
                 {copied ? (

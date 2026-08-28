@@ -8,6 +8,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import { Resend } from "resend";
+import sharp from "sharp";
 
 import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, firestore_video_reviews, firestore_users, firestore_places, firestore_chats } from "./src/db/schema.ts";
@@ -4804,137 +4805,413 @@ Sitemap: ${protocol}://${host}/sitemap.xml
     }
   });
 
-  app.get('/api/og-image', (req: any, res: any) => {
-    try {
-      const rawTitle = (req.query.title as string) || "Yoouz";
-      const subtitle = (req.query.subtitle as string) || "Real People. Real Reviews.";
-      const badge = (req.query.badge as string) || "Authentic 60s Video Reviews";
-      const rating = parseFloat(req.query.rating as string) || 0;
-      const author = (req.query.author as string) || "";
+  // SVG Generator for High-End Open Graph & Social Media Share Banners
+  function buildOgImageSvg(options: {
+    type?: string;
+    title?: string;
+    subtitle?: string;
+    badge?: string;
+    rating?: number;
+    author?: string;
+    caption?: string;
+    placeName?: string;
+    category?: string;
+    city?: string;
+    reviewsCount?: number;
+  }): string {
+    const escapeXml = (unsafe: string) => {
+      return (unsafe || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    };
 
-      // Escape XML characters
-      const escapeXml = (unsafe: string) => {
-        return unsafe
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
-      };
+    const type = options.type || "homepage";
+    const rawTitle = options.title || options.placeName || (type === 'creator' ? (options.author || '@user') : "Yoouz");
+    const rawSubtitle = options.subtitle || (type === 'video' ? "Authentic 60-Second Video Review" : "Real People. Real Reviews.");
+    const rawBadge = options.badge || (type === 'video' ? "60s VIDEO REVIEW" : type === 'place' ? "VERIFIED BUSINESS" : type === 'creator' ? "VERIFIED CREATOR" : "AUTHENTIC VIDEO REVIEWS");
+    const rating = typeof options.rating === 'number' ? options.rating : 5.0;
+    const author = escapeXml(options.author || "");
+    const caption = escapeXml(options.caption || "");
+    const placeName = escapeXml(options.placeName || rawTitle);
+    const category = escapeXml(options.category || "Local Business & Service");
+    const city = escapeXml(options.city || "Verified Location");
+    const reviewsCount = options.reviewsCount || 12;
 
-      const title = escapeXml(rawTitle);
-      const sub = escapeXml(subtitle);
-      const bdg = escapeXml(badge);
-      const auth = escapeXml(author);
+    const title = escapeXml(rawTitle);
+    const sub = escapeXml(rawSubtitle);
+    const badgeText = escapeXml(rawBadge);
 
-      // Simple word wrapping for title (max ~35 chars per line)
-      const words = title.split(' ');
+    // Word wrap helper
+    const wrapWords = (text: string, maxLen = 30, maxLines = 2) => {
+      const words = text.split(' ');
       const lines: string[] = [];
-      let currentLine = '';
+      let cur = '';
       for (const w of words) {
-        if ((currentLine + ' ' + w).length > 32) {
-          if (currentLine) lines.push(currentLine);
-          currentLine = w;
+        if ((cur + ' ' + w).trim().length > maxLen) {
+          if (cur) lines.push(cur.trim());
+          cur = w;
         } else {
-          currentLine = currentLine ? currentLine + ' ' + w : w;
+          cur = cur ? cur + ' ' + w : w;
         }
       }
-      if (currentLine) lines.push(currentLine);
-      const displayLines = lines.slice(0, 2);
+      if (cur) lines.push(cur.trim());
+      return lines.slice(0, maxLines);
+    };
 
-      const titleTspans = displayLines.map((line, idx) => 
-        `<tspan x="80" dy="${idx === 0 ? '0' : '1.2em'}">${line}</tspan>`
-      ).join('');
+    const isVideoCard = type === 'video' || (author && rating > 0);
+    const isPlaceCard = type === 'place';
+    const isCreatorCard = type === 'creator';
 
-      const starsSvg = rating > 0 ? `
-        <g transform="translate(80, 430)">
-          <rect width="180" height="42" rx="21" fill="#fef3c7" stroke="#fde68a" stroke-width="1.5"/>
-          <text x="24" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="bold" fill="#b45309">★ ${rating.toFixed(1)} / 5.0</text>
+    // Content body SVG per type
+    let mainContentSvg = '';
+
+    if (isVideoCard) {
+      const placeLines = wrapWords(`Review of ${placeName}`, 26, 2);
+      const placeTspans = placeLines.map((l, idx) => `<tspan x="72" dy="${idx === 0 ? '0' : '1.15em'}">${l}</tspan>`).join('');
+
+      mainContentSvg = `
+        <!-- Video Tagline -->
+        <text x="72" y="195" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">AUTHENTIC 60-SECOND CUSTOMER REVIEW</text>
+
+        <!-- Place Title -->
+        <text x="72" y="245" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" fill="#f4f4f5" letter-spacing="-0.5">
+          ${placeTspans}
+        </text>
+
+        <!-- Rating & Author Badges -->
+        <g transform="translate(72, ${placeLines.length > 1 ? 340 : 285})">
+          <!-- Star Rating Pill -->
+          <rect width="170" height="42" rx="21" fill="#18181b" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="22" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="bold" fill="#fbbf24">★ ${rating.toFixed(1)} / 5.0</text>
+
+          <!-- Author Pill -->
+          <g transform="translate(186, 0)">
+            <rect width="280" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
+            <circle cx="21" cy="21" r="13" fill="#27272a"/>
+            <text x="21" y="26" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="bold" fill="#e4e4e7">${author ? author.charAt(0).toUpperCase() : 'U'}</text>
+            <text x="44" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#f4f4f5">${author ? `By ${author}` : 'Verified Customer'}</text>
+            <circle cx="255" cy="21" r="8" fill="#ffffff"/>
+            <path d="M251.5 21l2.5 2.5 4.5-4.5" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
         </g>
-      ` : '';
 
-      const authorBadge = auth ? `
-        <g transform="translate(${rating > 0 ? '280' : '80'}, 430)">
-          <rect width="260" height="42" rx="21" fill="#e0e7ff" stroke="#c7d2fe" stroke-width="1.5"/>
-          <text x="20" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="600" fill="#3730a3">Reviewer: ${auth}</text>
+        <!-- Caption Quote -->
+        ${caption ? `
+        <g transform="translate(72, ${placeLines.length > 1 ? 405 : 355})">
+          <rect width="560" height="52" rx="14" fill="#18181b" stroke="#27272a" stroke-width="1"/>
+          <text x="20" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-style="italic" fill="#d4d4d8">"${caption.length > 68 ? caption.slice(0, 65) + '...' : caption}"</text>
         </g>
-      ` : '';
+        ` : `
+        <g transform="translate(72, ${placeLines.length > 1 ? 405 : 355})">
+          <text x="0" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="500" fill="#a1a1aa">Watch 100% genuine live 60-second video review. Zero fake text reviews.</text>
+        </g>
+        `}
 
-      const svg = `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#0B132B"/>
-            <stop offset="0.5" stop-color="#1C2541"/>
-            <stop offset="1" stop-color="#0F172A"/>
-          </linearGradient>
-          <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop stop-color="#1E293B" stop-opacity="0.9"/>
-            <stop offset="1" stop-color="#0F172A" stop-opacity="0.95"/>
-          </linearGradient>
-          <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop stop-color="#3B82F6"/>
-            <stop offset="1" stop-color="#60A5FA"/>
-          </linearGradient>
-        </defs>
+        <!-- Right Side Video Play Mockup Card -->
+        <g transform="translate(760, 140)">
+          <rect width="360" height="400" rx="24" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
+          
+          <!-- Inner Video Frame -->
+          <rect x="16" y="16" width="328" height="368" rx="16" fill="#09090b" stroke="#27272a" stroke-width="1"/>
+          
+          <!-- Live REC Pill -->
+          <rect x="32" y="32" width="76" height="24" rx="12" fill="#ef4444" fill-opacity="0.2" stroke="#ef4444" stroke-width="1"/>
+          <circle cx="44" cy="44" r="4" fill="#ef4444"/>
+          <text x="54" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="bold" fill="#ef4444">0:60</text>
 
-        <!-- Background -->
-        <rect width="1200" height="630" fill="url(#bgGrad)"/>
+          <!-- Verified Video Tag -->
+          <rect x="230" y="32" width="98" height="24" rx="12" fill="#27272a" stroke="#3f3f46" stroke-width="1"/>
+          <text x="279" y="48" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="bold" fill="#e4e4e7">REAL VIDEO</text>
+
+          <!-- Center Play Button -->
+          <circle cx="180" cy="190" r="46" fill="#ffffff" fill-opacity="0.1" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1.5"/>
+          <circle cx="180" cy="190" r="34" fill="#ffffff"/>
+          <path d="M174 176l18 14-18 14v-28z" fill="#09090b"/>
+
+          <!-- Bottom Place Card -->
+          <rect x="32" y="300" width="296" height="64" rx="14" fill="#18181b" fill-opacity="0.95" stroke="#3f3f46" stroke-width="1"/>
+          <text x="48" y="326" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="bold" fill="#ffffff">${placeName.length > 22 ? placeName.slice(0, 20) + '...' : placeName}</text>
+          <text x="48" y="348" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="600" fill="#fbbf24">★ ${rating.toFixed(1)} · Verified Rating</text>
+        </g>
+      `;
+    } else if (isPlaceCard) {
+      const placeLines = wrapWords(placeName, 26, 2);
+      const placeTspans = placeLines.map((l, idx) => `<tspan x="72" dy="${idx === 0 ? '0' : '1.15em'}">${l}</tspan>`).join('');
+
+      mainContentSvg = `
+        <!-- Category & Location -->
+        <text x="72" y="195" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">${category.toUpperCase()} · ${city.toUpperCase()}</text>
+
+        <!-- Place Title -->
+        <text x="72" y="245" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-0.5">
+          ${placeTspans}
+        </text>
+
+        <!-- Rating & Video Count Pill -->
+        <g transform="translate(72, ${placeLines.length > 1 ? 340 : 285})">
+          <rect width="360" height="44" rx="22" fill="#18181b" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="24" y="28" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="bold" fill="#fbbf24">★ ${rating.toFixed(1)}</text>
+          <text x="80" y="28" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#e4e4e7">· ${reviewsCount} Authentic Video Reviews</text>
+        </g>
+
+        <!-- Subtitle -->
+        <g transform="translate(72, ${placeLines.length > 1 ? 410 : 355})">
+          <text x="0" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Watch genuine customer video reviews recorded live before you visit.</text>
+          <text x="0" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#71717a">Zero fake text reviews · 100% verified customer video testimonials</text>
+        </g>
+
+        <!-- Right Side Location Card Mockup -->
+        <g transform="translate(760, 140)">
+          <rect width="360" height="400" rx="24" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
+          <rect x="16" y="16" width="328" height="368" rx="16" fill="#09090b" stroke="#27272a" stroke-width="1"/>
+          
+          <!-- Map Pin Icon Graphic -->
+          <circle cx="180" cy="150" r="54" fill="#27272a" stroke="#3f3f46" stroke-width="1.5"/>
+          <circle cx="180" cy="150" r="40" fill="#ffffff"/>
+          <path d="M180 134c-7.7 0-14 6.3-14 14 0 10.5 14 26 14 26s14-15.5 14-26c0-7.7-6.3-14-14-14zm0 19c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z" fill="#09090b"/>
+
+          <text x="180" y="240" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">Verified Place Profile</text>
+          <text x="180" y="268" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" fill="#a1a1aa">Watch 60s Video Reviews</text>
+
+          <!-- Watch Videos Action Pill -->
+          <g transform="translate(50, 305)">
+            <rect width="260" height="48" rx="24" fill="#ffffff"/>
+            <text x="130" y="30" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="900" fill="#09090b">WATCH REVIEWS ON YOOUZ</text>
+          </g>
+        </g>
+      `;
+    } else if (isCreatorCard) {
+      const cleanHandle = (options.author || title).replace(/^@+/, "");
+
+      mainContentSvg = `
+        <text x="72" y="195" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">VERIFIED VIDEO REVIEWER PROFILE</text>
+
+        <text x="72" y="255" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
+          @${cleanHandle}
+        </text>
+
+        <g transform="translate(72, 295)">
+          <rect width="320" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
+          <circle cx="21" cy="21" r="8" fill="#ffffff"/>
+          <path d="M17.5 21l2.5 2.5 4.5-4.5" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="38" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#f4f4f5">Verified Video Reviewer on Yoouz</text>
+        </g>
+
+        <g transform="translate(72, 370)">
+          <text x="0" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Explore authentic 60-second video reviews and honest customer ratings.</text>
+          <text x="0" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#71717a">Watch verified reviews for top local restaurants, cafes, and online businesses.</text>
+        </g>
+
+        <g transform="translate(760, 140)">
+          <rect width="360" height="400" rx="24" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
+          <rect x="16" y="16" width="328" height="368" rx="16" fill="#09090b" stroke="#27272a" stroke-width="1"/>
+          
+          <circle cx="180" cy="140" r="54" fill="#27272a" stroke="#3f3f46" stroke-width="1.5"/>
+          <text x="180" y="158" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="bold" fill="#ffffff">${cleanHandle.charAt(0).toUpperCase()}</text>
+
+          <text x="180" y="235" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="bold" fill="#ffffff">@${cleanHandle}</text>
+          <text x="180" y="262" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" fill="#a1a1aa">Verified Reviewer</text>
+
+          <g transform="translate(50, 305)">
+            <rect width="260" height="48" rx="24" fill="#ffffff"/>
+            <text x="130" y="30" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="900" fill="#09090b">VIEW PROFILE ON YOOUZ</text>
+          </g>
+        </g>
+      `;
+    } else {
+      // Default / Homepage Platform Banner
+      mainContentSvg = `
+        <!-- Main Headline -->
+        <text x="72" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="56" font-weight="900" fill="#f4f4f5" letter-spacing="-1.5">
+          Real People. Real Reviews.
+        </text>
+
+        <!-- Subtitle -->
+        <text x="72" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#a1a1aa">
+          The #1 authentic 60-second video review network for local places,
+        </text>
+        <text x="72" y="312" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#a1a1aa">
+          restaurants &amp; online businesses. Zero fake text reviews.
+        </text>
+
+        <!-- 3 Feature Pills -->
+        <g transform="translate(72, 380)">
+          <!-- Pill 1 -->
+          <g>
+            <rect width="180" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
+            <circle cx="21" cy="21" r="5" fill="#ef4444"/>
+            <text x="36" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">60s Live Video Only</text>
+          </g>
+          <!-- Pill 2 -->
+          <g transform="translate(196, 0)">
+            <rect width="180" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
+            <circle cx="21" cy="21" r="5" fill="#22c55e"/>
+            <text x="36" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Zero Fake Reviews</text>
+          </g>
+          <!-- Pill 3 -->
+          <g transform="translate(392, 0)">
+            <rect width="180" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
+            <circle cx="21" cy="21" r="5" fill="#3b82f6"/>
+            <text x="36" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Verified Businesses</text>
+          </g>
+        </g>
+
+        <!-- Right Side Platform Phone Frame Mockup -->
+        <g transform="translate(760, 130)">
+          <rect width="360" height="420" rx="28" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
+          <rect x="14" y="14" width="332" height="392" rx="20" fill="#09090b" stroke="#27272a" stroke-width="1"/>
+          
+          <!-- Top Bar inside Card -->
+          <rect x="28" y="28" width="70" height="22" rx="11" fill="#ef4444" fill-opacity="0.2" stroke="#ef4444" stroke-width="1"/>
+          <circle cx="38" cy="39" r="3.5" fill="#ef4444"/>
+          <text x="47" y="43" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="bold" fill="#ef4444">0:60</text>
+
+          <rect x="220" y="28" width="112" height="22" rx="11" fill="#27272a" stroke="#3f3f46" stroke-width="1"/>
+          <text x="276" y="43" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="bold" fill="#e4e4e7">REAL CUSTOMER</text>
+
+          <!-- Center Large Play Visual -->
+          <circle cx="180" cy="190" r="48" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1.5"/>
+          <circle cx="180" cy="190" r="36" fill="#ffffff"/>
+          <path d="M174 175l18 15-18 15v-30z" fill="#09090b"/>
+
+          <!-- Video Title Overlay Pill -->
+          <rect x="28" y="295" width="304" height="85" rx="16" fill="#18181b" fill-opacity="0.95" stroke="#3f3f46" stroke-width="1"/>
+          <circle cx="56" cy="328" r="14" fill="#27272a"/>
+          <text x="56" y="333" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="bold" fill="#ffffff">J</text>
+          <text x="80" y="326" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">Blue Bottle Coffee</text>
+          <text x="80" y="344" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" fill="#a1a1aa">Jack W. · Verified Video Review</text>
+          <text x="56" y="366" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#fbbf24">★ ★ ★ ★ ★ 5.0</text>
+        </g>
+      `;
+    }
+
+    return `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Background Gradient: Deep luxury dark canvas -->
+        <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#09090b"/>
+          <stop offset="50%" stop-color="#111114"/>
+          <stop offset="100%" stop-color="#09090b"/>
+        </linearGradient>
         
-        <!-- Decorative Glow Circles -->
-        <circle cx="1080" cy="120" r="300" fill="#2563EB" fill-opacity="0.15" filter="blur(80px)"/>
-        <circle cx="120" cy="500" r="250" fill="#3B82F6" fill-opacity="0.12" filter="blur(70px)"/>
+        <!-- Accent Glows -->
+        <radialGradient id="glowTopRight" cx="1100" cy="80" r="450" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.07"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+        
+        <radialGradient id="glowBottomLeft" cx="100" cy="550" r="400" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
 
-        <!-- Main Card Outline -->
-        <rect x="40" y="40" width="1120" height="550" rx="32" fill="url(#cardGrad)" stroke="#334155" stroke-width="2"/>
+      <!-- Background Base -->
+      <rect width="1200" height="630" fill="url(#bgGrad)"/>
+      <rect width="1200" height="630" fill="url(#glowTopRight)"/>
+      <rect width="1200" height="630" fill="url(#glowBottomLeft)"/>
 
-        <!-- Top Yoouz Brand Bar -->
-        <g transform="translate(80, 85)">
-          <!-- Logo Icon -->
-          <rect width="52" height="52" rx="14" fill="#1A73E8"/>
-          <path d="M21 16L37 26L21 36V16Z" fill="white"/>
-          <circle cx="36" cy="18" r="4" fill="#34A853"/>
-          
-          <!-- Logo Text -->
-          <text x="68" y="37" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="36" font-weight="900" fill="#FFFFFF" letter-spacing="-0.5">Yoouz</text>
-          
-          <!-- Pill Badge -->
-          <rect x="220" y="8" width="310" height="36" rx="18" fill="#1E3A8A" stroke="#3B82F6" stroke-width="1.5"/>
-          <text x="240" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#93C5FD">${bdg.toUpperCase()}</text>
+      <!-- Outer Border Frame -->
+      <rect x="32" y="32" width="1136" height="566" rx="28" fill="none" stroke="#27272a" stroke-width="1.5"/>
+
+      <!-- Top Navigation & Brand Header -->
+      <g transform="translate(72, 68)">
+        <!-- White Squircle Logo with Star -->
+        <rect width="48" height="48" rx="14" fill="#ffffff"/>
+        <path d="M24 13.5l2.47 5.01L32 19.32l-4 3.9 0.94 5.51L24 26.13l-4.94 2.6 0.94-5.51-4-3.9 5.53-0.8z" fill="#09090b"/>
+
+        <!-- Brand Typography -->
+        <text x="64" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="900" fill="#ffffff" letter-spacing="-0.5">Yoouz</text>
+
+        <!-- Beta Pill -->
+        <rect x="180" y="8" width="56" height="26" rx="13" fill="#27272a" stroke="#3f3f46" stroke-width="1"/>
+        <text x="208" y="25" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#a1a1aa" letter-spacing="0.5">BETA</text>
+
+        <!-- Top Right Category / Badge Pill -->
+        <g transform="translate(680, 4)">
+          <rect width="360" height="36" rx="18" fill="#18181b" stroke="#27272a" stroke-width="1"/>
+          <circle cx="20" cy="18" r="4.5" fill="#22c55e"/>
+          <text x="36" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#e4e4e7" letter-spacing="0.8">${badgeText}</text>
         </g>
+      </g>
 
-        <!-- Main Title -->
-        <text x="80" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="800" fill="#F8FAFC" letter-spacing="-1">
-          ${titleTspans}
+      <!-- Main Dynamic Content -->
+      ${mainContentSvg}
+
+      <!-- Footer Tagline & Watermark -->
+      <g transform="translate(72, 552)">
+        <text x="0" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#71717a" letter-spacing="0.2">
+          yoouz.com · Discover Authentic 60s Video Reviews
         </text>
-
-        <!-- Subtitle / Caption -->
-        <text x="80" y="365" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="400" fill="#94A3B8">
-          ${sub}
+        <text x="1056" y="0" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#71717a">
+          Real People. Real Reviews.
         </text>
+      </g>
+    </svg>`;
+  }
 
-        <!-- Metadata Badges -->
-        ${starsSvg}
-        ${authorBadge}
+  // Pre-render static fallback /public/og-banner.png on boot
+  try {
+    const defaultSvg = buildOgImageSvg({ type: 'homepage' });
+    sharp(Buffer.from(defaultSvg))
+      .png({ quality: 95, compressionLevel: 9 })
+      .toFile(path.join(process.cwd(), 'public', 'og-banner.png'))
+      .catch((e) => console.warn("Notice: og-banner.png pre-render error:", e?.message || e));
+  } catch (e) {}
 
-        <!-- Right Side Video Play Graphic -->
-        <g transform="translate(940, 220)">
-          <circle cx="90" cy="90" r="80" fill="#1A73E8" fill-opacity="0.2" stroke="#3B82F6" stroke-width="2"/>
-          <circle cx="90" cy="90" r="60" fill="#2563EB"/>
-          <path d="M80 68L112 90L80 112V68Z" fill="white"/>
-          <text x="90" y="195" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="bold" fill="#60A5FA">60s VIDEO</text>
-        </g>
+  // Open Graph Image Endpoint (Generates PNG for Facebook, X/Twitter, WhatsApp, LinkedIn, etc.)
+  app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png'], async (req: any, res: any) => {
+    try {
+      const type = (req.query.type as string) || "homepage";
+      const title = (req.query.title as string) || "";
+      const subtitle = (req.query.subtitle as string) || "";
+      const badge = (req.query.badge as string) || "";
+      const rating = parseFloat(req.query.rating as string) || 0;
+      const author = (req.query.author as string) || "";
+      const caption = (req.query.caption as string) || "";
+      const placeName = (req.query.placeName as string) || (req.query.place as string) || "";
+      const category = (req.query.category as string) || "";
+      const city = (req.query.city as string) || "";
+      const reviewsCount = parseInt(req.query.reviewsCount as string, 10) || 12;
 
-        <!-- Footer Tagline -->
-        <text x="80" y="540" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="600" fill="#64748B">
-          Real People. Real Reviews. · 100% Authentic Live Video Reviews
-        </text>
-      </svg>`;
+      const svg = buildOgImageSvg({
+        type,
+        title,
+        subtitle,
+        badge,
+        rating,
+        author,
+        caption,
+        placeName,
+        category,
+        city,
+        reviewsCount
+      });
 
-      res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-      return res.send(svg);
+      if (req.query.format === 'svg') {
+        res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+        return res.send(svg);
+      }
+
+      const pngBuffer = await sharp(Buffer.from(svg))
+        .png({ quality: 95, compressionLevel: 9 })
+        .toBuffer();
+
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+      return res.send(pngBuffer);
     } catch (e: any) {
       console.error("OG Image generation error:", e);
+      // Serve static fallback if available
+      const fallback = path.join(process.cwd(), 'public', 'og-banner.png');
+      if (fs.existsSync(fallback)) {
+        res.setHeader('Content-Type', 'image/png');
+        return res.sendFile(fallback);
+      }
       return res.status(500).send("Error generating image");
     }
   });
@@ -4957,17 +5234,17 @@ Sitemap: ${protocol}://${host}/sitemap.xml
 
     // Parse path-based routes for elite SEO
     if (!videoId) {
-      const userVideoMatch = pathname.match(/^\/@([^\/]+)\/video\/([^\/]+)/);
+      const userVideoMatch = pathname.match(/^\/@([^\/]+)\/video\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)\/video\/([^\/]+)/);
       if (userVideoMatch) {
         creatorHandle = userVideoMatch[1];
         videoId = userVideoMatch[2];
       } else {
-        const vMatch = pathname.match(/^\/(v|review)\/([^\/]+)/);
+        const vMatch = pathname.match(/^\/(v|video|review)\/([^\/]+)/);
         if (vMatch) videoId = vMatch[2];
       }
     }
     if (!creatorHandle) {
-      const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/);
+      const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)/);
       if (cMatch) creatorHandle = cMatch[1];
     }
     if (!placeId) {
@@ -4975,28 +5252,49 @@ Sitemap: ${protocol}://${host}/sitemap.xml
       if (pMatch) placeId = pMatch[1];
     }
 
-    let title = "Yoouz - Real Video Reviews for Real Businesses & Businesses";
+    let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
     let description = "Discover local businesses, restaurants, cafes, and websites with 100% authentic 60-second video reviews recorded by real customers. Zero fake text reviews.";
-    let imageUrl = `${baseUrl}/api/og-image?title=Yoouz&subtitle=Real+people.+Real+places.&badge=Authentic+60s+Video+Reviews`;
+    let imageUrl = `${baseUrl}/api/og-image.png`;
     let videoUrl = "";
     let type = "website";
     let structuredData: any = null;
-    let keywords = "video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
+    let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
 
     try {
       if (videoId) {
-        // Look up video review in Firestore, DB, or Mock Data
+        // Look up video review in Firestore, local index, or DB
         let foundVideo: any = null;
-          
+        
+        if (adminDb) {
+          try {
+            const snap = await adminDb.collection("videoReviews").doc(videoId).get();
+            if (snap.exists) foundVideo = { id: snap.id, ...snap.data() };
+          } catch (e) {}
+        }
+        if (!foundVideo) {
+          const localList = readReviewsIndex();
+          foundVideo = localList.find((v: any) => v.id === videoId);
+        }
+        if (!foundVideo && getDb()) {
+          try {
+            const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, videoId));
+            if (rec) foundVideo = { id: rec.id, ...rec.data };
+          } catch (e) {}
+        }
 
         if (foundVideo) {
-          const authorName = foundVideo.author?.name || foundVideo.authorName || "Verified Reviewer";
-          const placeName = foundVideo.placeName || "Business Review";
+          const authorName = foundVideo.author?.name || foundVideo.authorName || "Verified Customer";
+          const authorHandle = foundVideo.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
+          const placeName = foundVideo.placeName || "Local Business";
+          const rating = foundVideo.rating || 5.0;
+          const caption = foundVideo.caption || "";
+
           title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
-          description = foundVideo.caption 
-            ? `"${foundVideo.caption}" - Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`
+          description = caption 
+            ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
             : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
-          imageUrl = foundVideo.thumbnailUrl || `${baseUrl}/api/og-image?title=${encodeURIComponent(title)}&badge=Authentic+60s+Video+Review&author=${encodeURIComponent(authorName)}&rating=${foundVideo.rating || 5}`;
+          
+          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}`;
           videoUrl = foundVideo.videoUrl || "";
           type = "video.other";
           keywords = `${placeName} review, ${placeName} video review, ${authorName} review, authentic customer video, 60 second review, yoouz video`;
@@ -5014,11 +5312,11 @@ Sitemap: ${protocol}://${host}/sitemap.xml
             "author": {
               "@type": "Person",
               "name": authorName,
-              "url": `${baseUrl}/?creator=${encodeURIComponent(foundVideo.author?.handle || authorName)}`
+              "url": `${baseUrl}/@${encodeURIComponent(authorHandle)}`
             },
             "aggregateRating": {
               "@type": "AggregateRating",
-              "ratingValue": (foundVideo.rating || 5).toFixed(1),
+              "ratingValue": (rating).toFixed(1),
               "bestRating": "5",
               "worstRating": "1",
               "ratingCount": "1"
@@ -5028,17 +5326,17 @@ Sitemap: ${protocol}://${host}/sitemap.xml
               "name": "Yoouz",
               "logo": {
                 "@type": "ImageObject",
-                "url": `${baseUrl}/api/og-image/icon`
+                "url": `${baseUrl}/favicon.svg`
               }
             }
           };
         } else {
-          const placeParam = params.get('placeName') || params.get('place') || "Local Business Review";
-          const authorParam = params.get('author') || "Verified Community Member";
+          const placeParam = params.get('placeName') || params.get('place') || "Local Business";
+          const authorParam = params.get('author') || (creatorHandle ? creatorHandle.replace(/^@/, '') : "Verified Customer");
           const ratingParam = parseFloat(params.get('rating') || "5");
           title = `${authorParam}'s 60-Second Video Review | Yoouz`;
           description = `Watch authentic 60-second customer video review on Yoouz. Real People. Real Reviews.`;
-          imageUrl = `${baseUrl}/api/og-image?title=${encodeURIComponent(title)}&badge=Authentic+60s+Video+Review&author=${encodeURIComponent(authorParam)}&rating=${ratingParam}`;
+          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeParam)}&author=${encodeURIComponent(authorParam)}&rating=${ratingParam}`;
           type = "video.other";
 
           structuredData = {
@@ -5059,25 +5357,45 @@ Sitemap: ${protocol}://${host}/sitemap.xml
               "name": "Yoouz",
               "logo": {
                 "@type": "ImageObject",
-                "url": `${baseUrl}/api/og-image/icon`
+                "url": `${baseUrl}/favicon.svg`
               }
             }
           };
         }
       } else if (placeId) {
-          
         let foundPlace: any = null;
 
+        if (adminDb) {
+          try {
+            const snap = await adminDb.collection("places").doc(placeId).get();
+            if (snap.exists) foundPlace = { id: snap.id, ...snap.data() };
+          } catch (e) {}
+        }
+        if (!foundPlace && getDb()) {
+          try {
+            const [pRec] = await db.select().from(places).where(eq(places.id, placeId));
+            if (pRec) foundPlace = pRec;
+            if (!foundPlace) {
+              const [fpRec] = await db.select().from(firestore_places).where(eq(firestore_places.id, placeId));
+              if (fpRec) foundPlace = { id: fpRec.id, ...fpRec.data };
+            }
+          } catch (e) {}
+        }
+
         const placeName = foundPlace?.name || placeId.replace(/^place-/, '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-        const placeRating = (foundPlace?.rating || 4.8).toFixed(1);
-        const reviewCount = foundPlace?.totalReviews || 12;
+        const placeRating = parseFloat(foundPlace?.rating || "4.8").toFixed(1);
+        const reviewCount = foundPlace?.totalReviews || foundPlace?.reviewsCount || 12;
+        const category = foundPlace?.category || "Local Business";
+        const city = foundPlace?.city || foundPlace?.address || "Verified Location";
+
         title = `${placeName} - Customer Video Reviews & Ratings | Yoouz`;
         description = foundPlace?.description 
           ? `${foundPlace.description} Watch authentic 60-second video reviews for ${placeName} on Yoouz.`
           : `Watch 100% authentic 60-second live video reviews from real customers for ${placeName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = foundPlace?.avatarUrl || foundPlace?.bannerUrl || `${baseUrl}/api/og-image?title=${encodeURIComponent(placeName)}&badge=Verified+Place&rating=${placeRating}`;
+        
+        imageUrl = `${baseUrl}/api/og-image.png?type=place&placeName=${encodeURIComponent(placeName)}&rating=${placeRating}&reviewsCount=${reviewCount}&category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`;
         type = "website";
-        keywords = `${placeName}, ${placeName} reviews, ${placeName} video reviews, ${foundPlace?.city || 'local'} restaurants, best ${foundPlace?.category || 'places'}, real customer reviews`;
+        keywords = `${placeName}, ${placeName} reviews, ${placeName} video reviews, ${city} places, real customer video reviews`;
 
         structuredData = {
           "@context": "https://schema.org",
@@ -5090,7 +5408,7 @@ Sitemap: ${protocol}://${host}/sitemap.xml
           "address": {
             "@type": "PostalAddress",
             "streetAddress": foundPlace?.address || "",
-            "addressLocality": foundPlace?.city || "San Francisco",
+            "addressLocality": city,
             "addressCountry": "US"
           },
           ...(foundPlace?.lat && foundPlace?.lng ? {
@@ -5109,10 +5427,10 @@ Sitemap: ${protocol}://${host}/sitemap.xml
           }
         };
       } else if (creatorHandle) {
-        const cleanHandle = creatorHandle.replace(/^@/, '');
-        title = `@${cleanHandle} on Yoouz - Verified Video Reviews Portfolio`;
-        description = `Explore authentic 60-second video reviews recorded by @${cleanHandle} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image?title=${encodeURIComponent('@' + cleanHandle)}&badge=Verified+Creator`;
+        const cleanHandle = creatorHandle.replace(/^@+/, '');
+        title = `@${cleanHandle} on Yoouz - Authentic Video Reviews Portfolio`;
+        description = `Explore authentic 60-second video reviews recorded by @${cleanHandle} on Yoouz. 100% Genuine Video Reviews.`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(cleanHandle)}`;
         type = "profile";
         keywords = `${cleanHandle}, ${cleanHandle} yoouz, video reviewer, authentic local guide, food reviewer, verified reviewer`;
 
@@ -5137,7 +5455,7 @@ Sitemap: ${protocol}://${host}/sitemap.xml
       structuredData = {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "Yoouz - Real Video Reviews for Real Businesses & Businesses",
+        "name": "Yoouz - Real Video Reviews by Real People",
         "url": baseUrl,
         "description": description,
         "potentialAction": {
