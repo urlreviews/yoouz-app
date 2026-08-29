@@ -6,10 +6,16 @@ import { getDisplayViews, resolveSafeAuthor } from '../utils/placeUtils';
 
 // Helper to cleanly sanitize and normalize author data
 function normalizeReview(v: any): VideoReview {
-  let likedIds = [];
-  let savedIds = [];
-  try { likedIds = JSON.parse(localStorage.getItem("copo_liked_video_ids") || "[]"); } catch(e){}
-  try { savedIds = JSON.parse(localStorage.getItem("copo_saved_video_ids") || "[]"); } catch(e){}
+  let likedIds: any[] = [];
+  let savedIds: any[] = [];
+  try { 
+    const parsed = JSON.parse(localStorage.getItem("copo_liked_video_ids") || "[]");
+    if (Array.isArray(parsed)) likedIds = parsed;
+  } catch(e){}
+  try { 
+    const parsed = JSON.parse(localStorage.getItem("copo_saved_video_ids") || "[]"); 
+    if (Array.isArray(parsed)) savedIds = parsed;
+  } catch(e){}
 
   const safeAuthor = resolveSafeAuthor(v);
   const computedViews = getDisplayViews(v);
@@ -87,12 +93,17 @@ export function useFeedPagination() {
     const loadServerData = async () => {
       const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
       let deletedIds: string[] = [];
-      try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
+      try { 
+        const parsed = JSON.parse(deletedStr); 
+        if (Array.isArray(parsed)) deletedIds = parsed;
+      } catch (e) {}
 
       try {
+        console.log("[DEBUG feed] Fetching /api/videos/feed...");
         const res = await fetch("/api/videos/feed");
         if (res.ok && active) {
           const data = await res.json();
+          console.log("[DEBUG feed] /api/videos/feed returned:", data?.videos?.length, "videos");
           if (data && Array.isArray(data.videos) && data.videos.length > 0) {
             const valid = data.videos.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
             setVideos((prev) => {
@@ -108,12 +119,19 @@ export function useFeedPagination() {
               valid.forEach((v: VideoReview) => map.set(v.id, { ...map.get(v.id), ...v }));
               const merged = Array.from(map.values());
               merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+              console.log("[DEBUG feed] loadServerData setting videos to length:", merged.length);
               return merged;
             });
             setIsLoading(false);
+          } else {
+            console.log("[DEBUG feed] /api/videos/feed returned empty or no videos array.");
           }
+        } else {
+          console.warn("[DEBUG feed] /api/videos/feed fetch failed, res.ok:", res.ok);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("[DEBUG feed] /api/videos/feed error:", e);
+      }
     };
 
     loadServerData();
@@ -128,7 +146,10 @@ export function useFeedPagination() {
       try {
         const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
         let deletedIds: string[] = [];
-        try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
+        try { 
+          const parsed = JSON.parse(deletedStr); 
+          if (Array.isArray(parsed)) deletedIds = parsed;
+        } catch (e) {}
 
         const q = query(collection(db, "videoReviews"));
         const snapshot = await getDocs(q);
@@ -198,7 +219,10 @@ export function useFeedPagination() {
     const unsubscribe = onSnapshot(qLive, (snapshot) => {
       const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
       let deletedIds: string[] = [];
-      try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
+      try { 
+        const parsed = JSON.parse(deletedStr); 
+        if (Array.isArray(parsed)) deletedIds = parsed;
+      } catch (e) {}
 
       const fetched = snapshot.docs.map(docSnap => {
         const data = docSnap.data();
@@ -219,8 +243,10 @@ export function useFeedPagination() {
 
       fetched.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
       const filtered = fetched.filter(v => !deletedIds.includes(v.id)).map(normalizeReview);
+      console.log("[DEBUG feed] onSnapshot returned docs:", snapshot.docs.length, "filtered length:", filtered.length);
 
       setVideos((prev) => {
+        console.log("[DEBUG feed] onSnapshot setVideos triggered. prev.length:", prev.length, "filtered.length:", filtered.length);
         if (filtered.length === 0) {
           if (prev.length > 0) {
             return prev.filter(v => !deletedIds.includes(v.id));

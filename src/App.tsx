@@ -144,7 +144,9 @@ export function App() {
   const [isMobileNavDrawerOpen, setIsMobileNavDrawerOpen] = useState<boolean>(false);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem("yoouz_hidden_videos") || "[]");
+      const parsed = JSON.parse(localStorage.getItem("yoouz_hidden_videos") || "[]");
+      if (Array.isArray(parsed)) return parsed;
+      return [];
     } catch {
       return [];
     }
@@ -1491,8 +1493,10 @@ export function App() {
   const activeFeedVideos = useMemo(() => {
     // Filter out hidden/blocked videos
     const visibleVideos = videos.filter((v) => !hiddenVideoIds.includes(v.id));
+    console.log("[DEBUG App.tsx] videos length:", videos.length, "visibleVideos length:", visibleVideos.length);
 
     // Priority 0: Fullscreen Feed Context (when user clicked a video from a Creator or Business or Profile to watch fullscreen with TikTok scroll)
+
     if (fullscreenFeedContext) {
       if (fullscreenFeedContext.type === "creator" && fullscreenFeedContext.authorData) {
         const filtered = visibleVideos.filter(v => isAuthorMatch(v, fullscreenFeedContext.authorData!));
