@@ -49,6 +49,13 @@ jobs:
             --image gcr.io/gen-lang-client-0669185519/yoouz \
             --platform managed \
             --region europe-west1 \
+            --set-env-vars NODE_ENV=production \
+            --allow-unauthenticated
+          gcloud run deploy yoouz-app \
+            --image gcr.io/gen-lang-client-0669185519/yoouz \
+            --platform managed \
+            --region europe-west1 \
+            --set-env-vars NODE_ENV=production \
             --allow-unauthenticated
 
       - name: Deploy to Firebase Hosting (Frontend)
