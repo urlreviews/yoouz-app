@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, Club, CopoNotification, CopoMessage, VideoAuthor, UserProfile } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
 import { CopoSidebar } from "./components/CopoSidebar";
+import { SEOTags } from "./components/SEOTags";
+import { AEOBlock } from "./components/AEOBlock";
 import { CopoVideoPlayer } from "./components/CopoVideoPlayer";
 // QR Widget intentionally removed per user request
 import { CopoSearchView } from "./components/CopoSearchView";
@@ -1707,10 +1709,16 @@ export function App() {
       return v;
     }));
     try {
+      const shareData = { shares: newSharesCount, sharesCount: newSharesCount };
       if (db) {
         const vidRef = doc(db, "videoReviews", video.id);
-        setDoc(vidRef, { shares: newSharesCount, sharesCount: newSharesCount }, { merge: true }).catch(() => {});
+        setDoc(vidRef, shareData, { merge: true }).catch(() => {});
       }
+      fetch(`/api/nosql/videoReviews/${video.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: shareData, merge: true })
+      }).catch(() => {});
     } catch (e) {}
 
     // Send social notification for share
@@ -1940,15 +1948,19 @@ export function App() {
 
     // Persist to Firestore database
     try {
+      const dataToSave = cleanForFirestore({
+        comments: nextComments,
+        commentsCount: totalCount
+      });
       if (db) {
         const vidRef = doc(db, "videoReviews", videoId);
-        // Stripping undefined values using cleanForFirestore
-        const dataToSave = cleanForFirestore({
-          comments: nextComments,
-          commentsCount: totalCount
-        });
         await setDoc(vidRef, dataToSave, { merge: true });
       }
+      fetch(`/api/nosql/videoReviews/${videoId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: dataToSave, merge: true })
+      }).catch(() => {});
     } catch (err) {
       console.warn("Firestore comment sync warning:", err);
     }
@@ -2054,10 +2066,16 @@ export function App() {
 
     // Persist to Firestore database
     try {
+      const dataToSave = cleanForFirestore({ comments: updatedComments });
       if (db) {
         const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(vidRef, cleanForFirestore({ comments: updatedComments }), { merge: true });
+        await setDoc(vidRef, dataToSave, { merge: true });
       }
+      fetch(`/api/nosql/videoReviews/${videoId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: dataToSave, merge: true })
+      }).catch(() => {});
     } catch (err) {
       console.warn("Firestore comment like sync warning:", err);
     }
@@ -2105,10 +2123,16 @@ export function App() {
     }
 
     try {
+      const dataToSave = cleanForFirestore({ comments: updatedComments });
       if (db) {
         const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(vidRef, cleanForFirestore({ comments: updatedComments }), { merge: true });
+        await setDoc(vidRef, dataToSave, { merge: true });
       }
+      fetch(`/api/nosql/videoReviews/${videoId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: dataToSave, merge: true })
+      }).catch(() => {});
     } catch (err) {
       console.warn("Firestore creator heart sync warning:", err);
     }
@@ -2183,11 +2207,13 @@ export function App() {
         });
 
         const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(
-          vidRef,
-          cleanForFirestore({ comments: updatedComments, commentsCount: totalCount }),
-          { merge: true }
-        );
+        const dataToSave = cleanForFirestore({ comments: updatedComments, commentsCount: totalCount });
+        await setDoc(vidRef, dataToSave, { merge: true });
+        fetch(`/api/nosql/videoReviews/${videoId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: dataToSave, merge: true })
+        }).catch(() => {});
       }
     } catch (err) {
       console.warn("Firestore delete comment sync warning:", err);
@@ -2517,11 +2543,35 @@ export function App() {
     );
   }, [activeCommentVideo, places, currentUser]);
 
+  const seoTitle = useMemo(() => {
+    if (activeSection === 'business') return 'Yoouz for Business - Claim Your Profile & Leverage Video Reviews';
+    if (activeSection === 'home' && activeSubTab === 'following') return 'Following - Your Favorite Reviewers on Yoouz';
+    if (activeSection === 'home' && activeSubTab === 'discover') return 'Discover Authentic Video Reviews on Yoouz';
+    if (activeSection === 'admin') return 'Yoouz Admin Dashboard';
+    return 'Yoouz - Real Video Reviews by Real People | Authentic Business Reviews';
+  }, [activeSection, activeSubTab]);
+
+  const seoDescription = useMemo(() => {
+    if (activeSection === 'business') return 'Claim your business profile on Yoouz, monitor authentic 60-second video reviews, and connect with your customers through authentic video feedback.';
+    if (activeSection === 'home' && activeSubTab === 'following') return 'Watch the latest video reviews from the creators and local businesses you follow on Yoouz.';
+    if (activeSection === 'home' && activeSubTab === 'discover') return 'Explore a continuous feed of authentic 60-second video reviews. Discover the best local businesses, food, and experiences near you.';
+    return 'Yoouz is the #1 authentic video review network. Discover local businesses, restaurants, cafes, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.';
+  }, [activeSection, activeSubTab]);
+
+  const seoUrl = useMemo(() => {
+    if (typeof window === 'undefined') return 'https://yoouz.com';
+    const url = new URL(window.location.href);
+    return url.origin + url.pathname + url.search;
+  }, [activeSection, activeSubTab]);
+
   return (
     <div
       id="copo-app-root"
       className="flex w-screen h-[100dvh] overflow-hidden bg-zinc-950 text-white font-sans select-none antialiased relative"
     >
+      <SEOTags title={seoTitle} description={seoDescription} url={seoUrl} />
+      <AEOBlock />
+      
       {/* 1. Left Section: Business/Place Details Panel OR Creator Profile Panel OR Standard Navigation Sidebar */}
        {isPlaceView ? (
         <CopoPlaceDrawer

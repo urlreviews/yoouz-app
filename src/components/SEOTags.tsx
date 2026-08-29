@@ -40,7 +40,16 @@ export function SEOTags({ title, description, image, url, jsonLd, updateTitle = 
     updateOGTag('og:title', title);
     updateOGTag('og:description', description);
     if (image) updateOGTag('og:image', image);
-    if (url) updateOGTag('og:url', url);
+    if (url) {
+      updateOGTag('og:url', url);
+      let canonical = document.querySelector('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonical);
+      }
+      canonical.setAttribute('href', url);
+    }
     updateOGTag('og:type', 'website');
 
     // 4. Update JSON-LD Structured Data

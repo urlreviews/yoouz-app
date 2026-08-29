@@ -1,0 +1,135 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Background Gradient: Deep luxury dark canvas -->
+        <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#09090b"/>
+          <stop offset="50%" stop-color="#111114"/>
+          <stop offset="100%" stop-color="#09090b"/>
+        </linearGradient>
+        
+        <!-- Accent Glows -->
+        <radialGradient id="glowTopRight" cx="1100" cy="80" r="450" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.07"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+        
+        <radialGradient id="glowBottomLeft" cx="100" cy="550" r="400" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Background Base -->
+      <rect width="1200" height="630" fill="url(#bgGrad)"/>
+      <rect width="1200" height="630" fill="url(#glowTopRight)"/>
+      <rect width="1200" height="630" fill="url(#glowBottomLeft)"/>
+      
+
+      <!-- Outer Border Frame -->
+      <rect x="32" y="32" width="1136" height="566" rx="28" fill="none" stroke="#27272a" stroke-width="1.5"/>
+
+      <!-- Top Navigation & Brand Header -->
+      <g transform="translate(72, 68)">
+        <!-- White Squircle Logo with Star -->
+        <rect width="48" height="48" rx="14" fill="#ffffff"/>
+        <path d="M24 13.5l2.47 5.01L32 19.32l-4 3.9 0.94 5.51L24 26.13l-4.94 2.6 0.94-5.51-4-3.9 5.53-0.8z" fill="#09090b"/>
+
+        <!-- Brand Typography -->
+        <text x="64" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="900" fill="#ffffff" letter-spacing="-0.5">Yoouz</text>
+
+        <!-- Beta Pill -->
+        <rect x="180" y="8" width="56" height="26" rx="13" fill="#27272a" stroke="#3f3f46" stroke-width="1"/>
+        <text x="208" y="25" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#a1a1aa" letter-spacing="0.5">BETA</text>
+
+        <!-- Top Right Category / Badge Pill -->
+        <g transform="translate(680, 4)">
+          <rect width="360" height="36" rx="18" fill="#18181b" stroke="#27272a" stroke-width="1"/>
+          <circle cx="20" cy="18" r="4.5" fill="#22c55e"/>
+          <text x="36" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#e4e4e7" letter-spacing="0.8">AUTHENTIC VIDEO REVIEWS</text>
+        </g>
+      </g>
+
+      <!-- Main Dynamic Content -->
+      
+        <!-- Main Headline -->
+        <g transform="translate(72, 220)">
+          <!-- Yoouz Logo Graphic -->
+          <g transform="translate(0, -50)">
+            <image href="data:image/png;base64,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" x="-10" y="-10" width="84" height="84" preserveAspectRatio="xMidYMid meet" />
+          </g>
+          <text x="84" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="56" font-weight="900" fill="#f4f4f5" letter-spacing="-1.5">
+            Yoouz
+          </text>
+        </g>
+
+        <!-- Subtitle -->
+        <text x="72" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="800" fill="#f4f4f5" letter-spacing="-0.5">
+          Real People. Real Reviews.
+        </text>
+        <text x="72" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#a1a1aa">
+          The #1 authentic 60-second video review network for local places,
+        </text>
+        <text x="72" y="352" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#a1a1aa">
+          restaurants &amp; online businesses. Zero fake text reviews.
+        </text>
+
+        <!-- 3 Feature Pills -->
+        <g transform="translate(72, 420)">
+          <!-- Pill 1 -->
+          <g>
+            <rect width="180" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
+            <circle cx="21" cy="21" r="5" fill="#ef4444"/>
+            <text x="36" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">60s Live Video Only</text>
+          </g>
+          <!-- Pill 2 -->
+          <g transform="translate(196, 0)">
+            <rect width="180" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
+            <circle cx="21" cy="21" r="5" fill="#22c55e"/>
+            <text x="36" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Zero Fake Reviews</text>
+          </g>
+          <!-- Pill 3 -->
+          <g transform="translate(392, 0)">
+            <rect width="180" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
+            <circle cx="21" cy="21" r="5" fill="#3b82f6"/>
+            <text x="36" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Verified Businesses</text>
+          </g>
+        </g>
+
+        <!-- Right Side Platform Phone Frame Mockup -->
+        <g transform="translate(760, 130)">
+          <rect width="360" height="420" rx="28" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
+          <rect x="14" y="14" width="332" height="392" rx="20" fill="#09090b" stroke="#27272a" stroke-width="1"/>
+          
+          <!-- Top Bar inside Card -->
+          <rect x="28" y="28" width="70" height="22" rx="11" fill="#ef4444" fill-opacity="0.2" stroke="#ef4444" stroke-width="1"/>
+          <circle cx="38" cy="39" r="3.5" fill="#ef4444"/>
+          <text x="47" y="43" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="bold" fill="#ef4444">0:60</text>
+
+          <rect x="220" y="28" width="112" height="22" rx="11" fill="#27272a" stroke="#3f3f46" stroke-width="1"/>
+          <text x="276" y="43" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="bold" fill="#e4e4e7">REAL CUSTOMER</text>
+
+          <!-- Center Large Play Visual -->
+          <circle cx="180" cy="190" r="48" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1.5"/>
+          <circle cx="180" cy="190" r="36" fill="#ffffff"/>
+          <path d="M174 175l18 15-18 15v-30z" fill="#09090b"/>
+
+          <!-- Video Title Overlay Pill -->
+          <rect x="28" y="295" width="304" height="85" rx="16" fill="#18181b" fill-opacity="0.95" stroke="#3f3f46" stroke-width="1"/>
+          <circle cx="56" cy="328" r="14" fill="#27272a"/>
+          <text x="56" y="333" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="bold" fill="#ffffff">J</text>
+          <text x="80" y="326" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">Blue Bottle Coffee</text>
+          <text x="80" y="344" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" fill="#a1a1aa">Jack W. · Verified Video Review</text>
+          <text x="56" y="366" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#fbbf24">★ ★ ★ ★ ★ 5.0</text>
+        </g>
+      
+
+      <!-- Footer Tagline & Watermark -->
+      <g transform="translate(72, 552)">
+        <text x="0" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#71717a" letter-spacing="0.2">
+          yoouz.com · Discover Authentic 60s Video Reviews
+        </text>
+        <text x="1056" y="0" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#71717a">
+          Real People. Real Reviews.
+        </text>
+      </g>
+    </svg>

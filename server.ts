@@ -1,3 +1,18 @@
+
+import https from 'https';
+import http from 'http';
+async function fetchBase64(url) {
+  if (!url) return '';
+  return new Promise((resolve) => {
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, (res) => {
+      if (res.statusCode !== 200) return resolve('');
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks).toString('base64')));
+    }).on('error', () => resolve(''));
+  });
+}
 import express from "express";
 import { v2 as cloudinary } from 'cloudinary';
 import * as cheerio from 'cheerio';
@@ -2776,7 +2791,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       }
       writeReviewsIndex(list);
 
-      // Mirroring handled entirely by client-side SDK
+      // 2. Sync to Firestore Admin directly
+      if (adminDb) {
+        try {
+          await adminDb.collection("videoReviews").doc(review.id).set(review, { merge: true });
+        } catch (fErr) {
+          console.warn("Firestore sync in save-review notice:", (fErr as any)?.message || fErr);
+        }
+      }
 
       return res.json({ success: true, review });
     } catch (err: any) {
@@ -4678,10 +4700,7 @@ Return JSON:
   app.get('/robots.txt', (req: any, res: any) => {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
-    const content = `User-agent: *
-Allow: /
-Sitemap: ${protocol}://${host}/sitemap.xml
-`;
+    const content = `User-agent: *\nAllow: /\n\nUser-agent: GPTBot\nAllow: /\n\nUser-agent: Google-Extended\nAllow: /\n\nUser-agent: PerplexityBot\nAllow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nSitemap: ${protocol}://${host}/sitemap.xml\n`;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.send(content);
@@ -4698,6 +4717,26 @@ Sitemap: ${protocol}://${host}/sitemap.xml
       // Fetch all places & video reviews
       let allPlaces: any[] = [];
       let allVideos: any[] = [];
+      
+      try {
+        if (db) {
+          const dbPlaces = await db.select().from(places).catch(() => []);
+          const fbPlaces = await db.select().from(firestore_places).catch(() => []);
+          const mergedPlaces = [...dbPlaces, ...fbPlaces];
+          const placeMap = new Map();
+          mergedPlaces.forEach(p => placeMap.set(p.id, p));
+          allPlaces = Array.from(placeMap.values());
+          
+          const dbVideos = await db.select().from(firestore_video_reviews).catch(() => []);
+          const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const mergedVideos = [...dbVideos, ...localVideos];
+          const videoMap = new Map();
+          mergedVideos.forEach(v => videoMap.set(v.id, v));
+          allVideos = Array.from(videoMap.values());
+        }
+      } catch (err) {
+        console.warn('Sitemap generation data fetch warning:', err);
+      }
 
         
 
@@ -4812,6 +4851,9 @@ Sitemap: ${protocol}://${host}/sitemap.xml
     category?: string;
     city?: string;
     reviewsCount?: number;
+    avatarBase64?: string;
+    bannerBase64?: string;
+    logoBase64?: string;
   }): string {
     const escapeXml = (unsafe: string) => {
       return (unsafe || '')
@@ -4833,6 +4875,9 @@ Sitemap: ${protocol}://${host}/sitemap.xml
     const category = escapeXml(options.category || "Local Business & Service");
     const city = escapeXml(options.city || "Verified Location");
     const reviewsCount = options.reviewsCount || 12;
+    const avatarBase64 = options.avatarBase64;
+    const bannerBase64 = options.bannerBase64;
+    const logoBase64 = options.logoBase64;
 
     const title = escapeXml(rawTitle);
     const sub = escapeXml(rawSubtitle);
@@ -4884,8 +4929,18 @@ Sitemap: ${protocol}://${host}/sitemap.xml
           <!-- Author Pill -->
           <g transform="translate(186, 0)">
             <rect width="280" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
-            <circle cx="21" cy="21" r="13" fill="#27272a"/>
-            <text x="21" y="26" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="bold" fill="#e4e4e7">${author ? author.charAt(0).toUpperCase() : 'U'}</text>
+            ${avatarBase64 ? 
+              `<defs>
+                <clipPath id="videoAuthorClip">
+                  <circle cx="21" cy="21" r="13" />
+                </clipPath>
+              </defs>
+              <image href="data:image/jpeg;base64,${avatarBase64}" x="8" y="8" width="26" height="26" clip-path="url(#videoAuthorClip)" preserveAspectRatio="xMidYMid slice" />
+              <circle cx="21" cy="21" r="13" fill="none" stroke="#3f3f46" stroke-width="1"/>`
+              :
+              `<circle cx="21" cy="21" r="13" fill="#27272a"/>
+              <text x="21" y="26" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="bold" fill="#e4e4e7">${author ? author.charAt(0).toUpperCase() : 'U'}</text>`
+            }
             <text x="44" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#f4f4f5">${author ? `By ${author}` : 'Verified Customer'}</text>
             <circle cx="255" cy="21" r="8" fill="#ffffff"/>
             <path d="M251.5 21l2.5 2.5 4.5-4.5" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -4962,10 +5017,20 @@ Sitemap: ${protocol}://${host}/sitemap.xml
           <rect width="360" height="400" rx="24" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
           <rect x="16" y="16" width="328" height="368" rx="16" fill="#09090b" stroke="#27272a" stroke-width="1"/>
           
-          <!-- Map Pin Icon Graphic -->
-          <circle cx="180" cy="150" r="54" fill="#27272a" stroke="#3f3f46" stroke-width="1.5"/>
-          <circle cx="180" cy="150" r="40" fill="#ffffff"/>
-          <path d="M180 134c-7.7 0-14 6.3-14 14 0 10.5 14 26 14 26s14-15.5 14-26c0-7.7-6.3-14-14-14zm0 19c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z" fill="#09090b"/>
+          <!-- Place Avatar Graphic -->
+          ${avatarBase64 ? 
+            `<defs>
+              <clipPath id="placeClip">
+                <circle cx="180" cy="150" r="54" />
+              </clipPath>
+            </defs>
+            <image href="data:image/jpeg;base64,${avatarBase64}" x="126" y="96" width="108" height="108" clip-path="url(#placeClip)" preserveAspectRatio="xMidYMid slice" />
+            <circle cx="180" cy="150" r="54" fill="none" stroke="#3f3f46" stroke-width="1.5"/>` 
+            : 
+            `<circle cx="180" cy="150" r="54" fill="#27272a" stroke="#3f3f46" stroke-width="1.5"/>
+            <circle cx="180" cy="150" r="40" fill="#ffffff"/>
+            <path d="M180 134c-7.7 0-14 6.3-14 14 0 10.5 14 26 14 26s14-15.5 14-26c0-7.7-6.3-14-14-14zm0 19c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z" fill="#09090b"/>`
+          }
 
           <text x="180" y="240" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">Verified Place Profile</text>
           <text x="180" y="268" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" fill="#a1a1aa">Watch 60s Video Reviews</text>
@@ -5003,8 +5068,18 @@ Sitemap: ${protocol}://${host}/sitemap.xml
           <rect width="360" height="400" rx="24" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
           <rect x="16" y="16" width="328" height="368" rx="16" fill="#09090b" stroke="#27272a" stroke-width="1"/>
           
-          <circle cx="180" cy="140" r="54" fill="#27272a" stroke="#3f3f46" stroke-width="1.5"/>
-          <text x="180" y="158" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="bold" fill="#ffffff">${cleanHandle.charAt(0).toUpperCase()}</text>
+          ${avatarBase64 ? 
+            `<defs>
+              <clipPath id="creatorClip">
+                <circle cx="180" cy="140" r="54" />
+              </clipPath>
+            </defs>
+            <image href="data:image/jpeg;base64,${avatarBase64}" x="126" y="86" width="108" height="108" clip-path="url(#creatorClip)" preserveAspectRatio="xMidYMid slice" />
+            <circle cx="180" cy="140" r="54" fill="none" stroke="#3f3f46" stroke-width="1.5"/>` 
+            : 
+            `<circle cx="180" cy="140" r="54" fill="#27272a" stroke="#3f3f46" stroke-width="1.5"/>
+            <text x="180" y="158" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="bold" fill="#ffffff">${cleanHandle.charAt(0).toUpperCase()}</text>`
+          }
 
           <text x="180" y="235" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="bold" fill="#ffffff">@${cleanHandle}</text>
           <text x="180" y="262" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" fill="#a1a1aa">Verified Reviewer</text>
@@ -5020,10 +5095,14 @@ Sitemap: ${protocol}://${host}/sitemap.xml
       mainContentSvg = `
         <!-- Main Headline -->
         <g transform="translate(72, 220)">
-          <!-- Yoouz Logo SVG (Star) -->
+          <!-- Yoouz Logo Graphic -->
           <g transform="translate(0, -50)">
-            <rect width="64" height="64" rx="20" fill="#ffffff" />
-            <path d="M32 14l4.5 9 10 1-7 7 1.5 10-9-4.5-9 4.5 1.5-10-7-7 10-1 4.5-9z" fill="#09090b" />
+            ${logoBase64 ? 
+              `<image href="data:image/png;base64,${logoBase64}" x="-10" y="-10" width="84" height="84" preserveAspectRatio="xMidYMid meet" />`
+              :
+              `<rect width="64" height="64" rx="20" fill="#ffffff" />
+              <path d="M32 14l4.5 9 10 1-7 7 1.5 10-9-4.5-9 4.5 1.5-10-7-7 10-1 4.5-9z" fill="#09090b" />`
+            }
           </g>
           <text x="84" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="56" font-weight="900" fill="#f4f4f5" letter-spacing="-1.5">
             Yoouz
@@ -5117,6 +5196,8 @@ Sitemap: ${protocol}://${host}/sitemap.xml
       <rect width="1200" height="630" fill="url(#bgGrad)"/>
       <rect width="1200" height="630" fill="url(#glowTopRight)"/>
       <rect width="1200" height="630" fill="url(#glowBottomLeft)"/>
+      ${bannerBase64 ? `<image href="data:image/jpeg;base64,${bannerBase64}" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice" opacity="0.3" />
+      <rect width="1200" height="630" fill="#09090b" fill-opacity="0.5" />` : ''}
 
       <!-- Outer Border Frame -->
       <rect x="32" y="32" width="1136" height="566" rx="28" fill="none" stroke="#27272a" stroke-width="1.5"/>
@@ -5159,7 +5240,7 @@ Sitemap: ${protocol}://${host}/sitemap.xml
 
   // Pre-render static fallback /public/og-banner.png on boot
   try {
-    const defaultSvg = buildOgImageSvg({ type: 'homepage' });
+    const defaultSvg = buildOgImageSvg({ type: 'homepage', logoBase64: fs.readFileSync(path.join(process.cwd(), 'public', 'icon-512.png')).toString('base64') });
     sharp(Buffer.from(defaultSvg))
       .png({ quality: 95, compressionLevel: 9 })
       .toFile(path.join(process.cwd(), 'public', 'og-banner.png'))
@@ -5180,6 +5261,19 @@ Sitemap: ${protocol}://${host}/sitemap.xml
       const category = (req.query.category as string) || "";
       const city = (req.query.city as string) || "";
       const reviewsCount = parseInt(req.query.reviewsCount as string, 10) || 12;
+      let avatarBase64 = '';
+      let bannerBase64 = '';
+      let logoBase64 = '';
+      if (type === 'homepage') {
+        try {
+          logoBase64 = fs.readFileSync(path.join(process.cwd(), 'public', 'icon-512.png')).toString('base64');
+        } catch(e) {}
+      } else if (req.query.avatarUrl) {
+        avatarBase64 = await fetchBase64(req.query.avatarUrl as string);
+      }
+      if (req.query.bannerUrl) {
+        bannerBase64 = await fetchBase64(req.query.bannerUrl as string);
+      }
 
       const svg = buildOgImageSvg({
         type,
@@ -5192,7 +5286,7 @@ Sitemap: ${protocol}://${host}/sitemap.xml
         placeName,
         category,
         city,
-        reviewsCount
+        reviewsCount, avatarBase64, bannerBase64, logoBase64
       });
 
       if (req.query.format === 'svg') {
@@ -5205,18 +5299,13 @@ Sitemap: ${protocol}://${host}/sitemap.xml
         .png({ quality: 95, compressionLevel: 9 })
         .toBuffer();
 
+      console.log('Sharp PNG generated for request:', req.path);
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
       return res.send(pngBuffer);
     } catch (e: any) {
       console.error("OG Image generation error:", e);
-      // Serve static fallback if available
-      const fallback = path.join(process.cwd(), 'public', 'og-banner.png');
-      if (fs.existsSync(fallback)) {
-        res.setHeader('Content-Type', 'image/png');
-        return res.sendFile(fallback);
-      }
-      return res.status(500).send("Error generating image");
+      return res.status(500).send("Error generating image: " + (e.stack || e.message || e));
     }
   });
 
@@ -5256,13 +5345,27 @@ Sitemap: ${protocol}://${host}/sitemap.xml
       if (pMatch) placeId = pMatch[1];
     }
 
-    let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
-    let description = "Discover local businesses, restaurants, cafes, and websites with 100% authentic 60-second video reviews recorded by real customers. Zero fake text reviews.";
+    let title = "Yoouz: The Authentic Video Review Platform for Business & Software";
+    let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.";
     let imageUrl = `${baseUrl}/api/og-image.png`;
     let videoUrl = "";
     let type = "website";
     let structuredData: any = null;
     let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
+
+    if (pathname.includes('/business')) {
+      title = "Yoouz for Business | Leverage Authentic Video Reviews";
+      description = "Claim your Yoouz business profile to leverage authentic 60-second video testimonials. Build unparalleled consumer trust through verified video feedback.";
+    } else if (params.get('tab') === 'discover') {
+      title = "Discover Authentic Video Reviews on Yoouz";
+      description = "Explore a continuous feed of authentic 60-second video reviews. Discover the best local businesses, food, and experiences near you.";
+    } else if (params.get('tab') === 'following') {
+      title = "Following - Your Favorite Reviewers on Yoouz";
+      description = "Watch the latest video reviews from the creators and local businesses you follow on Yoouz.";
+    } else if (pathname === '/admin') {
+       title = "Yoouz Admin Dashboard";
+       description = "Manage and moderate content on the Yoouz platform.";
+    }
 
     try {
       if (videoId) {
@@ -5298,7 +5401,7 @@ Sitemap: ${protocol}://${host}/sitemap.xml
             ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
             : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
           
-          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}`;
+          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}${foundUser?.avatar ? '&avatarUrl=' + encodeURIComponent(foundUser.avatar) : ''}`;
           videoUrl = foundVideo.videoUrl || "";
           type = "video.other";
           keywords = `${placeName} review, ${placeName} video review, ${authorName} review, authentic customer video, 60 second review, yoouz video`;
@@ -5340,7 +5443,7 @@ Sitemap: ${protocol}://${host}/sitemap.xml
           const ratingParam = parseFloat(params.get('rating') || "5");
           title = `${authorParam}'s 60-Second Video Review | Yoouz`;
           description = `Watch authentic 60-second customer video review on Yoouz. Real People. Real Reviews.`;
-          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeParam)}&author=${encodeURIComponent(authorParam)}&rating=${ratingParam}`;
+          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeParam)}&author=${encodeURIComponent(authorParam)}&rating=${ratingParam}`; // Add avatar here if available
           type = "video.other";
 
           structuredData = {
@@ -5397,7 +5500,7 @@ Sitemap: ${protocol}://${host}/sitemap.xml
           ? `${foundPlace.description} Watch authentic 60-second video reviews for ${placeName} on Yoouz.`
           : `Watch 100% authentic 60-second live video reviews from real customers for ${placeName} on Yoouz. Real People. Real Reviews.`;
         
-        imageUrl = `${baseUrl}/api/og-image.png?type=place&placeName=${encodeURIComponent(placeName)}&rating=${placeRating}&reviewsCount=${reviewCount}&category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=place&placeName=${encodeURIComponent(placeName)}&rating=${placeRating}&reviewsCount=${reviewCount}&category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}${foundPlace?.avatarUrl ? '&avatarUrl=' + encodeURIComponent(foundPlace.avatarUrl) : ''}${foundPlace?.bannerUrl ? '&bannerUrl=' + encodeURIComponent(foundPlace.bannerUrl) : ''}`;
         type = "website";
         keywords = `${placeName}, ${placeName} reviews, ${placeName} video reviews, ${city} places, real customer video reviews`;
 
@@ -5434,7 +5537,7 @@ Sitemap: ${protocol}://${host}/sitemap.xml
         const cleanHandle = creatorHandle.replace(/^@+/, '');
         title = `@${cleanHandle} on Yoouz - Authentic Video Reviews Portfolio`;
         description = `Explore authentic 60-second video reviews recorded by @${cleanHandle} on Yoouz. 100% Genuine Video Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(cleanHandle)}`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(cleanHandle)}${foundUser?.avatar ? '&avatarUrl=' + encodeURIComponent(foundUser.avatar) : ''}${foundUser?.banner ? '&bannerUrl=' + encodeURIComponent(foundUser.banner) : ''}`;
         type = "profile";
         keywords = `${cleanHandle}, ${cleanHandle} yoouz, video reviewer, authentic local guide, food reviewer, verified reviewer`;
 
@@ -5458,15 +5561,50 @@ Sitemap: ${protocol}://${host}/sitemap.xml
     if (!structuredData) {
       structuredData = {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Yoouz - Real Video Reviews by Real People",
-        "url": baseUrl,
-        "description": description,
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": `${baseUrl}/?search={search_term_string}`,
-          "query-input": "required name=search_term_string"
-        }
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": `${baseUrl}/#website`,
+            "url": baseUrl,
+            "name": "Yoouz",
+            "alternateName": "Yoouz Video Reviews",
+            "description": "Yoouz is the premier authentic video review platform where real people record 60-second live video testimonials for local businesses, restaurants, and software.",
+            "publisher": {
+              "@id": `${baseUrl}/#organization`
+            },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": `${baseUrl}/?search={search_term_string}`,
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": `${baseUrl}/#organization`,
+            "name": "Yoouz",
+            "url": baseUrl,
+            "logo": `${baseUrl}/icon-512.png`,
+            "slogan": "Real People. Real Reviews.",
+            "description": "Yoouz is a video review platform and AI-optimized repository of verified 60-second customer testimonials.",
+            "sameAs": [
+              "https://twitter.com/yoouz",
+              "https://instagram.com/yoouz",
+              "https://youtube.com/@yoouz",
+              "https://tiktok.com/@yoouz"
+            ]
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": `${baseUrl}/#softwareapp`,
+            "name": "Yoouz Platform",
+            "applicationCategory": "SocialNetworkingApplication",
+            "operatingSystem": "All",
+            "description": "A robust platform for recording, discovering, and sharing authentic 60-second video reviews.",
+            "provider": {
+              "@id": `${baseUrl}/#organization`
+            }
+          }
+        ]
       };
     }
 

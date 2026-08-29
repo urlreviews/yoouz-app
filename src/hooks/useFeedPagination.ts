@@ -151,6 +151,7 @@ export function useFeedPagination() {
             createdAtMs: data.createdAtMs || (data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now()),
             likes: typeof data.likes === "number" ? Math.max(0, data.likes) : 0,
             bookmarksCount: typeof data.bookmarksCount === "number" ? Math.max(0, data.bookmarksCount) : 0,
+            sharesCount: typeof data.sharesCount === "number" ? Math.max(0, data.sharesCount) : (typeof data.shares === "number" ? Math.max(0, data.shares) : 0),
             commentsCount: typeof data.commentsCount === "number" ? data.commentsCount : (data.comments?.length || 0),
             comments: Array.isArray(data.comments) ? data.comments : []
           };
@@ -215,6 +216,7 @@ export function useFeedPagination() {
           createdAtMs: data.createdAtMs || (data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now()),
           likes: typeof data.likes === "number" ? Math.max(0, data.likes) : 0,
           bookmarksCount: typeof data.bookmarksCount === "number" ? Math.max(0, data.bookmarksCount) : 0,
+          sharesCount: typeof data.sharesCount === "number" ? Math.max(0, data.sharesCount) : (typeof data.shares === "number" ? Math.max(0, data.shares) : 0),
           commentsCount: typeof data.commentsCount === "number" ? data.commentsCount : (data.comments?.length || 0),
           comments: Array.isArray(data.comments) ? data.comments : []
         };

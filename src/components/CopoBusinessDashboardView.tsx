@@ -2187,7 +2187,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 >
                                   <MessageCircle className="w-3.5 h-3.5 text-zinc-500" />
                                   <span>
-                                    {expandedCommentsMap[video.id] ? 'Hide' : 'View'} Customer Comments ({video.comments?.length || 0})
+                                    {expandedCommentsMap[video.id] ? 'Hide' : 'View'} Customer Comments ({video.commentsCount || video.comments?.length || 0})
                                   </span>
                                 </button>
 

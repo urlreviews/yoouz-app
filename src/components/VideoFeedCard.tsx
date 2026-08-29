@@ -836,7 +836,7 @@ return () => {
               <MessageCircle className="w-6 h-6 text-white stroke-[2]" />
             </button>
             <span className="text-[12px] font-bold mt-1 text-white drop-shadow">
-              {(video.comments?.length || video.commentsCount || 0) + (video.ownerResponse ? 1 : 0)}
+              {(video.commentsCount || video.comments?.length || 0) + (video.ownerResponse ? 1 : 0)}
             </span>
           </div>
 
@@ -878,7 +878,7 @@ return () => {
               <Share2 className="w-5 h-5 text-white stroke-[2]" />
             </button>
             <span className="text-[12px] font-bold mt-1 text-white drop-shadow">
-              {video.sharesCount}
+              {video.sharesCount || video.shares || 0}
             </span>
           </div>
 
