@@ -301,7 +301,7 @@ export function App() {
           const authorObj: VideoAuthor = matchingVid?.author || {
             name: rawParam.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
             //handle: rawParam,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${rawParam}`,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(rawParam)}&background=27272a&color=fff&bold=true&size=128`,
             isVerified: true,
             isFollowed: false
           };
@@ -648,19 +648,26 @@ export function App() {
           if (str) savedProfile = JSON.parse(str);
         } catch (e) {}
 
-        // Use authentic Google photoURL or clean initials avatar
-        let validAvatar = user.photoURL || savedProfile.avatar;
-        if (
-          !validAvatar ||
-          validAvatar.includes("unsplash.com") ||
-          validAvatar.includes("photo-1534528741775") ||
-          validAvatar.includes("photo-1535713875002")
-        ) {
-          validAvatar =
-            user.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              user.displayName || user.email?.split("@")[0] || "User"
-            )}&background=27272a&color=fff&bold=true&size=128`;
+        // Priority: authentic Google photoURL or user-uploaded avatar. Never use video frames/thumbnails.
+        let validAvatar = user.photoURL;
+        if (!validAvatar && savedProfile.avatar) {
+          const s = savedProfile.avatar;
+          if (
+            !s.includes("unsplash.com") &&
+            !s.includes("photo-1534528741775") &&
+            !s.includes("photo-1535713875002") &&
+            !s.includes("dicebear") &&
+            !s.includes("/api/videos/") &&
+            !s.includes(".mp4") &&
+            !s.includes("rev-")
+          ) {
+            validAvatar = s;
+          }
+        }
+        if (!validAvatar) {
+          validAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+            user.displayName || user.email?.split("@")[0] || "User"
+          )}&background=27272a&color=fff&bold=true&size=128`;
         }
 
         const profileObj: UserProfile = {
@@ -684,11 +691,26 @@ export function App() {
             if (data) {
               let finalLocation = data.location || savedProfile.location || "";
               
+              // Validate firestore avatar - if it's a video frame, discard it and use Google/clean avatar
+              let finalAvatar = profileObj.avatar;
+              if (data.avatar && typeof data.avatar === "string") {
+                const a = data.avatar;
+                if (
+                  !a.includes("unsplash.com") &&
+                  !a.includes("dicebear") &&
+                  !a.includes("/api/videos/") &&
+                  !a.includes(".mp4") &&
+                  !a.includes("rev-")
+                ) {
+                  finalAvatar = a;
+                }
+              }
+
               const updatedProfile: UserProfile = {
                 ...profileObj,
                 name: data.name || profileObj.name,
                 bio: data.bio || profileObj.bio,
-                avatar: data.avatar || profileObj.avatar,
+                avatar: finalAvatar,
                 location: finalLocation,
               };
               setCurrentUser(updatedProfile);
@@ -2537,15 +2559,6 @@ export function App() {
         setDoc(doc(db, "videoReviews", newReview.id), cleanForFirestore(newReview), { merge: true }).catch(() => {});
       }
     } catch (e) {}
-
-    // If currentUser avatar was a default dicebear robot or missing, use their real camera snapshot
-    if (newReview.thumbnailUrl && currentUser && (!currentUser.avatar || currentUser.avatar.includes("dicebear"))) {
-      const updatedUser = { ...currentUser, avatar: newReview.thumbnailUrl };
-      setCurrentUser(updatedUser);
-      try {
-        localStorage.setItem("copo_user_profile", JSON.stringify(updatedUser));
-      } catch (e) {}
-    }
 
     // Auto-grab place to profile
     setSavedPlaceIds((prev) => {

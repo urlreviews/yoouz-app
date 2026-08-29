@@ -5583,6 +5583,27 @@ Return JSON:
         };
       } else if (creatorHandle) {
         const cleanHandle = creatorHandle.replace(/^@+/, '');
+        if (!foundUser && adminDb) {
+          try {
+            const userSnap = await adminDb.collection("users").where("name", "==", cleanHandle).limit(1).get();
+            if (!userSnap.empty) {
+              const uData = userSnap.docs[0].data();
+              if (uData?.avatar && !uData.avatar.includes("/api/videos/") && !uData.avatar.includes(".mp4") && !uData.avatar.includes("rev-")) {
+                foundUser = uData;
+              }
+            }
+          } catch (e) {}
+        }
+        if (!foundUser) {
+          const localList = readReviewsIndex();
+          const matchVid = localList.find((v: any) => {
+            const aName = (v.author?.name || v.authorName || "").toLowerCase().replace(/^@+/, "");
+            return aName === cleanHandle.toLowerCase();
+          });
+          if (matchVid?.author?.avatar && !matchVid.author.avatar.includes("/api/videos/") && !matchVid.author.avatar.includes(".mp4") && !matchVid.author.avatar.includes("rev-")) {
+            foundUser = { avatar: matchVid.author.avatar };
+          }
+        }
         title = `@${cleanHandle} on Yoouz - Authentic Video Reviews Portfolio`;
         description = `Explore authentic 60-second video reviews recorded by @${cleanHandle} on Yoouz. 100% Genuine Video Reviews.`;
         imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(cleanHandle)}${foundUser?.avatar ? '&avatarUrl=' + encodeURIComponent(foundUser.avatar) : ''}${foundUser?.banner ? '&bannerUrl=' + encodeURIComponent(foundUser.banner) : ''}`;

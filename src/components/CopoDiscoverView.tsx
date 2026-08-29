@@ -80,7 +80,14 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
     };
 
     const getAppropriateAvatar = (name?: string, handle?: string, avatar?: string): string => {
-      if (avatar && !avatar.includes("dicebear") && !avatar.includes("unsplash")) {
+      if (
+        avatar &&
+        !avatar.includes("dicebear") &&
+        !avatar.includes("unsplash") &&
+        !avatar.includes("/api/videos/") &&
+        !avatar.includes(".mp4") &&
+        !avatar.includes("rev-")
+      ) {
         return avatar;
       }
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=27272a&color=fff&bold=true&size=128`;

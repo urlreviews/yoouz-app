@@ -164,16 +164,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       ? (authorVideos.reduce((acc, v) => acc + v.rating, 0) / authorVideos.length).toFixed(1)
       : "5.0";
 
-  // Find real avatar
-  const recordedFaceThumbnail = authorVideos.find((v) => v.thumbnailUrl && !v.thumbnailUrl.includes("dicebear") && !v.thumbnailUrl.includes("unsplash"))?.thumbnailUrl;
-  let effectiveAvatar = isOwner && currentUser 
-    ? currentUser.avatar 
+  // Resolve genuine profile avatar (Google photo, user-uploaded photo, or clean initials avatar - never video frames)
+  let effectiveAvatar = isOwner && currentUser?.avatar
+    ? currentUser.avatar
     : (author.avatar && !author.avatar.includes("dicebear") && !author.avatar.includes("unsplash")
       ? author.avatar
-      : (recordedFaceThumbnail || author.avatar));
+      : "");
 
-  if (!effectiveAvatar || effectiveAvatar.includes("unsplash") || effectiveAvatar.includes("dicebear")) {
-    effectiveAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff&bold=true&size=128`;
+  // If the avatar URL looks like a video review artifact or invalid placeholder, fallback to clean initials
+  if (
+    !effectiveAvatar ||
+    effectiveAvatar.includes("unsplash") ||
+    effectiveAvatar.includes("dicebear") ||
+    effectiveAvatar.includes("/api/videos/") ||
+    effectiveAvatar.includes(".mp4") ||
+    effectiveAvatar.includes("rev-")
+  ) {
+    effectiveAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || currentUser?.name || "User")}&background=27272a&color=fff&bold=true&size=128`;
   }
 
   let effectiveBanner = isOwner && currentUser?.banner 

@@ -22,14 +22,14 @@ export default defineConfig(() => {
       chunkSizeWarningLimit: 2000,
     },
     server: {
-      allowedHosts: true,
+      allowedHosts: true as const,
       host: true,
       cors: true,
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     preview: {
-      allowedHosts: true,
+      allowedHosts: true as const,
       host: true,
       cors: true,
     },
