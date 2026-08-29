@@ -1493,10 +1493,17 @@ export function App() {
   const activeFeedVideos = useMemo(() => {
     // Filter out hidden/blocked videos
     const visibleVideos = videos.filter((v) => !hiddenVideoIds.includes(v.id));
-    console.log("[DEBUG App.tsx] videos length:", videos.length, "visibleVideos length:", visibleVideos.length);
+    console.log("[DEBUG App.tsx] Feed State:", {
+      totalVideos: videos.length,
+      visibleVideos: visibleVideos.length,
+      activeSection,
+      activeSubTab,
+      isPlaceView,
+      isCreatorView,
+      hasFullscreenContext: !!fullscreenFeedContext
+    });
 
     // Priority 0: Fullscreen Feed Context (when user clicked a video from a Creator or Business or Profile to watch fullscreen with TikTok scroll)
-
     if (fullscreenFeedContext) {
       if (fullscreenFeedContext.type === "creator" && fullscreenFeedContext.authorData) {
         const filtered = visibleVideos.filter(v => isAuthorMatch(v, fullscreenFeedContext.authorData!));
@@ -1512,8 +1519,10 @@ export function App() {
         if (filtered.length > 0) return filtered;
       }
       if (fullscreenFeedContext.type === "profile") {
-        return userVideos.length > 0 ? userVideos : visibleVideos;
+        return userVideos.length > 0 ? userVideos : (visibleVideos.length > 0 ? visibleVideos : videos);
       }
+      // If fullscreen context exists but yielded no matches (e.g. data still loading), fallback to visible
+      if (visibleVideos.length > 0) return visibleVideos;
     }
 
     // Priority 1: Business/Place context (if viewing a specific place)
@@ -1524,13 +1533,13 @@ export function App() {
         isPlaceReviewMatch(v, drawerPlace.id) ||
         isPlaceReviewMatch(v, drawerPlace.name)
       );
-      return filtered;
+      if (filtered.length > 0) return filtered;
     }
 
     // Priority 2: Creator context (if viewing a specific author profile)
     if (isCreatorView && selectedAuthorForDrawer) {
       const filtered = visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
-      return filtered;
+      if (filtered.length > 0) return filtered;
     }
 
     // Priority 3: User Profile context
