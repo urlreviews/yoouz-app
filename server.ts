@@ -18,6 +18,10 @@ import { v2 as cloudinary } from 'cloudinary';
 import * as cheerio from 'cheerio';
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from 'url';
+
+const __filename = typeof import.meta !== 'undefined' && import.meta.url ? fileURLToPath(import.meta.url) : (typeof filename !== 'undefined' ? filename : '');
+const __dirname = __filename ? path.dirname(__filename) : process.cwd();
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
@@ -1964,7 +1968,7 @@ function isQuotaError(err: any): boolean {
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 8080;
+  const PORT = 3000;
   const isProd = process.env.NODE_ENV === "production";
 
   // Global Cross-Origin Resource Sharing (CORS) Middleware
@@ -5730,22 +5734,30 @@ Return JSON:
 
   // Vite development & production integration
   const isCompiled = typeof __filename !== 'undefined' && __filename.endsWith('server.cjs');
-  const isProduction = process.env.NODE_ENV === "production" || isCompiled;
+  const isCloudRun = !!process.env.K_SERVICE && !process.env.K_SERVICE.startsWith('ais-dev');
+  const isProduction = process.env.NODE_ENV === "production" || isCompiled || isCloudRun;
+
+  // Debug log for environment detection
+  console.log(`Yoouz Server: Env[${process.env.NODE_ENV}] Compiled[${isCompiled}] CloudRun[${isCloudRun}] => Production[${isProduction}]`);
+
+  // Add a response header to identify the build version
+  app.use((req, res, next) => {
+    res.setHeader('X-Yoouz-Version', '2026-08-29-V6-FIX-FINAL');
+    next();
+  });
 
   if (!isProduction) {
     console.log("Yoouz Server: Starting in DEVELOPMENT mode (Vite middleware enabled)");
     const vite = await createViteServer({
       server: { 
         middlewareMode: true,
-        allowedHosts: [
-          'yoouz.com',
-          'yoouz-app-ibzu44b5yq-ew.a.run.app',
-          '.run.app',
-          'localhost',
-          '127.0.0.1'
-        ],
+        allowedHosts: true,
         host: true,
-        hmr: false 
+        hmr: false,
+        watch: {
+          usePolling: true,
+          interval: 100
+        }
       },
       appType: "spa",
     });
@@ -5773,11 +5785,12 @@ Return JSON:
 
     app.use(vite.middlewares);
   } else {
-    const distPath = fs.existsSync(path.join(__dirname, "index.html"))
-      ? __dirname
-      : fs.existsSync(path.join(process.cwd(), "dist", "index.html"))
-      ? path.join(process.cwd(), "dist")
-      : __dirname;
+    const distPath = path.join(process.cwd(), "dist");
+    
+    if (!fs.existsSync(path.join(distPath, "index.html"))) {
+      console.warn("Yoouz Server Warning: dist/index.html not found. Ensuring base static serving from cwd.");
+    }
+
     app.use(express.static(distPath, {
       setHeaders: (res, filePath) => {
         if (filePath.endsWith('.html')) {

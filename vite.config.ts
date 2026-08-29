@@ -22,24 +22,14 @@ export default defineConfig(() => {
       chunkSizeWarningLimit: 2000,
     },
     server: {
-      allowedHosts: [
-        'yoouz.com',
-        'yoouz-app-ibzu44b5yq-ew.a.run.app',
-        '.run.app',
-        'localhost',
-        '127.0.0.1'
-      ],
+      allowedHosts: true,
       host: true,
       cors: true,
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     preview: {
-      allowedHosts: [
-        'yoouz.com',
-        'yoouz-app-ibzu44b5yq-ew.a.run.app',
-        '.run.app'
-      ],
+      allowedHosts: true,
       host: true,
       cors: true,
     },
