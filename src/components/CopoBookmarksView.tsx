@@ -12,6 +12,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import { VideoReview, UserProfile } from "../types";
+import { getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 
@@ -178,7 +179,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
 
                   {/* Metadata labels bottom */}
                   <div className="absolute bottom-3 left-3 right-3 text-white">
-                    <p className="font-bold text-xs truncate leading-snug">{video.placeName}</p>
+                    <p className="font-bold text-xs truncate leading-snug">{getDisplayUrlAsDomain(video)}</p>
                     <div className="flex items-center gap-1.5 text-[10px] text-zinc-300 mt-1">
                       <span className="truncate">{video.author.name}</span>
                       <span className="w-1 h-1 rounded-full bg-zinc-400 shrink-0" />
@@ -213,7 +214,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-white md:text-white text-sm truncate leading-snug">
-                          {video.placeName}
+                          {getDisplayUrlAsDomain(video)}
                         </h4>
                         <span className="px-2 py-0.5 rounded-full bg-zinc-800 md:bg-zinc-900 text-zinc-300 md:text-zinc-400 text-[10px] font-bold border border-zinc-700 md:border-zinc-800 shrink-0">
                           {video.placeCategory}

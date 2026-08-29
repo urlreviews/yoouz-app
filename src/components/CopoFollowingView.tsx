@@ -16,6 +16,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
+import { getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 
@@ -272,7 +273,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           className="font-bold text-xs hover:underline flex items-center gap-1 truncate text-zinc-200"
                         >
                           <MapPin className="w-3 h-3 text-zinc-400" />
-                          <span className="truncate">{video.placeName}</span>
+                          <span className="truncate">{getDisplayUrlAsDomain(video)}</span>
                         </p>
                         <p className="text-[10px] text-zinc-300 line-clamp-2 leading-tight">
                           "{video.caption}"

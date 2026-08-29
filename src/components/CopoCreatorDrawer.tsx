@@ -20,7 +20,7 @@ import {
   MapPin
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
@@ -681,7 +681,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       {/* Bottom Meta Info (Stacked) */}
                       <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
                         <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
-                          {v.placeName}
+                          {getDisplayUrlAsDomain(v)}
                         </div>
                         <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
                           <Play className="w-2.5 h-2.5 fill-white" />

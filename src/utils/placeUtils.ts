@@ -31,6 +31,19 @@ export function extractCleanDomain(input?: string | null): string {
   return clean;
 }
 
+export function getDisplayUrlAsDomain(placeSource: { placeWebsite?: string, placeName?: string, name?: string, website?: string }): string {
+  const urlSource = placeSource.placeWebsite || placeSource.website || placeSource.placeName || placeSource.name || "";
+  let domain = extractCleanDomain(urlSource);
+  
+  if (!domain) return "website.com";
+
+  if (!domain.includes(".")) {
+    domain = domain.split('|')[0].replace(/[^a-z0-9]/g, "") + ".com";
+  }
+
+  return domain;
+}
+
 /**
  * Formats a business name for display, cleaning it if it looks like a URL.
  * Also attempts to convert domain-like strings into readable names.

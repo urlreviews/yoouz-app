@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -844,11 +844,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                             {/* Bottom Meta Info (Stacked) */}
                             <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
-                              {v.author?.name && (
-                                <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
-                                  {v.author.name}
-                                </div>
-                              )}
+                              <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
+                                {getDisplayUrlAsDomain(v)}
+                              </div>
                               <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
                                 <Play className="w-2.5 h-2.5 fill-white" />
                                 <span>{formattedViews}</span>
@@ -1150,11 +1148,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                         {/* Bottom Meta Info (Stacked) */}
                         <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
-                          {v.author?.name && (
-                            <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
-                              {v.author.name}
-                            </div>
-                          )}
+                          <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
+                            {getDisplayUrlAsDomain(v)}
+                          </div>
                           <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
                             <Play className="w-2.5 h-2.5 fill-white" />
                             <span>{formattedViews}</span>
