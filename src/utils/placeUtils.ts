@@ -333,3 +333,160 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     topDishes: []
   };
 }
+
+export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string }> = {
+  "aouisesmee": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "aouisesmee@gmail.com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "biz riv": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "bizriv": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "louis42111": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "louis42111@gmail.com": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "avt ertuop": {
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "avr6566gd": {
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "avr6566gd@gmail.com": {
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
+    bio: "Community reviewer on Yoouz."
+  }
+};
+
+/**
+ * Robustly resolves the real author name and authentic avatar photo for a video review.
+ * Guarantees that authentic Google profile photos and uploaded user pictures are always preserved
+ * and never replaced with generic fallback initial icons or placeholder names.
+ */
+export function resolveSafeAuthor(
+  video: Partial<VideoReview> | null | undefined,
+  currentUserOverride?: UserProfile | null
+): VideoAuthor {
+  const authorObj = (video?.author && typeof video.author === "object") ? video.author : ({} as any);
+  
+  // 1. Determine raw name candidate
+  let rawName = (
+    authorObj.name ||
+    (video as any)?.authorName ||
+    (video as any)?.author_name ||
+    (video as any)?.userName ||
+    (video?.userId && video.userId.includes("@") ? video.userId.split("@")[0] : video?.userId) ||
+    ""
+  ).trim();
+
+  // If rawName is a generic placeholder, try userEmail or userId
+  if (rawName.toLowerCase() === "reviewer" || rawName.toLowerCase() === "verified reviewer" || !rawName) {
+    if (video?.userEmail) {
+      rawName = video.userEmail.split("@")[0];
+    } else if (video?.userId && video.userId.includes("@")) {
+      rawName = video.userId.split("@")[0];
+    }
+  }
+
+  // 2. Check current logged-in user match from localStorage or argument
+  let activeUser = currentUserOverride;
+  if (!activeUser && typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("copo_user_profile");
+      if (stored) activeUser = JSON.parse(stored);
+    } catch (e) {}
+  }
+
+  // 3. Match against known community users
+  const nameKey = rawName.toLowerCase().replace(/^@+/, "");
+  const userKey = (video?.userId || video?.userEmail || "").toLowerCase().trim();
+  const knownMatch = KNOWN_COMMUNITY_USERS[nameKey] || KNOWN_COMMUNITY_USERS[userKey];
+
+  let finalName = knownMatch?.name || (rawName && rawName.toLowerCase() !== "reviewer" ? rawName : "Yoouz Reviewer");
+  let finalHandle = knownMatch?.handle || authorObj.handle || `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}`;
+  if (!finalHandle.startsWith("@")) finalHandle = `@${finalHandle}`;
+
+  // 4. Resolve authentic avatar
+  let candidateAvatar = authorObj.avatar || (video as any)?.authorAvatar || (video as any)?.avatar;
+
+  // Filter out invalid video file paths mistakenly passed as avatars
+  if (
+    candidateAvatar &&
+    (candidateAvatar.includes("/api/videos/") ||
+      candidateAvatar.includes(".mp4") ||
+      candidateAvatar.includes("rev-"))
+  ) {
+    candidateAvatar = "";
+  }
+
+  // Check if active user matches this video
+  if (activeUser && (
+    (activeUser.email && (activeUser.email.toLowerCase() === userKey || activeUser.email.toLowerCase() === (video?.userEmail || "").toLowerCase())) ||
+    (activeUser.name && activeUser.name.toLowerCase() === finalName.toLowerCase()) ||
+    (activeUser.name && activeUser.name.toLowerCase() === nameKey)
+  )) {
+    if (activeUser.name) finalName = activeUser.name;
+    if (activeUser.avatar && !candidateAvatar) candidateAvatar = activeUser.avatar;
+  }
+
+  let finalAvatar = "";
+  if (candidateAvatar && !candidateAvatar.includes("dicebear") && !candidateAvatar.includes("ui-avatars.com")) {
+    finalAvatar = candidateAvatar;
+  } else if (knownMatch?.avatar) {
+    finalAvatar = knownMatch.avatar;
+  } else if (candidateAvatar) {
+    finalAvatar = candidateAvatar;
+  } else if (activeUser?.avatar) {
+    finalAvatar = activeUser.avatar;
+  } else {
+    finalAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(finalName)}&background=27272a&color=fff&bold=true&size=128`;
+  }
+
+  return {
+    name: finalName,
+    handle: finalHandle,
+    avatar: finalAvatar,
+    isVerified: authorObj.isVerified ?? true,
+    isLocalGuide: authorObj.isLocalGuide ?? true,
+    localGuideLevel: authorObj.localGuideLevel ?? 7,
+    videoReviewCount: authorObj.videoReviewCount ?? 1,
+    photosCount: authorObj.photosCount ?? 0,
+    isFollowed: authorObj.isFollowed ?? false,
+    bio: knownMatch?.bio || authorObj.bio,
+    banner: authorObj.banner,
+    location: authorObj.location
+  };
+}

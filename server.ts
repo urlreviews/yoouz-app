@@ -2066,7 +2066,20 @@ app.get('/api/nosql/:collection', async (req, res) => {
         const localList = readReviewsIndex();
         localList.forEach((r: any) => {
           if (r && r.id) {
-            itemMap.set(r.id, { ...r, ...(itemMap.get(r.id) || {}) });
+            const existing = itemMap.get(r.id) || {};
+            const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
+            const localAuthor = (typeof r.author === 'object' && r.author) ? r.author : {};
+            const mergedAuthor = {
+              ...localAuthor,
+              ...existingAuthor,
+              name: existingAuthor.name || localAuthor.name || r.authorName || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId),
+              avatar: existingAuthor.avatar || localAuthor.avatar || r.authorAvatar
+            };
+            itemMap.set(r.id, {
+              ...r,
+              ...existing,
+              author: mergedAuthor
+            });
           }
         });
       } catch (e) {}
@@ -2750,7 +2763,15 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           dbRecords.forEach((r: any) => {
             if (r && r.id && r.data) {
               const existing = map.get(r.id) || {};
-              map.set(r.id, { ...existing, id: r.id, ...r.data });
+              const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
+              const incomingAuthor = (typeof r.data.author === 'object' && r.data.author) ? r.data.author : {};
+              const mergedAuthor = {
+                ...existingAuthor,
+                ...incomingAuthor,
+                name: incomingAuthor.name || existingAuthor.name || r.data.authorName || (r.data.userId && r.data.userId.includes('@') ? r.data.userId.split('@')[0] : r.data.userId),
+                avatar: incomingAuthor.avatar || existingAuthor.avatar || r.data.authorAvatar
+              };
+              map.set(r.id, { ...existing, id: r.id, ...r.data, author: mergedAuthor });
             }
           });
         } catch (dbErr) {}
@@ -2764,7 +2785,15 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
             const data = docSnap.data();
             if (data) {
               const existing = map.get(docSnap.id) || {};
-              map.set(docSnap.id, { ...existing, id: docSnap.id, ...data });
+              const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
+              const incomingAuthor = (typeof data.author === 'object' && data.author) ? data.author : {};
+              const mergedAuthor = {
+                ...existingAuthor,
+                ...incomingAuthor,
+                name: incomingAuthor.name || existingAuthor.name || data.authorName || (data.userId && data.userId.includes('@') ? data.userId.split('@')[0] : data.userId),
+                avatar: incomingAuthor.avatar || existingAuthor.avatar || data.authorAvatar
+              };
+              map.set(docSnap.id, { ...existing, id: docSnap.id, ...data, author: mergedAuthor });
             }
           });
         } catch (firestoreErr) {

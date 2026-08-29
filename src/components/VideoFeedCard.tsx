@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { formatBusinessName } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor } from "../utils/placeUtils";
 import { resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
@@ -407,25 +407,7 @@ return () => {
     triggerDoubleTapLike(e.clientX, e.clientY);
   };
 
-  const rawAvatar = video.author?.avatar;
-  const isCleanAvatar = rawAvatar && 
-    typeof rawAvatar === "string" && 
-    !rawAvatar.includes("dicebear") && 
-    !rawAvatar.includes("/api/videos/") && 
-    !rawAvatar.includes(".mp4") && 
-    !rawAvatar.includes("rev-");
-
-  const safeAuthor = {
-    name: video.author?.name || "Verified Reviewer",
-    avatar: isCleanAvatar
-      ? rawAvatar
-      : `https://ui-avatars.com/api/?name=${encodeURIComponent(video.author?.name || video.userId || "Reviewer")}&background=27272a&color=fff&bold=true&size=128`,
-    isVerified: video.author?.isVerified ?? true,
-    isFollowed: video.author?.isFollowed ?? false,
-    bio: video.author?.bio,
-    banner: video.author?.banner,
-    location: video.author?.location
-  };
+  const safeAuthor = resolveSafeAuthor(video);
 
 
   const videoJsonLd = {

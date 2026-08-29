@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, doc, setDoc, serverTimestamp, getDocs } from "../lib/firebase";
 import { db } from '../lib/firebase';
 import { VideoReview } from '../types';
-import { getDisplayViews } from '../utils/placeUtils';
+import { getDisplayViews, resolveSafeAuthor } from '../utils/placeUtils';
 
 // Helper to cleanly sanitize and normalize author data
 function normalizeReview(v: any): VideoReview {
@@ -11,22 +11,7 @@ function normalizeReview(v: any): VideoReview {
   try { likedIds = JSON.parse(localStorage.getItem("copo_liked_video_ids") || "[]"); } catch(e){}
   try { savedIds = JSON.parse(localStorage.getItem("copo_saved_video_ids") || "[]"); } catch(e){}
 
-  let author = v.author || {};
-  let name = author.name || "Reviewer";
-  let handle = author.name || "";
-
-  // Fix known seed inconsistency for Biz Riv
-  if (name === "Biz Riv" || handle === "@louis42111" || v.userId === "louis42111@gmail.com") {
-    name = "Biz Riv";
-    handle = "@bizriv";
-  }
-
-  if (!handle) {
-    handle = `@${name.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}`;
-  } else if (!handle.startsWith("@")) {
-    handle = `@${handle}`;
-  }
-
+  const safeAuthor = resolveSafeAuthor(v);
   const computedViews = getDisplayViews(v);
 
   return {
@@ -35,13 +20,7 @@ function normalizeReview(v: any): VideoReview {
     viewsCount: computedViews,
     isLiked: likedIds.includes(v.id),
     isBookmarked: savedIds.includes(v.id),
-    author: {
-      ...author,
-      name,
-      handle,
-      avatar: author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=059669&color=fff&bold=true&size=128`,
-      isVerified: author.isVerified ?? true
-    }
+    author: safeAuthor
   };
 }
 

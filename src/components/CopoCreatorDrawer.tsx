@@ -20,7 +20,7 @@ import {
   MapPin
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
@@ -205,6 +205,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       : "5.0";
 
   // Resolve genuine profile avatar (Google photo, user-uploaded photo, or clean initials avatar - never video frames)
+  const authorKey = (author.name || "").toLowerCase().replace(/^@+/, "");
+  const knownMatch = KNOWN_COMMUNITY_USERS[authorKey] || KNOWN_COMMUNITY_USERS[(author as any).userId?.toLowerCase() || ""];
+
   let effectiveAvatar = "";
   if (isOwner && currentUser?.avatar && !currentUser.avatar.includes("dicebear")) {
     effectiveAvatar = currentUser.avatar;
@@ -212,6 +215,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     effectiveAvatar = liveUserProfile.avatar;
   } else if (videoWithAuthenticAvatar?.author?.avatar) {
     effectiveAvatar = videoWithAuthenticAvatar.author.avatar;
+  } else if (knownMatch?.avatar) {
+    effectiveAvatar = knownMatch.avatar;
   } else if (
     author.avatar &&
     !author.avatar.includes("dicebear") &&
