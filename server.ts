@@ -6419,7 +6419,7 @@ const isPlaceCard = type === 'place';
     app.use(async (req: any, res: any, next: any) => {
       const userAgent = req.headers['user-agent'] || '';
       const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
-      const acceptsHtml = req.headers.accept?.includes('text/html') || req.headers.accept?.includes('*/*') || isCrawler;
+      const acceptsHtml = req.headers.accept?.includes('text/html') || req.headers.accept?.includes('*' + '/' + '*') || isCrawler;
       const isStaticFile = req.path.includes('.') && !req.path.endsWith('.html');
       
       if (req.method === 'GET' && !req.path.startsWith('/api') && !isStaticFile && acceptsHtml) {
