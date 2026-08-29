@@ -5,6 +5,7 @@ import { getStorage } from 'firebase-admin/storage';
 import fs from 'fs';
 import path from 'path';
 
+import { cert } from 'firebase-admin/app';
 const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
 let firebaseConfig: any = {};
 try {
@@ -15,12 +16,27 @@ try {
   console.warn("Failed to load firebase-applet-config.json in firebase-admin:", e);
 }
 
-const app = getApps().length > 0
-  ? getApps()[0]
-  : initializeApp({
+let credentialArgs: any = undefined;
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    credentialArgs = cert(sa);
+  } catch(e) {
+    console.warn("Failed to parse FIREBASE_SERVICE_ACCOUNT", e);
+  }
+}
+
+const appArgs: any = {
       projectId: firebaseConfig.projectId,
       storageBucket: firebaseConfig.storageBucket,
-    });
+};
+if (credentialArgs) {
+  appArgs.credential = credentialArgs;
+}
+const app = getApps().length > 0
+  ? getApps()[0]
+  : initializeApp(appArgs);
+
 
 export const adminAuth = getAuth(app);
 

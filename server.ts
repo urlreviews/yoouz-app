@@ -5093,7 +5093,7 @@ Return JSON:
               <!-- 1. Creator Avatar with '+' Badge -->
               <g transform="translate(0, 0)">
                 <circle cx="18" cy="18" r="18" fill="#27272a" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1.5"/>
-                <text x="18" y="24" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="900" fill="#ffffff">${displayAuthor.charAt(0).toUpperCase()}</text>
+                <text x="18" y="24" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="900" fill="#ffffff">${displayAuthor.charAt(0).toUpperCase()}</text>
                 <circle cx="18" cy="34" r="7.5" fill="#ffffff" stroke="#09090b" stroke-width="1.5"/>
                 <path d="M18 30v8 M14 34h8" stroke="#09090b" stroke-width="2.2" stroke-linecap="round"/>
               </g>
@@ -5102,21 +5102,21 @@ Return JSON:
               <g transform="translate(0, 62)">
                 <circle cx="18" cy="18" r="18" fill="#000000" fill-opacity="0.5" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1"/>
                 <path d="M18 24.5l-1.3-1.2C12.2 19.3 9 16.4 9 13c0-2.7 2.1-4.8 4.8-4.8 1.5 0 3 .7 4.2 1.9 1.2-1.2 2.7-1.9 4.2-1.9 2.7 0 4.8 2.1 4.8 4.8 0 3.4-3.2 6.3-7.7 10.3L18 24.5z" fill="#ef4444" stroke="#ef4444" stroke-width="0.8"/>
-                <text x="18" y="45" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">${likes}</text>
+                <text x="18" y="45" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">${likes}</text>
               </g>
 
               <!-- 3. Comment Bubble Button & Count -->
               <g transform="translate(0, 122)">
                 <circle cx="18" cy="18" r="18" fill="#000000" fill-opacity="0.5" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1"/>
                 <path d="M24 17a6.5 6.5 0 0 1-6.5 6.5c-1.3 0-2.6-.4-3.7-1L8 24l1.1-5.2a6.5 6.5 0 1 1 14.9-1.8z" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <text x="18" y="45" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">${comments}</text>
+                <text x="18" y="45" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">${comments}</text>
               </g>
 
               <!-- 4. Bookmark Button -->
               <g transform="translate(0, 182)">
                 <circle cx="18" cy="18" r="18" fill="#000000" fill-opacity="0.5" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1"/>
                 <path d="M12.5 10h11v16l-5.5-3.5-5.5 3.5V10z" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <text x="18" y="45" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">312</text>
+                <text x="18" y="45" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">312</text>
               </g>
 
               <!-- 5. Share Arrow Button -->
@@ -5126,7 +5126,7 @@ Return JSON:
                 <circle cx="11" cy="18" r="2.2" fill="none" stroke="#ffffff" stroke-width="1.6"/>
                 <circle cx="21" cy="23" r="2.2" fill="none" stroke="#ffffff" stroke-width="1.6"/>
                 <path d="M13 17l6-3 M13 19l6 3" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
-                <text x="18" y="45" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">45</text>
+                <text x="18" y="45" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">45</text>
               </g>
 
               <!-- 6. More Options Button -->
@@ -5141,7 +5141,7 @@ Return JSON:
             <!-- Bottom Left Video Reviewer & Place Pill Overlay -->
             <g transform="translate(18, 420)">
               <!-- Author Row: By [Author] + Verified White Checkmark Badge (Cleanly adjacent to name) -->
-              <text x="0" y="20" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="800" fill="#ffffff">By ${displayAuthor}</text>
+              <text x="0" y="20" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="800" fill="#ffffff">By ${displayAuthor}</text>
               
               <!-- Verified Badge: Placed immediately after author text with tight 5px margin -->
               <g transform="translate(${authorBadgeX}, 8)">
@@ -5152,15 +5152,15 @@ Return JSON:
               <!-- Stars & Timestamp Row (Snug, natural 6px spacing right next to the stars) -->
               <g transform="translate(0, 36)">
                 <!-- 5 Gold Stars -->
-                <text x="0" y="0" font-family="Liberation Sans, Arial, sans-serif" font-size="12" font-weight="900" fill="#f59e0b">★ ★ ★ ★ ★</text>
+                <text x="0" y="0" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="900" fill="#f59e0b">★ ★ ★ ★ ★</text>
                 
                 <!-- Dot Separator + Clock Icon + Timestamp directly following 5th star -->
                 <g transform="translate(78, -9)">
-                  <text x="0" y="9.5" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="600" fill="#71717a">·</text>
+                  <text x="0" y="9.5" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#71717a">·</text>
                   <g transform="translate(7, 0)">
                     <circle cx="5" cy="5" r="5" fill="none" stroke="#d4d4d8" stroke-width="1.1"/>
                     <path d="M5 3v2.5l1.5.8" stroke="#d4d4d8" stroke-width="1.1" stroke-linecap="round" fill="none"/>
-                    <text x="14" y="8.5" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="600" fill="#d4d4d8">${time}</text>
+                    <text x="14" y="8.5" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#d4d4d8">${time}</text>
                   </g>
                 </g>
               </g>
@@ -5180,7 +5180,7 @@ Return JSON:
                 </g>
 
                 <!-- Place Name Text -->
-                <text x="44" y="27" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="800" fill="#ffffff">${displayPlace}</text>
+                <text x="44" y="27" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#ffffff">${displayPlace}</text>
                 
                 <!-- Verified Badge on Place (Immediately following place text with 5px margin) -->
                 <g transform="translate(${verifiedPlaceBadgeX}, 16)">
@@ -5214,10 +5214,10 @@ Return JSON:
         <!-- Left Side Video Information -->
         <g transform="translate(0, 10)">
           <!-- Video Tagline -->
-          <text x="72" y="185" font-family="Liberation Sans, Arial, sans-serif" font-size="12" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">AUTHENTIC 60-SECOND CUSTOMER REVIEW</text>
+          <text x="72" y="185" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">AUTHENTIC 60-SECOND CUSTOMER REVIEW</text>
 
           <!-- Place Title -->
-          <text x="72" y="235" font-family="Liberation Sans, Arial, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
+          <text x="72" y="235" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
             ${placeTspans}
           </text>
 
@@ -5225,7 +5225,7 @@ Return JSON:
           <g transform="translate(72, ${placeLines.length > 1 ? 340 : 280})">
             <!-- Star Rating Pill -->
             <rect width="160" height="42" rx="21" fill="#18181b" stroke="#f59e0b" stroke-width="1.5"/>
-            <text x="20" y="27" font-family="Liberation Sans, Arial, sans-serif" font-size="17" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)} / 5.0</text>
+            <text x="20" y="27" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)} / 5.0</text>
 
             <!-- Author Pill with tight, custom-fit verified badge -->
             <g transform="translate(176, 0)">
@@ -5240,9 +5240,9 @@ Return JSON:
                 <circle cx="21" cy="21" r="13" fill="none" stroke="#3f3f46" stroke-width="1"/>`
                 :
                 `<circle cx="21" cy="21" r="13" fill="#27272a"/>
-                <text x="21" y="26" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#e4e4e7">${authorDisplay.charAt(0).toUpperCase()}</text>`
+                <text x="21" y="26" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#e4e4e7">${authorDisplay.charAt(0).toUpperCase()}</text>`
               }
-              <text x="44" y="26" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="700" fill="#f4f4f5">${authorText}</text>
+              <text x="44" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#f4f4f5">${authorText}</text>
               <circle cx="${leftBadgeCenterX}" cy="21" r="7.5" fill="#ffffff"/>
               <path d="M${leftBadgeCenterX - 3.5} 21l2.5 2.5 4.5-4.5" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
@@ -5252,12 +5252,12 @@ Return JSON:
           ${caption ? `
           <g transform="translate(72, ${placeLines.length > 1 ? 405 : 345})">
             <rect width="640" height="56" rx="14" fill="#18181b" stroke="#27272a" stroke-width="1"/>
-            <text x="20" y="34" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-style="italic" fill="#d4d4d8">"${caption.length > 75 ? caption.slice(0, 72) + '...' : caption}"</text>
+            <text x="20" y="34" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-style="italic" fill="#d4d4d8">"${caption.length > 75 ? caption.slice(0, 72) + '...' : caption}"</text>
           </g>
           ` : `
           <g transform="translate(72, ${placeLines.length > 1 ? 405 : 345})">
-            <text x="0" y="30" font-family="Liberation Sans, Arial, sans-serif" font-size="17" font-weight="500" fill="#d4d4d8">Watch 100% genuine live 60-second video reviews.</text>
-            <text x="0" y="58" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="500" fill="#71717a">Real customers sharing authentic experiences · Zero fake text reviews.</text>
+            <text x="0" y="30" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#d4d4d8">Watch 100% genuine live 60-second video reviews.</text>
+            <text x="0" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="500" fill="#71717a">Real customers sharing authentic experiences · Zero fake text reviews.</text>
           </g>
           `}
         </g>
@@ -5280,24 +5280,24 @@ Return JSON:
       mainContentSvg = `
         <g transform="translate(0, 10)">
           <!-- Category & Location -->
-          <text x="72" y="190" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">${(category || 'Rooftop Lounge & Club').toUpperCase()} · ${(city || 'London & New York').toUpperCase()}</text>
+          <text x="72" y="190" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">${(category || 'Rooftop Lounge & Club').toUpperCase()} · ${(city || 'London & New York').toUpperCase()}</text>
 
           <!-- Place Title -->
-          <text x="72" y="240" font-family="Liberation Sans, Arial, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-0.8">
+          <text x="72" y="240" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-0.8">
             ${placeTspans}
           </text>
 
           <!-- Rating & Video Count Pill -->
           <g transform="translate(72, ${placeLines.length > 1 ? 335 : 280})">
             <rect width="360" height="44" rx="22" fill="#18181b" stroke="#f59e0b" stroke-width="1.5"/>
-            <text x="24" y="28" font-family="Liberation Sans, Arial, sans-serif" font-size="18" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)}</text>
-            <text x="80" y="28" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="600" fill="#e4e4e7">· ${reviewsCount || 18} Authentic Video Reviews</text>
+            <text x="24" y="28" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)}</text>
+            <text x="80" y="28" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#e4e4e7">· ${reviewsCount || 18} Authentic Video Reviews</text>
           </g>
 
           <!-- Subtitle -->
           <g transform="translate(72, ${placeLines.length > 1 ? 400 : 345})">
-            <text x="0" y="26" font-family="Liberation Sans, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Watch genuine customer video reviews recorded live before you visit.</text>
-            <text x="0" y="58" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Zero fake text reviews · 100% verified customer video testimonials</text>
+            <text x="0" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Watch genuine customer video reviews recorded live before you visit.</text>
+            <text x="0" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Zero fake text reviews · 100% verified customer video testimonials</text>
           </g>
         </g>
 
@@ -5317,9 +5317,9 @@ Return JSON:
 
       mainContentSvg = `
         <g transform="translate(0, 10)">
-          <text x="72" y="190" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">VERIFIED VIDEO REVIEWER PROFILE</text>
+          <text x="72" y="190" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">VERIFIED VIDEO REVIEWER PROFILE</text>
 
-          <text x="72" y="245" font-family="Liberation Sans, Arial, sans-serif" font-size="52" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
+          <text x="72" y="245" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
             @${cleanHandle}
           </text>
 
@@ -5327,12 +5327,12 @@ Return JSON:
             <rect width="320" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
             <circle cx="21" cy="21" r="8" fill="#ffffff"/>
             <path d="M17.5 21l2.5 2.5 4.5-4.5" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="38" y="26" font-family="Liberation Sans, Arial, sans-serif" font-size="14" font-weight="700" fill="#f4f4f5">Verified Video Reviewer on Yoouz</text>
+            <text x="38" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#f4f4f5">Verified Video Reviewer on Yoouz</text>
           </g>
 
           <g transform="translate(72, 355)">
-            <text x="0" y="26" font-family="Liberation Sans, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Explore authentic 60-second video reviews and honest customer ratings.</text>
-            <text x="0" y="58" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Watch verified reviews for top local restaurants, cafes, and businesses.</text>
+            <text x="0" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Explore authentic 60-second video reviews and honest customer ratings.</text>
+            <text x="0" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Watch verified reviews for top local restaurants, cafes, and businesses.</text>
           </g>
         </g>
 
@@ -5355,24 +5355,24 @@ Return JSON:
           <!-- Tagline Pill -->
           <rect width="280" height="32" rx="16" fill="#18181b" stroke="#27272a" stroke-width="1"/>
           <circle cx="16" cy="16" r="4" fill="#3b82f6"/>
-          <text x="28" y="20" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="1">AUTHENTIC VIDEO REVIEWS</text>
+          <text x="28" y="20" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="1">AUTHENTIC VIDEO REVIEWS</text>
 
           <!-- Big Title -->
-          <text x="0" y="80" font-family="Liberation Sans, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
+          <text x="0" y="80" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
             Real People.
           </text>
-          <text x="0" y="136" font-family="Liberation Sans, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
+          <text x="0" y="136" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
             Real Reviews.
           </text>
 
           <!-- Descriptive Subtitle -->
-          <text x="0" y="186" font-family="Liberation Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
+          <text x="0" y="186" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
             The #1 authentic 60-second video review network.
           </text>
-          <text x="0" y="214" font-family="Liberation Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
+          <text x="0" y="214" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
             Watch genuine live customer testimonials before you visit.
           </text>
-          <text x="0" y="242" font-family="Liberation Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
+          <text x="0" y="242" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
             Zero fake text reviews · 100% verified trust.
           </text>
 
@@ -5382,19 +5382,19 @@ Return JSON:
             <g>
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
               <circle cx="20" cy="20" r="4.5" fill="#ef4444"/>
-              <text x="34" y="25" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">60s Live Video Only</text>
+              <text x="34" y="25" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">60s Live Video Only</text>
             </g>
             <!-- Pill 2 -->
             <g transform="translate(192, 0)">
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
               <circle cx="20" cy="20" r="4.5" fill="#22c55e"/>
-              <text x="34" y="25" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Zero Fake Reviews</text>
+              <text x="34" y="25" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Zero Fake Reviews</text>
             </g>
             <!-- Pill 3 -->
             <g transform="translate(384, 0)">
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
               <circle cx="20" cy="20" r="4.5" fill="#3b82f6"/>
-              <text x="34" y="25" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Verified Businesses</text>
+              <text x="34" y="25" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Verified Businesses</text>
             </g>
           </g>
         </g>
@@ -5450,13 +5450,13 @@ Return JSON:
         <path d="M22 12.5l2.25 4.6 5.05.75-3.65 3.55.85 5-4.5-2.4-4.5 2.4.85-5-3.65-3.55 5.05-.75z" fill="#09090b"/>
 
         <!-- Brand Typography -->
-        <text x="56" y="32" font-family="Liberation Sans, Arial, sans-serif" font-size="30" font-weight="900" fill="#ffffff" letter-spacing="-0.5">Yoouz</text>
+        <text x="56" y="32" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="30" font-weight="900" fill="#ffffff" letter-spacing="-0.5">Yoouz</text>
 
         <!-- Top Right Category / Badge Pill -->
         <g transform="translate(360, 4)">
           <rect width="250" height="34" rx="17" fill="#18181b" stroke="#27272a" stroke-width="1"/>
           <circle cx="18" cy="17" r="4" fill="#22c55e"/>
-          <text x="32" y="22" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="0.8">${badgeText}</text>
+          <text x="32" y="22" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="0.8">${badgeText}</text>
         </g>
       </g>
 
@@ -5465,7 +5465,7 @@ Return JSON:
 
       <!-- Footer Tagline (Positioned cleanly on the left, zero overlap with right player) -->
       <g transform="translate(72, 564)">
-        <text x="0" y="0" font-family="Liberation Sans, Arial, sans-serif" font-size="14" font-weight="700" fill="#71717a" letter-spacing="0.2">
+        <text x="0" y="0" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#71717a" letter-spacing="0.2">
           yoouz.com · Authentic 60-Second Video Reviews
         </text>
       </g>
@@ -5921,7 +5921,7 @@ Return JSON:
         if (avatarBase64) {
           reviewerPhotoBase64 = avatarBase64;
         } else {
-          reviewerPhotoBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // transparent pixel
+          reviewerPhotoBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // transparent pixel
         }
       }
 
