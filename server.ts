@@ -5796,7 +5796,7 @@ Return JSON:
   });
 
   // Open Graph Image Endpoint (Generates PNG for Facebook, X/Twitter, WhatsApp, LinkedIn, etc.)
-  app.get(['/api/og-image', '/api/og-image.png'], async (req: any, res: any) => {
+  app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
     try {
       const type = (req.query.type as string) || "homepage";
       const title = (req.query.title as string) || "";
@@ -5914,7 +5914,7 @@ Return JSON:
 
     let title = "Yoouz: The Authentic Video Review Platform for Business & Software";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.";
-    let imageUrl = `${baseUrl}/og-banner.png`;
+    let imageUrl = `${baseUrl}/og-banner.png?v=2`;
     let videoUrl = "";
     let type = "website";
     let structuredData: any = null;
