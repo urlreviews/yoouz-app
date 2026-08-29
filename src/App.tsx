@@ -100,17 +100,18 @@ export function App() {
     try {
       const pathname = window.location.pathname;
       if (pathname === "/admin" || pathname.startsWith("/admin")) return "admin";
-      if (pathname === "/business") return "business";
+      if (pathname === "/business" || pathname.startsWith("/business/") || pathname === "/portal" || pathname === "/business-dashboard") return "business";
       if (pathname === "/discover") return "discover";
       if (pathname === "/following") return "following";
       if (pathname === "/search") return "search";
       if (pathname === "/map") return "map";
       if (pathname === "/notifications") return "notifications";
-      if (pathname === "/messages") return "messages";
-      if (pathname === "/bookmarks") return "bookmarks";
+      if (pathname === "/messages" || pathname.startsWith("/messages/")) return "messages";
+      if (pathname === "/bookmarks" || pathname === "/saved") return "bookmarks";
       if (pathname === "/record_review") return "record_review";
       if (pathname === "/clubs") return "clubs";
-      if (pathname.startsWith("/profile/") || pathname.startsWith("/@")) return "profile"; // actually, if it's someone else's profile, it might open a drawer, not just set section to profile. If it's my profile, it's 'profile'. But let's just let syncFromUrl handle the drawer logic, and we return 'home' or 'discover' as base.
+      if (pathname === "/profile" || pathname === "/me") return "profile";
+      if (pathname.startsWith("/profile/") || pathname.startsWith("/@")) return "home"; // Drawer opens on top of home
       
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
@@ -253,19 +254,28 @@ export function App() {
           }
         }
         if (!placeParam) {
-          const pMatch = pathname.match(/^\/place\/([^\/]+)/) || pathname.match(/^\/business\/([^\/]+)/);
-          if (pMatch) placeParam = pMatch[1];
+          const pMatch = pathname.match(/^\/place\/([^\/]+)/);
+          if (pMatch) {
+            placeParam = pMatch[1];
+          } else {
+            const bMatch = pathname.match(/^\/business\/([^\/]+)/);
+            if (bMatch && bMatch[1] !== "dashboard" && bMatch[1] !== "claim" && bMatch[1] !== "portal") {
+              placeParam = bMatch[1];
+            }
+          }
         }
         if (!sectionParam) {
+          if (pathname === "/business" || pathname === "/business/claim" || pathname === "/business/dashboard" || pathname === "/portal" || pathname === "/business-dashboard") sectionParam = "business";
           if (pathname === "/discover") sectionParam = "discover";
           if (pathname === "/following") sectionParam = "following";
           if (pathname === "/search") sectionParam = "search";
           if (pathname === "/map") sectionParam = "map";
           if (pathname === "/notifications") sectionParam = "notifications";
-          if (pathname === "/messages") sectionParam = "messages";
-          if (pathname === "/bookmarks") sectionParam = "bookmarks";
+          if (pathname === "/messages" || pathname.startsWith("/messages/")) sectionParam = "messages";
+          if (pathname === "/bookmarks" || pathname === "/saved") sectionParam = "bookmarks";
           if (pathname === "/clubs") sectionParam = "clubs";
           if (pathname === "/record_review") sectionParam = "record_review";
+          if (pathname === "/profile" || pathname === "/me") sectionParam = "profile";
         }
 
         if (placeParam) {
