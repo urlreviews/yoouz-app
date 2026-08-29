@@ -325,17 +325,14 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-zinc-800 md:bg-zinc-100 border border-zinc-700 md:border-zinc-300 text-white md:text-zinc-800 flex items-center justify-center font-bold shrink-0">
+              <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center justify-center font-bold shrink-0">
                 <MessageSquare className="w-4 h-4" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-white md:text-zinc-950 font-bold text-base leading-tight">Comments</h2>
-                  <span className="px-2 py-0.5 rounded-full bg-zinc-800 md:bg-zinc-900 text-zinc-300 md:text-zinc-400 text-[10px] font-bold">
-                    {totalCommentsCount}
-                  </span>
-                </div>
-                <p className="text-[12px] text-zinc-400 md:text-zinc-400 font-medium mt-0.5 break-words line-clamp-2">
+              <div className="flex-1 min-w-0 pr-3">
+                <h2 className="text-white font-bold text-lg leading-tight tracking-tight">
+                  {totalCommentsCount} {totalCommentsCount === 1 ? "Comment" : "Comments"}
+                </h2>
+                <p className="text-[13px] text-zinc-400 font-medium mt-0.5 truncate">
                   {video.placeName}
                 </p>
               </div>

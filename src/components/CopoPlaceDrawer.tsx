@@ -816,7 +816,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-1.5">
                       {rawPlaceVideos.slice(0, 6).map((v) => {
-                        const displayViews = v.likes * 14 + 12;
+                        const displayViews = v.views || v.viewsCount || 0;
                         const formattedViews =
                           displayViews >= 1000
                             ? `${(displayViews / 1000).toFixed(1)}k`
@@ -842,18 +842,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                               <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                             </div>
 
-                            {/* Bottom Play count */}
-                            <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-white text-[10px] font-bold drop-shadow-sm">
-                              <Play className="w-2.5 h-2.5 fill-white" />
-                              <span>{formattedViews}</span>
-                            </div>
-
-                            {/* Author name */}
-                            {v.author?.name && (
-                              <div className="absolute bottom-1.5 right-1.5 max-w-[65%] text-right text-[9px] text-white/90 truncate font-bold drop-shadow-sm">
-                                {v.author.name}
+                            {/* Bottom Meta Info (Stacked) */}
+                            <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
+                              {v.author?.name && (
+                                <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
+                                  {v.author.name}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
+                                <Play className="w-2.5 h-2.5 fill-white" />
+                                <span>{formattedViews}</span>
                               </div>
-                            )}
+                            </div>
                           </div>
                         );
                       })}
@@ -1117,7 +1117,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               ) : (
                 <div className="grid grid-cols-3 gap-1.5 pt-1">
                   {placeVideos.map((v) => {
-                    const displayViews = v.likes * 14 + 12;
+                    const displayViews = v.views || v.viewsCount || 0;
                     const formattedViews =
                       displayViews >= 1000
                         ? `${(displayViews / 1000).toFixed(1)}k`
@@ -1148,18 +1148,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                         </div>
 
-                        {/* Bottom Left Play count */}
-                        <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-white text-[10px] font-bold drop-shadow-sm">
-                          <Play className="w-2.5 h-2.5 fill-white" />
-                          <span>{formattedViews}</span>
-                        </div>
-
-                        {/* Author name */}
-                        {v.author?.name && (
-                          <div className="absolute bottom-1.5 right-1.5 max-w-[65%] text-right text-[9px] text-white/90 truncate font-bold drop-shadow-sm">
-                            {v.author.name}
+                        {/* Bottom Meta Info (Stacked) */}
+                        <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
+                          {v.author?.name && (
+                            <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
+                              {v.author.name}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
+                            <Play className="w-2.5 h-2.5 fill-white" />
+                            <span>{formattedViews}</span>
                           </div>
-                        )}
+                        </div>
                       </div>
                     );
                   })}

@@ -643,7 +643,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="grid grid-cols-3 gap-1.5 px-0.5">
                 {authorVideos.map((v) => {
                   const isCurrentActive = v.id === activeVideoId;
-                  const displayViews = v.likes * 14 + 12;
+                  const displayViews = v.views || v.viewsCount || 0;
                   const formattedViews =
                     displayViews >= 1000
                       ? `${(displayViews / 1000).toFixed(1)}k`
@@ -678,15 +678,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                       </div>
 
-                      {/* Bottom Left: TikTok Style Play Count */}
-                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-white text-[10px] font-bold drop-shadow-sm">
-                        <Play className="w-2.5 h-2.5 fill-white" />
-                        <span>{formattedViews}</span>
-                      </div>
-
-                      {/* Place Name on Hover / subtle tag */}
-                      <div className="absolute bottom-1.5 right-1.5 max-w-[50%] text-right text-[8.5px] text-zinc-300 truncate font-medium drop-shadow-xs">
-                        {v.placeName}
+                      {/* Bottom Meta Info (Stacked) */}
+                      <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
+                        <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
+                          {v.placeName}
+                        </div>
+                        <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
+                          <Play className="w-2.5 h-2.5 fill-white" />
+                          <span>{formattedViews}</span>
+                        </div>
                       </div>
                     </div>
                   );

@@ -204,7 +204,7 @@ export function isAuthorMatch(
   if (emailPrefix) {
     if (vHandle && emailPrefix === vHandle) return true;
     if (vName && emailPrefix === vName) return true;
-    if (targetHandle && emailPrefix === targetHandle) return true;
+    
   }
   const vEmailPrefix = vEmail.split("@")[0];
   if (vEmailPrefix) {

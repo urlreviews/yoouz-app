@@ -78,47 +78,67 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       // 1. Check local places first
       let foundPlace = places.find(p => p.id === domain || p.brandDomain === domain);
       
-      if (!foundPlace) {
-         // 2. Fetch from backend /api/url-metadata
+      // 2. Always fetch from backend /api/url-metadata to ensure fresh logo/banner
+      try {
          const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(urlString)}`);
          if (resp.ok) {
            const data = await resp.json();
            if (data.title || data.domain) {
-             const newPlace: Place = {
-               id: (data.domain || "website").replace(/[^a-zA-Z0-9]/g, "-"),
-               name: data.title || data.domain,
-               category: "Website",
-               categoryType: "all",
-               address: "",
-               city: "Online",
-               lat: 0,
-               lng: 0,
-               rating: 5,
-               totalReviews: 1,
-               ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-               avatarUrl: data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : ""),
-               logoUrl: data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : ""),
-               bannerUrl: data.image || "",
-               ogImage: data.image || "",
-               photos: data.image ? [data.image] : [],
-               openingHours: "Available 24/7",
-               isOpen: true,
-               phone: "",
-               website: data.url || urlString,
-               priceRange: "N/A",
-               plusCode: "",
-               description: data.description || "",
-               popularKeywords: [],
-               amenities: [],
-               topDishes: [],
-               brandDomain: data.domain
-             };
-             foundPlace = newPlace;
-             if (onAddPlace) {
-               onAddPlace(newPlace);
+             const fetchedLogo = data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : "");
+             const fetchedBanner = data.image || "";
+             
+             if (foundPlace) {
+               // Enrich existing place with missing metadata
+               foundPlace = {
+                 ...foundPlace,
+                 logoUrl: fetchedLogo || foundPlace.logoUrl,
+                 avatarUrl: fetchedLogo || foundPlace.avatarUrl,
+                 bannerUrl: fetchedBanner || foundPlace.bannerUrl,
+                 ogImage: fetchedBanner || foundPlace.ogImage,
+                 description: data.description || foundPlace.description,
+               };
+               if (onAddPlace) {
+                 onAddPlace(foundPlace);
+               }
+             } else {
+               const newPlace: Place = {
+                 id: (data.domain || "website").replace(/[^a-zA-Z0-9]/g, "-"),
+                 name: data.title || data.domain,
+                 category: "Website",
+                 categoryType: "all",
+                 address: "",
+                 city: "Online",
+                 lat: 0,
+                 lng: 0,
+                 rating: 5,
+                 totalReviews: 1,
+                 ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+                 avatarUrl: fetchedLogo,
+                 logoUrl: fetchedLogo,
+                 bannerUrl: fetchedBanner,
+                 ogImage: fetchedBanner,
+                 photos: fetchedBanner ? [fetchedBanner] : [],
+                 openingHours: "Available 24/7",
+                 isOpen: true,
+                 phone: "",
+                 website: data.url || urlString,
+                 priceRange: "N/A",
+                 plusCode: "",
+                 description: data.description || "",
+                 popularKeywords: [],
+                 amenities: [],
+                 topDishes: [],
+                 brandDomain: data.domain
+               };
+               foundPlace = newPlace;
+               if (onAddPlace) {
+                 onAddPlace(newPlace);
+               }
              }
            }
          }
+      } catch (err) {
+         console.warn("Metadata fetch error:", err);
       }
 
       if (foundPlace) {

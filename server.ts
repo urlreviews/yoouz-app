@@ -1,14 +1,14 @@
 
 import https from 'https';
 import http from 'http';
-async function fetchBase64(url) {
+async function fetchBase64(url: string): Promise<string> {
   if (!url) return '';
   return new Promise((resolve) => {
     const client = url.startsWith('https') ? https : http;
-    client.get(url, (res) => {
+    client.get(url, (res: any) => {
       if (res.statusCode !== 200) return resolve('');
-      const chunks = [];
-      res.on('data', (c) => chunks.push(c));
+      const chunks: Buffer[] = [];
+      res.on('data', (c: Buffer) => chunks.push(c));
       res.on('end', () => resolve(Buffer.concat(chunks).toString('base64')));
     }).on('error', () => resolve(''));
   });
@@ -2233,7 +2233,8 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
     // 1. Write to Firestore Admin
     if (adminDb) {
       try {
-        await adminDb.collection(colName).doc(id).set(data, { merge: Boolean(merge) });
+        const shouldMerge = merge !== false; // Default to true unless explicitly false
+        await adminDb.collection(colName).doc(id).set(data, { merge: shouldMerge });
       } catch (fErr) {
         console.warn(`Firestore write notice for ${colName}/${id}:`, (fErr as any)?.message || fErr);
       }
@@ -5249,7 +5250,7 @@ Return JSON:
   } catch (e) {}
 
   // Open Graph Image Endpoint (Generates PNG for Facebook, X/Twitter, WhatsApp, LinkedIn, etc.)
-  app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png'], async (req: any, res: any) => {
+  app.get(['/api/og-image', '/api/og-image.png'], async (req: any, res: any) => {
     try {
       const type = (req.query.type as string) || "homepage";
       const title = (req.query.title as string) || "";
@@ -5325,6 +5326,7 @@ Return JSON:
     let videoId = params.get('video') || params.get('v') || params.get('review');
     let placeId = params.get('place') || params.get('p') || params.get('business') || params.get('domain');
     let creatorHandle = params.get('creator') || params.get('user') || params.get('c');
+    let foundUser: any = null;
 
     // Parse path-based routes for elite SEO
     if (!videoId) {
@@ -5348,7 +5350,7 @@ Return JSON:
 
     let title = "Yoouz: The Authentic Video Review Platform for Business & Software";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.";
-    let imageUrl = `${baseUrl}/api/og-image.png`;
+    let imageUrl = `${baseUrl}/og-banner.png`;
     let videoUrl = "";
     let type = "website";
     let structuredData: any = null;
@@ -5686,21 +5688,25 @@ Return JSON:
   }
 
   // Vite development & production integration
-  if (process.env.NODE_ENV !== "production") {
+  const isCompiled = typeof __filename !== 'undefined' && __filename.endsWith('server.cjs');
+  const isProduction = process.env.NODE_ENV === "production" || isCompiled;
+
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { 
         middlewareMode: true,
+        allowedHosts: true,
         hmr: false // Disable HMR to avoid port 24678 conflicts in this environment
       },
       appType: "spa",
     });
 
-    // Handle bot/crawler requests for Open Graph tags specifically in dev mode if needed
+    // Handle bot/crawler requests and direct HTML requests for Open Graph tags in dev mode
     app.use(async (req: any, res: any, next: any) => {
-      const userAgent = req.headers['user-agent'] || '';
-      const isBot = /facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Pinterest|TelegramBot|Slackbot|vkShare|W3C_Validator|Googlebot|Google-InspectionTool|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot/i.test(userAgent);
+      // Check if it's a direct browser navigation to a route (expects HTML)
+      const acceptsHtml = req.headers.accept?.includes('text/html');
       
-      if (isBot && req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
+      if (req.method === 'GET' && !req.path.startsWith('/api') && acceptsHtml) {
         try {
           const indexPath = path.resolve(process.cwd(), 'index.html');
           let indexTemplate = fs.readFileSync(indexPath, 'utf-8');
@@ -5709,6 +5715,7 @@ Return JSON:
           const finalHtml = injectOpenGraphTags(indexTemplate, meta);
           return res.status(200).set({ 'Content-Type': 'text/html' }).end(finalHtml);
         } catch (e) {
+          console.error("Vite Transform Error:", e);
           return next();
         }
       }

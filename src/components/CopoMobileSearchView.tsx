@@ -76,16 +76,32 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       const domain = parsedUrl.hostname;
 
       let foundPlace = places.find(p => p.id === domain || p.brandDomain === domain);
-
-      if (!foundPlace) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-        try {
-          const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(urlString)}`, { signal: controller.signal });
-          clearTimeout(timeoutId);
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data.title || data.domain) {
+      
+      // Always try to fetch fresh metadata to ensure logo and banner are present
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      try {
+        const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(urlString)}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.title || data.domain) {
+            const fetchedLogo = data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : "");
+            const fetchedBanner = data.image || "";
+            
+            if (foundPlace) {
+              // Enrich existing place with missing metadata
+              foundPlace = {
+                ...foundPlace,
+                logoUrl: fetchedLogo || foundPlace.logoUrl,
+                avatarUrl: fetchedLogo || foundPlace.avatarUrl,
+                bannerUrl: fetchedBanner || foundPlace.bannerUrl,
+                description: data.description || foundPlace.description,
+              };
+              if (onAddPlace) {
+                onAddPlace(foundPlace);
+              }
+            } else {
               const newPlace: Place = {
                 id: data.domain.replace(/[^a-zA-Z0-9]/g, "-"),
                 name: data.title || data.domain,
@@ -98,10 +114,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                 rating: 5,
                 totalReviews: 1,
                 ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-                avatarUrl: data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : ""),
-                logoUrl: data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : ""),
-                bannerUrl: data.image || "",
-                photos: data.image ? [data.image] : [],
+                avatarUrl: fetchedLogo,
+                logoUrl: fetchedLogo,
+                bannerUrl: fetchedBanner,
+                photos: fetchedBanner ? [fetchedBanner] : [],
                 openingHours: "Available 24/7",
                 isOpen: true,
                 phone: "",
@@ -120,13 +136,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               }
             }
           }
-        } catch (err: any) {
-          clearTimeout(timeoutId);
-          if (err.name === 'AbortError') {
-             setErrorMsg("Metadata fetch timed out. Please try again.");
-          } else {
-             throw err;
-          }
+        }
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+           setErrorMsg("Metadata fetch timed out. Please try again.");
+        } else {
+           console.warn("Metadata fetch error:", err);
         }
       }
 

@@ -56,7 +56,7 @@ export function App() {
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
     // Current App Version Timestamp (Updated: 2026-08-28-14:00-SUPER-FORCE)
-    const APP_VERSION = "2026-08-29-00-45-DARKMODE-FIXES"; 
+    const APP_VERSION = "2026-08-29-01-05-OG-FIX"; 
     try {
       const savedVersion = localStorage.getItem("yoouz_app_version");
       if (savedVersion && savedVersion !== APP_VERSION) {
@@ -313,17 +313,19 @@ export function App() {
           const idx = videosRef.current.findIndex((v) => v.id === targetVidId);
           if (idx !== -1) {
             setCurrentVideoIndex(idx);
-          } else if (db) {
-            getDoc(doc(db, "videoReviews", targetVidId)).then((snap) => {
-              if (snap.exists()) {
-                const vidData = snap.data() as VideoReview;
-                setVideos((prev) => {
-                  if (prev.some((v) => v.id === vidData.id)) return prev;
-                  return [{ ...vidData, id: snap.id }, ...prev];
-                });
-                setCurrentVideoIndex(0);
-              }
-            }).catch(() => {});
+          } else {
+            // Fetch from server API to ensure seed JSON data is merged with Firestore
+            fetch(`/api/nosql/videoReviews/${targetVidId}`)
+              .then(res => res.json())
+              .then(vidData => {
+                if (vidData && vidData.id) {
+                  setVideos((prev) => {
+                    if (prev.some((v) => v.id === vidData.id)) return prev;
+                    return [vidData as VideoReview, ...prev];
+                  });
+                  setCurrentVideoIndex(0);
+                }
+              }).catch(() => {});
           }
         }
       } catch (err) {
@@ -1598,7 +1600,8 @@ export function App() {
       prev.map((v) => {
         if (v.id === videoId) {
           nextIsLiked = !v.isLiked;
-          nextLikes = nextIsLiked ? v.likes + 1 : Math.max(0, v.likes - 1);
+          const currentLikes = typeof v.likes === 'number' && !isNaN(v.likes) ? v.likes : 0;
+          nextLikes = nextIsLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
           return {
             ...v,
             isLiked: nextIsLiked,
@@ -1678,7 +1681,8 @@ export function App() {
       prev.map((v) => {
         if (v.id === videoId) {
           nextBookmarked = !v.isBookmarked;
-          nextCount = nextBookmarked ? v.bookmarksCount + 1 : Math.max(0, v.bookmarksCount - 1);
+          const currentCount = typeof v.bookmarksCount === 'number' && !isNaN(v.bookmarksCount) ? v.bookmarksCount : 0;
+          nextCount = nextBookmarked ? currentCount + 1 : Math.max(0, currentCount - 1);
           return {
             ...v,
             isBookmarked: nextBookmarked,

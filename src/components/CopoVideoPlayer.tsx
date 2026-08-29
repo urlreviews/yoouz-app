@@ -131,6 +131,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isProgrammaticScrollRef = useRef<boolean>(false);
   const currentIndexRef = useRef<number>(currentIndex);
+  const lastObserverIndexRef = useRef<number>(currentIndex);
 
   // Sync ref
   useEffect(() => {
@@ -255,6 +256,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               const idx = parseInt(idxAttr, 10);
               if (!isNaN(idx) && idx !== currentIndexRef.current) {
                 currentIndexRef.current = idx;
+                lastObserverIndexRef.current = idx;
                 onSelectVideoIndex(idx);
               }
             }
@@ -278,7 +280,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
   // Scroll to currentIndex when changed via keyboard or floating arrow buttons
   useEffect(() => {
-    if (isProgrammaticScrollRef.current) {
+    if (currentIndex !== lastObserverIndexRef.current) {
+      isProgrammaticScrollRef.current = true;
       const cardEl = cardRefs.current[currentIndex];
       if (cardEl && containerRef.current) {
         cardEl.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -293,14 +296,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
   const handleNext = () => {
     if (currentIndex < videos.length - 1) {
-      isProgrammaticScrollRef.current = true;
       onSelectVideoIndex(currentIndex + 1);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
-      isProgrammaticScrollRef.current = true;
       onSelectVideoIndex(currentIndex - 1);
     }
   };

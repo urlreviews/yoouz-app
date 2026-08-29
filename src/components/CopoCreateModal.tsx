@@ -1030,6 +1030,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setErrorMsg("");
     
     try {
+      const cleanDomain = domain.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").toLowerCase();
+      const placeId = cleanDomain.replace(/[^a-zA-Z0-9]/g, "-");
+      let foundPlace = places.find(p => p.id === placeId || p.brandDomain === cleanDomain);
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
@@ -1039,44 +1043,58 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       if (resp.ok) {
         const data = await resp.json();
         if (data.title || data.domain) {
-          const newPlace: Place = {
-            id: data.domain.replace(/[^a-zA-Z0-9]/g, "-"),
-            name: data.title || data.domain,
-            category: "Website",
-            categoryType: "all",
-            address: "",
-            city: "Online",
-            lat: 0,
-            lng: 0,
-            rating: 5,
-            totalReviews: 1,
-            ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            avatarUrl: data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : ""),
-            logoUrl: data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : ""),
-            bannerUrl: data.image || "",
-            photos: data.image ? [data.image] : [],
-            openingHours: "Available 24/7",
-            isOpen: true,
-            phone: "",
-            website: data.url || domain,
-            priceRange: "N/A",
-            plusCode: "",
-            description: data.description || "",
-            popularKeywords: [],
-            amenities: [],
-            topDishes: [],
-            brandDomain: data.domain
-          };
-          
-          if (onAddPlace) onAddPlace(newPlace);
-          setSelectedPlace(newPlace);
+          const fetchedLogo = data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : "");
+          const fetchedBanner = data.image || "";
+
+          if (foundPlace) {
+            foundPlace = {
+              ...foundPlace,
+              logoUrl: fetchedLogo || foundPlace.logoUrl,
+              avatarUrl: fetchedLogo || foundPlace.avatarUrl,
+              bannerUrl: fetchedBanner || foundPlace.bannerUrl,
+              description: data.description || foundPlace.description,
+            };
+          } else {
+            foundPlace = {
+              id: placeId,
+              name: data.title || data.domain,
+              category: "Website",
+              categoryType: "all",
+              address: "",
+              city: "Online",
+              lat: 0,
+              lng: 0,
+              rating: 5,
+              totalReviews: 1,
+              ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+              avatarUrl: fetchedLogo,
+              logoUrl: fetchedLogo,
+              bannerUrl: fetchedBanner,
+              photos: fetchedBanner ? [fetchedBanner] : [],
+              openingHours: "Available 24/7",
+              isOpen: true,
+              phone: "",
+              website: data.url || domain,
+              priceRange: "N/A",
+              plusCode: "",
+              description: data.description || "",
+              popularKeywords: [],
+              amenities: [],
+              topDishes: [],
+              brandDomain: data.domain
+            };
+          }
+          if (onAddPlace) onAddPlace(foundPlace);
+          setSelectedPlace(foundPlace);
           setSearchQuery("");
+          return;
         }
-      } else {
-        // Fallback to basic if API fails
-        const cleanDomain = domain.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").toLowerCase();
-        const fallbackPlace: Place = {
-          id: cleanDomain.replace(/[^a-zA-Z0-9]/g, "-") || `custom-${Date.now()}`,
+      }
+      
+      // Fallback to basic if API fails
+      if (!foundPlace) {
+        foundPlace = {
+          id: placeId || `custom-${Date.now()}`,
           name: domain.charAt(0).toUpperCase() + domain.slice(1),
           brandDomain: cleanDomain.includes(".") ? cleanDomain : undefined,
           category: "Website",
@@ -1103,10 +1121,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           amenities: [],
           topDishes: []
         };
-        if (onAddPlace) onAddPlace(fallbackPlace);
-        setSelectedPlace(fallbackPlace);
-        setSearchQuery("");
       }
+      if (onAddPlace) onAddPlace(foundPlace);
+      setSelectedPlace(foundPlace);
+      setSearchQuery("");
+      
     } catch (err) {
       console.error("Metadata fetch error:", err);
       setErrorMsg("Could not fetch information for this URL.");
