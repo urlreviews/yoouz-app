@@ -20,8 +20,8 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from 'url';
 
-const __filename = typeof import.meta !== 'undefined' && import.meta.url ? fileURLToPath(import.meta.url) : (typeof filename !== 'undefined' ? filename : '');
-const __dirname = __filename ? path.dirname(__filename) : process.cwd();
+const _filename = typeof __filename !== 'undefined' ? __filename : (typeof import.meta !== 'undefined' && import.meta.url ? fileURLToPath(import.meta.url) : '');
+const _dirname = typeof __dirname !== 'undefined' ? __dirname : (_filename ? path.dirname(_filename) : process.cwd());
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
@@ -1968,7 +1968,7 @@ function isQuotaError(err: any): boolean {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 8080;
   const isProd = process.env.NODE_ENV === "production";
 
   // Global Cross-Origin Resource Sharing (CORS) Middleware
@@ -5733,7 +5733,7 @@ Return JSON:
   }
 
   // Vite development & production integration
-  const isCompiled = typeof __filename !== 'undefined' && __filename.endsWith('server.cjs');
+  const isCompiled = typeof _filename !== 'undefined' && _filename ? _filename.endsWith('server.cjs') : false;
   const isCloudRun = !!process.env.K_SERVICE && !process.env.K_SERVICE.startsWith('ais-dev');
   const isProduction = process.env.NODE_ENV === "production" || isCompiled || isCloudRun;
 
