@@ -85,7 +85,7 @@ export interface VideoReview {
   placeBannerUrl?: string;
   author: {
     name: string;
-    
+    handle?: string;
     email?: string;
     userId?: string;
     id?: string;

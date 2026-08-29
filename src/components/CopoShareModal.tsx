@@ -190,6 +190,35 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             )}
           </div>
 
+          {/* Social Card Preview Section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Social Card Preview</p>
+              <a
+                href={isVideoMode && video
+                  ? `/api/og-image.png?type=video&placeName=${encodeURIComponent(video.placeName || "Business")}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}`
+                  : "/api/og-image.png"
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition"
+              >
+                Open Full Card ↗
+              </a>
+            </div>
+            <div className="relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-inner group">
+              <img
+                src={isVideoMode && video
+                  ? `/api/og-image.png?type=video&placeName=${encodeURIComponent(video.placeName || "Business")}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}`
+                  : "/api/og-image.png"
+                }
+                alt="Social Media Preview Card"
+                className="w-full aspect-[1200/630] object-cover transition duration-300 group-hover:scale-[1.01]"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
           {/* Social Icons row */}
           <div>
             <p className="text-[11px] font-extrabold text-zinc-400 uppercase tracking-wider mb-3.5">Share on social media</p>
