@@ -5733,11 +5733,19 @@ Return JSON:
   const isProduction = process.env.NODE_ENV === "production" || isCompiled;
 
   if (!isProduction) {
+    console.log("Yoouz Server: Starting in DEVELOPMENT mode (Vite middleware enabled)");
     const vite = await createViteServer({
       server: { 
         middlewareMode: true,
-        allowedHosts: true,
-        hmr: false // Disable HMR to avoid port 24678 conflicts in this environment
+        allowedHosts: [
+          'yoouz.com',
+          'yoouz-app-ibzu44b5yq-ew.a.run.app',
+          '.run.app',
+          'localhost',
+          '127.0.0.1'
+        ],
+        host: true,
+        hmr: false 
       },
       appType: "spa",
     });
