@@ -407,12 +407,24 @@ return () => {
     triggerDoubleTapLike(e.clientX, e.clientY);
   };
 
-  const safeAuthor = video.author || {
-    name: "Verified Reviewer",
-    
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(video.userId || "Reviewer")}&background=27272a&color=fff&bold=true&size=128`,
-    isVerified: true,
-    isFollowed: false
+  const rawAvatar = video.author?.avatar;
+  const isCleanAvatar = rawAvatar && 
+    typeof rawAvatar === "string" && 
+    !rawAvatar.includes("dicebear") && 
+    !rawAvatar.includes("/api/videos/") && 
+    !rawAvatar.includes(".mp4") && 
+    !rawAvatar.includes("rev-");
+
+  const safeAuthor = {
+    name: video.author?.name || "Verified Reviewer",
+    avatar: isCleanAvatar
+      ? rawAvatar
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(video.author?.name || video.userId || "Reviewer")}&background=27272a&color=fff&bold=true&size=128`,
+    isVerified: video.author?.isVerified ?? true,
+    isFollowed: video.author?.isFollowed ?? false,
+    bio: video.author?.bio,
+    banner: video.author?.banner,
+    location: video.author?.location
   };
 
 
@@ -608,9 +620,11 @@ return () => {
           )}
         </div>
 
-        {/* Center: Context Title if viewing a specific place or creator review list */}
+        {/* Center: Context Title if viewing a specific place or category (never creator person name) */}
         <div className="flex items-center justify-center">
-          {feedContextTitle && (
+          {feedContextTitle && 
+            !feedContextTitle.startsWith("@") && 
+            feedContextTitle.trim().toLowerCase() !== (safeAuthor.name || "").trim().toLowerCase() && (
             <div className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-bold shadow-md max-w-[180px] sm:max-w-[240px] truncate text-center">
               {feedContextTitle}
             </div>
@@ -796,6 +810,9 @@ return () => {
                 alt={safeAuthor.name}
                 className="w-full h-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`;
+                }}
               />
             </button>
 

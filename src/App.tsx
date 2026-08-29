@@ -300,13 +300,40 @@ export function App() {
           });
           const authorObj: VideoAuthor = matchingVid?.author || {
             name: rawParam.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-            //handle: rawParam,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(rawParam)}&background=27272a&color=fff&bold=true&size=128`,
             isVerified: true,
             isFollowed: false
           };
           setSelectedAuthorForDrawer(authorObj);
           setSelectedPlaceIdForDrawer(null);
+
+          // Asynchronously fetch live user data to guarantee exact Google avatar and profile details
+          fetch(`/api/nosql/users`)
+            .then(res => res.json())
+            .then(usersList => {
+              if (Array.isArray(usersList)) {
+                const matched = usersList.find((u: any) => {
+                  const uName = (u.name || "").trim().toLowerCase();
+                  const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
+                  const uEmail = (u.email || "").split("@")[0].toLowerCase();
+                  return uName === rawParam || uHandle === rawParam || uEmail === rawParam;
+                });
+                if (matched && matched.avatar) {
+                  setSelectedAuthorForDrawer(prev => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      name: matched.name || prev.name,
+                      avatar: matched.avatar,
+                      bio: matched.bio || prev.bio,
+                      banner: matched.banner || prev.banner,
+                      location: matched.location || prev.location
+                    };
+                  });
+                }
+              }
+            })
+            .catch(() => {});
         } else {
           setSelectedPlaceIdForDrawer(null);
           setSelectedAuthorForDrawer(null);
@@ -992,6 +1019,26 @@ export function App() {
           });
         }
       } catch (e) {}
+
+      // Keep videos state in sync with updated author avatar and name
+      if (updated.avatar || updated.name) {
+        setVideos((prevVideos) =>
+          prevVideos.map((v) => {
+            if (isAuthorMatch(v, nextProfile)) {
+              return {
+                ...v,
+                author: {
+                  ...v.author,
+                  name: nextProfile.name,
+                  avatar: nextProfile.avatar
+                }
+              };
+            }
+            return v;
+          })
+        );
+      }
+
       return nextProfile;
     });
   };
@@ -1500,6 +1547,49 @@ export function App() {
   }, [videos, activeSubTab, hiddenVideoIds, fullscreenFeedContext, isPlaceView, drawerPlace, isCreatorView, selectedAuthorForDrawer, activeSection, userVideos]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
+  // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
+  useEffect(() => {
+    if (!selectedAuthorForDrawer) return;
+    const authorName = (selectedAuthorForDrawer.name || "").replace(/^@+/, "").toLowerCase().trim();
+    if (!authorName) return;
+
+    // Check if we can find a matching author object in videos with a real Google avatar
+    const matchingVid = videos.find((v) => {
+      if (!v.author) return false;
+      const h = (v.author.name || "").replace(/^@+/, "").toLowerCase().trim();
+      const n = (v.author.name || "")
+        .toLowerCase()
+        .trim()
+        .replace(/^@+/, "")
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9_-]/g, "")
+        .replace(/-+/g, "-");
+      return (
+        (h === authorName || n === authorName) &&
+        v.author.avatar &&
+        !v.author.avatar.includes("ui-avatars") &&
+        !v.author.avatar.includes("dicebear") &&
+        !v.author.avatar.includes("/api/videos/") &&
+        !v.author.avatar.includes(".mp4")
+      );
+    });
+
+    if (matchingVid?.author?.avatar && matchingVid.author.avatar !== selectedAuthorForDrawer.avatar) {
+      setSelectedAuthorForDrawer((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          name: matchingVid.author.name || prev.name,
+          avatar: matchingVid.author.avatar,
+          bio: matchingVid.author.bio || prev.bio,
+          banner: matchingVid.author.banner || prev.banner,
+          location: matchingVid.author.location || prev.location,
+          isVerified: matchingVid.author.isVerified ?? prev.isVerified
+        };
+      });
+    }
+  }, [videos]);
+
   useEffect(() => {
     if (pendingVideoId) {
       const idx = activeFeedVideos.findIndex((v) => v.id === pendingVideoId);
@@ -1521,12 +1611,10 @@ export function App() {
     if (source === "creator" || isCreatorView) {
       const author = targetVid.author || selectedAuthorForDrawer;
       if (!author) return;
-      const cleanHandle = (author.name || author.name || "creator").replace(/^@+/, "");
-      const authorDisplay = author.name || cleanHandle;
       setFullscreenFeedContext({
         type: "creator",
         id: author.name || author.name,
-        title: authorDisplay,
+        title: "", // Do not show creator person name at top of video
         authorData: author
       });
       setSelectedPlaceIdForDrawer(null);
@@ -3307,7 +3395,7 @@ export function App() {
           setSelectedAuthorForDrawer({
             name: name || handle,
             //handle: handle,
-            avatar: avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${handle}`,
+            avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || handle || "User")}&background=27272a&color=fff&bold=true&size=128`,
             isVerified: false,
             isFollowed: false
           });

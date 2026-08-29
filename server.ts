@@ -77,6 +77,42 @@ function getResendClient(): Resend | null {
   return resendClient;
 }
 
+const defaultCommunityUsers = [
+  {
+    id: "louis42111-user-id",
+    uid: "louis42111-user-id",
+    name: "Biz Riv",
+    handle: "@louis42111",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    email: "louis42111@gmail.com",
+    bio: "Food explorer linking real businesses and authentic video reviews.",
+    isVerified: true,
+    followersCount: 0
+  },
+  {
+    id: "mLiO66HDR9TRvOFdGddGWm30rKu2",
+    uid: "mLiO66HDR9TRvOFdGddGWm30rKu2",
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    email: "aouisesmee@gmail.com",
+    bio: "Community reviewer on Yoouz.",
+    isVerified: true,
+    followersCount: 1
+  },
+  {
+    id: "avr6566gd-user-id",
+    uid: "avr6566gd-user-id",
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    email: "avr6566gd@gmail.com",
+    bio: "Community reviewer on Yoouz.",
+    isVerified: true,
+    followersCount: 0
+  }
+];
+
 interface BusinessVerificationRecord {
   email: string;
   code: string;
@@ -2122,41 +2158,6 @@ app.get('/api/nosql/:collection', async (req, res) => {
       } catch (err) {}
 
       // 4. Ensure core active community reviewers (Biz Riv, aouisesmee, avt ertuop) are always available
-      const defaultCommunityUsers = [
-        {
-          id: "louis42111-user-id",
-          uid: "louis42111-user-id",
-          name: "Biz Riv",
-          handle: "@louis42111",
-          avatar: "https://ui-avatars.com/api/?name=Biz+Riv&background=059669&color=fff&bold=true&size=128",
-          email: "louis42111@gmail.com",
-          bio: "Food explorer linking real businesses and authentic video reviews.",
-          isVerified: true,
-          followersCount: 0
-        },
-        {
-          id: "mLiO66HDR9TRvOFdGddGWm30rKu2",
-          uid: "mLiO66HDR9TRvOFdGddGWm30rKu2",
-          name: "aouisesmee",
-          handle: "@aouisesmee",
-          avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-          email: "aouisesmee@gmail.com",
-          bio: "Community reviewer on Yoouz.",
-          isVerified: true,
-          followersCount: 1
-        },
-        {
-          id: "avr6566gd-user-id",
-          uid: "avr6566gd-user-id",
-          name: "avt ertuop",
-          handle: "@avr6566gd",
-          avatar: "https://ui-avatars.com/api/?name=avt+ertuop&background=0284c7&color=fff&bold=true&size=128",
-          email: "avr6566gd@gmail.com",
-          bio: "Community reviewer on Yoouz.",
-          isVerified: true,
-          followersCount: 0
-        }
-      ];
       defaultCommunityUsers.forEach((du) => {
         const key = getUserKey(du);
         if (key && !userMap.has(key)) {
@@ -4569,7 +4570,7 @@ Return JSON:
           uid,
           email,
           name: name || email.split('@')[0],
-          avatar: avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`
+          avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email.split('@')[0] || 'User')}&background=27272a&color=fff&bold=true&size=128`
         }).returning();
         userRecord = inserted[0];
       } else {
@@ -4609,7 +4610,7 @@ Return JSON:
         placeId,
         userId: uid,
         authorName: authorName || req.user.name || 'Verified Reviewer',
-        authorAvatar: authorAvatar || req.user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`,
+        authorAvatar: authorAvatar || req.user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName || req.user.name || 'User')}&background=27272a&color=fff&bold=true&size=128`,
         videoUrl,
         videoThumbnail: videoThumbnail || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=60',
         rating: rating || 5,
@@ -5582,31 +5583,57 @@ Return JSON:
           }
         };
       } else if (creatorHandle) {
-        const cleanHandle = creatorHandle.replace(/^@+/, '');
+        const cleanHandle = creatorHandle.replace(/^@+/, '').trim();
+        const lowerHandle = cleanHandle.toLowerCase();
+
+        // 1. Check defaultCommunityUsers
+        const defaultMatch = defaultCommunityUsers.find((du) => {
+          const duName = (du.name || "").toLowerCase().replace(/^@+/, "");
+          const duHandle = (du.handle || "").toLowerCase().replace(/^@+/, "");
+          const duEmail = (du.email || "").split("@")[0].toLowerCase();
+          return duName === lowerHandle || duHandle === lowerHandle || duEmail === lowerHandle;
+        });
+        if (defaultMatch?.avatar) {
+          foundUser = defaultMatch;
+        }
+
+        // 2. Query Firestore if not found
         if (!foundUser && adminDb) {
           try {
-            const userSnap = await adminDb.collection("users").where("name", "==", cleanHandle).limit(1).get();
+            const userSnap = await adminDb.collection("users").get();
             if (!userSnap.empty) {
-              const uData = userSnap.docs[0].data();
-              if (uData?.avatar && !uData.avatar.includes("/api/videos/") && !uData.avatar.includes(".mp4") && !uData.avatar.includes("rev-")) {
-                foundUser = uData;
+              const matchedDoc = userSnap.docs.find(doc => {
+                const u = doc.data();
+                const uName = (u.name || "").toLowerCase().replace(/^@+/, "");
+                const uHandle = (u.handle || "").toLowerCase().replace(/^@+/, "");
+                const uEmail = (u.email || "").split("@")[0].toLowerCase();
+                return uName === lowerHandle || uHandle === lowerHandle || uEmail === lowerHandle;
+              });
+              if (matchedDoc) {
+                const uData = matchedDoc.data();
+                if (uData?.avatar && !uData.avatar.includes("/api/videos/") && !uData.avatar.includes(".mp4") && !uData.avatar.includes("rev-")) {
+                  foundUser = uData;
+                }
               }
             }
           } catch (e) {}
         }
+
+        // 3. Check reviews index
         if (!foundUser) {
           const localList = readReviewsIndex();
           const matchVid = localList.find((v: any) => {
             const aName = (v.author?.name || v.authorName || "").toLowerCase().replace(/^@+/, "");
-            return aName === cleanHandle.toLowerCase();
+            const uId = (v.userId || "").toLowerCase();
+            return aName === lowerHandle || uId === lowerHandle;
           });
           if (matchVid?.author?.avatar && !matchVid.author.avatar.includes("/api/videos/") && !matchVid.author.avatar.includes(".mp4") && !matchVid.author.avatar.includes("rev-")) {
-            foundUser = { avatar: matchVid.author.avatar };
+            foundUser = { avatar: matchVid.author.avatar, name: matchVid.author.name };
           }
         }
         title = `@${cleanHandle} on Yoouz - Authentic Video Reviews Portfolio`;
         description = `Explore authentic 60-second video reviews recorded by @${cleanHandle} on Yoouz. 100% Genuine Video Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(cleanHandle)}${foundUser?.avatar ? '&avatarUrl=' + encodeURIComponent(foundUser.avatar) : ''}${foundUser?.banner ? '&bannerUrl=' + encodeURIComponent(foundUser.banner) : ''}`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(foundUser?.name || cleanHandle)}${foundUser?.avatar ? '&avatarUrl=' + encodeURIComponent(foundUser.avatar) : ''}${foundUser?.banner ? '&bannerUrl=' + encodeURIComponent(foundUser.banner) : ''}`;
         type = "profile";
         keywords = `${cleanHandle}, ${cleanHandle} yoouz, video reviewer, authentic local guide, food reviewer, verified reviewer`;
 

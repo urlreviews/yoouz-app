@@ -153,10 +153,50 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  // State to hold live fetched user profile for this creator
+  const [liveUserProfile, setLiveUserProfile] = useState<{ avatar?: string; banner?: string; bio?: string; name?: string; location?: string } | null>(null);
+
+  useEffect(() => {
+    if (!author) return;
+    const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
+    if (!authorIdentifier) return;
+
+    let isMounted = true;
+    fetch(`/api/nosql/users`)
+      .then((res) => res.json())
+      .then((usersList) => {
+        if (!isMounted || !Array.isArray(usersList)) return;
+        const matched = usersList.find((u: any) => {
+          const uName = (u.name || "").trim().toLowerCase();
+          const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
+          const uEmail = (u.email || "").split("@")[0].toLowerCase();
+          return uName === authorIdentifier || uHandle === authorIdentifier || uEmail === authorIdentifier;
+        });
+        if (matched && isMounted) {
+          setLiveUserProfile(matched);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [author?.name]);
+
   if (!author) return null;
 
   // Filter videos belonging to this author
   const authorVideos = allVideos.filter((v) => isAuthorMatch(v, author));
+
+  // Check if any video by this author contains a genuine Google / high-res avatar
+  const videoWithAuthenticAvatar = authorVideos.find((v) => {
+    const a = v.author?.avatar;
+    return (
+      a &&
+      typeof a === "string" &&
+      (a.includes("googleusercontent.com") || a.startsWith("data:image/") || (!a.includes("ui-avatars") && !a.includes("dicebear") && !a.includes("unsplash") && !a.includes("/api/videos/") && !a.includes(".mp4") && !a.includes("rev-")))
+    );
+  });
 
   const totalLikes = authorVideos.reduce((acc, v) => acc + v.likes + (v.isLiked ? 1 : 0), 0);
   const avgRating =
@@ -165,11 +205,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       : "5.0";
 
   // Resolve genuine profile avatar (Google photo, user-uploaded photo, or clean initials avatar - never video frames)
-  let effectiveAvatar = isOwner && currentUser?.avatar
-    ? currentUser.avatar
-    : (author.avatar && !author.avatar.includes("dicebear") && !author.avatar.includes("unsplash")
-      ? author.avatar
-      : "");
+  let effectiveAvatar = "";
+  if (isOwner && currentUser?.avatar && !currentUser.avatar.includes("dicebear")) {
+    effectiveAvatar = currentUser.avatar;
+  } else if (liveUserProfile?.avatar && (liveUserProfile.avatar.includes("googleusercontent.com") || (!liveUserProfile.avatar.includes("dicebear") && !liveUserProfile.avatar.includes("ui-avatars")))) {
+    effectiveAvatar = liveUserProfile.avatar;
+  } else if (videoWithAuthenticAvatar?.author?.avatar) {
+    effectiveAvatar = videoWithAuthenticAvatar.author.avatar;
+  } else if (
+    author.avatar &&
+    !author.avatar.includes("dicebear") &&
+    !author.avatar.includes("unsplash") &&
+    !author.avatar.includes("/api/videos/") &&
+    !author.avatar.includes(".mp4") &&
+    !author.avatar.includes("rev-")
+  ) {
+    effectiveAvatar = author.avatar;
+  }
 
   // If the avatar URL looks like a video review artifact or invalid placeholder, fallback to clean initials
   if (
@@ -185,7 +237,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
   let effectiveBanner = isOwner && currentUser?.banner 
     ? currentUser.banner 
-    : author?.banner;
+    : (liveUserProfile?.banner || author?.banner);
 
   const handleShare = () => {
     setIsShareModalOpen(true);
@@ -468,6 +520,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               alt={author.name}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`;
+              }}
             />
             {isOwner && (
               <button

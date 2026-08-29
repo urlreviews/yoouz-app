@@ -85,14 +85,24 @@ export function onAuthStateChanged(authObj: any, callback: (user: any) => void) 
   return firebaseOnAuthStateChanged(auth, async (user) => {
     if (user) {
       try {
+        const userRef = doc(db, "users", user.uid);
+        const existingSnap = await getDoc(userRef);
+        const existingData = existingSnap.exists() ? existingSnap.data() : null;
+
+        // If user already has a custom uploaded avatar in Firestore, preserve it
+        const customAvatar = existingData?.avatar;
+        const finalAvatar = (customAvatar && !customAvatar.includes("dicebear") && !customAvatar.includes("ui-avatars"))
+          ? customAvatar
+          : (user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=27272a&color=fff&bold=true&size=128`);
+
         const userProfile = {
-          name: user.displayName || user.email?.split("@")[0] || "Google User",
-          email: user.email || "",
-          avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=27272a&color=fff&bold=true&size=128`,
+          name: existingData?.name || user.displayName || user.email?.split("@")[0] || "Google User",
+          email: user.email || existingData?.email || "",
+          avatar: finalAvatar,
         };
         localStorage.setItem("copo_user_profile", JSON.stringify(userProfile));
         
-        await setDoc(doc(db, "users", user.uid), {
+        await setDoc(userRef, {
           uid: user.uid,
           name: userProfile.name,
           email: userProfile.email,
@@ -116,14 +126,31 @@ export async function signInWithGoogle(): Promise<any> {
     const result = await signInWithPopup(auth, googleProvider);
     user = result.user;
     if (user) {
+      const userRef = doc(db, "users", user.uid);
+      let finalAvatar = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=27272a&color=fff&bold=true&size=128`;
+      let finalName = user.displayName || user.email?.split("@")[0] || "Google User";
+      
+      try {
+        const existingSnap = await getDoc(userRef);
+        if (existingSnap.exists()) {
+          const existingData = existingSnap.data();
+          if (existingData?.avatar && !existingData.avatar.includes("dicebear") && !existingData.avatar.includes("ui-avatars")) {
+            finalAvatar = existingData.avatar;
+          }
+          if (existingData?.name) {
+            finalName = existingData.name;
+          }
+        }
+      } catch (e) {}
+
       const userProfile = {
-        name: user.displayName || user.email?.split("@")[0] || "Google User",
+        name: finalName,
         email: user.email || "",
-        avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=27272a&color=fff&bold=true&size=128`,
+        avatar: finalAvatar,
       };
       localStorage.setItem("copo_user_profile", JSON.stringify(userProfile));
       try {
-        await setDoc(doc(db, "users", user.uid), {
+        await setDoc(userRef, {
           uid: user.uid,
           name: userProfile.name,
           email: userProfile.email,
