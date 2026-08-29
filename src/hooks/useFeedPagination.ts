@@ -53,7 +53,7 @@ function normalizeReview(v: any): VideoReview {
 export function useFeedPagination() {
   const [videos, setVideos] = useState<VideoReview[]>(() => {
     try {
-      const cached = localStorage.getItem("yoouz_cached_videos_v16");
+      const cached = localStorage.getItem("yoouz_cached_videos_v20");
       const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
       let deletedIds: string[] = [];
       try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
@@ -67,50 +67,13 @@ export function useFeedPagination() {
     } catch (e) {}
     return [];
   });
-  const [isLoading, setIsLoading] = useState<boolean>(() => {
-    try {
-      const cached = localStorage.getItem("yoouz_cached_videos_v16");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // If we have cached videos, we do NOT show the skeleton screen initially!
-          return false;
-        }
-      }
-      return true;
-    } catch (e) {
-      return true;
-    }
-  });
-  const [hasMore, setHasMore] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(videos.length === 0);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
   useEffect(() => {
     let active = true;
 
-    // Auto-sync any local cached videos to server/Firestore on boot so they appear across private windows & devices
-    const syncLocalToCloud = async () => {
-      try {
-        const cached = localStorage.getItem("yoouz_cached_videos_v16") || localStorage.getItem("copo_videos");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            for (const v of parsed) {
-              if (v && v.id) {
-                fetch(`/api/nosql/videoReviews/${v.id}`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ data: v })
-                }).catch(() => {});
-              }
-            }
-          }
-        }
-      } catch (e) {}
-    };
-    syncLocalToCloud();
-
-    // 1. Initial fast load from server API
-    const loadServerData = async () => {
+    const loadData = async () => {
       const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
       let deletedIds: string[] = [];
       try { 
@@ -119,188 +82,109 @@ export function useFeedPagination() {
       } catch (e) {}
 
       try {
-        console.log("[DEBUG feed] Fetching /api/videos/feed...");
+        // 1. Fetch from Server API
         const res = await fetch("/api/videos/feed");
         if (res.ok && active) {
           const data = await res.json();
-          console.log("[DEBUG feed] /api/videos/feed response success:", data?.success, "length:", data?.videos?.length);
           if (data && Array.isArray(data.videos) && data.videos.length > 0) {
             const valid = data.videos.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
+            
             setVideos((prev) => {
               const map = new Map<string, VideoReview>();
-              
-              // Keep local optimistic reviews (less than 1 min old)
-              prev.forEach((v) => {
-                if (v.createdAtMs && (Date.now() - v.createdAtMs < 60000)) {
+              // Keep recent local ones
+              prev.forEach(v => {
+                if (v.id.startsWith("rev-") && v.createdAtMs && (Date.now() - v.createdAtMs < 300000)) {
                   map.set(v.id, v);
                 }
               });
-
-              // Add API videos
-              valid.forEach((v: VideoReview) => {
-                const existing = map.get(v.id);
-                map.set(v.id, { ...existing, ...v });
-              });
-
+              // Add server ones
+              valid.forEach(v => map.set(v.id, { ...map.get(v.id), ...v }));
+              
               const merged = Array.from(map.values());
               merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-              console.log("[DEBUG feed] Final merged videos length:", merged.length);
+              
+              // Persist to cache
+              try { localStorage.setItem("yoouz_cached_videos_v20", JSON.stringify(merged.slice(0, 50))); } catch(e){}
+              
               return merged;
             });
             setIsLoading(false);
           } else {
-            console.log("[DEBUG feed] /api/videos/feed returned empty.");
-            // If API is empty, still set loading to false so we don't hang
-            setIsLoading(false);
+             setIsLoading(false);
           }
-        } else {
-          console.warn("[DEBUG feed] /api/videos/feed fetch failed:", res.status);
-          setIsLoading(false);
         }
-      } catch (e) {
-        console.error("[DEBUG feed] /api/videos/feed error:", e);
-        setIsLoading(false);
-      }
-    };
-
-    loadServerData();
-
-    if (!db) {
-      console.warn("[DEBUG feed] No Firebase DB detected.");
-      setIsLoading(false);
-      return;
-    }
-
-    // 2. Perform a fast single-round-trip read of the Firestore collection
-    const loadFirestoreData = async () => {
-      try {
-        const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-        let deletedIds: string[] = [];
-        try { 
-          const parsed = JSON.parse(deletedStr); 
-          if (Array.isArray(parsed)) deletedIds = parsed;
-        } catch (e) {}
-
-        const q = query(collection(db, "videoReviews"));
-        const snapshot = await getDocs(q);
-        if (!active) return;
-
-        console.log("[DEBUG feed] loadFirestoreData snapshot size:", snapshot.size);
-        if (snapshot.empty) {
-          setIsLoading(false);
-          return;
-        }
-
-        const fetched = snapshot.docs.map(docSnap => {
-          const data = docSnap.data();
-          const docViews = typeof data.views === "number" ? data.views : (typeof data.viewsCount === "number" ? data.viewsCount : undefined);
-          return {
-            ...data,
-            id: docSnap.id,
-            createdAtMs: data.createdAtMs || (data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now()),
-            views: docViews,
-            viewsCount: docViews,
-            likes: typeof data.likes === "number" ? Math.max(0, data.likes) : 0,
-            bookmarksCount: typeof data.bookmarksCount === "number" ? Math.max(0, data.bookmarksCount) : 0,
-            sharesCount: typeof data.sharesCount === "number" ? Math.max(0, data.sharesCount) : (typeof data.shares === "number" ? Math.max(0, data.shares) : 0),
-            commentsCount: typeof data.commentsCount === "number" ? data.commentsCount : (data.comments?.length || 0),
-            comments: Array.isArray(data.comments) ? data.comments : []
-          };
-        }) as VideoReview[];
-
-        fetched.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-        const filtered = fetched.filter(v => !deletedIds.includes(v.id)).map(normalizeReview);
-        
-        if (filtered.length > 0) {
-          setVideos((prev) => {
-            const map = new Map<string, VideoReview>();
-            prev.forEach((v) => map.set(v.id, v));
-            
-            filtered.forEach(v => {
-              const existing = map.get(v.id);
-              map.set(v.id, { ...existing, ...v });
-            });
-
-            const nextList = Array.from(map.values());
-            nextList.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-            return nextList;
-          });
-
-          try {
-            localStorage.setItem("yoouz_cached_videos_v16", JSON.stringify(filtered.slice(0, 50)));
-          } catch (e) {}
-        }
-        setIsLoading(false);
       } catch (err) {
-        console.warn("[DEBUG feed] Fast load Firestore failed:", err);
+        console.warn("[useFeedPagination] Server fetch failed:", err);
         setIsLoading(false);
+      }
+
+      // 2. Fetch from Firestore if available
+      if (db && active) {
+        try {
+          const q = query(collection(db, "videoReviews"));
+          const snap = await getDocs(q);
+          if (!active) return;
+
+          if (!snap.empty) {
+            const fetched = snap.docs.map(docSnap => ({
+              ...docSnap.data(),
+              id: docSnap.id,
+              createdAtMs: docSnap.data().createdAtMs || (docSnap.data().createdAt?.toMillis ? docSnap.data().createdAt.toMillis() : Date.now())
+            })).filter(v => !deletedIds.includes(v.id)).map(normalizeReview);
+
+            setVideos((prev) => {
+              const map = new Map<string, VideoReview>();
+              prev.forEach(v => map.set(v.id, v));
+              fetched.forEach(v => map.set(v.id, { ...map.get(v.id), ...v }));
+              const merged = Array.from(map.values());
+              merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+              return merged;
+            });
+            setIsLoading(false);
+          } else if (videos.length === 0) {
+             setIsLoading(false);
+          }
+        } catch (err) {
+          console.warn("[useFeedPagination] Firestore fetch failed:", err);
+          setIsLoading(false);
+        }
+      } else {
+        // If no DB, we rely solely on server data
+        setTimeout(() => { if (active) setIsLoading(false); }, 1500);
       }
     };
 
-    loadFirestoreData();
+    loadData();
 
-    // 3. Keep live snapshot sync running purely in the background
-    const unsubscribe = onSnapshot(collection(db, "videoReviews"), (snapshot) => {
-      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-      let deletedIds: string[] = [];
-      try { 
-        const parsed = JSON.parse(deletedStr); 
-        if (Array.isArray(parsed)) deletedIds = parsed;
-      } catch (e) {}
+    // 3. Live Snapshot
+    let unsubscribe = () => {};
+    if (db) {
+      unsubscribe = onSnapshot(collection(db, "videoReviews"), (snap) => {
+        if (!active) return;
+        if (snap.empty) return;
 
-      if (snapshot.empty && videos.length === 0) {
-        // Only stop loading if we truly have nothing
-        setIsLoading(false);
-        return;
-      }
-
-      const fetched = snapshot.docs.map(docSnap => {
-        const data = docSnap.data();
-        const docViews = typeof data.views === "number" ? data.views : (typeof data.viewsCount === "number" ? data.viewsCount : undefined);
-        return {
-          ...data,
+        const fetched = snap.docs.map(docSnap => ({
+          ...docSnap.data(),
           id: docSnap.id,
-          createdAtMs: data.createdAtMs || (data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now()),
-          views: docViews,
-          viewsCount: docViews,
-          likes: typeof data.likes === "number" ? Math.max(0, data.likes) : 0,
-          bookmarksCount: typeof data.bookmarksCount === "number" ? Math.max(0, data.bookmarksCount) : 0,
-          sharesCount: typeof data.sharesCount === "number" ? Math.max(0, data.sharesCount) : (typeof data.shares === "number" ? Math.max(0, data.shares) : 0),
-          commentsCount: typeof data.commentsCount === "number" ? data.commentsCount : (data.comments?.length || 0),
-          comments: Array.isArray(data.comments) ? data.comments : []
-        };
-      }) as VideoReview[];
+          createdAtMs: docSnap.data().createdAtMs || (docSnap.data().createdAt?.toMillis ? docSnap.data().createdAt.toMillis() : Date.now())
+        })).map(normalizeReview);
 
-      const filtered = fetched.filter(v => !deletedIds.includes(v.id)).map(normalizeReview);
-      
-      setVideos((prev) => {
-        const map = new Map<string, VideoReview>();
-        prev.forEach((v) => map.set(v.id, v));
-        
-        filtered.forEach(v => {
-          const existing = map.get(v.id);
-          map.set(v.id, { ...existing, ...v });
+        setVideos((prev) => {
+          const map = new Map<string, VideoReview>();
+          prev.forEach(v => map.set(v.id, v));
+          fetched.forEach(v => map.set(v.id, { ...map.get(v.id), ...v }));
+          const merged = Array.from(map.values());
+          merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+          return merged;
         });
-
-        const nextList = Array.from(map.values());
-        nextList.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-        return nextList;
       });
-
-      try {
-        localStorage.setItem("yoouz_cached_videos_v16", JSON.stringify(filtered.slice(0, 50)));
-      } catch (e) {}
-      setIsLoading(false);
-    }, (err) => {
-      console.warn("[DEBUG feed] Background sync error:", err);
-      setIsLoading(false);
-    });
+    }
 
     return () => {
       active = false;
       unsubscribe();
     };
-  }, []);
+  }, [db]);
 
   const loadMore = async () => {
     setHasMore(false);
