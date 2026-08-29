@@ -2737,14 +2737,28 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         if (r && r.id && r.videoUrl) map.set(r.id, r);
       });
 
-      // 2. Query from Firestore Admin
+      // 2. Optional SQL mirror if active (Stale data)
+      if (getDb()) {
+        try {
+          const dbRecords = await db.select().from(firestore_video_reviews);
+          dbRecords.forEach((r: any) => {
+            if (r && r.id && r.data) {
+              const existing = map.get(r.id) || {};
+              map.set(r.id, { ...existing, id: r.id, ...r.data });
+            }
+          });
+        } catch (dbErr) {}
+      }
+
+      // 3. Query from Firestore Admin (Live data, overwrites stale data)
       if (adminDb) {
         try {
           const snapshot = await adminDb.collection("videoReviews").get();
           snapshot.forEach((docSnap: any) => {
             const data = docSnap.data();
             if (data) {
-              map.set(docSnap.id, { id: docSnap.id, ...data });
+              const existing = map.get(docSnap.id) || {};
+              map.set(docSnap.id, { ...existing, id: docSnap.id, ...data });
             }
           });
         } catch (firestoreErr) {
@@ -2752,21 +2766,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      // 3. Optional SQL mirror if active
-      if (getDb()) {
-        try {
-          const dbRecords = await db.select().from(firestore_video_reviews);
-          dbRecords.forEach((r: any) => {
-            if (r && r.id && r.data) {
-              map.set(r.id, { id: r.id, ...r.data });
-            }
-          });
-        } catch (dbErr) {}
-      }
-
       const merged = Array.from(map.values());
       merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-
       return res.json({ success: true, videos: merged });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

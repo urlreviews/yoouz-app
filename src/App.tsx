@@ -56,7 +56,7 @@ export function App() {
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
     // Current App Version Timestamp (Updated: 2026-08-28-14:00-SUPER-FORCE)
-    const APP_VERSION = "2026-08-28-14-00-SUPER-FORCE"; 
+    const APP_VERSION = "2026-08-28-23-52-CACHE-CLEAR"; 
     try {
       const savedVersion = localStorage.getItem("yoouz_app_version");
       if (savedVersion && savedVersion !== APP_VERSION) {

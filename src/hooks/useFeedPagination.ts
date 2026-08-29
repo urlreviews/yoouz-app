@@ -5,6 +5,11 @@ import { VideoReview } from '../types';
 
 // Helper to cleanly sanitize and normalize author data
 function normalizeReview(v: any): VideoReview {
+  let likedIds = [];
+  let savedIds = [];
+  try { likedIds = JSON.parse(localStorage.getItem("copo_liked_video_ids") || "[]"); } catch(e){}
+  try { savedIds = JSON.parse(localStorage.getItem("copo_saved_video_ids") || "[]"); } catch(e){}
+
   let author = v.author || {};
   let name = author.name || "Reviewer";
   let handle = author.name || "";
@@ -23,6 +28,8 @@ function normalizeReview(v: any): VideoReview {
 
   return {
     ...v,
+    isLiked: typeof v.isLiked === 'boolean' ? v.isLiked : likedIds.includes(v.id),
+    isBookmarked: typeof v.isBookmarked === 'boolean' ? v.isBookmarked : savedIds.includes(v.id),
     author: {
       ...author,
       name,
@@ -171,16 +178,14 @@ export function useFeedPagination() {
               const existing = prevMap.get(v.id);
               const isFollowed = followedAuthors.includes(v.author.name);
               const updatedV = { ...v, author: { ...v.author, isFollowed } };
-              return existing ? { ...updatedV, localVideoUrl: existing.localVideoUrl || v.localVideoUrl } : updatedV;
+              return existing ? { ...existing, ...updatedV, localVideoUrl: existing.localVideoUrl || v.localVideoUrl } : updatedV;
             });
 
             const firestoreIds = new Set(filtered.map(v => v.id));
             const now = Date.now();
             prev.forEach(v => {
               if (!firestoreIds.has(v.id) && !deletedIds.includes(v.id)) {
-                if (v.createdAtMs && (now - v.createdAtMs < 10000)) {
-                  nextList.push(v);
-                }
+                nextList.push(v);
               }
             });
 
@@ -242,16 +247,14 @@ export function useFeedPagination() {
           const existing = prevMap.get(v.id);
           const isFollowed = followedAuthors.includes(v.author.name);
           const updatedV = { ...v, author: { ...v.author, isFollowed } };
-          return existing ? { ...updatedV, localVideoUrl: existing.localVideoUrl || v.localVideoUrl } : updatedV;
+          return existing ? { ...existing, ...updatedV, localVideoUrl: existing.localVideoUrl || v.localVideoUrl } : updatedV;
         });
 
         const firestoreIds = new Set(filtered.map(v => v.id));
         const now = Date.now();
         prev.forEach(v => {
           if (!firestoreIds.has(v.id) && !deletedIds.includes(v.id)) {
-            if (v.createdAtMs && (now - v.createdAtMs < 10000)) {
-              nextList.push(v);
-            }
+            nextList.push(v);
           }
         });
 
