@@ -4974,9 +4974,8 @@ Return JSON:
       if (cur) lines.push(cur.trim());
       return lines.slice(0, maxLines);
     };
-
-    const isVideoCard = type === 'video';
-    const isPlaceCard = type === 'place';
+const isPlaceCard = type === 'place';
+    
     const isCreatorCard = type === 'creator';
 
     // Character width map accurately calibrated for standard sans-serif (San Francisco, Roboto, Arial, Helvetica)
@@ -5007,6 +5006,7 @@ Return JSON:
       likesCount?: string;
       commentsCount?: string;
       businessLogoBase64?: string;
+      offsetX?: number;
     }) => {
       const photo = opt.photoBase64;
       const displayAuthor = opt.authorName.replace(/^@+/, '') || 'Chloe Mitchell';
@@ -5029,7 +5029,7 @@ Return JSON:
 
       return `
         <!-- Video Player Phone Frame Mockup (Refined 9:16 Smartphone Bezel Ratio) -->
-        <g transform="translate(790, 24)">
+        <g transform="translate(${opt.offsetX ?? 790}, 24)">
           <!-- Ambient Drop Shadow & Backlight -->
           <rect x="-6" y="-6" width="352" height="594" rx="40" fill="#000000" fill-opacity="0.6" filter="drop-shadow(0px 30px 60px rgba(0,0,0,0.98))"/>
           
@@ -5199,80 +5199,53 @@ Return JSON:
 
     // Content body SVG per type
     let mainContentSvg = '';
-
+    const isVideoCard = type === 'video';
     if (isVideoCard) {
-      const placeLines = wrapWords(`Review of ${placeName || 'Soho House'}`, 24, 2);
-      const placeTspans = placeLines.map((l, idx) => `<tspan x="72" dy="${idx === 0 ? '0' : '1.18em'}">${l}</tspan>`).join('');
-
-      const authorDisplay = author || 'Chloe Mitchell';
-      const authorText = `By ${authorDisplay}`;
-      const authorWidth = getAccurateTextWidth(authorText, 15, true);
-      const leftBadgeCenterX = Math.round(44 + authorWidth + 8 + 7.5);
-      const leftAuthorPillWidth = Math.round(leftBadgeCenterX + 7.5 + 16);
-
-      mainContentSvg = `
-        <!-- Left Side Video Information -->
-        <g transform="translate(0, 10)">
-          <!-- Video Tagline -->
-          <text x="72" y="185" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">AUTHENTIC 60-SECOND CUSTOMER REVIEW</text>
-
-          <!-- Place Title -->
-          <text x="72" y="235" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
-            ${placeTspans}
-          </text>
-
-          <!-- Rating & Author Badges -->
-          <g transform="translate(72, ${placeLines.length > 1 ? 340 : 280})">
-            <!-- Star Rating Pill -->
-            <rect width="160" height="42" rx="21" fill="#18181b" stroke="#f59e0b" stroke-width="1.5"/>
-            <text x="20" y="27" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)} / 5.0</text>
-
-            <!-- Author Pill with tight, custom-fit verified badge -->
-            <g transform="translate(176, 0)">
-              <rect width="${leftAuthorPillWidth}" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
-              ${avatarBase64 ? 
-                `<defs>
-                  <clipPath id="videoAuthorClip">
-                    <circle cx="21" cy="21" r="13" />
-                  </clipPath>
-                </defs>
-                <image href="data:image/jpeg;base64,${avatarBase64}" x="8" y="8" width="26" height="26" clip-path="url(#videoAuthorClip)" preserveAspectRatio="xMidYMid slice" />
-                <circle cx="21" cy="21" r="13" fill="none" stroke="#3f3f46" stroke-width="1"/>`
-                :
-                `<circle cx="21" cy="21" r="13" fill="#27272a"/>
-                <text x="21" y="26" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#e4e4e7">${authorDisplay.charAt(0).toUpperCase()}</text>`
-              }
-              <text x="44" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#f4f4f5">${authorText}</text>
-              <circle cx="${leftBadgeCenterX}" cy="21" r="7.5" fill="#ffffff"/>
-              <path d="M${leftBadgeCenterX - 3.5} 21l2.5 2.5 4.5-4.5" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-          </g>
-
-          <!-- Caption Quote -->
-          ${caption ? `
-          <g transform="translate(72, ${placeLines.length > 1 ? 405 : 345})">
-            <rect width="640" height="56" rx="14" fill="#18181b" stroke="#27272a" stroke-width="1"/>
-            <text x="20" y="34" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-style="italic" fill="#d4d4d8">"${caption.length > 75 ? caption.slice(0, 72) + '...' : caption}"</text>
-          </g>
-          ` : `
-          <g transform="translate(72, ${placeLines.length > 1 ? 405 : 345})">
-            <text x="0" y="30" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#d4d4d8">Watch 100% genuine live 60-second video reviews.</text>
-            <text x="0" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="500" fill="#71717a">Real customers sharing authentic experiences · Zero fake text reviews.</text>
-          </g>
-          `}
-        </g>
-
-        <!-- Right Side Real Video Player Mockup -->
-        ${renderVideoPlayerMockup({
+      const bgImg = reviewerPhotoBase64 ? 
+        `<image href="data:image/jpeg;base64,${reviewerPhotoBase64}" x="-100" y="-100" width="1400" height="830" preserveAspectRatio="xMidYMid slice" opacity="0.35" filter="url(#bgBlur)"/>` : '';
+        
+      const playerMockup = renderVideoPlayerMockup({
           photoBase64: reviewerPhotoBase64,
-          authorName: author || 'Chloe Mitchell',
-          placeName: placeName || 'Soho House',
+          authorName: author || 'Reviewer',
+          placeName: placeName || 'Business',
           ratingVal: rating || 5.0,
-          timeAgo: '2h ago',
-          likesCount: '2.4k',
-          commentsCount: '94'
-        })}
-      `;
+          timeAgo: 'Just now',
+          likesCount: '4.2k',
+          commentsCount: '128',
+          offsetX: 430
+      });
+
+      return `
+      <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <defs>
+          <filter id="bgBlur">
+            <feGaussianBlur stdDeviation="30" />
+          </filter>
+        </defs>
+        <rect width="1200" height="630" fill="#000000"/>
+        ${bgImg}
+        
+        <!-- Dark tint to ensure mockup pops -->
+        <rect width="1200" height="630" fill="#09090b" fill-opacity="0.75" />
+
+        <!-- Luxury premium glow behind the player -->
+        <circle cx="600" cy="315" r="300" fill="#3b82f6" fill-opacity="0.15" filter="url(#bgBlur)"/>
+        
+        <!-- Top Left Brand Identity -->
+        <g transform="translate(48, 48)">
+          <rect width="44" height="44" rx="13" fill="#ffffff"/>
+          <path d="M22 12.5l2.25 4.6 5.05.75-3.65 3.55.85 5-4.5-2.4-4.5 2.4.85-5-3.65-3.55 5.05-.75z" fill="#09090b"/>
+          <text x="56" y="32" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="30" font-weight="900" fill="#ffffff" letter-spacing="-0.5">Yoouz</text>
+        </g>
+        
+        <!-- Bottom left subtle text -->
+        <text x="48" y="582" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#71717a" letter-spacing="0.2">
+          yoouz.com · Authentic 60-Second Video Reviews
+        </text>
+
+        <!-- Centered Mobile Video Player Mockup -->
+        ${playerMockup}
+      </svg>`;
     } else if (isPlaceCard) {
       const placeLines = wrapWords(placeName || 'Soho House', 22, 2);
       const placeTspans = placeLines.map((l, idx) => `<tspan x="72" dy="${idx === 0 ? '0' : '1.15em'}">${l}</tspan>`).join('');
