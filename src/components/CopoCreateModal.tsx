@@ -944,7 +944,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       author: {
         name: currentUser?.name || "Verified Reviewer",
         //handle: currentUser?.email ? `@${currentUser.email.split("@")[0]}` : "@yoouz_user",
-        avatar: currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || "User")}&background=1a73e8&color=fff&bold=true&size=128`,
+        avatar: currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
         isLocalGuide: true,
         localGuideLevel: 7,
         videoReviewCount: 1,
@@ -1153,14 +1153,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             {/* Step 1 Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 md:border-zinc-800 bg-zinc-900/50 md:bg-zinc-950/80 backdrop-blur-sm shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-900/25">
+                <div className="w-10 h-10 rounded-2xl bg-zinc-800 flex items-center justify-center text-white shadow-md shadow-black/50">
                   <Video className="w-5 h-5 stroke-[2.5]" />
                 </div>
                 <div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-0.5">
                       <h2 className="text-lg font-bold text-white md:text-white">Record Video Review</h2>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/20 md:bg-blue-100 text-blue-400 md:text-blue-700 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800 md:bg-zinc-700 text-zinc-300 md:text-white font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
                         Step 1 of 2
                       </span>
                     </div>
@@ -1191,11 +1191,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               {/* Responsive Place Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-bold text-zinc-100 md:text-zinc-200 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-blue-500" />
+                  <MapPin className="w-4 h-4 text-zinc-400" />
                   <span>Selected Business</span>
                 </label>
                 
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-blue-900/10 md:bg-blue-950/40/50 border border-blue-500/20 md:border-blue-200 shadow-lg ">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-900 md:bg-zinc-800 border border-zinc-800 md:border-zinc-700 shadow-lg ">
                   <CopoBrandLogo
                     domain={selectedPlace.brandDomain}
                     name={selectedPlace.name}

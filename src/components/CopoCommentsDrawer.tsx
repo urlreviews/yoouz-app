@@ -325,7 +325,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-blue-950/60 md:bg-blue-950/40 border border-blue-800/60 md:border-blue-100/50 text-blue-400 md:text-blue-400 flex items-center justify-center font-bold shrink-0">
+              <div className="w-9 h-9 rounded-full bg-zinc-800 md:bg-zinc-100 border border-zinc-700 md:border-zinc-300 text-white md:text-zinc-800 flex items-center justify-center font-bold shrink-0">
                 <MessageSquare className="w-4 h-4" />
               </div>
               <div>
@@ -388,10 +388,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         >
           {/* 1. Official Verified Business Owner Response (Pinned Banner - Google Maps Standard) */}
           {video.ownerResponse && (
-            <div className="p-4 bg-gradient-to-br from-blue-950/40 md:from-blue-50/90 via-sky-950/30 md:via-sky-50/50 to-indigo-950/20 md:to-indigo-50/40 border border-blue-800/60 md:border-blue-200/80 rounded-2xl space-y-2.5 shadow-2xs animate-in fade-in slide-in-from-top-1 duration-250">
+            <div className="p-4 bg-zinc-900 border border-zinc-800 md:bg-zinc-100 md:border-zinc-300 rounded-2xl space-y-2.5 shadow-2xs animate-in fade-in slide-in-from-top-1 duration-250">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full overflow-hidden bg-white border border-blue-800 md:border-blue-200 flex items-center justify-center shrink-0 p-0.5">
+                  <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0 p-0.5">
                     <CopoBrandLogo
                       domain={video.placeWebsite}
                       name={video.placeName}
@@ -408,7 +408,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       <span className="font-extrabold text-white md:text-zinc-950 text-xs truncate">
                         Response from the owner
                       </span>
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[9px] font-bold tracking-tight">
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-zinc-800 text-white border border-zinc-700 text-[9px] font-bold tracking-tight">
                         <ShieldCheck className="w-2.5 h-2.5" />
                         Verified Business
                       </span>
@@ -424,7 +424,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 </span>
               </div>
 
-              <div className="pl-3 py-1 border-l-2 border-blue-500 text-zinc-200 md:text-zinc-200 text-[13px] leading-relaxed font-medium bg-zinc-900/80 md:bg-zinc-900 rounded-r-xl p-2.5">
+              <div className="pl-3 py-1 border-l-2 border-zinc-500 text-zinc-200 md:text-zinc-200 text-[13px] leading-relaxed font-medium bg-zinc-900/80 md:bg-zinc-200/50 rounded-r-xl p-2.5">
                 "{video.ownerResponse.text}"
               </div>
 
@@ -438,7 +438,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       setEditingOwnerResponse(true);
                       if (inputRef.current) inputRef.current.focus();
                     }}
-                    className="flex items-center gap-1 text-blue-400 md:text-[#1a73e8] hover:text-blue-300 md:hover:text-blue-700 font-bold hover:underline"
+                    className="flex items-center gap-1 text-zinc-300 md:text-zinc-600 hover:text-white md:hover:text-zinc-900 font-bold hover:underline"
                   >
                     <Edit2 className="w-3 h-3" />
                     <span>Edit response</span>
@@ -460,7 +460,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
           {/* 2. Empty State when no comments exist */}
           {sortedComments.length === 0 && !video.ownerResponse ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4 py-12 space-y-4">
-              <div className="w-16 h-16 rounded-3xl bg-zinc-900 md:bg-blue-950/40 text-blue-400 md:text-[#1a73e8] flex items-center justify-center shadow-xs">
+              <div className="w-16 h-16 rounded-3xl bg-zinc-900 md:bg-zinc-200 text-zinc-300 md:text-zinc-700 flex items-center justify-center shadow-xs">
                 <MessageSquare className="w-8 h-8 stroke-[1.5]" />
               </div>
               <div className="space-y-1">
@@ -483,7 +483,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         if (inputRef.current) inputRef.current.focus();
                       }
                     }}
-                    className="px-3 py-1.5 rounded-full bg-zinc-900 md:bg-zinc-900 hover:bg-zinc-800 md:hover:bg-blue-900/40 text-zinc-300 md:text-zinc-300 hover:text-white md:hover:text-[#1a73e8] border border-zinc-800 md:border-zinc-800 text-xs font-medium transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-full bg-zinc-900 md:bg-zinc-900 hover:bg-zinc-800 md:hover:bg-zinc-300 text-zinc-300 md:text-zinc-300 hover:text-white md:hover:text-zinc-900 border border-zinc-800 md:border-zinc-800 text-xs font-medium transition-all cursor-pointer"
                   >
                     {prompt}
                   </button>
@@ -546,8 +546,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
                           {/* Reviewer / Creator Badge */}
                           {isCommentAuthorCreator && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-blue-950/60 md:bg-blue-950/40 text-blue-400 md:text-blue-700 border border-blue-800/60 md:border-blue-200 text-[10px] font-bold">
-                              <Camera className="w-2.5 h-2.5 text-blue-400 md:text-blue-400" />
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-zinc-800 md:bg-zinc-200 text-zinc-300 md:text-zinc-700 border border-zinc-700 md:border-zinc-300 text-[10px] font-bold">
+                              <Camera className="w-2.5 h-2.5 text-white md:text-zinc-700" />
                               Reviewer
                             </span>
                           )}
@@ -596,7 +596,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           {/* Reply Button */}
                           <button
                             onClick={() => handleStartReply(comment)}
-                            className="text-zinc-400 md:text-zinc-400 hover:text-blue-400 md:hover:text-[#1a73e8] transition-colors text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                            className="text-zinc-400 md:text-zinc-400 hover:text-white md:hover:text-zinc-900 transition-colors text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                           >
                             <CornerDownRight className="w-3 h-3" />
                             <span>Reply</span>
@@ -646,9 +646,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         {/* Toggle Replies button */}
                         <button
                           onClick={() => handleToggleReplies(comment.id)}
-                          className="flex items-center gap-1.5 text-xs font-bold text-blue-400 md:text-[#1a73e8] hover:text-blue-300 md:hover:text-blue-700 transition-colors cursor-pointer py-1"
+                          className="flex items-center gap-1.5 text-xs font-bold text-zinc-300 md:text-zinc-600 hover:text-white md:hover:text-zinc-900 transition-colors cursor-pointer py-1"
                         >
-                          <div className="w-4 h-0.5 bg-blue-400 md:bg-blue-300 rounded" />
+                          <div className="w-4 h-0.5 bg-zinc-400 md:bg-zinc-500 rounded" />
                           <span>
                             {isExpanded
                               ? `Hide ${comment.replies?.length} ${comment.replies?.length === 1 ? "reply" : "replies"}`
@@ -710,7 +710,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                       </span>
 
                                       {isReplyAuthorCreator && (
-                                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-full bg-blue-950/60 md:bg-blue-950/40 text-blue-400 md:text-blue-700 border border-blue-800/60 md:border-blue-200 text-[9px] font-bold">
+                                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-full bg-zinc-800 md:bg-zinc-200 text-zinc-300 md:text-zinc-700 border border-zinc-700 md:border-zinc-300 text-[9px] font-bold">
                                           Reviewer
                                         </span>
                                       )}
@@ -809,7 +809,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
               <button
                 type="button"
                 onClick={() => onRequireAuth?.()}
-                className="px-4 py-2 bg-white hover:bg-zinc-200 active:scale-95 text-zinc-950 text-xs font-bold rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-white text-xs font-bold rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1.5"
               >
                 <span>Sign in</span>
               </button>
@@ -926,7 +926,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer ${
                     postAsOwner
                       ? "bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40"
-                      : "bg-white hover:bg-zinc-200 text-zinc-950 disabled:opacity-40"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-white disabled:opacity-40"
                   }`}
                   title="Send comment"
                 >

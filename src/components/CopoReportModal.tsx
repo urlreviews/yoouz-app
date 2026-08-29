@@ -106,7 +106,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "privacy_doxxing",
     title: "Privacy violation or doxxing",
     description: "Sharing private phone numbers, home addresses, or secret recordings",
-    icon: <Lock className="w-5 h-5 text-blue-500" />,
+    icon: <Lock className="w-5 h-5 text-zinc-400" />,
     subcategories: [
       "Exposing private personal phone number, address or email",
       "Filming people without consent in private areas (e.g. restrooms)",
@@ -467,7 +467,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     <button
                       type="submit"
                       disabled={isSubmitting || !selectedSubcategory}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-zinc-950 text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <span>Submitting...</span>

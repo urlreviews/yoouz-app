@@ -398,7 +398,7 @@ return () => {
   const safeAuthor = video.author || {
     name: "Verified Reviewer",
     
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(video.userId || "Reviewer")}&background=1a73e8&color=fff&bold=true&size=128`,
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(video.userId || "Reviewer")}&background=27272a&color=fff&bold=true&size=128`,
     isVerified: true,
     isFollowed: false
   };

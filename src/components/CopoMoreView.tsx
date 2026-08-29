@@ -355,7 +355,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   return (
     <div
       id="yoouz-more-view-container"
-      className="flex-1 w-full h-full bg-zinc-950 overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+88px)] md:pb-24 select-none selection:bg-[#1a73e8]/20 selection:text-[#1a73e8]"
+      className="flex-1 w-full h-full bg-zinc-950 overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+88px)] md:pb-24 select-none selection:bg-zinc-700 selection:text-white"
     >
       {/* Top Banner / Google-grade Header */}
       <header className="bg-zinc-900/90 border-b border-zinc-800 sticky top-0 z-20 backdrop-blur-md">
@@ -371,7 +371,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               </button>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-[#38bdf8] text-[11px] font-black tracking-wide uppercase">
+                  <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black tracking-wide uppercase">
                     Yoouz Hub
                   </span>
                   <span className="text-xs text-zinc-400 font-semibold">• Trust, Verification & Support</span>

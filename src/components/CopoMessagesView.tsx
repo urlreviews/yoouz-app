@@ -600,7 +600,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               <div className="inline-flex items-center p-1 bg-zinc-950 md:bg-zinc-900/90 rounded-2xl border border-zinc-800 md:border-zinc-800">
                 <button
                   id="tab-inbox-messages"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-white text-black shadow-xs cursor-pointer transition-all"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-zinc-800 text-white shadow-xs cursor-pointer transition-all"
                 >
                   <Mail className="w-4 h-4 text-black" />
                   <span>Messages</span>
@@ -665,7 +665,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   setNewChatSearch("");
                   setShowNewChatModal(true);
                 }}
-                className="w-9 h-9 rounded-xl bg-white hover:bg-zinc-200 text-black flex items-center justify-center shadow-sm shrink-0 transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center shadow-sm shrink-0 transition-colors cursor-pointer"
                 title="Start new message"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -687,7 +687,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       setNewChatSearch("");
                       setShowNewChatModal(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-black text-xs font-bold shadow-xs hover:bg-zinc-200 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800 text-white text-xs font-bold shadow-xs hover:bg-zinc-200 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Start a Message</span>
@@ -982,7 +982,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               msg.videoThumbnail ? "w-[260px] sm:w-[280px]" : "w-fit max-w-full"
                             } ${
                               msg.isMe
-                                ? "bg-white text-black rounded-tr-none text-left font-medium"
+                                ? "bg-zinc-800 text-white rounded-tr-none text-left font-medium"
                                 : "bg-zinc-900 text-zinc-200 rounded-tl-none text-left border border-zinc-800"
                             }`}
                           >
@@ -1007,7 +1007,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                     }}
                                   />
                                   <div className="absolute inset-0 bg-black/20 group-hover/card:bg-black/30 transition-colors flex items-center justify-center">
-                                    <div className="w-12 h-12 rounded-full bg-white/95 text-zinc-900 flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
+                                    <div className="w-12 h-12 rounded-full bg-zinc-800/95 text-white flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
                                       <Play className="w-5 h-5 fill-current translate-x-0.5" />
                                     </div>
                                   </div>
@@ -1148,7 +1148,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                     </p>
                                   </div>
                                 </div>
-                                <span className="px-2.5 py-1 bg-white text-black rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
+                                <span className="px-2.5 py-1 bg-zinc-800 text-white rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
                                   Share
                                 </span>
                               </div>
@@ -1171,7 +1171,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     title="Recommend a Place or Video Review"
                     className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                       showQuickRecommend
-                        ? "bg-white text-black border border-white"
+                        ? "bg-zinc-800 text-white border border-white"
                         : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700"
                     }`}
                   >
@@ -1322,7 +1322,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                     <button
                       type="button"
-                      className="px-3 py-1 rounded-xl bg-zinc-800 group-hover:bg-white text-zinc-300 group-hover:text-black text-[11px] font-bold transition-colors cursor-pointer shrink-0"
+                      className="px-3 py-1 rounded-xl bg-zinc-800 group-hover:bg-zinc-700 text-zinc-300 group-hover:text-white text-[11px] font-bold transition-colors cursor-pointer shrink-0"
                     >
                       Chat
                     </button>

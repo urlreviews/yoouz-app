@@ -56,7 +56,7 @@ export function App() {
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
     // Current App Version Timestamp (Updated: 2026-08-28-14:00-SUPER-FORCE)
-    const APP_VERSION = "2026-08-28-23-52-CACHE-CLEAR"; 
+    const APP_VERSION = "2026-08-29-00-45-DARKMODE-FIXES"; 
     try {
       const savedVersion = localStorage.getItem("yoouz_app_version");
       if (savedVersion && savedVersion !== APP_VERSION) {
@@ -648,7 +648,7 @@ export function App() {
             user.photoURL ||
             `https://ui-avatars.com/api/?name=${encodeURIComponent(
               user.displayName || user.email?.split("@")[0] || "User"
-            )}&background=1a73e8&color=fff&bold=true&size=128`;
+            )}&background=27272a&color=fff&bold=true&size=128`;
         }
 
         const profileObj: UserProfile = {
@@ -695,9 +695,30 @@ export function App() {
                   localStorage.setItem("copo_followed_places", JSON.stringify(fPlaces));
                 }
                 
+                // Sync bookmarks and likes to localStorage
+                let sIds = [];
+                let lIds = [];
+                if (data.savedVideoIds && Array.isArray(data.savedVideoIds)) {
+                  sIds = data.savedVideoIds;
+                  localStorage.setItem("copo_saved_video_ids", JSON.stringify(sIds));
+                } else {
+                  try { sIds = JSON.parse(localStorage.getItem("copo_saved_video_ids") || "[]"); } catch(e){}
+                }
+                if (data.likedVideoIds && Array.isArray(data.likedVideoIds)) {
+                  lIds = data.likedVideoIds;
+                  localStorage.setItem("copo_liked_video_ids", JSON.stringify(lIds));
+                } else {
+                  try { lIds = JSON.parse(localStorage.getItem("copo_liked_video_ids") || "[]"); } catch(e){}
+                }
+                
                 // Instantly re-hydrate existing places and videos with the fresh follow state
                 setPlaces(prev => prev.map(p => ({ ...p, isFollowed: fPlaces.includes(p.id) })));
-                setVideos(prev => prev.map(v => ({ ...v, author: { ...v.author, isFollowed: fAuthors.includes(v.author.name) } })));
+                setVideos(prev => prev.map(v => ({ 
+                  ...v, 
+                  isBookmarked: sIds.includes(v.id),
+                  isLiked: lIds.includes(v.id),
+                  author: { ...v.author, isFollowed: fAuthors.includes(v.author.name) } 
+                })));
                 
               } catch (e) {}
 
@@ -1679,6 +1700,15 @@ export function App() {
         savedIds = savedIds.filter((id) => id !== videoId);
       }
       localStorage.setItem("copo_saved_video_ids", JSON.stringify(savedIds));
+      
+      // Also sync to global user profile in Firestore
+      if (currentUser && currentUser.email && db) {
+        // We use auth.currentUser?.uid directly as it's the doc ID
+        const uid = auth.currentUser?.uid;
+        if (uid) {
+          setDoc(doc(db, "users", uid), { savedVideoIds: savedIds }, { merge: true }).catch(() => {});
+        }
+      }
     } catch (e) {}
 
     // Persist to Server and Firestore database
@@ -1880,7 +1910,7 @@ export function App() {
 
     const authorAvatar =
       validCurrentAvatar ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a73e8&color=fff&bold=true&size=128`;
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
 
     const newCommentItem: ReviewComment = {
       id: `comm-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -2242,7 +2272,7 @@ export function App() {
             id: `owner_comm_${videoId}`,
             authorName: `${placeName} (Owner)`,
             authorHandle: "owner",
-            authorAvatar: placeLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(placeName)}&background=1a73e8&color=fff&bold=true`,
+            authorAvatar: placeLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`,
             text: text.trim(),
             createdAt: "Just now",
       createdAtMs: Date.now(),
@@ -2930,7 +2960,7 @@ export function App() {
                           user: {
                             name: "Yoouz Admin Team",
                             //handle: "yoouz",
-                            avatar: "https://ui-avatars.com/api/?name=Yoouz+Admin&background=1a73e8&color=fff&bold=true",
+                            avatar: "https://ui-avatars.com/api/?name=Yoouz+Admin&background=27272a&color=fff&bold=true",
                             email: "admin@yoouz.com"
                           },
                           text: notif.message,

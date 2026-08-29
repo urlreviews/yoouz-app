@@ -87,7 +87,7 @@ export function onAuthStateChanged(authObj: any, callback: (user: any) => void) 
         const userProfile = {
           name: user.displayName || user.email?.split("@")[0] || "Google User",
           email: user.email || "",
-          avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=1a73e8&color=fff&bold=true&size=128`,
+          avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=27272a&color=fff&bold=true&size=128`,
         };
         localStorage.setItem("copo_user_profile", JSON.stringify(userProfile));
         
@@ -118,7 +118,7 @@ export async function signInWithGoogle(): Promise<any> {
       const userProfile = {
         name: user.displayName || user.email?.split("@")[0] || "Google User",
         email: user.email || "",
-        avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=1a73e8&color=fff&bold=true&size=128`,
+        avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || "User")}&background=27272a&color=fff&bold=true&size=128`,
       };
       localStorage.setItem("copo_user_profile", JSON.stringify(userProfile));
       try {

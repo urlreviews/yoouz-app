@@ -28,8 +28,8 @@ function normalizeReview(v: any): VideoReview {
 
   return {
     ...v,
-    isLiked: typeof v.isLiked === 'boolean' ? v.isLiked : likedIds.includes(v.id),
-    isBookmarked: typeof v.isBookmarked === 'boolean' ? v.isBookmarked : savedIds.includes(v.id),
+    isLiked: likedIds.includes(v.id),
+    isBookmarked: savedIds.includes(v.id),
     author: {
       ...author,
       name,
