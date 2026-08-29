@@ -2742,13 +2742,46 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
   };
 
-  // Get Video Feed endpoint (combines server index with Firestore and uploaded videos)
+  // Memory Cache for Firestore reviews to drastically reduce read calls and prevent quota exhaustion
+  interface VideoFeedCache {
+    videos: any[];
+    lastFetched: number;
+  }
+  const feedCache: VideoFeedCache = {
+    videos: [],
+    lastFetched: 0
+  };
+  const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+
+  // Get Video Feed endpoint (combines server index with Firestore and uploaded videos with memory caching & write-back resiliency)
   app.get("/api/videos/feed", async (_req, res) => {
     try {
+      const now = Date.now();
       const localList = readReviewsIndex();
+      
+      // If we have a valid memory cache AND we are not due for a live fetch, serve from cache
+      const isCacheValid = (now - feedCache.lastFetched < CACHE_TTL_MS) && feedCache.videos.length > 0;
+      
+      if (isCacheValid) {
+        // Merge memory cache with localList (in case any brand-new reviews were just saved to the local file)
+        const map = new Map<string, any>();
+        feedCache.videos.forEach((r: any) => {
+          if (r && r.id) map.set(r.id, r);
+        });
+        localList.forEach((r: any) => {
+          if (r && r.id && r.videoUrl) {
+            map.set(r.id, { ...(map.get(r.id) || {}), ...r });
+          }
+        });
+        const merged = Array.from(map.values());
+        merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+        return res.json({ success: true, videos: merged });
+      }
+
+      // Otherwise, fetch from sources to refresh cache
       const map = new Map<string, any>();
       
-      // 1. Add local reviews
+      // 1. Populate from local file baseline
       localList.forEach((r: any) => {
         if (r && r.id && r.videoUrl) map.set(r.id, r);
       });
@@ -2775,6 +2808,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       }
 
       // 3. Query from Firestore Admin (Live data, overwrites stale data)
+      let firestoreFetchSuccess = false;
       if (adminDb) {
         try {
           const snapshot = await adminDb.collection("videoReviews").get();
@@ -2793,13 +2827,45 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
               map.set(docSnap.id, { ...existing, id: docSnap.id, ...data, author: mergedAuthor });
             }
           });
-        } catch (firestoreErr) {
-          console.warn("Firestore videoReviews read notice:", (firestoreErr as any)?.message || firestoreErr);
+          firestoreFetchSuccess = true;
+        } catch (firestoreErr: any) {
+          console.warn("Firestore videoReviews read notice (likely quota limit reached):", firestoreErr?.message || firestoreErr);
+          
+          // If Firestore is exhausted but we have previous cached videos in memory, fallback to cache
+          if (feedCache.videos.length > 0) {
+            const cachedMap = new Map<string, any>();
+            feedCache.videos.forEach((r: any) => {
+              if (r && r.id) cachedMap.set(r.id, r);
+            });
+            localList.forEach((r: any) => {
+              if (r && r.id && r.videoUrl) {
+                cachedMap.set(r.id, { ...(cachedMap.get(r.id) || {}), ...r });
+              }
+            });
+            const mergedCached = Array.from(cachedMap.values());
+            mergedCached.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+            return res.json({ success: true, videos: mergedCached });
+          }
         }
       }
 
       const merged = Array.from(map.values());
       merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+
+      // 4. Update memory cache and write-back to local reviews_index.json on success
+      if (firestoreFetchSuccess) {
+        feedCache.videos = merged;
+        feedCache.lastFetched = now;
+
+        // Persist back to local reviews_index.json so we have full, beautiful durability even on system cold starts
+        if (merged.length > 0) {
+          writeReviewsIndex(merged);
+        }
+      } else {
+        // If Firestore read failed (e.g. quota limit), retry after 1 minute instead of spamming on every request
+        feedCache.lastFetched = now - CACHE_TTL_MS + (60 * 1000);
+      }
+
       return res.json({ success: true, videos: merged });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -2819,10 +2885,13 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const existingIdx = list.findIndex((item: any) => item.id === review.id);
       if (existingIdx !== -1) {
         list[existingIdx] = { ...list[existingIdx], ...review };
-      } else if (review.videoUrl) {
+      } else {
         list.unshift(review);
       }
       writeReviewsIndex(list);
+
+      // Invalidate memory cache to force an immediate refresh on next feed request
+      feedCache.lastFetched = 0;
 
       // 2. Sync to Firestore Admin directly
       if (adminDb) {
@@ -2830,6 +2899,24 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           await adminDb.collection("videoReviews").doc(review.id).set(review, { merge: true });
         } catch (fErr) {
           console.warn("Firestore sync in save-review notice:", (fErr as any)?.message || fErr);
+        }
+      }
+
+      // 3. Mirror to Drizzle PostgreSQL database for container scaling durability
+      if (getDb()) {
+        try {
+          const [existing] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, review.id));
+          if (existing) {
+            let finalData = review;
+            if (existing.data && typeof existing.data === 'object') {
+              finalData = { ...existing.data, ...review };
+            }
+            await db.update(firestore_video_reviews).set({ data: finalData }).where(eq(firestore_video_reviews.id, review.id));
+          } else {
+            await db.insert(firestore_video_reviews).values({ id: review.id, data: review });
+          }
+        } catch (sqlErr) {
+          console.warn("SQL database sync in save-review notice:", (sqlErr as any)?.message || sqlErr);
         }
       }
 

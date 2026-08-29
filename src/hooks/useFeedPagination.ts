@@ -141,6 +141,18 @@ export function useFeedPagination() {
               return merged;
             });
             setIsLoading(false);
+
+            // Background sync-back to backend server to populate durable PostgreSQL
+            snap.docs.forEach((docSnap) => {
+              const rData = docSnap.data();
+              if (rData && docSnap.id) {
+                fetch("/api/videos/save-review", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ ...rData, id: docSnap.id })
+                }).catch(() => {});
+              }
+            });
           } else if (videos.length === 0) {
              setIsLoading(false);
           }
