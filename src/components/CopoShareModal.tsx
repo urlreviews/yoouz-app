@@ -57,7 +57,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   };
 
   const shareUrl = isVideoMode && video
-    ? `${window.location.origin}/@${getCleanHandle(video.author)}/video/${video.id}`
+    ? `${window.location.origin}/@${getCleanHandle(video.author)}/video/${video.id}?ref=x`
     : (explicitShareUrl ? explicitShareUrl.trim().replace(/\s+/g, "%20") : window.location.origin);
 
   const title = isVideoMode && video
@@ -196,8 +196,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Social Card Preview</p>
               <a
                 href={isVideoMode && video
-                  ? `/api/og-image.png?type=video&placeName=${encodeURIComponent(video.placeName || "Business")}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}`
-                  : "/api/og-image.png"
+                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(video.placeName || "Business")}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&v=4`
+                  : "/api/og-image.png?v=4"
                 }
                 target="_blank"
                 rel="noopener noreferrer"
@@ -209,8 +209,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             <div className="relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-inner group">
               <img
                 src={isVideoMode && video
-                  ? `/api/og-image.png?type=video&placeName=${encodeURIComponent(video.placeName || "Business")}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}`
-                  : "/api/og-image.png"
+                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(video.placeName || "Business")}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&v=4`
+                  : "/api/og-image.png?v=4"
                 }
                 alt="Social Media Preview Card"
                 className="w-full aspect-[1200/630] object-cover transition duration-300 group-hover:scale-[1.01]"

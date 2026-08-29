@@ -5093,7 +5093,7 @@ Return JSON:
               <!-- 1. Creator Avatar with '+' Badge -->
               <g transform="translate(0, 0)">
                 <circle cx="18" cy="18" r="18" fill="#27272a" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1.5"/>
-                <text x="18" y="24" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="900" fill="#ffffff">${displayAuthor.charAt(0).toUpperCase()}</text>
+                <text x="18" y="24" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="900" fill="#ffffff">${displayAuthor.charAt(0).toUpperCase()}</text>
                 <circle cx="18" cy="34" r="7.5" fill="#ffffff" stroke="#09090b" stroke-width="1.5"/>
                 <path d="M18 30v8 M14 34h8" stroke="#09090b" stroke-width="2.2" stroke-linecap="round"/>
               </g>
@@ -5102,21 +5102,21 @@ Return JSON:
               <g transform="translate(0, 62)">
                 <circle cx="18" cy="18" r="18" fill="#000000" fill-opacity="0.5" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1"/>
                 <path d="M18 24.5l-1.3-1.2C12.2 19.3 9 16.4 9 13c0-2.7 2.1-4.8 4.8-4.8 1.5 0 3 .7 4.2 1.9 1.2-1.2 2.7-1.9 4.2-1.9 2.7 0 4.8 2.1 4.8 4.8 0 3.4-3.2 6.3-7.7 10.3L18 24.5z" fill="#ef4444" stroke="#ef4444" stroke-width="0.8"/>
-                <text x="18" y="45" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#ffffff">${likes}</text>
+                <text x="18" y="45" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">${likes}</text>
               </g>
 
               <!-- 3. Comment Bubble Button & Count -->
               <g transform="translate(0, 122)">
                 <circle cx="18" cy="18" r="18" fill="#000000" fill-opacity="0.5" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1"/>
                 <path d="M24 17a6.5 6.5 0 0 1-6.5 6.5c-1.3 0-2.6-.4-3.7-1L8 24l1.1-5.2a6.5 6.5 0 1 1 14.9-1.8z" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <text x="18" y="45" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#ffffff">${comments}</text>
+                <text x="18" y="45" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">${comments}</text>
               </g>
 
               <!-- 4. Bookmark Button -->
               <g transform="translate(0, 182)">
                 <circle cx="18" cy="18" r="18" fill="#000000" fill-opacity="0.5" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1"/>
                 <path d="M12.5 10h11v16l-5.5-3.5-5.5 3.5V10z" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <text x="18" y="45" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#ffffff">312</text>
+                <text x="18" y="45" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">312</text>
               </g>
 
               <!-- 5. Share Arrow Button -->
@@ -5126,7 +5126,7 @@ Return JSON:
                 <circle cx="11" cy="18" r="2.2" fill="none" stroke="#ffffff" stroke-width="1.6"/>
                 <circle cx="21" cy="23" r="2.2" fill="none" stroke="#ffffff" stroke-width="1.6"/>
                 <path d="M13 17l6-3 M13 19l6 3" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
-                <text x="18" y="45" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#ffffff">45</text>
+                <text x="18" y="45" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">45</text>
               </g>
 
               <!-- 6. More Options Button -->
@@ -5141,7 +5141,7 @@ Return JSON:
             <!-- Bottom Left Video Reviewer & Place Pill Overlay -->
             <g transform="translate(18, 420)">
               <!-- Author Row: By [Author] + Verified White Checkmark Badge (Cleanly adjacent to name) -->
-              <text x="0" y="20" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="800" fill="#ffffff">By ${displayAuthor}</text>
+              <text x="0" y="20" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="800" fill="#ffffff">By ${displayAuthor}</text>
               
               <!-- Verified Badge: Placed immediately after author text with tight 5px margin -->
               <g transform="translate(${authorBadgeX}, 8)">
@@ -5152,15 +5152,15 @@ Return JSON:
               <!-- Stars & Timestamp Row (Snug, natural 6px spacing right next to the stars) -->
               <g transform="translate(0, 36)">
                 <!-- 5 Gold Stars -->
-                <text x="0" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="900" fill="#f59e0b">★ ★ ★ ★ ★</text>
+                <text x="0" y="0" font-family="Liberation Sans, Arial, sans-serif" font-size="12" font-weight="900" fill="#f59e0b">★ ★ ★ ★ ★</text>
                 
                 <!-- Dot Separator + Clock Icon + Timestamp directly following 5th star -->
                 <g transform="translate(78, -9)">
-                  <text x="0" y="9.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" fill="#71717a">·</text>
+                  <text x="0" y="9.5" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="600" fill="#71717a">·</text>
                   <g transform="translate(7, 0)">
                     <circle cx="5" cy="5" r="5" fill="none" stroke="#d4d4d8" stroke-width="1.1"/>
                     <path d="M5 3v2.5l1.5.8" stroke="#d4d4d8" stroke-width="1.1" stroke-linecap="round" fill="none"/>
-                    <text x="14" y="8.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" fill="#d4d4d8">${time}</text>
+                    <text x="14" y="8.5" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="600" fill="#d4d4d8">${time}</text>
                   </g>
                 </g>
               </g>
@@ -5180,7 +5180,7 @@ Return JSON:
                 </g>
 
                 <!-- Place Name Text -->
-                <text x="44" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="800" fill="#ffffff">${displayPlace}</text>
+                <text x="44" y="27" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="800" fill="#ffffff">${displayPlace}</text>
                 
                 <!-- Verified Badge on Place (Immediately following place text with 5px margin) -->
                 <g transform="translate(${verifiedPlaceBadgeX}, 16)">
@@ -5214,10 +5214,10 @@ Return JSON:
         <!-- Left Side Video Information -->
         <g transform="translate(0, 10)">
           <!-- Video Tagline -->
-          <text x="72" y="185" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">AUTHENTIC 60-SECOND CUSTOMER REVIEW</text>
+          <text x="72" y="185" font-family="Liberation Sans, Arial, sans-serif" font-size="12" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">AUTHENTIC 60-SECOND CUSTOMER REVIEW</text>
 
           <!-- Place Title -->
-          <text x="72" y="235" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
+          <text x="72" y="235" font-family="Liberation Sans, Arial, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
             ${placeTspans}
           </text>
 
@@ -5225,7 +5225,7 @@ Return JSON:
           <g transform="translate(72, ${placeLines.length > 1 ? 340 : 280})">
             <!-- Star Rating Pill -->
             <rect width="160" height="42" rx="21" fill="#18181b" stroke="#f59e0b" stroke-width="1.5"/>
-            <text x="20" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)} / 5.0</text>
+            <text x="20" y="27" font-family="Liberation Sans, Arial, sans-serif" font-size="17" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)} / 5.0</text>
 
             <!-- Author Pill with tight, custom-fit verified badge -->
             <g transform="translate(176, 0)">
@@ -5240,9 +5240,9 @@ Return JSON:
                 <circle cx="21" cy="21" r="13" fill="none" stroke="#3f3f46" stroke-width="1"/>`
                 :
                 `<circle cx="21" cy="21" r="13" fill="#27272a"/>
-                <text x="21" y="26" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="bold" fill="#e4e4e7">${authorDisplay.charAt(0).toUpperCase()}</text>`
+                <text x="21" y="26" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#e4e4e7">${authorDisplay.charAt(0).toUpperCase()}</text>`
               }
-              <text x="44" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#f4f4f5">${authorText}</text>
+              <text x="44" y="26" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="700" fill="#f4f4f5">${authorText}</text>
               <circle cx="${leftBadgeCenterX}" cy="21" r="7.5" fill="#ffffff"/>
               <path d="M${leftBadgeCenterX - 3.5} 21l2.5 2.5 4.5-4.5" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
@@ -5252,12 +5252,12 @@ Return JSON:
           ${caption ? `
           <g transform="translate(72, ${placeLines.length > 1 ? 405 : 345})">
             <rect width="640" height="56" rx="14" fill="#18181b" stroke="#27272a" stroke-width="1"/>
-            <text x="20" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-style="italic" fill="#d4d4d8">"${caption.length > 75 ? caption.slice(0, 72) + '...' : caption}"</text>
+            <text x="20" y="34" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-style="italic" fill="#d4d4d8">"${caption.length > 75 ? caption.slice(0, 72) + '...' : caption}"</text>
           </g>
           ` : `
           <g transform="translate(72, ${placeLines.length > 1 ? 405 : 345})">
-            <text x="0" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="500" fill="#d4d4d8">Watch 100% genuine live 60-second video reviews.</text>
-            <text x="0" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="500" fill="#71717a">Real customers sharing authentic experiences · Zero fake text reviews.</text>
+            <text x="0" y="30" font-family="Liberation Sans, Arial, sans-serif" font-size="17" font-weight="500" fill="#d4d4d8">Watch 100% genuine live 60-second video reviews.</text>
+            <text x="0" y="58" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="500" fill="#71717a">Real customers sharing authentic experiences · Zero fake text reviews.</text>
           </g>
           `}
         </g>
@@ -5280,24 +5280,24 @@ Return JSON:
       mainContentSvg = `
         <g transform="translate(0, 10)">
           <!-- Category & Location -->
-          <text x="72" y="190" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">${(category || 'Rooftop Lounge & Club').toUpperCase()} · ${(city || 'London & New York').toUpperCase()}</text>
+          <text x="72" y="190" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">${(category || 'Rooftop Lounge & Club').toUpperCase()} · ${(city || 'London & New York').toUpperCase()}</text>
 
           <!-- Place Title -->
-          <text x="72" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-0.8">
+          <text x="72" y="240" font-family="Liberation Sans, Arial, sans-serif" font-size="46" font-weight="900" fill="#f4f4f5" letter-spacing="-0.8">
             ${placeTspans}
           </text>
 
           <!-- Rating & Video Count Pill -->
           <g transform="translate(72, ${placeLines.length > 1 ? 335 : 280})">
             <rect width="360" height="44" rx="22" fill="#18181b" stroke="#f59e0b" stroke-width="1.5"/>
-            <text x="24" y="28" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)}</text>
-            <text x="80" y="28" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#e4e4e7">· ${reviewsCount || 18} Authentic Video Reviews</text>
+            <text x="24" y="28" font-family="Liberation Sans, Arial, sans-serif" font-size="18" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)}</text>
+            <text x="80" y="28" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="600" fill="#e4e4e7">· ${reviewsCount || 18} Authentic Video Reviews</text>
           </g>
 
           <!-- Subtitle -->
           <g transform="translate(72, ${placeLines.length > 1 ? 400 : 345})">
-            <text x="0" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Watch genuine customer video reviews recorded live before you visit.</text>
-            <text x="0" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#71717a">Zero fake text reviews · 100% verified customer video testimonials</text>
+            <text x="0" y="26" font-family="Liberation Sans, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Watch genuine customer video reviews recorded live before you visit.</text>
+            <text x="0" y="58" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Zero fake text reviews · 100% verified customer video testimonials</text>
           </g>
         </g>
 
@@ -5317,9 +5317,9 @@ Return JSON:
 
       mainContentSvg = `
         <g transform="translate(0, 10)">
-          <text x="72" y="190" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">VERIFIED VIDEO REVIEWER PROFILE</text>
+          <text x="72" y="190" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">VERIFIED VIDEO REVIEWER PROFILE</text>
 
-          <text x="72" y="245" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
+          <text x="72" y="245" font-family="Liberation Sans, Arial, sans-serif" font-size="52" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
             @${cleanHandle}
           </text>
 
@@ -5327,12 +5327,12 @@ Return JSON:
             <rect width="320" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
             <circle cx="21" cy="21" r="8" fill="#ffffff"/>
             <path d="M17.5 21l2.5 2.5 4.5-4.5" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="38" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#f4f4f5">Verified Video Reviewer on Yoouz</text>
+            <text x="38" y="26" font-family="Liberation Sans, Arial, sans-serif" font-size="14" font-weight="700" fill="#f4f4f5">Verified Video Reviewer on Yoouz</text>
           </g>
 
           <g transform="translate(72, 355)">
-            <text x="0" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Explore authentic 60-second video reviews and honest customer ratings.</text>
-            <text x="0" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#71717a">Watch verified reviews for top local restaurants, cafes, and businesses.</text>
+            <text x="0" y="26" font-family="Liberation Sans, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Explore authentic 60-second video reviews and honest customer ratings.</text>
+            <text x="0" y="58" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Watch verified reviews for top local restaurants, cafes, and businesses.</text>
           </g>
         </g>
 
@@ -5355,24 +5355,24 @@ Return JSON:
           <!-- Tagline Pill -->
           <rect width="280" height="32" rx="16" fill="#18181b" stroke="#27272a" stroke-width="1"/>
           <circle cx="16" cy="16" r="4" fill="#3b82f6"/>
-          <text x="28" y="20" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="1">AUTHENTIC VIDEO REVIEWS</text>
+          <text x="28" y="20" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="1">AUTHENTIC VIDEO REVIEWS</text>
 
           <!-- Big Title -->
-          <text x="0" y="80" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
+          <text x="0" y="80" font-family="Liberation Sans, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
             Real People.
           </text>
-          <text x="0" y="136" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
+          <text x="0" y="136" font-family="Liberation Sans, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
             Real Reviews.
           </text>
 
           <!-- Descriptive Subtitle -->
-          <text x="0" y="186" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
+          <text x="0" y="186" font-family="Liberation Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
             The #1 authentic 60-second video review network.
           </text>
-          <text x="0" y="214" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
+          <text x="0" y="214" font-family="Liberation Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
             Watch genuine live customer testimonials before you visit.
           </text>
-          <text x="0" y="242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
+          <text x="0" y="242" font-family="Liberation Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
             Zero fake text reviews · 100% verified trust.
           </text>
 
@@ -5382,19 +5382,19 @@ Return JSON:
             <g>
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
               <circle cx="20" cy="20" r="4.5" fill="#ef4444"/>
-              <text x="34" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">60s Live Video Only</text>
+              <text x="34" y="25" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">60s Live Video Only</text>
             </g>
             <!-- Pill 2 -->
             <g transform="translate(192, 0)">
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
               <circle cx="20" cy="20" r="4.5" fill="#22c55e"/>
-              <text x="34" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Zero Fake Reviews</text>
+              <text x="34" y="25" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Zero Fake Reviews</text>
             </g>
             <!-- Pill 3 -->
             <g transform="translate(384, 0)">
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
               <circle cx="20" cy="20" r="4.5" fill="#3b82f6"/>
-              <text x="34" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Verified Businesses</text>
+              <text x="34" y="25" font-family="Liberation Sans, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Verified Businesses</text>
             </g>
           </g>
         </g>
@@ -5450,13 +5450,13 @@ Return JSON:
         <path d="M22 12.5l2.25 4.6 5.05.75-3.65 3.55.85 5-4.5-2.4-4.5 2.4.85-5-3.65-3.55 5.05-.75z" fill="#09090b"/>
 
         <!-- Brand Typography -->
-        <text x="56" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="900" fill="#ffffff" letter-spacing="-0.5">Yoouz</text>
+        <text x="56" y="32" font-family="Liberation Sans, Arial, sans-serif" font-size="30" font-weight="900" fill="#ffffff" letter-spacing="-0.5">Yoouz</text>
 
         <!-- Top Right Category / Badge Pill -->
         <g transform="translate(360, 4)">
           <rect width="250" height="34" rx="17" fill="#18181b" stroke="#27272a" stroke-width="1"/>
           <circle cx="18" cy="17" r="4" fill="#22c55e"/>
-          <text x="32" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="0.8">${badgeText}</text>
+          <text x="32" y="22" font-family="Liberation Sans, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="0.8">${badgeText}</text>
         </g>
       </g>
 
@@ -5465,7 +5465,7 @@ Return JSON:
 
       <!-- Footer Tagline (Positioned cleanly on the left, zero overlap with right player) -->
       <g transform="translate(72, 564)">
-        <text x="0" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#71717a" letter-spacing="0.2">
+        <text x="0" y="0" font-family="Liberation Sans, Arial, sans-serif" font-size="14" font-weight="700" fill="#71717a" letter-spacing="0.2">
           yoouz.com · Authentic 60-Second Video Reviews
         </text>
       </g>
@@ -5515,7 +5515,7 @@ Return JSON:
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Yoouz Marketing & Social Share Card Preview</title>
+      <title>Yoouz Social Media Share & Metadata Card Live Inspector</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <style>
         body { background-color: #09090b; color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
@@ -5529,14 +5529,14 @@ Return JSON:
           <div>
             <div class="flex items-center gap-3 mb-1">
               <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-black font-black">Y</div>
-              <h1 class="text-2xl font-black tracking-tight text-white">Yoouz Social & Marketing Card</h1>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">Ultra HD 8K</span>
+              <h1 class="text-2xl font-black tracking-tight text-white">Yoouz Live Social Metadata & Card Inspector</h1>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Dynamic SSR Verified</span>
             </div>
-            <p class="text-sm text-zinc-400">100% Authentic human review cards with verified badges, real photography, and multi-device preview.</p>
+            <p class="text-sm text-zinc-400">Inspect real-time Open Graph previews for homepage and specific video reviews (e.g. avt ertuop, aouisesmee, etc.) with real thumbnails and avatars.</p>
           </div>
           
           <div class="flex items-center gap-3">
-            <a id="downloadBtn" href="${baseUrl}/api/og-image.png?type=video&placeName=Soho%20House&author=Chloe%20Mitchell&rating=5.0" download="yoouz-social-share-card.png" class="px-5 py-2.5 rounded-xl bg-white text-zinc-900 font-bold hover:bg-zinc-200 transition flex items-center gap-2 shadow-lg text-sm">
+            <a id="downloadBtn" href="${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4" download="yoouz-social-share-card.png" class="px-5 py-2.5 rounded-xl bg-white text-zinc-900 font-bold hover:bg-zinc-200 transition flex items-center gap-2 shadow-lg text-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
               Download Ultra-HD PNG
             </a>
@@ -5544,19 +5544,37 @@ Return JSON:
         </div>
 
         <!-- Venue & Reviewer Selectors -->
-        <div class="space-y-2">
-          <div class="text-xs font-bold uppercase tracking-wider text-zinc-400">Select Preview Preset (Homepage & Reviews):</div>
-          <div class="flex items-center gap-2 overflow-x-auto pb-1">
-            <button onclick="switchPreset('homepage')" id="tab-homepage" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-800 text-white border border-zinc-700 transition">🌐 https://yoouz.com/ (Official Homepage Share)</button>
-            <button onclick="switchPreset('soho')" id="tab-soho" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">✨ Soho House · Chloe Mitchell</button>
-            <button onclick="switchPreset('ritz')" id="tab-ritz" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">The Ritz-Carlton · Emma Davis</button>
-            <button onclick="switchPreset('fourseasons')" id="tab-fourseasons" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">Four Seasons · Sophie Laurent</button>
+        <div class="space-y-3">
+          <div class="text-xs font-bold uppercase tracking-wider text-zinc-400">Choose a Live Page / Video Review Preset:</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            <button onclick="switchPreset('homepage')" id="tab-homepage" class="tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">
+              <div class="text-white font-bold mb-0.5">🌐 Homepage</div>
+              <div class="text-[11px] text-zinc-500 font-normal">https://yoouz.com/</div>
+            </button>
+            <button onclick="switchPreset('londontrust')" id="tab-londontrust" class="tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-800 text-white border border-zinc-700 transition">
+              <div class="text-amber-400 font-bold mb-0.5">🎬 avt ertuop (★ 5.0)</div>
+              <div class="text-[11px] text-zinc-300 font-normal truncate">londontrustedtherapy.com</div>
+            </button>
+            <button onclick="switchPreset('ibm')" id="tab-ibm" class="tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">
+              <div class="text-white font-bold mb-0.5">🎬 aouisesmee (★ 5.0)</div>
+              <div class="text-[11px] text-zinc-500 font-normal truncate">IBM Review</div>
+            </button>
+            <button onclick="switchPreset('taj')" id="tab-taj" class="tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">
+              <div class="text-white font-bold mb-0.5">🎬 avt ertuop (★ 5.0)</div>
+              <div class="text-[11px] text-zinc-500 font-normal truncate">Taj Hotels Review</div>
+            </button>
+          </div>
+
+          <!-- Interactive Custom Video ID / URL Tester -->
+          <div class="flex items-center gap-2 pt-1">
+            <input id="customVideoInput" type="text" placeholder="Or paste any video URL or ID (e.g. rev-1787774080951-vuu2k)..." class="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600" />
+            <button onclick="testCustomUrl()" class="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition">Inspect Custom Video</button>
           </div>
         </div>
 
         <!-- Device View Mode Switcher -->
         <div class="flex items-center justify-between gap-4 glass-panel p-3 rounded-2xl">
-          <div class="flex items-center gap-2 text-xs font-bold text-zinc-300">
+          <div class="flex items-center gap-2 text-xs font-bold text-zinc-300 overflow-x-auto pb-1 sm:pb-0">
             <span class="text-zinc-500">View In:</span>
             <button onclick="switchDevice('master')" id="dev-master" class="dev-btn px-3 py-1.5 rounded-lg bg-zinc-700 text-white">Full 1200×630 Canvas</button>
             <button onclick="switchDevice('phone')" id="dev-phone" class="dev-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white">📱 Mobile Screen (iPhone)</button>
@@ -5567,12 +5585,12 @@ Return JSON:
           <span id="dimensionLabel" class="text-xs font-mono text-zinc-400 hidden sm:inline">1200 × 630 px (HD Master)</span>
         </div>
 
-        <!-- Main Display Frame (Dynamic based on selected view mode) -->
+        <!-- Main Display Frame -->
         <div id="previewWrapper" class="flex justify-center items-center py-4">
           <!-- 1. Master Canvas View -->
           <div id="view-master" class="w-full relative rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 p-2 shadow-2xl">
             <div class="aspect-[1200/630] w-full rounded-2xl overflow-hidden bg-zinc-900 flex items-center justify-center">
-              <img id="ogImgMaster" src="${baseUrl}/api/og-image.png?type=homepage" alt="Yoouz Share Card" class="w-full h-full object-contain" />
+              <img id="ogImgMaster" src="${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4" alt="Yoouz Share Card" class="w-full h-full object-contain" />
             </div>
           </div>
 
@@ -5584,7 +5602,7 @@ Return JSON:
                 <div class="w-2.5 h-2.5 rounded-full bg-zinc-900"></div>
                 <div class="w-3 h-3 rounded-full bg-blue-950/80 border border-blue-600/40"></div>
               </div>
-              <!-- Screen Content: How card is shared or shown in feed -->
+              <!-- Screen Content -->
               <div class="w-full h-full rounded-[40px] bg-zinc-950 pt-14 pb-6 px-3 flex flex-col justify-between overflow-y-auto">
                 <div class="space-y-3">
                   <div class="flex items-center justify-between text-xs text-zinc-400 px-1">
@@ -5598,10 +5616,10 @@ Return JSON:
                   <div class="p-2 rounded-2xl bg-zinc-900/80 border border-zinc-800">
                     <div class="text-[11px] font-bold text-zinc-400 mb-1">Shared via Yoouz</div>
                     <div class="rounded-xl overflow-hidden aspect-[1200/630] border border-zinc-800">
-                      <img id="ogImgPhone" src="${baseUrl}/api/og-image.png?type=homepage" class="w-full h-full object-cover" />
+                      <img id="ogImgPhone" src="${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4" class="w-full h-full object-cover" />
                     </div>
                     <div class="pt-2">
-                      <div id="phoneCardTitle" class="text-xs font-bold text-white">Yoouz: The Authentic Video Review Platform</div>
+                      <div id="phoneCardTitle" class="text-xs font-bold text-white">avt ertuop's 60s Video Review of londontrustedtherapy.com</div>
                       <div id="phoneCardSubtitle" class="text-[11px] text-zinc-400">https://yoouz.com · 100% Real Video. Zero Fake Text Reviews.</div>
                     </div>
                   </div>
@@ -5620,12 +5638,12 @@ Return JSON:
               </div>
               <div class="bg-[#1f2c34] rounded-2xl overflow-hidden border border-zinc-700/50 shadow-md">
                 <div class="aspect-[1200/630] w-full overflow-hidden bg-black">
-                  <img id="ogImgWhatsapp" src="${baseUrl}/api/og-image.png?type=homepage" class="w-full h-full object-cover" />
+                  <img id="ogImgWhatsapp" src="${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4" class="w-full h-full object-cover" />
                 </div>
                 <div class="p-3 bg-[#1f2c34]">
-                  <div id="waCardTitle" class="text-sm font-bold text-zinc-100">Yoouz: Authentic Video Reviews (Real People. Real Reviews.)</div>
-                  <div id="waCardDesc" class="text-xs text-zinc-400 mt-1 line-clamp-2">Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.</div>
-                  <div class="text-[11px] text-zinc-500 mt-2">https://yoouz.com</div>
+                  <div id="waCardTitle" class="text-sm font-bold text-zinc-100">avt ertuop's 60s Video Review of londontrustedtherapy.com | Yoouz</div>
+                  <div id="waCardDesc" class="text-xs text-zinc-400 mt-1 line-clamp-2">Watch the authentic 60-second video review by avt ertuop for londontrustedtherapy.com on Yoouz. 100% Real Video. Zero Fake Text Reviews.</div>
+                  <div id="waCardUrl" class="text-[11px] text-zinc-500 mt-2">https://yoouz.com/@avr6566gd/video/rev-1787774080951-vuu2k</div>
                 </div>
               </div>
             </div>
@@ -5639,12 +5657,12 @@ Return JSON:
               </div>
               <div class="bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-700/60 shadow-lg">
                 <div class="aspect-[1200/630] w-full overflow-hidden bg-black">
-                  <img id="ogImgImessage" src="${baseUrl}/api/og-image.png?type=homepage" class="w-full h-full object-cover" />
+                  <img id="ogImgImessage" src="${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4" class="w-full h-full object-cover" />
                 </div>
                 <div class="p-3.5 bg-zinc-900">
                   <div class="text-[11px] font-bold uppercase tracking-wider text-blue-400">YOOUZ.COM</div>
-                  <div id="imCardTitle" class="text-sm font-bold text-white mt-0.5">Yoouz: The Authentic Video Review Platform</div>
-                  <div class="text-xs text-zinc-400 mt-1">Authentic 60-second video reviews by verified creators. Zero fake text reviews.</div>
+                  <div id="imCardTitle" class="text-sm font-bold text-white mt-0.5">avt ertuop's 60s Video Review of londontrustedtherapy.com</div>
+                  <div id="imCardDesc" class="text-xs text-zinc-400 mt-1">Authentic 60-second customer video review on Yoouz. Zero fake text reviews.</div>
                 </div>
               </div>
             </div>
@@ -5656,44 +5674,22 @@ Return JSON:
               <div class="text-xs text-zinc-400 mb-3">𝕏 (Twitter) Summary Large Image Card</div>
               <div class="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 hover:bg-zinc-900/50 transition">
                 <div class="aspect-[1200/630] w-full overflow-hidden bg-black">
-                  <img id="ogImgTwitter" src="${baseUrl}/api/og-image.png?type=homepage" class="w-full h-full object-cover" />
+                  <img id="ogImgTwitter" src="${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4" class="w-full h-full object-cover" />
                 </div>
                 <div class="p-3">
-                  <div class="text-xs text-zinc-500">https://yoouz.com</div>
-                  <div id="twCardTitle" class="text-sm font-bold text-white">Yoouz: Real People. Real Reviews.</div>
-                  <div class="text-xs text-zinc-400 mt-1">Authentic customer video reviews on Yoouz. Zero fake text reviews.</div>
+                  <div id="twCardUrl" class="text-xs text-zinc-500">https://yoouz.com</div>
+                  <div id="twCardTitle" class="text-sm font-bold text-white">avt ertuop's 60s Video Review of londontrustedtherapy.com | Yoouz</div>
+                  <div id="twCardDesc" class="text-xs text-zinc-400 mt-1">Watch authentic 60-second video reviews by real customers on Yoouz.</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Verified Fix Checklist (Direct proof addressing user requests) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80">
-            <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-1">
-              <span>✓</span> Tight Verified Badge Spacing
-            </div>
-            <p class="text-xs text-zinc-400">The solid white verified checkmark badge now sits right next to the reviewer's name (Chloe Mitchell) with exact 8px optical clearance.</p>
-          </div>
-          <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80">
-            <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-1">
-              <span>✓</span> Generous Star / Timestamp Gap
-            </div>
-            <p class="text-xs text-zinc-400">The "2h ago" clock icon is separated by a clean luxury dot divider (·) and 16px horizontal spacing, eliminating all squishing.</p>
-          </div>
-          <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80">
-            <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-1">
-              <span>✓</span> Authentic Human Female Reviewer
-            </div>
-            <p class="text-xs text-zinc-400">Features authentic real photography of female reviewer (no AI look), front-camera review framing, luxury Soho House branding, and 2.4k verified likes.</p>
-          </div>
-        </div>
-
         <!-- Direct Link Information -->
         <div class="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
           <div>
-            Direct High-Res Link: <a id="directLink" href="${baseUrl}/api/og-image.png?type=video&placeName=Soho%20House&author=Chloe%20Mitchell&rating=5.0" target="_blank" class="text-blue-400 hover:underline font-mono ml-1">${baseUrl}/api/og-image.png?type=video&placeName=Soho%20House&author=Chloe%20Mitchell&rating=5.0</a>
+            Direct Image URL: <a id="directLink" href="${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4" target="_blank" class="text-blue-400 hover:underline font-mono ml-1">${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4</a>
           </div>
           <a href="/" class="text-zinc-300 hover:text-white font-medium flex items-center gap-1">
             Back to Yoouz App &rarr;
@@ -5702,9 +5698,9 @@ Return JSON:
       </div>
 
       <script>
-        let currentUrl = '${baseUrl}/api/og-image.png?type=homepage';
+        let currentUrl = '${baseUrl}/api/og-image.png?type=video&id=rev-1787774080951-vuu2k&v=4';
 
-        function updateAllImages(url, isHomepage = false) {
+        function updateAllImages(url, details) {
           currentUrl = url;
           ['ogImgMaster', 'ogImgPhone', 'ogImgWhatsapp', 'ogImgImessage', 'ogImgTwitter'].forEach(id => {
             const el = document.getElementById(id);
@@ -5714,52 +5710,90 @@ Return JSON:
           document.getElementById('directLink').href = url;
           document.getElementById('directLink').textContent = url;
 
-          // Update titles in device mockups
-          const phoneTitle = document.getElementById('phoneCardTitle');
-          const phoneSubtitle = document.getElementById('phoneCardSubtitle');
-          const waTitle = document.getElementById('waCardTitle');
-          const waDesc = document.getElementById('waCardDesc');
-          const imTitle = document.getElementById('imCardTitle');
-          const twTitle = document.getElementById('twCardTitle');
+          if (details) {
+            const phoneTitle = document.getElementById('phoneCardTitle');
+            const phoneSubtitle = document.getElementById('phoneCardSubtitle');
+            const waTitle = document.getElementById('waCardTitle');
+            const waDesc = document.getElementById('waCardDesc');
+            const waUrl = document.getElementById('waCardUrl');
+            const imTitle = document.getElementById('imCardTitle');
+            const imDesc = document.getElementById('imCardDesc');
+            const twTitle = document.getElementById('twCardTitle');
+            const twDesc = document.getElementById('twCardDesc');
+            const twUrl = document.getElementById('twCardUrl');
 
-          if (isHomepage) {
-            if (phoneTitle) phoneTitle.textContent = 'Yoouz: The Authentic Video Review Platform';
-            if (phoneSubtitle) phoneSubtitle.textContent = 'https://yoouz.com · 100% Real Video. Zero Fake Text Reviews.';
-            if (waTitle) waTitle.textContent = 'Yoouz: Authentic Video Reviews (Real People. Real Reviews.)';
-            if (waDesc) waDesc.textContent = 'Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.';
-            if (imTitle) imTitle.textContent = 'Yoouz: The Authentic Video Review Platform';
-            if (twTitle) twTitle.textContent = 'Yoouz: Real People. Real Reviews.';
-          } else {
-            if (phoneTitle) phoneTitle.textContent = 'Review of Soho House · Chloe Mitchell';
-            if (phoneSubtitle) phoneSubtitle.textContent = 'yoouz.com · Authentic 60-Second Video Review';
-            if (waTitle) waTitle.textContent = 'Review of Soho House · By Chloe Mitchell (★ 5.0)';
-            if (waDesc) waDesc.textContent = 'Watch 100% genuine live 60-second video reviews. Real customers sharing authentic experiences · Zero fake text reviews.';
-            if (imTitle) imTitle.textContent = 'Review of Soho House · Chloe Mitchell';
-            if (twTitle) twTitle.textContent = 'Review of Soho House · Chloe Mitchell ★ 5.0';
+            if (phoneTitle) phoneTitle.textContent = details.title;
+            if (phoneSubtitle) phoneSubtitle.textContent = details.subtitle || 'https://yoouz.com · Real Video Reviews';
+            if (waTitle) waTitle.textContent = details.title;
+            if (waDesc) waDesc.textContent = details.description;
+            if (waUrl) waUrl.textContent = details.shareUrl || 'https://yoouz.com';
+            if (imTitle) imTitle.textContent = details.title;
+            if (imDesc) imDesc.textContent = details.description;
+            if (twTitle) twTitle.textContent = details.title;
+            if (twDesc) twDesc.textContent = details.description;
+            if (twUrl) twUrl.textContent = details.shareUrl || 'https://yoouz.com';
           }
         }
 
         function switchPreset(preset) {
           document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.className = 'tab-btn px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition';
+            btn.className = 'tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition';
           });
           const activeBtn = document.getElementById('tab-' + preset);
-          if (activeBtn) activeBtn.className = 'tab-btn px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-800 text-white border border-zinc-700 transition';
+          if (activeBtn) activeBtn.className = 'tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-800 text-white border border-zinc-700 transition';
           
           let url = '${baseUrl}/api/og-image.png';
-          let isHomepage = false;
+          let details = {};
+
           if (preset === 'homepage') {
-            url += '?type=homepage';
-            isHomepage = true;
-          } else if (preset === 'soho') {
-            url += '?type=video&placeName=Soho%20House&author=Chloe%20Mitchell&rating=5.0&caption=Best%20atmosphere%20and%20rooftop%20lounge';
-          } else if (preset === 'ritz') {
-            url += '?type=video&placeName=The%20Ritz-Carlton&author=Emma%20Davis&rating=5.0&caption=Amazing%20hospitality%20and%20views';
-          } else if (preset === 'fourseasons') {
-            url += '?type=video&placeName=Four%20Seasons&author=Sophie%20Laurent&rating=5.0&caption=Exquisite%20dining%20experience';
+            url += '?type=homepage&v=4';
+            details = {
+              title: 'Yoouz: The Authentic Video Review Platform for Business & Software',
+              description: 'Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.',
+              shareUrl: 'https://yoouz.com/'
+            };
+          } else if (preset === 'londontrust') {
+            url += '?type=video&id=rev-1787774080951-vuu2k&v=4';
+            details = {
+              title: "avt ertuop's 60s Video Review of londontrustedtherapy.com | Yoouz",
+              description: 'Watch the authentic 60-second video review by avt ertuop for londontrustedtherapy.com on Yoouz. Real People. Real Reviews.',
+              shareUrl: 'https://yoouz.com/@avr6566gd/video/rev-1787774080951-vuu2k'
+            };
+          } else if (preset === 'ibm') {
+            url += '?type=video&id=rev-1787990803895-2ftsu&v=4';
+            details = {
+              title: "aouisesmee's 60s Video Review of IBM | Yoouz",
+              description: 'Watch the authentic 60-second video review by aouisesmee for IBM on Yoouz. Real People. Real Reviews.',
+              shareUrl: 'https://yoouz.com/@aouisesmee/video/rev-1787990803895-2ftsu'
+            };
+          } else if (preset === 'taj') {
+            url += '?type=video&id=rev-1787767013276-ee969&v=4';
+            details = {
+              title: "avt ertuop's 60s Video Review of Taj Hotels | Yoouz",
+              description: 'Watch the authentic 60-second video review by avt ertuop for Taj Hotels on Yoouz. Real People. Real Reviews.',
+              shareUrl: 'https://yoouz.com/@avt/video/rev-1787767013276-ee969'
+            };
           }
 
-          updateAllImages(url, isHomepage);
+          updateAllImages(url, details);
+        }
+
+        function testCustomUrl() {
+          const input = document.getElementById('customVideoInput').value.trim();
+          if (!input) return;
+
+          let id = input;
+          const match = input.match(/\/video\/([^\/\?#]+)/);
+          if (match) {
+            id = match[1];
+          }
+
+          const url = '${baseUrl}/api/og-image.png?type=video&id=' + encodeURIComponent(id) + '&v=4';
+          updateAllImages(url, {
+            title: 'Dynamic Video Review (' + id + ') | Yoouz',
+            description: 'Authentic 60-second customer video review on Yoouz. Real People. Real Reviews.',
+            shareUrl: input.startsWith('http') ? input : 'https://yoouz.com/video/' + id
+          });
         }
 
         function switchDevice(device) {
@@ -5798,37 +5832,105 @@ Return JSON:
   // Open Graph Image Endpoint (Generates PNG for Facebook, X/Twitter, WhatsApp, LinkedIn, etc.)
   app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
     try {
-      const type = (req.query.type as string) || "homepage";
-      const title = (req.query.title as string) || "";
-      const subtitle = (req.query.subtitle as string) || "";
-      const badge = (req.query.badge as string) || "";
-      const rating = parseFloat(req.query.rating as string) || 0;
-      const author = (req.query.author as string) || "";
-      const caption = (req.query.caption as string) || "";
-      const placeName = (req.query.placeName as string) || (req.query.place as string) || "";
-      const category = (req.query.category as string) || "";
-      const city = (req.query.city as string) || "";
-      const reviewsCount = parseInt(req.query.reviewsCount as string, 10) || 12;
+      let type = (req.query.type as string) || "homepage";
+      let title = (req.query.title as string) || "";
+      let subtitle = (req.query.subtitle as string) || "";
+      let badge = (req.query.badge as string) || "";
+      let rating = parseFloat(req.query.rating as string) || 0;
+      let author = (req.query.author as string) || "";
+      let caption = (req.query.caption as string) || "";
+      let placeName = (req.query.placeName as string) || (req.query.place as string) || "";
+      let category = (req.query.category as string) || "";
+      let city = (req.query.city as string) || "";
+      let reviewsCount = parseInt(req.query.reviewsCount as string, 10) || 12;
       let avatarBase64 = '';
       let bannerBase64 = '';
       let logoBase64 = '';
       let reviewerPhotoBase64 = '';
 
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
+      const baseUrl = `${protocol}://${host}`;
+
+      const vidId = (req.query.id as string) || (req.query.videoId as string) || (req.query.video as string) || (req.query.v as string);
+
+      if (vidId) {
+        let foundVideo: any = null;
+        if (adminDb) {
+          try {
+            const snap = await adminDb.collection("videoReviews").doc(vidId).get();
+            if (snap.exists) foundVideo = { id: snap.id, ...snap.data() };
+          } catch(e) {}
+        }
+        if (!foundVideo) {
+          const localList = readReviewsIndex();
+          foundVideo = localList.find((v: any) => v.id === vidId);
+        }
+        if (!foundVideo && getDb()) {
+          try {
+            const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, vidId));
+            if (rec) foundVideo = { id: rec.id, ...rec.data };
+          } catch(e) {}
+        }
+
+        if (foundVideo) {
+          type = 'video';
+          if (!placeName && foundVideo.placeName) placeName = foundVideo.placeName;
+          if (!author && (foundVideo.author?.name || foundVideo.authorName)) author = foundVideo.author?.name || foundVideo.authorName;
+          if (!rating && foundVideo.rating) rating = foundVideo.rating;
+          if (!caption && foundVideo.caption) caption = foundVideo.caption;
+
+          // Fetch thumbnail photo of actual video recording
+          if (foundVideo.thumbnailUrl) {
+            if (foundVideo.thumbnailUrl.startsWith('data:image')) {
+              reviewerPhotoBase64 = foundVideo.thumbnailUrl.split(',')[1];
+            } else {
+              const tUrl = foundVideo.thumbnailUrl.startsWith('/') ? `${baseUrl}${foundVideo.thumbnailUrl}` : foundVideo.thumbnailUrl;
+              try {
+                reviewerPhotoBase64 = await fetchBase64(tUrl);
+              } catch(e) {}
+            }
+          }
+
+          // Fetch reviewer profile avatar
+          if (foundVideo.author?.avatar) {
+            if (foundVideo.author.avatar.startsWith('data:image')) {
+              avatarBase64 = foundVideo.author.avatar.split(',')[1];
+            } else {
+              const aUrl = foundVideo.author.avatar.startsWith('/') ? `${baseUrl}${foundVideo.author.avatar}` : foundVideo.author.avatar;
+              try {
+                avatarBase64 = await fetchBase64(aUrl);
+              } catch(e) {}
+            }
+          }
+        }
+      }
+
+      if (!reviewerPhotoBase64 && req.query.thumbnailUrl) {
+        const tUrl = req.query.thumbnailUrl as string;
+        if (tUrl.startsWith('data:image')) {
+          reviewerPhotoBase64 = tUrl.split(',')[1];
+        } else {
+          const absUrl = tUrl.startsWith('/') ? `${baseUrl}${tUrl}` : tUrl;
+          reviewerPhotoBase64 = await fetchBase64(absUrl);
+        }
+      }
+
       if (!reviewerPhotoBase64) {
-        // High quality authentic human reviewer portrait (front camera selfie perspective, natural warm lighting)
-        const defaultPhotoUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=95';
-        try {
-          reviewerPhotoBase64 = await fetchBase64(defaultPhotoUrl);
-        } catch(e) {}
+        // Fall back to the author's avatar, or a transparent pixel
+        if (avatarBase64) {
+          reviewerPhotoBase64 = avatarBase64;
+        } else {
+          reviewerPhotoBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // transparent pixel
+        }
       }
 
       if (type === 'homepage') {
         try {
           logoBase64 = fs.readFileSync(path.join(process.cwd(), 'public', 'icon-512.png')).toString('base64');
         } catch(e) {}
-      } else if (req.query.avatarUrl) {
+      } else if (!avatarBase64 && req.query.avatarUrl) {
         avatarBase64 = await fetchBase64(req.query.avatarUrl as string);
-        reviewerPhotoBase64 = avatarBase64;
       }
       if (req.query.bannerUrl) {
         bannerBase64 = await fetchBase64(req.query.bannerUrl as string);
@@ -5839,7 +5941,7 @@ Return JSON:
         title,
         subtitle,
         badge,
-        rating,
+        rating: rating || 5.0,
         author,
         caption,
         placeName,
@@ -5914,7 +6016,7 @@ Return JSON:
 
     let title = "Yoouz: The Authentic Video Review Platform for Business & Software";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.";
-    let imageUrl = `${baseUrl}/og-banner.png?v=2`;
+    let imageUrl = `${baseUrl}/og-banner.png?v=4`;
     let videoUrl = "";
     let type = "website";
     let structuredData: any = null;
@@ -5968,7 +6070,7 @@ Return JSON:
             ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
             : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
           
-          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}${foundUser?.avatar ? '&avatarUrl=' + encodeURIComponent(foundUser.avatar) : ''}`;
+          imageUrl = `${baseUrl}/api/og-image.png?type=video&id=${encodeURIComponent(foundVideo.id)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}&v=4`;
           videoUrl = foundVideo.videoUrl || "";
           type = "video.other";
           keywords = `${placeName} review, ${placeName} video review, ${authorName} review, authentic customer video, 60 second review, yoouz video`;
@@ -6004,15 +6106,27 @@ Return JSON:
               }
             }
           };
+        } else if (placeId) {
+          title = `Authentic Video Reviews for ${placeId} | Yoouz`;
+          description = `Discover genuine 60-second video testimonials for ${placeId} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
+          imageUrl = `${baseUrl}/api/og-image.png?type=homepage&v=4`;
+          type = "website";
+          structuredData = null;
+        } else if (creatorHandle) {
+          const cleanHandle = creatorHandle.replace(/^@/, '');
+          title = `@${cleanHandle}'s Authentic Video Reviews | Yoouz`;
+          description = `Watch genuine 60-second video testimonials by @${cleanHandle} on Yoouz.`;
+          imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(cleanHandle)}&v=4`;
+          type = "profile";
+          structuredData = null;
         } else {
           const placeParam = params.get('placeName') || params.get('place') || "Local Business";
-          const authorParam = params.get('author') || (creatorHandle ? creatorHandle.replace(/^@/, '') : "Verified Customer");
+          const authorParam = params.get('author') || "Verified Customer";
           const ratingParam = parseFloat(params.get('rating') || "5");
           title = `${authorParam}'s 60-Second Video Review | Yoouz`;
           description = `Watch authentic 60-second customer video review on Yoouz. Real People. Real Reviews.`;
-          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeParam)}&author=${encodeURIComponent(authorParam)}&rating=${ratingParam}`; // Add avatar here if available
+          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeParam)}&author=${encodeURIComponent(authorParam)}&rating=${ratingParam}&v=4`;
           type = "video.other";
-
           structuredData = {
             "@context": "https://schema.org",
             "@type": "VideoObject",
@@ -6330,17 +6444,19 @@ Return JSON:
 
     // Handle bot/crawler requests and direct HTML requests for Open Graph tags in dev mode
     app.use(async (req: any, res: any, next: any) => {
-      // Check if it's a direct browser navigation to a route (expects HTML)
-      const acceptsHtml = req.headers.accept?.includes('text/html');
+      const userAgent = req.headers['user-agent'] || '';
+      const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+      const acceptsHtml = req.headers.accept?.includes('text/html') || req.headers.accept?.includes('*/*') || isCrawler;
+      const isStaticFile = req.path.includes('.') && !req.path.endsWith('.html');
       
-      if (req.method === 'GET' && !req.path.startsWith('/api') && acceptsHtml) {
+      if (req.method === 'GET' && !req.path.startsWith('/api') && !isStaticFile && acceptsHtml) {
         try {
           const indexPath = path.resolve(process.cwd(), 'index.html');
           let indexTemplate = fs.readFileSync(indexPath, 'utf-8');
           const meta = await resolveMetadataForRequest(req);
           indexTemplate = await vite.transformIndexHtml(req.originalUrl, indexTemplate);
           const finalHtml = injectOpenGraphTags(indexTemplate, meta);
-          return res.status(200).set({ 'Content-Type': 'text/html' }).end(finalHtml);
+          return res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(finalHtml);
         } catch (e) {
           console.error("Vite Transform Error:", e);
           return next();
