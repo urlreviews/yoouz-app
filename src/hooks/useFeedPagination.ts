@@ -6,28 +6,48 @@ import { getDisplayViews, resolveSafeAuthor } from '../utils/placeUtils';
 
 // Helper to cleanly sanitize and normalize author data
 function normalizeReview(v: any): VideoReview {
-  let likedIds: any[] = [];
-  let savedIds: any[] = [];
-  try { 
-    const parsed = JSON.parse(localStorage.getItem("copo_liked_video_ids") || "[]");
-    if (Array.isArray(parsed)) likedIds = parsed;
-  } catch(e){}
-  try { 
-    const parsed = JSON.parse(localStorage.getItem("copo_saved_video_ids") || "[]"); 
-    if (Array.isArray(parsed)) savedIds = parsed;
-  } catch(e){}
+  try {
+    let likedIds: any[] = [];
+    let savedIds: any[] = [];
+    try { 
+      const likedStr = localStorage.getItem("copo_liked_video_ids") || "[]";
+      const parsed = JSON.parse(likedStr);
+      if (Array.isArray(parsed)) likedIds = parsed;
+    } catch(e){}
+    try { 
+      const savedStr = localStorage.getItem("copo_saved_video_ids") || "[]"; 
+      const parsed = JSON.parse(savedStr); 
+      if (Array.isArray(parsed)) savedIds = parsed;
+    } catch(e){}
 
-  const safeAuthor = resolveSafeAuthor(v);
-  const computedViews = getDisplayViews(v);
+    const safeAuthor = resolveSafeAuthor(v);
+    const computedViews = getDisplayViews(v);
 
-  return {
-    ...v,
-    views: computedViews,
-    viewsCount: computedViews,
-    isLiked: likedIds.includes(v.id),
-    isBookmarked: savedIds.includes(v.id),
-    author: safeAuthor
-  };
+    const videoId = v.id || v.videoId || `rev-${Math.random().toString(36).substring(2, 9)}`;
+
+    return {
+      ...v,
+      id: videoId,
+      views: computedViews,
+      viewsCount: computedViews,
+      isLiked: likedIds.includes(videoId),
+      isBookmarked: savedIds.includes(videoId),
+      author: safeAuthor
+    };
+  } catch (err) {
+    console.error("[DEBUG feed] Critical error in normalizeReview:", err, v);
+    // Fallback to a safe minimal object to avoid breaking the entire feed
+    return {
+      ...v,
+      id: v?.id || `rev-err-${Math.random().toString(36).substring(2, 9)}`,
+      author: v?.author || { 
+        name: "Verified Reviewer", 
+        handle: "@user", 
+        avatar: `https://ui-avatars.com/api/?name=Reviewer&background=27272a&color=fff` 
+      },
+      createdAtMs: v?.createdAtMs || Date.now()
+    } as VideoReview;
+  }
 }
 
 export function useFeedPagination() {
@@ -103,40 +123,50 @@ export function useFeedPagination() {
         const res = await fetch("/api/videos/feed");
         if (res.ok && active) {
           const data = await res.json();
-          console.log("[DEBUG feed] /api/videos/feed returned:", data?.videos?.length, "videos");
+          console.log("[DEBUG feed] /api/videos/feed response success:", data?.success, "length:", data?.videos?.length);
           if (data && Array.isArray(data.videos) && data.videos.length > 0) {
             const valid = data.videos.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
             setVideos((prev) => {
               const map = new Map<string, VideoReview>();
               
-              // Keep local optimistic reviews
+              // Keep local optimistic reviews (less than 1 min old)
               prev.forEach((v) => {
                 if (v.createdAtMs && (Date.now() - v.createdAtMs < 60000)) {
                   map.set(v.id, v);
                 }
               });
 
-              valid.forEach((v: VideoReview) => map.set(v.id, { ...map.get(v.id), ...v }));
+              // Add API videos
+              valid.forEach((v: VideoReview) => {
+                const existing = map.get(v.id);
+                map.set(v.id, { ...existing, ...v });
+              });
+
               const merged = Array.from(map.values());
               merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-              console.log("[DEBUG feed] loadServerData setting videos to length:", merged.length);
+              console.log("[DEBUG feed] Final merged videos length:", merged.length);
               return merged;
             });
             setIsLoading(false);
           } else {
-            console.log("[DEBUG feed] /api/videos/feed returned empty or no videos array.");
+            console.log("[DEBUG feed] /api/videos/feed returned empty.");
+            // If API is empty, still set loading to false so we don't hang
+            setIsLoading(false);
           }
         } else {
-          console.warn("[DEBUG feed] /api/videos/feed fetch failed, res.ok:", res.ok);
+          console.warn("[DEBUG feed] /api/videos/feed fetch failed:", res.status);
+          setIsLoading(false);
         }
       } catch (e) {
         console.error("[DEBUG feed] /api/videos/feed error:", e);
+        setIsLoading(false);
       }
     };
 
     loadServerData();
 
     if (!db) {
+      console.warn("[DEBUG feed] No Firebase DB detected.");
       setIsLoading(false);
       return;
     }
@@ -155,6 +185,12 @@ export function useFeedPagination() {
         const snapshot = await getDocs(q);
         if (!active) return;
 
+        console.log("[DEBUG feed] loadFirestoreData snapshot size:", snapshot.size);
+        if (snapshot.empty) {
+          setIsLoading(false);
+          return;
+        }
+
         const fetched = snapshot.docs.map(docSnap => {
           const data = docSnap.data();
           const docViews = typeof data.views === "number" ? data.views : (typeof data.viewsCount === "number" ? data.viewsCount : undefined);
@@ -172,31 +208,20 @@ export function useFeedPagination() {
           };
         }) as VideoReview[];
 
-        if (fetched.length > 0) {
-          fetched.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-          const filtered = fetched.filter(v => !deletedIds.includes(v.id)).map(normalizeReview);
-          
+        fetched.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+        const filtered = fetched.filter(v => !deletedIds.includes(v.id)).map(normalizeReview);
+        
+        if (filtered.length > 0) {
           setVideos((prev) => {
-            const prevMap = new Map<string, VideoReview>();
-            prev.forEach((v) => prevMap.set(v.id, v));
-            let followedAuthors = [];
-            try { followedAuthors = JSON.parse(localStorage.getItem("copo_followed_authors") || "[]"); } catch(e){}
-
-            const nextList: VideoReview[] = filtered.map(v => {
-              const existing = prevMap.get(v.id);
-              const isFollowed = followedAuthors.includes(v.author.name);
-              const updatedV = { ...v, author: { ...v.author, isFollowed } };
-              return existing ? { ...existing, ...updatedV, localVideoUrl: existing.localVideoUrl || v.localVideoUrl } : updatedV;
+            const map = new Map<string, VideoReview>();
+            prev.forEach((v) => map.set(v.id, v));
+            
+            filtered.forEach(v => {
+              const existing = map.get(v.id);
+              map.set(v.id, { ...existing, ...v });
             });
 
-            const firestoreIds = new Set(filtered.map(v => v.id));
-            const now = Date.now();
-            prev.forEach(v => {
-              if (!firestoreIds.has(v.id) && !deletedIds.includes(v.id)) {
-                nextList.push(v);
-              }
-            });
-
+            const nextList = Array.from(map.values());
             nextList.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
             return nextList;
           });
@@ -207,22 +232,27 @@ export function useFeedPagination() {
         }
         setIsLoading(false);
       } catch (err) {
-        console.warn("Fast load failed:", err);
+        console.warn("[DEBUG feed] Fast load Firestore failed:", err);
         setIsLoading(false);
       }
     };
 
     loadFirestoreData();
 
-    // 3. Keep live snapshot sync running purely in the background to avoid blocking initial load
-    const qLive = query(collection(db, "videoReviews"));
-    const unsubscribe = onSnapshot(qLive, (snapshot) => {
+    // 3. Keep live snapshot sync running purely in the background
+    const unsubscribe = onSnapshot(collection(db, "videoReviews"), (snapshot) => {
       const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
       let deletedIds: string[] = [];
       try { 
         const parsed = JSON.parse(deletedStr); 
         if (Array.isArray(parsed)) deletedIds = parsed;
       } catch (e) {}
+
+      if (snapshot.empty && videos.length === 0) {
+        // Only stop loading if we truly have nothing
+        setIsLoading(false);
+        return;
+      }
 
       const fetched = snapshot.docs.map(docSnap => {
         const data = docSnap.data();
@@ -241,39 +271,18 @@ export function useFeedPagination() {
         };
       }) as VideoReview[];
 
-      fetched.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
       const filtered = fetched.filter(v => !deletedIds.includes(v.id)).map(normalizeReview);
-      console.log("[DEBUG feed] onSnapshot returned docs:", snapshot.docs.length, "filtered length:", filtered.length);
-
+      
       setVideos((prev) => {
-        console.log("[DEBUG feed] onSnapshot setVideos triggered. prev.length:", prev.length, "filtered.length:", filtered.length);
-        if (filtered.length === 0) {
-          if (prev.length > 0) {
-            return prev.filter(v => !deletedIds.includes(v.id));
-          }
-          return [];
-        }
-
-        const prevMap = new Map<string, VideoReview>();
-        prev.forEach((v) => prevMap.set(v.id, v));
-        let followedAuthors = [];
-        try { followedAuthors = JSON.parse(localStorage.getItem("copo_followed_authors") || "[]"); } catch(e){}
-
-        const nextList: VideoReview[] = filtered.map(v => {
-          const existing = prevMap.get(v.id);
-          const isFollowed = followedAuthors.includes(v.author.name);
-          const updatedV = { ...v, author: { ...v.author, isFollowed } };
-          return existing ? { ...existing, ...updatedV, localVideoUrl: existing.localVideoUrl || v.localVideoUrl } : updatedV;
+        const map = new Map<string, VideoReview>();
+        prev.forEach((v) => map.set(v.id, v));
+        
+        filtered.forEach(v => {
+          const existing = map.get(v.id);
+          map.set(v.id, { ...existing, ...v });
         });
 
-        const firestoreIds = new Set(filtered.map(v => v.id));
-        const now = Date.now();
-        prev.forEach(v => {
-          if (!firestoreIds.has(v.id) && !deletedIds.includes(v.id)) {
-            nextList.push(v);
-          }
-        });
-
+        const nextList = Array.from(map.values());
         nextList.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
         return nextList;
       });
@@ -283,7 +292,7 @@ export function useFeedPagination() {
       } catch (e) {}
       setIsLoading(false);
     }, (err) => {
-      console.warn("Background feed live-sync notice:", err?.message || err);
+      console.warn("[DEBUG feed] Background sync error:", err);
       setIsLoading(false);
     });
 

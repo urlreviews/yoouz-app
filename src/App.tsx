@@ -1541,12 +1541,19 @@ export function App() {
     // Priority 4: Standard Home feed sub-tabs
     if (activeSubTab === "following") {
       const followed = visibleVideos.filter((v) => v.author.isFollowed || v.feedCategory === "following");
-      return followed.length > 0 ? followed : visibleVideos;
+      return followed.length > 0 ? followed : (visibleVideos.length > 0 ? visibleVideos : videos);
     }
     if (activeSubTab === "clubs") {
       const clubVids = visibleVideos.filter((v) => v.clubName || v.feedCategory === "clubs");
-      return clubVids.length > 0 ? clubVids : visibleVideos;
+      return clubVids.length > 0 ? clubVids : (visibleVideos.length > 0 ? visibleVideos : videos);
     }
+
+    // Emergency Fallback: If we have ANY videos but they are ALL hidden or filtered, show the raw list
+    if (visibleVideos.length === 0 && videos.length > 0) {
+      console.warn("[DEBUG App.tsx] Emergency fallback triggered: visibleVideos is empty but videos has items.");
+      return videos;
+    }
+
     return visibleVideos;
   }, [videos, activeSubTab, hiddenVideoIds, fullscreenFeedContext, isPlaceView, drawerPlace, isCreatorView, selectedAuthorForDrawer, activeSection, userVideos]);
 
