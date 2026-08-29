@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getDisplayViews, formatViewCount } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -816,11 +816,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-1.5">
                       {rawPlaceVideos.slice(0, 6).map((v) => {
-                        const displayViews = v.views || v.viewsCount || 0;
-                        const formattedViews =
-                          displayViews >= 1000
-                            ? `${(displayViews / 1000).toFixed(1)}k`
-                            : `${displayViews}`;
+                        const displayViews = getDisplayViews(v);
+                        const formattedViews = formatViewCount(displayViews);
                         const posterUrl = resolveVideoPosterUrl(v);
 
                         return (
@@ -1115,11 +1112,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               ) : (
                 <div className="grid grid-cols-3 gap-1.5 pt-1">
                   {placeVideos.map((v) => {
-                    const displayViews = v.views || v.viewsCount || 0;
-                    const formattedViews =
-                      displayViews >= 1000
-                        ? `${(displayViews / 1000).toFixed(1)}k`
-                        : `${displayViews}`;
+                    const displayViews = getDisplayViews(v);
+                    const formattedViews = formatViewCount(displayViews);
                     const posterUrl = resolveVideoPosterUrl(v);
 
                     return (

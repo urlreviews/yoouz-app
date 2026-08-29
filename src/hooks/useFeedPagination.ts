@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, doc, setDoc, serverTimestamp, getDocs } from "../lib/firebase";
 import { db } from '../lib/firebase';
 import { VideoReview } from '../types';
+import { getDisplayViews } from '../utils/placeUtils';
 
 // Helper to cleanly sanitize and normalize author data
 function normalizeReview(v: any): VideoReview {
@@ -26,8 +27,12 @@ function normalizeReview(v: any): VideoReview {
     handle = `@${handle}`;
   }
 
+  const computedViews = getDisplayViews(v);
+
   return {
     ...v,
+    views: computedViews,
+    viewsCount: computedViews,
     isLiked: likedIds.includes(v.id),
     isBookmarked: savedIds.includes(v.id),
     author: {
@@ -152,10 +157,13 @@ export function useFeedPagination() {
 
         const fetched = snapshot.docs.map(docSnap => {
           const data = docSnap.data();
+          const docViews = typeof data.views === "number" ? data.views : (typeof data.viewsCount === "number" ? data.viewsCount : undefined);
           return {
             ...data,
             id: docSnap.id,
             createdAtMs: data.createdAtMs || (data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now()),
+            views: docViews,
+            viewsCount: docViews,
             likes: typeof data.likes === "number" ? Math.max(0, data.likes) : 0,
             bookmarksCount: typeof data.bookmarksCount === "number" ? Math.max(0, data.bookmarksCount) : 0,
             sharesCount: typeof data.sharesCount === "number" ? Math.max(0, data.sharesCount) : (typeof data.shares === "number" ? Math.max(0, data.shares) : 0),
@@ -215,10 +223,13 @@ export function useFeedPagination() {
 
       const fetched = snapshot.docs.map(docSnap => {
         const data = docSnap.data();
+        const docViews = typeof data.views === "number" ? data.views : (typeof data.viewsCount === "number" ? data.viewsCount : undefined);
         return {
           ...data,
           id: docSnap.id,
           createdAtMs: data.createdAtMs || (data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now()),
+          views: docViews,
+          viewsCount: docViews,
           likes: typeof data.likes === "number" ? Math.max(0, data.likes) : 0,
           bookmarksCount: typeof data.bookmarksCount === "number" ? Math.max(0, data.bookmarksCount) : 0,
           sharesCount: typeof data.sharesCount === "number" ? Math.max(0, data.sharesCount) : (typeof data.shares === "number" ? Math.max(0, data.shares) : 0),

@@ -967,6 +967,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       bookmarksCount: 0,
       isBookmarked: false,
       repostsCount: 0,
+      views: 1,
+      viewsCount: 1,
       sharesCount: 0,
       tags: [selectedPlace.category || "Review"],
       recordedAt: "Just now"

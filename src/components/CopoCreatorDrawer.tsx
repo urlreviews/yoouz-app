@@ -20,7 +20,7 @@ import {
   MapPin
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
@@ -643,11 +643,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="grid grid-cols-3 gap-1.5 px-0.5">
                 {authorVideos.map((v) => {
                   const isCurrentActive = v.id === activeVideoId;
-                  const displayViews = v.views || v.viewsCount || 0;
-                  const formattedViews =
-                    displayViews >= 1000
-                      ? `${(displayViews / 1000).toFixed(1)}k`
-                      : `${displayViews}`;
+                  const displayViews = getDisplayViews(v);
+                  const formattedViews = formatViewCount(displayViews);
                   const posterUrl = resolveVideoPosterUrl(v);
 
                   return (

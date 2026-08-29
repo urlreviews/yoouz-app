@@ -60,6 +60,7 @@ interface VideoFeedCardProps {
   slotRef?: (el: HTMLDivElement | null) => void;
   hasUserStartedFeed?: boolean;
   onStartFeed?: () => void;
+  onRecordView?: (videoId: string) => void;
 }
 
 export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
@@ -88,7 +89,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   cardRef,
   localBlobUrl,
   hasUserStartedFeed = false,
-  onStartFeed
+  onStartFeed,
+  onRecordView
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -222,6 +224,16 @@ return () => {
       } catch (e) {}
     };
   }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
+
+  // Record view count when video is active and playing
+  useEffect(() => {
+    if (isActive && hasUserStartedFeed && video?.id) {
+      const timer = setTimeout(() => {
+        onRecordView?.(video.id);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isActive, hasUserStartedFeed, video?.id, onRecordView]);
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
   useEffect(() => {
@@ -516,6 +528,9 @@ return () => {
             setIsPlaying(true);
             setIsBuffering(false);
             setIsVideoLoaded(true);
+            if (video?.id) {
+              onRecordView?.(video.id);
+            }
           }}
           onPause={() => {
             setIsPlaying(false);

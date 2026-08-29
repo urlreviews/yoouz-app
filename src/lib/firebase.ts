@@ -17,6 +17,7 @@ import {
   orderBy, 
   limit, 
   serverTimestamp,
+  increment,
   getDocFromServer
 } from "firebase/firestore";
 import { 
@@ -197,6 +198,7 @@ export {
   orderBy,
   limit,
   serverTimestamp,
+  increment,
   getDocFromServer,
   ref,
   uploadBytesResumable,

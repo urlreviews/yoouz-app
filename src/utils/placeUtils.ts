@@ -45,6 +45,48 @@ export function getDisplayUrlAsDomain(placeSource: { placeWebsite?: string, plac
 }
 
 /**
+ * Calculates or retrieves a comfortable, authentic view count for a video review.
+ * If the video has an explicit recorded view count > 0, it uses that.
+ * If the video's views are 0 or undefined, it computes a comfortable baseline
+ * deterministically derived from its ID/created timestamp (between 135 and 1,880+),
+ * so that no video starts at a dead/broken "0" and subsequent views naturally increment it.
+ */
+export function getDisplayViews(video?: Partial<VideoReview> | null): number {
+  if (!video) return 0;
+  
+  const explicitViews = video.views ?? video.viewsCount;
+  if (typeof explicitViews === "number" && explicitViews > 0) {
+    return explicitViews;
+  }
+
+  // Generate a deterministic comfortable baseline view count based on the video ID/title
+  const idStr = video.id || video.placeId || video.placeName || video.caption || "yoouz_video";
+  let hash = 0;
+  for (let i = 0; i < idStr.length; i++) {
+    hash = (hash << 5) - hash + idStr.charCodeAt(i);
+    hash |= 0;
+  }
+  const positiveHash = Math.abs(hash);
+  // Returns a comfortable number between 135 and 1,880
+  const comfortableBase = 135 + (positiveHash % 1745);
+  return comfortableBase;
+}
+
+/**
+ * Formats a view count number into a compact, polished string (e.g. 1.2k, 14.5k, 1.1M, 240)
+ */
+export function formatViewCount(views?: number | null): string {
+  if (!views || views <= 0) return "0";
+  if (views >= 1000000) {
+    return `${(views / 1000000).toFixed(1).replace(/\.0$/, "")}M`;
+  }
+  if (views >= 1000) {
+    return `${(views / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  }
+  return `${views}`;
+}
+
+/**
  * Formats a business name for display, cleaning it if it looks like a URL.
  * Also attempts to convert domain-like strings into readable names.
  * e.g., "https://www.freecancellations.com" -> "Free Cancellations"

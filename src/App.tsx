@@ -34,10 +34,10 @@ import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleFirestoreError, OperationType } from "./lib/firebase";
-import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc } from "./lib/firebase";
+import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/firebase";
 import { cleanForFirestore } from "./utils/cleanFirestore";
 import { getRawVideoBlobFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount } from "./utils/placeUtils";
 import { getCleanLogoUrl } from "./utils/logoUtils";
 import { resolveVideoPosterUrl } from "./utils/videoUtils";
 import {
@@ -1097,6 +1097,69 @@ export function App() {
     } catch (err) {
       console.warn("Firestore update video rating error:", err);
     }
+  };
+
+  // Video View Recording Session State
+  const recordedViewsInSessionRef = useRef<Set<string>>(new Set());
+
+  const handleRecordVideoView = (videoId: string) => {
+    if (!videoId) return;
+
+    // Deduplicate rapid repeat calls within this session
+    if (recordedViewsInSessionRef.current.has(videoId)) return;
+    recordedViewsInSessionRef.current.add(videoId);
+
+    // 1. Increment in local React state
+    setVideos((prev) => {
+      const next = prev.map((v) => {
+        if (v.id === videoId) {
+          const currentViews = getDisplayViews(v);
+          const nextViews = currentViews + 1;
+          return {
+            ...v,
+            views: nextViews,
+            viewsCount: nextViews
+          };
+        }
+        return v;
+      });
+
+      // Update local storage cache
+      try {
+        localStorage.setItem("yoouz_cached_videos_v16", JSON.stringify(next.slice(0, 50)));
+      } catch (e) {}
+
+      return next;
+    });
+
+    // 2. Persist to Firestore database using increment(1)
+    try {
+      if (db) {
+        const vidRef = doc(db, "videoReviews", videoId);
+        setDoc(
+          vidRef,
+          {
+            views: increment(1),
+            viewsCount: increment(1),
+            lastViewedAt: serverTimestamp()
+          },
+          { merge: true }
+        ).catch((err) => {
+          console.warn("Firestore view increment note:", err);
+        });
+      }
+    } catch (err) {
+      console.warn("Firestore view tracking error:", err);
+    }
+
+    // 3. Persist to backend server API
+    try {
+      fetch(`/api/videos/${encodeURIComponent(videoId)}/view`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId })
+      }).catch(() => {});
+    } catch (e) {}
   };
 
   const handleStartChat = async (senderId: string, senderName: string, senderAvatar: string) => {
@@ -2792,6 +2855,7 @@ export function App() {
               feedContextTitle={fullscreenFeedContext?.title}
               onGoHome={handleGoHome}
               onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
+              onRecordView={handleRecordVideoView}
             />
         )}
 

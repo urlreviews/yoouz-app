@@ -2808,6 +2808,47 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
   });
 
+  // Increment video view count endpoint
+  app.post(["/api/videos/:id/view", "/api/videos/record-view"], async (req, res) => {
+    try {
+      const videoId = req.params.id || req.body?.videoId;
+      if (!videoId) {
+        return res.status(400).json({ error: "Missing videoId" });
+      }
+
+      let updatedViews = 1;
+
+      // 1. Update local JSON index
+      const list = readReviewsIndex();
+      const existingIdx = list.findIndex((item: any) => item.id === videoId);
+      if (existingIdx !== -1) {
+        const curr = list[existingIdx].views || list[existingIdx].viewsCount || 0;
+        updatedViews = curr + 1;
+        list[existingIdx].views = updatedViews;
+        list[existingIdx].viewsCount = updatedViews;
+        writeReviewsIndex(list);
+      }
+
+      // 2. Sync to Firestore Admin if configured
+      if (adminDb) {
+        try {
+          const firestore = await import("firebase-admin/firestore");
+          await adminDb.collection("videoReviews").doc(videoId).set({
+            views: firestore.FieldValue.increment(1),
+            viewsCount: firestore.FieldValue.increment(1),
+            lastViewedAt: Date.now()
+          }, { merge: true });
+        } catch (fErr) {
+          console.warn("Firestore increment in view route notice:", (fErr as any)?.message || fErr);
+        }
+      }
+
+      return res.json({ success: true, videoId, views: updatedViews });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ==========================================
   // BUSINESS VERIFICATION & RESEND API ROUTES
   // ==========================================

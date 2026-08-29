@@ -31,6 +31,7 @@ interface GoogleVideoPlayerModalProps {
   onToggleBookmark: (placeId: string) => void;
   isBookmarked: boolean;
   onOpenCreator?: (author: VideoAuthor) => void;
+  onRecordView?: (videoId: string) => void;
 }
 
 export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
@@ -41,7 +42,8 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
   onToggleLike,
   onToggleBookmark,
   isBookmarked,
-  onOpenCreator
+  onOpenCreator,
+  onRecordView
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -79,7 +81,12 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       videoRef.current.muted = isMuted;
       
       if (hasStarted) {
-        videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+        videoRef.current.play().then(() => {
+          setIsPlaying(true);
+          if (currentReview?.id) {
+            onRecordView?.(currentReview.id);
+          }
+        }).catch(() => {});
       } else {
         try {
           videoRef.current.pause();

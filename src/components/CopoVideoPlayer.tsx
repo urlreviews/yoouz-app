@@ -55,6 +55,7 @@ interface CopoVideoPlayerProps {
   onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[] }) => void;
   isPaused?: boolean;
   contextKey?: string;
+  onRecordView?: (videoId: string) => void;
 }
 
 export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
@@ -84,7 +85,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   onDeleteVideo,
   onUpdateVideoReview,
   isPaused = false,
-  contextKey
+  contextKey,
+  onRecordView
 }) => {
   const currentVideo = videos[currentIndex] || videos[0];
   const [isMuted, setIsMuted] = useGlobalMute();
@@ -484,6 +486,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 cardRef={(el) => {
                   cardRefs.current[idx] = el;
                 }}
+                onRecordView={onRecordView}
               />
             );
           })}

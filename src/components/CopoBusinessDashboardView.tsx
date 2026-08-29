@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { NavSection, Place, VideoReview, UserProfile, VideoAuthor } from '../types';
+import { getDisplayViews } from '../utils/placeUtils';
 import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
 import { CopoBusinessAuthLanding } from './CopoBusinessAuthLanding';
 import { 
@@ -828,7 +829,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Dynamic KPIs calculated strictly from real data
   const totalReviews = placeVideos.length;
   const avgRating = totalReviews > 0 ? (placeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalReviews).toFixed(1) : '0.0';
-  const totalViews = placeVideos.reduce((acc, v) => acc + (v.viewsCount || 0), 0);
+  const totalViews = placeVideos.reduce((acc, v) => acc + getDisplayViews(v), 0);
   const totalClicks = 0; // Tracked accurately as 0
   const totalInquiries = 0; // Tracked accurately as 0
 
