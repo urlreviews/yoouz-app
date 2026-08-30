@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, doc, setDoc, serverTimestamp, getDocs } from "../lib/firebase";
-import { db } from '../lib/firebase';
 import { VideoReview } from '../types';
 import { getDisplayViews, resolveSafeAuthor } from '../utils/placeUtils';
 
@@ -118,85 +116,15 @@ export function useFeedPagination() {
         setIsLoading(false);
       }
 
-      // 2. Fetch from Firestore if available
-      if (db && active) {
-        try {
-          const q = query(collection(db, "videoReviews"));
-          const snap = await getDocs(q);
-          if (!active) return;
-
-          if (!snap.empty) {
-            const fetched = snap.docs.map(docSnap => ({
-              ...docSnap.data(),
-              id: docSnap.id,
-              createdAtMs: docSnap.data().createdAtMs || (docSnap.data().createdAt?.toMillis ? docSnap.data().createdAt.toMillis() : Date.now())
-            })).filter(v => !deletedIds.includes(v.id)).map(normalizeReview);
-
-            setVideos((prev) => {
-              const map = new Map<string, VideoReview>();
-              prev.forEach(v => map.set(v.id, v));
-              fetched.forEach(v => map.set(v.id, { ...map.get(v.id), ...v }));
-              const merged = Array.from(map.values());
-              merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-              return merged;
-            });
-            setIsLoading(false);
-
-            // Background sync-back to backend server to populate durable PostgreSQL
-            snap.docs.forEach((docSnap) => {
-              const rData = docSnap.data();
-              if (rData && docSnap.id) {
-                fetch("/api/videos/save-review", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ ...rData, id: docSnap.id })
-                }).catch(() => {});
-              }
-            });
-          } else if (videos.length === 0) {
-             setIsLoading(false);
-          }
-        } catch (err) {
-          console.warn("[useFeedPagination] Firestore fetch failed:", err);
-          setIsLoading(false);
-        }
-      } else {
-        // If no DB, we rely solely on server data
-        setTimeout(() => { if (active) setIsLoading(false); }, 1500);
-      }
+      setTimeout(() => { if (active) setIsLoading(false); }, 1500);
     };
 
     loadData();
 
-    // 3. Live Snapshot
-    let unsubscribe = () => {};
-    if (db) {
-      unsubscribe = onSnapshot(collection(db, "videoReviews"), (snap) => {
-        if (!active) return;
-        if (snap.empty) return;
-
-        const fetched = snap.docs.map(docSnap => ({
-          ...docSnap.data(),
-          id: docSnap.id,
-          createdAtMs: docSnap.data().createdAtMs || (docSnap.data().createdAt?.toMillis ? docSnap.data().createdAt.toMillis() : Date.now())
-        })).map(normalizeReview);
-
-        setVideos((prev) => {
-          const map = new Map<string, VideoReview>();
-          prev.forEach(v => map.set(v.id, v));
-          fetched.forEach(v => map.set(v.id, { ...map.get(v.id), ...v }));
-          const merged = Array.from(map.values());
-          merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-          return merged;
-        });
-      });
-    }
-
     return () => {
       active = false;
-      unsubscribe();
     };
-  }, [db]);
+  }, []);
 
   const loadMore = async () => {
     setHasMore(false);

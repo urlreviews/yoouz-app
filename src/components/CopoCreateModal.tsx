@@ -1,3 +1,4 @@
+import { db, doc, setDoc, serverTimestamp } from "../lib/firebase";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import {
@@ -24,8 +25,6 @@ import {
 } from "lucide-react";
 import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
-import { db } from "../lib/firebase";
-import { doc, setDoc } from "../lib/firebase";
 import { cleanForFirestore } from "../utils/cleanFirestore";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { initFaceDetection, detectFaceInVideo } from "../utils/faceDetector";

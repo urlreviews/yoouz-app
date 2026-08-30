@@ -44,8 +44,6 @@ import {
   Smartphone
 } from "lucide-react";
 import { UserProfile, NavSection } from "../types";
-import { db } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "../lib/firebase";
 
 interface CopoMoreViewProps {
   currentUser: UserProfile | null;
@@ -221,14 +219,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         body: JSON.stringify({ data: contactPayload })
       }).catch(() => {});
 
-      if (db) {
-        try {
-          await addDoc(collection(db, "contact_requests"), {
-            ...contactPayload,
-            createdAt: serverTimestamp()
-          });
-        } catch (fErr) {}
-      }
+      // db removed
 
       setSubmitSuccess(true);
       setContactDomain("");

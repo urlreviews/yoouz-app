@@ -116,6 +116,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     return resolvePlayableVideoSourcesCascade(video, cachedLocalUrl || localBlobUrl);
   }, [video, cachedLocalUrl, localBlobUrl]);
 
+  const hasUserStartedFeedRef = useRef(hasUserStartedFeed);
+  useEffect(() => {
+    hasUserStartedFeedRef.current = hasUserStartedFeed;
+  }, [hasUserStartedFeed]);
+
   // Read local IndexedDB blob URL if available
   useEffect(() => {
     let active = true;
@@ -166,7 +171,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+    const shouldPlay = isActive && hasUserStartedFeedRef.current && !isManuallyPaused;
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
@@ -217,7 +222,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
   // Record view count when video is active and playing
   useEffect(() => {
-    if (isActive && hasUserStartedFeed && video?.id) {
+    if (isActive && hasUserStartedFeedRef.current && video?.id) {
       const timer = setTimeout(() => {
         onRecordView?.(video.id);
       }, 500);
@@ -290,6 +295,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     if (onStartFeed && !hasUserStartedFeed) {
       onStartFeed();
+      hasUserStartedFeedRef.current = true;
     }
 
     triggerHaptic("light");
@@ -337,6 +343,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     // Direct user tap: activate feed session immediately
     if (onStartFeed && !hasUserStartedFeed) {
       onStartFeed();
+      hasUserStartedFeedRef.current = true;
     }
 
     // Synchronous direct DOM mutation inside the click handler to satisfy iOS Safari
@@ -490,7 +497,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               const t = e.currentTarget;
               
               // Safety: if it should be paused but is moving, force pause
-              const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+              const shouldPlay = isActive && hasUserStartedFeedRef.current && !isManuallyPaused;
               if (!shouldPlay && !t.paused) {
                 t.pause();
               }
@@ -505,7 +512,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+              const shouldPlay = isActive && hasUserStartedFeedRef.current && !isManuallyPaused;
               if (shouldPlay) {
                 if (videoRef.current?.paused) {
                   videoRef.current.play().catch(() => {});
@@ -517,7 +524,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               }
             }}
             onPlaying={() => {
-              const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+              const shouldPlay = isActive && hasUserStartedFeedRef.current && !isManuallyPaused;
               if (!shouldPlay) {
                 // Safety catch for inactive card
                 videoRef.current?.pause();

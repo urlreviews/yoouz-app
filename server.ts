@@ -33,7 +33,7 @@ import { eq, desc } from "drizzle-orm";
 
 dotenv.config();
 
-import { adminAuth, adminDb } from "./src/lib/firebase-admin.ts";
+const adminAuth = null; const adminDb = null; const adminStorage = null;
 let serverFirestoreDb: any = null;
 function getServerFirestoreDb() { return null; }
 const clientGetDoc: any = null;
@@ -3082,7 +3082,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       // 2. Sync to Firestore Admin if configured
       if (adminDb) {
         try {
-          const firestore = await import("firebase-admin/firestore");
+          const firestore = await null;
           await adminDb.collection("videoReviews").doc(videoId).set({
             views: firestore.FieldValue.increment(1),
             viewsCount: firestore.FieldValue.increment(1),

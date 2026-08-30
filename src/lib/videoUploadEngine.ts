@@ -1,5 +1,4 @@
-import { collection, addDoc, serverTimestamp, setDoc, doc } from "../lib/firebase";
-import { db } from "./firebase";
+import { db, doc, setDoc, serverTimestamp } from "./firebase";
 
 export async function uploadVideoReview(
   blob: Blob,

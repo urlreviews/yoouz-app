@@ -1,8 +1,5 @@
 import { VideoReview } from "../types";
 import { validateAndOptimizeVideoBlob, VideoMetadata } from "./videoCompression";
-import { db, storage } from "./firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "../lib/firebase";
-import { collection, doc, setDoc, getDocs, orderBy, query } from "../lib/firebase";
 
 // ==========================================
 // IndexedDB Local Video Vault
