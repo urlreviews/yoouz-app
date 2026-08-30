@@ -91,7 +91,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = videos[currentIndex] || videos[0];
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
 
   // Reset when navigating pages or sub-tabs
   useEffect(() => {

@@ -134,26 +134,15 @@ return () => {
 
   // Establish stable source to prevent mobile Safari/Chrome pipeline resets
   const [activeSource, setActiveSource] = useState<string>(() => {
-    return localBlobUrl || cachedLocalUrl || cascade[cascadeIndex] || "/api/videos/stream/default-review.mp4";
+    return localBlobUrl || cachedLocalUrl || cascade[0] || "/default-review.mp4";
   });
 
   useEffect(() => {
-    const resolved = localBlobUrl || cachedLocalUrl || cascade[cascadeIndex] || "/api/videos/stream/default-review.mp4";
-    
-    // If card is active and already playing or loaded, lock the source to prevent pipeline teardown
-    if (isActive && activeSource) {
-      // If we got a local blob, we can only safely hot-swap before playback starts
-      if (!isPlaying && !isVideoLoaded && localBlobUrl && activeSource !== localBlobUrl) {
-        setActiveSource(localBlobUrl);
-      }
-      return;
-    }
-
-    // Otherwise, we are free to keep the source fully up-to-date with preloaded blobs
+    const resolved = localBlobUrl || cachedLocalUrl || cascade[cascadeIndex] || "/default-review.mp4";
     if (resolved && resolved !== activeSource) {
       setActiveSource(resolved);
     }
-  }, [isActive, localBlobUrl, cachedLocalUrl, cascade, cascadeIndex, isPlaying, isVideoLoaded, activeSource]);
+  }, [localBlobUrl, cachedLocalUrl, cascade, cascadeIndex, activeSource]);
 
   const currentSource = activeSource;
 
@@ -177,7 +166,7 @@ return () => {
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+    const shouldPlay = isActive && !isManuallyPaused;
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
@@ -192,6 +181,7 @@ return () => {
             setIsBuffering(false);
           })
           .catch(() => {
+            // Autoplay blocked with sound: play muted cleanly
             el.muted = true;
             el.play().then(() => {
               setIsPlaying(true);
@@ -223,17 +213,17 @@ return () => {
         el.pause();
       } catch (e) {}
     };
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
+  }, [isActive, currentSource, isMuted, isManuallyPaused]);
 
   // Record view count when video is active and playing
   useEffect(() => {
-    if (isActive && hasUserStartedFeed && video?.id) {
+    if (isActive && video?.id) {
       const timer = setTimeout(() => {
         onRecordView?.(video.id);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [isActive, hasUserStartedFeed, video?.id, onRecordView]);
+  }, [isActive, video?.id, onRecordView]);
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
   useEffect(() => {
@@ -280,10 +270,17 @@ return () => {
   // Handle video error and advance through cascade
   const handleVideoError = useCallback(() => {
     console.warn(`[VideoFeedCard] Source failed for video ${video.id}: ${currentSource}`);
-    if (cascadeIndex < cascade.length - 1) {
-      setCascadeIndex((prev) => prev + 1);
-    }
-  }, [cascadeIndex, cascade.length, currentSource, video.id]);
+    setCascadeIndex((prev) => {
+      const next = prev + 1;
+      if (next < cascade.length) {
+        const nextSrc = cascade[next];
+        setActiveSource(nextSrc);
+        return next;
+      }
+      setActiveSource("/default-review.mp4");
+      return prev;
+    });
+  }, [cascade, currentSource, video.id]);
 
   // Click card to toggle Play / Pause (TikTok style)
   const togglePlayPause = (e?: React.MouseEvent) => {
@@ -291,29 +288,31 @@ return () => {
     const el = videoRef.current;
     if (!el) return;
 
-    // Direct user tap: activate feed session immediately
     if (onStartFeed && !hasUserStartedFeed) {
       onStartFeed();
     }
 
     triggerHaptic("light");
 
-    if (el.paused) {
+    if (el.paused || !isPlaying) {
       setIsManuallyPaused(false);
       el.muted = isMuted;
       if (!isMuted) el.volume = 1;
-      el.play()
-        .then(() => {
-          setIsPlaying(true);
-          if (e) triggerFeedback("play");
-        })
-        .catch(() => {
-          el.muted = true;
-          el.play().then(() => {
+      const playPromise = el.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
             setIsPlaying(true);
             if (e) triggerFeedback("play");
-          }).catch(() => {});
-        });
+          })
+          .catch(() => {
+            el.muted = true;
+            el.play().then(() => {
+              setIsPlaying(true);
+              if (e) triggerFeedback("play");
+            }).catch(() => {});
+          });
+      }
     } else {
       setIsManuallyPaused(true);
       el.pause();
@@ -388,13 +387,9 @@ return () => {
       lastTapTimeRef.current = 0;
       triggerDoubleTapLike(e.clientX, e.clientY);
     } else {
-      // First tap: debounce single tap so double tap isn't interrupted by play/pause
+      // Single tap: execute togglePlayPause directly and synchronously to preserve gesture token
       lastTapTimeRef.current = now;
-      if (singleTapTimeoutRef.current) clearTimeout(singleTapTimeoutRef.current);
-      singleTapTimeoutRef.current = setTimeout(() => {
-        togglePlayPause(e);
-        singleTapTimeoutRef.current = null;
-      }, 250);
+      togglePlayPause(e);
     }
   };
 
@@ -484,8 +479,8 @@ return () => {
           onTimeUpdate={(e) => {
             const t = e.currentTarget;
             
-            // Safety: if it should be paused but is moving (browser heuristic), force pause
-            const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+            // Safety: if it should be paused but is moving, force pause
+            const shouldPlay = isActive && !isManuallyPaused;
             if (!shouldPlay && !t.paused) {
               t.pause();
             }
@@ -500,21 +495,21 @@ return () => {
           }}
           onCanPlay={() => {
             setIsVideoLoaded(true);
-            const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+            const shouldPlay = isActive && !isManuallyPaused;
             if (shouldPlay) {
               if (videoRef.current?.paused) {
                 videoRef.current.play().catch(() => {});
               }
             } else {
-              // Force pause if not active or feed not started or manually paused
+              // Force pause if not active or manually paused
               videoRef.current?.pause();
               setIsPlaying(false);
             }
           }}
           onPlaying={() => {
-            const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+            const shouldPlay = isActive && !isManuallyPaused;
             if (!shouldPlay) {
-              // Safety catch for browser-level autoplay heuristics or race conditions
+              // Safety catch for inactive card
               videoRef.current?.pause();
               setIsPlaying(false);
               return;

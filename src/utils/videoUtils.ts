@@ -143,6 +143,9 @@ export function resolvePlayableVideoSourcesCascade(
   }
 
   // 7. Guaranteed static default MP4 assets
+  if (!sources.includes("/default-review.mp4")) {
+    sources.push("/default-review.mp4");
+  }
   if (!sources.includes("/api/videos/stream/default-review.mp4")) {
     sources.push("/api/videos/stream/default-review.mp4");
   }
