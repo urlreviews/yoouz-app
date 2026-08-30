@@ -112,7 +112,6 @@ export const CopoAuthPrompt: React.FC<{
   const [tempUser, setTempUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [simulationHint, setSimulationHint] = useState<string>("");
 
   const copy = getAuthContextCopy(intent, customTitle, customSubtitle);
 
@@ -126,7 +125,6 @@ export const CopoAuthPrompt: React.FC<{
 
     setIsLoading(true);
     setErrorMessage("");
-    setSimulationHint("");
 
     try {
       const res = await fetch("/api/auth/send-magic-link", {
@@ -141,10 +139,6 @@ export const CopoAuthPrompt: React.FC<{
       const data = await res.json();
       if (!res.ok || data.error) {
         throw new Error(data.error || "Failed to send magic link");
-      }
-
-      if (data.previewCode) {
-        setSimulationHint(`Demo Preview Code: ${data.previewCode}`);
       }
 
       setStep('code');
@@ -371,12 +365,6 @@ export const CopoAuthPrompt: React.FC<{
                 className="w-full h-14 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-center font-mono text-2xl tracking-[8px] focus:outline-none focus:border-zinc-300 focus:ring-2 focus:ring-white/10 transition-all"
               />
             </div>
-
-            {simulationHint && (
-              <div className="p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-300 text-xs text-center font-medium">
-                {simulationHint}
-              </div>
-            )}
 
             {errorMessage && (
               <div className="p-3 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">

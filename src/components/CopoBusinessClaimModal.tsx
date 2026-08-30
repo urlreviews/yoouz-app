@@ -65,7 +65,6 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSentSuccess, setEmailSentSuccess] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [previewCode, setPreviewCode] = useState<string | null>(null);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailStatusMessage, setEmailStatusMessage] = useState<string | null>(null);
@@ -126,9 +125,6 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
       if (response.ok && data.success) {
         setEmailSentSuccess(true);
         setEmailStatusMessage(data.message);
-        if (data.previewCode) {
-          setPreviewCode(data.previewCode);
-        }
       } else {
         setEmailError(data.error || 'Failed to dispatch verification email.');
       }
@@ -439,20 +435,6 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                     <p className="text-[11.5px] text-zinc-400 leading-relaxed">
                       We sent a verification code to <strong className="text-white">{businessEmail}</strong>. Enter the 6-digit code below:
                     </p>
-                    {previewCode && (
-                      <div className="pt-2 flex items-center justify-between border-t border-zinc-800">
-                        <span className="text-[10px] text-zinc-400 font-bold">Demo Mode Test Code:</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOtpCode(previewCode);
-                          }}
-                          className="px-2 py-0.5 rounded-md bg-zinc-800 text-white text-[10px] font-mono font-bold hover:bg-zinc-700 cursor-pointer border border-zinc-700"
-                        >
-                          Auto-fill: {previewCode}
-                        </button>
-                      </div>
-                    )}
                   </div>
 
                   <form onSubmit={handleVerifyCode} className="space-y-3">

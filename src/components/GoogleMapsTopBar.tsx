@@ -153,11 +153,11 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
           <Grid className="w-5 h-5" />
         </div>
 
-        {/* User Google Avatar 'J' */}
+        {/* User Account Avatar */}
         <div
-          id="google-user-avatar"
+          id="user-account-avatar"
           className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 text-white font-bold text-base flex items-center justify-center shadow-md cursor-pointer hover:border-white transition-all"
-          title="Google Account: 4samet@gmail.com"
+          title="Account Profile"
         >
           J
         </div>

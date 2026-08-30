@@ -141,7 +141,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   Account Registration
                 </h3>
                 <ul className="list-disc pl-5 space-y-1 text-zinc-400">
-                  <li>You must authenticate using an authorized sign-in provider (such as Google Sign-In) to create an account.</li>
+                  <li>You must authenticate using your verified email address to create an account.</li>
                   <li>You are responsible for maintaining the security of your account and restricting unauthorized access to your device.</li>
                 </ul>
               </section>
@@ -261,9 +261,9 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 </p>
                 <div className="space-y-2.5">
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <p className="font-bold text-white">Account Information via Google Sign-In</p>
+                    <p className="font-bold text-white">Account Information & Verified Email</p>
                     <p className="text-zinc-400">
-                      When you log in using Google OAuth, we receive your basic Google account profile data, which includes your name, email address, and profile picture. We do not collect or store passwords.
+                      When you log in using your verified email address, we receive your account profile data, which includes your name, email address, and profile picture. We do not collect or store passwords.
                     </p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">

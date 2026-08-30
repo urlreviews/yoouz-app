@@ -944,9 +944,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Authentication</span>
-                    <h4 className="text-xs font-black text-white">Google OAuth 2.0 Security</h4>
+                    <h4 className="text-xs font-black text-white">Passwordless Email Security</h4>
                     <p className="text-[11px] text-zinc-400 leading-normal">
-                      We never store passwords. All logins use trusted Google Sign-In with cryptographic access tokens and encrypted HTTPS transport.
+                      We never store passwords. All logins use secure verification codes sent to your verified email with encrypted HTTPS transport.
                     </p>
                   </div>
 

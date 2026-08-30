@@ -790,13 +790,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
           {!currentUser ? (
             <div className="bg-zinc-900 md:bg-zinc-950 border border-zinc-800 md:border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-zinc-950 md:bg-zinc-900 border border-zinc-800 md:border-zinc-800 flex items-center justify-center shrink-0 shadow-2xs">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
-                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.19v3.15C3.17 21.32 7.22 24 12 24z" />
-                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.5-.38-2.27s.13-1.55.38-2.27H6.58H1.19C.43 8.1 0 9.98 0 12s.43 3.9 1.19 5.42l4.09-3.15z" />
-                    <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.61 4.58 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.22 0 3.17 2.68 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-                  </svg>
+                <div className="w-9 h-9 rounded-full bg-zinc-950 md:bg-zinc-900 border border-zinc-800 md:border-zinc-800 flex items-center justify-center shrink-0 shadow-2xs text-zinc-400">
+                  <MessageSquare className="w-4 h-4 text-zinc-300" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-white md:text-white truncate">Sign in to join the conversation</p>

@@ -3163,10 +3163,12 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const originHost = host || req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
       const magicLinkUrl = `${protocol}://${originHost}/?magic_token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
+      let emailDispatched = false;
+      let emailErrorDetails = "";
       if (resend) {
         try {
           const fromAddress = process.env.RESEND_FROM_EMAIL || "Yoouz <onboarding@resend.dev>";
-          await resend.emails.send({
+          const sendResult = await resend.emails.send({
             from: fromAddress,
             to: [cleanEmail],
             subject: `Your Yoouz sign-in code: ${otpCode}`,
@@ -3202,19 +3204,17 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
               </div>
             `
           });
+          emailDispatched = true;
         } catch (resendErr: any) {
-          console.warn("Resend email delivery warning:", resendErr?.message);
+          console.error("Resend email delivery error:", resendErr?.message || resendErr);
+          emailErrorDetails = resendErr?.message || "Delivery failed";
         }
       }
 
       return res.json({
         success: true,
         email: cleanEmail,
-        simulated: isSandboxOrSimulated,
-        previewCode: isSandboxOrSimulated ? otpCode : undefined,
-        message: isSandboxOrSimulated
-          ? `Magic link generated! Test code is ${otpCode}`
-          : `Sign-in verification code sent to ${cleanEmail}.`
+        message: `Sign-in verification code sent to ${cleanEmail}.`
       });
     } catch (err: any) {
       console.error("send user magic-link error:", err);
@@ -3538,11 +3538,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         email: cleanEmail,
         placeId: cleanPlaceId,
         magicLinkUrl,
-        simulated: isSandboxOrSimulated,
-        previewCode: isSandboxOrSimulated ? otpCode : undefined,
-        message: isSandboxOrSimulated 
-          ? `Demo simulation: Magic link generated! Test code is ${otpCode}`
-          : `Official verification code dispatched via Resend to ${cleanEmail}.`
+        message: `Official verification code dispatched via Resend to ${cleanEmail}.`
       });
     } catch (err: any) {
       console.error("send-magic-link error:", err);

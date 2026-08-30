@@ -40,7 +40,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
   
   // 6-Digit Code State
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
-  const [previewCode, setPreviewCode] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Auto-detect matching place by email domain
@@ -177,9 +176,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
       if (response.ok && data.success) {
         setStep('code');
         setOtpDigits(['', '', '', '', '', '']);
-        if (data.previewCode) {
-          setPreviewCode(data.previewCode);
-        }
         setTimeout(() => {
           inputRefs.current[0]?.focus();
         }, 100);
@@ -391,23 +387,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   We sent a 6-digit code to <strong className="text-zinc-200">{email}</strong>
                 </p>
               </div>
-
-              {previewCode && (
-                <div className="p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-between text-xs">
-                  <span className="text-zinc-400 font-medium">Demo test code:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const digits = previewCode.split('');
-                      setOtpDigits(digits);
-                      verifyCode(previewCode);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-zinc-800 text-white text-xs font-mono font-bold hover:bg-zinc-700 cursor-pointer border border-zinc-700 shadow-2xs"
-                  >
-                    Auto-fill: {previewCode}
-                  </button>
-                </div>
-              )}
 
               <form onSubmit={(e) => { e.preventDefault(); verifyCode(otpDigits.join('')); }} className="space-y-4">
                 <div className="flex items-center justify-center gap-2">
