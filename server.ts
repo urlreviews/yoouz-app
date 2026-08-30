@@ -3814,6 +3814,19 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         console.error("Postgres delete error:", err);
       }
 
+      // 1b. Delete from Bunny Database (libSQL)
+      const bunnyClient = getBunnyDb();
+      if (bunnyClient) {
+        try {
+          await bunnyClient.execute({
+            sql: `DELETE FROM videoReviews WHERE id = ?`,
+            args: [videoId]
+          });
+        } catch (bErr) {
+          console.warn("BunnyDB single delete error:", bErr);
+        }
+      }
+
       // 2. Remove local video files from uploads and uploads/videos
       const serverUploadsVideosDir = path.join(process.cwd(), "uploads", "videos");
       const candidates = [
@@ -3880,6 +3893,21 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       } catch (err) {
         console.error("Postgres bulk delete error:", err);
+      }
+
+      // Delete from Bunny Database (libSQL)
+      const bunnyClient = getBunnyDb();
+      if (bunnyClient) {
+        try {
+          for (const id of videoIds) {
+            await bunnyClient.execute({
+              sql: `DELETE FROM videoReviews WHERE id = ?`,
+              args: [id]
+            });
+          }
+        } catch (bErr) {
+          console.warn("BunnyDB bulk delete error:", bErr);
+        }
       }
 
       const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
@@ -3954,6 +3982,19 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         const table = getNoSqlTable('chats');
         if (table) await db.delete(table);
       } catch(e) {}
+
+      // Clear tables in Bunny Database (libSQL)
+      const bunnyClient = getBunnyDb();
+      if (bunnyClient) {
+        try {
+          await bunnyClient.execute("DELETE FROM videoReviews");
+          await bunnyClient.execute("DELETE FROM comments");
+          await bunnyClient.execute("DELETE FROM likes");
+          await bunnyClient.execute("DELETE FROM bookmarks");
+        } catch (bErr) {
+          console.warn("BunnyDB purge notice:", bErr);
+        }
+      }
       
       // 2. Remove all files from uploads/ directory
       if (fs.existsSync(uploadsDir)) {

@@ -1045,6 +1045,26 @@ export function App() {
       };
       try {
         localStorage.setItem("copo_user_profile", JSON.stringify(nextProfile));
+        const userUid = auth.currentUser?.uid || (nextProfile.email ? nextProfile.email.replace(/[^a-zA-Z0-9]/g, '_') : 'guest');
+        
+        // Mirror to BunnyDB
+        fetch(`/api/nosql/users/${userUid}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            data: {
+              uid: userUid,
+              name: nextProfile.name,
+              email: nextProfile.email,
+              avatar: nextProfile.avatar,
+              bio: nextProfile.bio,
+              location: nextProfile.location || "",
+              lastLogin: Date.now()
+            },
+            merge: true
+          })
+        }).catch(() => {});
+
         if (auth.currentUser && db) {
           setDoc(doc(db, "users", auth.currentUser.uid), {
             uid: auth.currentUser.uid,
@@ -1084,6 +1104,14 @@ export function App() {
   };
 
   const handleDeleteProfile = async () => {
+    const userUid = auth.currentUser?.uid || (currentUser?.email ? currentUser.email.replace(/[^a-zA-Z0-9]/g, '_') : null);
+    if (userUid) {
+      // Delete from BunnyDB
+      fetch(`/api/nosql/users/${userUid}`, {
+        method: "DELETE"
+      }).catch(() => {});
+    }
+
     if (auth.currentUser) {
       try {
         const uid = auth.currentUser.uid;
@@ -1353,6 +1381,32 @@ export function App() {
         prev.forEach(p => map.set(p.id, p));
         return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
       });
+
+      // 1. Fetch from BunnyDB / Server NoSQL
+      const fetchServerPlaces = async () => {
+        try {
+          const res = await fetch("/api/nosql/places");
+          if (res.ok) {
+            const serverList = await res.json();
+            if (Array.isArray(serverList) && serverList.length > 0) {
+              const filtered = serverList.filter((p: any) => !deletedIds.includes(p.id));
+              setPlaces((prev) => {
+                let followedPlaces = [];
+                try { followedPlaces = JSON.parse(localStorage.getItem("copo_followed_places") || "[]"); } catch(e){}
+                const map = new Map<string, Place>();
+                prev.forEach(p => map.set(p.id, p));
+                filtered.forEach((p: any) => {
+                  const existing = map.get(p.id);
+                  const isFollowed = followedPlaces.includes(p.id);
+                  map.set(p.id, { ...existing, ...p, isFollowed });
+                });
+                return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+              });
+            }
+          }
+        } catch (e) {}
+      };
+      fetchServerPlaces();
 
       if (!db) return;
       const placesRef = collection(db, "places");
@@ -3165,6 +3219,17 @@ export function App() {
                 onPurgeAllVideos={handleAdminPurgeAllVideos}
                 onUpdateVideo={(updatedVid) => {
                   setVideos((prev) => prev.map((v) => (v.id === updatedVid.id ? updatedVid : v)));
+                  // Mirror to BunnyDB and Server
+                  fetch("/api/videos/save-review", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedVid)
+                  }).catch(() => {});
+                  fetch(`/api/nosql/videoReviews/${updatedVid.id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ data: updatedVid, merge: true })
+                  }).catch(() => {});
                   if (db) {
                     setDoc(doc(db, "videoReviews", updatedVid.id), cleanForFirestore(updatedVid), { merge: true }).catch(() => {});
                   }
@@ -3173,12 +3238,24 @@ export function App() {
                 onBulkDeletePlaces={handleAdminBulkDeletePlaces}
                 onUpdatePlace={(updatedPlace) => {
                   handleUpdatePlace(updatedPlace);
+                  // Mirror to BunnyDB
+                  fetch(`/api/nosql/places/${updatedPlace.id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ data: updatedPlace, merge: true })
+                  }).catch(() => {});
                   if (db) {
                     setDoc(doc(db, "places", updatedPlace.id), cleanForFirestore(updatedPlace), { merge: true }).catch(() => {});
                   }
                 }}
                 onAddPlace={(newPlace) => {
                   setPlaces((prev) => [newPlace, ...prev.filter((p) => p.id !== newPlace.id)]);
+                  // Mirror to BunnyDB
+                  fetch(`/api/nosql/places/${newPlace.id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ data: newPlace, merge: true })
+                  }).catch(() => {});
                   if (db) {
                     setDoc(doc(db, "places", newPlace.id), cleanForFirestore(newPlace), { merge: true }).catch(() => {});
                   }

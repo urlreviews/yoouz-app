@@ -1138,10 +1138,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         key={p.id}
                         className="flex items-center justify-between p-3 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 transition-all"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <AdminPlaceLogo place={p} size="sm" />
-                          <div className="min-w-0">
-                            <h4 className="font-bold text-sm text-white truncate">{p.name}</h4>
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <AdminPlaceLogo place={p} size="sm" className="shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-sm text-white truncate" title={p.name}>{p.name}</h4>
                             <p className="text-xs text-zinc-400 truncate">
                               {p.category} • {p.city || p.address}
                             </p>
@@ -1818,23 +1818,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col justify-between space-y-4"
                     >
                       <div className="space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedPlaceIds.includes(place.id)}
-                              onChange={() => handleTogglePlaceSelection(place.id)}
-                              className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white"
-                            />
+                        <div className="flex items-start gap-3 w-full">
+                          <input
+                            type="checkbox"
+                            checked={selectedPlaceIds.includes(place.id)}
+                            onChange={() => handleTogglePlaceSelection(place.id)}
+                            className="w-4 h-4 mt-1.5 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white shrink-0"
+                          />
 
-                            <AdminPlaceLogo place={place} size="md" />
+                          <AdminPlaceLogo place={place} size="md" className="shrink-0 mt-0.5" />
 
-                            <div className="min-w-0">
-                              <h3 className="font-black text-white text-base truncate">{place.name}</h3>
-                              <p className="text-xs text-zinc-400 truncate">
-                                {place.category} • {place.city || place.address}
-                              </p>
-                            </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 
+                              className="font-bold text-white text-sm sm:text-base leading-snug break-words line-clamp-2" 
+                              title={place.name}
+                            >
+                              {place.name}
+                            </h3>
+                            <p className="text-xs text-zinc-400 truncate mt-0.5">
+                              {place.category} • {place.city || place.address}
+                            </p>
                           </div>
                         </div>
 
@@ -2181,7 +2184,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <div>
                 <h2 className="text-2xl font-black text-white tracking-tight">Database & Cloud Integrations</h2>
                 <p className="text-sm text-zinc-400">
-                  Direct connectivity, backup exports, and system state diagnostics.
+                  Direct connectivity, backup exports, and system state diagnostics for Bunny.net and Cloud Sync.
                 </p>
               </div>
 
@@ -2189,14 +2192,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-white animate-pulse" />
+                    <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
                     <div>
-                      <h3 className="font-bold text-white text-base">Firestore Database Connected</h3>
-                      <p className="text-xs text-zinc-400">Auto-Detect Long Polling & Resilient Offline Cache Active</p>
+                      <h3 className="font-bold text-white text-base">Cloud Sync & NoSQL Active</h3>
+                      <p className="text-xs text-zinc-400">Firestore Cloud + Bunny.net Edge libSQL & Video Storage</p>
                     </div>
                   </div>
-                  <span className="text-xs font-mono bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 text-zinc-300">
-                    STATUS: HEALTHY
+                  <span className="text-xs font-mono bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 text-emerald-400 font-bold">
+                    CONNECTED & SYNCED
                   </span>
                 </div>
 
@@ -2216,11 +2219,36 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
+              {/* Bunny.net Readiness & Table Mapping Status */}
+              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">🐰</span>
+                    <h3 className="font-bold text-white text-base">Bunny.net Database Migration Checklist</h3>
+                  </div>
+                  <span className="text-xs px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg font-bold">
+                    10 Tables Provisioned
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  All 10 core application tables (<code className="text-zinc-300">users</code>, <code className="text-zinc-300">places</code>, <code className="text-zinc-300">videoReviews</code>, <code className="text-zinc-300">chats</code>, <code className="text-zinc-300">notifications</code>, <code className="text-zinc-300">comments</code>, <code className="text-zinc-300">likes</code>, <code className="text-zinc-300">bookmarks</code>, <code className="text-zinc-300">follows</code>, <code className="text-zinc-300">businessClaims</code>) are mapped and ready to operate independently.
+                </p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs pt-1">
+                  {["users", "places", "videoReviews", "chats (DMs)", "notifications", "comments", "likes", "bookmarks", "follows", "businessClaims"].map((t) => (
+                    <div key={t} className="p-2.5 bg-zinc-950 rounded-xl border border-zinc-800/80 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="font-mono text-[11px] text-zinc-300 truncate">{t}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Backup & Tools */}
               <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
                 <h3 className="font-bold text-white text-base">Database Backup & Recovery</h3>
                 <p className="text-sm text-zinc-400">
-                  Export complete collections as formatted JSON for external backups or offline analysis.
+                  Export complete collections as formatted JSON for external backups, archiving, or offline analysis.
                 </p>
 
                 <div className="flex flex-wrap items-center gap-3 pt-2">

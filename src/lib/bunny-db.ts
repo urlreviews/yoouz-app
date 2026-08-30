@@ -151,6 +151,16 @@ export async function initBunnyDbSchema() {
       videoId TEXT,
       data TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS contact_requests (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      email TEXT,
+      category TEXT,
+      domain TEXT,
+      message TEXT,
+      data TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`
   ];
 

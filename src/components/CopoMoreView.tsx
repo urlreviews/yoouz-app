@@ -202,7 +202,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         base64: file.base64
       }));
 
-      await addDoc(collection(db, "contact_requests"), {
+      const contactPayload = {
         name: contactName.trim(),
         email: contactEmail.trim(),
         category: contactCategory,
@@ -210,8 +210,25 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         message: contactMessage.trim(),
         attachments: attachments,
         userId: currentUser ? currentUser.email : "guest",
-        createdAt: serverTimestamp()
-      });
+        createdAt: new Date().toISOString()
+      };
+
+      const reqId = `req-${Date.now()}`;
+      // Sync to BunnyDB
+      fetch(`/api/nosql/contact_requests/${reqId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: contactPayload })
+      }).catch(() => {});
+
+      if (db) {
+        try {
+          await addDoc(collection(db, "contact_requests"), {
+            ...contactPayload,
+            createdAt: serverTimestamp()
+          });
+        } catch (fErr) {}
+      }
 
       setSubmitSuccess(true);
       setContactDomain("");

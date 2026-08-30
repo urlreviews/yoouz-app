@@ -189,7 +189,14 @@ export function subscribeToNotifications(
  * Mark a single notification as read
  */
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-  if (!db || !notificationId) return;
+  if (!notificationId) return;
+  fetch(`/api/nosql/notifications/${notificationId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: { isRead: true }, merge: true })
+  }).catch(() => {});
+
+  if (!db) return;
   try {
     const notifRef = doc(db, "notifications", notificationId);
     await updateDoc(notifRef, { isRead: true });
@@ -202,13 +209,21 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
  * Mark all notifications as read
  */
 export async function markAllNotificationsAsRead(notificationIds: string[]): Promise<void> {
-  if (!db || notificationIds.length === 0) return;
+  if (notificationIds.length === 0) return;
   for (const id of notificationIds) {
-    try {
-      const notifRef = doc(db, "notifications", id);
-      await updateDoc(notifRef, { isRead: true });
-    } catch (err) {
-      console.warn("Error updating notification:", err);
+    fetch(`/api/nosql/notifications/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: { isRead: true }, merge: true })
+    }).catch(() => {});
+
+    if (db) {
+      try {
+        const notifRef = doc(db, "notifications", id);
+        await updateDoc(notifRef, { isRead: true });
+      } catch (err) {
+        console.warn("Error updating notification:", err);
+      }
     }
   }
 }
@@ -217,7 +232,12 @@ export async function markAllNotificationsAsRead(notificationIds: string[]): Pro
  * Delete a notification
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
-  if (!db || !notificationId) return;
+  if (!notificationId) return;
+  fetch(`/api/nosql/notifications/${notificationId}`, {
+    method: "DELETE"
+  }).catch(() => {});
+
+  if (!db) return;
   try {
     const notifRef = doc(db, "notifications", notificationId);
     await deleteDoc(notifRef);
@@ -580,22 +600,35 @@ export async function sendChatMessageToFirestore(
  * Mark a thread as read for current user
  */
 export async function markChatThreadAsRead(threadId: string, currentUser: UserProfile): Promise<void> {
-  if (!db || !currentUser || !threadId) return;
+  if (!currentUser || !threadId) return;
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
   const userHandle = (currentUser.name || currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
   const userName = (currentUser.name || "").toLowerCase().trim();
 
+  const unreadCountsUpdates: Record<string, number> = {};
+  if (userEmail) unreadCountsUpdates[userEmail] = 0;
+  if (emailPrefix) unreadCountsUpdates[emailPrefix] = 0;
+  if (userHandle) unreadCountsUpdates[userHandle] = 0;
+  if (userName) unreadCountsUpdates[userName] = 0;
+  if (currentUser.userId) unreadCountsUpdates[currentUser.userId] = 0;
+
+  // Mirror to BunnyDB
+  fetch(`/api/nosql/chats/${threadId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      data: {
+        unreadCount: 0,
+        unreadCounts: unreadCountsUpdates
+      },
+      merge: true
+    })
+  }).catch(() => {});
+
+  if (!db) return;
   try {
     const threadDocRef = doc(db, "chats", threadId);
-    
-    const unreadCountsUpdates: Record<string, number> = {};
-    if (userEmail) unreadCountsUpdates[userEmail] = 0;
-    if (emailPrefix) unreadCountsUpdates[emailPrefix] = 0;
-    if (userHandle) unreadCountsUpdates[userHandle] = 0;
-    if (userName) unreadCountsUpdates[userName] = 0;
-    if (currentUser.userId) unreadCountsUpdates[currentUser.userId] = 0;
-
     await setDoc(threadDocRef, { 
       unreadCount: 0,
       unreadCounts: unreadCountsUpdates 
@@ -606,10 +639,17 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
 }
 
 /**
- * Delete a chat thread from Firestore
+ * Delete a chat thread from Firestore & BunnyDB
  */
 export async function deleteChatThreadFromFirestore(threadId: string): Promise<void> {
-  if (!db || !threadId) return;
+  if (!threadId) return;
+  
+  // Mirror to BunnyDB
+  fetch(`/api/nosql/chats/${threadId}`, {
+    method: "DELETE"
+  }).catch(() => {});
+
+  if (!db) return;
   try {
     const threadDocRef = doc(db, "chats", threadId);
     await deleteDoc(threadDocRef);
