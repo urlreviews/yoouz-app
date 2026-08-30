@@ -1,8 +1,11 @@
 const fs = require('fs');
 let code = fs.readFileSync('server.ts', 'utf8');
 
-const injectCode = `
-  function injectOpenGraphTags(html: string, meta: any) {
+const startIndex = code.indexOf('function injectOpenGraphTags(html: string, meta: any) {');
+const endIndex = code.indexOf('  async function resolveMetadataForRequest(req: any) {');
+
+if (startIndex !== -1 && endIndex !== -1) {
+  const replacement = `function injectOpenGraphTags(html: string, meta: any) {
     let headInject = \`
     <title>\${meta.title}</title>
     <meta name="description" content="\${meta.description}" />
@@ -37,14 +40,17 @@ const injectCode = `
       \`;
     }
 
+    // Strip out all existing title and og/twitter meta tags so they don't conflict
     return html
-      .replace(/<title>.*?<\\/title>/, '')
+      .replace(/<title>.*?<\\/title>/g, '')
+      .replace(/<meta\\s+(?:name|property)=["'](?:description|keywords|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
+      .replace(/<link\\s+rel=["']canonical["'][^>]*>/gi, '')
       .replace('</head>', \`\${headInject}</head>\`);
   }
 `;
-
-if (!code.includes('function injectOpenGraphTags')) {
-  code = code.replace('async function resolveMetadataForRequest(req: any) {', injectCode + '\\n  async function resolveMetadataForRequest(req: any) {');
+  code = code.substring(0, startIndex) + replacement + code.substring(endIndex);
   fs.writeFileSync('server.ts', code);
-  console.log("Injected injectOpenGraphTags");
+  console.log("Fixed injectOpenGraphTags");
+} else {
+  console.log("Could not find start or end index");
 }

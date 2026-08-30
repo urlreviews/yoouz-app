@@ -6788,7 +6788,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
 
       // Default fallback for non-video OG images
-      const fallbackBuf = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
+      const ogBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
+      let fallbackBuf;
+      if (fs.existsSync(ogBannerPath)) {
+         fallbackBuf = await sharp(ogBannerPath).resize(1200, 630, { fit: 'cover' }).png().toBuffer();
+      } else {
+         fallbackBuf = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
+      }
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       return res.end(fallbackBuf);
@@ -6835,11 +6841,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
       `;
     }
 
+    // Strip out all existing title and og/twitter meta tags so they don't conflict
     return html
-      .replace(/<title>.*?<\/title>/, '')
+      .replace(/<title>.*?<\/title>/g, '')
+      .replace(/<meta\s+(?:name|property)=["'](?:description|keywords|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
+      .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
       .replace('</head>', `${headInject}</head>`);
   }
-
   async function resolveMetadataForRequest(req: any) {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
