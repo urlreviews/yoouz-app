@@ -1,21 +1,29 @@
-import { db } from "./src/db/index.ts";
-import { firestore_video_reviews } from "./src/db/schema.ts";
-import { eq } from "drizzle-orm";
+const admin = require('firebase-admin');
+const serviceAccount = require('./firebase-applet-config.json');
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
+
+const db = admin.firestore();
 
 async function run() {
   const ids = ["rev-1787767013276-ee969", "rev-1787510734251-tcadw"];
   for (const id of ids) {
-    const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, id));
-    if (rec) {
+    const doc = await db.collection("videoReviews").doc(id).get();
+    if (doc.exists) {
+      const data = doc.data();
       console.log(`\n--- Video: ${id} ---`);
-      const data = rec.data as any;
       console.log(`coverUrl: ${data.coverUrl ? data.coverUrl.substring(0, 50) + "..." : "none"}`);
       console.log(`thumbnailUrl: ${data.thumbnailUrl ? data.thumbnailUrl.substring(0, 50) + "..." : "none"}`);
       console.log(`videoThumbnail: ${data.videoThumbnail ? data.videoThumbnail.substring(0, 50) + "..." : "none"}`);
       console.log(`videoPreviewUrl: ${data.videoPreviewUrl ? data.videoPreviewUrl.substring(0, 50) + "..." : "none"}`);
     } else {
-      console.log(`\n--- Video: ${id} --- NOT FOUND IN DB`);
+      console.log(`\n--- Video: ${id} --- NOT FOUND IN FIRESTORE`);
     }
   }
 }
+
 run().catch(console.error);

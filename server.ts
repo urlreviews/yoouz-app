@@ -6711,6 +6711,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 if (snap.exists) foundVideo = { id: snap.id, ...snap.data() };
               } catch (e) {}
             }
+            if (!foundVideo && typeof readReviewsIndex === 'function') {
+                try {
+                    const localList = readReviewsIndex();
+                    foundVideo = localList.find((v: any) => v.id === videoId);
+                } catch (e) {}
+            }
             if (!foundVideo && typeof getDb !== 'undefined' && getDb()) {
               try {
                 const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, videoId));
