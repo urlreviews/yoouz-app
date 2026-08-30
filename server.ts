@@ -2517,41 +2517,33 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
       let filePath = candidatePaths.find((c) => fs.existsSync(c));
 
-      // 🐰 Bunny CDN Instant Edge Redirect / Failover (0ms latency, handles global edge streaming directly)
-      const bunnyPullZone = process.env.BUNNY_PULL_ZONE_URL || (process.env.BUNNY_STORAGE_ZONE_NAME ? `https://${process.env.BUNNY_STORAGE_ZONE_NAME}.b-cdn.net` : "");
-      if (!filePath && bunnyPullZone && rawFilename && rawFilename !== "default-review.mp4") {
-        const cleanPullDomain = bunnyPullZone.replace(/\/+$/, "");
-        const ext = rawFilename.includes(".") ? "" : ".mp4";
-        const cdnTargetUrl = `${cleanPullDomain}/videos/${rawFilename}${ext}`;
-        return res.redirect(302, cdnTargetUrl);
-      }
-
-      // Fast non-blocking background recovery: If file is missing, trigger async recovery without blocking streaming
+      // Firestore Video Recovery: If file is not yet on server disk, pull chunks from Firestore
       if (!filePath && !failedRecoveryCache.has(base) && adminDb) {
-        // Run recovery asynchronously in background
-        (async () => {
-          try {
-            const docRef = adminDb.collection("videoReviews").doc(base);
-            const docSnap = await docRef.get().catch(() => null);
-            if (docSnap && docSnap.exists) {
-              const reviewData = docSnap.data();
-              if (reviewData?.videoData) {
-                const rawB64 = reviewData.videoData.includes("base64,")
-                  ? reviewData.videoData.split("base64,")[1]
-                  : reviewData.videoData;
-                const buffer = Buffer.from(rawB64, "base64");
-                const ext = (reviewData.videoMimeType || "").includes("webm") ? ".webm" : ".mp4";
-                const restoredPath = path.join(serverUploadsDir, `${base}${ext}`);
-                fs.writeFileSync(restoredPath, buffer);
-                console.log(`✅ [Server] Background-restored video ${base} (${buffer.length} bytes)`);
-              }
+        try {
+          console.log(`🔍 [Server] File missing: ${base}. Querying Firestore recovery once...`);
+          const docRef = adminDb.collection("videoReviews").doc(base);
+          const docSnap = await docRef.get().catch(() => null);
+          if (docSnap && docSnap.exists) {
+            const reviewData = docSnap.data();
+            if (reviewData?.videoData) {
+              const rawB64 = reviewData.videoData.includes("base64,")
+                ? reviewData.videoData.split("base64,")[1]
+                : reviewData.videoData;
+              const buffer = Buffer.from(rawB64, "base64");
+              const ext = (reviewData.videoMimeType || "").includes("webm") ? ".webm" : ".mp4";
+              const restoredPath = path.join(serverUploadsDir, `${base}${ext}`);
+              fs.writeFileSync(restoredPath, buffer);
+              filePath = restoredPath;
+              console.log(`✅ [Server] Reconstituted video ${base} from Firestore (${buffer.length} bytes)`);
             } else {
               failedRecoveryCache.add(base);
             }
-          } catch (e) {
+          } else {
             failedRecoveryCache.add(base);
           }
-        })();
+        } catch (e) {
+          failedRecoveryCache.add(base);
+        }
       }
 
       if (!filePath || !fs.existsSync(filePath)) {

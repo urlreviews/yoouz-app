@@ -302,6 +302,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       // If video element had a previous error or no source, advance cascade immediately
       if (el.error) {
         handleVideoError();
+        return;
       }
 
       const playPromise = el.play();
