@@ -113,8 +113,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
   // Fallback video cascade list
   const cascade = React.useMemo(() => {
-    return resolvePlayableVideoSourcesCascade(video);
-  }, [video]);
+    return resolvePlayableVideoSourcesCascade(video, cachedLocalUrl || localBlobUrl);
+  }, [video, cachedLocalUrl, localBlobUrl]);
 
   // Read local IndexedDB blob URL if available
   useEffect(() => {
@@ -127,7 +127,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         }
       });
     }
-return () => {
+    return () => {
       active = false;
     };
   }, [video?.id]);
@@ -298,6 +298,12 @@ return () => {
       setIsManuallyPaused(false);
       el.muted = isMuted;
       if (!isMuted) el.volume = 1;
+
+      // If video element had a previous error or no source, advance cascade immediately
+      if (el.error) {
+        handleVideoError();
+      }
+
       const playPromise = el.play();
       if (playPromise !== undefined) {
         playPromise
@@ -310,7 +316,9 @@ return () => {
             el.play().then(() => {
               setIsPlaying(true);
               if (e) triggerFeedback("play");
-            }).catch(() => {});
+            }).catch(() => {
+              handleVideoError();
+            });
           });
       }
     } else {

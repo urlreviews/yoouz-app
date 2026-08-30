@@ -1,7 +1,18 @@
 import { VideoReview } from "../types";
 
-// Bunny CDN Pull Zone Configuration (from Vite environment or default CDN edge)
-const DEFAULT_BUNNY_PULL_ZONE = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_PULL_ZONE_URL) || "";
+// Bunny CDN Pull Zone Configuration (Dynamic with environment and API status support)
+let activeBunnyPullZone = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_PULL_ZONE_URL) || "https://rev1.b-cdn.net";
+
+if (typeof window !== "undefined") {
+  fetch("/api/cdn/status")
+    .then((r) => r.json())
+    .then((data) => {
+      if (data?.pullZoneUrl && typeof data.pullZoneUrl === "string") {
+        activeBunnyPullZone = data.pullZoneUrl.replace(/\/+$/, "");
+      }
+    })
+    .catch(() => {});
+}
 
 /**
  * Normalizes video URLs to ensure flawless cross-origin and cross-device playback.
@@ -109,22 +120,42 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(video.videoData);
   }
 
-  // 3. Primary videoUrl
+  // 3. Primary videoUrl (if already pointing to Bunny CDN or external CDN, prioritize directly)
+  if (video.videoUrl && (video.videoUrl.includes("b-cdn.net") || video.videoUrl.includes("bunnycdn.com"))) {
+    const norm = normalizeVideoUrl(video.videoUrl);
+    if (norm && !sources.includes(norm)) sources.push(norm);
+  }
+
+  // 4. Direct Bunny CDN Pull Zone Edge URLs (Sub-10ms global edge delivery)
+  if (activeBunnyPullZone) {
+    const cleanZone = activeBunnyPullZone.replace(/\/+$/, "");
+    
+    // Check if videoUrl had a specific filename (e.g. rev-xxx.mp4)
+    if (video.videoUrl) {
+      const match = video.videoUrl.match(/rev-[a-zA-Z0-9_\-\.]+/);
+      if (match && match[0]) {
+        let fn = match[0];
+        if (!fn.includes(".")) fn += ".mp4";
+        const cdnUrl = `${cleanZone}/videos/${fn}`;
+        if (!sources.includes(cdnUrl)) sources.push(cdnUrl);
+      }
+    }
+
+    if (video.id) {
+      const cdnUrlMp4 = `${cleanZone}/videos/${video.id}.mp4`;
+      const cdnUrlWebm = `${cleanZone}/videos/${video.id}.webm`;
+      if (!sources.includes(cdnUrlMp4)) sources.push(cdnUrlMp4);
+      if (!sources.includes(cdnUrlWebm)) sources.push(cdnUrlWebm);
+    }
+  }
+
+  // 5. Normalized Primary videoUrl
   const normalizedPrimary = normalizeVideoUrl(video.videoUrl);
   if (normalizedPrimary && !sources.includes(normalizedPrimary)) {
     sources.push(normalizedPrimary);
   }
 
-  // 4. Bunny CDN Pull Zone Stream (if configured)
-  if (DEFAULT_BUNNY_PULL_ZONE && video.id) {
-    const cleanZone = DEFAULT_BUNNY_PULL_ZONE.replace(/\/$/, "");
-    const bunnyUrl = `${cleanZone}/videos/${video.id}.mp4`;
-    if (!sources.includes(bunnyUrl)) {
-      sources.push(bunnyUrl);
-    }
-  }
-
-  // 5. Fallback video URLs from document
+  // 6. Fallback video URLs from document
   if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
     for (const fb of video.fallbackVideoUrls) {
       const norm = normalizeVideoUrl(fb);
@@ -134,7 +165,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 6. Local Server streaming endpoint
+  // 7. Local Server streaming endpoint
   if (video.id) {
     const serverStream = `/api/videos/stream/${video.id}.mp4`;
     if (!sources.includes(serverStream)) {
@@ -142,7 +173,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 7. Static default MP4 asset
+  // 8. Static default MP4 asset
   if (!sources.includes("/default-review.mp4")) {
     sources.push("/default-review.mp4");
   }

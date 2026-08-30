@@ -2458,6 +2458,17 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
   });
 
+  // Serve static public assets with CORS and byte-range support
+  app.use(express.static(path.join(process.cwd(), "public"), {
+    setHeaders: (res, filePath) => {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Accept-Ranges", "bytes");
+      if (filePath.endsWith(".mp4") || filePath.endsWith(".webm") || filePath.endsWith(".mov")) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    }
+  }));
+
   // Configure Cloudinary
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -2465,7 +2476,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
 
-  // Fast in-memory recovery cache to prevent slow repeated Firestore queries on streaming Range requests
+  // Fast in-memory recovery cache to prevent slow repeated queries
   const failedRecoveryCache = new Set<string>();
 
   // Universal Video Streaming Handler with HTTP 206 Range & HEAD support (Required for iOS Safari & Mobile Chrome)
@@ -2506,70 +2517,45 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
       let filePath = candidatePaths.find((c) => fs.existsSync(c));
 
-      // Auto-healing Firestore Video Recovery: If file is not yet on server disk, pull chunks from Firestore
-      if (!filePath && !failedRecoveryCache.has(base)) {
-        try {
-          let reviewData: any = null;
-          let chunkDocs: any[] = [];
+      // 🐰 Bunny CDN Instant Edge Redirect / Failover (0ms latency, handles global edge streaming directly)
+      const bunnyPullZone = process.env.BUNNY_PULL_ZONE_URL || (process.env.BUNNY_STORAGE_ZONE_NAME ? `https://${process.env.BUNNY_STORAGE_ZONE_NAME}.b-cdn.net` : "");
+      if (!filePath && bunnyPullZone && rawFilename && rawFilename !== "default-review.mp4") {
+        const cleanPullDomain = bunnyPullZone.replace(/\/+$/, "");
+        const ext = rawFilename.includes(".") ? "" : ".mp4";
+        const cdnTargetUrl = `${cleanPullDomain}/videos/${rawFilename}${ext}`;
+        return res.redirect(302, cdnTargetUrl);
+      }
 
-          if (adminDb) {
-            console.log(`🔍 [Server] File missing: ${base}. Querying Firestore recovery once...`);
+      // Fast non-blocking background recovery: If file is missing, trigger async recovery without blocking streaming
+      if (!filePath && !failedRecoveryCache.has(base) && adminDb) {
+        // Run recovery asynchronously in background
+        (async () => {
+          try {
             const docRef = adminDb.collection("videoReviews").doc(base);
             const docSnap = await docRef.get().catch(() => null);
             if (docSnap && docSnap.exists) {
-              reviewData = docSnap.data();
-            }
-            const chunksSnap = await docRef.collection("chunks").get().catch(() => null);
-            if (chunksSnap && !chunksSnap.empty) {
-              chunkDocs = chunksSnap.docs.map((d: any) => d.data());
-            }
-          }
-
-          if (chunkDocs.length > 0) {
-            chunkDocs.sort((a: any, b: any) => (a.index || 0) - (b.index || 0));
-            const buffers: Buffer[] = [];
-            let detectedMime = "video/mp4";
-            for (const cd of chunkDocs) {
-              if (cd.data) {
-                const b64 = cd.data.includes("base64,") ? cd.data.split("base64,")[1] : cd.data;
-                buffers.push(Buffer.from(b64, "base64"));
-                if (cd.mimeType) detectedMime = cd.mimeType;
+              const reviewData = docSnap.data();
+              if (reviewData?.videoData) {
+                const rawB64 = reviewData.videoData.includes("base64,")
+                  ? reviewData.videoData.split("base64,")[1]
+                  : reviewData.videoData;
+                const buffer = Buffer.from(rawB64, "base64");
+                const ext = (reviewData.videoMimeType || "").includes("webm") ? ".webm" : ".mp4";
+                const restoredPath = path.join(serverUploadsDir, `${base}${ext}`);
+                fs.writeFileSync(restoredPath, buffer);
+                console.log(`✅ [Server] Background-restored video ${base} (${buffer.length} bytes)`);
               }
-            }
-
-            if (buffers.length > 0) {
-              const totalBuffer = Buffer.concat(buffers);
-              const ext = detectedMime.includes("webm") ? ".webm" : ".mp4";
-              const restoredPath = path.join(serverUploadsDir, `${base}${ext}`);
-              fs.writeFileSync(restoredPath, totalBuffer);
-              filePath = restoredPath;
-              console.log(`✅ [Server] Reconstituted video ${base} from ${buffers.length} Firestore chunks (${totalBuffer.length} bytes)`);
             } else {
               failedRecoveryCache.add(base);
             }
-          } else if (reviewData && reviewData.videoData) {
-            const rawB64 = reviewData.videoData.includes("base64,")
-              ? reviewData.videoData.split("base64,")[1]
-              : reviewData.videoData;
-            const buffer = Buffer.from(rawB64, "base64");
-            const ext = (reviewData.videoMimeType || "").includes("webm") ? ".webm" : ".mp4";
-            const restoredPath = path.join(serverUploadsDir, `${base}${ext}`);
-            fs.writeFileSync(restoredPath, buffer);
-            filePath = restoredPath;
-            console.log(`✅ [Server] Reconstituted video ${base} from Firestore root document (${buffer.length} bytes)`);
-          } else {
-            // No data or chunks found in Firestore for this ID
+          } catch (e) {
             failedRecoveryCache.add(base);
-            console.log(`⚠️ [Server] No recovery data in Firestore for ${base}. Added to bypass list.`);
           }
-        } catch (recoveryErr: any) {
-          console.warn("Firestore video recovery warning:", recoveryErr.message);
-          failedRecoveryCache.add(base);
-        }
+        })();
       }
 
       if (!filePath || !fs.existsSync(filePath)) {
-        // Fallback to high-performance default video asset
+        // Fallback to high-performance default video asset immediately (0ms wait)
         const fallbackCandidates = [
           path.join(process.cwd(), "public", "default-review.mp4"),
           path.join(serverUploadsDir, "default-review.mp4"),
@@ -2579,7 +2565,6 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       }
 
       if (!filePath || !fs.existsSync(filePath)) {
-        // Emergency fallback: create a minimal valid mp4 stream or return 404
         const pubDefault = path.join(process.cwd(), "public", "default-review.mp4");
         if (fs.existsSync(pubDefault)) {
           filePath = pubDefault;
