@@ -543,7 +543,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
             // Virtual sliding window (YouTube Shorts architecture): only mount decoders for active and immediately adjacent cards
-            const isCardNear = Math.abs(idx - currentIndex) <= 1;
+            const isCardNear = Math.abs(idx - currentIndex) <= 2;
 
             return (
               <VideoFeedCard

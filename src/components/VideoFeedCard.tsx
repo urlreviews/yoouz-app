@@ -143,11 +143,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   });
 
   useEffect(() => {
-    const resolved = localBlobUrl || cachedLocalUrl || cascade[cascadeIndex] || "/default-review.mp4";
-    if (resolved && resolved !== activeSource) {
-      setActiveSource(resolved);
+    const newCascadeSource = cascade[cascadeIndex] || "/default-review.mp4";
+    const resolvedBlob = localBlobUrl || cachedLocalUrl;
+    
+    if (resolvedBlob && resolvedBlob !== activeSource) {
+      // If we are already playing a network source smoothly, avoid disruptive swap.
+      // Otherwise, swap to the much faster local blob.
+      if (!isPlaying || !isActive) {
+        setActiveSource(resolvedBlob);
+      }
+    } else if (!resolvedBlob && newCascadeSource !== activeSource && !activeSource.startsWith("blob:")) {
+      // Error recovery: cascade index advanced, we must swap
+      setActiveSource(newCascadeSource);
     }
-  }, [localBlobUrl, cachedLocalUrl, cascade, cascadeIndex, activeSource]);
+  }, [localBlobUrl, cachedLocalUrl, cascade, cascadeIndex, activeSource, isActive, isPlaying]);
 
   const currentSource = activeSource;
 
@@ -188,6 +197,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           .catch(() => {
             // Autoplay blocked with sound: play muted cleanly
             el.muted = true;
+            onForceMute?.();
             el.play().then(() => {
               setIsPlaying(true);
               setIsBuffering(false);
@@ -320,6 +330,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           })
           .catch(() => {
             el.muted = true;
+            onForceMute?.();
             el.play().then(() => {
               setIsPlaying(true);
               if (e) triggerFeedback("play");
