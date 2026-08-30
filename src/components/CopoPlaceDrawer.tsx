@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, getDocs, limit } from "../lib/firebase";
-import { db } from '../lib/firebase';
 import {
   X,
   MapPin,
