@@ -665,13 +665,16 @@ return () => {
         </div>
       )}
 
-      {/* Paused Center Play Button - shown whenever video is paused or feed hasn't started */}
-      {isActive && (isManuallyPaused || !hasUserStartedFeed) && !showPlayPauseFeedback && (
+      {/* Paused Center Play Button - shown whenever active card is paused or feed hasn't started */}
+      {isActive && (!isPlaying || isManuallyPaused || !hasUserStartedFeed) && !showPlayPauseFeedback && (
         <button
           type="button"
           id={`copo-play-center-btn-${video.id}`}
-          onClick={togglePlayPause}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-black/65 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shadow-2xl animate-in zoom-in-90 duration-150 pointer-events-auto cursor-pointer active:scale-90 hover:scale-105 transition-transform"
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePlayPause(e);
+          }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-black/70 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-2xl animate-in zoom-in-90 duration-150 pointer-events-auto cursor-pointer active:scale-90 hover:scale-105 transition-transform"
           aria-label="Play video"
         >
           <Play className="w-8 h-8 fill-white translate-x-0.5" />
