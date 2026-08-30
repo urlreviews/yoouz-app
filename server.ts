@@ -6718,7 +6718,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
             }
             
             if (foundVideo) {
-              let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || foundVideo.author?.avatar || foundVideo.avatar || "";
+              let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
               if (!thumbArg.startsWith('data:image')) {
                  try {
                     const tr = await fetch(thumbArg);
@@ -6910,10 +6910,6 @@ function injectOpenGraphTags(html: string, meta: any) {
             }
             if (thumbArg.startsWith('data:image')) {
                thumbArg = ""; // Prevent massive URLs
-            }
-            if (!thumbArg && (foundVideo.author?.avatar || foundVideo.avatar)) {
-               thumbArg = foundVideo.author?.avatar || foundVideo.avatar;
-               if (thumbArg && thumbArg.startsWith('data:image')) thumbArg = "";
             }
             if (thumbArg) {
                queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
