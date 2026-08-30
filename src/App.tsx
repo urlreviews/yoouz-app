@@ -40,6 +40,7 @@ import { getRawVideoBlobFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount } from "./utils/placeUtils";
 import { getCleanLogoUrl } from "./utils/logoUtils";
 import { resolveVideoPosterUrl } from "./utils/videoUtils";
+import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import {
   sendSocialNotification,
   subscribeToNotifications,
@@ -637,6 +638,42 @@ export function App() {
 
   // Firebase Auth state listener and multi-tab reactive sync
   useEffect(() => {
+    // 1. Process Magic link token if coming from email
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const magicToken = urlParams.get("magic_token");
+      const magicEmail = urlParams.get("email");
+
+      if (magicToken && magicEmail) {
+        fetch("/api/auth/verify-magic-link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: magicEmail, token: magicToken })
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.user) {
+              const fName = data.user.firstName || magicEmail.split("@")[0];
+              const lName = data.user.lastName || "";
+              const avatarSvg = generateGoogleLetterAvatarSvg(fName, 128);
+              const profile: UserProfile = {
+                name: data.user.name || fName,
+                email: data.user.email || magicEmail,
+                avatar: avatarSvg,
+                bio: "Food explorer linking real businesses and websites with authentic 60-second video reviews.",
+                memberSince: "August 2026"
+              };
+              setCurrentUser(profile);
+              localStorage.setItem("copo_user_profile", JSON.stringify(profile));
+              // Clean query parameters from URL
+              const cleanUrl = window.location.pathname;
+              window.history.replaceState({}, "", cleanUrl);
+            }
+          })
+          .catch((err) => console.warn("Magic token verification error:", err));
+      }
+    } catch (e) {}
+
     // 1. Process Google redirect result if returning from full-page redirect
     handleRedirectResult().then((redirectedUser) => {
       if (redirectedUser) {
@@ -694,13 +731,14 @@ export function App() {
           }
         }
         if (!validAvatar) {
-          validAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-            user.displayName || user.email?.split("@")[0] || "User"
-          )}&background=27272a&color=fff&bold=true&size=128`;
+          validAvatar = generateGoogleLetterAvatarSvg(
+            user.displayName || user.email?.split("@")[0] || "User",
+            128
+          );
         }
 
         const profileObj: UserProfile = {
-          name: user.displayName || savedProfile.name || user.email?.split("@")[0] || "Google User",
+          name: user.displayName || savedProfile.name || user.email?.split("@")[0] || "User",
           email: user.email || savedProfile.email || "",
           avatar: validAvatar,
           bio: savedProfile.bio || "Food explorer linking real businesses and websites with authentic 60-second video reviews.",

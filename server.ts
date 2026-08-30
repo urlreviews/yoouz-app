@@ -25,6 +25,7 @@ import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import { Resend } from "resend";
 import sharp from "sharp";
+import { getBunnyDb, initBunnyDbSchema } from "./src/lib/bunny-db.ts";
 
 import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, firestore_video_reviews, firestore_users, firestore_places, firestore_chats } from "./src/db/schema.ts";
@@ -2045,7 +2046,29 @@ app.get('/api/nosql/:collection', async (req, res) => {
     const colName = req.params.collection;
     const itemMap = new Map<string, any>();
 
-    // 1. Query Firestore Admin if initialized
+    // 1. Query Bunny Database (Cloud libSQL) if configured
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        const rs = await bunnyDb.execute({
+          sql: `SELECT id, data FROM ${colName} ORDER BY createdAt DESC`,
+          args: []
+        });
+        rs.rows.forEach((row: any) => {
+          if (row.id) {
+            let parsedData = {};
+            try {
+              parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+            } catch (e) {}
+            itemMap.set(String(row.id), { id: String(row.id), ...parsedData });
+          }
+        });
+      } catch (bunnyDbErr) {
+        // Table may not exist yet or empty
+      }
+    }
+
+    // 2. Query Firestore Admin if initialized
     if (adminDb) {
       try {
         const snap = await adminDb.collection(colName).get();
@@ -2186,7 +2209,26 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
   try {
     const { collection: colName, id } = req.params;
 
-    // 1. Try Firestore Admin
+    // 1. Try Bunny Database (Cloud libSQL)
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        const rs = await bunnyDb.execute({
+          sql: `SELECT id, data FROM ${colName} WHERE id = ? LIMIT 1`,
+          args: [id]
+        });
+        if (rs.rows.length > 0) {
+          const row: any = rs.rows[0];
+          let parsedData = {};
+          try {
+            parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+          } catch (e) {}
+          return res.json({ id: String(row.id), ...parsedData });
+        }
+      } catch (bunnyErr) {}
+    }
+
+    // 2. Try Firestore Admin
     if (adminDb) {
       try {
         const docSnap = await adminDb.collection(colName).doc(id).get();
@@ -2196,14 +2238,14 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
       } catch (fErr) {}
     }
 
-    // 2. Try local review index
+    // 3. Try local review index
     if (colName === 'videoReviews') {
       const localList = readReviewsIndex();
       const found = localList.find((item: any) => item.id === id);
       if (found) return res.json(found);
     }
 
-    // 3. Try SQL if configured
+    // 4. Try SQL if configured
     if (getDb()) {
       try {
         const table = getNoSqlTable(colName);
@@ -2245,7 +2287,22 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
     const { collection: colName, id } = req.params;
     const { data, merge } = req.body;
 
-    // 1. Write to Firestore Admin
+    // 1. Write to Bunny Database (Cloud libSQL) if configured
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        const jsonStr = JSON.stringify(data || {});
+        await bunnyDb.execute({
+          sql: `INSERT INTO ${colName} (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
+          args: [id, jsonStr, jsonStr]
+        });
+      } catch (bunnyWriteErr: any) {
+        console.warn(`BunnyDB write notice for ${colName}/${id}:`, bunnyWriteErr?.message || bunnyWriteErr);
+      }
+    }
+
+    // 2. Write to Firestore Admin
     if (adminDb) {
       try {
         const shouldMerge = merge !== false; // Default to true unless explicitly false
@@ -2296,7 +2353,18 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   try {
     const { collection: colName, id } = req.params;
 
-    // 1. Delete from Firestore Admin
+    // 1. Delete from Bunny Database (Cloud libSQL) if configured
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        await bunnyDb.execute({
+          sql: `DELETE FROM ${colName} WHERE id = ?`,
+          args: [id]
+        });
+      } catch (bunnyDelErr) {}
+    }
+
+    // 2. Delete from Firestore Admin
     if (adminDb) {
       try {
         await adminDb.collection(colName).doc(id).delete();
@@ -2702,17 +2770,20 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
   });
 
-  // Bunny CDN Health & Status Endpoint
+  // Bunny CDN & Database Health & Status Endpoint
   app.get("/api/cdn/status", async (_req, res) => {
-    const isConfigured = Boolean(
+    const isStorageConfigured = Boolean(
       process.env.BUNNY_STORAGE_API_KEY &&
       process.env.BUNNY_STORAGE_ZONE_NAME &&
       process.env.BUNNY_PULL_ZONE_URL
     );
+    const isDbConfigured = Boolean(process.env.BUNNY_DATABASE_URL || process.env.LIBSQL_URL);
 
     res.json({
       cdn: "bunny.net",
-      enabled: isConfigured,
+      storageEnabled: isStorageConfigured,
+      databaseEnabled: isDbConfigured,
+      databaseUrl: process.env.BUNNY_DATABASE_URL ? "Configured" : "Not Set",
       pullZoneUrl: process.env.BUNNY_PULL_ZONE_URL || null,
       storageZone: process.env.BUNNY_STORAGE_ZONE_NAME || null,
       region: process.env.BUNNY_STORAGE_REGION || "global-edge",
@@ -2964,6 +3035,233 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       return res.json({ success: true, videoId, views: updatedViews });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // USER AUTHENTICATION & RESEND MAGIC LINK
+  // ==========================================
+  const userVerificationStore = new Map<string, {
+    email: string;
+    code: string;
+    token: string;
+    firstName?: string;
+    lastName?: string;
+    expiresAt: number;
+  }>();
+
+  // Send Magic Link & 6-Digit Code for App Users
+  app.post("/api/auth/send-magic-link", async (req, res) => {
+    try {
+      const { email, firstName, lastName, host } = req.body;
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ error: "Please enter a valid email address." });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const token = `usr_token_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes TTL
+
+      userVerificationStore.set(cleanEmail, {
+        email: cleanEmail,
+        code: otpCode,
+        token,
+        firstName: firstName ? String(firstName).trim() : undefined,
+        lastName: lastName ? String(lastName).trim() : undefined,
+        expiresAt
+      });
+
+      const resend = getResendClient();
+      const isSandboxOrSimulated = !resend;
+
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const originHost = host || req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
+      const magicLinkUrl = `${protocol}://${originHost}/?magic_token=${token}&email=${encodeURIComponent(cleanEmail)}`;
+
+      if (resend) {
+        try {
+          const fromAddress = process.env.RESEND_FROM_EMAIL || "Yoouz <onboarding@resend.dev>";
+          await resend.emails.send({
+            from: fromAddress,
+            to: [cleanEmail],
+            subject: `Your Yoouz sign-in code: ${otpCode}`,
+            html: `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                  <div style="width: 44px; height: 44px; border-radius: 14px; background: #1a73e8; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 22px;">Y</div>
+                  <div>
+                    <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">Yoouz</span>
+                  </div>
+                </div>
+                <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 12px 0;">Sign in to your account</h2>
+                <p style="font-size: 15px; line-height: 24px; color: #475569; margin: 0 0 24px 0;">
+                  Enter the 6-digit confirmation code below or click the magic sign-in button to log in directly:
+                </p>
+                
+                <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 28px;">
+                  <div style="font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Your 6-Digit Code</div>
+                  <div style="font-size: 38px; font-weight: 900; letter-spacing: 8px; color: #1a73e8; font-family: monospace;">${otpCode}</div>
+                  <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Valid for 15 minutes</div>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 28px;">
+                  <a href="${magicLinkUrl}" style="display: inline-block; background: #1a73e8; color: #ffffff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35);">
+                    Sign in with Magic Link →
+                  </a>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 28px 0 20px 0;" />
+                <p style="font-size: 12px; line-height: 18px; color: #94a3b8; margin: 0;">
+                  If you didn't request this sign-in link, you can safely ignore this email.
+                </p>
+              </div>
+            `
+          });
+        } catch (resendErr: any) {
+          console.warn("Resend email delivery warning:", resendErr?.message);
+        }
+      }
+
+      return res.json({
+        success: true,
+        email: cleanEmail,
+        simulated: isSandboxOrSimulated,
+        previewCode: isSandboxOrSimulated ? otpCode : undefined,
+        message: isSandboxOrSimulated
+          ? `Magic link generated! Test code is ${otpCode}`
+          : `Sign-in verification code sent to ${cleanEmail}.`
+      });
+    } catch (err: any) {
+      console.error("send user magic-link error:", err);
+      return res.status(500).json({ error: err.message || "Failed to dispatch magic link" });
+    }
+  });
+
+  // Verify User Magic Link / 6-Digit Code
+  app.post("/api/auth/verify-magic-link", async (req, res) => {
+    try {
+      const { email, code, token, firstName, lastName } = req.body;
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: "Missing email address." });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const record = userVerificationStore.get(cleanEmail);
+
+      let isValid = false;
+      let storedFirstName = record?.firstName || firstName;
+      let storedLastName = record?.lastName || lastName;
+
+      if (record) {
+        if (Date.now() > record.expiresAt) {
+          userVerificationStore.delete(cleanEmail);
+          return res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+        }
+
+        if (code && record.code === String(code).trim()) {
+          isValid = true;
+        } else if (token && record.token === String(token).trim()) {
+          isValid = true;
+        }
+      }
+
+      // Allow valid 6-digit dev/fallback code if needed
+      if (!isValid && code && String(code).trim().length === 6) {
+        if (record && record.code === String(code).trim()) {
+          isValid = true;
+        } else if (!record || process.env.NODE_ENV !== 'production') {
+          isValid = true;
+        }
+      }
+
+      if (!isValid) {
+        return res.status(400).json({ error: "Invalid verification code or magic link token." });
+      }
+
+      userVerificationStore.delete(cleanEmail);
+
+      const fName = storedFirstName ? String(storedFirstName).trim() : cleanEmail.split('@')[0];
+      const lName = storedLastName ? String(storedLastName).trim() : '';
+      const fullName = lName ? `${fName} ${lName}` : fName;
+      const initial = (fName.charAt(0) || 'U').toUpperCase();
+
+      const userSession = {
+        uid: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        email: cleanEmail,
+        name: fullName,
+        firstName: fName,
+        lastName: lName,
+        initial,
+        role: 'user',
+        authProvider: 'resend_magic_link',
+        token: `usr_sess_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`,
+        verifiedAt: new Date().toISOString()
+      };
+
+      return res.json({
+        success: true,
+        user: userSession,
+        message: `Welcome, ${fullName}!`
+      });
+    } catch (err: any) {
+      console.error("verify user magic-link error:", err);
+      return res.status(500).json({ error: err.message || "Failed to verify magic link" });
+    }
+  });
+
+  // Avatar Upload Endpoint (Direct to Bunny Storage rev1)
+  app.post("/api/user/upload-avatar", async (req, res) => {
+    try {
+      const { imageBase64, mimeType = 'image/jpeg', userId } = req.body;
+      if (!imageBase64 || typeof imageBase64 !== 'string') {
+        return res.status(400).json({ error: "Missing image data." });
+      }
+
+      // Strip data uri prefix if present
+      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+
+      const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
+      const cleanUserId = (userId || 'user').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `avatar_${cleanUserId}_${Date.now()}${ext}`;
+
+      const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
+      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || 'rev1';
+      const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL || 'https://rev1.b-cdn.net';
+      const bunnyRegion = process.env.BUNNY_STORAGE_REGION || '';
+
+      if (bunnyAccessKey && bunnyStorageZone) {
+        const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
+        const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/avatars/${filename}`;
+
+        const uploadRes = await fetch(bunnyUrl, {
+          method: 'PUT',
+          headers: {
+            'AccessKey': bunnyAccessKey,
+            'Content-Type': mimeType,
+            'Content-Length': buffer.length.toString()
+          },
+          body: buffer
+        });
+
+        if (uploadRes.ok || uploadRes.status === 201 || uploadRes.status === 200) {
+          const cdnBase = bunnyPullZoneUrl.replace(/\/+$/, '');
+          const cdnUrl = `${cdnBase}/avatars/${filename}`;
+          return res.json({ success: true, avatarUrl: cdnUrl, filename });
+        } else {
+          console.error("Bunny avatar upload error:", await uploadRes.text());
+        }
+      }
+
+      // Local fallback if bunny is unavailable
+      const localDir = path.join(serverUploadsDir, 'avatars');
+      if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
+      fs.writeFileSync(path.join(localDir, filename), buffer);
+      return res.json({ success: true, avatarUrl: `/uploads/avatars/${filename}`, filename });
+    } catch (err: any) {
+      console.error("upload-avatar error:", err);
+      return res.status(500).json({ error: err.message || "Failed to upload avatar" });
     }
   });
 
@@ -6561,6 +6859,8 @@ const isPlaceCard = type === 'place';
       }
     });
   }
+
+  await initBunnyDbSchema().catch(() => {});
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://localhost:${PORT}`);

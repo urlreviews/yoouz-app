@@ -28,6 +28,7 @@ import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
 import { countries } from "../utils/countries";
 import { locationData } from "../utils/locationData";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { triggerHaptic } from "../utils/haptics";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 
@@ -213,7 +214,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   let effectiveAvatar = "";
   if (isOwner && currentUser?.avatar && !currentUser.avatar.includes("dicebear")) {
     effectiveAvatar = currentUser.avatar;
-  } else if (liveUserProfile?.avatar && (liveUserProfile.avatar.includes("googleusercontent.com") || (!liveUserProfile.avatar.includes("dicebear") && !liveUserProfile.avatar.includes("ui-avatars")))) {
+  } else if (liveUserProfile?.avatar && (!liveUserProfile.avatar.includes("dicebear") && !liveUserProfile.avatar.includes("ui-avatars"))) {
     effectiveAvatar = liveUserProfile.avatar;
   } else if (videoWithAuthenticAvatar?.author?.avatar) {
     effectiveAvatar = videoWithAuthenticAvatar.author.avatar;
@@ -230,16 +231,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     effectiveAvatar = author.avatar;
   }
 
-  // If the avatar URL looks like a video review artifact or invalid placeholder, fallback to clean initials
+  // If the avatar URL looks like a video review artifact or invalid placeholder, fallback to Google-style 1-letter avatar
   if (
     !effectiveAvatar ||
     effectiveAvatar.includes("unsplash") ||
     effectiveAvatar.includes("dicebear") ||
     effectiveAvatar.includes("/api/videos/") ||
     effectiveAvatar.includes(".mp4") ||
-    effectiveAvatar.includes("rev-")
+    effectiveAvatar.includes("rev-") ||
+    effectiveAvatar.includes("ui-avatars.com")
   ) {
-    effectiveAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || currentUser?.name || "User")}&background=27272a&color=fff&bold=true&size=128`;
+    effectiveAvatar = generateGoogleLetterAvatarSvg(author.name || currentUser?.name || "User", 128);
   }
 
   let effectiveBanner = isOwner && currentUser?.banner 
@@ -362,7 +364,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = currentUser?.name || "Reviewer";
     
@@ -370,11 +374,36 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     const locParts = [editCity.trim(), editState.trim(), editCountry.trim()].filter(Boolean);
     const combinedLocation = locParts.join(", ");
 
+    let finalAvatar = editAvatar || currentUser?.avatar;
+
+    // If user selected a new photo (base64), upload it directly to Bunny CDN storage
+    if (editAvatar && editAvatar.startsWith('data:image/')) {
+      setIsSavingProfile(true);
+      try {
+        const uploadRes = await fetch('/api/user/upload-avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: editAvatar,
+            userId: currentUser?.email || currentUser?.name || 'user'
+          })
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadData.avatarUrl) {
+          finalAvatar = uploadData.avatarUrl;
+        }
+      } catch (uploadErr) {
+        console.warn("Avatar upload to Bunny CDN fallback:", uploadErr);
+      } finally {
+        setIsSavingProfile(false);
+      }
+    }
+
     if (onUpdateProfile) {
       onUpdateProfile({
         name: cleanName,
         bio: editBio.trim(),
-        avatar: editAvatar || currentUser?.avatar,
+        avatar: finalAvatar,
         banner: editBanner || currentUser?.banner,
         location: combinedLocation
       });
