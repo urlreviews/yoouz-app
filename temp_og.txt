@@ -1,0 +1,121 @@
+  app.get(['/api/og-image/icon', '/favicon.svg'], (_req: any, res: any) => {
+    const iconSvg = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="512" height="512" rx="140" fill="#18181b"/>
+      <g transform="translate(86, 86) scale(14.166)">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
+      </g>
+    </svg>`;
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.send(iconSvg);
+  });
+    app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
+    try {
+      let type = (req.query.type as string) || "homepage";
+      let title = (req.query.title as string) || "";
+      let subtitle = (req.query.subtitle as string) || "";
+      let badge = (req.query.badge as string) || "";
+      let rating = parseFloat(req.query.rating as string) || 0;
+      let author = (req.query.author as string) || "";
+      let caption = (req.query.caption as string) || "";
+      let placeName = (req.query.placeName as string) || (req.query.place as string) || "";
+      let category = (req.query.category as string) || "";
+      let city = (req.query.city as string) || "";
+      let reviewsCount = parseInt(req.query.reviewsCount as string, 10) || 12;
+
+      let thumbBuf;
+      let reviewerPhotoBase64 = '';
+      let avatarBase64 = '';
+      let bannerBase64 = '';
+      let logoBase64 = '';
+
+      if (type === 'video') {
+         const videoId = req.query.id;
+         if (videoId) {
+            let foundVideo: any = null;
+            if (typeof adminDb !== 'undefined' && adminDb) {
+              try {
+                const snap = await adminDb.collection("videoReviews").doc(videoId).get();
+                if (snap.exists) foundVideo = { id: snap.id, ...snap.data() };
+              } catch (e) {}
+            }
+            if (!foundVideo && typeof readReviewsIndex === 'function') {
+              try {
+                const localList = readReviewsIndex();
+                foundVideo = localList.find((v: any) => v.id === videoId);
+              } catch(e) {}
+            }
+            if (!foundVideo && typeof getDb !== 'undefined' && getDb()) {
+              try {
+                const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, videoId));
+                if (rec) foundVideo = { id: rec.id, ...rec.data };
+              } catch (e) {}
+            }
+            
+            if (foundVideo) {
+              let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || foundVideo.author?.avatar || foundVideo.avatar || "";
+              if (thumbArg.startsWith('data:image')) {
+                 thumbBuf = Buffer.from(thumbArg.split(',')[1], 'base64');
+              } else if (thumbArg.startsWith('http')) {
+                 try {
+                    const tr = await fetch(thumbArg);
+                    thumbBuf = Buffer.from(await tr.arrayBuffer());
+                 } catch(e) {}
+              }
+            }
+         }
+
+         if (!thumbBuf && req.query.thumbUrl) {
+           const tUrl = req.query.thumbUrl as string;
+           if (tUrl.startsWith('data:image')) {
+             thumbBuf = Buffer.from(tUrl.split(',')[1], 'base64');
+           } else {
+             try {
+                const tr = await fetch(tUrl);
+                thumbBuf = Buffer.from(await tr.arrayBuffer());
+             } catch(e) {}
+           }
+         }
+
+         if (!thumbBuf) {
+            thumbBuf = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
+         }
+
+         const playButtonSvg = `
+           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+             <rect width="1200" height="630" fill="#000000" fill-opacity="0.2"/>
+             <g transform="translate(560, 275)">
+               <circle cx="40" cy="40" r="40" fill="#000000" fill-opacity="0.6"/>
+               <path d="M30 25l26 15-26 15V25z" fill="#ffffff"/>
+             </g>
+           </svg>
+         `;
+
+         const finalImage = await sharp(thumbBuf)
+           .resize(1200, 630, { fit: 'cover' })
+           .composite([{ input: Buffer.from(playButtonSvg), top: 0, left: 0 }])
+           .png()
+           .toBuffer();
+         
+         res.setHeader("Content-Type", "image/png");
+         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+         return res.end(finalImage);
+      }
+
+      // Default fallback for non-video OG images
+      const ogBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
+      let fallbackBuf;
+      if (fs.existsSync(ogBannerPath)) {
+         fallbackBuf = await sharp(ogBannerPath).resize(1200, 630, { fit: 'cover' }).png().toBuffer();
+      } else {
+         fallbackBuf = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
+      }
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return res.end(fallbackBuf);
+
+    } catch (e: any) {
+      console.error("OG Image Error:", e);
+      return res.status(500).send("Error generating image");
+    }
+  });

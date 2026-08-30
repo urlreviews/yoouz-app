@@ -11,6 +11,20 @@ import {
   Linkedin
 } from "lucide-react";
 import { VideoReview } from "../types";
+function cleanDomainName(urlStr: string) {
+  if (!urlStr) return "";
+  try {
+     let lower = urlStr.trim().toLowerCase();
+     if (lower.startsWith('http')) {
+        const u = new URL(lower);
+        return u.hostname.replace(/^www\./, '');
+     }
+     return lower.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0];
+  } catch(e) {
+     return urlStr.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0];
+  }
+}
+
 
 interface CopoShareModalProps {
   // Mode A: General Share
@@ -196,7 +210,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Social Card Preview</p>
               <a
                 href={isVideoMode && video
-                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(video.placeName || "Business")}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&thumbUrl=${encodeURIComponent(video.videoThumbnail || video.videoPreviewUrl || video.author?.avatar || "")}&v=8`
+                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&thumbUrl=${encodeURIComponent(video.thumbnailUrl || (video as any).videoThumbnail || video.author?.avatar || "")}&v=10`
                   : "/api/og-image.png?v=8"
                 }
                 target="_blank"
@@ -209,7 +223,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             <div className="relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-inner group">
               <img
                 src={isVideoMode && video
-                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(video.placeName || "Business")}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&thumbUrl=${encodeURIComponent(video.videoThumbnail || video.videoPreviewUrl || video.author?.avatar || "")}&v=8`
+                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&thumbUrl=${encodeURIComponent(video.thumbnailUrl || (video as any).videoThumbnail || video.author?.avatar || "")}&v=10`
                   : "/api/og-image.png?v=8"
                 }
                 alt="Social Media Preview Card"
