@@ -166,7 +166,7 @@ return () => {
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && !isManuallyPaused;
+    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
@@ -213,17 +213,17 @@ return () => {
         el.pause();
       } catch (e) {}
     };
-  }, [isActive, currentSource, isMuted, isManuallyPaused]);
+  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
 
   // Record view count when video is active and playing
   useEffect(() => {
-    if (isActive && video?.id) {
+    if (isActive && hasUserStartedFeed && video?.id) {
       const timer = setTimeout(() => {
         onRecordView?.(video.id);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [isActive, video?.id, onRecordView]);
+  }, [isActive, hasUserStartedFeed, video?.id, onRecordView]);
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
   useEffect(() => {
@@ -463,72 +463,74 @@ return () => {
         id={`video-slot-${video.id}`}
         className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black"
       >
-        {/* Direct Embedded Video Element with Active / Standby Pre-buffering */}
-        <video
-          ref={videoRef}
-          id={`video-element-${video.id}`}
-          src={isActive || isNear ? currentSource : undefined}
-          preload={isActive || isNear ? "auto" : "metadata"}
-          autoPlay={false}
-          playsInline
-          webkit-playsinline="true"
-          loop
-          muted={isMuted}
-          disablePictureInPicture
-          className="w-full h-full object-cover absolute inset-0"
-          onTimeUpdate={(e) => {
-            const t = e.currentTarget;
-            
-            // Safety: if it should be paused but is moving, force pause
-            const shouldPlay = isActive && !isManuallyPaused;
-            if (!shouldPlay && !t.paused) {
-              t.pause();
-            }
-
-            if (t.duration && !isNaN(t.duration) && t.duration > 0) {
-              setProgressPercent((t.currentTime / t.duration) * 100);
-            }
-          }}
-          onLoadedData={() => {
-            setIsVideoLoaded(true);
-            setIsBuffering(false);
-          }}
-          onCanPlay={() => {
-            setIsVideoLoaded(true);
-            const shouldPlay = isActive && !isManuallyPaused;
-            if (shouldPlay) {
-              if (videoRef.current?.paused) {
-                videoRef.current.play().catch(() => {});
+        {/* Direct Embedded Video Element with Active / Standby Pre-buffering (Sliding Window like YouTube Shorts) */}
+        {(isActive || isNear) && (
+          <video
+            ref={videoRef}
+            id={`video-element-${video.id}`}
+            src={currentSource}
+            preload={isActive ? "auto" : "metadata"}
+            autoPlay={false}
+            playsInline
+            webkit-playsinline="true"
+            loop
+            muted={isMuted}
+            disablePictureInPicture
+            className="w-full h-full object-cover absolute inset-0"
+            onTimeUpdate={(e) => {
+              const t = e.currentTarget;
+              
+              // Safety: if it should be paused but is moving, force pause
+              const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+              if (!shouldPlay && !t.paused) {
+                t.pause();
               }
-            } else {
-              // Force pause if not active or manually paused
-              videoRef.current?.pause();
+
+              if (t.duration && !isNaN(t.duration) && t.duration > 0) {
+                setProgressPercent((t.currentTime / t.duration) * 100);
+              }
+            }}
+            onLoadedData={() => {
+              setIsVideoLoaded(true);
+              setIsBuffering(false);
+            }}
+            onCanPlay={() => {
+              setIsVideoLoaded(true);
+              const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+              if (shouldPlay) {
+                if (videoRef.current?.paused) {
+                  videoRef.current.play().catch(() => {});
+                }
+              } else {
+                // Force pause if not active or manually paused or feed not started
+                videoRef.current?.pause();
+                setIsPlaying(false);
+              }
+            }}
+            onPlaying={() => {
+              const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+              if (!shouldPlay) {
+                // Safety catch for inactive card
+                videoRef.current?.pause();
+                setIsPlaying(false);
+                return;
+              }
+              setIsPlaying(true);
+              setIsBuffering(false);
+              setIsVideoLoaded(true);
+              if (video?.id) {
+                onRecordView?.(video.id);
+              }
+            }}
+            onPause={() => {
               setIsPlaying(false);
-            }
-          }}
-          onPlaying={() => {
-            const shouldPlay = isActive && !isManuallyPaused;
-            if (!shouldPlay) {
-              // Safety catch for inactive card
-              videoRef.current?.pause();
-              setIsPlaying(false);
-              return;
-            }
-            setIsPlaying(true);
-            setIsBuffering(false);
-            setIsVideoLoaded(true);
-            if (video?.id) {
-              onRecordView?.(video.id);
-            }
-          }}
-          onPause={() => {
-            setIsPlaying(false);
-          }}
-          onWaiting={() => {
-            if (isActive) setIsBuffering(true);
-          }}
-          onError={handleVideoError}
-        />
+            }}
+            onWaiting={() => {
+              if (isActive) setIsBuffering(true);
+            }}
+            onError={handleVideoError}
+          />
+        )}
 
         {/* High-Fidelity Poster (visible until video starts playback) */}
         <img

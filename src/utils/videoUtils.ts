@@ -8,9 +8,9 @@ const DEFAULT_BUNNY_PULL_ZONE = (typeof import.meta !== "undefined" && (import.m
  * Automatically handles public static assets, Bunny CDN edge URLs, remote CDNs, and server streaming endpoints.
  */
 export function normalizeVideoUrl(url?: string | null): string {
-  if (!url || typeof url !== "string") return "/api/videos/stream/default-review.mp4";
+  if (!url || typeof url !== "string") return "/default-review.mp4";
   const trimmed = url.trim();
-  if (!trimmed) return "/api/videos/stream/default-review.mp4";
+  if (!trimmed) return "/default-review.mp4";
 
   // 1. Base64 data URI
   if (trimmed.startsWith("data:video/")) {
@@ -19,7 +19,7 @@ export function normalizeVideoUrl(url?: string | null): string {
 
   // 2. Static root assets (e.g. /default-review.mp4 or default-review.mp4)
   if (trimmed === "/default-review.mp4" || trimmed === "default-review.mp4" || trimmed === "/api/videos/stream/default-review.mp4") {
-    return "/api/videos/stream/default-review.mp4";
+    return "/default-review.mp4";
   }
 
   // 3. Bunny CDN Edge URLs & Remote CDNs
@@ -51,7 +51,7 @@ export function normalizeVideoUrl(url?: string | null): string {
       if (filename && !filename.includes("/")) return `/api/videos/stream/${filename}`;
     }
     if (secureUrl.endsWith("/default-review.mp4") || secureUrl.endsWith("/api/videos/stream/default-review.mp4")) {
-      return "/api/videos/stream/default-review.mp4";
+      return "/default-review.mp4";
     }
     // Remote external CDN URLs
     return secureUrl;
@@ -95,7 +95,7 @@ export function resolvePlayableVideoSourcesCascade(
   video?: VideoReview | null,
   cachedLocalBlobUrl?: string | null
 ): string[] {
-  if (!video) return ["/api/videos/stream/default-review.mp4", "/api/videos/stream/default-review.mp4"];
+  if (!video) return ["/default-review.mp4"];
 
   const sources: string[] = [];
 
@@ -142,12 +142,9 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 7. Guaranteed static default MP4 assets
+  // 7. Static default MP4 asset
   if (!sources.includes("/default-review.mp4")) {
     sources.push("/default-review.mp4");
-  }
-  if (!sources.includes("/api/videos/stream/default-review.mp4")) {
-    sources.push("/api/videos/stream/default-review.mp4");
   }
 
   return sources;

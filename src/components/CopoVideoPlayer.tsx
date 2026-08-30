@@ -91,7 +91,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = videos[currentIndex] || videos[0];
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
 
   // Reset when navigating pages or sub-tabs
   useEffect(() => {
@@ -145,6 +145,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const scrollToCard = useCallback(
     (targetIndex: number, behavior: ScrollBehavior = "smooth") => {
       if (targetIndex < 0 || targetIndex >= videos.length) return;
+
+      // Scrolling to a video is an active user engagement: start playback of the target card
+      setHasUserStartedFeed(true);
 
       // Update refs and trigger state change immediately to prevent race conditions
       currentIndexRef.current = targetIndex;
@@ -290,6 +293,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (idxAttr !== null) {
           const idx = parseInt(idxAttr, 10);
           if (!isNaN(idx) && idx !== currentIndexRef.current) {
+            setHasUserStartedFeed(true);
             currentIndexRef.current = idx;
             lastObserverIndexRef.current = idx;
             onSelectVideoIndex(idx);
@@ -538,8 +542,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            // Preload 3 videos ahead and 1 video behind for instant transitions
-            const isCardNear = (idx >= currentIndex - 1 && idx <= currentIndex + 3);
+            // Virtual sliding window (YouTube Shorts architecture): only mount decoders for active and immediately adjacent cards
+            const isCardNear = Math.abs(idx - currentIndex) <= 1;
 
             return (
               <VideoFeedCard
