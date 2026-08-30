@@ -6694,7 +6694,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
   res.send(svg);
 });
 
-  app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
+    app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
     try {
       let type = (req.query.type as string) || "homepage";
       let title = (req.query.title as string) || "";
@@ -6707,118 +6707,61 @@ app.get('/api/og-preview-v2', async (req, res) => {
       let category = (req.query.category as string) || "";
       let city = (req.query.city as string) || "";
       let reviewsCount = parseInt(req.query.reviewsCount as string, 10) || 12;
+
+      let thumbBuf;
+      let reviewerPhotoBase64 = '';
       let avatarBase64 = '';
       let bannerBase64 = '';
       let logoBase64 = '';
-      let reviewerPhotoBase64 = '';
 
-      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-      const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
-      const baseUrl = `${protocol}://${host}`;
-
-      const vidId = (req.query.id as string) || (req.query.videoId as string) || (req.query.video as string) || (req.query.v as string);
-
-      if (vidId) {
-        let foundVideo: any = null;
-        if (adminDb) {
-          try {
-            const snap = await adminDb.collection("videoReviews").doc(vidId).get();
-            if (snap.exists) foundVideo = { id: snap.id, ...snap.data() };
-          } catch(e) {}
-        }
-        if (!foundVideo) {
-          const localList = readReviewsIndex();
-          foundVideo = localList.find((v: any) => v.id === vidId);
-        }
-        if (!foundVideo && getDb()) {
-          try {
-            const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, vidId));
-            if (rec) foundVideo = { id: rec.id, ...rec.data };
-          } catch(e) {}
-        }
-
-        if (foundVideo) {
-          type = 'video';
-          if (!placeName && foundVideo.placeName) placeName = foundVideo.placeName;
-          if (!author && (foundVideo.author?.name || foundVideo.authorName)) author = foundVideo.author?.name || foundVideo.authorName;
-          if (!rating && foundVideo.rating) rating = foundVideo.rating;
-          if (!caption && foundVideo.caption) caption = foundVideo.caption;
-
-          // Fetch thumbnail photo of actual video recording
-          if (foundVideo.thumbnailUrl) {
-            if (foundVideo.thumbnailUrl.startsWith('data:image')) {
-              reviewerPhotoBase64 = foundVideo.thumbnailUrl.split(',')[1];
-            } else {
-              const tUrl = foundVideo.thumbnailUrl.startsWith('/') ? `${baseUrl}${foundVideo.thumbnailUrl}` : foundVideo.thumbnailUrl;
-              try {
-                reviewerPhotoBase64 = await fetchBase64(tUrl);
-              } catch(e) {}
-            }
-          }
-
-          // Fetch reviewer profile avatar
-          if (foundVideo.author?.avatar) {
-            if (foundVideo.author.avatar.startsWith('data:image')) {
-              avatarBase64 = foundVideo.author.avatar.split(',')[1];
-            } else {
-              const aUrl = foundVideo.author.avatar.startsWith('/') ? `${baseUrl}${foundVideo.author.avatar}` : foundVideo.author.avatar;
-              try {
-                avatarBase64 = await fetchBase64(aUrl);
-              } catch(e) {}
-            }
-          }
-        }
-      }
-
-      if (!reviewerPhotoBase64 && req.query.thumbnailUrl) {
-        const tUrl = req.query.thumbnailUrl as string;
-        if (tUrl.startsWith('data:image')) {
-          reviewerPhotoBase64 = tUrl.split(',')[1];
-        } else {
-          const absUrl = tUrl.startsWith('/') ? `${baseUrl}${tUrl}` : tUrl;
-          reviewerPhotoBase64 = await fetchBase64(absUrl);
-        }
-      }
-
-      if (!reviewerPhotoBase64) {
-        // Fall back to the author's avatar, or a transparent pixel
-        if (avatarBase64) {
-          reviewerPhotoBase64 = avatarBase64;
-        } else {
-          reviewerPhotoBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // transparent pixel
-        }
-      }
-
-      if (type === 'homepage') {
-        try {
-          logoBase64 = fs.readFileSync(path.join(process.cwd(), 'public', 'icon-512.png')).toString('base64');
-        } catch(e) {}
-      } else if (!avatarBase64 && req.query.avatarUrl) {
-        avatarBase64 = await fetchBase64(req.query.avatarUrl as string);
-      }
-      if (req.query.bannerUrl) {
-        bannerBase64 = await fetchBase64(req.query.bannerUrl as string);
-      }
-
-      
-      // Short-circuit for 'video' type to use native Sharp compositing (Avoid SVG text rendering issues on Linux)
-      
       if (type === 'video') {
-         let thumbBuf;
-         if (req.query.thumbUrl) {
-           const tUrl = req.query.thumbUrl;
+         const videoId = req.query.id;
+         if (videoId) {
+            let foundVideo: any = null;
+            if (typeof adminDb !== 'undefined' && adminDb) {
+              try {
+                const snap = await adminDb.collection("videoReviews").doc(videoId).get();
+                if (snap.exists) foundVideo = { id: snap.id, ...snap.data() };
+              } catch (e) {}
+            }
+            if (!foundVideo && typeof readReviewsIndex === 'function') {
+              try {
+                const localList = readReviewsIndex();
+                foundVideo = localList.find((v: any) => v.id === videoId);
+              } catch(e) {}
+            }
+            if (!foundVideo && typeof getDb !== 'undefined' && getDb()) {
+              try {
+                const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, videoId));
+                if (rec) foundVideo = { id: rec.id, ...rec.data };
+              } catch (e) {}
+            }
+            
+            if (foundVideo) {
+              let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || foundVideo.author?.avatar || foundVideo.avatar || "";
+              if (thumbArg.startsWith('data:image')) {
+                 thumbBuf = Buffer.from(thumbArg.split(',')[1], 'base64');
+              } else if (thumbArg.startsWith('http')) {
+                 try {
+                    const tr = await fetch(thumbArg);
+                    thumbBuf = Buffer.from(await tr.arrayBuffer());
+                 } catch(e) {}
+              }
+            }
+         }
+
+         if (!thumbBuf && req.query.thumbUrl) {
+           const tUrl = req.query.thumbUrl as string;
            if (tUrl.startsWith('data:image')) {
              thumbBuf = Buffer.from(tUrl.split(',')[1], 'base64');
            } else {
              try {
                 const tr = await fetch(tUrl);
                 thumbBuf = Buffer.from(await tr.arrayBuffer());
-             } catch(e) {
-                console.error("Failed to fetch thumbUrl", e);
-             }
+             } catch(e) {}
            }
          }
-         
+
          if (!thumbBuf) {
             thumbBuf = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
          }
@@ -6833,120 +6776,81 @@ app.get('/api/og-preview-v2', async (req, res) => {
            </svg>
          `;
 
-         try {
-           // 1. Create a blurred, covered background
-           const background = await sharp(thumbBuf)
-             .resize(1200, 630, { fit: 'cover' })
-             .blur(40)
-             .modulate({ brightness: 0.6 })
-             .toBuffer();
-
-           // 2. Create the crisp, contained foreground
-           // Videos are typically 9:16 vertical (e.g. 720x1280). We fit it into 1200x630 with 'contain'.
-           // To make it look like a short, we give it a clean height of 630.
-           const foreground = await sharp(thumbBuf)
-             .resize(1200, 630, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-             .toBuffer();
-
-           const finalPng = await sharp(background)
-             .composite([
-                { input: foreground, blend: 'over' },
-                { input: Buffer.from(playButtonSvg), blend: 'over' }
-             ])
-             .png({ quality: 90 })
-             .toBuffer();
-             
-           res.setHeader('Content-Type', 'image/png');
-           res.setHeader('Cache-Control', 'public, max-age=86400');
-           return res.send(finalPng);
-         } catch(e) {
-           console.error("Sharp composite error:", e);
-           const blank = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
-           res.setHeader('Content-Type', 'image/png');
-           return res.send(blank);
-         }
+         const finalImage = await sharp(thumbBuf)
+           .resize(1200, 630, { fit: 'cover' })
+           .composite([{ input: Buffer.from(playButtonSvg), top: 0, left: 0 }])
+           .png()
+           .toBuffer();
+         
+         res.setHeader("Content-Type", "image/png");
+         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+         return res.end(finalImage);
       }
 
-      const svg = buildOgImageSvg({
-        type,
-        title,
-        subtitle,
-        badge,
-        rating: rating || 5.0,
-        author,
-        caption,
-        placeName,
-        category,
-        city,
-        reviewsCount, 
-        avatarBase64, 
-        bannerBase64, 
-        logoBase64,
-        reviewerPhotoBase64,
-        thumbBase64
-      });
+      // Default fallback for non-video OG images
+      const fallbackBuf = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return res.end(fallbackBuf);
 
-      if (req.query.format === 'svg') {
-        res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
-        return res.send(svg);
-      }
-
-      const scale = req.query.scale === '2' || req.query.hd === 'true' || req.query.retina === 'true' ? 2 : 1;
-      const density = scale === 2 ? 144 : 96;
-
-      const pngBuffer = await sharp(Buffer.from(svg), { density })
-        .png({ quality: 100, compressionLevel: 6 })
-        .toBuffer();
-
-      console.log('Sharp PNG generated for request:', req.path);
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
-      return res.send(pngBuffer);
     } catch (e: any) {
-      console.error("OG Image generation error:", e);
-      return res.status(500).send("Error generating image: " + (e.stack || e.message || e));
+      console.error("OG Image Error:", e);
+      return res.status(500).send("Error generating image");
     }
   });
 
-  // Helper function to resolve dynamic metadata for any URL
+  
+  function injectOpenGraphTags(html: string, meta: any) {
+    let headInject = `
+    <title>${meta.title}</title>
+    <meta name="description" content="${meta.description}" />
+    <meta name="keywords" content="${meta.keywords}" />
+    <meta property="og:title" content="${meta.title}" />
+    <meta property="og:description" content="${meta.description}" />
+    <meta property="og:image" content="${meta.imageUrl}" />
+    <meta property="og:url" content="${meta.url}" />
+    <meta property="og:type" content="${meta.type}" />
+    <meta property="og:site_name" content="Yoouz" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${meta.title}" />
+    <meta name="twitter:description" content="${meta.description}" />
+    <meta name="twitter:image" content="${meta.imageUrl}" />
+    <link rel="canonical" href="${meta.url}" />
+    `;
+
+    if (meta.videoUrl) {
+      headInject += `
+      <meta property="og:video" content="${meta.videoUrl}" />
+      <meta property="og:video:type" content="video/mp4" />
+      <meta property="og:video:width" content="1080" />
+      <meta property="og:video:height" content="1920" />
+      `;
+    }
+
+    if (meta.structuredData) {
+      headInject += `
+      <script type="application/ld+json">
+        ${JSON.stringify(meta.structuredData)}
+      </script>
+      `;
+    }
+
+    return html
+      .replace(/<title>.*?<\/title>/, '')
+      .replace('</head>', `${headInject}</head>`);
+  }
+
   async function resolveMetadataForRequest(req: any) {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
     const baseUrl = `${protocol}://${host}`;
     const fullUrl = `${baseUrl}${req.originalUrl || req.url}`;
 
-    // Extract query parameters or route paths
     const urlObj = new URL(fullUrl);
     const params = urlObj.searchParams;
     const pathname = urlObj.pathname;
     
-    let videoId = params.get('video') || params.get('v') || params.get('review');
-    let placeId = params.get('place') || params.get('p') || params.get('business') || params.get('domain');
-    let creatorHandle = params.get('creator') || params.get('user') || params.get('c');
-    let foundUser: any = null;
-
-    // Parse path-based routes for elite SEO
-    if (!videoId) {
-      const userVideoMatch = pathname.match(/^\/@([^\/]+)\/video\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)\/video\/([^\/]+)/);
-      if (userVideoMatch) {
-        creatorHandle = userVideoMatch[1];
-        videoId = userVideoMatch[2];
-      } else {
-        const vMatch = pathname.match(/^\/(v|video|review)\/([^\/]+)/);
-        if (vMatch) videoId = vMatch[2];
-      }
-    }
-    if (!creatorHandle) {
-      const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)/);
-      if (cMatch) creatorHandle = cMatch[1];
-    }
-    if (!placeId) {
-      const pMatch = pathname.match(/^\/place\/([^\/]+)/) || pathname.match(/^\/business\/([^\/]+)/);
-      if (pMatch) placeId = pMatch[1];
-    }
-
-    let title = "Yoouz: The Authentic Video Review Platform for Business & Software";
+    let title = "Yoouz - Authentic 60-Second Video Reviews";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.";
     let imageUrl = `${baseUrl}/og-banner.png?v=4`;
     let videoUrl = "";
@@ -6954,282 +6858,108 @@ app.get('/api/og-preview-v2', async (req, res) => {
     let structuredData: any = null;
     let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
 
-    if (pathname.includes('/business')) {
-      title = "Yoouz for Business | Leverage Authentic Video Reviews";
-      description = "Claim your Yoouz business profile to leverage authentic 60-second video testimonials. Build unparalleled consumer trust through verified video feedback.";
-    } else if (params.get('tab') === 'discover') {
-      title = "Discover Authentic Video Reviews on Yoouz";
-      description = "Explore a continuous feed of authentic 60-second video reviews. Discover the best local businesses, food, and experiences near you.";
-    } else if (params.get('tab') === 'following') {
-      title = "Following - Your Favorite Reviewers on Yoouz";
-      description = "Watch the latest video reviews from the creators and local businesses you follow on Yoouz.";
-    } else if (pathname === '/admin') {
-       title = "Yoouz Admin Dashboard";
-       description = "Manage and moderate content on the Yoouz platform.";
-    }
+    const videoIdMatch = pathname.match(/\/video\/(rev-[a-zA-Z0-9-]+)/);
+    const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9-]+)/);
+    const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/);
 
-    try {
-      if (videoId) {
-        // Look up video review in Firestore, local index, or DB
+    const videoId = videoIdMatch ? videoIdMatch[1] : (params.get('video') || params.get('v') || params.get('id'));
+    const placeId = placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null);
+    const creatorHandle = creatorMatch ? creatorMatch[1] : null;
+
+    if (videoId) {
         let foundVideo: any = null;
+        if (typeof adminDb !== 'undefined' && adminDb) {
+            try {
+                const snap = await adminDb.collection("videoReviews").doc(videoId).get();
+                if (snap.exists) foundVideo = { id: snap.id, ...snap.data() };
+            } catch (e) {}
+        }
+        if (!foundVideo && typeof readReviewsIndex === 'function') {
+            try {
+                const localList = readReviewsIndex();
+                foundVideo = localList.find((v: any) => v.id === videoId);
+            } catch (e) {}
+        }
+        if (!foundVideo && typeof getDb !== 'undefined' && getDb()) {
+            try {
+                const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, videoId));
+                if (rec) foundVideo = { id: rec.id, ...rec.data };
+            } catch (e) {}
+        }
         
-        if (adminDb) {
-          try {
-            const snap = await adminDb.collection("videoReviews").doc(videoId).get();
-            if (snap.exists) foundVideo = { id: snap.id, ...snap.data() };
-          } catch (e) {}
-        }
-        if (!foundVideo) {
-          const localList = readReviewsIndex();
-          foundVideo = localList.find((v: any) => v.id === videoId);
-        }
-        if (!foundVideo && getDb()) {
-          try {
-            const [rec] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, videoId));
-            if (rec) foundVideo = { id: rec.id, ...rec.data };
-          } catch (e) {}
-        }
-
         if (foundVideo) {
-          const authorName = foundVideo.author?.name || foundVideo.authorName || "Verified Customer";
-          const authorHandle = foundVideo.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
-          const placeName = foundVideo.placeName || "Local Business";
-          const rating = foundVideo.rating || 5.0;
-          const caption = foundVideo.caption || "";
+            const authorName = foundVideo.author?.name || foundVideo.authorName || "Verified Customer";
+            const authorHandle = foundVideo.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
+            const placeName = foundVideo.placeName || "Local Business";
+            const rating = foundVideo.rating || 5.0;
+            const caption = foundVideo.caption || "";
 
-          title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
-          description = caption 
-            ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
-            : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
-          
-          
-          
-          let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
-          if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
-             thumbArg = "";
-          }
-          if (thumbArg.length > 0 && thumbArg.length < 1000 && thumbArg.startsWith('data:image')) {
-             thumbArg = "";
-          }
-          if (!thumbArg && (foundVideo.author?.avatar || foundVideo.avatar)) {
-             thumbArg = foundVideo.author?.avatar || foundVideo.avatar;
-          }
-          imageUrl = `${baseUrl}/api/og-image.png?type=video&id=${encodeURIComponent(foundVideo.id)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}&thumbUrl=${encodeURIComponent(thumbArg)}&v=6`;
-
-
-          videoUrl = foundVideo.videoUrl || "";
-          type = "video.other";
-          keywords = `${placeName} review, ${placeName} video review, ${authorName} review, authentic customer video, 60 second review, yoouz video`;
-
-          structuredData = {
-            "@context": "https://schema.org",
-            "@type": "VideoObject",
-            "name": title,
-            "description": description,
-            "thumbnailUrl": [imageUrl],
-            "uploadDate": foundVideo.createdAt || new Date().toISOString(),
-            "duration": "PT60S",
-            "contentUrl": videoUrl,
-            "embedUrl": fullUrl,
-            "author": {
-              "@type": "Person",
-              "name": authorName,
-              "url": `${baseUrl}/@${encodeURIComponent(authorHandle)}`
-            },
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": (rating).toFixed(1),
-              "bestRating": "5",
-              "worstRating": "1",
-              "ratingCount": "1"
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "Yoouz",
-              "logo": {
-                "@type": "ImageObject",
-                "url": `${baseUrl}/favicon.svg`
-              }
+            title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+            description = caption 
+              ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
+              : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
+            
+            let queryParams = `type=video&id=${encodeURIComponent(foundVideo.id)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}&v=7`;
+            
+            let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
+            if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
+               thumbArg = "";
             }
-          };
-        } else if (placeId) {
-          title = `Authentic Video Reviews for ${placeId} | Yoouz`;
-          description = `Discover genuine 60-second video testimonials for ${placeId} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-          imageUrl = `${baseUrl}/api/og-image.png?type=homepage&v=4`;
-          type = "website";
-          structuredData = null;
-        } else if (creatorHandle) {
-          const cleanHandle = creatorHandle.replace(/^@/, '');
-          title = `@${cleanHandle}'s Authentic Video Reviews | Yoouz`;
-          description = `Watch genuine 60-second video testimonials by @${cleanHandle} on Yoouz.`;
-          imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(cleanHandle)}&v=4`;
-          type = "profile";
-          structuredData = null;
-        } else {
-          const placeParam = params.get('placeName') || params.get('place') || "Local Business";
-          const authorParam = params.get('author') || "Verified Customer";
-          const ratingParam = parseFloat(params.get('rating') || "5");
-          title = `${authorParam}'s 60-Second Video Review | Yoouz`;
-          description = `Watch authentic 60-second customer video review on Yoouz. Real People. Real Reviews.`;
-          imageUrl = `${baseUrl}/api/og-image.png?type=video&placeName=${encodeURIComponent(placeParam)}&author=${encodeURIComponent(authorParam)}&rating=${ratingParam}&v=4`;
-          type = "video.other";
-          structuredData = {
-            "@context": "https://schema.org",
-            "@type": "VideoObject",
-            "name": title,
-            "description": description,
-            "thumbnailUrl": [imageUrl],
-            "uploadDate": new Date().toISOString(),
-            "duration": "PT60S",
-            "embedUrl": fullUrl,
-            "author": {
-              "@type": "Person",
-              "name": authorParam
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "Yoouz",
-              "logo": {
-                "@type": "ImageObject",
-                "url": `${baseUrl}/favicon.svg`
-              }
+            if (thumbArg.startsWith('data:image')) {
+               thumbArg = ""; // Prevent massive URLs
             }
-          };
-        }
-      } else if (placeId) {
-        let foundPlace: any = null;
-
-        if (adminDb) {
-          try {
-            const snap = await adminDb.collection("places").doc(placeId).get();
-            if (snap.exists) foundPlace = { id: snap.id, ...snap.data() };
-          } catch (e) {}
-        }
-        if (!foundPlace && getDb()) {
-          try {
-            const [pRec] = await db.select().from(places).where(eq(places.id, placeId));
-            if (pRec) foundPlace = pRec;
-            if (!foundPlace) {
-              const [fpRec] = await db.select().from(firestore_places).where(eq(firestore_places.id, placeId));
-              if (fpRec) foundPlace = { id: fpRec.id, ...fpRec.data };
+            if (!thumbArg && (foundVideo.author?.avatar || foundVideo.avatar)) {
+               thumbArg = foundVideo.author?.avatar || foundVideo.avatar;
+               if (thumbArg && thumbArg.startsWith('data:image')) thumbArg = "";
             }
-          } catch (e) {}
-        }
-
-        const placeName = foundPlace?.name || placeId.replace(/^place-/, '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-        const placeRating = parseFloat(foundPlace?.rating || "4.8").toFixed(1);
-        const reviewCount = foundPlace?.totalReviews || foundPlace?.reviewsCount || 12;
-        const category = foundPlace?.category || "Local Business";
-        const city = foundPlace?.city || foundPlace?.address || "Verified Location";
-
-        title = `${placeName} - Customer Video Reviews & Ratings | Yoouz`;
-        description = foundPlace?.description 
-          ? `${foundPlace.description} Watch authentic 60-second video reviews for ${placeName} on Yoouz.`
-          : `Watch 100% authentic 60-second live video reviews from real customers for ${placeName} on Yoouz. Real People. Real Reviews.`;
-        
-        imageUrl = `${baseUrl}/api/og-image.png?type=place&placeName=${encodeURIComponent(placeName)}&rating=${placeRating}&reviewsCount=${reviewCount}&category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}${foundPlace?.avatarUrl ? '&avatarUrl=' + encodeURIComponent(foundPlace.avatarUrl) : ''}${foundPlace?.bannerUrl ? '&bannerUrl=' + encodeURIComponent(foundPlace.bannerUrl) : ''}`;
-        type = "website";
-        keywords = `${placeName}, ${placeName} reviews, ${placeName} video reviews, ${city} places, real customer video reviews`;
-
-        structuredData = {
-          "@context": "https://schema.org",
-          "@type": "LocalBusiness",
-          "name": placeName,
-          "description": description,
-          "image": imageUrl,
-          "url": fullUrl,
-          "telephone": foundPlace?.phone || "",
-          "address": {
-            "@type": "PostalAddress",
-            "streetAddress": foundPlace?.address || "",
-            "addressLocality": city,
-            "addressCountry": "US"
-          },
-          ...(foundPlace?.lat && foundPlace?.lng ? {
-            "geo": {
-              "@type": "GeoCoordinates",
-              "latitude": foundPlace.lat,
-              "longitude": foundPlace.lng
+            if (thumbArg) {
+               queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
             }
-          } : {}),
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": placeRating,
-            "bestRating": "5",
-            "worstRating": "1",
-            "reviewCount": String(reviewCount)
-          }
-        };
-      } else if (creatorHandle) {
-        const cleanHandle = creatorHandle.replace(/^@+/, '').trim();
-        const lowerHandle = cleanHandle.toLowerCase();
-
-        // 1. Check defaultCommunityUsers
-        const defaultMatch = defaultCommunityUsers.find((du) => {
-          const duName = (du.name || "").toLowerCase().replace(/^@+/, "");
-          const duHandle = (du.handle || "").toLowerCase().replace(/^@+/, "");
-          const duEmail = (du.email || "").split("@")[0].toLowerCase();
-          return duName === lowerHandle || duHandle === lowerHandle || duEmail === lowerHandle;
-        });
-        if (defaultMatch?.avatar) {
-          foundUser = defaultMatch;
-        }
-
-        // 2. Query Firestore if not found
-        if (!foundUser && adminDb) {
-          try {
-            const userSnap = await adminDb.collection("users").get();
-            if (!userSnap.empty) {
-              const matchedDoc = userSnap.docs.find(doc => {
-                const u = doc.data();
-                const uName = (u.name || "").toLowerCase().replace(/^@+/, "");
-                const uHandle = (u.handle || "").toLowerCase().replace(/^@+/, "");
-                const uEmail = (u.email || "").split("@")[0].toLowerCase();
-                return uName === lowerHandle || uHandle === lowerHandle || uEmail === lowerHandle;
-              });
-              if (matchedDoc) {
-                const uData = matchedDoc.data();
-                if (uData?.avatar && !uData.avatar.includes("/api/videos/") && !uData.avatar.includes(".mp4") && !uData.avatar.includes("rev-")) {
-                  foundUser = uData;
+            
+            imageUrl = `${baseUrl}/api/og-image.png?${queryParams}`;
+            videoUrl = foundVideo.videoUrl || "";
+            type = "video.other";
+            
+            structuredData = {
+              "@context": "https://schema.org",
+              "@type": "VideoObject",
+              "name": title,
+              "description": description,
+              "thumbnailUrl": [imageUrl],
+              "uploadDate": foundVideo.createdAt || new Date().toISOString(),
+              "duration": "PT60S",
+              "contentUrl": videoUrl,
+              "embedUrl": fullUrl,
+              "author": {
+                "@type": "Person",
+                "name": authorName,
+                "url": `${baseUrl}/@${encodeURIComponent(authorHandle)}`
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": (rating).toFixed(1),
+                "bestRating": "5",
+                "worstRating": "1",
+                "ratingCount": "1"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Yoouz",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": `${baseUrl}/favicon.svg`
                 }
               }
-            }
-          } catch (e) {}
+            };
         }
-
-        // 3. Check reviews index
-        if (!foundUser) {
-          const localList = readReviewsIndex();
-          const matchVid = localList.find((v: any) => {
-            const aName = (v.author?.name || v.authorName || "").toLowerCase().replace(/^@+/, "");
-            const uId = (v.userId || "").toLowerCase();
-            return aName === lowerHandle || uId === lowerHandle;
-          });
-          if (matchVid?.author?.avatar && !matchVid.author.avatar.includes("/api/videos/") && !matchVid.author.avatar.includes(".mp4") && !matchVid.author.avatar.includes("rev-")) {
-            foundUser = { avatar: matchVid.author.avatar, name: matchVid.author.name };
-          }
-        }
-        title = `@${cleanHandle} on Yoouz - Authentic Video Reviews Portfolio`;
-        description = `Explore authentic 60-second video reviews recorded by @${cleanHandle} on Yoouz. 100% Genuine Video Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(foundUser?.name || cleanHandle)}${foundUser?.avatar ? '&avatarUrl=' + encodeURIComponent(foundUser.avatar) : ''}${foundUser?.banner ? '&bannerUrl=' + encodeURIComponent(foundUser.banner) : ''}`;
-        type = "profile";
-        keywords = `${cleanHandle}, ${cleanHandle} yoouz, video reviewer, authentic local guide, food reviewer, verified reviewer`;
-
-        structuredData = {
-          "@context": "https://schema.org",
-          "@type": "Person",
-          "name": `@${cleanHandle}`,
-          "url": fullUrl,
-          "image": imageUrl,
-          "jobTitle": "Verified Video Reviewer",
-          "worksFor": {
-            "@type": "Organization",
-            "name": "Yoouz"
-          }
-        };
-      }
-    } catch (err) {
-      console.warn("Metadata resolution warning:", err);
+    } else if (placeId) {
+        title = `Authentic Video Reviews for ${placeId} | Yoouz`;
+        description = `Discover genuine 60-second video testimonials for ${placeId} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=homepage&v=4`;
+    } else if (creatorHandle) {
+        title = `@${creatorHandle}'s Authentic Video Reviews | Yoouz`;
+        description = `Watch genuine 60-second video testimonials by @${creatorHandle} on Yoouz.`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(creatorHandle)}&v=4`;
     }
 
     if (!structuredData) {
@@ -7242,44 +6972,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
             "url": baseUrl,
             "name": "Yoouz",
             "alternateName": "Yoouz Video Reviews",
-            "description": "Yoouz is the premier authentic video review platform where real people record 60-second live video testimonials for local businesses, restaurants, and software.",
-            "publisher": {
-              "@id": `${baseUrl}/#organization`
-            },
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": `${baseUrl}/?search={search_term_string}`,
-              "query-input": "required name=search_term_string"
-            }
-          },
-          {
-            "@type": "Organization",
-            "@id": `${baseUrl}/#organization`,
-            "name": "Yoouz",
-            "url": baseUrl,
-            "logo": `${baseUrl}/icon-512.png`,
-            "slogan": "Real People. Real Reviews.",
-            "description": "Yoouz is a video review platform and AI-optimized repository of verified 60-second customer testimonials.",
-            "sameAs": [
-              "https://twitter.com/yoouz",
-              "https://instagram.com/yoouz",
-              "https://youtube.com/@yoouz",
-              "https://tiktok.com/@yoouz"
-            ]
-          },
-          {
-            "@type": "SoftwareApplication",
-            "@id": `${baseUrl}/#softwareapp`,
-            "name": "Yoouz Platform",
-            "applicationCategory": "SocialNetworkingApplication",
-            "operatingSystem": "All",
-            "description": "A robust platform for recording, discovering, and sharing authentic 60-second video reviews.",
-            "provider": {
-              "@id": `${baseUrl}/#organization`
-            }
           }
         ]
-      };
+      }
     }
 
     return {
@@ -7288,91 +6983,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
       imageUrl,
       videoUrl,
       type,
-      fullUrl,
-      baseUrl,
+      url: fullUrl,
       keywords,
       structuredData
     };
   }
 
-  // Helper to inject meta tags into index.html
-  function injectOpenGraphTags(html: string, meta: any): string {
-    const escapeAttr = (s: string) => (s || '').replace(/"/g, '&quot;');
-    const escapeContent = (s: string) => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    const metaTags = `
-    <!-- Dynamic Open Graph & Google SEO Tags -->
-    <title>${escapeContent(meta.title)}</title>
-    <meta name="description" content="${escapeAttr(meta.description)}" />
-    <meta name="keywords" content="${escapeAttr(meta.keywords)}" />
-    <link rel="canonical" href="${escapeAttr(meta.fullUrl)}" />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    
-    <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Pinterest) -->
-    <meta property="og:type" content="${escapeAttr(meta.type)}" />
-    <meta property="og:site_name" content="Yoouz" />
-    <meta property="og:title" content="${escapeAttr(meta.title)}" />
-    <meta property="og:description" content="${escapeAttr(meta.description)}" />
-    <meta property="og:url" content="${escapeAttr(meta.fullUrl)}" />
-    <meta property="og:image" content="${escapeAttr(meta.imageUrl)}" />
-    <meta property="og:image:secure_url" content="${escapeAttr(meta.imageUrl)}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="${escapeAttr(meta.title)}" />
-    ${meta.videoUrl ? `
-    <meta property="og:video" content="${escapeAttr(meta.videoUrl)}" />
-    <meta property="og:video:secure_url" content="${escapeAttr(meta.videoUrl)}" />
-    <meta property="og:video:type" content="video/mp4" />
-    <meta property="og:video:width" content="720" />
-    <meta property="og:video:height" content="1280" />
-    ` : ''}
-
-    <!-- Twitter / X Cards -->
-    <meta name="twitter:card" content="${meta.videoUrl ? 'player' : 'summary_large_image'}" />
-    <meta name="twitter:site" content="@Yoouz" />
-    <meta name="twitter:creator" content="@Yoouz" />
-    <meta name="twitter:title" content="${escapeAttr(meta.title)}" />
-    <meta name="twitter:description" content="${escapeAttr(meta.description)}" />
-    <meta name="twitter:image" content="${escapeAttr(meta.imageUrl)}" />
-    ${meta.videoUrl ? `
-    <meta name="twitter:player" content="${escapeAttr(meta.fullUrl)}" />
-    <meta name="twitter:player:width" content="720" />
-    <meta name="twitter:player:height" content="1280" />
-    ` : ''}
-
-    <!-- Schema.org JSON-LD Structured Data for Google Rich Snippets -->
-    <script type="application/ld+json">
-    ${JSON.stringify(meta.structuredData)}
-    </script>
-    `;
-
-    // Remove existing generic title, description, keywords, canonical and OG tags
-    let cleaned = html
-      .replace(/<title>[\s\S]*?<\/title>/gi, '')
-      .replace(/<meta\s+(?:name|property)=["'](?:description|keywords|robots|googlebot|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
-      .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
-      .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '');
-
-    // Inject our rich dynamic tags right before </head>
-    return cleaned.replace('</head>', `${metaTags}\n  </head>`);
-  }
-
-  // Vite development & production integration
-  const isCompiled = typeof _filename !== 'undefined' && _filename ? _filename.endsWith('server.cjs') : false;
-  const isCloudRun = !!process.env.K_SERVICE && !process.env.K_SERVICE.startsWith('ais-dev');
-  const isProduction = process.env.NODE_ENV === "production" || isCompiled || isCloudRun;
-
-  // Debug log for environment detection
-  console.log(`Yoouz Server: Env[${process.env.NODE_ENV}] Compiled[${isCompiled}] CloudRun[${isCloudRun}] => Production[${isProduction}]`);
-
-  // Add a response header to identify the build version
-  app.use((req, res, next) => {
-    res.setHeader('X-Yoouz-Version', '2026-08-29-V6-FIX-FINAL');
-    next();
-  });
-
-  if (!isProduction) {
+  if (process.env.NODE_ENV !== 'production') {
     console.log("Yoouz Server: Starting in DEVELOPMENT mode (Vite middleware enabled)");
     const vite = await createViteServer({
       server: { 
