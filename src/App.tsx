@@ -1888,6 +1888,11 @@ export function App() {
 
   // Handle Likes - fully synced with Firestore
   const handleToggleLike = async (videoId: string) => {
+    if (!currentUser) {
+      setAuthIntent("like");
+      setIsAuthModalOpen(true);
+      return;
+    }
     let nextLikes = 0;
     let nextIsLiked = false;
 
@@ -1922,10 +1927,10 @@ export function App() {
 
     // Persist to Server and Firestore database
     try {
-      fetch("/api/videos/save-review", {
+      fetch("/api/interactions/like", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: videoId, likes: nextLikes })
+        body: JSON.stringify({ videoId, isLiked: nextIsLiked, likesCount: nextLikes, userId: currentUser?.email || auth.currentUser?.uid })
       }).catch(() => {});
     } catch (e) {}
 
@@ -1969,6 +1974,11 @@ export function App() {
 
   // Handle Bookmarks - fully synced with Server & Firestore
   const handleToggleBookmark = async (videoId: string) => {
+    if (!currentUser) {
+      setAuthIntent("bookmarks");
+      setIsAuthModalOpen(true);
+      return;
+    }
     let nextBookmarked = false;
     let nextCount = 0;
 
@@ -2012,10 +2022,10 @@ export function App() {
 
     // Persist to Server and Firestore database
     try {
-      fetch("/api/videos/save-review", {
+      fetch("/api/interactions/bookmark", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: videoId, bookmarksCount: nextCount })
+        body: JSON.stringify({ videoId, isBookmarked: nextBookmarked, bookmarksCount: nextCount, userId: currentUser?.email || auth.currentUser?.uid })
       }).catch(() => {});
     } catch (e) {}
 
@@ -2289,6 +2299,11 @@ export function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: dataToSave, merge: true })
+      }).catch(() => {});
+      fetch("/api/interactions/comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId, comment: newCommentItem, userId: currentUser?.email || auth.currentUser?.uid })
       }).catch(() => {});
     } catch (err) {
       console.warn("Firestore comment sync warning:", err);

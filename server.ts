@@ -2961,7 +2961,114 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   });
 
   // Save Video Review metadata endpoint (persists review record on server and Firestore)
-  app.post("/api/videos/save-review", async (req, res) => {
+  
+  
+  app.post("/api/interactions/comment", async (req, res) => {
+    try {
+      const { videoId, comment, userId } = req.body;
+      if (!videoId || !comment) return res.status(400).json({ error: "Missing fields" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          args: [comment.id, videoId, userId || comment.authorHandle || "", comment.authorName || "", comment.authorAvatar || "", comment.text || "", JSON.stringify(comment)]
+        });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/interactions/message", async (req, res) => {
+    try {
+      const { threadId, message, threadData } = req.body;
+      if (!threadId || !threadData) return res.status(400).json({ error: "Missing fields" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: "INSERT INTO chats (id, participants, lastMessage, lastSenderEmail, data, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET lastMessage = ?, lastSenderEmail = ?, data = ?, updatedAt = CURRENT_TIMESTAMP",
+          args: [
+            threadId, 
+            JSON.stringify(threadData.participants || []), 
+            threadData.lastMessage || message?.text || "", 
+            threadData.lastSenderEmail || message?.senderEmail || "", 
+            JSON.stringify(threadData),
+            threadData.lastMessage || message?.text || "", 
+            threadData.lastSenderEmail || message?.senderEmail || "", 
+            JSON.stringify(threadData)
+          ]
+        });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+app.post("/api/interactions/like", async (req, res) => {
+    try {
+      const { videoId, isLiked, likesCount, userId } = req.body;
+      if (!videoId || !userId) return res.status(400).json({ error: "Missing fields" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        if (isLiked) {
+          const id = `${userId}_${videoId}`;
+          await bunnyDb.execute({
+            sql: "INSERT OR IGNORE INTO likes (id, userId, videoId, data) VALUES (?, ?, ?, ?)",
+            args: [id, userId, videoId, JSON.stringify({ createdAt: new Date().toISOString() })]
+          });
+        } else {
+          await bunnyDb.execute({
+            sql: "DELETE FROM likes WHERE userId = ? AND videoId = ?",
+            args: [userId, videoId]
+          });
+        }
+        
+        if (typeof likesCount === "number") {
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET likesCount = ? WHERE id = ?",
+            args: [likesCount, videoId]
+          });
+        }
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/interactions/bookmark", async (req, res) => {
+    try {
+      const { videoId, isBookmarked, bookmarksCount, userId } = req.body;
+      if (!videoId || !userId) return res.status(400).json({ error: "Missing fields" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        if (isBookmarked) {
+          const id = `${userId}_${videoId}`;
+          await bunnyDb.execute({
+            sql: "INSERT OR IGNORE INTO bookmarks (id, userId, placeId, videoId, data) VALUES (?, ?, ?, ?, ?)",
+            args: [id, userId, "", videoId, JSON.stringify({ createdAt: new Date().toISOString() })]
+          });
+        } else {
+          await bunnyDb.execute({
+            sql: "DELETE FROM bookmarks WHERE userId = ? AND videoId = ?",
+            args: [userId, videoId]
+          });
+        }
+        // Note: Currently we don't have bookmarksCount on videoReviews schema, but keeping this robust
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+app.post("/api/videos/save-review", async (req, res) => {
     try {
       const review = req.body;
       if (!review || !review.id) {

@@ -550,6 +550,11 @@ export async function sendChatMessageToFirestore(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data: threadData, merge: true })
     }).catch(() => {});
+    fetch("/api/interactions/message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ threadId, message: newMessage, threadData })
+    }).catch(() => {});
     
     // Also send an activity notification to recipient
     const targetRecipient = recipientEmail || recipientId || recipientHandle;
