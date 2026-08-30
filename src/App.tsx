@@ -2897,7 +2897,7 @@ export function App() {
             handleCloseDrawers();
           }}
         />
-       ) : activeSection === "business" ? null : (
+       ) : (activeSection === "business" || activeSection === "admin") ? null : (
         <CopoSidebar
           activeSection={activeSection}
           currentUser={currentUser}
@@ -2973,7 +2973,7 @@ export function App() {
       )}
 
       {/* 2. Main Stage Content Switcher */}
-      <div className={`flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950 md:bg-zinc-950 ${activeSection === "business" ? "" : "pb-mobile-nav"}`}>
+      <div className={`flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950 md:bg-zinc-950 ${(activeSection === "business" || activeSection === "admin") ? "" : "pb-mobile-nav"}`}>
         {/* If in Feed View (Home, Clubs) or Place / Creator drawer views: Display center video player */}
         {(isPlaceView || isCreatorView || activeSection === "home" || activeSection === "clubs") && (
             <CopoVideoPlayer

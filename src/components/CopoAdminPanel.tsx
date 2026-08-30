@@ -55,6 +55,64 @@ import {
   Clock
 } from "lucide-react";
 import { isAuthorMatch } from "../utils/placeUtils";
+import { getPlaceLogoUrl } from "../utils/logoUtils";
+
+export const AdminPlaceLogo: React.FC<{
+  place: Partial<Place> | null | undefined;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}> = ({ place, size = "md", className = "" }) => {
+  const [hasError, setHasError] = useState(false);
+
+  const resolvedUrl = useMemo(() => {
+    if (!place) return null;
+    return getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl || null;
+  }, [place]);
+
+  const sizeClasses =
+    size === "sm"
+      ? "w-9 h-9"
+      : size === "lg"
+      ? "w-14 h-14"
+      : "w-12 h-12";
+
+  const iconSize = size === "sm" ? "w-4 h-4" : size === "lg" ? "w-6 h-6" : "w-5 h-5";
+
+  const placeName = (place?.name || "Place").trim();
+  const firstLetter = (placeName[0] || "P").toUpperCase();
+
+  useEffect(() => {
+    setHasError(false);
+  }, [resolvedUrl]);
+
+  if (!resolvedUrl || hasError) {
+    return (
+      <div
+        className={`${sizeClasses} rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 font-black text-sm text-zinc-300 shadow-inner ${className}`}
+      >
+        {place?.name ? (
+          <span className="font-black text-xs tracking-tight text-zinc-200">{firstLetter}</span>
+        ) : (
+          <Building2 className={`${iconSize} text-zinc-400`} />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`${sizeClasses} rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-sm ${className}`}
+    >
+      <img
+        src={resolvedUrl}
+        alt={place?.name || ""}
+        onError={() => setHasError(true)}
+        className="w-full h-full object-contain rounded-lg"
+        loading="lazy"
+      />
+    </div>
+  );
+};
 
 interface CopoAdminPanelProps {
   videos: VideoReview[];
@@ -655,10 +713,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         <div className="flex items-center gap-4">
           <button
             onClick={onExit}
-            className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-all border border-zinc-700 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-all border border-zinc-700 cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
             title="Return to Yoouz Live Feed"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
+            <span>Exit to Yoouz</span>
           </button>
 
           <div className="flex items-center gap-3">
@@ -1080,13 +1139,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         className="flex items-center justify-between p-3 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 transition-all"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1">
-                            {p.logoUrl || p.avatarUrl ? (
-                              <img src={p.logoUrl || p.avatarUrl} alt="" className="w-full h-full object-contain rounded-lg" />
-                            ) : (
-                              <MapPin className="w-5 h-5 text-zinc-400" />
-                            )}
-                          </div>
+                          <AdminPlaceLogo place={p} size="sm" />
                           <div className="min-w-0">
                             <h4 className="font-bold text-sm text-white truncate">{p.name}</h4>
                             <p className="text-xs text-zinc-400 truncate">
@@ -1266,13 +1319,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           <tr key={place.id} className="hover:bg-zinc-850/50 transition-colors">
                             <td className="p-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1">
-                                  {place.logoUrl || place.avatarUrl ? (
-                                    <img src={place.logoUrl || place.avatarUrl} alt="" className="w-full h-full object-contain rounded-lg" />
-                                  ) : (
-                                    <Building2 className="w-4 h-4 text-zinc-400" />
-                                  )}
-                                </div>
+                                <AdminPlaceLogo place={place} size="sm" />
                                 <div className="min-w-0">
                                   <div className="font-bold text-white flex items-center gap-1.5">
                                     {place.name}
@@ -1780,17 +1827,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white"
                             />
 
-                            <div className="w-12 h-12 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1">
-                              {place.logoUrl || place.avatarUrl ? (
-                                <img
-                                  src={place.logoUrl || place.avatarUrl}
-                                  alt=""
-                                  className="w-full h-full object-contain rounded-lg"
-                                />
-                              ) : (
-                                <Building2 className="w-6 h-6 text-zinc-400" />
-                              )}
-                            </div>
+                            <AdminPlaceLogo place={place} size="md" />
 
                             <div className="min-w-0">
                               <h3 className="font-black text-white text-base truncate">{place.name}</h3>
