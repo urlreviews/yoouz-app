@@ -88,6 +88,12 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
 
   try {
     await setDoc(notifDocRef, payload);
+    // Mirror to Bunny Cloud Database
+    fetch(`/api/nosql/notifications/${notifId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: payload, merge: true })
+    }).catch(() => {});
   } catch (err) {
     console.warn("Error saving notification to Firestore:", err);
   }
@@ -517,6 +523,13 @@ export async function sendChatMessageToFirestore(
 
     // Save document with full history array to Firestore
     await setDoc(threadDocRef, threadData, { merge: true });
+    
+    // Mirror to Bunny Cloud Database
+    fetch(`/api/nosql/chats/${threadId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: threadData, merge: true })
+    }).catch(() => {});
     
     // Also send an activity notification to recipient
     const targetRecipient = recipientEmail || recipientId || recipientHandle;

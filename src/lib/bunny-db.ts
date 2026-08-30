@@ -109,6 +109,48 @@ export async function initBunnyDbSchema() {
       videoId TEXT,
       data TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS chats (
+      id TEXT PRIMARY KEY,
+      participants TEXT,
+      lastMessage TEXT,
+      lastSenderEmail TEXT,
+      data TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY,
+      recipientEmail TEXT,
+      type TEXT,
+      text TEXT,
+      isRead INTEGER DEFAULT 0,
+      data TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS businessClaims (
+      id TEXT PRIMARY KEY,
+      placeId TEXT,
+      placeName TEXT,
+      userEmail TEXT,
+      status TEXT DEFAULT 'pending',
+      data TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS follows (
+      id TEXT PRIMARY KEY,
+      followerId TEXT,
+      followingId TEXT,
+      data TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS likes (
+      id TEXT PRIMARY KEY,
+      userId TEXT,
+      videoId TEXT,
+      data TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`
   ];
 

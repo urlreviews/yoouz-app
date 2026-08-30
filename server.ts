@@ -2857,7 +2857,47 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         if (r && r.id && r.videoUrl) map.set(r.id, r);
       });
 
-      // 2. Optional SQL mirror if active (Stale data)
+      // 2. Fetch live records from Bunny Cloud Database (Primary persistent store)
+      let bunnyFetchSuccess = false;
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY createdAt DESC LIMIT 100");
+          bunnyRows.rows.forEach((r: any) => {
+            if (r && r.id) {
+              const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+              const existing = map.get(r.id) || {};
+              const mergedAuthor = {
+                ...(typeof existing.author === 'object' ? existing.author : {}),
+                ...(typeof parsedData.author === 'object' ? parsedData.author : {}),
+                name: r.authorName || parsedData.authorName || (parsedData.author && parsedData.author.name) || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId),
+                avatar: r.authorAvatar || parsedData.authorAvatar || (parsedData.author && parsedData.author.avatar) || ''
+              };
+              map.set(r.id, {
+                ...existing,
+                ...parsedData,
+                id: r.id,
+                placeId: r.placeId || parsedData.placeId,
+                placeName: r.placeName || parsedData.placeName,
+                authorName: r.authorName || parsedData.authorName,
+                authorAvatar: r.authorAvatar || parsedData.authorAvatar,
+                rating: r.rating || parsedData.rating || 5,
+                videoUrl: r.videoUrl || parsedData.videoUrl,
+                thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
+                duration: r.duration || parsedData.duration || 60,
+                likesCount: r.likesCount || parsedData.likesCount || 0,
+                viewsCount: r.viewsCount || parsedData.viewsCount || 0,
+                author: mergedAuthor
+              });
+            }
+          });
+          bunnyFetchSuccess = true;
+        } catch (bunnyReadErr: any) {
+          console.warn("BunnyDB read notice in feed:", bunnyReadErr?.message || bunnyReadErr);
+        }
+      }
+
+      // 3. Optional SQL mirror if active (Stale data)
       if (getDb()) {
         try {
           const dbRecords = await db.select().from(firestore_video_reviews);
@@ -2924,7 +2964,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
 
       // 4. Update memory cache and write-back to local reviews_index.json on success
-      if (firestoreFetchSuccess) {
+      if (bunnyFetchSuccess || firestoreFetchSuccess) {
         feedCache.videos = merged;
         feedCache.lastFetched = now;
 
@@ -2964,7 +3004,51 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       // Invalidate memory cache to force an immediate refresh on next feed request
       feedCache.lastFetched = 0;
 
-      // 2. Sync to Firestore Admin directly
+      // 2. Sync to Bunny Database (libSQL cloud)
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          const jsonStr = JSON.stringify(review);
+          await bunnyDb.execute({
+            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, data, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET 
+                    placeId = ?, placeName = ?, authorName = ?, authorAvatar = ?, userId = ?, rating = ?, videoUrl = ?, thumbnailUrl = ?, duration = ?, likesCount = ?, viewsCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [
+              review.id,
+              review.placeId || (review.place && review.place.id) || '',
+              review.placeName || (review.place && review.place.name) || '',
+              review.authorName || (review.author && review.author.name) || '',
+              review.authorAvatar || (review.author && review.author.avatar) || '',
+              review.userId || review.authorEmail || (review.author && review.author.email) || '',
+              review.rating || 5,
+              review.videoUrl || '',
+              review.thumbnailUrl || '',
+              review.duration || 60,
+              review.likesCount || review.likes || 0,
+              review.viewsCount || review.views || 0,
+              jsonStr,
+              // Update args
+              review.placeId || (review.place && review.place.id) || '',
+              review.placeName || (review.place && review.place.name) || '',
+              review.authorName || (review.author && review.author.name) || '',
+              review.authorAvatar || (review.author && review.author.avatar) || '',
+              review.userId || review.authorEmail || (review.author && review.author.email) || '',
+              review.rating || 5,
+              review.videoUrl || '',
+              review.thumbnailUrl || '',
+              review.duration || 60,
+              review.likesCount || review.likes || 0,
+              review.viewsCount || review.views || 0,
+              jsonStr
+            ]
+          });
+        } catch (bunnySaveErr: any) {
+          console.warn("BunnyDB sync in save-review notice:", bunnySaveErr?.message || bunnySaveErr);
+        }
+      }
+
+      // 3. Sync to Firestore Admin directly
       if (adminDb) {
         try {
           await adminDb.collection("videoReviews").doc(review.id).set(review, { merge: true });
