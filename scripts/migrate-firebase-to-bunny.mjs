@@ -587,6 +587,25 @@ VALUES (
   fs.writeFileSync(config.outputSqlPath, sqlStatements.join('\n'), 'utf8');
   console.log(`✅ SQL Dump written to: ${path.resolve(config.outputSqlPath)} (${sqlStatements.length} statements)`);
 
+  // Direct sync to Bunny Cloud Database if configured
+  const bunnyDbUrl = process.env.BUNNY_DATABASE_URL || process.env.LIBSQL_URL;
+  const bunnyDbAuthToken = process.env.BUNNY_DATABASE_AUTH_TOKEN || process.env.LIBSQL_AUTH_TOKEN;
+  if (bunnyDbUrl && bunnyDbAuthToken) {
+    try {
+      console.log('\n🚀 Executing statements directly on Bunny Cloud Database...');
+      const { createClient } = await import('@libsql/client');
+      const client = createClient({ url: bunnyDbUrl, authToken: bunnyDbAuthToken });
+      for (const stmt of sqlStatements) {
+        if (stmt && stmt.trim()) {
+          await client.execute(stmt);
+        }
+      }
+      console.log('✅ All data synced to Bunny Cloud Database!');
+    } catch (dbSyncErr) {
+      console.warn('⚠️ Bunny Cloud Database sync notice:', dbSyncErr.message);
+    }
+  }
+
   const report = {
     timestamp: new Date().toISOString(),
     configuration: {

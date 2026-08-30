@@ -3181,23 +3181,64 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
       userVerificationStore.delete(cleanEmail);
 
-      const fName = storedFirstName ? String(storedFirstName).trim() : cleanEmail.split('@')[0];
-      const lName = storedLastName ? String(storedLastName).trim() : '';
-      const fullName = lName ? `${fName} ${lName}` : fName;
-      const initial = (fName.charAt(0) || 'U').toUpperCase();
+      let existingUser: any = null;
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const userRows = await bunnyDb.execute({
+            sql: "SELECT data FROM users WHERE id = ? OR email = ? LIMIT 1",
+            args: [`usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`, cleanEmail]
+          });
+          if (userRows.rows.length > 0 && userRows.rows[0].data) {
+            existingUser = typeof userRows.rows[0].data === 'string' ? JSON.parse(userRows.rows[0].data as string) : userRows.rows[0].data;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not check existing user in BunnyDB:", err);
+      }
+
+      const fName = storedFirstName ? String(storedFirstName).trim() : (existingUser?.firstName || (existingUser?.name ? existingUser.name.split(' ')[0] : ''));
+      const lName = storedLastName ? String(storedLastName).trim() : (existingUser?.lastName || (existingUser?.name && existingUser.name.includes(' ') ? existingUser.name.split(' ').slice(1).join(' ') : ''));
+      const fullName = fName && lName ? `${fName} ${lName}` : (fName || existingUser?.name || cleanEmail.split('@')[0]);
+      const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
 
       const userSession = {
-        uid: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        uid: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
         email: cleanEmail,
         name: fullName,
         firstName: fName,
         lastName: lName,
+        city: existingUser?.city || '',
+        country: existingUser?.country || '',
+        avatar: existingUser?.avatar || '',
         initial,
-        role: 'user',
+        role: existingUser?.role || 'user',
+        isNewUser: !existingUser || (!existingUser.firstName && !existingUser.name),
         authProvider: 'resend_magic_link',
         token: `usr_sess_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`,
         verifiedAt: new Date().toISOString()
       };
+
+      // Save/update user session in Bunny Database
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          await bunnyDb.execute({
+            sql: `INSERT INTO users (id, email, name, data, updatedAt) 
+                  VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
+                  ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [
+              userSession.uid,
+              cleanEmail,
+              userSession.name,
+              JSON.stringify(userSession),
+              JSON.stringify(userSession)
+            ]
+          });
+        }
+      } catch (saveErr) {
+        console.warn("Could not persist verified user to BunnyDB:", saveErr);
+      }
 
       return res.json({
         success: true,
@@ -3207,6 +3248,64 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     } catch (err: any) {
       console.error("verify user magic-link error:", err);
       return res.status(500).json({ error: err.message || "Failed to verify magic link" });
+    }
+  });
+
+  // Update User Profile Endpoint (Directly into Bunny Cloud Database)
+  app.post("/api/auth/update-profile", async (req, res) => {
+    try {
+      const { email, firstName, lastName, city, country, avatar, name } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Missing email address." });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const uid = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const fName = (firstName || '').trim();
+      const lName = (lastName || '').trim();
+      const fullName = (name || (lName ? `${fName} ${lName}` : fName) || cleanEmail.split('@')[0]).trim();
+      const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
+
+      const profile = {
+        uid,
+        id: uid,
+        email: cleanEmail,
+        name: fullName,
+        firstName: fName,
+        lastName: lName,
+        city: (city || '').trim(),
+        country: (country || '').trim(),
+        avatar: avatar || '',
+        initial,
+        role: 'user',
+        updatedAt: new Date().toISOString()
+      };
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO users (id, email, name, data, updatedAt) 
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
+                ON CONFLICT(id) DO UPDATE SET name = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+          args: [
+            uid,
+            cleanEmail,
+            fullName,
+            JSON.stringify(profile),
+            fullName,
+            JSON.stringify(profile)
+          ]
+        });
+      }
+
+      return res.json({
+        success: true,
+        user: profile,
+        message: "Profile updated successfully"
+      });
+    } catch (err: any) {
+      console.error("Update profile error:", err);
+      return res.status(500).json({ error: err.message || "Failed to update profile" });
     }
   });
 
