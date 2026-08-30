@@ -132,6 +132,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isProgrammaticScrollRef = useRef<boolean>(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentIndexRef = useRef<number>(currentIndex);
   const lastObserverIndexRef = useRef<number>(currentIndex);
 
@@ -139,6 +140,32 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
+
+  // Robust programmatic scroll function that guarantees instant synchronization
+  const scrollToCard = useCallback(
+    (targetIndex: number, behavior: ScrollBehavior = "smooth") => {
+      if (targetIndex < 0 || targetIndex >= videos.length) return;
+
+      // Update refs and trigger state change immediately to prevent race conditions
+      currentIndexRef.current = targetIndex;
+      lastObserverIndexRef.current = targetIndex;
+      onSelectVideoIndex(targetIndex);
+
+      const cardEl = cardRefs.current[targetIndex];
+      const container = containerRef.current;
+      if (cardEl && container) {
+        isProgrammaticScrollRef.current = true;
+        const targetTop = cardEl.offsetTop - container.offsetTop;
+        container.scrollTo({ top: targetTop, behavior });
+
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 500);
+      }
+    },
+    [videos.length, onSelectVideoIndex]
+  );
 
   // Web Audio API session unlocker to guarantee audio permission
   const unlockAudioSession = useCallback(() => {
@@ -242,7 +269,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [currentIndex, videos, onLoadMore]);
 
-  // IntersectionObserver: 0.55 visibility threshold for instant active card selection
+  // IntersectionObserver: accurately pick the card with the highest visible intersection ratio (>= 0.45)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -250,24 +277,28 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const observer = new IntersectionObserver(
       (entries) => {
         if (isProgrammaticScrollRef.current) return;
-        
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const idxAttr = entry.target.getAttribute("data-video-index");
-            if (idxAttr !== null) {
-              const idx = parseInt(idxAttr, 10);
-              if (!isNaN(idx) && idx !== currentIndexRef.current) {
-                currentIndexRef.current = idx;
-                lastObserverIndexRef.current = idx;
-                onSelectVideoIndex(idx);
-              }
-            }
+
+        const visibleEntries = entries.filter(
+          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.45
+        );
+        if (visibleEntries.length === 0) return;
+
+        visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const bestEntry = visibleEntries[0];
+
+        const idxAttr = bestEntry.target.getAttribute("data-video-index");
+        if (idxAttr !== null) {
+          const idx = parseInt(idxAttr, 10);
+          if (!isNaN(idx) && idx !== currentIndexRef.current) {
+            currentIndexRef.current = idx;
+            lastObserverIndexRef.current = idx;
+            onSelectVideoIndex(idx);
           }
-        });
+        }
       },
       {
         root: container,
-        threshold: 0.45
+        threshold: [0.3, 0.45, 0.6, 0.8, 1.0]
       }
     );
 
@@ -280,33 +311,89 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [videos, onSelectVideoIndex]);
 
-  // Scroll to currentIndex when changed via keyboard or floating arrow buttons
+  // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {
     if (currentIndex !== lastObserverIndexRef.current) {
-      isProgrammaticScrollRef.current = true;
+      lastObserverIndexRef.current = currentIndex;
+      currentIndexRef.current = currentIndex;
+
       const cardEl = cardRefs.current[currentIndex];
-      if (cardEl && containerRef.current) {
-        cardEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      const container = containerRef.current;
+      if (cardEl && container) {
+        isProgrammaticScrollRef.current = true;
+        const targetTop = cardEl.offsetTop - container.offsetTop;
+        container.scrollTo({ top: targetTop, behavior: "smooth" });
+
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 500);
       }
-      
-      const timeout = setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-      }, 700);
-      return () => clearTimeout(timeout);
     }
   }, [currentIndex]);
 
   const handleNext = () => {
-    if (currentIndex < videos.length - 1) {
-      onSelectVideoIndex(currentIndex + 1);
+    if (currentIndexRef.current < videos.length - 1) {
+      scrollToCard(currentIndexRef.current + 1, "smooth");
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      onSelectVideoIndex(currentIndex - 1);
+    if (currentIndexRef.current > 0) {
+      scrollToCard(currentIndexRef.current - 1, "smooth");
     }
   };
+
+  // Desktop Mouse Wheel Navigation: smoothly step to previous/next video without getting stuck
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let wheelTimeout: NodeJS.Timeout | null = null;
+    let isWheeling = false;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (
+        document.body.style.overflow === "hidden" ||
+        moreMenuVideo !== null ||
+        document.querySelector(
+          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer"
+        ) !== null
+      ) {
+        return;
+      }
+
+      // If wheel delta is significant, cleanly trigger next / previous reel step
+      if (Math.abs(e.deltaY) > 28) {
+        e.preventDefault();
+        if (isWheeling) return;
+        isWheeling = true;
+
+        if (e.deltaY > 0) {
+          // Wheel Down -> Next Video
+          if (currentIndexRef.current < videos.length - 1) {
+            scrollToCard(currentIndexRef.current + 1, "smooth");
+          }
+        } else {
+          // Wheel Up -> Previous Video
+          if (currentIndexRef.current > 0) {
+            scrollToCard(currentIndexRef.current - 1, "smooth");
+          }
+        }
+
+        if (wheelTimeout) clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(() => {
+          isWheeling = false;
+        }, 380);
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+      if (wheelTimeout) clearTimeout(wheelTimeout);
+    };
+  }, [videos.length, moreMenuVideo, scrollToCard]);
 
   // MediaSession Next/Prev Skip Action Handlers for Lock Screen
   useEffect(() => {
@@ -500,7 +587,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-prev-video"
             onClick={handlePrev}
-            className="w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 flex items-center justify-center text-zinc-200 hover:bg-zinc-800 hover:text-white hover:border-zinc-500 hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
+            disabled={currentIndex <= 0}
+            className={`w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 flex items-center justify-center transition-all shadow-xl ${
+              currentIndex <= 0
+                ? "opacity-30 cursor-not-allowed text-zinc-600 border-zinc-800"
+                : "text-zinc-200 hover:bg-zinc-800 hover:text-white hover:border-zinc-500 hover:scale-105 active:scale-95 cursor-pointer"
+            }`}
             title="Previous Video (Up Arrow)"
           >
             <ChevronUp className="w-6 h-6 stroke-[2.5]" />
@@ -509,7 +601,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-next-video"
             onClick={handleNext}
-            className="w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 flex items-center justify-center text-zinc-200 hover:bg-zinc-800 hover:text-white hover:border-zinc-500 hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
+            disabled={currentIndex >= videos.length - 1}
+            className={`w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 flex items-center justify-center transition-all shadow-xl ${
+              currentIndex >= videos.length - 1
+                ? "opacity-30 cursor-not-allowed text-zinc-600 border-zinc-800"
+                : "text-zinc-200 hover:bg-zinc-800 hover:text-white hover:border-zinc-500 hover:scale-105 active:scale-95 cursor-pointer"
+            }`}
             title="Next Video (Down Arrow)"
           >
             <ChevronDown className="w-6 h-6 stroke-[2.5]" />
