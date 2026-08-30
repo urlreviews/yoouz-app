@@ -1,15 +1,7 @@
 const fs = require('fs');
-let code = fs.readFileSync('src/components/CopoBusinessDashboardView.tsx', 'utf8');
+let code = fs.readFileSync('server.ts', 'utf8');
 
-const regex = /                      \)\}\n                  <\/div>\n                <\/div>\n              <\/div>\n            \)\}\n\n        \{\/\* TAB 5/;
-const replace = `                      )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            )}
+code = code.replace(/      \}\n        type,\n        title,/g, '      }\n      const svg = buildOgImageSvg({\n        type,\n        title,');
 
-        {/* TAB 5`;
-
-code = code.replace(regex, replace);
-fs.writeFileSync('src/components/CopoBusinessDashboardView.tsx', code);
+fs.writeFileSync('server.ts', code);
+console.log("Fixed");

@@ -5618,6 +5618,7 @@ Return JSON:
     bannerBase64?: string;
     logoBase64?: string;
     reviewerPhotoBase64?: string;
+    thumbBase64?: string;
   }): string {
     const escapeXml = (unsafe: string) => {
       return (unsafe || '')
@@ -6140,6 +6141,15 @@ const isPlaceCard = type === 'place';
       // Ultra high-resolution authentic human reviewer portrait (natural selfie review angle, warm real photography)
       const reviewerPhotoUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=95';
       let reviewerPhotoBase64 = '';
+      let thumbBase64 = '';
+      if (req.query.thumbUrl) {
+         try {
+           const response = await fetch(req.query.thumbUrl);
+           const arrayBuffer = await response.arrayBuffer();
+           const buffer = Buffer.from(arrayBuffer);
+           thumbBase64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+         } catch(e) {}
+      }
       try {
         reviewerPhotoBase64 = await fetchBase64(reviewerPhotoUrl);
       } catch(e) {}
@@ -6492,6 +6502,198 @@ const isPlaceCard = type === 'place';
   });
 
   // Open Graph Image Endpoint (Generates PNG for Facebook, X/Twitter, WhatsApp, LinkedIn, etc.)
+  
+
+app.get('/api/debug-metadata', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl) return res.send("Please provide ?url=...");
+  
+  try {
+    const urlObj = new URL(targetUrl);
+    
+    // Mock a request object for resolveMetadataForRequest
+    const mockReq = {
+      headers: {
+        'x-forwarded-proto': urlObj.protocol.replace(':', ''),
+        'x-forwarded-host': urlObj.host,
+        host: urlObj.host
+      },
+      protocol: urlObj.protocol.replace(':', ''),
+      originalUrl: urlObj.pathname + urlObj.search,
+      url: urlObj.pathname + urlObj.search
+    };
+    
+    const meta = await resolveMetadataForRequest(mockReq);
+    const htmlTags = injectOpenGraphTags("<html><head><title>Test</title></head><body></body></html>", meta);
+    
+    // Return a beautiful preview
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`
+      <html>
+        <head>
+          <style>
+            body { font-family: system-ui, sans-serif; background: #09090b; color: #fff; padding: 40px; }
+            .card { background: #18181b; padding: 24px; border-radius: 12px; border: 1px solid #27272a; margin-bottom: 24px; }
+            pre { background: #000; padding: 16px; border-radius: 8px; overflow-x: auto; color: #a1a1aa; }
+            img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #27272a; }
+            h2 { color: #f4f4f5; margin-top: 0; }
+          </style>
+        </head>
+        <body>
+          <h1>URL Metadata Preview</h1>
+          
+          <div class="card">
+            <h2>Generated Open Graph Image</h2>
+            <img src="${meta.imageUrl}" />
+          </div>
+
+          <div class="card">
+            <h2>Generated HTML Tags</h2>
+            <pre>${htmlTags.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+          </div>
+          
+          <div class="card">
+            <h2>Raw JSON Metadata Object</h2>
+            <pre>${JSON.stringify(meta, null, 2)}</pre>
+          </div>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.get('/api/og-preview-v2', async (req, res) => {
+  let placeName = req.query.placeName || "Awesome Coffee Shop";
+  let authorName = req.query.author || "Alex Johnson";
+  let rating = parseFloat(req.query.rating || "5");
+  let thumbUrl = req.query.thumbUrl || "";
+
+  // Helper to fetch and convert image to base64
+  let thumbBase64 = "";
+  if (thumbUrl) {
+    try {
+      const response = await fetch(thumbUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      thumbBase64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+    } catch (e) {
+      console.warn("Could not load thumbUrl");
+    }
+  }
+
+  if (!thumbBase64) {
+    // Fallback colorful gradient data URI
+    thumbBase64 = "data:image/svg+xml;base64," + Buffer.from(`<svg width="300" height="500" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#3b82f6"/></svg>`).toString('base64');
+  }
+
+  // Draw Stars
+  let starsSvg = '';
+  for(let i=0; i<5; i++) {
+    const fill = i < Math.floor(rating) ? '#fbbf24' : '#3f3f46';
+    starsSvg += `<path transform="translate(${i * 28}, 0)" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="${fill}"/>`;
+  }
+
+  const svg = `
+  <svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+      <filter id="blurLg" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="80" />
+      </filter>
+      <filter id="shadow">
+        <feDropShadow dx="0" dy="24" stdDeviation="32" flood-opacity="0.6" flood-color="#000000"/>
+      </filter>
+      <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="30%" stop-color="#09090b" stop-opacity="0.95"/>
+        <stop offset="100%" stop-color="#09090b" stop-opacity="0.3"/>
+      </linearGradient>
+      <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05"/>
+      </linearGradient>
+      <clipPath id="thumbClip">
+        <rect width="315" height="560" rx="32"/>
+      </clipPath>
+      <clipPath id="avatarClip">
+        <circle cx="28" cy="28" r="28"/>
+      </clipPath>
+    </defs>
+
+    <!-- Base dark layer -->
+    <rect width="1200" height="630" fill="#09090b"/>
+    
+    <!-- Ultra-blurred ambient background from the thumbnail -->
+    <image href="${thumbBase64}" x="-100" y="-100" width="1400" height="830" preserveAspectRatio="xMidYMid slice" opacity="0.6" filter="url(#blurLg)"/>
+    
+    <!-- Fade gradient to keep text hyper-legible on the left -->
+    <rect width="1200" height="630" fill="url(#fade)"/>
+
+    <!-- LEFT COLUMN: Typography & Info -->
+    <g transform="translate(80, 80)">
+      
+      <!-- Brand Logo -->
+      <g transform="translate(0, 0)">
+        <rect width="48" height="48" rx="14" fill="#ffffff"/>
+        <path d="M24 13.5l2.4 4.9 5.4.8-3.9 3.8.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.9-3.8 5.4-.8z" fill="#09090b"/>
+        <text x="64" y="34" font-family="system-ui, sans-serif" font-size="34" font-weight="900" fill="#ffffff" letter-spacing="-0.5">Yoouz</text>
+      </g>
+
+      <!-- Rating -->
+      <g transform="translate(0, 160)">
+        ${starsSvg}
+        <text x="150" y="17" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="#a1a1aa">${rating.toFixed(1)} / 5.0</text>
+      </g>
+
+      <!-- Huge Place Name -->
+      <!-- We split placeName artificially for demo if it's too long, but SVG text doesn't auto-wrap. Let's just do a big bold line -->
+      <text x="0" y="240" font-family="system-ui, sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">${placeName.substring(0, 22)}${placeName.length > 22 ? '...' : ''}</text>
+      
+      <!-- Tagline -->
+      <text x="0" y="300" font-family="system-ui, sans-serif" font-size="26" font-weight="600" fill="#a1a1aa">Authentic 60-Second Video Review</text>
+
+      <!-- Reviewer Profile -->
+      <g transform="translate(0, 420)">
+        <g clip-path="url(#avatarClip)">
+           <rect width="56" height="56" fill="#27272a"/>
+           <!-- Initials fallback for avatar -->
+           <text x="28" y="36" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#ffffff">${authorName.charAt(0)}</text>
+        </g>
+        <text x="76" y="24" font-family="system-ui, sans-serif" font-size="24" font-weight="800" fill="#ffffff">${authorName}</text>
+        <text x="76" y="48" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#3b82f6">Verified Video Reviewer</text>
+      </g>
+    </g>
+
+    <!-- RIGHT COLUMN: The 9:16 Video Thumbnail -->
+    <g transform="translate(750, 35)" filter="url(#shadow)">
+      <!-- Thumbnail Wrapper with border radius -->
+      <g clip-path="url(#thumbClip)">
+        <image href="${thumbBase64}" x="0" y="0" width="315" height="560" preserveAspectRatio="xMidYMid slice"/>
+        
+        <!-- Dark tint overlay for better play button contrast -->
+        <rect width="315" height="560" fill="#000000" fill-opacity="0.15"/>
+      </g>
+      
+      <!-- Glossy Premium Border -->
+      <rect width="315" height="560" rx="32" fill="none" stroke="url(#glass)" stroke-width="2"/>
+
+      <!-- Center Play Button Overlay -->
+      <g transform="translate(113.5, 236)">
+        <!-- Frosted Glass Circle -->
+        <circle cx="44" cy="44" r="44" fill="#000000" fill-opacity="0.4"/>
+        <!-- Thin sleek border -->
+        <circle cx="44" cy="44" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1.5"/>
+        <!-- Play Triangle -->
+        <path d="M36 28l24 16-24 16V28z" fill="#ffffff"/>
+      </g>
+    </g>
+  </svg>
+  `;
+  
+  res.setHeader("Content-Type", "image/svg+xml");
+  res.send(svg);
+});
+
   app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
     try {
       let type = (req.query.type as string) || "homepage";
@@ -6598,6 +6800,73 @@ const isPlaceCard = type === 'place';
         bannerBase64 = await fetchBase64(req.query.bannerUrl as string);
       }
 
+      
+      // Short-circuit for 'video' type to use native Sharp compositing (Avoid SVG text rendering issues on Linux)
+      
+      if (type === 'video') {
+         let thumbBuf;
+         if (req.query.thumbUrl) {
+           const tUrl = req.query.thumbUrl;
+           if (tUrl.startsWith('data:image')) {
+             thumbBuf = Buffer.from(tUrl.split(',')[1], 'base64');
+           } else {
+             try {
+                const tr = await fetch(tUrl);
+                thumbBuf = Buffer.from(await tr.arrayBuffer());
+             } catch(e) {
+                console.error("Failed to fetch thumbUrl", e);
+             }
+           }
+         }
+         
+         if (!thumbBuf) {
+            thumbBuf = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
+         }
+
+         const playButtonSvg = `
+           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+             <rect width="1200" height="630" fill="#000000" fill-opacity="0.2"/>
+             <g transform="translate(560, 275)">
+               <circle cx="40" cy="40" r="40" fill="#000000" fill-opacity="0.6"/>
+               <path d="M30 25l26 15-26 15V25z" fill="#ffffff"/>
+             </g>
+           </svg>
+         `;
+
+         try {
+           // 1. Create a blurred, covered background
+           const background = await sharp(thumbBuf)
+             .resize(1200, 630, { fit: 'cover' })
+             .blur(40)
+             .modulate({ brightness: 0.6 })
+             .toBuffer();
+
+           // 2. Create the crisp, contained foreground
+           // Videos are typically 9:16 vertical (e.g. 720x1280). We fit it into 1200x630 with 'contain'.
+           // To make it look like a short, we give it a clean height of 630.
+           const foreground = await sharp(thumbBuf)
+             .resize(1200, 630, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+             .toBuffer();
+
+           const finalPng = await sharp(background)
+             .composite([
+                { input: foreground, blend: 'over' },
+                { input: Buffer.from(playButtonSvg), blend: 'over' }
+             ])
+             .png({ quality: 90 })
+             .toBuffer();
+             
+           res.setHeader('Content-Type', 'image/png');
+           res.setHeader('Cache-Control', 'public, max-age=86400');
+           return res.send(finalPng);
+         } catch(e) {
+           console.error("Sharp composite error:", e);
+           const blank = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
+           res.setHeader('Content-Type', 'image/png');
+           return res.send(blank);
+         }
+      }
+
       const svg = buildOgImageSvg({
         type,
         title,
@@ -6613,7 +6882,8 @@ const isPlaceCard = type === 'place';
         avatarBase64, 
         bannerBase64, 
         logoBase64,
-        reviewerPhotoBase64
+        reviewerPhotoBase64,
+        thumbBase64
       });
 
       if (req.query.format === 'svg') {
@@ -6732,7 +7002,21 @@ const isPlaceCard = type === 'place';
             ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
             : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
           
-          imageUrl = `${baseUrl}/api/og-image.png?type=video&id=${encodeURIComponent(foundVideo.id)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}&v=4`;
+          
+          
+          let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
+          if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
+             thumbArg = "";
+          }
+          if (thumbArg.length > 0 && thumbArg.length < 1000 && thumbArg.startsWith('data:image')) {
+             thumbArg = "";
+          }
+          if (!thumbArg && (foundVideo.author?.avatar || foundVideo.avatar)) {
+             thumbArg = foundVideo.author?.avatar || foundVideo.avatar;
+          }
+          imageUrl = `${baseUrl}/api/og-image.png?type=video&id=${encodeURIComponent(foundVideo.id)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}&thumbUrl=${encodeURIComponent(thumbArg)}&v=6`;
+
+
           videoUrl = foundVideo.videoUrl || "";
           type = "video.other";
           keywords = `${placeName} review, ${placeName} video review, ${authorName} review, authentic customer video, 60 second review, yoouz video`;
