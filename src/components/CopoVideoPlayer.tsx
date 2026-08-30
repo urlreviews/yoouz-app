@@ -641,7 +641,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-zinc-100 line-clamp-1">
-                    {formatBusinessName(moreMenuVideo?.placeName) || "Business Place"}
+                    {formatBusinessName(moreMenuVideo?.placeName || moreMenuVideo?.dishOrItem || moreMenuVideo?.placeId) || "Business Place"}
                   </h3>
                   <p className="text-xs text-zinc-400">
                     Review by {moreMenuVideo?.author?.name || "Verified Reviewer"}

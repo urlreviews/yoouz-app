@@ -772,9 +772,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           >
             <CopoBrandLogo
               domain={video.placeWebsite}
-              name={formatBusinessName(video?.placeName) || "Business Place"}
+              name={formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || "Business Place"}
               website={video.placeWebsite}
-              logoUrl={businessLogoUrl}
+              logoUrl={businessLogoUrl || video?.placeLogoUrl}
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
               className="w-9 h-9 rounded-lg bg-white border border-white/40 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm group-hover:scale-105 transition-transform"
               imageClassName="w-full h-full object-contain rounded-[5px] [image-rendering:-webkit-optimize-contrast]"
@@ -782,7 +782,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             />
             <div className="flex items-center min-w-0 flex-1 gap-1.5">
               <span className="truncate leading-tight font-bold text-white group-hover:text-zinc-200 transition-colors">
-                {formatBusinessName(video?.placeName) || "Business Place"}
+                {formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || "Business Place"}
               </span>
               <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
             </div>
