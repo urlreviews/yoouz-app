@@ -35,48 +35,48 @@ export const getAuthContextCopy = (intent?: string, customTitle?: string, custom
     case 'record':
       return {
         title: customTitle || "Sign in to Record",
-        subtitle: customSubtitle || "Sign in with your email to record and publish verified 60-second video reviews."
+        subtitle: customSubtitle || "Sign in to record and share your 60-second video review."
       };
     case 'following':
       return {
         title: customTitle || "Sign in to Yoouz",
-        subtitle: customSubtitle || "Follow creators, save top reviewers, and get updates from places you love."
+        subtitle: customSubtitle || "Sign in to follow creators and stay updated on top places."
       };
     case 'messages':
       return {
         title: customTitle || "Sign in to Yoouz",
-        subtitle: customSubtitle || "Connect with video reviewers and verified local business owners."
+        subtitle: customSubtitle || "Sign in to message reviewers and verified businesses."
       };
     case 'notifications':
       return {
         title: customTitle || "Sign in to Yoouz",
-        subtitle: customSubtitle || "Stay notified on likes, comments, and mentions on your video reviews."
+        subtitle: customSubtitle || "Sign in to view your activity and notifications."
       };
     case 'bookmarks':
       return {
         title: customTitle || "Sign in to Yoouz",
-        subtitle: customSubtitle || "Save places and keep your favorite 60-second reviews in one place."
+        subtitle: customSubtitle || "Sign in to save and access your favorite places."
       };
     case 'profile':
       return {
         title: customTitle || "Sign in to Yoouz",
-        subtitle: customSubtitle || "Sign in with your email to customize your profile, avatar, and reviews."
+        subtitle: customSubtitle || "Sign in to manage your account and video reviews."
       };
     case 'comment':
     case 'like':
       return {
         title: customTitle || "Sign in to Yoouz",
-        subtitle: customSubtitle || "Join the conversation, leave feedback, and interact with reviews."
+        subtitle: customSubtitle || "Sign in to join the conversation and interact."
       };
     case 'claim':
       return {
         title: customTitle || "Business Sign in",
-        subtitle: customSubtitle || "Sign in to verify and manage your official business listing."
+        subtitle: customSubtitle || "Sign in to verify and manage your official business."
       };
     default:
       return {
-        title: customTitle || "Welcome to Yoouz",
-        subtitle: customSubtitle || "Enter your email to sign in or create an account with a secure magic link."
+        title: customTitle || "Sign in to Yoouz",
+        subtitle: customSubtitle || "Enter your email to sign in or create an account."
       };
   }
 };
@@ -264,7 +264,7 @@ export const CopoAuthPrompt: React.FC<{
   const previewColor = getAvatarColor(seedName);
 
   return (
-    <div className={`w-full ${isFullPage ? "min-h-full flex flex-col justify-between" : "flex flex-col items-center"} p-4 sm:p-8 select-none bg-[#09090b] text-white`}>
+    <div className={`w-full ${isFullPage ? "min-h-full flex flex-col justify-between" : "flex flex-col items-center"} p-4 sm:p-7 select-none bg-[#09090b] text-white`}>
       {isFullPage && onOpenHelp && (
         <div className="w-full flex items-center justify-end py-2 mb-4">
           <button
@@ -272,37 +272,45 @@ export const CopoAuthPrompt: React.FC<{
             className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-full hover:bg-white/[0.04]"
           >
             <HelpCircle className="w-4 h-4 text-zinc-400" />
-            <span>Feedback and help</span>
+            <span>Help</span>
           </button>
         </div>
       )}
 
-      <div className="w-full max-w-md mx-auto my-auto flex flex-col items-center text-center space-y-6 py-4">
+      <div className="w-full max-w-sm mx-auto my-auto flex flex-col items-center text-center space-y-5 py-2">
         
-        {/* Dynamic 1-Letter Avatar Icon */}
-        <div 
-          className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold tracking-tight shadow-xl transition-all duration-300 transform scale-100 hover:scale-105 border border-white/10"
-          style={{ backgroundColor: previewColor.bg, color: previewColor.text }}
-        >
-          {previewLetter}
-        </div>
+        {/* Step-Aware Brand / Profile Icon */}
+        {step === 'profile' ? (
+          <div 
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold tracking-tight shadow-xl transition-all duration-300 border border-white/10"
+            style={{ backgroundColor: previewColor.bg, color: previewColor.text }}
+          >
+            {previewLetter}
+          </div>
+        ) : (
+          <div className="relative flex items-center justify-center w-13 h-13 rounded-2xl bg-white shadow-[0_4px_24px_rgba(255,255,255,0.18)] border border-white/20">
+            <svg viewBox="0 0 24 24" className="w-6 h-6 fill-zinc-950">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+          </div>
+        )}
 
-        <div className="space-y-2 max-w-sm">
-          <h1 className="text-[24px] sm:text-2xl font-bold text-white tracking-tight font-['Google_Sans',sans-serif] leading-snug">
+        <div className="space-y-1.5 max-w-xs">
+          <h1 className="text-[22px] sm:text-2xl font-bold text-white tracking-tight font-['Google_Sans',sans-serif] leading-tight">
             {step === 'code' ? 'Check your email' : step === 'profile' ? 'Complete your profile' : copy.title}
           </h1>
-          <p className="text-[13.5px] text-zinc-400 font-normal leading-relaxed">
+          <p className="text-[13px] text-zinc-400 font-normal leading-relaxed">
             {step === 'code' 
               ? `We sent a 6-digit confirmation code to ${email}`
               : step === 'profile'
-                ? "Enter your name and location to personalize your verified reviews."
+                ? "Enter your name and location for verified reviews."
                 : copy.subtitle}
           </p>
         </div>
 
         {/* STEP 1: Email Only Form */}
         {step === 'email' && (
-          <form onSubmit={handleSendMagicLink} className="w-full max-w-sm space-y-4 pt-1 text-left">
+          <form onSubmit={handleSendMagicLink} className="w-full space-y-3.5 pt-1 text-left">
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1.5 tracking-wider uppercase">
                 Email Address
@@ -551,14 +559,9 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
       <div className="w-full max-w-[440px] bg-[#09090b] rounded-[28px] shadow-2xl border border-white/[0.08] text-white flex flex-col relative animate-in zoom-in-95 duration-200 overflow-hidden">
         
         {/* Header with Close and Help */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.04]">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white">Y</div>
-            <span className="text-sm font-bold tracking-tight text-white font-['Google_Sans',sans-serif]">Yoouz Account</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            {onOpenHelp && (
+        <div className="flex items-center justify-between px-5 pt-4 pb-1">
+          <div className="flex items-center">
+            {onOpenHelp ? (
               <button
                 onClick={() => {
                   onClose();
@@ -569,16 +572,16 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
                 <HelpCircle className="w-3.5 h-3.5 text-zinc-400" />
                 <span>Help</span>
               </button>
-            )}
-
-            <button
-              onClick={onClose}
-              aria-label="Close modal"
-              className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            ) : <div />}
           </div>
+
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Modal Body */}
