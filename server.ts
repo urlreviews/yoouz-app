@@ -6719,7 +6719,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
             
             if (foundVideo) {
               let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
-              if (!thumbArg.startsWith('data:image')) {
+              if (thumbArg.startsWith('data:image')) {
+                 try {
+                    const b64 = thumbArg.split(',')[1];
+                    if (b64) thumbBuf = Buffer.from(b64, 'base64');
+                 } catch(e) {}
+              } else if (thumbArg) {
                  try {
                     const tr = await fetch(thumbArg);
                     thumbBuf = Buffer.from(await tr.arrayBuffer());
