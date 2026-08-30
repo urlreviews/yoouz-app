@@ -6700,6 +6700,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       if (type === 'video') {
          const videoId = req.query.id;
+         console.log("DEBUG OG: videoId:", videoId, "query:", req.query);
          let thumbBuf;
          
          if (videoId) {

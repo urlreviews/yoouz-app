@@ -210,7 +210,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Social Card Preview</p>
               <a
                 href={isVideoMode && video
-                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&thumbUrl=${encodeURIComponent([video.thumbnailUrl, (video as any).videoThumbnail, (video as any).videoPreviewUrl, (video as any).coverUrl].find(url => url && typeof url === 'string' && !url.startsWith('data:image')) || "")}&v=13`
+                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&v=14`
                   : "/api/og-image.png?v=8"
                 }
                 target="_blank"
@@ -223,7 +223,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             <div className="relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-inner group">
               <img
                 src={isVideoMode && video
-                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&thumbUrl=${encodeURIComponent([video.thumbnailUrl, (video as any).videoThumbnail, (video as any).videoPreviewUrl, (video as any).coverUrl].find(url => url && typeof url === 'string' && !url.startsWith('data:image')) || "")}&v=13`
+                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&v=14`
                   : "/api/og-image.png?v=8"
                 }
                 alt="Social Media Preview Card"
