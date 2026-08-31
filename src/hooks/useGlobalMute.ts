@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react';
 
-// Global state outside the hook so it persists across unmounts
-const STORAGE_KEY = 'copo_global_muted';
-let globalIsMuted = true; // Always start a cold session as muted to guarantee Safari/iOS instant autoplay!
-try {
-  const saved = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
-  if (saved !== null) {
-    globalIsMuted = saved === 'true';
-  }
-} catch (e) {}
+// Industry-standard mobile PWA behavior (matching TikTok, Instagram, YouTube Shorts):
+// Fresh cold sessions ALWAYS start muted so native iOS Safari & Android Chrome autoplay instantly with zero lag,
+// zero permission freezes, and no browser security rejections.
+// Once the user interacts and unmutes during their session, sound remains active across all scrolled videos.
+let globalIsMuted = true;
 
 const listeners = new Set<(val: boolean) => void>();
 
@@ -25,10 +21,6 @@ export function useGlobalMute() {
   const setIsMuted = (val: boolean | ((prev: boolean) => boolean)) => {
     const nextVal = typeof val === 'function' ? val(globalIsMuted) : val;
     globalIsMuted = nextVal;
-    try {
-      localStorage.setItem(STORAGE_KEY, String(nextVal));
-      sessionStorage.setItem(STORAGE_KEY, String(nextVal));
-    } catch (e) {}
     listeners.forEach(listener => listener(nextVal));
   };
 
