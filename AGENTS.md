@@ -1,4 +1,4 @@
-# Reviuz Project Policies
+# Yoouz Project Policies
 
 ## Recording Screen Guidelines (Step 2)
 

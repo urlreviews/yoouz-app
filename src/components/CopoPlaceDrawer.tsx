@@ -1734,7 +1734,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   Direct Messaging Unavailable
                 </h3>
                 <p className="text-xs text-zinc-300 leading-relaxed font-medium">
-                  <span className="font-bold text-white">{formatBusinessName(place.name)}</span> has not claimed their official page on Reviuz yet, so they cannot receive or reply to customer messages.
+                  <span className="font-bold text-white">{formatBusinessName(place.name)}</span> has not claimed their official page on Yoouz yet, so they cannot receive or reply to customer messages.
                 </p>
               </div>
 

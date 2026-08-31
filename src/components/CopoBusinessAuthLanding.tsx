@@ -32,7 +32,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
 }) => {
   // State
   const [email, setEmail] = useState('');
-  const [step, setStep] = useState<'email' | 'code' | 'select_place'>('email');
+  const [step, setStep] = useState<'email' | 'code'>('email');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(initialPlace || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -190,9 +190,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
     // Auto-detect business
     let matched = selectedPlace || findMatchingPlaceForEmail(cleanEmail);
     
-    // If not matched, we MUST ask them to select a place
+    // If not matched, show error
     if (!matched) {
-      setStep('select_place');
+      setErrorMessage('Your email domain does not match any known business. Please claim your business from its official Yoouz page.');
       return;
     }
 
@@ -239,10 +239,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
     }
   };
 
-  const filteredPlaces = places.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    p.address.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
 
   return (
     <div className="w-full h-full min-h-0 flex-1 overflow-y-auto bg-zinc-950 flex flex-col antialiased text-white selection:bg-zinc-800 selection:text-white copo-business-auth-landing">
@@ -323,10 +320,13 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   </div>
                   <button
                     type="button"
-                    onClick={() => setStep('select_place')}
+                    onClick={() => {
+                      setSelectedPlace(null);
+                      setErrorMessage(null);
+                    }}
                     className="text-white text-xs font-semibold shrink-0 hover:underline cursor-pointer"
                   >
-                    Change
+                    Cancel
                   </button>
                 </div>
               )}
@@ -418,59 +418,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   </button>
                 </div>
               </form>
-            </div>
-          )}
-
-          {/* STEP 3: OPTIONAL PLACE SELECTOR */}
-          {step === 'select_place' && (
-            <div className="space-y-4 animate-in fade-in">
-              <div>
-                <h2 className="text-base font-bold text-white">Select your venue</h2>
-                <p className="text-xs text-zinc-400 mt-0.5">Choose the listing associated with your business.</p>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search venue name..."
-                  className="w-full pl-9 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600"
-                />
-                <Building2 className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              </div>
-
-              <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-                {filteredPlaces.slice(0, 5).map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedPlace(p);
-                      if (email.trim()) {
-                        doSendMagicLink(email.trim().toLowerCase(), p);
-                      } else {
-                        setStep('email');
-                      }
-                    }}
-                    className="w-full p-2.5 text-left rounded-xl hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 flex items-center justify-between text-xs transition-colors cursor-pointer"
-                  >
-                    <div className="truncate pr-2">
-                      <span className="font-bold text-white block truncate">{p.name}</span>
-                      <span className="text-[10.5px] text-zinc-400 block truncate">{p.address}</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setStep('email')}
-                className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-zinc-700"
-              >
-                Cancel
-              </button>
             </div>
           )}
 
