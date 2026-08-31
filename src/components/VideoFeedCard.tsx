@@ -175,12 +175,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isMuted]);
 
-  // Play / Pause video based on card active state
+  // Establecer reproducción instantánea al activarse
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && hasUserStartedFeedRef.current && !isManuallyPaused;
+    const shouldPlay = isActive && !isManuallyPaused;
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
@@ -195,19 +195,36 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             setIsBuffering(false);
           })
           .catch(() => {
-            // Autoplay blocked with sound: play muted cleanly
+            // If browser blocks audio autoplay on this video before gesture:
+            // start playback muted on this element WITHOUT clearing the user's global unmuted preference!
             el.muted = true;
-            onForceMute?.();
             el.play().then(() => {
               setIsPlaying(true);
               setIsBuffering(false);
+              // If global preference is unmuted, re-enable audio as soon as user taps/scrolls
+              if (!isMuted) {
+                const tryUnmute = () => {
+                  if (videoRef.current) {
+                    videoRef.current.muted = false;
+                    videoRef.current.volume = 1;
+                  }
+                  window.removeEventListener("touchstart", tryUnmute);
+                  window.removeEventListener("touchend", tryUnmute);
+                  window.removeEventListener("click", tryUnmute);
+                  window.removeEventListener("scroll", tryUnmute);
+                };
+                window.addEventListener("touchstart", tryUnmute, { once: true, passive: true });
+                window.addEventListener("touchend", tryUnmute, { once: true, passive: true });
+                window.addEventListener("click", tryUnmute, { once: true, passive: true });
+                window.addEventListener("scroll", tryUnmute, { once: true, passive: true });
+              }
             }).catch(() => {
               setIsPlaying(false);
             });
           });
       }
     } else {
-      // If we are not supposed to play, force pause
+      // If card is not active or paused, cleanly pause
       try {
         el.pause();
         if (!isActive) {
@@ -228,17 +245,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         el.pause();
       } catch (e) {}
     };
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
+  }, [isActive, currentSource, isMuted, isManuallyPaused]);
 
   // Record view count when video is active and playing
   useEffect(() => {
-    if (isActive && hasUserStartedFeedRef.current && video?.id) {
+    if (isActive && video?.id) {
       const timer = setTimeout(() => {
         onRecordView?.(video.id);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [isActive, hasUserStartedFeed, video?.id, onRecordView]);
+  }, [isActive, video?.id, onRecordView]);
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
   useEffect(() => {
@@ -310,7 +327,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     triggerHaptic("light");
 
-    if (el.paused || !isPlaying) {
+    if (el.paused) {
       setIsManuallyPaused(false);
       el.muted = isMuted;
       if (!isMuted) el.volume = 1;
@@ -330,7 +347,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           })
           .catch(() => {
             el.muted = true;
-            onForceMute?.();
             el.play().then(() => {
               setIsPlaying(true);
               if (e) triggerFeedback("play");
@@ -496,8 +512,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             ref={videoRef}
             id={`video-element-${video.id}`}
             src={currentSource}
-            preload={isActive ? "auto" : "metadata"}
-            autoPlay={false}
+            preload={isActive || isNear ? "auto" : "metadata"}
+            autoPlay={isActive}
             playsInline
             webkit-playsinline="true"
             loop
@@ -508,7 +524,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               const t = e.currentTarget;
               
               // Safety: if it should be paused but is moving, force pause
-              const shouldPlay = isActive && hasUserStartedFeedRef.current && !isManuallyPaused;
+              const shouldPlay = isActive && !isManuallyPaused;
               if (!shouldPlay && !t.paused) {
                 t.pause();
               }
@@ -523,19 +539,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              const shouldPlay = isActive && hasUserStartedFeedRef.current && !isManuallyPaused;
+              const shouldPlay = isActive && !isManuallyPaused;
               if (shouldPlay) {
                 if (videoRef.current?.paused) {
                   videoRef.current.play().catch(() => {});
                 }
               } else {
-                // Force pause if not active or manually paused or feed not started
+                // Force pause if not active or manually paused
                 videoRef.current?.pause();
                 setIsPlaying(false);
               }
             }}
             onPlaying={() => {
-              const shouldPlay = isActive && hasUserStartedFeedRef.current && !isManuallyPaused;
+              const shouldPlay = isActive && !isManuallyPaused;
               if (!shouldPlay) {
                 // Safety catch for inactive card
                 videoRef.current?.pause();
@@ -689,8 +705,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Paused Center Play Button - shown whenever active card is paused or feed hasn't started */}
-      {isActive && (!isPlaying || isManuallyPaused || !hasUserStartedFeed) && !showPlayPauseFeedback && (
+      {/* Paused Center Play Button - shown only when the active video is actually paused */}
+      {isActive && isManuallyPaused && !showPlayPauseFeedback && (
         <button
           type="button"
           id={`copo-play-center-btn-${video.id}`}

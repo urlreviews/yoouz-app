@@ -56,35 +56,13 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
   const selectedPlace = places.find((p) => p.id === selectedPlaceId) || places[0];
   const placeVideos = selectedPlace ? videos.filter((v) => isPlaceReviewMatch(v, selectedPlace)) : [];
 
-  // Geolocation detection with localStorage persistence
+  // Load cached location if available without auto-prompting browser geolocation
   useEffect(() => {
     const cached = getCachedUserLocation();
     if (cached) {
       setUserLocation(cached);
-    }
-
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          if (isValidLatLng(pos.coords.latitude, pos.coords.longitude)) {
-            const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            setUserLocation(loc);
-            try {
-              localStorage.setItem("yoouz_lat", loc.lat.toString());
-              localStorage.setItem("yoouz_lng", loc.lng.toString());
-            } catch {}
-            if (mapInstanceRef.current) {
-              mapInstanceRef.current.flyTo([loc.lat, loc.lng], 16, { duration: 1.2 });
-            }
-          }
-        },
-        () => {
-          if (!cached) {
-            setUserLocation({ lat: 31.7921646, lng: 34.635408 });
-          }
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
+    } else {
+      setUserLocation({ lat: 31.7921646, lng: 34.635408 });
     }
   }, []);
 

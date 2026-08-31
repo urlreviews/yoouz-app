@@ -21,6 +21,7 @@ import { VideoReview, VideoAuthor } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import { resolvePlayableVideoSource, normalizeVideoUrl } from "../utils/videoUtils";
+import { useGlobalMute } from "../hooks/useGlobalMute";
 
 interface GoogleVideoPlayerModalProps {
   reviews: VideoReview[];
@@ -46,8 +47,8 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
   onRecordView
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
-  const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [hasStarted, setHasStarted] = useState(true);
+  const [isMuted, setIsMuted] = useGlobalMute();
   const [newComment, setNewComment] = useState("");
   const [activeVideoSrc, setActiveVideoSrc] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement | null>(null);

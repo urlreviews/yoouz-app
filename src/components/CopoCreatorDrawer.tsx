@@ -1138,20 +1138,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </div>
 
               {/* Structured Location Fields */}
-              <div className="space-y-3">
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 block mb-1">Location</label>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">Location</label>
                 
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">Country</span>
-                  <CountrySelector 
-                    value={editCountry} 
-                    onChange={(country) => {
-                      setEditCountry(country);
-                      setEditCity("");
-                      setEditState("");
-                    }} 
-                  />
-                </div>
+                <CountrySelector 
+                  value={editCountry} 
+                  onChange={(country) => {
+                    setEditCountry(country);
+                    setEditCity("");
+                    setEditState("");
+                  }} 
+                />
 
                 {editCountry && (() => {
                   const countryConfig = locationData[editCountry];
