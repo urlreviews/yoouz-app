@@ -37,7 +37,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
   return (
     <div
       id="copo-legal-modal-backdrop"
-      className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
