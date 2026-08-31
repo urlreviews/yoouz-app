@@ -689,7 +689,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   if (stateRegion) {
     const selectedState = statesObj.find(s => s.name === stateRegion);
     if (selectedState) {
-       cityOptions = City.getCitiesOfState(isoCode, selectedState.isoCode).map(c => c.name);
+       const stateCities = City.getCitiesOfState(isoCode, selectedState.isoCode).map(c => c.name);
+                       cityOptions = stateCities.length > 0 ? stateCities : (City.getCitiesOfCountry(isoCode)?.map(c => c.name) || []);
     } else {
        cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
     }

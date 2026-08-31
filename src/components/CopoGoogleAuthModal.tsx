@@ -514,23 +514,27 @@ export const CopoAuthPrompt: React.FC<{
             </div>
 
             {country && (() => {
-              const countryConfig = locationData[country];
-              const hasStates = countryConfig?.hasStates || false;
-              const stateLabel = countryConfig?.stateLabel || "State / Prov";
-              const stateOptions = countryConfig?.states || [];
-
+              const selectedCountryObj = Country.getAllCountries().find(c => c.name === country);
+              const isoCode = selectedCountryObj?.isoCode || "";
+              
+              const statesObj = State.getStatesOfCountry(isoCode);
+              const hasStates = statesObj.length > 0;
+              const stateOptions = statesObj.map(s => s.name);
+              const stateLabel = "Region / Province";
+              
               let cityOptions: string[] = [];
-              if (countryConfig) {
-                if (Array.isArray(countryConfig.cities)) {
-                  cityOptions = countryConfig.cities;
+              if (stateRegion) {
+                const selectedState = statesObj.find(s => s.name === stateRegion);
+                if (selectedState) {
+                   const stateCities = City.getCitiesOfState(isoCode, selectedState.isoCode).map(c => c.name);
+                   cityOptions = stateCities.length > 0 ? stateCities : (City.getCitiesOfCountry(isoCode)?.map(c => c.name) || []);
                 } else {
-                  if (stateRegion) {
-                    cityOptions = countryConfig.cities[stateRegion] || [];
-                  } else {
-                    cityOptions = Object.values(countryConfig.cities).flat();
-                  }
+                   cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
                 }
+              } else {
+                cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
               }
+              const uniqueCityOptions = Array.from(new Set(cityOptions));
 
               return (
                 <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -542,13 +546,7 @@ export const CopoAuthPrompt: React.FC<{
                           value={stateRegion}
                           onChange={(val) => {
                             setStateRegion(val);
-                            if (countryConfig && !Array.isArray(countryConfig.cities)) {
-                              const allowedCities = countryConfig.cities[val] || [];
-                              const primaryCity = allowedCities.find(c => c.toLowerCase() === val.toLowerCase());
-                              setCity(primaryCity || allowedCities[0] || "");
-                            } else {
-                              setCity("");
-                            }
+                            setCity("");
                           }}
                           options={stateOptions}
                           placeholder={stateLabel}
@@ -559,9 +557,8 @@ export const CopoAuthPrompt: React.FC<{
                         <SearchableComboSelector
                           value={city}
                           onChange={setCity}
-                          options={cityOptions}
+                          options={uniqueCityOptions}
                           placeholder="Select City"
-                          disabled={!stateRegion}
                         />
                       </div>
                     </>
@@ -571,7 +568,7 @@ export const CopoAuthPrompt: React.FC<{
                       <SearchableComboSelector
                         value={city}
                         onChange={setCity}
-                        options={cityOptions}
+                        options={uniqueCityOptions}
                         placeholder="Select City"
                       />
                     </div>

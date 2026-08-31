@@ -656,23 +656,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap text-sm">
-            <div className="flex items-center gap-1">
-              <span className="font-bold text-white">{avgRating}</span>
-              <div className="flex items-center text-zinc-300">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3.5 h-3.5 ${
-                      i < Math.floor(parseFloat(avgRating))
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-zinc-700"
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
             <span className="text-zinc-400 font-medium">
-              ({authorVideos.length} {authorVideos.length === 1 ? "review" : "reviews"})
+              {authorVideos.length} {authorVideos.length === 1 ? "review" : "reviews"}
             </span>
             <span className="text-zinc-700">·</span>
             <span className="text-zinc-400 font-medium">
@@ -994,7 +979,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     <span className="text-base font-black text-white">{authorVideos.length}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Avg Rating</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Avg Rating Given</span>
                     <span className="text-base font-black text-white">{avgRating} ⭐</span>
                   </div>
                 </div>
@@ -1152,23 +1137,27 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 />
 
                 {editCountry && (() => {
-                  const countryConfig = locationData[editCountry];
-                  const hasStates = countryConfig?.hasStates || false;
-                  const stateLabel = countryConfig?.stateLabel || "State / Prov";
-                  const stateOptions = countryConfig?.states || [];
-
+                  const selectedCountryObj = Country.getAllCountries().find(c => c.name === editCountry);
+                  const isoCode = selectedCountryObj?.isoCode || "";
+                  
+                  const statesObj = State.getStatesOfCountry(isoCode);
+                  const hasStates = statesObj.length > 0;
+                  const stateOptions = statesObj.map(s => s.name);
+                  const stateLabel = "Region / Province";
+                  
                   let cityOptions: string[] = [];
-                  if (countryConfig) {
-                    if (Array.isArray(countryConfig.cities)) {
-                      cityOptions = countryConfig.cities;
+                  if (editState) {
+                    const selectedState = statesObj.find(s => s.name === editState);
+                    if (selectedState) {
+                       const stateCities = City.getCitiesOfState(isoCode, selectedState.isoCode).map(c => c.name);
+                       cityOptions = stateCities.length > 0 ? stateCities : (City.getCitiesOfCountry(isoCode)?.map(c => c.name) || []);
                     } else {
-                      if (editState) {
-                        cityOptions = countryConfig.cities[editState] || [];
-                      } else {
-                        cityOptions = Object.values(countryConfig.cities).flat();
-                      }
+                       cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
                     }
+                  } else {
+                    cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
                   }
+                  const uniqueCityOptions = Array.from(new Set(cityOptions));
 
                   return (
                     <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -1180,20 +1169,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                               value={editState}
                               onChange={(val) => {
                                 setEditState(val);
-                                if (countryConfig && !Array.isArray(countryConfig.cities)) {
-                                  const allowedCities = countryConfig.cities[val] || [];
-                                  const primaryCity = allowedCities.find(c => c.toLowerCase() === val.toLowerCase());
-                                  if (primaryCity) {
-                                    setEditCity(primaryCity);
-                                  } else if (allowedCities.length === 1) {
-                                    setEditCity(allowedCities[0]);
-                                  } else if (editCity && !allowedCities.includes(editCity)) {
-                                    setEditCity("");
-                                  }
-                                }
+                                setEditCity(""); // Reset city when region changes
                               }}
                               options={stateOptions}
-                              placeholder={`e.g. ${stateOptions[0] || "NY"}`}
+                              placeholder={stateLabel}
                             />
                           </div>
                           <div className="space-y-1">
@@ -1201,25 +1180,19 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             <SearchableComboSelector
                               value={editCity}
                               onChange={setEditCity}
-                              options={cityOptions}
-                              placeholder={
-                                cityOptions.length > 0
-                                  ? `e.g. ${cityOptions[0]}`
-                                  : editState
-                                    ? `e.g. City in ${editState}`
-                                    : "e.g. New York"
-                              }
+                              options={uniqueCityOptions}
+                              placeholder="Select City"
                             />
                           </div>
                         </>
                       ) : (
-                        <div className="space-y-1 col-span-2">
+                        <div className="col-span-2 space-y-1">
                           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">City</span>
                           <SearchableComboSelector
                             value={editCity}
                             onChange={setEditCity}
-                            options={cityOptions}
-                            placeholder={cityOptions.length > 0 ? `e.g. ${cityOptions[0]}` : "e.g. Paris"}
+                            options={uniqueCityOptions}
+                            placeholder="Select City"
                           />
                         </div>
                       )}

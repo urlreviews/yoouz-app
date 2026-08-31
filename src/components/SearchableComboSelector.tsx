@@ -75,9 +75,22 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
           </div>
 
           <div className="max-h-48 overflow-y-auto py-1 scrollbar-thin">
+            {search.trim().length > 0 && !filteredOptions.some(opt => opt.toLowerCase() === search.trim().toLowerCase()) && (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(search.trim());
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer text-zinc-300 hover:bg-zinc-850"
+              >
+                <span className="font-semibold text-emerald-400">Use "{search.trim()}"</span>
+              </button>
+            )}
+
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-xs text-zinc-400 text-center font-medium">
-                No results found
+              <div className="px-4 py-3 text-xs text-zinc-500 text-center font-medium italic">
+                Press "Use" above to add custom location.
               </div>
             ) : (
               filteredOptions.map((option) => {
