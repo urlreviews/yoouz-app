@@ -109,7 +109,7 @@ export const CopoAuthPrompt: React.FC<{
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [city, setCity] = useState<string>("");
-  const [country, setCountry] = useState<string>("United States");
+  const [country, setCountry] = useState<string>("");
   const [stateRegion, setStateRegion] = useState<string>("");
   const [otpCode, setOtpCode] = useState<string>("");
   const [tempUser, setTempUser] = useState<any>(null);
@@ -190,7 +190,7 @@ export const CopoAuthPrompt: React.FC<{
         if (returnedUser?.firstName) setFirstName(returnedUser.firstName);
         if (returnedUser?.lastName) setLastName(returnedUser.lastName);
         if (returnedUser?.city) setCity(returnedUser.city);
-        if (returnedUser?.country) setCountry(returnedUser.country || "United States");
+        if (returnedUser?.country) setCountry(returnedUser.country || "");
         setStep('profile');
       }
     } catch (err: any) {
@@ -203,6 +203,12 @@ export const CopoAuthPrompt: React.FC<{
   // STEP 3: Complete Profile & Persist
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
+    if (!country.trim()) {
+      setErrorMessage("Please select your country to continue.");
+      return;
+    }
+    
     setIsLoading(true);
     setErrorMessage("");
 
@@ -211,7 +217,7 @@ export const CopoAuthPrompt: React.FC<{
     const fullName = lName ? `${fName} ${lName}` : fName;
     const finalCity = city.trim();
     const finalState = stateRegion.trim();
-    const finalCountry = country.trim() || "United States";
+    const finalCountry = country.trim();
     const locParts = [finalCity, finalState, finalCountry].filter(Boolean);
     const combinedLocation = locParts.join(", ");
 
@@ -283,11 +289,8 @@ export const CopoAuthPrompt: React.FC<{
         
         {/* Step-Aware Brand / Profile Icon */}
         {step === 'profile' ? (
-          <div 
-            className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold tracking-tight shadow-xl transition-all duration-300 border border-white/10"
-            style={{ backgroundColor: previewColor.bg, color: previewColor.text }}
-          >
-            {previewLetter ? previewLetter : <User className="w-6 h-6 text-zinc-400" />}
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-xl">
+            <User className="w-6 h-6 text-zinc-400" />
           </div>
         ) : (
           <div className="relative flex items-center justify-center w-13 h-13 rounded-2xl bg-white shadow-[0_4px_24px_rgba(255,255,255,0.18)] border border-white/20">
@@ -482,10 +485,11 @@ export const CopoAuthPrompt: React.FC<{
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
-                  Last Name
+                  Last Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
+                  required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Taylor"
@@ -496,7 +500,7 @@ export const CopoAuthPrompt: React.FC<{
 
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
-                Country
+                Country <span className="text-red-400">*</span>
               </label>
               <CountrySelector
                 value={country}
