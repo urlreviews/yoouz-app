@@ -239,7 +239,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Copy direct link</p>
-              {copied && <span className="text-[11px] font-bold text-emerald-400 animate-in fade-in">Copied to clipboard!</span>}
+              {copied && <span className="text-[11px] font-bold text-zinc-300 animate-in fade-in flex items-center gap-1"><Check className="w-3 h-3 text-zinc-400" /> Copied to clipboard!</span>}
             </div>
             <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 focus-within:border-zinc-700 transition">
               <input
@@ -254,13 +254,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 type="button"
                 className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
                   copied
-                    ? "bg-emerald-600 text-white"
+                    ? "bg-zinc-800 text-white border border-zinc-700 hover:bg-zinc-750"
                     : "bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95"
                 }`}
               >
                 {copied ? (
                   <>
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3.5 h-3.5 text-zinc-300" />
                     <span>Copied</span>
                   </>
                 ) : (

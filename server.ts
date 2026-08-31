@@ -3257,35 +3257,61 @@ app.post("/api/videos/save-review", async (req, res) => {
             to: [cleanEmail],
             subject: `Your Yoouz sign-in code: ${otpCode}`,
             html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-                  <div style="width: 44px; height: 44px; border-radius: 14px; background: #1a73e8; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 22px;">Y</div>
-                  <div>
-                    <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">Yoouz</span>
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Yoouz Sign-in Code</title>
+              </head>
+              <body style="margin: 0; padding: 24px 12px; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f4f4f5; -webkit-font-smoothing: antialiased;">
+                <div style="max-width: 520px; margin: 0 auto; background-color: #121215; border: 1px solid #27272a; border-radius: 24px; padding: 36px 28px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);">
+                  
+                  <!-- Official Yoouz Brand Header -->
+                  <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 28px;">
+                    <tr>
+                      <td style="width: 44px; height: 44px; background-color: #ffffff; border-radius: 14px; text-align: center; vertical-align: middle; box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);">
+                        <!-- Official Star Vector Mark -->
+                        <div style="font-size: 24px; line-height: 44px; color: #09090b; font-weight: 900;">★</div>
+                      </td>
+                      <td style="padding-left: 14px; vertical-align: middle;">
+                        <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; line-height: 1.2;">Yoouz</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #a1a1aa; letter-spacing: 0.2px; margin-top: 2px;">Real People. Real Reviews.</div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <h1 style="font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.3px;">Sign in to your account</h1>
+                  <p style="font-size: 15px; line-height: 24px; color: #a1a1aa; margin: 0 0 28px 0;">
+                    Enter the 6-digit confirmation code below or click the magic sign-in button to log in directly:
+                  </p>
+                  
+                  <!-- 6-Digit Code Box -->
+                  <div style="background-color: #18181b; border: 1px solid #3f3f46; border-radius: 18px; padding: 26px 20px; text-align: center; margin-bottom: 28px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;">Your 6-Digit Code</div>
+                    <div style="font-size: 40px; font-weight: 900; letter-spacing: 10px; color: #ffffff; font-family: ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace; line-height: 1;">${otpCode}</div>
+                    <div style="font-size: 12px; color: #71717a; margin-top: 12px; font-weight: 500;">Valid for 15 minutes • Single use only</div>
+                  </div>
+
+                  <!-- Magic Sign In Button -->
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <a href="${magicLinkUrl}" style="display: inline-block; background-color: #ffffff; color: #09090b; font-weight: 800; font-size: 15px; padding: 14px 34px; border-radius: 12px; text-decoration: none; letter-spacing: -0.2px; box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);">
+                      Sign in with Magic Link →
+                    </a>
+                  </div>
+
+                  <!-- Footer -->
+                  <div style="border-top: 1px solid #27272a; padding-top: 24px; margin-top: 8px;">
+                    <p style="font-size: 12px; line-height: 18px; color: #71717a; margin: 0 0 8px 0;">
+                      If you didn't request this sign-in link, you can safely ignore this email.
+                    </p>
+                    <p style="font-size: 11px; color: #52525b; margin: 0;">
+                      © ${new Date().getFullYear()} Yoouz Inc. • Authentic 60s Video Reviews Platform
+                    </p>
                   </div>
                 </div>
-                <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 12px 0;">Sign in to your account</h2>
-                <p style="font-size: 15px; line-height: 24px; color: #475569; margin: 0 0 24px 0;">
-                  Enter the 6-digit confirmation code below or click the magic sign-in button to log in directly:
-                </p>
-                
-                <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 28px;">
-                  <div style="font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Your 6-Digit Code</div>
-                  <div style="font-size: 38px; font-weight: 900; letter-spacing: 8px; color: #1a73e8; font-family: monospace;">${otpCode}</div>
-                  <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Valid for 15 minutes</div>
-                </div>
-
-                <div style="text-align: center; margin-bottom: 28px;">
-                  <a href="${magicLinkUrl}" style="display: inline-block; background: #1a73e8; color: #ffffff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35);">
-                    Sign in with Magic Link →
-                  </a>
-                </div>
-
-                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 28px 0 20px 0;" />
-                <p style="font-size: 12px; line-height: 18px; color: #94a3b8; margin: 0;">
-                  If you didn't request this sign-in link, you can safely ignore this email.
-                </p>
-              </div>
+              </body>
+              </html>
             `
           });
           emailDispatched = true;
@@ -3580,35 +3606,63 @@ app.post("/api/videos/save-review", async (req, res) => {
             to: [cleanEmail],
             subject: `Verify Ownership: ${cleanPlaceName} on Yoouz (Code: ${otpCode})`,
             html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-                  <div style="width: 40px; height: 40px; border-radius: 12px; background: #1a73e8; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 20px;">R</div>
-                  <div>
-                    <span style="font-size: 20px; font-weight: 800; color: #0f172a;">Yoouz</span>
-                    <span style="font-size: 11px; font-weight: 700; color: #1a73e8; background: #eff6ff; padding: 2px 8px; border-radius: 999px; margin-left: 6px; text-transform: uppercase;">Business</span>
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Yoouz Business Verification</title>
+              </head>
+              <body style="margin: 0; padding: 24px 12px; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f4f4f5; -webkit-font-smoothing: antialiased;">
+                <div style="max-width: 520px; margin: 0 auto; background-color: #121215; border: 1px solid #27272a; border-radius: 24px; padding: 36px 28px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);">
+                  
+                  <!-- Official Yoouz Business Header -->
+                  <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 28px;">
+                    <tr>
+                      <td style="width: 44px; height: 44px; background-color: #ffffff; border-radius: 14px; text-align: center; vertical-align: middle; box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);">
+                        <div style="font-size: 24px; line-height: 44px; color: #09090b; font-weight: 900;">★</div>
+                      </td>
+                      <td style="padding-left: 14px; vertical-align: middle;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; line-height: 1.2;">Yoouz</span>
+                          <span style="font-size: 10px; font-weight: 800; color: #ffffff; background-color: #27272a; border: 1px solid #3f3f46; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px;">Business</span>
+                        </div>
+                        <div style="font-size: 11px; font-weight: 600; color: #a1a1aa; letter-spacing: 0.2px; margin-top: 2px;">Merchant Verification Portal</div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <h1 style="font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.3px;">Claim & Verify Business Portal</h1>
+                  <p style="font-size: 15px; line-height: 24px; color: #a1a1aa; margin: 0 0 28px 0;">
+                    You requested a secure verification link to manage the official business profile for <strong style="color: #ffffff;">${cleanPlaceName}</strong> on Yoouz.
+                  </p>
+                  
+                  <!-- 6-Digit Code Box -->
+                  <div style="background-color: #18181b; border: 1px solid #3f3f46; border-radius: 18px; padding: 26px 20px; text-align: center; margin-bottom: 28px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;">Your 6-Digit Verification Code</div>
+                    <div style="font-size: 40px; font-weight: 900; letter-spacing: 10px; color: #ffffff; font-family: ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace; line-height: 1;">${otpCode}</div>
+                    <div style="font-size: 12px; color: #71717a; margin-top: 12px; font-weight: 500;">Expires in 15 minutes • Single use only</div>
+                  </div>
+
+                  <!-- Magic Sign In Button -->
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <a href="${magicLinkUrl}" style="display: inline-block; background-color: #ffffff; color: #09090b; font-weight: 800; font-size: 15px; padding: 14px 34px; border-radius: 12px; text-decoration: none; letter-spacing: -0.2px; box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);">
+                      Instant 1-Click Verification →
+                    </a>
+                  </div>
+
+                  <!-- Footer -->
+                  <div style="border-top: 1px solid #27272a; padding-top: 24px; margin-top: 8px;">
+                    <p style="font-size: 12px; line-height: 18px; color: #71717a; margin: 0 0 8px 0;">
+                      Business accounts require verified domain authentication to protect listings against unauthorized access.
+                    </p>
+                    <p style="font-size: 11px; color: #52525b; margin: 0;">
+                      © ${new Date().getFullYear()} Yoouz Inc. • Business Trust & Verified Reviews
+                    </p>
                   </div>
                 </div>
-                <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 12px 0;">Claim & Verify Your Business Portal</h2>
-                <p style="font-size: 15px; line-height: 24px; color: #475569; margin: 0 0 24px 0;">
-                  You requested a secure verification link to manage the official business profile for <strong style="color: #0f172a;">${cleanPlaceName}</strong> on Yoouz.
-                </p>
-                
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 28px;">
-                  <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Your 6-Digit Verification Code</div>
-                  <div style="font-size: 36px; font-weight: 900; letter-spacing: 6px; color: #1a73e8; font-family: monospace;">${otpCode}</div>
-                  <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Expires in 15 minutes • Single use only</div>
-                </div>
-
-                <div style="text-align: center; margin-bottom: 28px;">
-                  <a href="${magicLinkUrl}" style="display: inline-block; background: #1a73e8; color: #ffffff; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35);">
-                    Instant 1-Click Sign In ➔
-                  </a>
-                </div>
-
-                <p style="font-size: 13px; color: #64748b; line-height: 20px; border-top: 1px solid #f1f5f9; padding-top: 20px; margin: 0;">
-                  Business accounts require verified domain authentication to protect listings against unauthorized access.
-                </p>
-              </div>
+              </body>
+              </html>
             `
           });
           emailSent = true;
@@ -3811,31 +3865,53 @@ app.post("/api/videos/save-review", async (req, res) => {
               to: [recipientEmail],
               subject: emailSubject,
               html: `
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px;">
-                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-                    <div style="width: 32px; height: 32px; background: #1a73e8; color: #ffffff; border-radius: 8px; text-align: center; line-height: 32px; font-weight: 800; font-size: 16px;">★</div>
-                    <div>
-                      <div style="font-size: 16px; font-weight: 800; color: #0f172a;">${bName}</div>
-                      <div style="font-size: 12px; color: #64748b;">Official Customer Feedback Portal</div>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>${emailSubject}</title>
+                </head>
+                <body style="margin: 0; padding: 24px 12px; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f4f4f5; -webkit-font-smoothing: antialiased;">
+                  <div style="max-width: 520px; margin: 0 auto; background-color: #121215; border: 1px solid #27272a; border-radius: 24px; padding: 36px 28px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);">
+                    
+                    <!-- Official Yoouz Partner Header -->
+                    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px;">
+                      <tr>
+                        <td style="width: 40px; height: 40px; background-color: #ffffff; border-radius: 12px; text-align: center; vertical-align: middle; box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);">
+                          <div style="font-size: 22px; line-height: 40px; color: #09090b; font-weight: 900;">★</div>
+                        </td>
+                        <td style="padding-left: 12px; vertical-align: middle;">
+                          <div style="font-size: 18px; font-weight: 800; color: #ffffff; line-height: 1.2;">${bName}</div>
+                          <div style="font-size: 11px; font-weight: 600; color: #a1a1aa; margin-top: 2px;">Verified Feedback on Yoouz</div>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="font-size: 15px; line-height: 24px; color: #e4e4e7; margin: 0 0 20px 0;">
+                      <strong style="color: #ffffff;">${greetingPrefix}</strong>${renderedBody}
+                    </p>
+
+                    ${includeIncentive && incentiveText ? `
+                      <div style="padding: 14px 18px; background-color: #18181b; border: 1px solid #3f3f46; border-radius: 14px; color: #fef08a; font-size: 13px; font-weight: 600; margin-bottom: 24px;">
+                        ✨ ${incentiveText}
+                      </div>
+                    ` : ''}
+
+                    <div style="text-align: center; margin: 28px 0;">
+                      <a href="https://yoouz.com/?place=${placeId || 'business'}&action=record" style="display: inline-block; background-color: #ffffff; color: #09090b; font-weight: 800; font-size: 15px; padding: 14px 34px; border-radius: 12px; text-decoration: none; letter-spacing: -0.2px; box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);">
+                        Record 60s Video Review →
+                      </a>
+                    </div>
+
+                    <div style="border-top: 1px solid #27272a; padding-top: 20px; margin-top: 12px;">
+                      <p style="font-size: 11px; line-height: 16px; color: #71717a; margin: 0;">
+                        Powered by Yoouz • 100% Authentic 60-Second Video Reviews. Real People. Real Reviews.
+                      </p>
                     </div>
                   </div>
-
-                  <p style="font-size: 15px; line-height: 24px; color: #334155; margin-bottom: 20px;">
-                    <strong>${greetingPrefix}</strong>${renderedBody}
-                  </p>
-
-                  ${includeIncentive && incentiveText ? `
-                    <div style="padding: 12px 16px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; color: #92400e; font-size: 13px; font-weight: 600; margin-bottom: 20px;">
-                      ✨ ${incentiveText}
-                    </div>
-                  ` : ''}
-
-                  <div style="text-align: center; margin: 24px 0;">
-                    <a href="https://yoouz.com/?place=${placeId || 'business'}&action=record" style="display: inline-block; background: #1a73e8; color: #ffffff; font-weight: 700; font-size: 14px; padding: 12px 28px; border-radius: 12px; text-decoration: none;">
-                      Record 60s Video Review ➔
-                    </a>
-                  </div>
-                </div>
+                </body>
+                </html>
               `
             });
             
