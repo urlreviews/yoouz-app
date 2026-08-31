@@ -240,37 +240,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   // Unique Users Mapping
   const uniqueUsers = useMemo(() => {
-    const userMap = new Map<string, any>();
-    const getCleanHandle = (str?: string) => (str || "").replace(/^@+/, "").trim();
-
+    const getCleanHandle = (str?: string) => (str || "").replace(/^@+/, "").trim().toLowerCase();
+    const mergedList: any[] = [];
+    
     (allUsers || []).forEach((u) => {
       if (!u) return;
-      const cleanHandle = getCleanHandle(u.name) || (u.email ? u.email.split("@")[0] : u.id) || "user";
-      // prioritize EMAIL to combine multiple auth records for the same human
-      const key = (u.email || u.uid || u.id || cleanHandle).toLowerCase().trim();
-      if (!key) return;
-
-      if (!userMap.has(key)) {
-        userMap.set(key, {
-          id: u.id || u.uid || cleanHandle,
-          uid: u.uid || u.id,
-          name: u.name || "Registered User",
-          email: u.email || "",
-          handle: cleanHandle,
-          avatar:
-            u.avatar ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
-          isVerified: true,
-          isRegisteredAccount: true,
-          role: u.role || (u.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
-          memberSince: u.memberSince || "Active"
-        });
-      } else {
-        const existing = userMap.get(key);
-        if (existing && !existing.email && u.email) existing.email = u.email;
-        if (existing && (!existing.name || existing.name === "Registered User") && u.name) existing.name = u.name;
-        if (existing && (!existing.avatar || existing.avatar.includes("ui-avatars")) && u.avatar) existing.avatar = u.avatar;
-      }
+      const cleanHandle = getCleanHandle(u.name) || (u.email ? u.email.split("@")[0].toLowerCase() : u.id) || "user";
+      mergedList.push({
+        id: u.id || u.uid || cleanHandle,
+        uid: u.uid || u.id,
+        name: u.name || "Registered User",
+        email: u.email || "",
+        handle: cleanHandle,
+        avatar:
+          u.avatar ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
+        isVerified: true,
+        isRegisteredAccount: true,
+        role: u.role || (u.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
+        memberSince: u.memberSince || "Active"
+      });
     });
 
     (videos || []).forEach((v) => {
@@ -281,44 +270,67 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         avatar: "",
         isVerified: true
       };
-      const cleanHandle =
-        getCleanHandle(author.name) ||
-        (v.userEmail ? v.userEmail.split("@")[0] : getCleanHandle(v.userId) || "reviewer");
+      
+      const vEmail = (v.userEmail || "").toLowerCase().trim();
+      const vUserId = (v.userId || "").toLowerCase().trim();
+      const vCleanHandle = getCleanHandle(author.name) || (vEmail ? vEmail.split("@")[0] : getCleanHandle(vUserId) || "reviewer");
+      
+      let match = mergedList.find(u => {
+        const uEmail = (u.email || "").toLowerCase().trim();
+        const uUserId = (u.uid || u.id || "").toLowerCase().trim();
+        const uCleanHandle = getCleanHandle(u.name);
         
-      const key = (v.userEmail || v.userId || cleanHandle).toLowerCase().trim();
-      if (!key) return;
-
-      if (!userMap.has(key)) {
-        userMap.set(key, {
-          id: v.userId || cleanHandle,
-          uid: v.userId || cleanHandle,
+        return (
+          (vEmail && uEmail && vEmail === uEmail) ||
+          (vUserId && uUserId && vUserId === uUserId) ||
+          (vCleanHandle && uEmail && uEmail.startsWith(vCleanHandle + "@")) ||
+          (vCleanHandle && uCleanHandle && vCleanHandle === uCleanHandle)
+        );
+      });
+      
+      if (match) {
+        if (!match.name || match.name === "Registered User") match.name = author.name;
+        if (!match.avatar || match.avatar.includes("ui-avatars")) match.avatar = author.avatar;
+        match.role = "Creator"; 
+      } else {
+        mergedList.push({
+          id: vUserId || vCleanHandle,
+          uid: vUserId || vCleanHandle,
           name: author.name || "Verified Reviewer",
-          email: v.userEmail || "",
-          handle: cleanHandle,
+          email: vEmail,
+          handle: vCleanHandle,
           avatar:
             author.avatar ||
             `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
           isVerified: author.isVerified !== false,
-          isRegisteredAccount: Boolean(v.userId),
+          isRegisteredAccount: Boolean(vUserId),
           role: "Creator",
           memberSince: "Active"
         });
-      } else {
-        const existing = userMap.get(key);
-        if (existing && (!existing.name || existing.name === "Registered User") && author.name) {
-          existing.name = author.name;
-        }
-        if (existing && (!existing.avatar || existing.avatar.includes("ui-avatars")) && author.avatar) {
-          existing.avatar = author.avatar;
-        }
-        // Upgrade role to Creator if they have videos but were just marked as Member
-        if (existing) {
-           existing.role = "Creator";
-        }
       }
     });
-
-    return Array.from(userMap.values());
+    
+    // Final deduplication loop to aggressively merge records by Email or Name
+    const finalList: any[] = [];
+    mergedList.forEach(u => {
+       const cleanName = u.name ? u.name.toLowerCase().trim() : "";
+       let existing = null;
+       if (u.email) {
+         existing = finalList.find(x => x.email === u.email);
+       }
+       if (!existing && cleanName && cleanName !== "registered user" && cleanName !== "verified reviewer") {
+           existing = finalList.find(x => (x.name || "").toLowerCase().trim() === cleanName);
+       }
+       
+       if (!existing) {
+         finalList.push(u);
+       } else {
+         if (u.role === "Creator") existing.role = "Creator";
+         if (u.email && !existing.email) existing.email = u.email;
+         if (u.avatar && !u.avatar.includes("ui-avatars") && (!existing.avatar || existing.avatar.includes("ui-avatars"))) existing.avatar = u.avatar;
+       }
+    });
+    return finalList;
   }, [allUsers, videos]);
 
   // All Comments aggregation for Moderation
