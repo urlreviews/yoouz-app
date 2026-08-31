@@ -3314,7 +3314,17 @@ app.post("/api/videos/save-review", async (req, res) => {
               </html>
             `
           });
-          emailDispatched = true;
+          
+          if (sendResult?.error) {
+            console.error("Resend API warning / rejection:", sendResult.error);
+            emailErrorDetails = sendResult.error.message || "Email dispatch rejected by provider";
+            // If Resend returns testing restriction (onboarding@resend.dev only allows sending to the account owner's email)
+            if (sendResult.error.statusCode === 403 || sendResult.error.name === "validation_error") {
+              console.warn(`[Resend Sandbox Notice]: To deliver emails to "${cleanEmail}", verify your custom domain at https://resend.com/domains and set RESEND_FROM_EMAIL.`);
+            }
+          } else {
+            emailDispatched = true;
+          }
         } catch (resendErr: any) {
           console.error("Resend email delivery error:", resendErr?.message || resendErr);
           emailErrorDetails = resendErr?.message || "Delivery failed";
