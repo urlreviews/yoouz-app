@@ -6771,55 +6771,308 @@ app.get('/api/og-preview-v2', async (req, res) => {
          return res.end(finalImage);
       }
 
-      if (type === 'place' || type === 'creator') {
-         const name = (req.query.name as string) || (type === 'place' ? "Place" : "Creator");
-         let initials = name.substring(0, 2).toUpperCase();
-         const words = name.split(' ');
-         if (words.length > 1 && words[0].length > 0 && words[1].length > 0) {
-            initials = (words[0][0] + words[1][0]).toUpperCase();
-         }
+      if (type === 'place') {
+         const rawName = (req.query.name as string) || "Business";
+         const name = escapeXml(rawName.length > 28 ? rawName.substring(0, 26) + '...' : rawName);
+         const rawDomain = (req.query.domain as string) || cleanDomainName((req.query.website as string) || rawName);
+         const domain = escapeXml(rawDomain);
+         let explicitLogoUrl = (req.query.logoUrl as string) || "";
          
-         const isPlace = type === 'place';
-         // Dark gradient background with subtle borders/grid
-         const svg = `
+         // Search reviews for place logo if not in query
+         if (!explicitLogoUrl) {
+            try {
+               const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+               const match = localList.find((v: any) => 
+                  (v.placeName && v.placeName.toLowerCase() === rawName.toLowerCase()) || 
+                  (v.placeName && cleanDomainName(v.placeName) === rawDomain) ||
+                  v.placeId === req.query.id
+               );
+               if (match && (match.placeLogo || match.logoUrl)) {
+                  explicitLogoUrl = match.placeLogo || match.logoUrl;
+               }
+            } catch(e) {}
+         }
+
+         let logoBuf: Buffer | null = null;
+         const candidateUrls: string[] = [];
+         if (explicitLogoUrl && explicitLogoUrl.startsWith("http")) {
+            candidateUrls.push(explicitLogoUrl);
+         }
+         if (rawDomain) {
+            candidateUrls.push(`https://logos.hunter.io/${rawDomain}`);
+            candidateUrls.push(`https://unavatar.io/${rawDomain}?fallback=false`);
+            candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${rawDomain}&size=256`);
+         }
+
+         for (const u of candidateUrls) {
+            try {
+               const controller = new AbortController();
+               const timeout = setTimeout(() => controller.abort(), 2000);
+               const resp = await fetch(u, { signal: controller.signal });
+               clearTimeout(timeout);
+               if (resp.ok) {
+                  const ab = await resp.arrayBuffer();
+                  const buf = Buffer.from(ab);
+                  if (buf.length > 100) {
+                     const meta = await sharp(buf).metadata().catch(() => null);
+                     if (meta && meta.width && meta.height) {
+                        logoBuf = buf;
+                        break;
+                     }
+                  }
+               }
+            } catch(e) {}
+         }
+
+         // Base 600x600 dark canvas
+         const baseSvg = `
            <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
              <defs>
-               <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+               <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                  <stop offset="0%" stop-color="#09090b" />
+                 <stop offset="50%" stop-color="#121216" />
                  <stop offset="100%" stop-color="#18181b" />
                </linearGradient>
-               <linearGradient id="avatarBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                 <stop offset="0%" stop-color="#3b82f6" />
-                 <stop offset="100%" stop-color="#2563eb" />
-               </linearGradient>
-               <linearGradient id="placeBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                 <stop offset="0%" stop-color="#ef4444" />
-                 <stop offset="100%" stop-color="#dc2626" />
+               <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                 <stop offset="0%" stop-color="#ef4444" stop-opacity="0.12" />
+                 <stop offset="100%" stop-color="#dc2626" stop-opacity="0.0" />
                </linearGradient>
              </defs>
-             <rect width="600" height="600" fill="url(#bg)"/>
+             <rect width="600" height="600" fill="url(#bgGrad)"/>
              
-             <!-- Decorative subtle circle -->
-             <circle cx="300" cy="240" r="140" fill="url(#${isPlace ? 'placeBg' : 'avatarBg'})"/>
-             <text x="300" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="120" font-weight="bold" fill="#ffffff" text-anchor="middle">${initials}</text>
+             <!-- Decorative glowing circle behind logo -->
+             <circle cx="300" cy="205" r="160" fill="url(#glowGrad)"/>
+             <circle cx="300" cy="205" r="135" stroke="#27272a" stroke-width="1.5" fill="none" stroke-dasharray="4 4"/>
              
-             <!-- Bottom Branding Area -->
-             <rect x="0" y="480" width="600" height="120" fill="#000000" fill-opacity="0.3"/>
+             <!-- Bottom Info Card -->
+             <rect x="36" y="380" width="528" height="184" rx="24" fill="#0c0c0e" stroke="#27272a" stroke-width="1.5"/>
              
-             <!-- Name Text -->
-             <text x="300" y="440" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="bold" fill="#ffffff" text-anchor="middle">${name.length > 25 ? name.substring(0, 22) + '...' : name}</text>
+             <!-- Red Pill Tag -->
+             <rect x="200" y="404" width="200" height="26" rx="13" fill="#ef4444" fill-opacity="0.15" stroke="#ef4444" stroke-opacity="0.4" stroke-width="1"/>
+             <text x="300" y="421" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#f87171" text-anchor="middle" letter-spacing="1.5">AUTHENTIC VIDEO REVIEWS</text>
              
-             <!-- Logo Text -->
-             <text x="300" y="550" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="2">YOOUZ.COM</text>
+             <!-- Business Name -->
+             <text x="300" y="468" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#ffffff" text-anchor="middle">${name}</text>
+             
+             <!-- Domain / Subtitle -->
+             <text x="300" y="498" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#a1a1aa" text-anchor="middle">${domain ? domain : "100% Real Video • Zero Fake Text"}</text>
+             
+             <!-- Footer Brand -->
+             <line x1="60" y1="522" x2="540" y2="522" stroke="#27272a" stroke-width="1"/>
+             <text x="300" y="546" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" fill="#71717a" text-anchor="middle" letter-spacing="2.5">YOOUZ.COM</text>
            </svg>
          `;
 
-         const finalImage = await sharp(Buffer.from(svg))
+         const composites: any[] = [];
+
+         if (logoBuf) {
+            // White squircle container with crisp rounded corners
+            const squircleCardSvg = `
+              <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="216" height="216" rx="42" ry="42" fill="#ffffff" stroke="#e4e4e7" stroke-width="3"/>
+              </svg>
+            `;
+            const resizedLogo = await sharp(logoBuf)
+              .resize(165, 165, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+              .png()
+              .toBuffer();
+
+            const squircleCard = await sharp(Buffer.from(squircleCardSvg))
+              .composite([{ input: resizedLogo, gravity: 'center' }])
+              .png()
+              .toBuffer();
+
+            composites.push({
+              input: squircleCard,
+              top: 95,
+              left: 190
+            });
+         } else {
+            // Fallback squircle with stylized initials
+            let initials = rawName.substring(0, 2).toUpperCase();
+            const words = rawName.split(' ');
+            if (words.length > 1 && words[0].length > 0 && words[1].length > 0) {
+               initials = (words[0][0] + words[1][0]).toUpperCase();
+            }
+            const fallbackSquircleSvg = `
+              <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="sqGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ef4444" />
+                    <stop offset="100%" stop-color="#b91c1c" />
+                  </linearGradient>
+                </defs>
+                <rect x="2" y="2" width="216" height="216" rx="42" ry="42" fill="url(#sqGrad)" stroke="#fca5a5" stroke-width="3"/>
+                <text x="110" y="140" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="900" fill="#ffffff" text-anchor="middle">${escapeXml(initials)}</text>
+              </svg>
+            `;
+            composites.push({
+              input: Buffer.from(fallbackSquircleSvg),
+              top: 95,
+              left: 190
+            });
+         }
+
+         const finalImage = await sharp(Buffer.from(baseSvg))
+           .composite(composites)
            .png()
            .toBuffer();
 
          res.setHeader("Content-Type", "image/png");
-         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+         res.setHeader("Cache-Control", "public, max-age=86400");
+         return res.end(finalImage);
+      }
+
+      if (type === 'creator') {
+         const rawName = (req.query.name as string) || (req.query.handle as string) || "Creator";
+         const name = escapeXml(rawName.length > 25 ? rawName.substring(0, 23) + '...' : rawName);
+         const rawHandle = ((req.query.handle as string) || rawName).replace(/^@+/, "");
+         const handle = escapeXml(rawHandle.length > 25 ? rawHandle.substring(0, 23) + '...' : rawHandle);
+         let avatarUrl = (req.query.avatarUrl as string) || "";
+
+         if (!avatarUrl) {
+            try {
+               const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+               const match = localList.find((v: any) => 
+                  (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === rawHandle.toLowerCase()) ||
+                  (v.author?.name && v.author.name.toLowerCase() === rawName.toLowerCase())
+               );
+               if (match && match.author?.avatar) {
+                  avatarUrl = match.author.avatar;
+               }
+            } catch(e) {}
+         }
+
+         let avatarBuf: Buffer | null = null;
+         if (avatarUrl) {
+            if (avatarUrl.startsWith('data:image')) {
+               try {
+                  const b64 = avatarUrl.split(',')[1];
+                  if (b64) avatarBuf = Buffer.from(b64, 'base64');
+               } catch(e) {}
+            } else if (avatarUrl.startsWith('http')) {
+               try {
+                  const controller = new AbortController();
+                  const timeout = setTimeout(() => controller.abort(), 2000);
+                  const resp = await fetch(avatarUrl, { signal: controller.signal });
+                  clearTimeout(timeout);
+                  if (resp.ok) {
+                     const ab = await resp.arrayBuffer();
+                     const buf = Buffer.from(ab);
+                     if (buf.length > 100) avatarBuf = buf;
+                  }
+               } catch(e) {}
+            }
+         }
+
+         // Base 600x600 dark canvas
+         const baseSvg = `
+           <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+             <defs>
+               <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                 <stop offset="0%" stop-color="#09090b" />
+                 <stop offset="50%" stop-color="#121216" />
+                 <stop offset="100%" stop-color="#18181b" />
+               </linearGradient>
+               <linearGradient id="blueGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                 <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15" />
+                 <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0" />
+               </linearGradient>
+             </defs>
+             <rect width="600" height="600" fill="url(#bgGrad)"/>
+             
+             <!-- Decorative glowing circle behind avatar -->
+             <circle cx="300" cy="205" r="160" fill="url(#blueGlow)"/>
+             <circle cx="300" cy="205" r="135" stroke="#27272a" stroke-width="1.5" fill="none" stroke-dasharray="4 4"/>
+             
+             <!-- Bottom Info Card -->
+             <rect x="36" y="380" width="528" height="184" rx="24" fill="#0c0c0e" stroke="#27272a" stroke-width="1.5"/>
+             
+             <!-- Blue Pill Tag -->
+             <rect x="200" y="404" width="200" height="26" rx="13" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1"/>
+             <text x="300" y="421" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#60a5fa" text-anchor="middle" letter-spacing="1.5">VERIFIED REVIEWER</text>
+             
+             <!-- Creator Name -->
+             <text x="300" y="468" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#ffffff" text-anchor="middle">${name}</text>
+             
+             <!-- Handle / Subtitle -->
+             <text x="300" y="498" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="500" fill="#a1a1aa" text-anchor="middle">@${handle} • Authentic 60s Video Reviews</text>
+             
+             <!-- Footer Brand -->
+             <line x1="60" y1="522" x2="540" y2="522" stroke="#27272a" stroke-width="1"/>
+             <text x="300" y="546" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" fill="#71717a" text-anchor="middle" letter-spacing="2.5">YOOUZ.COM</text>
+           </svg>
+         `;
+
+         const composites: any[] = [];
+
+         if (avatarBuf) {
+            // Cut circular avatar with ring border
+            const circleMaskSvg = `
+              <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="110" cy="110" r="106" fill="#ffffff"/>
+              </svg>
+            `;
+            const resizedAvatar = await sharp(avatarBuf)
+              .resize(220, 220, { fit: 'cover' })
+              .composite([{
+                input: Buffer.from(circleMaskSvg),
+                blend: 'dest-in'
+              }])
+              .png()
+              .toBuffer();
+
+            // Circular border with blue ring
+            const borderRingSvg = `
+              <svg width="228" height="228" viewBox="0 0 228 228" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="114" cy="114" r="110" fill="none" stroke="#3b82f6" stroke-width="5"/>
+                <!-- Verified Checkmark Badge at bottom right -->
+                <circle cx="178" cy="178" r="22" fill="#3b82f6" stroke="#09090b" stroke-width="3"/>
+                <path d="M170 178 L176 184 L188 172" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            `;
+
+            const finalAvatarCard = await sharp(Buffer.from(borderRingSvg))
+              .composite([{ input: resizedAvatar, top: 4, left: 4 }])
+              .png()
+              .toBuffer();
+
+            composites.push({
+              input: finalAvatarCard,
+              top: 91,
+              left: 186
+            });
+         } else {
+            let initials = rawName.substring(0, 2).toUpperCase();
+            const fallbackAvatarSvg = `
+              <svg width="228" height="228" viewBox="0 0 228 228" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="avGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#3b82f6" />
+                    <stop offset="100%" stop-color="#1d4ed8" />
+                  </linearGradient>
+                </defs>
+                <circle cx="114" cy="114" r="110" fill="url(#avGrad)" stroke="#60a5fa" stroke-width="4"/>
+                <text x="114" y="145" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="900" fill="#ffffff" text-anchor="middle">${escapeXml(initials)}</text>
+                <!-- Verified Badge -->
+                <circle cx="178" cy="178" r="22" fill="#3b82f6" stroke="#09090b" stroke-width="3"/>
+                <path d="M170 178 L176 184 L188 172" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            `;
+            composites.push({
+              input: Buffer.from(fallbackAvatarSvg),
+              top: 91,
+              left: 186
+            });
+         }
+
+         const finalImage = await sharp(Buffer.from(baseSvg))
+           .composite(composites)
+           .png()
+           .toBuffer();
+
+         res.setHeader("Content-Type", "image/png");
+         res.setHeader("Cache-Control", "public, max-age=86400");
          return res.end(finalImage);
       }
 
@@ -6842,6 +7095,19 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
   
   
+function escapeXml(unsafe: string) {
+  return (unsafe || "").replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
 function cleanDomainName(urlStr: string) {
   if (!urlStr) return "";
   try {
@@ -7010,14 +7276,46 @@ function injectOpenGraphTags(html: string, meta: any) {
     } else if (placeId) {
         let placeName = placeId.replace(/-/g, ' ');
         placeName = placeName.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const domain = cleanDomainName(placeId.includes('.') ? placeId : `${placeId}.com`);
+        let foundLogo = "";
+        
+        try {
+          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const match = localList.find((v: any) => 
+            (v.placeName && v.placeName.toLowerCase() === placeName.toLowerCase()) || 
+            (v.placeName && cleanDomainName(v.placeName) === domain) ||
+            v.placeId === placeId
+          );
+          if (match) {
+            if (match.placeName) placeName = match.placeName;
+            foundLogo = match.placeLogo || match.logoUrl || "";
+          }
+        } catch(e) {}
+
         title = `Authentic Video Reviews for ${placeName} | Yoouz`;
         description = `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&v=1`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=5`;
         twitterCard = "summary";
     } else if (creatorHandle) {
+        let authorName = creatorHandle;
+        let authorAvatar = "";
+
+        try {
+          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const cleanH = creatorHandle.toLowerCase().replace(/^@/, '');
+          const match = localList.find((v: any) => 
+            (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === cleanH) ||
+            (v.author?.name && v.author.name.toLowerCase().replace(/\s+/g, '') === cleanH)
+          );
+          if (match && match.author) {
+            if (match.author.name) authorName = match.author.name;
+            if (match.author.avatar) authorAvatar = match.author.avatar;
+          }
+        } catch(e) {}
+
         title = `@${creatorHandle}'s Authentic Video Reviews | Yoouz`;
-        description = `Watch genuine 60-second video testimonials by @${creatorHandle} on Yoouz.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(creatorHandle)}&v=1`;
+        description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(creatorHandle)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=5`;
         twitterCard = "summary";
     }
 

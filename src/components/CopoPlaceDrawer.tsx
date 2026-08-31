@@ -1678,9 +1678,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       <CopoShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        shareUrl={`${window.location.origin}/place/${place.id}`}
+        shareUrl={`${window.location.origin}/place/${(place.website ? getDisplayUrlAsDomain(place.website) : place.name).toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || place.id}`}
         title={formatBusinessName(place.name)}
         subtitle="Business Location"
+        logoUrl={place.logoUrl || primaryLogoUrl || undefined}
+        domain={place.brandDomain || drawerDomain || undefined}
+        website={place.website || undefined}
+        bannerUrl={place.bannerUrl || place.ogImage || undefined}
       />
 
       {isPricingModalOpen && (

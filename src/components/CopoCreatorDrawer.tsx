@@ -1273,6 +1273,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         shareUrl={`${window.location.origin}/@${((author as any).handle || author.name || "user").replace(/^@+/, "").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "").replace(/-+/g, "-") || "user"}`}
         title={author.name}
         subtitle="Reviewer Profile"
+        avatarUrl={author.avatar || (isOwner && currentUser?.avatar ? currentUser.avatar : undefined)}
+        bannerUrl={(isOwner && currentUser?.banner ? currentUser.banner : undefined)}
       />
     </>
   );
