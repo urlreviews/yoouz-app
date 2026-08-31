@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+const fs = require('fs');
+
+const code = `import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Search, Check } from "lucide-react";
 
 interface SearchableComboSelectorProps {
@@ -51,9 +53,9 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
           {value || placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 shrink-0 ${
+          className={\`w-4 h-4 text-zinc-400 transition-transform duration-200 shrink-0 \${
             isOpen ? "rotate-180" : ""
-          }`}
+          }\`}
         />
       </button>
 
@@ -90,11 +92,11 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
                       onChange(option);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                    className={\`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer \${
                       isSelected
                         ? "bg-zinc-800 text-white font-semibold"
                         : "text-zinc-300 hover:bg-zinc-850"
-                    }`}
+                    }\`}
                   >
                     <span>{option}</span>
                     {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
@@ -108,3 +110,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
     </div>
   );
 };
+`;
+
+fs.writeFileSync('src/components/SearchableComboSelector.tsx', code);
+console.log("Patched SearchableComboSelector.tsx");

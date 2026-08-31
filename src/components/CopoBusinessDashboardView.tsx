@@ -79,7 +79,8 @@ import { CopoBrandLogo } from './CopoBrandLogo';
 import { formatRecordedDate } from '../utils/dateUtils';
 import { CountrySelector } from './CountrySelector';
 import { SearchableComboSelector } from './SearchableComboSelector';
-import { locationData } from '../utils/locationData';
+import { locationData } from "../utils/locationData";
+import { Country, State, City } from "country-state-city";
 import { countryDialData, getDialCodeByCountry, getCountryDialInfo } from '../utils/countries';
 
 interface CopoBusinessDashboardViewProps {
@@ -648,35 +649,23 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       }
     }
 
-    const countryConfig = locationData[c];
-    if (countryConfig) {
-      if (countryConfig.hasStates) {
-        const stateOptions = countryConfig.states || [];
-        const firstState = stateOptions[0] || '';
-        setStateRegion(firstState);
-
-        if (countryConfig.cities && !Array.isArray(countryConfig.cities)) {
-          const citiesForState = countryConfig.cities[firstState] || [];
-          setCity(citiesForState[0] || '');
-        } else if (Array.isArray(countryConfig.cities)) {
-          setCity(countryConfig.cities[0] || '');
-        } else {
-          setCity('');
-        }
+    const selectedCountry = Country.getAllCountries().find(countryObj => countryObj.name === c);
+    if (selectedCountry) {
+      const statesObj = State.getStatesOfCountry(selectedCountry.isoCode);
+      if (statesObj.length > 0) {
+        setStateRegion(statesObj[0].name);
+        const citiesObj = City.getCitiesOfState(selectedCountry.isoCode, statesObj[0].isoCode);
+        setCity(citiesObj[0]?.name || '');
       } else {
         setStateRegion('');
-        if (Array.isArray(countryConfig.cities) && countryConfig.cities.length > 0) {
-          setCity(countryConfig.cities[0] || '');
-        } else {
-          setCity('');
-        }
+        const citiesObj = City.getCitiesOfCountry(selectedCountry.isoCode);
+        setCity(citiesObj[0]?.name || '');
       }
     } else {
       setStateRegion('');
       setCity('');
     }
 
-    // Reset default US zip code if user moved away from US
     if (c !== 'United States' && zipCode === '10001') {
       setZipCode('');
     }
@@ -687,24 +676,28 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return getCountryDialInfo(selectedCountry);
   }, [selectedCountry]);
 
-  // Dynamic location options derived from locationData
-  const activeCountryConfig = locationData[selectedCountry];
-  const hasStates = activeCountryConfig?.hasStates || false;
-  const stateLabel = activeCountryConfig?.stateLabel || "State / Province";
-  const stateOptions = activeCountryConfig?.states || [];
-
+  // Dynamic location options derived from country-state-city
+  const activeCountryObj = Country.getAllCountries().find(c => c.name === selectedCountry);
+  const isoCode = activeCountryObj?.isoCode || "";
+  
+  const statesObj = State.getStatesOfCountry(isoCode);
+  const hasStates = statesObj.length > 0;
+  const stateLabel = "Country / Region";
+  const stateOptions = statesObj.map(s => s.name);
+  
   let cityOptions: string[] = [];
-  if (activeCountryConfig) {
-    if (Array.isArray(activeCountryConfig.cities)) {
-      cityOptions = activeCountryConfig.cities;
-    } else if (activeCountryConfig.cities && typeof activeCountryConfig.cities === 'object') {
-      if (stateRegion && activeCountryConfig.cities[stateRegion]) {
-        cityOptions = activeCountryConfig.cities[stateRegion] || [];
-      } else {
-        cityOptions = Object.values(activeCountryConfig.cities).flat();
-      }
+  if (stateRegion) {
+    const selectedState = statesObj.find(s => s.name === stateRegion);
+    if (selectedState) {
+       cityOptions = City.getCitiesOfState(isoCode, selectedState.isoCode).map(c => c.name);
+    } else {
+       cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
     }
+  } else {
+    cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
   }
+  
+  cityOptions = Array.from(new Set(cityOptions));
 
   // Sync profilePhone string from dial code and local phone
   useEffect(() => {
@@ -3865,17 +3858,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 value={stateRegion}
                                 onChange={(val) => {
                                   setStateRegion(val);
-                                  if (activeCountryConfig && !Array.isArray(activeCountryConfig.cities) && activeCountryConfig.cities) {
-                                    const allowedCities = activeCountryConfig.cities[val] || [];
-                                    const primaryCity = allowedCities.find(c => c.toLowerCase() === val.toLowerCase());
-                                    if (primaryCity) {
-                                      setCity(primaryCity);
-                                    } else if (allowedCities.length > 0) {
-                                      setCity(allowedCities[0]);
-                                    } else if (city && !allowedCities.includes(city)) {
-                                      setCity("");
-                                    }
-                                  }
+                                  setCity("");
                                 }}
                                 options={stateOptions}
                                 placeholder={`Select ${stateLabel}`}

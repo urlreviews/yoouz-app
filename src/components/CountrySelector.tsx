@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Search, Check, Globe } from "lucide-react";
-import { countries, getCountryDialInfo } from "../utils/countries";
+import { countries as oldCountries, getCountryDialInfo } from "../utils/countries";
+import { Country } from "country-state-city";
 
 interface CountrySelectorProps {
   value: string;
@@ -26,7 +27,8 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
     };
   }, [isOpen]);
 
-  const filteredCountries = countries.filter((country) =>
+  const allCountryNames = Country.getAllCountries().map(c => c.name);
+  const filteredCountries = allCountryNames.filter((country) =>
     country.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -63,6 +65,9 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
             <input
               type="text"
               value={search}
+              autoComplete="new-password"
+              autoCorrect="off"
+              spellCheck={false}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search countries..."
               className="w-full bg-transparent border-0 p-0 text-xs text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-0 focus:border-transparent"

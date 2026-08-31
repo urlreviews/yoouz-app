@@ -4,6 +4,7 @@ import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from ".
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
 import { locationData } from "../utils/locationData";
+import { Country, State, City } from "country-state-city";
 
 export type AuthIntent = 
   | 'general' 
