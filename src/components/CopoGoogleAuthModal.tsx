@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Loader2, X, AlertCircle, HelpCircle, Mail, ArrowRight, CheckCircle2, User, Sparkles, MapPin } from "lucide-react";
 import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from "../lib/avatar";
 import { CountrySelector } from "./CountrySelector";
@@ -150,9 +150,9 @@ export const CopoAuthPrompt: React.FC<{
   };
 
   // STEP 2: Verify Code
-  const handleVerifyCode = async (e?: React.FormEvent) => {
+  const handleVerifyCode = async (e?: React.FormEvent, explicitCode?: string) => {
     if (e) e.preventDefault();
-    const cleanCode = otpCode.trim();
+    const cleanCode = (explicitCode || otpCode).trim();
     if (!cleanCode || cleanCode.length < 6) {
       setErrorMessage("Please enter the complete 6-digit confirmation code.");
       return;
@@ -173,7 +173,7 @@ export const CopoAuthPrompt: React.FC<{
 
       const data = await res.json();
       if (!res.ok || data.error) {
-        throw new Error(data.error || "Invalid code. Please try again.");
+        throw new Error(data.error || "Invalid code. Please check your inbox and try again.");
       }
 
       const returnedUser = data.user;
@@ -351,19 +351,65 @@ export const CopoAuthPrompt: React.FC<{
         {step === 'code' && (
           <form onSubmit={handleVerifyCode} className="w-full max-w-sm space-y-4 pt-1 text-left">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1.5 tracking-wider uppercase text-center">
-                Enter 6-Digit Verification Code
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                autoFocus
-                required
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="123456"
-                className="w-full h-14 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-center font-mono text-2xl tracking-[8px] focus:outline-none focus:border-zinc-300 focus:ring-2 focus:ring-white/10 transition-all"
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-[11px] font-semibold text-zinc-400 tracking-wider uppercase">
+                  6-Digit Verification Code
+                </label>
+                <span className="text-[11px] text-zinc-500 font-mono">
+                  {otpCode.length}/6 digits
+                </span>
+              </div>
+              
+              {/* Interactive 6-Cell OTP Input */}
+              <div className="relative group my-1">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  autoFocus
+                  required
+                  value={otpCode}
+                  onChange={(e) => {
+                    const cleanVal = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setOtpCode(cleanVal);
+                    if (cleanVal.length === 6) {
+                      handleVerifyCode(undefined, cleanVal);
+                    }
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer caret-transparent"
+                />
+
+                <div className="grid grid-cols-6 gap-2 w-full">
+                  {[0, 1, 2, 3, 4, 5].map((index) => {
+                    const char = otpCode[index];
+                    const isFilled = Boolean(char);
+                    const isFocused = otpCode.length === index;
+
+                    return (
+                      <div
+                        key={index}
+                        className={`h-13 rounded-xl flex items-center justify-center font-mono text-xl font-bold transition-all select-none ${
+                          isFilled
+                            ? "bg-zinc-800/90 text-white border-2 border-white/80 shadow-md shadow-white/5"
+                            : isFocused
+                            ? "bg-zinc-900 text-zinc-300 border-2 border-zinc-400 ring-2 ring-white/10"
+                            : "bg-zinc-900/90 text-zinc-600 border border-zinc-800"
+                        }`}
+                      >
+                        {isFilled ? (
+                          char
+                        ) : isFocused ? (
+                          <span className="animate-pulse text-zinc-400 font-normal">|</span>
+                        ) : (
+                          <span className="text-zinc-600 font-light text-base">·</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {errorMessage && (

@@ -69,10 +69,28 @@ function getGeminiClient() {
 
 let resendClient: Resend | null = null;
 function getResendClient(): Resend | null {
-  if (!resendClient && process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim() !== '') {
-    resendClient = new Resend(process.env.RESEND_API_KEY.trim());
+  const rawKey = (process.env.RESEND_API_KEY || "").replace(/^["']|["']$/g, '').trim();
+  if (!rawKey) return null;
+  if (!resendClient) {
+    resendClient = new Resend(rawKey);
   }
   return resendClient;
+}
+
+function getResendFromEmail(fallback: string = "Yoouz <onboarding@resend.dev>"): string {
+  let envFrom = process.env.RESEND_FROM_EMAIL?.trim();
+  if (!envFrom) {
+    // If RESEND_API_KEY is configured, default to Yoouz's verified domain if no sender is specified
+    return "Yoouz <no-reply@yoouz.com>";
+  }
+  // Strip outer quotes if any were typed in .env
+  envFrom = envFrom.replace(/^["']|["']$/g, '').trim();
+  if (!envFrom) return fallback;
+  // If user only provided raw email address (e.g. no-reply@yoouz.com)
+  if (envFrom.includes('@') && !envFrom.includes('<')) {
+    return `Yoouz <${envFrom}>`;
+  }
+  return envFrom;
 }
 
 const defaultCommunityUsers = [
@@ -3251,7 +3269,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       let emailErrorDetails = "";
       if (resend) {
         try {
-          const fromAddress = process.env.RESEND_FROM_EMAIL || "Yoouz <onboarding@resend.dev>";
+          const fromAddress = getResendFromEmail("Yoouz <no-reply@yoouz.com>");
           const sendResult = await resend.emails.send({
             from: fromAddress,
             to: [cleanEmail],
@@ -3610,7 +3628,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       let emailSent = false;
       if (resend) {
         try {
-          const fromAddress = process.env.RESEND_FROM_EMAIL || "Yoouz Business <onboarding@resend.dev>";
+          const fromAddress = getResendFromEmail("Yoouz Business <no-reply@yoouz.com>");
           await resend.emails.send({
             from: fromAddress,
             to: [cleanEmail],
@@ -3869,7 +3887,7 @@ app.post("/api/videos/save-review", async (req, res) => {
               .replace(/\{business_name\}/g, bName)
               .replace(/\{first_name\}/g, firstName || "there");
 
-            const fromAddress = process.env.RESEND_FROM_EMAIL || "Yoouz Business <onboarding@resend.dev>";
+            const fromAddress = getResendFromEmail("Yoouz Business <no-reply@yoouz.com>");
             const response = await resend.emails.send({
               from: fromAddress,
               to: [recipientEmail],
