@@ -6774,7 +6774,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       if (type === 'place') {
          const rawName = (req.query.name as string) || "Business";
          const name = escapeXml(rawName.length > 28 ? rawName.substring(0, 26) + '...' : rawName);
-         const rawDomain = (req.query.domain as string) || cleanDomainName((req.query.website as string) || rawName);
+         const rawDomain = cleanDomainName((req.query.domain as string) || (req.query.website as string) || rawName);
          const domain = escapeXml(rawDomain);
          let explicitLogoUrl = (req.query.logoUrl as string) || "";
          
@@ -6802,12 +6802,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
             candidateUrls.push(`https://logos.hunter.io/${rawDomain}`);
             candidateUrls.push(`https://unavatar.io/${rawDomain}?fallback=false`);
             candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${rawDomain}&size=256`);
+            candidateUrls.push(`https://www.google.com/s2/favicons?domain=${rawDomain}&sz=256`);
          }
 
          for (const u of candidateUrls) {
             try {
                const controller = new AbortController();
-               const timeout = setTimeout(() => controller.abort(), 2000);
+               const timeout = setTimeout(() => controller.abort(), 2500);
                const resp = await fetch(u, { signal: controller.signal });
                clearTimeout(timeout);
                if (resp.ok) {
@@ -6824,56 +6825,80 @@ app.get('/api/og-preview-v2', async (req, res) => {
             } catch(e) {}
          }
 
-         // Base 600x600 dark canvas
+         // High Resolution 1200x630 Social Preview Card
          const baseSvg = `
-           <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
              <defs>
                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                  <stop offset="0%" stop-color="#09090b" />
-                 <stop offset="50%" stop-color="#121216" />
-                 <stop offset="100%" stop-color="#18181b" />
+                 <stop offset="60%" stop-color="#111115" />
+                 <stop offset="100%" stop-color="#18181c" />
                </linearGradient>
-               <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                 <stop offset="0%" stop-color="#ef4444" stop-opacity="0.12" />
+               <linearGradient id="glowRed" x1="0%" y1="0%" x2="100%" y2="100%">
+                 <stop offset="0%" stop-color="#ef4444" stop-opacity="0.22" />
                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0.0" />
                </linearGradient>
              </defs>
-             <rect width="600" height="600" fill="url(#bgGrad)"/>
+             <rect width="1200" height="630" fill="url(#bgGrad)"/>
              
-             <!-- Decorative glowing circle behind logo -->
-             <circle cx="300" cy="205" r="160" fill="url(#glowGrad)"/>
-             <circle cx="300" cy="205" r="135" stroke="#27272a" stroke-width="1.5" fill="none" stroke-dasharray="4 4"/>
-             
-             <!-- Bottom Info Card -->
-             <rect x="36" y="380" width="528" height="184" rx="24" fill="#0c0c0e" stroke="#27272a" stroke-width="1.5"/>
-             
+             <!-- Outer Card Border -->
+             <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
+
+             <!-- Glowing Halo Behind Logo -->
+             <circle cx="230" cy="315" r="190" fill="url(#glowRed)"/>
+
              <!-- Red Pill Tag -->
-             <rect x="200" y="404" width="200" height="26" rx="13" fill="#ef4444" fill-opacity="0.15" stroke="#ef4444" stroke-opacity="0.4" stroke-width="1"/>
-             <text x="300" y="421" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#f87171" text-anchor="middle" letter-spacing="1.5">AUTHENTIC VIDEO REVIEWS</text>
-             
+             <rect x="450" y="135" width="280" height="34" rx="17" fill="#ef4444" fill-opacity="0.15" stroke="#ef4444" stroke-opacity="0.4" stroke-width="1.5"/>
+             <text x="590" y="158" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="14" font-weight="bold" fill="#f87171" text-anchor="middle" letter-spacing="2">AUTHENTIC VIDEO REVIEWS</text>
+
              <!-- Business Name -->
-             <text x="300" y="468" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#ffffff" text-anchor="middle">${name}</text>
+             <text x="450" y="230" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="52" font-weight="bold" fill="#ffffff">${name}</text>
              
              <!-- Domain / Subtitle -->
-             <text x="300" y="498" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#a1a1aa" text-anchor="middle">${domain ? domain : "100% Real Video • Zero Fake Text"}</text>
-             
-             <!-- Footer Brand -->
-             <line x1="60" y1="522" x2="540" y2="522" stroke="#27272a" stroke-width="1"/>
-             <text x="300" y="546" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" fill="#71717a" text-anchor="middle" letter-spacing="2.5">YOOUZ.COM</text>
+             <text x="450" y="280" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="24" font-weight="bold" fill="#3b82f6">${domain || "yoouz.com"}</text>
+             <text x="450" y="328" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="20" font-weight="normal" fill="#a1a1aa">Genuine 60-second video reviews and ratings on Yoouz.</text>
+
+             <!-- Rating & Real People Badges -->
+             <g transform="translate(450, 370)">
+               <rect x="0" y="0" width="210" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
+               <!-- 5 Star Icons as pure SVG paths -->
+               <g fill="#facc15" transform="translate(16, 15) scale(0.7)">
+                 <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+                 <g transform="translate(24, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
+                 <g transform="translate(48, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
+                 <g transform="translate(72, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
+                 <g transform="translate(96, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
+               </g>
+               <text x="140" y="29" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="16" font-weight="bold" fill="#ffffff">5.0 / 5.0</text>
+
+               <rect x="225" y="0" width="280" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
+               <!-- Checkmark SVG path -->
+               <g transform="translate(242, 14)">
+                 <circle cx="9" cy="9" r="9" fill="#22c55e" fill-opacity="0.2"/>
+                 <path d="M5 9 L8 12 L13 6" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+               </g>
+               <text x="270" y="29" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="15" font-weight="bold" fill="#4ade80">100% Real Video Verified</text>
+             </g>
+
+             <!-- Footer Divider & Brand -->
+             <line x1="450" y1="465" x2="1120" y2="465" stroke="#27272a" stroke-width="1.5"/>
+             <text x="450" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" letter-spacing="1">YOOUZ</text>
+             <circle cx="545" cy="504" r="3" fill="#71717a"/>
+             <text x="560" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="18" font-weight="normal" fill="#71717a">Real People. Real Reviews.</text>
+             <text x="1120" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="18" font-weight="bold" fill="#71717a" text-anchor="end">yoouz.com</text>
            </svg>
          `;
 
          const composites: any[] = [];
 
          if (logoBuf) {
-            // White squircle container with crisp rounded corners
             const squircleCardSvg = `
-              <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="216" height="216" rx="42" ry="42" fill="#ffffff" stroke="#e4e4e7" stroke-width="3"/>
+              <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="236" height="236" rx="48" ry="48" fill="#ffffff" stroke="#3f3f46" stroke-width="3"/>
               </svg>
             `;
             const resizedLogo = await sharp(logoBuf)
-              .resize(165, 165, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+              .resize(180, 180, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
               .png()
               .toBuffer();
 
@@ -6884,32 +6909,31 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
             composites.push({
               input: squircleCard,
-              top: 95,
-              left: 190
+              top: 195,
+              left: 110
             });
          } else {
-            // Fallback squircle with stylized initials
             let initials = rawName.substring(0, 2).toUpperCase();
             const words = rawName.split(' ');
             if (words.length > 1 && words[0].length > 0 && words[1].length > 0) {
                initials = (words[0][0] + words[1][0]).toUpperCase();
             }
             const fallbackSquircleSvg = `
-              <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+              <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="sqGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#ef4444" />
                     <stop offset="100%" stop-color="#b91c1c" />
                   </linearGradient>
                 </defs>
-                <rect x="2" y="2" width="216" height="216" rx="42" ry="42" fill="url(#sqGrad)" stroke="#fca5a5" stroke-width="3"/>
-                <text x="110" y="140" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="900" fill="#ffffff" text-anchor="middle">${escapeXml(initials)}</text>
+                <rect x="2" y="2" width="236" height="236" rx="48" ry="48" fill="url(#sqGrad)" stroke="#fca5a5" stroke-width="3"/>
+                <text x="120" y="150" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="88" font-weight="bold" fill="#ffffff" text-anchor="middle">${escapeXml(initials)}</text>
               </svg>
             `;
             composites.push({
               input: Buffer.from(fallbackSquircleSvg),
-              top: 95,
-              left: 190
+              top: 195,
+              left: 110
             });
          }
 
@@ -6953,7 +6977,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
             } else if (avatarUrl.startsWith('http')) {
                try {
                   const controller = new AbortController();
-                  const timeout = setTimeout(() => controller.abort(), 2000);
+                  const timeout = setTimeout(() => controller.abort(), 2500);
                   const resp = await fetch(avatarUrl, { signal: controller.signal });
                   clearTimeout(timeout);
                   if (resp.ok) {
@@ -6965,104 +6989,118 @@ app.get('/api/og-preview-v2', async (req, res) => {
             }
          }
 
-         // Base 600x600 dark canvas
+         // High Resolution 1200x630 Social Preview Card
          const baseSvg = `
-           <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
              <defs>
                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                  <stop offset="0%" stop-color="#09090b" />
-                 <stop offset="50%" stop-color="#121216" />
-                 <stop offset="100%" stop-color="#18181b" />
+                 <stop offset="60%" stop-color="#10131c" />
+                 <stop offset="100%" stop-color="#141824" />
                </linearGradient>
                <linearGradient id="blueGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                 <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15" />
+                 <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25" />
                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0" />
                </linearGradient>
              </defs>
-             <rect width="600" height="600" fill="url(#bgGrad)"/>
+             <rect width="1200" height="630" fill="url(#bgGrad)"/>
              
-             <!-- Decorative glowing circle behind avatar -->
-             <circle cx="300" cy="205" r="160" fill="url(#blueGlow)"/>
-             <circle cx="300" cy="205" r="135" stroke="#27272a" stroke-width="1.5" fill="none" stroke-dasharray="4 4"/>
-             
-             <!-- Bottom Info Card -->
-             <rect x="36" y="380" width="528" height="184" rx="24" fill="#0c0c0e" stroke="#27272a" stroke-width="1.5"/>
-             
+             <!-- Outer Card Border -->
+             <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
+
+             <!-- Glowing Halo Behind Avatar -->
+             <circle cx="230" cy="315" r="190" fill="url(#blueGlow)"/>
+
              <!-- Blue Pill Tag -->
-             <rect x="200" y="404" width="200" height="26" rx="13" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1"/>
-             <text x="300" y="421" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#60a5fa" text-anchor="middle" letter-spacing="1.5">VERIFIED REVIEWER</text>
-             
+             <rect x="450" y="135" width="240" height="34" rx="17" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+             <text x="570" y="158" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="14" font-weight="bold" fill="#60a5fa" text-anchor="middle" letter-spacing="2">VERIFIED REVIEWER</text>
+
              <!-- Creator Name -->
-             <text x="300" y="468" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#ffffff" text-anchor="middle">${name}</text>
+             <text x="450" y="230" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="52" font-weight="bold" fill="#ffffff">${name}</text>
              
-             <!-- Handle / Subtitle -->
-             <text x="300" y="498" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="500" fill="#a1a1aa" text-anchor="middle">@${handle} • Authentic 60s Video Reviews</text>
-             
-             <!-- Footer Brand -->
-             <line x1="60" y1="522" x2="540" y2="522" stroke="#27272a" stroke-width="1"/>
-             <text x="300" y="546" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" fill="#71717a" text-anchor="middle" letter-spacing="2.5">YOOUZ.COM</text>
+             <!-- Handle -->
+             <text x="450" y="280" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="26" font-weight="bold" fill="#3b82f6">@${handle}</text>
+             <text x="450" y="328" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="20" font-weight="normal" fill="#a1a1aa">Authentic 60-second video reviews and recommendations.</text>
+
+             <!-- Trust Badges -->
+             <g transform="translate(450, 370)">
+               <rect x="0" y="0" width="220" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
+               <!-- Star icon vector path -->
+               <g fill="#60a5fa" transform="translate(18, 14) scale(0.8)">
+                 <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+               </g>
+               <text x="44" y="29" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="15" font-weight="bold" fill="#60a5fa">Verified Creator</text>
+
+               <rect x="235" y="0" width="270" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
+               <!-- Checkmark SVG path -->
+               <g transform="translate(252, 14)">
+                 <circle cx="9" cy="9" r="9" fill="#22c55e" fill-opacity="0.2"/>
+                 <path d="M5 9 L8 12 L13 6" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+               </g>
+               <text x="280" y="29" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="15" font-weight="bold" fill="#4ade80">Real Video Reviews</text>
+             </g>
+
+             <!-- Footer Divider & Brand -->
+             <line x1="450" y1="465" x2="1120" y2="465" stroke="#27272a" stroke-width="1.5"/>
+             <text x="450" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" letter-spacing="1">YOOUZ</text>
+             <circle cx="545" cy="504" r="3" fill="#71717a"/>
+             <text x="560" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="18" font-weight="normal" fill="#71717a">Real People. Real Reviews.</text>
+             <text x="1120" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="18" font-weight="bold" fill="#71717a" text-anchor="end">yoouz.com/@${handle}</text>
            </svg>
          `;
 
          const composites: any[] = [];
 
          if (avatarBuf) {
-            // Cut circular avatar with ring border
             const circleMaskSvg = `
-              <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="110" cy="110" r="106" fill="#ffffff"/>
+              <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="120" cy="120" r="116" fill="#ffffff"/>
               </svg>
             `;
             const resizedAvatar = await sharp(avatarBuf)
-              .resize(220, 220, { fit: 'cover' })
-              .composite([{
-                input: Buffer.from(circleMaskSvg),
-                blend: 'dest-in'
-              }])
+              .resize(240, 240, { fit: 'cover' })
+              .composite([{ input: Buffer.from(circleMaskSvg), blend: 'dest-in' }])
               .png()
               .toBuffer();
 
-            // Circular border with blue ring
             const borderRingSvg = `
-              <svg width="228" height="228" viewBox="0 0 228 228" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="114" cy="114" r="110" fill="none" stroke="#3b82f6" stroke-width="5"/>
-                <!-- Verified Checkmark Badge at bottom right -->
-                <circle cx="178" cy="178" r="22" fill="#3b82f6" stroke="#09090b" stroke-width="3"/>
-                <path d="M170 178 L176 184 L188 172" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <svg width="252" height="252" viewBox="0 0 252 252" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="126" cy="126" r="122" fill="none" stroke="#3b82f6" stroke-width="5"/>
+                <circle cx="198" cy="198" r="26" fill="#3b82f6" stroke="#09090b" stroke-width="3.5"/>
+                <path d="M188 198 L195 205 L209 191" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             `;
 
             const finalAvatarCard = await sharp(Buffer.from(borderRingSvg))
-              .composite([{ input: resizedAvatar, top: 4, left: 4 }])
+              .composite([{ input: resizedAvatar, top: 6, left: 6 }])
               .png()
               .toBuffer();
 
             composites.push({
               input: finalAvatarCard,
-              top: 91,
-              left: 186
+              top: 189,
+              left: 104
             });
          } else {
             let initials = rawName.substring(0, 2).toUpperCase();
             const fallbackAvatarSvg = `
-              <svg width="228" height="228" viewBox="0 0 228 228" xmlns="http://www.w3.org/2000/svg">
+              <svg width="252" height="252" viewBox="0 0 252 252" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="avGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#3b82f6" />
                     <stop offset="100%" stop-color="#1d4ed8" />
                   </linearGradient>
                 </defs>
-                <circle cx="114" cy="114" r="110" fill="url(#avGrad)" stroke="#60a5fa" stroke-width="4"/>
-                <text x="114" y="145" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="900" fill="#ffffff" text-anchor="middle">${escapeXml(initials)}</text>
-                <!-- Verified Badge -->
-                <circle cx="178" cy="178" r="22" fill="#3b82f6" stroke="#09090b" stroke-width="3"/>
-                <path d="M170 178 L176 184 L188 172" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="126" cy="126" r="122" fill="url(#avGrad)" stroke="#60a5fa" stroke-width="4"/>
+                <text x="126" y="160" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="90" font-weight="bold" fill="#ffffff" text-anchor="middle">${escapeXml(initials)}</text>
+                <circle cx="198" cy="198" r="26" fill="#3b82f6" stroke="#09090b" stroke-width="3.5"/>
+                <path d="M188 198 L195 205 L209 191" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             `;
             composites.push({
               input: Buffer.from(fallbackAvatarSvg),
-              top: 91,
-              left: 186
+              top: 189,
+              left: 104
             });
          }
 
@@ -7114,9 +7152,26 @@ function cleanDomainName(urlStr: string) {
      let lower = urlStr.trim().toLowerCase();
      if (lower.startsWith('http')) {
         const u = new URL(lower);
-        return u.hostname.replace(/^www\./, '');
+        lower = u.hostname.replace(/^www\./, '');
+     } else {
+        lower = lower.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0].split('?')[0].split('#')[0];
      }
-     return lower.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0];
+     if (lower.endsWith("-com")) lower = lower.replace(/-com$/, ".com");
+     if (lower.endsWith("-net")) lower = lower.replace(/-net$/, ".net");
+     if (lower.endsWith("-org")) lower = lower.replace(/-org$/, ".org");
+     if (lower.endsWith("-io")) lower = lower.replace(/-io$/, ".io");
+     if (lower.endsWith("-co")) lower = lower.replace(/-co$/, ".co");
+     if (lower.endsWith("-ai")) lower = lower.replace(/-ai$/, ".ai");
+     if (lower.endsWith("-app")) lower = lower.replace(/-app$/, ".app");
+     if (lower.endsWith("-dev")) lower = lower.replace(/-dev$/, ".dev");
+     if (lower.endsWith("-me")) lower = lower.replace(/-me$/, ".me");
+     if (lower.endsWith("-tech")) lower = lower.replace(/-tech$/, ".tech");
+     if (lower.endsWith("-store")) lower = lower.replace(/-store$/, ".store");
+
+     if (!lower.includes(".") && lower.length > 0) {
+        lower = lower.replace(/[^a-z0-9]/g, "") + ".com";
+     }
+     return lower;
   } catch(e) {
      return urlStr.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0];
   }
@@ -7130,6 +7185,9 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta property="og:title" content="${meta.title}" />
     <meta property="og:description" content="${meta.description}" />
     <meta property="og:image" content="${meta.imageUrl}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:url" content="${meta.url}" />
     <meta property="og:type" content="${meta.type}" />
     <meta property="og:site_name" content="Yoouz" />
@@ -7224,7 +7282,7 @@ function injectOpenGraphTags(html: string, meta: any) {
               ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
               : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
             
-            let queryParams = `type=video&id=${encodeURIComponent(foundVideo.id)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}&v=7`;
+            let queryParams = `type=video&id=${encodeURIComponent(foundVideo.id)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}&v=11`;
             
             let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
             if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
@@ -7240,6 +7298,7 @@ function injectOpenGraphTags(html: string, meta: any) {
             imageUrl = `${baseUrl}/api/og-image.png?${queryParams}`;
             videoUrl = foundVideo.videoUrl || "";
             type = "video.other";
+            twitterCard = "summary_large_image";
             
             structuredData = {
               "@context": "https://schema.org",
@@ -7274,9 +7333,9 @@ function injectOpenGraphTags(html: string, meta: any) {
             };
         }
     } else if (placeId) {
-        let placeName = placeId.replace(/-/g, ' ');
+        const domain = cleanDomainName(placeId);
+        let placeName = placeId.replace(/-com$|-net$|-org$|-io$|-co$|-ai$/i, '').replace(/-/g, ' ');
         placeName = placeName.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        const domain = cleanDomainName(placeId.includes('.') ? placeId : `${placeId}.com`);
         let foundLogo = "";
         
         try {
@@ -7294,10 +7353,10 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `Authentic Video Reviews for ${placeName} | Yoouz`;
         description = `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=5`;
-        twitterCard = "summary";
+        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=11`;
+        twitterCard = "summary_large_image";
     } else if (creatorHandle) {
-        let authorName = creatorHandle;
+        let authorName = creatorHandle.replace(/-/g, ' ').split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         let authorAvatar = "";
 
         try {
@@ -7315,8 +7374,8 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${creatorHandle}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(creatorHandle)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=5`;
-        twitterCard = "summary";
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(creatorHandle)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=11`;
+        twitterCard = "summary_large_image";
     }
 
     if (!structuredData) {

@@ -31,11 +31,26 @@ export function extractCleanDomain(input?: string | null): string {
   return clean;
 }
 
-export function getDisplayUrlAsDomain(placeSource: { placeWebsite?: string, placeName?: string, name?: string, website?: string }): string {
-  const urlSource = placeSource.placeWebsite || placeSource.website || placeSource.placeName || placeSource.name || "";
+export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string } | null | undefined): string {
+  if (!placeSource) return "website.com";
+  let urlSource = "";
+  if (typeof placeSource === "string") {
+    urlSource = placeSource;
+  } else if (typeof placeSource === "object") {
+    urlSource = placeSource.brandDomain || placeSource.placeWebsite || placeSource.website || placeSource.id || placeSource.placeName || placeSource.name || "";
+  }
   let domain = extractCleanDomain(urlSource);
   
-  if (!domain) return "website.com";
+  if (!domain) {
+    if (typeof placeSource === "string" && placeSource.trim()) {
+      const cleanStr = placeSource.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (cleanStr) return `${cleanStr}.com`;
+    } else if (placeSource && typeof placeSource === "object" && (placeSource.name || placeSource.placeName)) {
+      const cleanName = (placeSource.name || placeSource.placeName || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (cleanName) return `${cleanName}.com`;
+    }
+    return "website.com";
+  }
 
   if (!domain.includes(".")) {
     domain = domain.split('|')[0].replace(/[^a-z0-9]/g, "") + ".com";
