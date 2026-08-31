@@ -181,20 +181,30 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
     },
     {
-      name: "TikTok",
+      name: "Gmail",
       icon: (
         <svg className="w-5 h-5 fill-current text-white" viewBox="0 0 24 24">
-          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298 0 .59.043.87.127V9.41a6.33 6.33 0 0 0-.87-.06A6.34 6.34 0 0 0 3.1 15.69a6.34 6.34 0 0 0 10.82 4.48c.18-.18.35-.37.49-.57V10.7a8.28 8.28 0 0 0 5.18 1.83v-3.47a4.85 4.85 0 0 1-.0-.37z" />
+          <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
         </svg>
       ),
       color: "hover:bg-zinc-800 border-zinc-800",
-      url: `https://www.tiktok.com/`
+      url: `https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=${encodeURIComponent(title || "Yoouz")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`
     },
     {
-      name: "Email",
-      icon: <Mail className="w-5 h-5 text-zinc-300" />,
+      name: "Outlook",
+      icon: (
+        <svg className="w-5 h-5 fill-current text-white" viewBox="0 0 24 24">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-.95 18H8.55v-6.95L5.72 13v-2.3l2.95-1.07h2.38V18zm3.62-5.55h-2.1v-1.68h2.1V18h2.1v-7.23h-2.1v1.68z" />
+        </svg>
+      ),
       color: "hover:bg-zinc-800 border-zinc-800",
-      url: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`
+      url: `https://outlook.live.com/owa/?path=/mail/action/compose&subject=${encodeURIComponent(title || "Yoouz")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`
+    },
+    {
+      name: "Email App",
+      icon: <Mail className="w-5 h-5 text-white" />,
+      color: "hover:bg-zinc-800 border-zinc-800",
+      url: `mailto:?subject=${encodeURIComponent(title || "Yoouz")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`
     }
   ];
 
