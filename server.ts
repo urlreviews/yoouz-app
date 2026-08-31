@@ -6780,6 +6780,58 @@ app.get('/api/og-preview-v2', async (req, res) => {
          return res.end(finalImage);
       }
 
+      if (type === 'place' || type === 'creator') {
+         const name = (req.query.name as string) || (type === 'place' ? "Place" : "Creator");
+         let initials = name.substring(0, 2).toUpperCase();
+         const words = name.split(' ');
+         if (words.length > 1 && words[0].length > 0 && words[1].length > 0) {
+            initials = (words[0][0] + words[1][0]).toUpperCase();
+         }
+         
+         const isPlace = type === 'place';
+         // Dark gradient background with subtle borders/grid
+         const svg = `
+           <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+             <defs>
+               <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                 <stop offset="0%" stop-color="#09090b" />
+                 <stop offset="100%" stop-color="#18181b" />
+               </linearGradient>
+               <linearGradient id="avatarBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                 <stop offset="0%" stop-color="#3b82f6" />
+                 <stop offset="100%" stop-color="#2563eb" />
+               </linearGradient>
+               <linearGradient id="placeBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                 <stop offset="0%" stop-color="#ef4444" />
+                 <stop offset="100%" stop-color="#dc2626" />
+               </linearGradient>
+             </defs>
+             <rect width="600" height="600" fill="url(#bg)"/>
+             
+             <!-- Decorative subtle circle -->
+             <circle cx="300" cy="240" r="140" fill="url(#${isPlace ? 'placeBg' : 'avatarBg'})"/>
+             <text x="300" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="120" font-weight="bold" fill="#ffffff" text-anchor="middle">${initials}</text>
+             
+             <!-- Bottom Branding Area -->
+             <rect x="0" y="480" width="600" height="120" fill="#000000" fill-opacity="0.3"/>
+             
+             <!-- Name Text -->
+             <text x="300" y="440" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="bold" fill="#ffffff" text-anchor="middle">${name.length > 25 ? name.substring(0, 22) + '...' : name}</text>
+             
+             <!-- Logo Text -->
+             <text x="300" y="550" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="2">YOOUZ.COM</text>
+           </svg>
+         `;
+
+         const finalImage = await sharp(Buffer.from(svg))
+           .png()
+           .toBuffer();
+
+         res.setHeader("Content-Type", "image/png");
+         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+         return res.end(finalImage);
+      }
+
       // Default fallback for non-video OG images
       const ogBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
       let fallbackBuf;
@@ -6824,7 +6876,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta property="og:url" content="${meta.url}" />
     <meta property="og:type" content="${meta.type}" />
     <meta property="og:site_name" content="Yoouz" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="${meta.twitterCard || 'summary_large_image'}" />
     <meta name="twitter:title" content="${meta.title}" />
     <meta name="twitter:description" content="${meta.description}" />
     <meta name="twitter:image" content="${meta.imageUrl}" />
@@ -6870,6 +6922,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     let imageUrl = `${baseUrl}/og-banner.png?v=4`;
     let videoUrl = "";
     let type = "website";
+    let twitterCard = "summary_large_image";
     let structuredData: any = null;
     let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
 
@@ -6964,13 +7017,17 @@ function injectOpenGraphTags(html: string, meta: any) {
             };
         }
     } else if (placeId) {
-        title = `Authentic Video Reviews for ${placeId} | Yoouz`;
-        description = `Discover genuine 60-second video testimonials for ${placeId} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=homepage&v=4`;
+        let placeName = placeId.replace(/-/g, ' ');
+        placeName = placeName.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        title = `Authentic Video Reviews for ${placeName} | Yoouz`;
+        description = `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&v=1`;
+        twitterCard = "summary";
     } else if (creatorHandle) {
         title = `@${creatorHandle}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by @${creatorHandle} on Yoouz.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&author=${encodeURIComponent(creatorHandle)}&v=4`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(creatorHandle)}&v=1`;
+        twitterCard = "summary";
     }
 
     if (!structuredData) {
@@ -6994,6 +7051,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       imageUrl,
       videoUrl,
       type,
+      twitterCard,
       url: fullUrl,
       keywords,
       structuredData
