@@ -6773,7 +6773,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       if (type === 'place') {
          const rawName = (req.query.name as string) || "Business";
-         const name = escapeXml(rawName.length > 28 ? rawName.substring(0, 26) + '...' : rawName);
+         const cleanName = formatBusinessName(rawName);
+         const name = escapeXml(cleanName.length > 28 ? cleanName.substring(0, 26) + '...' : cleanName);
          const rawDomain = cleanDomainName((req.query.domain as string) || (req.query.website as string) || rawName);
          const domain = escapeXml(rawDomain);
          let explicitLogoUrl = (req.query.logoUrl as string) || "";
@@ -6785,7 +6786,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
                const match = localList.find((v: any) => 
                   (v.placeName && v.placeName.toLowerCase() === rawName.toLowerCase()) || 
                   (v.placeName && cleanDomainName(v.placeName) === rawDomain) ||
-                  v.placeId === req.query.id
+                  v.placeId === req.query.id ||
+                  (v.placeWebsite && cleanDomainName(v.placeWebsite) === rawDomain)
                );
                if (match && (match.placeLogo || match.logoUrl)) {
                   explicitLogoUrl = match.placeLogo || match.logoUrl;
@@ -6794,35 +6796,66 @@ app.get('/api/og-preview-v2', async (req, res) => {
          }
 
          let logoBuf: Buffer | null = null;
-         const candidateUrls: string[] = [];
-         if (explicitLogoUrl && explicitLogoUrl.startsWith("http")) {
-            candidateUrls.push(explicitLogoUrl);
-         }
-         if (rawDomain) {
-            candidateUrls.push(`https://logos.hunter.io/${rawDomain}`);
-            candidateUrls.push(`https://unavatar.io/${rawDomain}?fallback=false`);
-            candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${rawDomain}&size=256`);
-            candidateUrls.push(`https://www.google.com/s2/favicons?domain=${rawDomain}&sz=256`);
+
+         // 1. Direct match for data URL
+         if (explicitLogoUrl && explicitLogoUrl.startsWith("data:")) {
+            logoBuf = decodeDataUrl(explicitLogoUrl);
          }
 
-         for (const u of candidateUrls) {
+         // 2. Direct match for known brand logos SVG
+         if (!logoBuf && rawDomain && KNOWN_BRAND_LOGOS[rawDomain]) {
             try {
+               logoBuf = Buffer.from(KNOWN_BRAND_LOGOS[rawDomain]);
+            } catch (e) {}
+         }
+
+         // 3. Fast parallel network fetch from top icon & favicon sources
+         if (!logoBuf) {
+            const candidateUrls: string[] = [];
+            if (explicitLogoUrl && explicitLogoUrl.startsWith("http")) {
+               candidateUrls.push(explicitLogoUrl);
+            }
+            if (rawDomain) {
+               candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${rawDomain}&size=256`);
+               candidateUrls.push(`https://unavatar.io/${rawDomain}?fallback=false`);
+               candidateUrls.push(`https://logos.hunter.io/${rawDomain}`);
+               candidateUrls.push(`https://www.google.com/s2/favicons?domain=${rawDomain}&sz=256`);
+            }
+
+            const fetchPromises = candidateUrls.map(async (u) => {
                const controller = new AbortController();
-               const timeout = setTimeout(() => controller.abort(), 2500);
-               const resp = await fetch(u, { signal: controller.signal });
-               clearTimeout(timeout);
-               if (resp.ok) {
-                  const ab = await resp.arrayBuffer();
-                  const buf = Buffer.from(ab);
-                  if (buf.length > 100) {
-                     const meta = await sharp(buf).metadata().catch(() => null);
-                     if (meta && meta.width && meta.height) {
-                        logoBuf = buf;
-                        break;
+               const timeout = setTimeout(() => controller.abort(), 3000);
+               try {
+                  const resp = await fetch(u, { 
+                     signal: controller.signal,
+                     headers: {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                     }
+                  });
+                  clearTimeout(timeout);
+                  if (resp.ok) {
+                     const ab = await resp.arrayBuffer();
+                     const buf = Buffer.from(ab);
+                     if (buf.length > 80) {
+                        const meta = await sharp(buf).metadata().catch(() => null);
+                        if (meta && meta.width && meta.height) {
+                           return buf;
+                        }
                      }
                   }
+               } catch (e) {
+                  clearTimeout(timeout);
                }
-            } catch(e) {}
+               return null;
+            });
+
+            const results = await Promise.allSettled(fetchPromises);
+            for (const res of results) {
+               if (res.status === "fulfilled" && res.value) {
+                  logoBuf = res.value;
+                  break;
+               }
+            }
          }
 
          // High Resolution 1200x630 Social Preview Card
@@ -6969,21 +7002,28 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
          let avatarBuf: Buffer | null = null;
          if (avatarUrl) {
-            if (avatarUrl.startsWith('data:image')) {
-               try {
-                  const b64 = avatarUrl.split(',')[1];
-                  if (b64) avatarBuf = Buffer.from(b64, 'base64');
-               } catch(e) {}
+            if (avatarUrl.startsWith('data:')) {
+               avatarBuf = decodeDataUrl(avatarUrl);
             } else if (avatarUrl.startsWith('http')) {
                try {
                   const controller = new AbortController();
-                  const timeout = setTimeout(() => controller.abort(), 2500);
-                  const resp = await fetch(avatarUrl, { signal: controller.signal });
+                  const timeout = setTimeout(() => controller.abort(), 3000);
+                  const resp = await fetch(avatarUrl, { 
+                     signal: controller.signal,
+                     headers: {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                     }
+                  });
                   clearTimeout(timeout);
                   if (resp.ok) {
                      const ab = await resp.arrayBuffer();
                      const buf = Buffer.from(ab);
-                     if (buf.length > 100) avatarBuf = buf;
+                     if (buf.length > 80) {
+                        const meta = await sharp(buf).metadata().catch(() => null);
+                        if (meta && meta.width && meta.height) {
+                           avatarBuf = buf;
+                        }
+                     }
                   }
                } catch(e) {}
             }
@@ -7146,16 +7186,126 @@ function escapeXml(unsafe: string) {
   });
 }
 
+const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "tajhotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#292524"/>
+    <path d="M50 22 C38 34 30 48 30 62 C30 72 38 78 50 78 C62 78 70 72 70 62 C70 48 62 34 50 22 Z" fill="#d97706"/>
+    <circle cx="50" cy="54" r="10" fill="#fef3c7"/>
+  </svg>`,
+  "mastercard.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#18181b"/>
+    <circle cx="40" cy="50" r="22" fill="#eb001b"/>
+    <circle cx="60" cy="50" r="22" fill="#f79e1b" fill-opacity="0.88"/>
+  </svg>`,
+  "latakiano.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#0f172a"/>
+    <circle cx="50" cy="50" r="40" fill="none" stroke="#eab308" stroke-width="2.5"/>
+    <text x="50" y="58" font-family="'Playfair Display', serif" font-weight="bold" font-size="34" fill="#facc15" text-anchor="middle">LB</text>
+    <path d="M38 70 Q50 64 62 70" stroke="#facc15" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`,
+  "latakianobarbero.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#0f172a"/>
+    <circle cx="50" cy="50" r="40" fill="none" stroke="#eab308" stroke-width="2.5"/>
+    <text x="50" y="58" font-family="'Playfair Display', serif" font-weight="bold" font-size="34" fill="#facc15" text-anchor="middle">LB</text>
+    <path d="M38 70 Q50 64 62 70" stroke="#facc15" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`,
+  "bpost.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#dc2626"/>
+    <circle cx="50" cy="50" r="32" fill="#ffffff"/>
+    <path d="M38 38 H52 C58 38 62 42 62 48 C62 54 58 58 52 58 H44 V68 H38 V38 Z" fill="#dc2626"/>
+    <circle cx="50" cy="48" r="4" fill="#ffffff"/>
+  </svg>`,
+  "bol.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#0000a4"/>
+    <text x="46" y="58" font-family="Arial, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle">bol.</text>
+    <circle cx="76" cy="53" r="5" fill="#00b4f0"/>
+  </svg>`,
+  "immoweb.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#0284c7"/>
+    <path d="M50 20 L24 44 H34 V74 H66 V44 H76 Z" fill="#ffffff"/>
+    <rect x="58" y="26" width="6" height="12" fill="#ffffff"/>
+    <rect x="44" y="52" width="12" height="22" rx="2" fill="#0284c7"/>
+  </svg>`,
+  "cnn.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#cc0000"/>
+    <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
+  </svg>`,
+  "edition.cnn.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#cc0000"/>
+    <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
+  </svg>`,
+  "kempinski.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#18181b"/>
+    <polygon points="50,22 58,38 76,38 62,50 67,68 50,56 33,68 38,50 24,38 42,38" fill="#d4af37"/>
+    <text x="50" y="86" font-family="'Cinzel', serif, Georgia" font-weight="bold" font-size="12" fill="#d4af37" text-anchor="middle" letter-spacing="1">KEMPINSKI</text>
+  </svg>`,
+  "ibm.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#001d6c"/>
+    <text x="50" y="60" font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="30" fill="#4589ff" text-anchor="middle" letter-spacing="1">IBM</text>
+  </svg>`,
+  "ups.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#351c15"/>
+    <path d="M50 20 L76 30 V56 C76 72 50 82 50 82 C50 82 24 72 24 56 V30 Z" fill="#ffb500"/>
+    <text x="50" y="60" font-family="Arial Black, sans-serif" font-weight="bold" font-size="20" fill="#351c15" text-anchor="middle">ups</text>
+  </svg>`,
+  "aa.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#00447c"/>
+    <path d="M32 30 L46 70 H54 L68 30 H58 L50 56 L42 30 Z" fill="#ffffff"/>
+    <path d="M50 36 L62 70 H70 L82 36 H73 L66 60 L59 36 Z" fill="#c3102f"/>
+  </svg>`,
+  "freecancellations.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#991b1b"/>
+    <circle cx="50" cy="50" r="32" fill="none" stroke="#fca5a5" stroke-width="4"/>
+    <path d="M38 38 L62 62 M62 38 L38 62" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  </svg>`,
+  "timehotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#1c1917"/>
+    <circle cx="50" cy="50" r="32" fill="none" stroke="#d97706" stroke-width="3"/>
+    <path d="M50 28 V50 L64 64" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
+  </svg>`,
+  "midtownwellness.co.uk": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#18181b"/>
+    <g fill="#f4f4f5">
+      <rect x="22" y="24" width="6" height="52" rx="3"/>
+      <rect x="34" y="32" width="6" height="44" rx="3"/>
+      <rect x="46" y="20" width="6" height="60" rx="3"/>
+      <rect x="58" y="32" width="6" height="44" rx="3"/>
+      <rect x="70" y="24" width="6" height="52" rx="3"/>
+    </g>
+  </svg>`,
+  "spaandmassage.co.uk": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="20" fill="#292524"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#d97706" stroke-width="3"/>
+    <path d="M50 24 C45 32 36 40 36 50 C36 60 42 66 50 72 C58 66 64 60 64 50 C64 40 55 32 50 24 Z" fill="#f59e0b"/>
+    <circle cx="50" cy="46" r="6" fill="#fef3c7"/>
+  </svg>`
+};
+
+function decodeDataUrl(dataUrl?: string | null): Buffer | null {
+  if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) return null;
+  const commaIdx = dataUrl.indexOf(",");
+  if (commaIdx === -1) return null;
+  const meta = dataUrl.slice(0, commaIdx);
+  const data = dataUrl.slice(commaIdx + 1);
+  try {
+    if (meta.includes("base64")) {
+      return Buffer.from(data, "base64");
+    } else {
+      return Buffer.from(decodeURIComponent(data));
+    }
+  } catch (e) {
+    return null;
+  }
+}
+
 function cleanDomainName(urlStr: string) {
   if (!urlStr) return "";
   try {
      let lower = urlStr.trim().toLowerCase();
-     if (lower.startsWith('http')) {
-        const u = new URL(lower);
-        lower = u.hostname.replace(/^www\./, '');
-     } else {
-        lower = lower.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0].split('?')[0].split('#')[0];
-     }
+     lower = lower.replace(/^https?:\/\//, '');
+     lower = lower.replace(/^www[\.\-\/]/, '');
+     lower = lower.split('/')[0].split('?')[0].split('#')[0].split(':')[0];
+     
      if (lower.endsWith("-com")) lower = lower.replace(/-com$/, ".com");
      if (lower.endsWith("-net")) lower = lower.replace(/-net$/, ".net");
      if (lower.endsWith("-org")) lower = lower.replace(/-org$/, ".org");
@@ -7167,14 +7317,57 @@ function cleanDomainName(urlStr: string) {
      if (lower.endsWith("-me")) lower = lower.replace(/-me$/, ".me");
      if (lower.endsWith("-tech")) lower = lower.replace(/-tech$/, ".tech");
      if (lower.endsWith("-store")) lower = lower.replace(/-store$/, ".store");
+     if (lower.endsWith("-be")) lower = lower.replace(/-be$/, ".be");
+     if (lower.endsWith("-co-uk")) lower = lower.replace(/-co-uk$/, ".co.uk");
+
+     lower = lower.replace(/^www[\.\-\/]/, '');
 
      if (!lower.includes(".") && lower.length > 0) {
         lower = lower.replace(/[^a-z0-9]/g, "") + ".com";
      }
      return lower;
   } catch(e) {
-     return urlStr.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0];
+     return urlStr.replace(/^(https?:\/\/)?(www[\.\-])?/i, '').split('/')[0];
   }
+}
+
+function formatBusinessName(name?: string | null): string {
+  if (!name) return "";
+  let trimmed = name.trim();
+  
+  if (
+    trimmed.includes("://") || 
+    trimmed.startsWith("www.") || 
+    trimmed.startsWith("www-") ||
+    /\.[a-z]{2,}(\/|$)/i.test(trimmed) ||
+    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed)
+  ) {
+    const domain = cleanDomainName(trimmed);
+    const namePart = domain.split('.')[0];
+    
+    if (namePart) {
+      const words = namePart
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .split(/[-_ ]+/)
+        .map(word => {
+          if (!word) return "";
+          const lowerCaseWords = ["of", "the", "and", "in", "at"];
+          const lowerWord = word.toLowerCase();
+          if (lowerCaseWords.includes(lowerWord)) return lowerWord;
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
+        .filter(Boolean);
+      
+      return words.join(' ');
+    }
+    return domain;
+  }
+  
+  if (!trimmed.includes(" ") && trimmed.length > 1) {
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  }
+  
+  return trimmed;
 }
 
 function injectOpenGraphTags(html: string, meta: any) {
@@ -7334,8 +7527,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         }
     } else if (placeId) {
         const domain = cleanDomainName(placeId);
-        let placeName = placeId.replace(/-com$|-net$|-org$|-io$|-co$|-ai$/i, '').replace(/-/g, ' ');
-        placeName = placeName.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        let placeName = formatBusinessName(placeId);
         let foundLogo = "";
         
         try {
@@ -7343,20 +7535,21 @@ function injectOpenGraphTags(html: string, meta: any) {
           const match = localList.find((v: any) => 
             (v.placeName && v.placeName.toLowerCase() === placeName.toLowerCase()) || 
             (v.placeName && cleanDomainName(v.placeName) === domain) ||
-            v.placeId === placeId
+            v.placeId === placeId ||
+            (v.placeWebsite && cleanDomainName(v.placeWebsite) === domain)
           );
           if (match) {
-            if (match.placeName) placeName = match.placeName;
+            if (match.placeName) placeName = formatBusinessName(match.placeName);
             foundLogo = match.placeLogo || match.logoUrl || "";
           }
         } catch(e) {}
 
         title = `Authentic Video Reviews for ${placeName} | Yoouz`;
         description = `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=11`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=12`;
         twitterCard = "summary_large_image";
     } else if (creatorHandle) {
-        let authorName = creatorHandle.replace(/-/g, ' ').split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        let authorName = formatBusinessName(creatorHandle.replace(/-/g, ' '));
         let authorAvatar = "";
 
         try {
@@ -7374,7 +7567,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${creatorHandle}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(creatorHandle)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=11`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(creatorHandle)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=12`;
         twitterCard = "summary_large_image";
     }
 

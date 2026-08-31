@@ -3,9 +3,10 @@ import { getCleanLogoUrl } from "./logoUtils";
 
 /**
  * Cleanly extracts domain name from URL or text string
- * e.g., "https://www.fiverr.com/categories" -> "fiverr.com"
+ * e.g., "https://www.tajhotels.com/categories" -> "tajhotels.com"
+ * "www-tajhotels-com" -> "tajhotels.com"
+ * "tajhotels-com" -> "tajhotels.com"
  * "fiverr.com" -> "fiverr.com"
- * "fiverr-com" -> "fiverr.com"
  */
 export function extractCleanDomain(input?: string | null): string {
   if (!input || typeof input !== "string") return "";
@@ -13,22 +14,41 @@ export function extractCleanDomain(input?: string | null): string {
   
   // Remove protocol
   clean = clean.replace(/^https?:\/\//, "");
-  // Remove www.
-  clean = clean.replace(/^www\./, "");
+  // Remove www. or www- or www/
+  clean = clean.replace(/^www[\.\-\/]/, "");
   // Remove query, hash, and subpath
   clean = clean.split("/")[0].split("?")[0].split("#")[0];
   // Remove trailing colon and port
   clean = clean.split(":")[0];
   
-  // If slug like "fiverr-com" where the user entered domain as id
+  // If slug like "fiverr-com" or "tajhotels-com" where the user entered domain as id
   if (clean.endsWith("-com")) clean = clean.replace(/-com$/, ".com");
   if (clean.endsWith("-net")) clean = clean.replace(/-net$/, ".net");
   if (clean.endsWith("-org")) clean = clean.replace(/-org$/, ".org");
   if (clean.endsWith("-io")) clean = clean.replace(/-io$/, ".io");
   if (clean.endsWith("-co")) clean = clean.replace(/-co$/, ".co");
   if (clean.endsWith("-ai")) clean = clean.replace(/-ai$/, ".ai");
+  if (clean.endsWith("-app")) clean = clean.replace(/-app$/, ".app");
+  if (clean.endsWith("-dev")) clean = clean.replace(/-dev$/, ".dev");
+  if (clean.endsWith("-me")) clean = clean.replace(/-me$/, ".me");
+  if (clean.endsWith("-tech")) clean = clean.replace(/-tech$/, ".tech");
+  if (clean.endsWith("-store")) clean = clean.replace(/-store$/, ".store");
+  if (clean.endsWith("-be")) clean = clean.replace(/-be$/, ".be");
+  if (clean.endsWith("-co-uk")) clean = clean.replace(/-co-uk$/, ".co.uk");
+
+  // Strip again in case of www remaining
+  clean = clean.replace(/^www[\.\-\/]/, "");
 
   return clean;
+}
+
+/**
+ * Gets a clean URL slug for a place (e.g. "tajhotels-com", "mastercard-com", "apple-com")
+ * Guarantees no "www-" prefixes or URL protocol baggage.
+ */
+export function getPlaceSlug(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string } | null | undefined): string {
+  const domain = getDisplayUrlAsDomain(placeSource);
+  return domain.toLowerCase().replace(/^www[\.\-]/, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 }
 
 export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string } | null | undefined): string {
@@ -43,10 +63,10 @@ export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: str
   
   if (!domain) {
     if (typeof placeSource === "string" && placeSource.trim()) {
-      const cleanStr = placeSource.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      const cleanStr = placeSource.trim().toLowerCase().replace(/^www[\.\-]/, "").replace(/[^a-z0-9]/g, "");
       if (cleanStr) return `${cleanStr}.com`;
     } else if (placeSource && typeof placeSource === "object" && (placeSource.name || placeSource.placeName)) {
-      const cleanName = (placeSource.name || placeSource.placeName || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      const cleanName = (placeSource.name || placeSource.placeName || "").trim().toLowerCase().replace(/^www[\.\-]/, "").replace(/[^a-z0-9]/g, "");
       if (cleanName) return `${cleanName}.com`;
     }
     return "website.com";
@@ -104,29 +124,28 @@ export function formatViewCount(views?: number | null): string {
 /**
  * Formats a business name for display, cleaning it if it looks like a URL.
  * Also attempts to convert domain-like strings into readable names.
- * e.g., "https://www.freecancellations.com" -> "Free Cancellations"
+ * e.g., "https://www.tajhotels.com/" -> "Taj Hotels"
+ * "www-tajhotels-com" -> "Taj Hotels"
+ * "tajhotels-com" -> "Taj Hotels"
+ * "https://www.freecancellations.com" -> "Free Cancellations"
  */
 export function formatBusinessName(name?: string | null): string {
   if (!name) return "";
-  const trimmed = name.trim();
+  let trimmed = name.trim();
   
-  // If it's already a clean name (contains spaces and no URL markers), return as is
-  if (trimmed.includes(" ") && !trimmed.includes("://") && !trimmed.includes("www.")) {
-    return trimmed;
-  }
-
-  // If it looks like a URL or domain, clean and format it
+  // If it contains URL protocols, www, or domain endings, clean it through extractCleanDomain
   if (
     trimmed.includes("://") || 
     trimmed.startsWith("www.") || 
-    /\.[a-z]{2,}(\/|$)/i.test(trimmed)
+    trimmed.startsWith("www-") ||
+    /\.[a-z]{2,}(\/|$)/i.test(trimmed) ||
+    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed)
   ) {
     const domain = extractCleanDomain(trimmed);
     const namePart = domain.split('.')[0];
     
     if (namePart) {
       // Split by common delimiters and capitalize
-      // Also try to split camelCase if present
       const words = namePart
         .replace(/([a-z])([A-Z])/g, '$1 $2') // split camelCase
         .split(/[-_ ]+/)
@@ -143,6 +162,11 @@ export function formatBusinessName(name?: string | null): string {
       return words.join(' ');
     }
     return domain;
+  }
+  
+  // If it's a single word without spaces, capitalize first letter
+  if (!trimmed.includes(" ") && trimmed.length > 1) {
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   }
   
   return trimmed;

@@ -13,20 +13,7 @@ import {
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-
-function cleanDomainName(urlStr: string) {
-  if (!urlStr) return "";
-  try {
-     let lower = urlStr.trim().toLowerCase();
-     if (lower.startsWith('http')) {
-        const u = new URL(lower);
-        return u.hostname.replace(/^www\./, '');
-     }
-     return lower.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0];
-  } catch(e) {
-     return urlStr.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0];
-  }
-}
+import { extractCleanDomain, formatBusinessName } from "../utils/placeUtils";
 
 interface CopoShareModalProps {
   // Mode A: General Share
@@ -108,20 +95,20 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const isSquarePreview = isBusiness || isCreator;
 
   // Resolve metadata assets
-  const resolvedDomain = explicitDomain || cleanDomainName(explicitWebsite || (shareUrl.includes("/place/") ? shareUrl.split("/place/")[1] : title));
-  const resolvedLogoUrl = explicitLogoUrl || (isVideoMode && video ? (video.placeLogo || (video as any).logoUrl) : undefined);
+  const resolvedDomain = explicitDomain || extractCleanDomain(explicitWebsite || (shareUrl.includes("/place/") ? shareUrl.split("/place/")[1] : title));
+  const resolvedLogoUrl = explicitLogoUrl || (isVideoMode && video ? ((video as any).placeLogo || video.placeLogoUrl || (video as any).logoUrl) : undefined);
   const resolvedAvatarUrl = explicitAvatarUrl || (isVideoMode && video?.author ? video.author.avatar : undefined);
   const resolvedWebsite = explicitWebsite || (isVideoMode && video ? (video as any).website : undefined);
   const resolvedBannerUrl = explicitBannerUrl || (isVideoMode && video ? (video as any).bannerUrl : undefined);
 
-  let previewImageUrl = "/api/og-image.png?v=9";
+  let previewImageUrl = "/api/og-image.png?v=12";
   if (isVideoMode && video) {
-    previewImageUrl = `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&v=14`;
+    previewImageUrl = `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(formatBusinessName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&v=12`;
   } else if (isBusiness) {
-    previewImageUrl = `/api/og-image.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}${resolvedWebsite ? `&website=${encodeURIComponent(resolvedWebsite)}` : ""}&v=5`;
+    previewImageUrl = `/api/og-image.png?type=place&name=${encodeURIComponent(formatBusinessName(title))}&domain=${encodeURIComponent(resolvedDomain)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}${resolvedWebsite ? `&website=${encodeURIComponent(resolvedWebsite)}` : ""}&v=12`;
   } else if (isCreator) {
     const cleanHandle = (shareUrl.split("/@")[1] || title).replace(/^@+/, "");
-    previewImageUrl = `/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanHandle)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}&v=5`;
+    previewImageUrl = `/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanHandle)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}&v=12`;
   }
 
   const handleCopy = async () => {

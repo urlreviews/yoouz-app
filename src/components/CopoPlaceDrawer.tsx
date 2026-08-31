@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getDisplayViews, formatViewCount } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -1678,15 +1678,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       <CopoShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        shareUrl={`${window.location.origin}/place/${(
-          (place.id && (place.id.includes("-com") || place.id.includes("-net") || place.id.includes("-org") || place.id.includes("-io") || place.id.includes("-co") || place.id.includes("-ai")))
-            ? place.id
-            : (drawerDomain ? drawerDomain.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") : getDisplayUrlAsDomain(place).toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""))
-        )}`}
-        title={formatBusinessName(place.name)}
+        shareUrl={`${window.location.origin}/place/${getPlaceSlug(place)}`}
+        title={formatBusinessName(place.name || drawerDomain || place.id)}
         subtitle="Business Location"
         logoUrl={place.logoUrl || primaryLogoUrl || undefined}
-        domain={place.brandDomain || drawerDomain || undefined}
+        domain={drawerDomain || extractCleanDomain(place.website || place.id) || undefined}
         website={place.website || undefined}
         bannerUrl={place.bannerUrl || place.ogImage || undefined}
       />
