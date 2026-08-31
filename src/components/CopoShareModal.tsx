@@ -69,9 +69,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     return raw || "user";
   };
 
-  const shareUrl = isVideoMode && video
+  const rawShareUrl = isVideoMode && video
     ? `${window.location.origin}/@${getCleanHandle(video.author)}/video/${video.id}?ref=x`
     : (explicitShareUrl ? explicitShareUrl.trim().replace(/\s+/g, "%20") : window.location.origin);
+
+  const shareUrl = rawShareUrl.replace(/\/place\/www-/g, '/place/');
 
   const title = isVideoMode && video
     ? `${video.author?.name || "Reviewer"}'s 60s review of ${video.placeName || "Business"}`

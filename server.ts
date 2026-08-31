@@ -6862,6 +6862,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
          const baseSvg = `
            <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
              <defs>
+               ${EMBEDDED_FONT_STYLE}
                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                  <stop offset="0%" stop-color="#09090b" />
                  <stop offset="60%" stop-color="#111115" />
@@ -6882,14 +6883,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
              <!-- Red Pill Tag -->
              <rect x="450" y="135" width="280" height="34" rx="17" fill="#ef4444" fill-opacity="0.15" stroke="#ef4444" stroke-opacity="0.4" stroke-width="1.5"/>
-             <text x="590" y="158" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="14" font-weight="bold" fill="#f87171" text-anchor="middle" letter-spacing="2">AUTHENTIC VIDEO REVIEWS</text>
+             <text x="590" y="158" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="14" font-weight="bold" fill="#f87171" text-anchor="middle" letter-spacing="2">AUTHENTIC VIDEO REVIEWS</text>
 
              <!-- Business Name -->
-             <text x="450" y="230" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="52" font-weight="bold" fill="#ffffff">${name}</text>
+             <text x="450" y="230" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="52" font-weight="bold" fill="#ffffff">${name}</text>
              
              <!-- Domain / Subtitle -->
-             <text x="450" y="280" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="24" font-weight="bold" fill="#3b82f6">${domain || "yoouz.com"}</text>
-             <text x="450" y="328" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="20" font-weight="normal" fill="#a1a1aa">Genuine 60-second video reviews and ratings on Yoouz.</text>
+             <text x="450" y="280" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="24" font-weight="bold" fill="#3b82f6">${domain || "yoouz.com"}</text>
+             <text x="450" y="328" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="20" font-weight="normal" fill="#a1a1aa">Genuine 60-second video reviews and ratings on Yoouz.</text>
 
              <!-- Rating & Real People Badges -->
              <g transform="translate(450, 370)">
@@ -6902,7 +6903,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
                  <g transform="translate(72, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
                  <g transform="translate(96, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
                </g>
-               <text x="140" y="29" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="16" font-weight="bold" fill="#ffffff">5.0 / 5.0</text>
+               <text x="140" y="29" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="16" font-weight="bold" fill="#ffffff">5.0 / 5.0</text>
 
                <rect x="225" y="0" width="280" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
                <!-- Checkmark SVG path -->
@@ -6910,15 +6911,15 @@ app.get('/api/og-preview-v2', async (req, res) => {
                  <circle cx="9" cy="9" r="9" fill="#22c55e" fill-opacity="0.2"/>
                  <path d="M5 9 L8 12 L13 6" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                </g>
-               <text x="270" y="29" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="15" font-weight="bold" fill="#4ade80">100% Real Video Verified</text>
+               <text x="270" y="29" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="15" font-weight="bold" fill="#4ade80">100% Real Video Verified</text>
              </g>
 
              <!-- Footer Divider & Brand -->
              <line x1="450" y1="465" x2="1120" y2="465" stroke="#27272a" stroke-width="1.5"/>
-             <text x="450" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" letter-spacing="1">YOOUZ</text>
+             <text x="450" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="20" font-weight="bold" fill="#ffffff" letter-spacing="1">YOOUZ</text>
              <circle cx="545" cy="504" r="3" fill="#71717a"/>
-             <text x="560" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="18" font-weight="normal" fill="#71717a">Real People. Real Reviews.</text>
-             <text x="1120" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="18" font-weight="bold" fill="#71717a" text-anchor="end">yoouz.com</text>
+             <text x="560" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="18" font-weight="normal" fill="#71717a">Real People. Real Reviews.</text>
+             <text x="1120" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="18" font-weight="bold" fill="#71717a" text-anchor="end">yoouz.com</text>
            </svg>
          `;
 
@@ -7033,6 +7034,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
          const baseSvg = `
            <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
              <defs>
+               ${EMBEDDED_FONT_STYLE}
                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                  <stop offset="0%" stop-color="#09090b" />
                  <stop offset="60%" stop-color="#10131c" />
@@ -7053,14 +7055,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
              <!-- Blue Pill Tag -->
              <rect x="450" y="135" width="240" height="34" rx="17" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
-             <text x="570" y="158" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="14" font-weight="bold" fill="#60a5fa" text-anchor="middle" letter-spacing="2">VERIFIED REVIEWER</text>
+             <text x="570" y="158" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="14" font-weight="bold" fill="#60a5fa" text-anchor="middle" letter-spacing="2">VERIFIED REVIEWER</text>
 
              <!-- Creator Name -->
-             <text x="450" y="230" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="52" font-weight="bold" fill="#ffffff">${name}</text>
+             <text x="450" y="230" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="52" font-weight="bold" fill="#ffffff">${name}</text>
              
              <!-- Handle -->
-             <text x="450" y="280" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="26" font-weight="bold" fill="#3b82f6">@${handle}</text>
-             <text x="450" y="328" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="20" font-weight="normal" fill="#a1a1aa">Authentic 60-second video reviews and recommendations.</text>
+             <text x="450" y="280" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="26" font-weight="bold" fill="#3b82f6">@${handle}</text>
+             <text x="450" y="328" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="20" font-weight="normal" fill="#a1a1aa">Authentic 60-second video reviews and recommendations.</text>
 
              <!-- Trust Badges -->
              <g transform="translate(450, 370)">
@@ -7069,7 +7071,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
                <g fill="#60a5fa" transform="translate(18, 14) scale(0.8)">
                  <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
                </g>
-               <text x="44" y="29" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="15" font-weight="bold" fill="#60a5fa">Verified Creator</text>
+               <text x="44" y="29" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="15" font-weight="bold" fill="#60a5fa">Verified Creator</text>
 
                <rect x="235" y="0" width="270" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
                <!-- Checkmark SVG path -->
@@ -7077,15 +7079,15 @@ app.get('/api/og-preview-v2', async (req, res) => {
                  <circle cx="9" cy="9" r="9" fill="#22c55e" fill-opacity="0.2"/>
                  <path d="M5 9 L8 12 L13 6" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                </g>
-               <text x="280" y="29" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="15" font-weight="bold" fill="#4ade80">Real Video Reviews</text>
+               <text x="280" y="29" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="15" font-weight="bold" fill="#4ade80">Real Video Reviews</text>
              </g>
 
              <!-- Footer Divider & Brand -->
              <line x1="450" y1="465" x2="1120" y2="465" stroke="#27272a" stroke-width="1.5"/>
-             <text x="450" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" letter-spacing="1">YOOUZ</text>
+             <text x="450" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="20" font-weight="bold" fill="#ffffff" letter-spacing="1">YOOUZ</text>
              <circle cx="545" cy="504" r="3" fill="#71717a"/>
-             <text x="560" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="18" font-weight="normal" fill="#71717a">Real People. Real Reviews.</text>
-             <text x="1120" y="510" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="18" font-weight="bold" fill="#71717a" text-anchor="end">yoouz.com/@${handle}</text>
+             <text x="560" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="18" font-weight="normal" fill="#71717a">Real People. Real Reviews.</text>
+             <text x="1120" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="18" font-weight="bold" fill="#71717a" text-anchor="end">yoouz.com/@${handle}</text>
            </svg>
          `;
 
@@ -7173,6 +7175,51 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
   
   
+let EMBEDDED_FONT_STYLE = "";
+try {
+  const liberationBoldPath = "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf";
+  const liberationRegPath = "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf";
+  if (fs.existsSync(liberationBoldPath) && fs.existsSync(liberationRegPath)) {
+    const boldB64 = fs.readFileSync(liberationBoldPath).toString("base64");
+    const regB64 = fs.readFileSync(liberationRegPath).toString("base64");
+    EMBEDDED_FONT_STYLE = `
+      <style>
+        @font-face {
+          font-family: "YoouzSans";
+          src: url("data:font/truetype;charset=utf-8;base64,${boldB64}") format("truetype");
+          font-weight: 700;
+          font-style: normal;
+        }
+        @font-face {
+          font-family: "YoouzSans";
+          src: url("data:font/truetype;charset=utf-8;base64,${regB64}") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+        }
+        text, tspan {
+          font-family: "YoouzSans", "Liberation Sans", "DejaVu Sans", sans-serif !important;
+        }
+      </style>
+    `;
+  }
+} catch (e) {
+  console.warn("Font embedding warning:", e);
+}
+
+function escapeHtml(unsafe: string) {
+  if (!unsafe) return "";
+  return String(unsafe).replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&#39;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
 function escapeXml(unsafe: string) {
   return (unsafe || "").replace(/[<>&'"]/g, (c) => {
     switch (c) {
@@ -7371,29 +7418,48 @@ function formatBusinessName(name?: string | null): string {
 }
 
 function injectOpenGraphTags(html: string, meta: any) {
+    const safeTitle = escapeHtml(meta.title);
+    const safeDesc = escapeHtml(meta.description);
+    const safeUrl = escapeHtml(meta.url);
+    const safeImage = escapeHtml(meta.imageUrl);
+    const safeKeywords = escapeHtml(meta.keywords || "");
+    const safeType = escapeHtml(meta.type || "website");
+    const safeTwitterCard = escapeHtml(meta.twitterCard || "summary_large_image");
+
     let headInject = `
-    <title>${meta.title}</title>
-    <meta name="description" content="${meta.description}" />
-    <meta name="keywords" content="${meta.keywords}" />
-    <meta property="og:title" content="${meta.title}" />
-    <meta property="og:description" content="${meta.description}" />
-    <meta property="og:image" content="${meta.imageUrl}" />
+    <title>${safeTitle}</title>
+    <meta name="description" content="${safeDesc}" />
+    <meta name="keywords" content="${safeKeywords}" />
+    
+    <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
+    <meta property="og:site_name" content="Yoouz" />
+    <meta property="og:type" content="${safeType}" />
+    <meta property="og:url" content="${safeUrl}" />
+    <meta property="og:title" content="${safeTitle}" />
+    <meta property="og:description" content="${safeDesc}" />
+    <meta property="og:image" content="${safeImage}" />
+    <meta property="og:image:secure_url" content="${safeImage}" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:url" content="${meta.url}" />
-    <meta property="og:type" content="${meta.type}" />
-    <meta property="og:site_name" content="Yoouz" />
-    <meta name="twitter:card" content="${meta.twitterCard || 'summary_large_image'}" />
-    <meta name="twitter:title" content="${meta.title}" />
-    <meta name="twitter:description" content="${meta.description}" />
-    <meta name="twitter:image" content="${meta.imageUrl}" />
-    <link rel="canonical" href="${meta.url}" />
+    <meta property="og:image:alt" content="${safeTitle}" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="${safeTwitterCard}" />
+    <meta name="twitter:site" content="@yoouz" />
+    <meta name="twitter:creator" content="@yoouz" />
+    <meta name="twitter:url" content="${safeUrl}" />
+    <meta name="twitter:title" content="${safeTitle}" />
+    <meta name="twitter:description" content="${safeDesc}" />
+    <meta name="twitter:image" content="${safeImage}" />
+    <meta name="twitter:image:alt" content="${safeTitle}" />
+    
+    <link rel="canonical" href="${safeUrl}" />
     `;
 
     if (meta.videoUrl) {
       headInject += `
-      <meta property="og:video" content="${meta.videoUrl}" />
+      <meta property="og:video" content="${escapeHtml(meta.videoUrl)}" />
       <meta property="og:video:type" content="video/mp4" />
       <meta property="og:video:width" content="1080" />
       <meta property="og:video:height" content="1920" />
@@ -7415,9 +7481,13 @@ function injectOpenGraphTags(html: string, meta: any) {
       .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
       .replace('</head>', `${headInject}</head>`);
   }
+
   async function resolveMetadataForRequest(req: any) {
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
+    let host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
+    let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+      protocol = 'https';
+    }
     const baseUrl = `${protocol}://${host}`;
     const fullUrl = `${baseUrl}${req.originalUrl || req.url}`;
 
@@ -7439,7 +7509,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/);
 
     const videoId = videoIdMatch ? videoIdMatch[1] : (params.get('video') || params.get('v') || params.get('id'));
-    const placeId = placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null);
+    let placeId = placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null);
+    if (placeId && placeId.startsWith('www-')) {
+      placeId = placeId.replace(/^www-/, '');
+    }
     const creatorHandle = creatorMatch ? creatorMatch[1] : null;
 
     if (videoId) {
