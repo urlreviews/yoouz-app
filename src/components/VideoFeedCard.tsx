@@ -95,6 +95,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isManuallyPaused, setIsManuallyPaused] = useState<boolean>(false);
+  const isManuallyPausedRef = useRef<boolean>(false);
+  useEffect(() => {
+    isManuallyPausedRef.current = isManuallyPaused;
+  }, [isManuallyPaused]);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [cascadeIndex, setCascadeIndex] = useState<number>(0);
@@ -175,12 +179,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isMuted]);
 
-  // Establecer reproducción instantánea al activarse
+  // Play / Pause video based on card active state and user feed initiation
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && !isManuallyPaused;
+    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
@@ -224,7 +228,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           });
       }
     } else {
-      // If card is not active or paused, cleanly pause
+      // If card is not active, paused, or user hasn't clicked to start the feed:
       try {
         el.pause();
         if (!isActive) {
@@ -245,7 +249,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         el.pause();
       } catch (e) {}
     };
-  }, [isActive, currentSource, isMuted, isManuallyPaused]);
+  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
 
   // Record view count when video is active and playing
   useEffect(() => {
@@ -328,6 +332,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     triggerHaptic("light");
 
     if (el.paused) {
+      isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       el.muted = isMuted;
       if (!isMuted) el.volume = 1;
@@ -356,6 +361,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           });
       }
     } else {
+      isManuallyPausedRef.current = true;
       setIsManuallyPaused(true);
       el.pause();
       setIsPlaying(false);
@@ -512,8 +518,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             ref={videoRef}
             id={`video-element-${video.id}`}
             src={currentSource}
+            poster={resolveVideoPosterUrl(video)}
             preload={isActive || isNear ? "auto" : "metadata"}
-            autoPlay={isActive}
+            autoPlay={false}
             playsInline
             webkit-playsinline="true"
             loop
@@ -523,9 +530,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onTimeUpdate={(e) => {
               const t = e.currentTarget;
               
-              // Safety: if it should be paused but is moving, force pause
-              const shouldPlay = isActive && !isManuallyPaused;
-              if (!shouldPlay && !t.paused) {
+              // Safety: if this card is no longer active and somehow moving, pause it
+              if (!isActive && !t.paused) {
                 t.pause();
               }
 
@@ -539,21 +545,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              const shouldPlay = isActive && !isManuallyPaused;
-              if (shouldPlay) {
-                if (videoRef.current?.paused) {
-                  videoRef.current.play().catch(() => {});
-                }
-              } else {
-                // Force pause if not active or manually paused
-                videoRef.current?.pause();
-                setIsPlaying(false);
+              const shouldPlay = isActive && (hasUserStartedFeed || hasUserStartedFeedRef.current) && !isManuallyPausedRef.current;
+              if (shouldPlay && videoRef.current?.paused) {
+                videoRef.current.play().catch(() => {});
               }
             }}
             onPlaying={() => {
-              const shouldPlay = isActive && !isManuallyPaused;
-              if (!shouldPlay) {
-                // Safety catch for inactive card
+              if (!isActive || isManuallyPausedRef.current) {
                 videoRef.current?.pause();
                 setIsPlaying(false);
                 return;
@@ -705,8 +703,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Paused Center Play Button - shown only when the active video is actually paused */}
-      {isActive && isManuallyPaused && !showPlayPauseFeedback && (
+      {/* Initial Start / Paused Center Play Button - shown on first load before feed starts or when paused */}
+      {isActive && (!isPlaying || isManuallyPaused || !hasUserStartedFeed) && !showPlayPauseFeedback && (
         <button
           type="button"
           id={`copo-play-center-btn-${video.id}`}
@@ -714,10 +712,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             e.stopPropagation();
             togglePlayPause(e);
           }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-black/70 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-2xl animate-in zoom-in-90 duration-150 pointer-events-auto cursor-pointer active:scale-90 hover:scale-105 transition-transform"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-black/70 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-2xl animate-in zoom-in-90 duration-150 pointer-events-auto cursor-pointer active:scale-90 hover:scale-105 transition-transform"
           aria-label="Play video"
         >
-          <Play className="w-8 h-8 fill-white translate-x-0.5" />
+          <Play className="w-9 h-9 fill-white translate-x-0.5" />
         </button>
       )}
 
