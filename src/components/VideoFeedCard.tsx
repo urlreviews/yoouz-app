@@ -703,8 +703,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Initial Start / Paused Center Play Button - shown on first load before feed starts or when paused */}
-      {isActive && (!isPlaying || isManuallyPaused || !hasUserStartedFeed) && !showPlayPauseFeedback && (
+      {/* Initial Start / Paused Center Play Button - shown only on first load before feed starts or when user explicitly pauses */}
+      {isActive && (!hasUserStartedFeed || isManuallyPaused) && !showPlayPauseFeedback && (
         <button
           type="button"
           id={`copo-play-center-btn-${video.id}`}
