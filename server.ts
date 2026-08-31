@@ -3889,25 +3889,28 @@ app.post("/api/videos/save-review", async (req, res) => {
         verifiedAt: new Date().toISOString()
       };
 
-      // Save/update user session in Bunny Database
-      try {
-        const bunnyDb = getBunnyDb();
-        if (bunnyDb) {
-          await bunnyDb.execute({
-            sql: `INSERT INTO users (id, email, name, data, updatedAt) 
-                  VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
-                  ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [
-              userSession.uid,
-              cleanEmail,
-              userSession.name,
-              JSON.stringify(userSession),
-              JSON.stringify(userSession)
-            ]
-          });
+      // Save/update user session in Bunny Database ONLY if they are an existing user
+      // We do not want incomplete signups (who haven't filled out their profile) to appear in the DB
+      if (!userSession.isNewUser) {
+        try {
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
+            await bunnyDb.execute({
+              sql: `INSERT INTO users (id, email, name, data, updatedAt) 
+                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
+                    ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
+              args: [
+                userSession.uid,
+                cleanEmail,
+                userSession.name,
+                JSON.stringify(userSession),
+                JSON.stringify(userSession)
+              ]
+            });
+          }
+        } catch (saveErr) {
+          console.warn("Could not persist verified user to BunnyDB:", saveErr);
         }
-      } catch (saveErr) {
-        console.warn("Could not persist verified user to BunnyDB:", saveErr);
       }
 
       return res.json({

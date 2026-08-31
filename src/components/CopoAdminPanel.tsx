@@ -330,7 +330,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
          if (u.avatar && !u.avatar.includes("ui-avatars") && (!existing.avatar || existing.avatar.includes("ui-avatars"))) existing.avatar = u.avatar;
        }
     });
-    return finalList;
+    // Filter out incomplete signups (e.g. no reviews, name matches email prefix)
+    return finalList.filter(u => {
+       if (u.role === "Creator") return true; // Keep creators
+       
+       const emailPrefix = u.email ? u.email.split('@')[0].toLowerCase() : "";
+       const nameClean = (u.name || "").toLowerCase().trim();
+       
+       // If they have no name, or their name is just their email prefix, consider them incomplete
+       const isIncomplete = !nameClean || nameClean === emailPrefix || nameClean === "registered user";
+       
+       return !isIncomplete;
+    });
   }, [allUsers, videos]);
 
   // All Comments aggregation for Moderation

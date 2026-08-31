@@ -1,73 +1,36 @@
 const fs = require('fs');
 let code = fs.readFileSync('server.ts', 'utf8');
 
-const newRoutes = `
-  app.post("/api/interactions/like", async (req, res) => {
-    try {
-      const { videoId, isLiked, likesCount, userId } = req.body;
-      if (!videoId || !userId) return res.status(400).json({ error: "Missing fields" });
+const regex = /\/\/ Save\/update user session in Bunny Database[\s\S]*?try \{[\s\S]*?const bunnyDb = getBunnyDb\(\);[\s\S]*?if \(bunnyDb\) \{[\s\S]*?await bunnyDb\.execute\(\{[\s\S]*?sql: `INSERT INTO users \(id, email, name, data, updatedAt\)[\s\S]*?VALUES \(\?, \?, \?, \?, CURRENT_TIMESTAMP\)[\s\S]*?ON CONFLICT\(id\) DO UPDATE SET data = \?, updatedAt = CURRENT_TIMESTAMP`,[\s\S]*?args: \[[\s\S]*?userSession\.uid,[\s\S]*?cleanEmail,[\s\S]*?userSession\.name,[\s\S]*?JSON\.stringify\(userSession\),[\s\S]*?JSON\.stringify\(userSession\)[\s\S]*?\][\s\S]*?\}\);[\s\S]*?\}[\s\S]*?\} catch \(saveErr\) \{[\s\S]*?console\.warn\("Could not persist verified user to BunnyDB:", saveErr\);[\s\S]*?\}/g;
 
-      const bunnyDb = getBunnyDb();
-      if (bunnyDb) {
-        if (isLiked) {
-          const id = \`\${userId}_\${videoId}\`;
-          await bunnyDb.execute({
-            sql: "INSERT OR IGNORE INTO likes (id, userId, videoId, data) VALUES (?, ?, ?, ?)",
-            args: [id, userId, videoId, JSON.stringify({ createdAt: new Date().toISOString() })]
-          });
-        } else {
-          await bunnyDb.execute({
-            sql: "DELETE FROM likes WHERE userId = ? AND videoId = ?",
-            args: [userId, videoId]
-          });
+const replacement = `// Save/update user session in Bunny Database ONLY if they are an existing user
+      // We do not want incomplete signups (who haven't filled out their profile) to appear in the DB
+      if (!userSession.isNewUser) {
+        try {
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
+            await bunnyDb.execute({
+              sql: \`INSERT INTO users (id, email, name, data, updatedAt) 
+                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
+                    ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP\`,
+              args: [
+                userSession.uid,
+                cleanEmail,
+                userSession.name,
+                JSON.stringify(userSession),
+                JSON.stringify(userSession)
+              ]
+            });
+          }
+        } catch (saveErr) {
+          console.warn("Could not persist verified user to BunnyDB:", saveErr);
         }
-        
-        if (typeof likesCount === "number") {
-          await bunnyDb.execute({
-            sql: "UPDATE videoReviews SET likesCount = ? WHERE id = ?",
-            args: [likesCount, videoId]
-          });
-        }
-      }
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  });
+      }`;
 
-  app.post("/api/interactions/bookmark", async (req, res) => {
-    try {
-      const { videoId, isBookmarked, bookmarksCount, userId } = req.body;
-      if (!videoId || !userId) return res.status(400).json({ error: "Missing fields" });
-
-      const bunnyDb = getBunnyDb();
-      if (bunnyDb) {
-        if (isBookmarked) {
-          const id = \`\${userId}_\${videoId}\`;
-          await bunnyDb.execute({
-            sql: "INSERT OR IGNORE INTO bookmarks (id, userId, placeId, videoId, data) VALUES (?, ?, ?, ?, ?)",
-            args: [id, userId, "", videoId, JSON.stringify({ createdAt: new Date().toISOString() })]
-          });
-        } else {
-          await bunnyDb.execute({
-            sql: "DELETE FROM bookmarks WHERE userId = ? AND videoId = ?",
-            args: [userId, videoId]
-          });
-        }
-        // Note: Currently we don't have bookmarksCount on videoReviews schema, but keeping this robust
-      }
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-`;
-
-code = code.replace(
-  /app\.post\("\/api\/videos\/save-review",/,
-  newRoutes + 'app.post("/api/videos/save-review",'
-);
-
-fs.writeFileSync('server.ts', code);
-console.log('Patched server.ts');
+if (regex.test(code)) {
+    code = code.replace(regex, replacement);
+    fs.writeFileSync('server.ts', code);
+    console.log("Patched server.ts successfully");
+} else {
+    console.log("Regex not found in server.ts");
+}
