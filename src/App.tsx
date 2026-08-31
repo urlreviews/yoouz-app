@@ -1950,7 +1950,7 @@ export function App() {
     try {
       if (db) {
         const vidRef = doc(db, "videoReviews", videoId);
-        setDoc(vidRef, { likes: nextLikes }, { merge: true }).catch(() => {});
+        setDoc(vidRef, { likes: nextLikes, likesCount: nextLikes }, { merge: true }).catch(() => {});
       }
     } catch (err) {}
 

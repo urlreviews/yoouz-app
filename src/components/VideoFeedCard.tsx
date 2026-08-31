@@ -873,7 +873,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               />
             </button>
             <span className="text-[12px] font-bold mt-1 text-white drop-shadow">
-              {video.likes}
+              {typeof video.likes === 'number' ? video.likes : (video.likesCount || 0)}
             </span>
           </div>
 

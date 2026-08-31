@@ -28,6 +28,7 @@ function normalizeReview(v: any): VideoReview {
       id: videoId,
       views: computedViews,
       viewsCount: computedViews,
+      likes: typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0),
       isLiked: likedIds.includes(videoId),
       isBookmarked: savedIds.includes(videoId),
       author: safeAuthor
