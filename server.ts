@@ -2340,6 +2340,62 @@ async function startServer() {
     res.status(404).send("Not found");
   });
 
+  app.get(["/download/icon", "/download/avatar", "/download/outlook-photo"], (req, res) => {
+    const iconPath = path.join(process.cwd(), "public", "icon-512.png");
+    if (fs.existsSync(iconPath)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-outlook-avatar.png"');
+      res.setHeader("Content-Type", "image/png");
+      return res.sendFile(iconPath);
+    }
+    const appleIcon = path.join(process.cwd(), "public", "apple-touch-icon.png");
+    if (fs.existsSync(appleIcon)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-outlook-avatar.png"');
+      res.setHeader("Content-Type", "image/png");
+      return res.sendFile(appleIcon);
+    }
+    res.status(404).send("Not found");
+  });
+
+  app.get(["/download/signature-dark", "/download/signature"], (req, res) => {
+    const sigPath = path.join(process.cwd(), "public", "yoouz-team-signature-dark.svg");
+    if (fs.existsSync(sigPath)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-team-signature-dark.svg"');
+      res.setHeader("Content-Type", "image/svg+xml");
+      return res.sendFile(sigPath);
+    }
+    res.status(404).send("Not found");
+  });
+
+  app.get("/download/signature-light", (req, res) => {
+    const sigPath = path.join(process.cwd(), "public", "yoouz-team-signature-light.svg");
+    if (fs.existsSync(sigPath)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-team-signature-light.svg"');
+      res.setHeader("Content-Type", "image/svg+xml");
+      return res.sendFile(sigPath);
+    }
+    res.status(404).send("Not found");
+  });
+
+  app.get("/brand-assets", (req, res) => {
+    const brandPath = path.join(process.cwd(), "public", "brand-assets.html");
+    if (fs.existsSync(brandPath)) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.sendFile(brandPath);
+    }
+    res.redirect("/");
+  });
+
+  app.get(["/yoouz-logo-email.svg", "/yoouz-logo-full.svg", "/yoouz-team-signature-dark.svg", "/yoouz-team-signature-light.svg"], (req, res) => {
+    const fileName = req.path.replace(/^\//, "");
+    const filePath = path.join(process.cwd(), "public", fileName);
+    if (fs.existsSync(filePath)) {
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.sendFile(filePath);
+    }
+    res.status(404).send("Not found");
+  });
+
   app.get("/llms-full.txt", (req, res) => {
     const fullPath = path.join(process.cwd(), "public", "llms-full.txt");
     if (fs.existsSync(fullPath)) {
@@ -3789,15 +3845,6 @@ app.post("/api/videos/save-review", async (req, res) => {
         }
       }
 
-      // Allow valid 6-digit dev/fallback code if needed
-      if (!isValid && code && String(code).trim().length === 6) {
-        if (record && record.code === String(code).trim()) {
-          isValid = true;
-        } else if (!record || process.env.NODE_ENV !== 'production') {
-          isValid = true;
-        }
-      }
-
       if (!isValid) {
         return res.status(400).json({ error: "Invalid verification code or magic link token." });
       }
@@ -4137,15 +4184,6 @@ app.post("/api/videos/save-review", async (req, res) => {
         if (code && record.code === code.trim()) {
           isValid = true;
         } else if (token && record.token === token.trim()) {
-          isValid = true;
-        }
-      }
-
-      // Allow demo testing if in development or valid 6-digit input
-      if (!isValid && code && code.length === 6 && (!record || process.env.NODE_ENV !== 'production')) {
-        if (record && record.code === code) {
-          isValid = true;
-        } else if (!record) {
           isValid = true;
         }
       }

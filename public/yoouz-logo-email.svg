@@ -1,0 +1,31 @@
+<svg width="800" height="240" viewBox="0 0 800 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="starGradLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f4f4f5"/>
+    </linearGradient>
+    <linearGradient id="badgeBgLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+    <filter id="shadowLight" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Star Icon Badge with Rounded Squircle -->
+  <g filter="url(#shadowLight)">
+    <rect x="20" y="30" width="180" height="180" rx="42" fill="url(#badgeBgLight)"/>
+    <g transform="translate(56, 66) scale(4.5)">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="url(#starGradLight)"/>
+    </g>
+  </g>
+
+  <!-- Yoouz Typographic Wordmark for Light Outlook Backgrounds -->
+  <text x="235" y="145" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="104" font-weight="800" letter-spacing="-1px" fill="#09090b">
+    Yoouz
+  </text>
+  <text x="240" y="185" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="4px" fill="#52525b">
+    AUTHENTIC VIDEO REVIEWS
+  </text>
+</svg>

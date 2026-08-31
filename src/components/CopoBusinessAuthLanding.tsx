@@ -138,36 +138,23 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
     }
   };
 
-  // Submit Email (Step 1)
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      setErrorMessage('Please enter a valid work email.');
-      return;
-    }
-
-    setErrorMessage(null);
+  const doSendMagicLink = async (targetEmail: string, placeToClaim: Place | null) => {
     setIsLoading(true);
+    setErrorMessage(null);
 
-    // Auto-detect business
-    let matched = selectedPlace || findMatchingPlaceForEmail(cleanEmail);
-    
-    // If not matched and no initial place, use default first place or prompt
-    if (!matched && places.length > 0) {
-      matched = places[0];
-    }
-    setSelectedPlace(matched);
+    const placeId = placeToClaim ? placeToClaim.id : 'place-custom';
+    const placeName = placeToClaim ? placeToClaim.name : 'Your Business';
+    const website = placeToClaim?.website || '';
 
     try {
       const response = await fetch('/api/business/send-magic-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: cleanEmail,
-          placeId: matched ? matched.id : 'place-custom',
-          placeName: matched ? matched.name : 'Your Business',
-          website: matched?.website || '',
+          email: targetEmail,
+          placeId,
+          placeName,
+          website,
           host: window.location.host
         })
       });
@@ -187,6 +174,30 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Submit Email (Step 1)
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setErrorMessage('Please enter a valid work email.');
+      return;
+    }
+
+    setErrorMessage(null);
+
+    // Auto-detect business
+    let matched = selectedPlace || findMatchingPlaceForEmail(cleanEmail);
+    
+    // If not matched, we MUST ask them to select a place
+    if (!matched) {
+      setStep('select_place');
+      return;
+    }
+
+    setSelectedPlace(matched);
+    await doSendMagicLink(cleanEmail, matched);
   };
 
   // Verify Code (Step 2)
@@ -226,37 +237,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Quick Demo Access
-  const handleLaunchDemo = (placeChoice: 'london' | 'rustic' | 'ups') => {
-    let place = places.find(p => p.id === 'place-rustic-spoon') || places[0];
-    let defaultEmail = 'owner@therusticspoon.com';
-    let defaultName = 'The Rustic Spoon';
-
-    if (placeChoice === 'london') {
-      place = places.find(p => p.name.toLowerCase().includes('london') || p.name.toLowerCase().includes('trusted')) || places[0];
-      defaultEmail = 'contact@londontrustedtherapy.com';
-      defaultName = 'Londontrustedtherapy';
-    } else if (placeChoice === 'ups') {
-      place = places.find(p => p.name.toLowerCase().includes('ups') || p.website?.includes('ups.com')) || places[0];
-      defaultEmail = 'merchant@ups.com';
-      defaultName = 'ups.com';
-    }
-
-    const session: BusinessSession = {
-      businessEmail: defaultEmail,
-      placeId: place ? place.id : 'place-rustic-spoon',
-      placeName: place ? place.name : defaultName,
-      verifiedAt: new Date().toISOString(),
-      role: 'business_owner',
-      verificationMethod: 'business_email_code',
-      token: `biz_demo_${Date.now()}`
-    };
-
-    localStorage.setItem('copo_business_verified_session', JSON.stringify(session));
-    window.dispatchEvent(new CustomEvent('copo_business_auth_changed', { detail: session }));
-    onSuccessAuth(session);
   };
 
   const filteredPlaces = places.filter(p => 
@@ -467,7 +447,11 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     type="button"
                     onClick={() => {
                       setSelectedPlace(p);
-                      setStep('email');
+                      if (email.trim()) {
+                        doSendMagicLink(email.trim().toLowerCase(), p);
+                      } else {
+                        setStep('email');
+                      }
                     }}
                     className="w-full p-2.5 text-left rounded-xl hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 flex items-center justify-between text-xs transition-colors cursor-pointer"
                   >
@@ -490,31 +474,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
             </div>
           )}
 
-        </div>
-
-        {/* Subtle Sample Business Previews */}
-        <div className="mt-8 text-center">
-          <span className="text-xs text-zinc-400 font-medium block mb-3">Or explore with a demo listing</span>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              onClick={() => handleLaunchDemo('rustic')}
-              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer shadow-2xs"
-            >
-              The Rustic Spoon
-            </button>
-            <button
-              onClick={() => handleLaunchDemo('london')}
-              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer shadow-2xs"
-            >
-              Londontrustedtherapy
-            </button>
-            <button
-              onClick={() => handleLaunchDemo('ups')}
-              className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer shadow-2xs"
-            >
-              ups.com
-            </button>
-          </div>
         </div>
 
       </main>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yoouz Official Brand Assets & Outlook Email Signature</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --card: #18181b;
+      --border: #27272a;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    h1 {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .card:hover {
+      border-color: #3f3f46;
+      transform: translateY(-2px);
+    }
+    .preview-box {
+      width: 100%;
+      height: 180px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .preview-dark { background: #000000; }
+    .preview-light { background: #ffffff; }
+    .card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+    }
+    .btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn:active {
+      opacity: 0.8;
+    }
+    .btn-primary {
+      background: #ffffff;
+      color: #000000;
+    }
+    .btn-primary:hover {
+      background: #e4e4e7;
+    }
+    .btn-secondary {
+      background: #27272a;
+      color: #ffffff;
+    }
+    .btn-secondary:hover {
+      background: #3f3f46;
+    }
+    .instruction-box {
+      background: #121214;
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .instruction-box h2 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+    .instruction-box ol {
+      margin-left: 20px;
+      color: #d4d4d8;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .badge-pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Yoouz Brand &amp; Outlook Email Assets</h1>
+      <p class="subtitle">Official high-resolution icon badges, cards, and logos ready for Microsoft Outlook, Gmail, Apple Mail, and Desktop use.</p>
+    </header>
+
+    <div class="grid">
+      <!-- 1. Signature Card (Dark Mode) -->
+      <div class="card" style="border: 2px solid #10b981; grid-column: 1 / -1;">
+        <div class="preview-box preview-dark" style="height: 180px;">
+          <img id="img-sig-dark" src="/yoouz-team-signature-dark.svg" alt="Yoouz Signature Dark" style="max-width: 95%; max-height: 90%;">
+        </div>
+        <div class="badge-pill" style="background: #059669; color: #ffffff;">OFFICIAL EMAIL SIGNATURE CARD (DARK)</div>
+        <h3>Yoouz Email Signature Card (Dark Theme)</h3>
+        <p>Clean official card with the Star Icon, Yoouz Wordmark, info@yoouz.com, and www.yoouz.com in a single image.</p>
+        <div class="btn-group" style="max-width: 540px; margin: 0 auto;">
+          <button onclick="downloadAsPng('/yoouz-team-signature-dark.svg', 'yoouz-signature-dark.png', 1840, 460)" class="btn btn-primary" style="background: #10b981; color: #ffffff;">
+            Download PNG (for Outlook)
+          </button>
+          <a href="/download/signature-dark" class="btn btn-secondary">Download SVG</a>
+          <a href="/yoouz-team-signature-dark.svg" target="_blank" class="btn btn-secondary">Open Full</a>
+        </div>
+      </div>
+
+      <!-- 2. Signature Card (Light Mode) -->
+      <div class="card" style="border: 2px solid #6366f1; grid-column: 1 / -1;">
+        <div class="preview-box preview-light" style="height: 180px;">
+          <img id="img-sig-light" src="/yoouz-team-signature-light.svg" alt="Yoouz Signature Light" style="max-width: 95%; max-height: 90%;">
+        </div>
+        <div class="badge-pill" style="background: #4f46e5; color: #ffffff;">LIGHT THEME SIGNATURE CARD</div>
+        <h3>Yoouz Email Signature Card (Light Theme)</h3>
+        <p>Crisp white card version for standard white email backgrounds with high-contrast text and star icon.</p>
+        <div class="btn-group" style="max-width: 540px; margin: 0 auto;">
+          <button onclick="downloadAsPng('/yoouz-team-signature-light.svg', 'yoouz-signature-light.png', 1840, 460)" class="btn btn-primary" style="background: #6366f1; color: #ffffff;">
+            Download PNG (for Outlook)
+          </button>
+          <a href="/download/signature-light" class="btn btn-secondary">Download SVG</a>
+          <a href="/yoouz-team-signature-light.svg" target="_blank" class="btn btn-secondary">Open Full</a>
+        </div>
+      </div>
+
+      <!-- 3. App Icon / Squircle Star (512x512) for Outlook Profile Photo -->
+      <div class="card" style="border: 2px solid #3b82f6;">
+        <div class="preview-box preview-dark">
+          <img src="/favicon.svg" alt="Yoouz Star Icon" style="width: 92px; height: 92px;">
+        </div>
+        <div class="badge-pill" style="background: #1d4ed8; color: #ffffff;">OUTLOOK AVATAR / PROFILE PHOTO</div>
+        <h3>Outlook Profile Photo (Star Icon)</h3>
+        <p>The iconic 60s Star Squircle in 512x512 HD PNG. Set as your user profile photo in Outlook.</p>
+        <div class="btn-group">
+          <a href="/download/outlook-photo" download="yoouz-outlook-avatar.png" class="btn btn-primary" style="background: #3b82f6; color: #ffffff;">Download 512px PNG</a>
+        </div>
+      </div>
+
+      <!-- 4. Yoouz Full Logo (Light Theme) -->
+      <div class="card">
+        <div class="preview-box preview-light">
+          <img src="/yoouz-logo-email.svg" alt="Yoouz Light Logo" style="max-width: 80%; max-height: 80%;">
+        </div>
+        <h3>Logo Only (Light)</h3>
+        <p>Yoouz wordmark &amp; icon for standard white/light backgrounds.</p>
+        <div class="btn-group">
+          <button onclick="downloadAsPng('/yoouz-logo-email.svg', 'yoouz-logo-light.png', 1600, 480)" class="btn btn-primary">Download PNG</button>
+          <a href="/yoouz-logo-email.svg" download="yoouz-logo-light.svg" class="btn btn-secondary">SVG</a>
+        </div>
+      </div>
+
+      <!-- 5. Yoouz Full Logo (Dark Theme) -->
+      <div class="card">
+        <div class="preview-box preview-dark">
+          <img src="/yoouz-logo-full.svg" alt="Yoouz Dark Logo" style="max-width: 80%; max-height: 80%;">
+        </div>
+        <h3>Logo Only (Dark)</h3>
+        <p>Yoouz wordmark &amp; icon for dark mode signatures and backgrounds.</p>
+        <div class="btn-group">
+          <button onclick="downloadAsPng('/yoouz-logo-full.svg', 'yoouz-logo-dark.png', 1600, 480)" class="btn btn-primary">Download PNG</button>
+          <a href="/yoouz-logo-full.svg" download="yoouz-logo-dark.svg" class="btn btn-secondary">SVG</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outlook Instructions -->
+    <div class="instruction-box">
+      <h2>How to Add the Signature Image in Microsoft Outlook</h2>
+      <ol>
+        <li>Click <b>Download PNG (for Outlook)</b> above or use the direct download link.</li>
+        <li>Open <b>Microsoft Outlook</b>:
+          <ul style="margin-left: 20px; margin-top: 4px; color: #a1a1aa;">
+            <li>In <b>Outlook Web / Mac / New Outlook:</b> Click the <b>Settings (Gear Icon)</b> in the top right &rarr; <b>Mail &rarr; Signatures</b>.</li>
+            <li>In <b>Classic Outlook Desktop:</b> Go to <b>File &rarr; Options &rarr; Mail &rarr; Signatures</b>.</li>
+          </ul>
+        </li>
+        <li>In the signature editor box, click the <b>Insert Picture / Image</b> icon and choose the downloaded image from your desktop.</li>
+        <li>Select the image in Outlook, click the <b>Hyperlink icon</b>, and enter: <code style="color: #34d399;">https://yoouz.com</code></li>
+        <li>Click <b>Save</b>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <canvas id="export-canvas" style="display: none;"></canvas>
+
+  <script>
+    async function downloadAsPng(svgUrl, fileName, targetWidth = 1840, targetHeight = 460) {
+      try {
+        const response = await fetch(svgUrl);
+        const svgText = await response.text();
+        
+        const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+        const URL = window.URL || window.webkitURL || window;
+        const blobURL = URL.createObjectURL(blob);
+        
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        
+        image.onload = function () {
+          const canvas = document.getElementById('export-canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const context = canvas.getContext('2d');
+          
+          context.clearRect(0, 0, targetWidth, targetHeight);
+          context.drawImage(image, 0, 0, targetWidth, targetHeight);
+          
+          URL.revokeObjectURL(blobURL);
+          
+          const pngUrl = canvas.toDataURL('image/png');
+          const downloadLink = document.createElement('a');
+          downloadLink.download = fileName;
+          downloadLink.href = pngUrl;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        };
+        
+        image.src = blobURL;
+      } catch (err) {
+        console.error('Error generating PNG:', err);
+        window.location.href = svgUrl;
+      }
+    }
+  </script>
+</body>
+</html>

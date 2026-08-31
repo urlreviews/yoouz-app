@@ -462,8 +462,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
 
+  const [verifiedBusinessSession, setVerifiedBusinessSession] = useState<BusinessSession | null>(() => {
+    try {
+      const saved = localStorage.getItem('copo_business_verified_session');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
   // Business Selection State
   const [selectedPlaceId, setSelectedPlaceId] = useState<string>(() => {
+    if (verifiedBusinessSession && verifiedBusinessSession.placeId && verifiedBusinessSession.placeId !== 'place-custom') {
+      return verifiedBusinessSession.placeId;
+    }
     if (initialPlace) return initialPlace.id;
     return places.length > 0 ? places[0].id : 'place-rustic-spoon';
   });
@@ -501,14 +513,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [isClaiming, setIsClaiming] = useState(initialMode === 'claim');
   const [claimSearchQuery, setClaimSearchQuery] = useState('');
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
-  const [verifiedBusinessSession, setVerifiedBusinessSession] = useState<BusinessSession | null>(() => {
-    try {
-      const saved = localStorage.getItem('copo_business_verified_session');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
-  });
 
   // Listen to business auth changes
   useEffect(() => {

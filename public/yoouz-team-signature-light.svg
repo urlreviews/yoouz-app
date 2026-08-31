@@ -1,0 +1,62 @@
+<svg width="920" height="230" viewBox="0 0 920 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cardBgLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+    <linearGradient id="starGradLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f4f4f5"/>
+    </linearGradient>
+    <filter id="cardShadowLight" x="-5%" y="-10%" width="110%" height="125%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Card Container -->
+  <g filter="url(#cardShadowLight)">
+    <rect x="12" y="12" width="896" height="206" rx="24" fill="url(#cardBgLight)"/>
+    <rect x="12.5" y="12.5" width="895" height="205" rx="23.5" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+
+  <!-- Left: Official Star Icon Squircle -->
+  <g transform="translate(42, 36)">
+    <rect width="118" height="118" rx="28" fill="#09090b"/>
+    <g transform="translate(24, 24) scale(2.9)">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="url(#starGradLight)"/>
+    </g>
+    <!-- 60s Video Badge under icon -->
+    <rect x="12" y="128" width="94" height="24" rx="12" fill="#f1f5f9"/>
+    <text x="59" y="144" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" font-weight="800" fill="#475569" text-anchor="middle" letter-spacing="1.5px">60s VIDEO</text>
+  </g>
+
+  <!-- Vertical Divider -->
+  <line x1="192" y1="36" x2="192" y2="192" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Middle/Right Content -->
+  <!-- Header: Yoouz Brand -->
+  <text x="222" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="800" letter-spacing="-0.5px" fill="#09090b">Yoouz</text>
+  <text x="372" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13.5" font-weight="800" letter-spacing="2.5px" fill="#475569">AUTHENTIC VIDEO REVIEWS</text>
+
+  <!-- Tagline / Mission -->
+  <text x="222" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14.5" font-weight="500" fill="#64748b">The verified 60-second video review platform • Real People • Real Places</text>
+
+  <!-- Horizontal subtle divider -->
+  <line x1="222" y1="134" x2="865" y2="134" stroke="#f1f5f9" stroke-width="1.5"/>
+
+  <!-- Contact Row: Email -->
+  <g transform="translate(222, 154)">
+    <circle cx="14" cy="14" r="14" fill="#eff6ff"/>
+    <path d="M7 9h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zm0 2l7 4.5 7-4.5" stroke="#2563eb" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="38" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#0f172a">info@yoouz.com</text>
+  </g>
+
+  <!-- Contact Row: Website -->
+  <g transform="translate(470, 154)">
+    <circle cx="14" cy="14" r="14" fill="#ecfdf5"/>
+    <circle cx="14" cy="14" r="7" stroke="#059669" stroke-width="1.5" fill="none"/>
+    <path d="M7 14h14M14 7c2 2.5 3 4.5 3 7s-1 4.5-3 7c-2-2.5-3-4.5-3-7s1-4.5 3-7z" stroke="#059669" stroke-width="1.5" fill="none"/>
+    <text x="38" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="#059669">www.yoouz.com</text>
+  </g>
+
+</svg>
