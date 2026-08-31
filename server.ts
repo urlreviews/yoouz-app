@@ -6691,7 +6691,6 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       if (type === 'video') {
          const videoId = req.query.id;
-         console.log("DEBUG OG: videoId:", videoId, "query:", req.query);
          let thumbBuf;
          
          if (videoId) {
@@ -6752,10 +6751,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
          const playButtonSvg = `
            <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
-             <rect width="1200" height="630" fill="#000000" fill-opacity="0.2"/>
-             <g transform="translate(560, 275)">
-               <circle cx="40" cy="40" r="40" fill="#000000" fill-opacity="0.6"/>
-               <path d="M30 25l26 15-26 15V25z" fill="#ffffff"/>
+             <rect width="1200" height="630" fill="#000000" fill-opacity="0.25"/>
+             <g transform="translate(540, 255)">
+               <circle cx="60" cy="60" r="60" fill="#000000" fill-opacity="0.55"/>
+               <circle cx="60" cy="60" r="58" fill="none" stroke="#ffffff" stroke-opacity="0.4" stroke-width="2"/>
+               <path d="M48 38 L84 60 L48 82 Z" fill="#ffffff"/>
              </g>
            </svg>
          `;
@@ -6773,10 +6773,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       if (type === 'place') {
          const rawName = (req.query.name as string) || "Business";
-         const cleanName = formatBusinessName(rawName);
-         const name = escapeXml(cleanName.length > 28 ? cleanName.substring(0, 26) + '...' : cleanName);
          const rawDomain = cleanDomainName((req.query.domain as string) || (req.query.website as string) || rawName);
-         const domain = escapeXml(rawDomain);
          let explicitLogoUrl = (req.query.logoUrl as string) || "";
          
          // Search reviews for place logo if not in query
@@ -6858,68 +6855,28 @@ app.get('/api/og-preview-v2', async (req, res) => {
             }
          }
 
-         // High Resolution 1200x630 Social Preview Card
+         // Pure geometric card layout (1200x630) with NO text elements
          const baseSvg = `
            <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
              <defs>
-               ${EMBEDDED_FONT_STYLE}
                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                  <stop offset="0%" stop-color="#09090b" />
-                 <stop offset="60%" stop-color="#111115" />
+                 <stop offset="50%" stop-color="#111115" />
                  <stop offset="100%" stop-color="#18181c" />
                </linearGradient>
-               <linearGradient id="glowRed" x1="0%" y1="0%" x2="100%" y2="100%">
-                 <stop offset="0%" stop-color="#ef4444" stop-opacity="0.22" />
-                 <stop offset="100%" stop-color="#dc2626" stop-opacity="0.0" />
-               </linearGradient>
+               <radialGradient id="glowHalo" cx="50%" cy="50%" r="50%">
+                 <stop offset="0%" stop-color="#ef4444" stop-opacity="0.18" />
+                 <stop offset="60%" stop-color="#ef4444" stop-opacity="0.04" />
+                 <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
+               </radialGradient>
              </defs>
              <rect width="1200" height="630" fill="url(#bgGrad)"/>
              
+             <!-- Ambient Center Halo Glow -->
+             <circle cx="600" cy="315" r="300" fill="url(#glowHalo)"/>
+
              <!-- Outer Card Border -->
              <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
-
-             <!-- Glowing Halo Behind Logo -->
-             <circle cx="230" cy="315" r="190" fill="url(#glowRed)"/>
-
-             <!-- Red Pill Tag -->
-             <rect x="450" y="135" width="280" height="34" rx="17" fill="#ef4444" fill-opacity="0.15" stroke="#ef4444" stroke-opacity="0.4" stroke-width="1.5"/>
-             <text x="590" y="158" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="14" font-weight="bold" fill="#f87171" text-anchor="middle" letter-spacing="2">AUTHENTIC VIDEO REVIEWS</text>
-
-             <!-- Business Name -->
-             <text x="450" y="230" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="52" font-weight="bold" fill="#ffffff">${name}</text>
-             
-             <!-- Domain / Subtitle -->
-             <text x="450" y="280" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="24" font-weight="bold" fill="#3b82f6">${domain || "yoouz.com"}</text>
-             <text x="450" y="328" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="20" font-weight="normal" fill="#a1a1aa">Genuine 60-second video reviews and ratings on Yoouz.</text>
-
-             <!-- Rating & Real People Badges -->
-             <g transform="translate(450, 370)">
-               <rect x="0" y="0" width="210" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
-               <!-- 5 Star Icons as pure SVG paths -->
-               <g fill="#facc15" transform="translate(16, 15) scale(0.7)">
-                 <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
-                 <g transform="translate(24, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
-                 <g transform="translate(48, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
-                 <g transform="translate(72, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
-                 <g transform="translate(96, 0)"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></g>
-               </g>
-               <text x="140" y="29" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="16" font-weight="bold" fill="#ffffff">5.0 / 5.0</text>
-
-               <rect x="225" y="0" width="280" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
-               <!-- Checkmark SVG path -->
-               <g transform="translate(242, 14)">
-                 <circle cx="9" cy="9" r="9" fill="#22c55e" fill-opacity="0.2"/>
-                 <path d="M5 9 L8 12 L13 6" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-               </g>
-               <text x="270" y="29" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="15" font-weight="bold" fill="#4ade80">100% Real Video Verified</text>
-             </g>
-
-             <!-- Footer Divider & Brand -->
-             <line x1="450" y1="465" x2="1120" y2="465" stroke="#27272a" stroke-width="1.5"/>
-             <text x="450" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="20" font-weight="bold" fill="#ffffff" letter-spacing="1">YOOUZ</text>
-             <circle cx="545" cy="504" r="3" fill="#71717a"/>
-             <text x="560" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="18" font-weight="normal" fill="#71717a">Real People. Real Reviews.</text>
-             <text x="1120" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="18" font-weight="bold" fill="#71717a" text-anchor="end">yoouz.com</text>
            </svg>
          `;
 
@@ -6927,12 +6884,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
          if (logoBuf) {
             const squircleCardSvg = `
-              <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="236" height="236" rx="48" ry="48" fill="#ffffff" stroke="#3f3f46" stroke-width="3"/>
+              <svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="4" width="352" height="352" rx="72" ry="72" fill="#ffffff" stroke="#3f3f46" stroke-width="2.5"/>
               </svg>
             `;
             const resizedLogo = await sharp(logoBuf)
-              .resize(180, 180, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+              .resize(260, 260, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
               .png()
               .toBuffer();
 
@@ -6943,31 +6900,30 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
             composites.push({
               input: squircleCard,
-              top: 195,
-              left: 110
+              top: 135,
+              left: 420
             });
          } else {
-            let initials = rawName.substring(0, 2).toUpperCase();
-            const words = rawName.split(' ');
-            if (words.length > 1 && words[0].length > 0 && words[1].length > 0) {
-               initials = (words[0][0] + words[1][0]).toUpperCase();
-            }
+            // Elegant geometric mark with pure SVG shapes, ZERO text
             const fallbackSquircleSvg = `
-              <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+              <svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="sqGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#ef4444" />
-                    <stop offset="100%" stop-color="#b91c1c" />
+                    <stop offset="100%" stop-color="#991b1b" />
                   </linearGradient>
                 </defs>
-                <rect x="2" y="2" width="236" height="236" rx="48" ry="48" fill="url(#sqGrad)" stroke="#fca5a5" stroke-width="3"/>
-                <text x="120" y="150" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="88" font-weight="bold" fill="#ffffff" text-anchor="middle">${escapeXml(initials)}</text>
+                <rect x="4" y="4" width="352" height="352" rx="72" ry="72" fill="url(#sqGrad)" stroke="#fca5a5" stroke-width="3"/>
+                <!-- Geometric Star & Camera Aperture Icon (Pure vector, no text) -->
+                <g fill="#ffffff" transform="translate(180, 180) scale(4.5)">
+                  <path d="M0 -14 L4 -4 L14 -4 L6 2 L9 12 L0 6 L-9 12 L-6 2 L-14 -4 L-4 -4 Z"/>
+                </g>
               </svg>
             `;
             composites.push({
               input: Buffer.from(fallbackSquircleSvg),
-              top: 195,
-              left: 110
+              top: 135,
+              left: 420
             });
          }
 
@@ -6983,9 +6939,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       if (type === 'creator') {
          const rawName = (req.query.name as string) || (req.query.handle as string) || "Creator";
-         const name = escapeXml(rawName.length > 25 ? rawName.substring(0, 23) + '...' : rawName);
          const rawHandle = ((req.query.handle as string) || rawName).replace(/^@+/, "");
-         const handle = escapeXml(rawHandle.length > 25 ? rawHandle.substring(0, 23) + '...' : rawHandle);
          let avatarUrl = (req.query.avatarUrl as string) || "";
 
          if (!avatarUrl) {
@@ -7030,64 +6984,28 @@ app.get('/api/og-preview-v2', async (req, res) => {
             }
          }
 
-         // High Resolution 1200x630 Social Preview Card
+         // Pure geometric card layout (1200x630) with NO text elements
          const baseSvg = `
            <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
              <defs>
-               ${EMBEDDED_FONT_STYLE}
                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                  <stop offset="0%" stop-color="#09090b" />
-                 <stop offset="60%" stop-color="#10131c" />
+                 <stop offset="50%" stop-color="#10131c" />
                  <stop offset="100%" stop-color="#141824" />
                </linearGradient>
-               <linearGradient id="blueGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                 <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25" />
-                 <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0" />
-               </linearGradient>
+               <radialGradient id="blueGlow" cx="50%" cy="50%" r="50%">
+                 <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.20" />
+                 <stop offset="60%" stop-color="#2563eb" stop-opacity="0.04" />
+                 <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
+               </radialGradient>
              </defs>
              <rect width="1200" height="630" fill="url(#bgGrad)"/>
              
+             <!-- Ambient Center Halo Glow -->
+             <circle cx="600" cy="315" r="300" fill="url(#blueGlow)"/>
+
              <!-- Outer Card Border -->
              <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
-
-             <!-- Glowing Halo Behind Avatar -->
-             <circle cx="230" cy="315" r="190" fill="url(#blueGlow)"/>
-
-             <!-- Blue Pill Tag -->
-             <rect x="450" y="135" width="240" height="34" rx="17" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
-             <text x="570" y="158" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="14" font-weight="bold" fill="#60a5fa" text-anchor="middle" letter-spacing="2">VERIFIED REVIEWER</text>
-
-             <!-- Creator Name -->
-             <text x="450" y="230" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="52" font-weight="bold" fill="#ffffff">${name}</text>
-             
-             <!-- Handle -->
-             <text x="450" y="280" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="26" font-weight="bold" fill="#3b82f6">@${handle}</text>
-             <text x="450" y="328" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="20" font-weight="normal" fill="#a1a1aa">Authentic 60-second video reviews and recommendations.</text>
-
-             <!-- Trust Badges -->
-             <g transform="translate(450, 370)">
-               <rect x="0" y="0" width="220" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
-               <!-- Star icon vector path -->
-               <g fill="#60a5fa" transform="translate(18, 14) scale(0.8)">
-                 <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
-               </g>
-               <text x="44" y="29" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="15" font-weight="bold" fill="#60a5fa">Verified Creator</text>
-
-               <rect x="235" y="0" width="270" height="46" rx="12" fill="#18181b" stroke="#27272a" stroke-width="1.5"/>
-               <!-- Checkmark SVG path -->
-               <g transform="translate(252, 14)">
-                 <circle cx="9" cy="9" r="9" fill="#22c55e" fill-opacity="0.2"/>
-                 <path d="M5 9 L8 12 L13 6" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-               </g>
-               <text x="280" y="29" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="15" font-weight="bold" fill="#4ade80">Real Video Reviews</text>
-             </g>
-
-             <!-- Footer Divider & Brand -->
-             <line x1="450" y1="465" x2="1120" y2="465" stroke="#27272a" stroke-width="1.5"/>
-             <text x="450" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="20" font-weight="bold" fill="#ffffff" letter-spacing="1">YOOUZ</text>
-             <circle cx="545" cy="504" r="3" fill="#71717a"/>
-             <text x="560" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="18" font-weight="normal" fill="#71717a">Real People. Real Reviews.</text>
-             <text x="1120" y="510" font-family="YoouzSans, 'Liberation Sans', 'DejaVu Sans', sans-serif" font-size="18" font-weight="bold" fill="#71717a" text-anchor="end">yoouz.com/@${handle}</text>
            </svg>
          `;
 
@@ -7095,54 +7013,60 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
          if (avatarBuf) {
             const circleMaskSvg = `
-              <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="120" cy="120" r="116" fill="#ffffff"/>
+              <svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="150" cy="150" r="146" fill="#ffffff"/>
               </svg>
             `;
             const resizedAvatar = await sharp(avatarBuf)
-              .resize(240, 240, { fit: 'cover' })
+              .resize(300, 300, { fit: 'cover' })
               .composite([{ input: Buffer.from(circleMaskSvg), blend: 'dest-in' }])
               .png()
               .toBuffer();
 
             const borderRingSvg = `
-              <svg width="252" height="252" viewBox="0 0 252 252" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="126" cy="126" r="122" fill="none" stroke="#3b82f6" stroke-width="5"/>
-                <circle cx="198" cy="198" r="26" fill="#3b82f6" stroke="#09090b" stroke-width="3.5"/>
-                <path d="M188 198 L195 205 L209 191" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <svg width="316" height="316" viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="158" cy="158" r="152" fill="none" stroke="#3b82f6" stroke-width="6"/>
+                <!-- Verified Checkmark Badge Icon at bottom right -->
+                <circle cx="248" cy="248" r="32" fill="#3b82f6" stroke="#09090b" stroke-width="4"/>
+                <path d="M236 248 L244 256 L260 240" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             `;
 
             const finalAvatarCard = await sharp(Buffer.from(borderRingSvg))
-              .composite([{ input: resizedAvatar, top: 6, left: 6 }])
+              .composite([{ input: resizedAvatar, top: 8, left: 8 }])
               .png()
               .toBuffer();
 
             composites.push({
               input: finalAvatarCard,
-              top: 189,
-              left: 104
+              top: 157,
+              left: 442
             });
          } else {
-            let initials = rawName.substring(0, 2).toUpperCase();
+            // Sleek silhouette avatar in cobalt ring, ZERO text
             const fallbackAvatarSvg = `
-              <svg width="252" height="252" viewBox="0 0 252 252" xmlns="http://www.w3.org/2000/svg">
+              <svg width="316" height="316" viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="avGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#3b82f6" />
                     <stop offset="100%" stop-color="#1d4ed8" />
                   </linearGradient>
                 </defs>
-                <circle cx="126" cy="126" r="122" fill="url(#avGrad)" stroke="#60a5fa" stroke-width="4"/>
-                <text x="126" y="160" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="90" font-weight="bold" fill="#ffffff" text-anchor="middle">${escapeXml(initials)}</text>
-                <circle cx="198" cy="198" r="26" fill="#3b82f6" stroke="#09090b" stroke-width="3.5"/>
-                <path d="M188 198 L195 205 L209 191" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="158" cy="158" r="152" fill="url(#avGrad)" stroke="#60a5fa" stroke-width="5"/>
+                <!-- Vector Silhouette (Pure vector, no text) -->
+                <g fill="#ffffff">
+                  <circle cx="158" cy="120" r="48"/>
+                  <path d="M98 236 C98 188 124 176 158 176 C192 176 218 188 218 236 Z"/>
+                </g>
+                <!-- Verified Checkmark Badge -->
+                <circle cx="248" cy="248" r="32" fill="#3b82f6" stroke="#09090b" stroke-width="4"/>
+                <path d="M236 248 L244 256 L260 240" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             `;
             composites.push({
               input: Buffer.from(fallbackAvatarSvg),
-              top: 189,
-              left: 104
+              top: 157,
+              left: 442
             });
          }
 
@@ -7156,14 +7080,32 @@ app.get('/api/og-preview-v2', async (req, res) => {
          return res.end(finalImage);
       }
 
-      // Default fallback for non-video OG images
-      const ogBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
-      let fallbackBuf;
-      if (fs.existsSync(ogBannerPath)) {
-         fallbackBuf = await sharp(ogBannerPath).resize(1200, 630, { fit: 'cover' }).png().toBuffer();
-      } else {
-         fallbackBuf = await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } }).png().toBuffer();
-      }
+      // Default fallback for non-video OG images (Clean centered brand emblem, NO text)
+      const defaultSvg = `
+        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="defGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#09090b" />
+              <stop offset="50%" stop-color="#111115" />
+              <stop offset="100%" stop-color="#18181c" />
+            </linearGradient>
+            <radialGradient id="defGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ef4444" stop-opacity="0.2" />
+              <stop offset="60%" stop-color="#ef4444" stop-opacity="0.04" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
+            </radialGradient>
+          </defs>
+          <rect width="1200" height="630" fill="url(#defGrad)"/>
+          <circle cx="600" cy="315" r="300" fill="url(#defGlow)"/>
+          <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
+          <!-- Pure Geometric Hexagon & Play Emblem (ZERO text) -->
+          <g transform="translate(600, 315)">
+            <polygon points="0,-100 86.6,-50 86.6,50 0,100 -86.6,50 -86.6,-50" fill="#ef4444" stroke="#fca5a5" stroke-width="4"/>
+            <polygon points="-24,-40 40,0 -24,40" fill="#ffffff"/>
+          </g>
+        </svg>
+      `;
+      const fallbackBuf = await sharp(Buffer.from(defaultSvg)).png().toBuffer();
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       return res.end(fallbackBuf);
@@ -7235,83 +7177,87 @@ function escapeXml(unsafe: string) {
 
 const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "tajhotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#292524"/>
-    <path d="M50 22 C38 34 30 48 30 62 C30 72 38 78 50 78 C62 78 70 72 70 62 C70 48 62 34 50 22 Z" fill="#d97706"/>
-    <circle cx="50" cy="54" r="10" fill="#fef3c7"/>
+    <rect width="100" height="100" rx="22" fill="#1c1917"/>
+    <path d="M50 18 C36 32 28 48 28 62 C28 74 38 82 50 82 C62 82 72 74 72 62 C72 48 64 32 50 18 Z" fill="#d97706"/>
+    <circle cx="50" cy="52" r="11" fill="#fef3c7"/>
   </svg>`,
   "mastercard.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#18181b"/>
-    <circle cx="40" cy="50" r="22" fill="#eb001b"/>
-    <circle cx="60" cy="50" r="22" fill="#f79e1b" fill-opacity="0.88"/>
+    <rect width="100" height="100" rx="22" fill="#18181b"/>
+    <circle cx="38" cy="50" r="26" fill="#eb001b"/>
+    <circle cx="62" cy="50" r="26" fill="#f79e1b" fill-opacity="0.92"/>
+    <path d="M50 28.5 a25.8 25.8 0 0 0 -9.8 21.5 a25.8 25.8 0 0 0 9.8 21.5 a25.8 25.8 0 0 0 9.8 -21.5 a25.8 25.8 0 0 0 -9.8 -21.5 z" fill="#ff5f00"/>
   </svg>`,
   "latakiano.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#0f172a"/>
-    <circle cx="50" cy="50" r="40" fill="none" stroke="#eab308" stroke-width="2.5"/>
-    <text x="50" y="58" font-family="'Playfair Display', serif" font-weight="bold" font-size="34" fill="#facc15" text-anchor="middle">LB</text>
-    <path d="M38 70 Q50 64 62 70" stroke="#facc15" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <rect width="100" height="100" rx="22" fill="#0f172a"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#eab308" stroke-width="3"/>
+    <path d="M35 35 L65 65 M65 35 L35 65" stroke="#facc15" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="50" cy="50" r="8" fill="#facc15"/>
   </svg>`,
   "latakianobarbero.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#0f172a"/>
-    <circle cx="50" cy="50" r="40" fill="none" stroke="#eab308" stroke-width="2.5"/>
-    <text x="50" y="58" font-family="'Playfair Display', serif" font-weight="bold" font-size="34" fill="#facc15" text-anchor="middle">LB</text>
-    <path d="M38 70 Q50 64 62 70" stroke="#facc15" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <rect width="100" height="100" rx="22" fill="#0f172a"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#eab308" stroke-width="3"/>
+    <path d="M35 35 L65 65 M65 35 L35 65" stroke="#facc15" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="50" cy="50" r="8" fill="#facc15"/>
   </svg>`,
   "bpost.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#dc2626"/>
+    <rect width="100" height="100" rx="22" fill="#dc2626"/>
     <circle cx="50" cy="50" r="32" fill="#ffffff"/>
-    <path d="M38 38 H52 C58 38 62 42 62 48 C62 54 58 58 52 58 H44 V68 H38 V38 Z" fill="#dc2626"/>
-    <circle cx="50" cy="48" r="4" fill="#ffffff"/>
+    <path d="M38 34 H54 C60 34 64 38 64 44 C64 50 60 54 54 54 H44 V66 H38 V34 Z" fill="#dc2626"/>
   </svg>`,
   "bol.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#0000a4"/>
-    <text x="46" y="58" font-family="Arial, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle">bol.</text>
-    <circle cx="76" cy="53" r="5" fill="#00b4f0"/>
+    <rect width="100" height="100" rx="22" fill="#0000a4"/>
+    <circle cx="42" cy="50" r="18" fill="#ffffff"/>
+    <circle cx="70" cy="50" r="8" fill="#00b4f0"/>
   </svg>`,
   "immoweb.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#0284c7"/>
+    <rect width="100" height="100" rx="22" fill="#0284c7"/>
     <path d="M50 20 L24 44 H34 V74 H66 V44 H76 Z" fill="#ffffff"/>
     <rect x="58" y="26" width="6" height="12" fill="#ffffff"/>
     <rect x="44" y="52" width="12" height="22" rx="2" fill="#0284c7"/>
   </svg>`,
   "cnn.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#cc0000"/>
-    <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
+    <rect width="100" height="100" rx="22" fill="#cc0000"/>
+    <path d="M26 34 H42 V66 H26 Z M48 34 H64 V66 H48 Z M70 34 H86 V66 H70 Z" fill="#ffffff"/>
   </svg>`,
   "edition.cnn.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#cc0000"/>
-    <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
+    <rect width="100" height="100" rx="22" fill="#cc0000"/>
+    <path d="M26 34 H42 V66 H26 Z M48 34 H64 V66 H48 Z M70 34 H86 V66 H70 Z" fill="#ffffff"/>
   </svg>`,
   "kempinski.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#18181b"/>
+    <rect width="100" height="100" rx="22" fill="#18181b"/>
     <polygon points="50,22 58,38 76,38 62,50 67,68 50,56 33,68 38,50 24,38 42,38" fill="#d4af37"/>
-    <text x="50" y="86" font-family="'Cinzel', serif, Georgia" font-weight="bold" font-size="12" fill="#d4af37" text-anchor="middle" letter-spacing="1">KEMPINSKI</text>
   </svg>`,
   "ibm.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#001d6c"/>
-    <text x="50" y="60" font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="30" fill="#4589ff" text-anchor="middle" letter-spacing="1">IBM</text>
+    <rect width="100" height="100" rx="22" fill="#001d6c"/>
+    <g fill="#4589ff">
+      <rect x="22" y="30" width="56" height="5"/>
+      <rect x="22" y="38" width="56" height="5"/>
+      <rect x="22" y="46" width="56" height="5"/>
+      <rect x="22" y="54" width="56" height="5"/>
+      <rect x="22" y="62" width="56" height="5"/>
+    </g>
   </svg>`,
   "ups.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#351c15"/>
+    <rect width="100" height="100" rx="22" fill="#351c15"/>
     <path d="M50 20 L76 30 V56 C76 72 50 82 50 82 C50 82 24 72 24 56 V30 Z" fill="#ffb500"/>
-    <text x="50" y="60" font-family="Arial Black, sans-serif" font-weight="bold" font-size="20" fill="#351c15" text-anchor="middle">ups</text>
   </svg>`,
   "aa.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#00447c"/>
+    <rect width="100" height="100" rx="22" fill="#00447c"/>
     <path d="M32 30 L46 70 H54 L68 30 H58 L50 56 L42 30 Z" fill="#ffffff"/>
     <path d="M50 36 L62 70 H70 L82 36 H73 L66 60 L59 36 Z" fill="#c3102f"/>
   </svg>`,
   "freecancellations.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#991b1b"/>
+    <rect width="100" height="100" rx="22" fill="#991b1b"/>
     <circle cx="50" cy="50" r="32" fill="none" stroke="#fca5a5" stroke-width="4"/>
     <path d="M38 38 L62 62 M62 38 L38 62" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
   </svg>`,
   "timehotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#1c1917"/>
+    <rect width="100" height="100" rx="22" fill="#1c1917"/>
     <circle cx="50" cy="50" r="32" fill="none" stroke="#d97706" stroke-width="3"/>
     <path d="M50 28 V50 L64 64" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
   </svg>`,
   "midtownwellness.co.uk": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#18181b"/>
+    <rect width="100" height="100" rx="22" fill="#18181b"/>
     <g fill="#f4f4f5">
       <rect x="22" y="24" width="6" height="52" rx="3"/>
       <rect x="34" y="32" width="6" height="44" rx="3"/>
@@ -7321,7 +7267,7 @@ const KNOWN_BRAND_LOGOS: Record<string, string> = {
     </g>
   </svg>`,
   "spaandmassage.co.uk": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="20" fill="#292524"/>
+    <rect width="100" height="100" rx="22" fill="#292524"/>
     <circle cx="50" cy="50" r="38" fill="none" stroke="#d97706" stroke-width="3"/>
     <path d="M50 24 C45 32 36 40 36 50 C36 60 42 66 50 72 C58 66 64 60 64 50 C64 40 55 32 50 24 Z" fill="#f59e0b"/>
     <circle cx="50" cy="46" r="6" fill="#fef3c7"/>
