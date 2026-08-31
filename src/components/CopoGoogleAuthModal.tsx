@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { Loader2, X, AlertCircle, HelpCircle, Mail, ArrowRight, CheckCircle2, User, Sparkles, MapPin } from "lucide-react";
 import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from "../lib/avatar";
 import { CountrySelector } from "./CountrySelector";
+import { SearchableComboSelector } from "./SearchableComboSelector";
+import { locationData } from "../utils/locationData";
 
 export type AuthIntent = 
   | 'general' 
@@ -108,6 +110,7 @@ export const CopoAuthPrompt: React.FC<{
   const [lastName, setLastName] = useState<string>("");
   const [city, setCity] = useState<string>("");
   const [country, setCountry] = useState<string>("United States");
+  const [stateRegion, setStateRegion] = useState<string>("");
   const [otpCode, setOtpCode] = useState<string>("");
   const [tempUser, setTempUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -198,18 +201,21 @@ export const CopoAuthPrompt: React.FC<{
   };
 
   // STEP 3: Complete Profile & Persist
-  const handleSaveProfile = async (e?: React.FormEvent, skip: boolean = false) => {
+  const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsLoading(true);
     setErrorMessage("");
 
-    const fName = skip ? (email.split('@')[0]) : (firstName.trim() || email.split('@')[0]);
-    const lName = skip ? "" : lastName.trim();
+    const fName = firstName.trim() || email.split('@')[0];
+    const lName = lastName.trim();
     const fullName = lName ? `${fName} ${lName}` : fName;
-    const finalCity = skip ? "" : city.trim();
-    const finalCountry = skip ? "United States" : (country.trim() || "United States");
+    const finalCity = city.trim();
+    const finalState = stateRegion.trim();
+    const finalCountry = country.trim() || "United States";
+    const locParts = [finalCity, finalState, finalCountry].filter(Boolean);
+    const combinedLocation = locParts.join(", ");
 
-    const avatarSvg = generateGoogleLetterAvatarSvg(fName, 128);
+    const avatarSvg = generateGoogleLetterAvatarSvg(fName || email.split("@")[0] || "Y", 128, email);
 
     const updatedUser = {
       uid: tempUser?.uid || `usr_${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
@@ -220,6 +226,7 @@ export const CopoAuthPrompt: React.FC<{
       lastName: lName,
       city: finalCity,
       country: finalCountry,
+      location: combinedLocation,
       avatar: tempUser?.avatar || avatarSvg,
       role: 'user',
       verifiedAt: new Date().toISOString()
@@ -255,7 +262,7 @@ export const CopoAuthPrompt: React.FC<{
 
   const seedName = firstName || email.split('@')[0] || 'Y';
   const previewLetter = getFirstLetter(seedName);
-  const previewColor = getAvatarColor(seedName);
+  const previewColor = getAvatarColor(email || seedName);
 
   return (
     <div className={`w-full ${isFullPage ? "min-h-full flex flex-col justify-between" : "flex flex-col items-center"} p-4 sm:p-7 select-none bg-[#09090b] text-white`}>
@@ -456,7 +463,7 @@ export const CopoAuthPrompt: React.FC<{
 
         {/* STEP 3: Profile Setup (First Name, Last Name, City, Country) */}
         {step === 'profile' && (
-          <form onSubmit={(e) => handleSaveProfile(e, false)} className="w-full max-w-sm space-y-3.5 pt-1 text-left">
+          <form onSubmit={(e) => handleSaveProfile(e)} className="w-full max-w-sm space-y-3.5 pt-1 text-left">
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
@@ -488,29 +495,84 @@ export const CopoAuthPrompt: React.FC<{
 
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
-                City
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g. New York, London, Dubai"
-                  className="w-full h-11 pl-9 pr-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
-                />
-                <MapPin className="w-4 h-4 text-zinc-500 absolute left-3 top-3.5" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
                 Country
               </label>
               <CountrySelector
                 value={country}
-                onChange={(c) => setCountry(c)}
+                onChange={(c) => {
+                  setCountry(c);
+                  setCity("");
+                  setStateRegion("");
+                }}
               />
             </div>
+
+            {country && (() => {
+              const countryConfig = locationData[country];
+              const hasStates = countryConfig?.hasStates || false;
+              const stateLabel = countryConfig?.stateLabel || "State / Prov";
+              const stateOptions = countryConfig?.states || [];
+
+              let cityOptions: string[] = [];
+              if (countryConfig) {
+                if (Array.isArray(countryConfig.cities)) {
+                  cityOptions = countryConfig.cities;
+                } else {
+                  if (stateRegion) {
+                    cityOptions = countryConfig.cities[stateRegion] || [];
+                  } else {
+                    cityOptions = Object.values(countryConfig.cities).flat();
+                  }
+                }
+              }
+
+              return (
+                <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {hasStates ? (
+                    <>
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">{stateLabel}</span>
+                        <SearchableComboSelector
+                          value={stateRegion}
+                          onChange={(val) => {
+                            setStateRegion(val);
+                            if (countryConfig && !Array.isArray(countryConfig.cities)) {
+                              const allowedCities = countryConfig.cities[val] || [];
+                              const primaryCity = allowedCities.find(c => c.toLowerCase() === val.toLowerCase());
+                              setCity(primaryCity || allowedCities[0] || "");
+                            } else {
+                              setCity("");
+                            }
+                          }}
+                          options={stateOptions}
+                          placeholder={stateLabel}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">City</span>
+                        <SearchableComboSelector
+                          value={city}
+                          onChange={setCity}
+                          options={cityOptions}
+                          placeholder="Select City"
+                          disabled={!stateRegion}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="col-span-2 space-y-1">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">City</span>
+                      <SearchableComboSelector
+                        value={city}
+                        onChange={setCity}
+                        options={cityOptions}
+                        placeholder="Select City"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {errorMessage && (
               <div className="p-3 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">
@@ -533,16 +595,6 @@ export const CopoAuthPrompt: React.FC<{
                 </>
               )}
             </button>
-
-            <div className="text-center pt-1">
-              <button
-                type="button"
-                onClick={() => handleSaveProfile(undefined, true)}
-                className="text-xs text-zinc-400 hover:text-white underline cursor-pointer"
-              >
-                Skip for now
-              </button>
-            </div>
           </form>
         )}
 

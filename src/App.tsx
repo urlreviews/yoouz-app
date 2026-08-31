@@ -668,7 +668,7 @@ export function App() {
             if (data.user) {
               const fName = data.user.firstName || magicEmail.split("@")[0];
               const lName = data.user.lastName || "";
-              const avatarSvg = generateGoogleLetterAvatarSvg(fName, 128);
+              const avatarSvg = generateGoogleLetterAvatarSvg(fName, 128, data.user.email || magicEmail);
               const profile: UserProfile = {
                 name: data.user.name || fName,
                 email: data.user.email || magicEmail,
@@ -746,7 +746,8 @@ export function App() {
         if (!validAvatar) {
           validAvatar = generateGoogleLetterAvatarSvg(
             user.displayName || user.email?.split("@")[0] || "User",
-            128
+            128,
+            user.email || user.displayName
           );
         }
 

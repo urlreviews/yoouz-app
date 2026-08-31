@@ -63,9 +63,9 @@ export function getAvatarColor(nameOrSeed?: string): { bg: string; text: string 
  * Generate a standalone SVG Data URI for an initial avatar
  * Compatible everywhere as an <img> src or CSS background
  */
-export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128): string {
+export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string): string {
   const letter = getFirstLetter(nameOrSeed);
-  const color = getAvatarColor(nameOrSeed);
+  const color = getAvatarColor(colorSeed || nameOrSeed);
   const fontSize = Math.round(size * 0.52);
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">

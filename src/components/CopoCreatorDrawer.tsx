@@ -241,7 +241,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     effectiveAvatar.includes("rev-") ||
     effectiveAvatar.includes("ui-avatars.com")
   ) {
-    effectiveAvatar = generateGoogleLetterAvatarSvg(author.name || currentUser?.name || "User", 128);
+    effectiveAvatar = generateGoogleLetterAvatarSvg(author.name || currentUser?.name || "User", 128, author.handle || author.name);
   }
 
   let effectiveBanner = isOwner && currentUser?.banner 

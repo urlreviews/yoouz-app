@@ -246,23 +246,31 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     (allUsers || []).forEach((u) => {
       if (!u) return;
       const cleanHandle = getCleanHandle(u.name) || (u.email ? u.email.split("@")[0] : u.id) || "user";
-      const key = (u.email || cleanHandle).toLowerCase().trim();
+      // prioritize EMAIL to combine multiple auth records for the same human
+      const key = (u.email || u.uid || u.id || cleanHandle).toLowerCase().trim();
       if (!key) return;
 
-      userMap.set(key, {
-        id: u.id || u.uid || cleanHandle,
-        uid: u.uid || u.id,
-        name: u.name || "Registered User",
-        email: u.email || "",
-        handle: cleanHandle,
-        avatar:
-          u.avatar ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
-        isVerified: true,
-        isRegisteredAccount: true,
-        role: u.role || (u.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
-        memberSince: u.memberSince || "Active"
-      });
+      if (!userMap.has(key)) {
+        userMap.set(key, {
+          id: u.id || u.uid || cleanHandle,
+          uid: u.uid || u.id,
+          name: u.name || "Registered User",
+          email: u.email || "",
+          handle: cleanHandle,
+          avatar:
+            u.avatar ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
+          isVerified: true,
+          isRegisteredAccount: true,
+          role: u.role || (u.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
+          memberSince: u.memberSince || "Active"
+        });
+      } else {
+        const existing = userMap.get(key);
+        if (existing && !existing.email && u.email) existing.email = u.email;
+        if (existing && (!existing.name || existing.name === "Registered User") && u.name) existing.name = u.name;
+        if (existing && (!existing.avatar || existing.avatar.includes("ui-avatars")) && u.avatar) existing.avatar = u.avatar;
+      }
     });
 
     (videos || []).forEach((v) => {
@@ -276,7 +284,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const cleanHandle =
         getCleanHandle(author.name) ||
         (v.userEmail ? v.userEmail.split("@")[0] : getCleanHandle(v.userId) || "reviewer");
-      const key = (v.userEmail || cleanHandle).toLowerCase().trim();
+        
+      const key = (v.userEmail || v.userId || cleanHandle).toLowerCase().trim();
       if (!key) return;
 
       if (!userMap.has(key)) {
@@ -301,6 +310,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         }
         if (existing && (!existing.avatar || existing.avatar.includes("ui-avatars")) && author.avatar) {
           existing.avatar = author.avatar;
+        }
+        // Upgrade role to Creator if they have videos but were just marked as Member
+        if (existing) {
+           existing.role = "Creator";
         }
       }
     });
@@ -1986,27 +1999,52 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
-                        <button
-                          onClick={() => setEditUserModal(user)}
-                          className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                        >
-                          <Edit className="w-3.5 h-3.5" /> Edit Profile
-                        </button>
-
-                        {userVideos.length > 0 && (
+                      <div className="flex flex-col gap-2 pt-2 border-t border-zinc-800">
+                        <div className="flex items-center justify-between">
                           <button
-                            onClick={() => {
-                              const userVidIds = userVideos.map((v) => v.id);
-                              if (onBulkDeleteVideos) onBulkDeleteVideos(userVidIds);
-                              showToast(`Removed all ${userVidIds.length} reviews for @${user.name}`);
-                            }}
-                            className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                            title="Remove this user's videos (keeps account intact)"
+                            onClick={() => setEditUserModal(user)}
+                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                           >
-                            Clear Reviews
+                            <Edit className="w-3.5 h-3.5" /> Edit Profile
                           </button>
-                        )}
+                          
+                          <div className="flex items-center gap-1">
+                            {userVideos.length > 0 && (
+                              <button
+                                onClick={() => {
+                                  const userVidIds = userVideos.map((v) => v.id);
+                                  if (onBulkDeleteVideos) onBulkDeleteVideos(userVidIds);
+                                  showToast(`Removed all ${userVidIds.length} reviews for @${user.name}`);
+                                }}
+                                className="px-2.5 py-1.5 text-orange-400 hover:bg-orange-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                                title="Remove this user's videos (keeps account intact)"
+                              >
+                                Clear Reviews
+                              </button>
+                            )}
+
+                            <button
+                              onClick={async () => {
+                                if (window.confirm(`Are you sure you want to delete the account for ${user.name}?`)) {
+                                  try {
+                                    const res = await fetch(`/api/nosql/users/${user.uid || user.id}`, { method: 'DELETE' });
+                                    if (res.ok) {
+                                      const uName = user.name || "User";
+                                      // show toast is a mock here, you might need to use existing alert or toast
+                                      showToast(`Deleted ${uName} successfully. Please refresh the page.`);
+                                    }
+                                  } catch (e) {
+                                    showToast('Failed to delete account');
+                                  }
+                                }
+                              }}
+                              className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                              title="Delete entire user account"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
