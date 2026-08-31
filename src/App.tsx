@@ -1025,9 +1025,9 @@ export function App() {
             if (dbUsers.length > 0) {
               setAllRegisteredUsers((prev) => {
                 const map = new Map<string, any>();
-                prev.forEach((u) => map.set((u.uid || u.id || u.email || u.name || "").toLowerCase(), u));
-                dbUsers.forEach((u) => map.set((u.uid || u.id || u.email || u.name || "").toLowerCase(), u));
-                return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+                prev.forEach((u) => map.set((u.email || u.uid || u.id || u.name || "").toLowerCase(), u));
+                dbUsers.forEach((u) => map.set((u.email || u.uid || u.id || u.name || "").toLowerCase(), u));
+                return Array.from(map.values());
               });
             }
           }
@@ -1393,7 +1393,7 @@ export function App() {
       setPlaces((prev) => {
         const map = new Map<string, Place>();
         prev.forEach(p => map.set(p.id, p));
-        return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+        return Array.from(map.values());
       });
 
       // 1. Fetch from BunnyDB / Server NoSQL
@@ -1414,7 +1414,7 @@ export function App() {
                   const isFollowed = followedPlaces.includes(p.id);
                   map.set(p.id, { ...existing, ...p, isFollowed });
                 });
-                return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+                return Array.from(map.values());
               });
             }
           }
@@ -1442,7 +1442,7 @@ export function App() {
              const isFollowed = followedPlaces.includes(p.id);
              map.set(p.id, { ...existing, ...p, isFollowed });
           });
-          return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+          return Array.from(map.values());
         });
       }, (err) => {
         console.warn("Places snapshot notice:", err);
@@ -3153,7 +3153,7 @@ export function App() {
                     prev.forEach((p) => {
                       if (!map.has(p.id)) map.set(p.id, p);
                     });
-                    return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+                    return Array.from(map.values());
                   });
                 }}
               />
@@ -3196,7 +3196,7 @@ export function App() {
                     prev.forEach((p) => {
                       if (!map.has(p.id)) map.set(p.id, p);
                     });
-                    return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+                    return Array.from(map.values());
                   });
                 }}
               />
@@ -3699,7 +3699,7 @@ export function App() {
               prev.forEach((p) => {
                 if (!map.has(p.id)) map.set(p.id, p);
               });
-              return Array.from(map.values()).filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+              return Array.from(map.values());
             });
           }}
           onClose={() => setIsSearchModalOpen(false)}
