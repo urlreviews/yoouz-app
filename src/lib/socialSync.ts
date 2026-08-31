@@ -463,7 +463,7 @@ export async function sendChatMessageToFirestore(
 
     try {
       const snap = await getDoc(threadDocRef);
-      if (snap.exists()) {
+      if (typeof (snap as any).exists === "function" ? (snap as any).exists() : Boolean((snap as any).exists)) {
         const d = snap.data();
         if (Array.isArray(d.history)) {
           existingHistory = d.history;

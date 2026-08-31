@@ -753,7 +753,7 @@ export function App() {
         // Try reading custom profile data from Firestore if available
         try {
           const userDoc = await getDoc(doc(db, "users", user.uid));
-          if (userDoc.exists()) {
+          if (typeof (userDoc as any).exists === "function" ? (userDoc as any).exists() : Boolean((userDoc as any).exists)) {
             const data = userDoc.data();
             if (data) {
               let finalLocation = data.location || savedProfile.location || "";

@@ -6141,15 +6141,6 @@ const isPlaceCard = type === 'place';
       // Ultra high-resolution authentic human reviewer portrait (natural selfie review angle, warm real photography)
       const reviewerPhotoUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=95';
       let reviewerPhotoBase64 = '';
-      let thumbBase64 = '';
-      if (req.query.thumbUrl) {
-         try {
-           const response = await fetch(req.query.thumbUrl);
-           const arrayBuffer = await response.arrayBuffer();
-           const buffer = Buffer.from(arrayBuffer);
-           thumbBase64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
-         } catch(e) {}
-      }
       try {
         reviewerPhotoBase64 = await fetchBase64(reviewerPhotoUrl);
       } catch(e) {}
@@ -6505,7 +6496,7 @@ const isPlaceCard = type === 'place';
   
 
 app.get('/api/debug-metadata', async (req, res) => {
-  const targetUrl = req.query.url;
+  const targetUrl = String(req.query.url || '');
   if (!targetUrl) return res.send("Please provide ?url=...");
   
   try {
@@ -6523,7 +6514,7 @@ app.get('/api/debug-metadata', async (req, res) => {
       url: urlObj.pathname + urlObj.search
     };
     
-    const meta = await resolveMetadataForRequest(mockReq);
+    const meta = await resolveMetadataForRequest(mockReq as any);
     const htmlTags = injectOpenGraphTags("<html><head><title>Test</title></head><body></body></html>", meta);
     
     // Return a beautiful preview
@@ -6559,16 +6550,16 @@ app.get('/api/debug-metadata', async (req, res) => {
         </body>
       </html>
     `);
-  } catch (err) {
+  } catch (err: any) {
     res.status(500).send(err.message);
   }
 });
 
 app.get('/api/og-preview-v2', async (req, res) => {
-  let placeName = req.query.placeName || "Awesome Coffee Shop";
-  let authorName = req.query.author || "Alex Johnson";
-  let rating = parseFloat(req.query.rating || "5");
-  let thumbUrl = req.query.thumbUrl || "";
+  let placeName = String(req.query.placeName || "Awesome Coffee Shop");
+  let authorName = String(req.query.author || "Alex Johnson");
+  let rating = parseFloat(String(req.query.rating || "5"));
+  let thumbUrl = String(req.query.thumbUrl || "");
 
   // Helper to fetch and convert image to base64
   let thumbBase64 = "";

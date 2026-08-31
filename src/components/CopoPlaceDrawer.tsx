@@ -1672,6 +1672,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         </div>
       )}
 
+    </aside>
+
       {/* Google-style Share Modal Popup */}
       <CopoShareModal
         isOpen={isShareModalOpen}
@@ -1680,7 +1682,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         title={formatBusinessName(place.name)}
         subtitle="Business Location"
       />
-    </aside>
 
       {isPricingModalOpen && (
         <CopoBusinessPricingModal 

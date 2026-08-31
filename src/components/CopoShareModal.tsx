@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Facebook,
@@ -11,6 +12,7 @@ import {
   Linkedin
 } from "lucide-react";
 import { VideoReview } from "../types";
+
 function cleanDomainName(urlStr: string) {
   if (!urlStr) return "";
   try {
@@ -24,7 +26,6 @@ function cleanDomainName(urlStr: string) {
      return urlStr.replace(/^(https?:\/\/)?(www\.)?/i, '').split('/')[0];
   }
 }
-
 
 interface CopoShareModalProps {
   // Mode A: General Share
@@ -82,6 +83,23 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     ? "Authentic 60-Second Video Review"
     : (explicitSubtitle || "Share link");
 
+  const isSquarePreview = !isVideoMode && (
+    subtitle?.toLowerCase().includes("business") || 
+    subtitle?.toLowerCase().includes("profile") || 
+    subtitle?.toLowerCase().includes("reviewer") || 
+    shareUrl.includes("/place/") || 
+    shareUrl.includes("/@")
+  );
+
+  let previewImageUrl = "/api/og-image.png?v=8";
+  if (isVideoMode && video) {
+    previewImageUrl = `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&v=14`;
+  } else if (subtitle?.toLowerCase().includes("business") || shareUrl.includes("/place/")) {
+    previewImageUrl = `/api/og-image.png?type=place&name=${encodeURIComponent(title)}&v=1`;
+  } else if (subtitle?.toLowerCase().includes("reviewer") || subtitle?.toLowerCase().includes("profile") || shareUrl.includes("/@")) {
+    previewImageUrl = `/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&v=1`;
+  }
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -94,7 +112,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   const shareText = isVideoMode && video
     ? `Watch ${video.author.name}'s authentic 60-second video review of ${video.placeName || "Business"} on Yoouz:`
-    : "Discover places and websites with authentic 60-second video reviews on Yoouz:";
+    : `Check out ${title} on Yoouz — Authentic 60-second video reviews:`;
 
   const socialShares = [
     {
@@ -147,19 +165,19 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     }
   ];
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain text-white"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overscroll-contain text-white"
       onKeyDown={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
     >
       {/* Background click to close */}
-      <div className="absolute inset-0" onClick={onClose} />
+      <div className="absolute inset-0 cursor-pointer" onClick={onClose} />
 
       {/* Modal Card */}
       <div 
-        className="relative w-full max-w-[480px] bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 overflow-hidden animate-in zoom-in-95 duration-200 overscroll-contain text-white"
+        className="relative z-10 w-full max-w-[480px] max-h-[90vh] flex flex-col bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 overflow-hidden animate-in zoom-in-95 duration-200 text-white"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
@@ -167,19 +185,19 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       >
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-zinc-800 text-white flex items-center justify-center border border-zinc-700">
+        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between shrink-0 bg-zinc-900">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-zinc-800 text-white flex items-center justify-center border border-zinc-700 shrink-0">
               <Share2 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base">Share</h3>
+              <h3 className="font-bold text-white text-base leading-tight">Share</h3>
               {subtitle && <p className="text-xs text-zinc-400 font-medium">{subtitle}</p>}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
             title="Close share dialog"
           >
             <X className="w-5 h-5" />
@@ -187,7 +205,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto min-h-0 flex-1">
           {/* Target Title Card */}
           <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800">
             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Sharing link to</p>
@@ -209,10 +227,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Social Card Preview</p>
               <a
-                href={isVideoMode && video
-                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&v=14`
-                  : "/api/og-image.png?v=8"
-                }
+                href={previewImageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition"
@@ -220,17 +235,35 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 Open Full Card ↗
               </a>
             </div>
-            <div className="relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-inner group">
-              <img
-                src={isVideoMode && video
-                  ? `/api/og-image.png?type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(cleanDomainName(video.placeName || "Business"))}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&caption=${encodeURIComponent(video.caption || "")}&v=14`
-                  : "/api/og-image.png?v=8"
-                }
-                alt="Social Media Preview Card"
-                className="w-full aspect-[1200/630] object-cover transition duration-300 group-hover:scale-[1.01]"
-                loading="lazy"
-              />
-            </div>
+
+            {isSquarePreview ? (
+              <div className="relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 p-3.5 flex items-center gap-3.5 shadow-inner">
+                <img
+                  src={previewImageUrl}
+                  alt="Social Media Preview Logo"
+                  className="w-16 h-16 rounded-xl object-cover shrink-0 border border-zinc-800 shadow-md bg-zinc-900"
+                  loading="lazy"
+                />
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">yoouz.com</span>
+                  <h5 className="font-bold text-white text-sm truncate mt-0.5">{title}</h5>
+                  <p className="text-xs text-zinc-400 line-clamp-2 mt-0.5 font-medium leading-tight">
+                    {subtitle?.toLowerCase().includes("business") 
+                      ? `Authentic 60s video reviews & ratings for ${title}. Real People. Real Reviews.` 
+                      : `Authentic 60s video reviews & recommendations by ${title}.`}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-inner group">
+                <img
+                  src={previewImageUrl}
+                  alt="Social Media Preview Card"
+                  className="w-full aspect-[1200/630] object-cover transition duration-300 group-hover:scale-[1.01]"
+                  loading="lazy"
+                />
+              </div>
+            )}
           </div>
 
           {/* Social Icons row */}
@@ -286,7 +319,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-zinc-950 border-t border-zinc-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-zinc-950 border-t border-zinc-800 flex items-center justify-between shrink-0">
           {onOpenReport ? (
             <button
               onClick={() => {
@@ -311,4 +344,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document !== "undefined") {
+    return createPortal(modalContent, document.body);
+  }
+  return modalContent;
 };
+
