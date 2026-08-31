@@ -53,6 +53,7 @@ interface CopoMoreViewProps {
   onNavigate: (section: NavSection) => void;
   onDeleteProfile: () => Promise<void>;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
+  onOpenComparison?: (competitor?: string) => void;
 }
 
 interface FaqItem {
@@ -68,7 +69,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   onSignOut,
   onNavigate,
   onDeleteProfile,
-  onOpenLegal
+  onOpenLegal,
+  onOpenComparison
 }) => {
   const [activeTab, setActiveTab] = useState<"about" | "faq" | "business" | "security" | "contact">("about");
   const [searchQuery, setSearchQuery] = useState("");
@@ -600,6 +602,20 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       Living comment threads connecting Reviewers, curious Viewers, and Verified Place Owners.
                     </p>
                   </div>
+                </div>
+
+                {/* Direct Competitor Comparison Callout */}
+                <div className="pt-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-xs text-zinc-400 text-center sm:text-left">
+                    <span className="text-white font-bold">Why Yoouz beats Yelp & Google Reviews:</span> Zero bot spam, no anonymous text rants, and 100% verified 60s video proof.
+                  </div>
+                  <button
+                    onClick={() => onOpenComparison && onOpenComparison('yelp')}
+                    className="px-4 py-2 rounded-xl bg-white text-black font-black text-xs hover:bg-zinc-200 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm"
+                  >
+                    <span>Compare with Yelp & Competitors</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 

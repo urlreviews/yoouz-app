@@ -30,6 +30,7 @@ import { CopoMobileNavDrawer } from "./components/CopoMobileNavDrawer";
 import { CopoAdminPanel } from "./components/CopoAdminPanel";
 import { CopoGoogleAuthModal, AuthIntent, CopoAuthPrompt } from "./components/CopoGoogleAuthModal";
 import { CopoLegalModal } from "./components/CopoLegalModal";
+import { CopoComparisonModal } from "./components/CopoComparisonModal";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { prefetchVideo } from "./utils/videoPrefetcher";
@@ -196,6 +197,8 @@ export function App() {
   const [businessClaimTargetPlace, setBusinessClaimTargetPlace] = useState<Place | null>(null);
   const [businessInitialMode, setBusinessInitialMode] = useState<'signin' | 'claim' | 'demo'>('signin');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isComparisonModalOpen, setIsComparisonModalOpen] = useState<boolean>(false);
+  const [comparisonCompetitor, setComparisonCompetitor] = useState<string>('yelp');
   const [deleteSuccessToast, setDeleteSuccessToast] = useState<boolean>(false);
 
   // Background prefetch first few videos for instant playback when entering feed
@@ -279,6 +282,16 @@ export function App() {
           if (pathname === "/clubs") sectionParam = "clubs";
           if (pathname === "/record_review") sectionParam = "record_review";
           if (pathname === "/profile" || pathname === "/me") sectionParam = "profile";
+        }
+
+        // Competitor comparison and GEO routes
+        if (pathname.includes('/vs/') || pathname === '/compare' || pathname.includes('/alternatives/')) {
+          let comp = 'yelp';
+          if (pathname.includes('google')) comp = 'google';
+          else if (pathname.includes('trustpilot')) comp = 'trustpilot';
+          else if (pathname.includes('tripadvisor')) comp = 'tripadvisor';
+          setComparisonCompetitor(comp);
+          setIsComparisonModalOpen(true);
         }
 
         if (placeParam) {
@@ -3485,6 +3498,10 @@ export function App() {
               <CopoMoreView
                 currentUser={currentUser}
                 onOpenLegal={handleOpenLegal}
+                onOpenComparison={(comp) => {
+                  if (comp) setComparisonCompetitor(comp);
+                  setIsComparisonModalOpen(true);
+                }}
                 onOpenAuth={() => {
                   setAuthIntent('general');
                   setIsAuthModalOpen(true);
@@ -3712,6 +3729,21 @@ export function App() {
         isOpen={isLegalModalOpen}
         onClose={() => setIsLegalModalOpen(false)}
         initialTab={legalModalTab}
+      />
+
+      {/* Competitor Comparison (GEO & Conversion) Modal */}
+      <CopoComparisonModal
+        isOpen={isComparisonModalOpen}
+        onClose={() => setIsComparisonModalOpen(false)}
+        initialCompetitor={comparisonCompetitor}
+        onStartReview={() => {
+          if (!currentUser) {
+            setAuthIntent('record');
+            setIsAuthModalOpen(true);
+          } else {
+            setIsCreateModalOpen(true);
+          }
+        }}
       />
 
       {/* Record Video Review Modal */}

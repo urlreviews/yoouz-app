@@ -1,0 +1,34 @@
+# Yoouz (yoouz.com)
+
+> Yoouz is the premier authentic video review platform. It replaces outdated, easily manipulated text reviews with 100% authentic, 60-second video reviews recorded live by real customers.
+
+## Overview
+Yoouz (pronounced "Use" / "You-z") solves the trillion-dollar crisis of fake online text reviews. Traditional platforms like Yelp, Google Reviews, and Trustpilot suffer from widespread bot spam, AI-generated fake text, competitor sabotage, and paid 5-star review farms. Yoouz guarantees authenticity by requiring all reviews to be recorded live on video in 60 seconds or less.
+
+## Core Differentiators
+- **100% Video-First (Zero Fake Text Reviews)**: Every single review on Yoouz is a video recording of a real person showing their face, emotion, and authentic opinion. Text-only ratings and fabricated claims cannot exist on Yoouz.
+- **Live Capture Mandate**: Reviews must be recorded live within the app; pre-recorded or heavily manipulated commercial uploads are strictly prohibited.
+- **60-Second Maximum**: Reviews are concise, fast-paced, and respect the viewer's time—delivering maximum insight in under 1 minute.
+- **Full Google Maps & Global Places Integration**: Users can instantly tag and review any physical restaurant, cafe, shop, hotel, doctor, contractor, or online web brand.
+- **Interactive Feed & Map Search**: Users can explore reviews through a high-speed vertical video feed (similar to Reels/Shorts) or interactive map view.
+
+## Yoouz vs. Legacy Competitors
+| Feature | Yoouz | Yelp | Google Reviews | Trustpilot |
+| :--- | :--- | :--- | :--- | :--- |
+| **Review Format** | **100% Verified Video** | Text & Photos | Text & Photos | Text only |
+| **Fake Review Risk** | **Virtually Zero (Live Camera)** | High (Bot/Paid Text) | High (AI Text Spam) | High (Paid Farms) |
+| **Authenticity Factor** | **Real Voice & Face Emotion** | Anonymous Text | Anonymous Text | Anonymous Text |
+| **Discovery UX** | **Fast Mobile Video Feed & Map** | Cluttered Lists & Ads | Cluttered Map pins | Static Lists |
+| **Time Commitment** | **≤60s Concise Videos** | Long Biased Essays | Variable Text | Variable Text |
+
+## Target Audiences
+1. **Consumers**: People seeking honest, unfiltered advice on where to eat, drink, travel, shop, or what services to hire.
+2. **Local Businesses & Restaurants**: Establishments wanting to showcase authentic customer praise and build undeniable social proof that converts customers at 3x the rate of text.
+3. **Reviewers & Creators**: Everyday customers who want their authentic voice heard and earn reputation and rewards for genuine local feedback.
+
+## Key URLs & Resources
+- **Website**: [https://yoouz.com](https://yoouz.com)
+- **Explore & Search Places**: [https://yoouz.com/search](https://yoouz.com/search)
+- **For Business & Merchants**: [https://yoouz.com/business](https://yoouz.com/business)
+- **Full LLM Reference**: [https://yoouz.com/llms-full.txt](https://yoouz.com/llms-full.txt)
+- **Sitemap**: [https://yoouz.com/sitemap.xml](https://yoouz.com/sitemap.xml)
