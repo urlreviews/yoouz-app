@@ -144,6 +144,38 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <rect width="100" height="100" rx="20" fill="#18181b"/>
       <circle cx="40" cy="50" r="22" fill="#eb001b"/>
       <circle cx="60" cy="50" r="22" fill="#f79e1b" fill-opacity="0.88"/>
+    </svg>`),
+  "digitalparkae.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#0f172a"/>
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
+      <circle cx="50" cy="50" r="26" fill="none" stroke="#22d3ee" stroke-width="2"/>
+      <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
+      <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`),
+  "www.digitalparkae.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#0f172a"/>
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
+      <circle cx="50" cy="50" r="26" fill="none" stroke="#22d3ee" stroke-width="2"/>
+      <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
+      <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`),
+  "digitalpark.ae": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#0f172a"/>
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
+      <circle cx="50" cy="50" r="26" fill="none" stroke="#22d3ee" stroke-width="2"/>
+      <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
+      <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`),
+  "www.digitalpark.ae": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#0f172a"/>
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
+      <circle cx="50" cy="50" r="26" fill="none" stroke="#22d3ee" stroke-width="2"/>
+      <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
+      <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`)
 };
 
@@ -153,6 +185,10 @@ export const KNOWN_BRAND_BANNERS: Record<string, string> = {
   "www.thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
   "districtuae.com": "https://www.districtuae.com/og-default.jpeg",
   "www.districtuae.com": "https://www.districtuae.com/og-default.jpeg",
+  "digitalparkae.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+  "www.digitalparkae.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+  "digitalpark.ae": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+  "www.digitalpark.ae": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
   "tajhotels.com": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80",
   "ups.com": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&auto=format&fit=crop&q=80",
   "mastercard.com": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1200&auto=format&fit=crop&q=80",
