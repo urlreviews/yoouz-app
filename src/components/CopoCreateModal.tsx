@@ -1363,10 +1363,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 </video>
 
                 {/* Top Overlay: Place Badge & Close */}
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-30 pointer-events-none">
-                  <div className="flex items-center gap-2 pointer-events-auto">
-                    <div className="px-4 py-2 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 text-white font-bold text-xs flex items-center gap-2.5 shadow-lg">
-                      <div className="flex items-center gap-1.5 border-r border-white/10 pr-2.5">
+                <div className="absolute top-4 left-4 right-4 md:top-6 md:left-6 md:right-6 flex items-center justify-between z-30 pointer-events-none gap-2.5">
+                  <div className="flex items-center gap-2 pointer-events-auto min-w-0 flex-1 sm:flex-initial">
+                    <div className="px-3.5 sm:px-4 py-2 rounded-full bg-black/50 backdrop-blur-xl border border-white/15 text-white font-bold text-xs flex items-center gap-2 sm:gap-2.5 shadow-xl max-w-full">
+                      <div className="flex items-center gap-1.5 border-r border-white/15 pr-2 sm:pr-2.5 shrink-0">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse hidden sm:block" />
                         <CopoBrandLogo
                           domain={selectedPlace?.brandDomain}
@@ -1378,20 +1378,21 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                           imageClassName="w-full h-full object-contain rounded-[3px]"
                           fallbackTextClassName="font-extrabold text-[10px] text-white"
                         />
-                        <span className="truncate max-w-[140px] sm:max-w-[200px] tracking-tight">{formatBusinessName(selectedPlace?.name)}</span>
+                        <span className="truncate max-w-[110px] sm:max-w-[180px] tracking-tight">{formatBusinessName(selectedPlace?.name)}</span>
                       </div>
-                      <div className="flex items-center gap-1 bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30">
+                      <div className="flex items-center gap-1 bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30 shrink-0">
                         <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                         <span className="text-amber-400 font-black">{rating}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pointer-events-auto">
+                  <div className="flex items-center gap-2 pointer-events-auto shrink-0">
                     <button
                       type="button"
                       onClick={onClose}
-                      className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center hover:bg-black transition-all cursor-pointer active:scale-95 shadow-2xl"
+                      className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center hover:bg-black transition-all cursor-pointer active:scale-95 shadow-xl shrink-0"
+                      title="Close"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -1533,11 +1534,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 />
 
                 {/* Top Control Bar Over Camera */}
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-30 pointer-events-none">
+                <div className="absolute top-4 left-4 right-4 md:top-6 md:left-6 md:right-6 flex items-center justify-between z-30 pointer-events-none gap-2.5">
                   {/* Left: Place Info Pill - Clean Premium */}
-                  <div className="flex items-center gap-2 pointer-events-auto">
-                    <div className="px-4 py-2 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 text-white text-xs font-bold flex items-center gap-2.5 shadow-2xl">
-                      <div className="flex items-center gap-1.5 border-r border-white/10 pr-2.5">
+                  <div className="flex items-center gap-2 pointer-events-auto min-w-0 flex-1 sm:flex-initial">
+                    <div className="px-3.5 sm:px-4 py-2 rounded-full bg-black/50 backdrop-blur-xl border border-white/15 text-white text-xs font-bold flex items-center gap-2 sm:gap-2.5 shadow-xl max-w-full">
+                      <div className="flex items-center gap-1.5 border-r border-white/15 pr-2 sm:pr-2.5 shrink-0">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse hidden sm:block" />
                         <CopoBrandLogo
                           domain={selectedPlace?.brandDomain}
@@ -1549,10 +1550,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                           imageClassName="w-full h-full object-contain rounded-[3px]"
                           fallbackTextClassName="font-extrabold text-[10px] text-white"
                         />
-                        <span className="uppercase tracking-tighter opacity-80">Live</span>
+                        <span className="uppercase tracking-tighter opacity-80 text-[10px] sm:text-xs">Live</span>
                       </div>
-                      <span className="truncate max-w-[140px] sm:max-w-[220px] tracking-tight">{formatBusinessName(selectedPlace?.name)}</span>
-                      <div className="flex items-center gap-1 bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30">
+                      <span className="truncate max-w-[110px] sm:max-w-[180px] tracking-tight">{formatBusinessName(selectedPlace?.name)}</span>
+                      <div className="flex items-center gap-1 bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30 shrink-0">
                         <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                         <span className="text-amber-400 font-black">{rating}</span>
                       </div>
@@ -1560,11 +1561,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </div>
 
                   {/* Right: Close Only */}
-                  <div className="flex items-center gap-2 pointer-events-auto">
+                  <div className="flex items-center gap-2 pointer-events-auto shrink-0">
                     <button
                       type="button"
                       onClick={onClose}
-                      className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center hover:bg-black/80 transition-all cursor-pointer shadow-lg active:scale-95"
+                      className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center hover:bg-black/80 transition-all cursor-pointer shadow-xl active:scale-95 shrink-0"
                       title="Close"
                     >
                       <X className="w-5 h-5" />
@@ -1624,7 +1625,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
                 {/* Face Missing Warning Alert Banner */}
                 {faceWarning && (
-                  <div className="absolute top-20 inset-x-4 z-35 flex justify-center pointer-events-none animate-fadeIn">
+                  <div className="absolute top-20 md:top-22 inset-x-4 md:inset-x-6 z-35 flex justify-center pointer-events-none animate-fadeIn">
                     <div className="px-4 py-2.5 rounded-2xl bg-red-600/90 backdrop-blur-md border border-red-300/40 text-white text-xs font-bold flex items-center gap-2 shadow-2xl text-center max-w-md">
                       <AlertCircle className="w-4 h-4 shrink-0 text-red-200" />
                       <span>{faceWarning}</span>
