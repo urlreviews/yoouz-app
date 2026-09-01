@@ -1269,8 +1269,42 @@ export function App() {
       );
     }
 
-    // Persist to Firestore: videoReviews and legacy videos collections
+    // Persist immediately to Backend API (BunnyDB + PostgreSQL + Server Index)
     try {
+      fetch("/api/videos/update-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId,
+          updates
+        })
+      }).catch((err) => {
+        console.warn("Server update review API error:", err);
+      });
+
+      // Update local storage cache immediately
+      try {
+        const cachedStr = localStorage.getItem("yoouz_cached_videos_v20");
+        if (cachedStr) {
+          const cached = JSON.parse(cachedStr);
+          if (Array.isArray(cached)) {
+            const updated = cached.map((c: any) =>
+              c.id === videoId
+                ? {
+                    ...c,
+                    ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+                    ...(updates.caption !== undefined && { caption: updates.caption }),
+                    ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+                    ...(updates.tags !== undefined && { tags: updates.tags })
+                  }
+                : c
+            );
+            localStorage.setItem("yoouz_cached_videos_v20", JSON.stringify(updated));
+          }
+        }
+      } catch (e) {}
+
+      // Fallback mirror to Firestore if present
       if (db) {
         const vidRef = doc(db, "videoReviews", videoId);
         await setDoc(
@@ -1283,21 +1317,10 @@ export function App() {
             updatedAt: Date.now()
           },
           { merge: true }
-        );
-
-        const legacyRef = doc(db, "videos", videoId);
-        await setDoc(
-          legacyRef,
-          {
-            ...(updates.rating !== undefined && { rating: updates.rating }),
-            ...(updates.caption !== undefined && { caption: updates.caption }),
-            updatedAt: Date.now()
-          },
-          { merge: true }
         ).catch(() => {});
       }
     } catch (err) {
-      console.warn("Firestore update video rating error:", err);
+      console.warn("Update video rating error:", err);
     }
   };
 

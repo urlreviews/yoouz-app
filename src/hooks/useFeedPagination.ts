@@ -72,7 +72,7 @@ export function useFeedPagination() {
   useEffect(() => {
     let active = true;
 
-    const loadData = async () => {
+    const loadData = async (isBackground = false) => {
       const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
       let deletedIds: string[] = [];
       try { 
@@ -81,8 +81,8 @@ export function useFeedPagination() {
       } catch (e) {}
 
       try {
-        // 1. Fetch from Server API
-        const res = await fetch("/api/videos/feed");
+        // 1. Fetch from Server API (always fresh from BunnyDB)
+        const res = await fetch(`/api/videos/feed?t=${Date.now()}`);
         if (res.ok && active) {
           const data = await res.json();
           if (data && Array.isArray(data.videos) && data.videos.length > 0) {
@@ -90,14 +90,30 @@ export function useFeedPagination() {
             
             setVideos((prev) => {
               const map = new Map<string, VideoReview>();
-              // Keep recent local ones
+              
+              // Seed map with existing state
               prev.forEach(v => {
-                if (v.id.startsWith("rev-") && v.createdAtMs && (Date.now() - v.createdAtMs < 300000)) {
+                map.set(v.id, v);
+              });
+
+              // Server videos update matching IDs with latest ratings, views, likes, etc.
+              valid.forEach(v => {
+                const existing = map.get(v.id);
+                if (existing) {
+                  map.set(v.id, {
+                    ...existing,
+                    ...v,
+                    rating: v.rating !== undefined ? v.rating : existing.rating,
+                    placeRating: v.placeRating !== undefined ? v.placeRating : (v.rating !== undefined ? v.rating : existing.placeRating),
+                    likes: typeof v.likes === 'number' ? v.likes : existing.likes,
+                    views: typeof v.views === 'number' ? v.views : existing.views,
+                    isLiked: existing.isLiked !== undefined ? existing.isLiked : v.isLiked,
+                    isBookmarked: existing.isBookmarked !== undefined ? existing.isBookmarked : v.isBookmarked
+                  });
+                } else {
                   map.set(v.id, v);
                 }
               });
-              // Add server ones
-              valid.forEach(v => map.set(v.id, { ...map.get(v.id), ...v }));
               
               const merged = Array.from(map.values());
               merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
@@ -107,23 +123,48 @@ export function useFeedPagination() {
               
               return merged;
             });
-            setIsLoading(false);
+            if (!isBackground) setIsLoading(false);
           } else {
-             setIsLoading(false);
+            if (!isBackground) setIsLoading(false);
           }
         }
       } catch (err) {
-        console.warn("[useFeedPagination] Server fetch failed:", err);
-        setIsLoading(false);
+        if (!isBackground) {
+          console.warn("[useFeedPagination] Server fetch failed:", err);
+          setIsLoading(false);
+        }
       }
 
-      setTimeout(() => { if (active) setIsLoading(false); }, 1500);
+      if (!isBackground) {
+        setTimeout(() => { if (active) setIsLoading(false); }, 1500);
+      }
     };
 
-    loadData();
+    // Initial load
+    loadData(false);
+
+    // Live background polling every 5 seconds for instant multi-device rating updates
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        loadData(true);
+      }
+    }, 5000);
+
+    // Immediate refresh on tab focus / app resume
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadData(true);
+      }
+    };
+
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
 
     return () => {
       active = false;
+      clearInterval(interval);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
     };
   }, []);
 

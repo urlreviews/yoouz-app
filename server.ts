@@ -3725,7 +3725,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     videos: [],
     lastFetched: 0
   };
-  const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+  const CACHE_TTL_MS = 5 * 1000; // 5 seconds cache for real-time responsiveness
 
   // Get Video Feed endpoint (combines server index with Firestore and uploaded videos with memory caching & write-back resiliency)
   app.get("/api/videos/feed", async (_req, res) => {
@@ -4087,6 +4087,107 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
 
       return res.json({ success: true, review });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Update Review (Rating, Caption, Dish/Tags) with instant BunnyDB & live feed synchronization
+  app.post(["/api/videos/update-review", "/api/videos/:id/update"], async (req, res) => {
+    try {
+      const videoId = req.params.id || req.body?.videoId || req.body?.id;
+      const updates = req.body?.updates || req.body || {};
+      if (!videoId) {
+        return res.status(400).json({ error: "Missing videoId" });
+      }
+
+      console.log(`⭐ [Server] Updating review ${videoId}:`, updates);
+
+      // 1. Update in local reviews JSON index
+      const list = readReviewsIndex();
+      const existingIdx = list.findIndex((item: any) => item.id === videoId);
+      let updatedReview: any = null;
+      if (existingIdx !== -1) {
+        list[existingIdx] = {
+          ...list[existingIdx],
+          ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+          ...(updates.caption !== undefined && { caption: updates.caption }),
+          ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+          ...(updates.tags !== undefined && { tags: updates.tags }),
+          updatedAt: Date.now()
+        };
+        updatedReview = list[existingIdx];
+        writeReviewsIndex(list);
+      }
+
+      // Invalidate memory cache to force an immediate fresh fetch on all clients
+      feedCache.lastFetched = 0;
+
+      // 2. Sync updates to Bunny Cloud Database (libSQL cloud)
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          // Fetch existing data payload if available to merge nicely
+          const rowRes = await bunnyDb.execute({
+            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          let currentData: any = {};
+          if (rowRes.rows && rowRes.rows.length > 0 && rowRes.rows[0].data) {
+            try {
+              currentData = typeof rowRes.rows[0].data === 'string' ? JSON.parse(rowRes.rows[0].data as string) : rowRes.rows[0].data;
+            } catch (e) {}
+          }
+
+          const mergedData = {
+            ...currentData,
+            ...(updatedReview ? updatedReview : {}),
+            ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+            ...(updates.caption !== undefined && { caption: updates.caption }),
+            ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+            ...(updates.tags !== undefined && { tags: updates.tags }),
+            updatedAt: Date.now()
+          };
+
+          if (updates.rating !== undefined) {
+            await bunnyDb.execute({
+              sql: `UPDATE videoReviews SET rating = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [updates.rating, JSON.stringify(mergedData), videoId]
+            });
+          } else {
+            await bunnyDb.execute({
+              sql: `UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [JSON.stringify(mergedData), videoId]
+            });
+          }
+          console.log(`🐰 [Server] BunnyDB successfully updated review rating for ${videoId}`);
+        } catch (bunnyErr: any) {
+          console.warn("BunnyDB sync in update-review notice:", bunnyErr?.message || bunnyErr);
+        }
+      }
+
+      // 3. Mirror to Drizzle PostgreSQL database
+      if (getDb()) {
+        try {
+          const [existing] = await db.select().from(firestore_video_reviews).where(eq(firestore_video_reviews.id, videoId));
+          if (existing) {
+            let existingData = existing.data && typeof existing.data === 'object' ? existing.data : {};
+            const finalData = {
+              ...existingData,
+              ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+              ...(updates.caption !== undefined && { caption: updates.caption }),
+              ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+              ...(updates.tags !== undefined && { tags: updates.tags }),
+              updatedAt: Date.now()
+            };
+            await db.update(firestore_video_reviews).set({ data: finalData }).where(eq(firestore_video_reviews.id, videoId));
+          }
+        } catch (sqlErr: any) {
+          console.warn("SQL database sync in update-review notice:", sqlErr?.message || sqlErr);
+        }
+      }
+
+      return res.json({ success: true, videoId, review: updatedReview });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
