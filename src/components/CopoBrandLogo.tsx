@@ -46,7 +46,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
     // 1. Direct scraped or explicitly provided logoUrl (if valid and not a generic placeholder)
     const isFavicon = logoUrl && (logoUrl.includes("favicon") || logoUrl.includes("gstatic.com") || logoUrl.includes("google.com/s2"));
-    if (logoUrl && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image")) && !logoUrl.includes("ui-avatars") && !logoUrl.includes("dicebear") && !isFavicon) {
+    if (logoUrl && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image")) && !logoUrl.includes("ui-avatars") && !logoUrl.includes("dicebear") && !isFavicon) {
       addItem(logoUrl, "contain");
     }
 
@@ -63,7 +63,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     // 4. Explicit logoUrl fallback if it was a favicon
-    if (logoUrl && isFavicon && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image"))) {
+    if (logoUrl && isFavicon && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image"))) {
       addItem(logoUrl, "contain");
     }
 

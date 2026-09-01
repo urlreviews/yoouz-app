@@ -16,7 +16,7 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
   const [useVideoElement, setUseVideoElement] = useState<boolean>(() => {
     // If the video has an explicit custom image URL that is not a placeholder, prefer img
     const thumb = video.thumbnailUrl;
-    if (thumb && !thumb.includes("data:image/svg+xml") && (thumb.startsWith("http") || thumb.startsWith("data:image/jpeg") || thumb.startsWith("data:image/png"))) {
+    if (thumb && !thumb.includes("data:image/svg+xml") && (thumb.startsWith("http") || thumb.startsWith("/api/") || thumb.startsWith("data:image/jpeg") || thumb.startsWith("data:image/png"))) {
       return false;
     }
     // Otherwise, direct video frame extraction gives the authentic reviewer face from the recording

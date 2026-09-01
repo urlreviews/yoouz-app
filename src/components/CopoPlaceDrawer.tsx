@@ -263,14 +263,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (place.ogImage && !place.ogImage.startsWith("blob:") && !place.ogImage.startsWith("data:")) return place.ogImage;
     for (const v of rawPlaceVideos) {
       const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
-      if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://"))) {
+      if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/"))) {
         return b;
       }
     }
     for (const v of (allVideos || [])) {
       if (isPlaceReviewMatch(v, place)) {
         const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
-        if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://"))) {
+        if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/"))) {
           return b;
         }
       }
