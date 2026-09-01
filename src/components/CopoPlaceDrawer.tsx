@@ -309,10 +309,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 ...place,
                 name: (data.title && isGenericName) ? data.title : place.name,
                 description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
-                bannerUrl: data.image || place.bannerUrl,
-                ogImage: data.image || place.ogImage,
-                logoUrl: data.logo || place.logoUrl,
-                avatarUrl: data.logo || place.avatarUrl,
+                bannerUrl: place.bannerUrl || data.image || "",
+                ogImage: place.ogImage || data.image || "",
+                logoUrl: (place.logoUrl && !place.logoUrl.startsWith("data:;")) ? place.logoUrl : (data.logo || ""),
+                avatarUrl: (place.avatarUrl && !place.avatarUrl.startsWith("data:;")) ? place.avatarUrl : (data.logo || ""),
                 brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
                 photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
               });

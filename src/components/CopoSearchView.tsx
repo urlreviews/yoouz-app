@@ -98,12 +98,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                foundPlace = {
                  ...foundPlace,
                  name: (data.title && (isGenericName(foundPlace.name) || foundPlace.name === foundPlace.brandDomain)) ? data.title : foundPlace.name,
-                 logoUrl: fetchedLogo || foundPlace.logoUrl,
-                 avatarUrl: fetchedLogo || foundPlace.avatarUrl,
-                 bannerUrl: fetchedBanner || foundPlace.bannerUrl,
-                 ogImage: fetchedBanner || foundPlace.ogImage,
-                 photos: (fetchedBanner && (!foundPlace.photos || foundPlace.photos.length === 0)) ? [fetchedBanner] : (foundPlace.photos || []),
-                 description: data.description || foundPlace.description,
+                 logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;")) ? foundPlace.logoUrl : (fetchedLogo || ""),
+                 avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
+                 bannerUrl: foundPlace.bannerUrl || fetchedBanner || "",
+                 ogImage: foundPlace.ogImage || fetchedBanner || "",
+                 photos: (foundPlace.photos && foundPlace.photos.length > 0) ? foundPlace.photos : (fetchedBanner ? [fetchedBanner] : []),
+                 description: foundPlace.description || data.description || "",
                };
                if (onAddPlace) {
                  onAddPlace(foundPlace);

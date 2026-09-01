@@ -1058,10 +1058,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           if (foundPlace) {
             foundPlace = {
               ...foundPlace,
-              logoUrl: fetchedLogo || foundPlace.logoUrl,
-              avatarUrl: fetchedLogo || foundPlace.avatarUrl,
-              bannerUrl: fetchedBanner || foundPlace.bannerUrl,
-              description: data.description || foundPlace.description,
+              logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;")) ? foundPlace.logoUrl : (fetchedLogo || ""),
+              avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
+              bannerUrl: foundPlace.bannerUrl || fetchedBanner || "",
+              description: foundPlace.description || data.description || "",
             };
           } else {
             foundPlace = {

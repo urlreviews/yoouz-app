@@ -2897,6 +2897,22 @@ export function App() {
       }
       return [updatedPlace, ...prev];
     });
+
+    // Mirror updates to BunnyDB (libSQL/SQLite) and Firestore so they persist forever (even after page refresh!)
+    try {
+      fetch(`/api/nosql/places/${updatedPlace.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: updatedPlace, merge: true })
+      }).catch((e) => console.error("Error updating place in BunnyDB:", e));
+
+      if (db) {
+        setDoc(doc(db, "places", updatedPlace.id), cleanForFirestore(updatedPlace), { merge: true })
+          .catch((e) => console.error("Error updating place in Firestore:", e));
+      }
+    } catch (err) {
+      console.error("Failed to sync updated place to databases:", err);
+    }
   };
 
   // Handle Publishing New Video Review
