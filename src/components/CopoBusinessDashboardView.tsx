@@ -3488,7 +3488,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <>
                                 {/* Background Video Thumbnail */}
                                 <img
-                                  src={activePreviewVideo?.thumbnailUrl || (currentPlace as any).coverImage || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'}
+                                  src={activePreviewVideo?.thumbnailUrl || currentPlace.bannerUrl || currentPlace.ogImage || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'}
                                   alt="Video Feed"
                                   className="absolute inset-0 w-full h-full object-cover opacity-85"
                                   referrerPolicy="no-referrer"
@@ -3627,7 +3627,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 <div className="space-y-2">
                                   <div className="h-24 rounded-xl bg-zinc-900 overflow-hidden relative border border-zinc-800">
                                     <img
-                                      src={(currentPlace as any).coverImage || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'}
+                                      src={currentPlace.bannerUrl || currentPlace.ogImage || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'}
                                       alt="Cover"
                                       className="w-full h-full object-cover"
                                       referrerPolicy="no-referrer"

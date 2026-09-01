@@ -83,8 +83,22 @@ export function App() {
     // Preserved: Do not clear user videos or data
   }, []);
 
-  // 1. Core State with LocalStorage Persistence
-  const [places, setPlaces] = useState<Place[]>([]);
+  // 1. Core State with LocalStorage Persistence (Instant Logo & Banner Caching)
+  const [places, setPlaces] = useState<Place[]>(() => {
+    try {
+      const cached = localStorage.getItem("yoouz_cached_places");
+      if (cached) return JSON.parse(cached);
+    } catch(e){}
+    return [];
+  });
+  
+  useEffect(() => {
+    try {
+      if (places.length > 0) {
+        localStorage.setItem("yoouz_cached_places", JSON.stringify(places));
+      }
+    } catch (e) {}
+  }, [places]);
 
   const { videos, setVideos, isLoading: isLoadingVideos, loadMore: loadMoreVideos, hasMore } = useFeedPagination();
   const [clubs, setClubs] = useState<Club[]>([]);
