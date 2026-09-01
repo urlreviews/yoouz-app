@@ -999,14 +999,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               rating: rating
             };
 
-            // Mirror to BunnyDB
+            // Persist directly to BunnyDB
             fetch(`/api/nosql/places/${placeDocId}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ data: updatedPlaceData, merge: true })
             }).catch(() => {});
-
-            setDoc(doc(db, "places", placeDocId), cleanForFirestore(updatedPlaceData), { merge: true }).catch(() => {});
           }
         }
       }

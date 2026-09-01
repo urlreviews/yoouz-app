@@ -3652,8 +3652,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       name: "Kempinski Hotels"
     },
     "thecapitalavenue.com": {
-      bannerUrl: "https://thecapitalavenue.com/wp-content/uploads/2025/09/THE-CAPITAL-AVENUE-linked-in-pp.jpg",
-      logoUrl: "https://thecapitalavenue.com/wp-content/uploads/2023/12/760X310.png",
+      bannerUrl: "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
+      logoUrl: "https://thecapitalavenue.com/wp-content/uploads/2023/12/thecapitalavenue.png",
+      name: "The Capital Avenue Real Estate - Abu Dhabi",
+      website: "https://thecapitalavenue.com"
+    },
+    "www.thecapitalavenue.com": {
+      bannerUrl: "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
+      logoUrl: "https://thecapitalavenue.com/wp-content/uploads/2023/12/thecapitalavenue.png",
       name: "The Capital Avenue Real Estate - Abu Dhabi",
       website: "https://thecapitalavenue.com"
     },

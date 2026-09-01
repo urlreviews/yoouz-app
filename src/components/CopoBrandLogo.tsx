@@ -55,29 +55,19 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       addItem(logoUrl, "contain");
     }
 
-    // 3. Known high-res brand banner or explicit bannerUrl (instant visual representation)
-    if (resolvedDomain && KNOWN_BRAND_BANNERS[resolvedDomain]) {
-      addItem(KNOWN_BRAND_BANNERS[resolvedDomain], "cover");
-    }
-    if (bannerUrl && (bannerUrl.startsWith("http://") || bannerUrl.startsWith("https://") || bannerUrl.startsWith("data:image")) && !bannerUrl.includes("ui-avatars")) {
-      addItem(bannerUrl, "cover");
-    }
-
-    // 4. High-resolution brand logo retrieval APIs (Real brand fetchers)
+    // 3. High-resolution brand logo retrieval APIs
     if (resolvedDomain) {
-      addItem(`https://cdn.brandfetch.io/${resolvedDomain}/icon`, "contain");
       addItem(`https://unavatar.io/${resolvedDomain}?fallback=false`, "contain");
       addItem(`https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`, "contain");
-      addItem(`https://logos.hunter.io/${resolvedDomain}`, "contain");
     }
 
-    // 5. Explicit logoUrl fallback if it was a favicon
+    // 4. Explicit logoUrl fallback if it was a favicon
     if (logoUrl && isFavicon && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image"))) {
       addItem(logoUrl, "contain");
     }
 
     return items;
-  }, [resolvedDomain, logoUrl, bannerUrl]);
+  }, [resolvedDomain, logoUrl]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasFailedAll, setHasFailedAll] = useState(false);

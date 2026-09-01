@@ -129,8 +129,10 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <circle cx="50" cy="50" r="32" fill="none" stroke="#d97706" stroke-width="3"/>
       <path d="M50 28 V50 L64 64" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
     </svg>`),
-  "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2023/12/760X310.png",
+  "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2023/12/thecapitalavenue.png",
+  "www.thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2023/12/thecapitalavenue.png",
   "districtuae.com": "https://www.districtuae.com/dre-logo-dark.png",
+  "www.districtuae.com": "https://www.districtuae.com/dre-logo-dark.png",
   "tajhotels.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#292524"/>
@@ -147,8 +149,10 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses
 export const KNOWN_BRAND_BANNERS: Record<string, string> = {
-  "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2025/09/THE-CAPITAL-AVENUE-linked-in-pp.jpg",
+  "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
+  "www.thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
   "districtuae.com": "https://www.districtuae.com/og-default.jpeg",
+  "www.districtuae.com": "https://www.districtuae.com/og-default.jpeg",
   "tajhotels.com": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80",
   "ups.com": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&auto=format&fit=crop&q=80",
   "mastercard.com": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1200&auto=format&fit=crop&q=80",

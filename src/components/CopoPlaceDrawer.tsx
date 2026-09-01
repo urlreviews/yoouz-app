@@ -346,9 +346,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);
     if (place.avatarUrl && !place.avatarUrl.startsWith("data:;")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
-    if (hasAuthenticPhoto) return allPhotos[0];
     return null;
-  }, [place, drawerDomain, hasAuthenticPhoto, allPhotos]);
+  }, [place, drawerDomain]);
 
   // Genuine check filters
   const hasGenuinePhone = Boolean(

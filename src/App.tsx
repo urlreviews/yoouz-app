@@ -1519,8 +1519,8 @@ export function App() {
           const currentWebsite = existing.website && existing.website.trim() !== "" && !existing.website.includes("maps.google.com") ? existing.website : "";
           const effectiveWeb = currentWebsite || reviewWebsite || (existing.brandDomain && existing.brandDomain.includes(".") ? `https://${existing.brandDomain}` : "");
 
-          const effectiveBanner = existing.bannerUrl || existing.ogImage || reviewBanner || knownBanner || "";
-          const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) ? existing.avatarUrl : (reviewLogo || knownLogo || ""));
+          const effectiveBanner = knownBanner || existing.bannerUrl || existing.ogImage || reviewBanner || "";
+          const effectiveLogo = knownLogo || ((existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) ? existing.avatarUrl : (reviewLogo || "")));
 
           if (
             (!existing.bannerUrl && effectiveBanner) ||
@@ -2899,28 +2899,54 @@ export function App() {
       return prev;
     });
 
-    // Ensure place exists in places list or update its rating/review count
+    // Ensure place exists in places list or update its rating/review count and persist to DB
     setPlaces((prev) => {
       const exists = prev.some((p) => isPlaceReviewMatch(newReview, p));
+      let targetPlace: Place;
+      let nextList: Place[];
+
       if (!exists) {
-        const newPlace = synthesizePlaceFromReview(newReview, prev);
-        return [newPlace, ...prev];
+        targetPlace = synthesizePlaceFromReview(newReview, prev);
+        nextList = [targetPlace, ...prev];
+      } else {
+        nextList = prev.map((p) => {
+          if (isPlaceReviewMatch(newReview, p)) {
+            const newTotalReviews = (p.totalReviews || 0) + 1;
+            const newRating = Number(
+              (((p.rating || 5) * (p.totalReviews || 1) + newReview.rating) / newTotalReviews).toFixed(1)
+            );
+            targetPlace = {
+              ...p,
+              rating: newRating,
+              totalReviews: newTotalReviews,
+              videoReviewCount: (p.videoReviewCount || 0) + 1,
+              logoUrl: p.logoUrl || newReview.placeLogoUrl || p.avatarUrl || "",
+              avatarUrl: p.avatarUrl || newReview.placeLogoUrl || p.logoUrl || "",
+              bannerUrl: p.bannerUrl || newReview.placeBannerUrl || p.ogImage || "",
+              ogImage: p.ogImage || newReview.placeBannerUrl || p.bannerUrl || "",
+              website: p.website || newReview.placeWebsite || ""
+            };
+            return targetPlace;
+          }
+          return p;
+        });
       }
-      return prev.map((p) => {
-        if (isPlaceReviewMatch(newReview, p)) {
-          const newTotalReviews = (p.totalReviews || 0) + 1;
-          const newRating = Number(
-            (((p.rating || 5) * (p.totalReviews || 1) + newReview.rating) / newTotalReviews).toFixed(1)
-          );
-          return {
-            ...p,
-            rating: newRating,
-            totalReviews: newTotalReviews,
-            videoReviewCount: (p.videoReviewCount || 0) + 1
-          };
+
+      // Persist place directly to database so it is remembered forever
+      if (targetPlace! && targetPlace.id) {
+        if (db) {
+          try {
+            setDoc(doc(db, "places", targetPlace.id), cleanForFirestore(targetPlace), { merge: true }).catch(() => {});
+          } catch (e) {}
         }
-        return p;
-      });
+        fetch(`/api/nosql/places/${targetPlace.id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: targetPlace, merge: true })
+        }).catch(() => {});
+      }
+
+      return nextList;
     });
   };
 
