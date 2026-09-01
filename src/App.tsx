@@ -980,6 +980,48 @@ export function App() {
     return () => unsubscribe();
   }, [currentUser]);
 
+  // Account validity checker (logs out if admin deleted user from database)
+  useEffect(() => {
+    if (!currentUser || !currentUser.email) return;
+
+    let isSubscribed = true;
+    const cleanEmail = currentUser.email.trim().toLowerCase();
+    // Default fallback to the generated ID format from Magic Link
+    const generatedUid = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const expectedUid = currentUser.id || currentUser.uid || generatedUid;
+
+    const checkUserBanStatus = async () => {
+      try {
+        const res = await fetch(`/api/nosql/users/${expectedUid}`);
+        if (res.status === 404 && isSubscribed) {
+          console.warn("User account deleted or banned by admin. Logging out automatically.");
+          setCurrentUser(null);
+          localStorage.removeItem("copo_user");
+          localStorage.removeItem("copo_user_profile");
+          alert("Your account has been deleted by an administrator.");
+          if (activeSection !== "home") setActiveSection("home");
+          
+          if (auth && auth.signOut) {
+            try { await auth.signOut(); } catch (e) {}
+          }
+        }
+      } catch (err) {}
+    };
+
+    // Check immediately on mount/login
+    checkUserBanStatus();
+    
+    // Poll to catch mid-session deletions
+    const intervalId = setInterval(() => {
+      if (isSubscribed) checkUserBanStatus();
+    }, 15000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(intervalId);
+    };
+  }, [currentUser, activeSection]);
+
   // Real-time Firestore sync for Direct Messages & Chats
   useEffect(() => {
     if (!currentUser) {
