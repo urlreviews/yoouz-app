@@ -4731,9 +4731,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
 
               <div>
-                <h2 className="font-black text-white text-lg tracking-tight flex items-center gap-1.5 justify-center">
-                  <span>{currentPlace.name}</span>
-                  <CheckCircle className="w-5 h-5 fill-white text-black shrink-0" />
+                <h2 className="font-black text-white text-lg tracking-tight text-center [overflow-wrap:anywhere]">
+                  {currentPlace.name}
+                  <CheckCircle className="inline-block w-5 h-5 ml-1.5 align-text-bottom fill-white text-black shrink-0 relative -top-[1.5px]" />
                 </h2>
                 <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1 mt-0.5">
                   <span>★ 4.9</span>

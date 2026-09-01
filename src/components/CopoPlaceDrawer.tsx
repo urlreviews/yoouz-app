@@ -620,22 +620,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="min-w-0 flex-1 pr-2">
             <h2 className="text-2xl font-bold text-white md:text-white tracking-tight leading-tight [overflow-wrap:anywhere]">
-              {(() => {
-                const name = formatBusinessName(place.name) || "";
-                const words = name.split(" ");
-                const lastWord = words.pop();
-                return (
-                  <>
-                    {words.length > 0 && <span>{words.join(" ")} </span>}
-                    <span className="whitespace-nowrap inline-flex items-center gap-1.5 align-bottom">
-                      <span>{lastWord}</span>
-                      <span title="Verified Business" className="inline-flex">
-                        <CheckCircle className="w-5 h-5 fill-white text-black shrink-0" />
-                      </span>
-                    </span>
-                  </>
-                );
-              })()}
+              {formatBusinessName(place.name) || ""}
+              <CheckCircle className="inline-block w-[22px] h-[22px] ml-1.5 align-text-bottom fill-white text-black shrink-0 relative -top-[2px]" />
             </h2>
           </div>
 
