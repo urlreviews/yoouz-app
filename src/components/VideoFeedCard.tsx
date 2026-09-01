@@ -796,7 +796,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             className="self-start flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/85 backdrop-blur-md border border-white/20 text-white text-[14px] font-semibold hover:bg-black/95 hover:border-white/40 transition-all w-fit max-w-[100%] text-left group cursor-pointer shadow-lg"
           >
             <CopoBrandLogo
-              domain={video.placeWebsite}
+              domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
               name={formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || "Business Place"}
               website={video.placeWebsite}
               logoUrl={businessLogoUrl || video?.placeLogoUrl}

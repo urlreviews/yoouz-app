@@ -3649,6 +3649,18 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       logoUrl: "https://storage.kempinski.com/cdn-cgi/image/w=300,f=auto/ki-cms-prod/images/logo.png",
       name: "Kempinski Hotels"
     },
+    "thecapitalavenue.com": {
+      bannerUrl: "https://thecapitalavenue.com/wp-content/uploads/2025/09/THE-CAPITAL-AVENUE-linked-in-pp.jpg",
+      logoUrl: "https://thecapitalavenue.com/wp-content/uploads/2023/12/760X310.png",
+      name: "The Capital Avenue Real Estate - Abu Dhabi",
+      website: "https://thecapitalavenue.com"
+    },
+    "districtuae.com": {
+      bannerUrl: "https://www.districtuae.com/og-default.jpeg",
+      logoUrl: "https://www.districtuae.com/dre-logo-dark.png",
+      name: "District Real Estate | Abu Dhabi & Dubai Property Advisory",
+      website: "https://www.districtuae.com"
+    },
     "mastercard.com": {
       logoUrl: "https://assets.brandfetch.io/idO-nUa30p/theme/dark/logo.svg?c=1bx1740614838634id64Mup7ac68853mP5_",
       name: "Mastercard"
@@ -3657,21 +3669,39 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
   const enrichReviewPlaceAssets = (r: any): any => {
     if (!r) return r;
-    const domain = (r.placeWebsite || r.placeName || r.placeId || "")
+    let rawStr = (r.placeWebsite || r.placeId || r.placeName || "")
       .replace(/^https?:\/\//i, "")
-      .replace(/^www\./i, "")
+      .replace(/^www[\.\-\/]/i, "")
       .split("/")[0]
       .trim()
       .toLowerCase();
+
+    if (rawStr.endsWith("-com")) rawStr = rawStr.replace(/-com$/, ".com");
+    if (rawStr.endsWith("-net")) rawStr = rawStr.replace(/-net$/, ".net");
+    if (rawStr.endsWith("-org")) rawStr = rawStr.replace(/-org$/, ".org");
+    if (rawStr.endsWith("-io")) rawStr = rawStr.replace(/-io$/, ".io");
+    if (rawStr.endsWith("-co")) rawStr = rawStr.replace(/-co$/, ".co");
+    if (rawStr.endsWith("-ai")) rawStr = rawStr.replace(/-ai$/, ".ai");
+    if (rawStr.endsWith("-be")) rawStr = rawStr.replace(/-be$/, ".be");
+    if (rawStr.endsWith("-co-uk")) rawStr = rawStr.replace(/-co-uk$/, ".co.uk");
+
+    const domain = rawStr.includes(".") ? rawStr : (rawStr.length > 2 ? rawStr.replace(/[^a-z0-9]/g, "") + ".com" : "");
     
     let banner = r.placeBannerUrl || r.bannerUrl || r.ogImage || "";
     let logo = r.placeLogoUrl || r.logoUrl || "";
+    if (logo === "data:;" || logo.startsWith("data:;")) logo = "";
+
     let website = r.placeWebsite || (domain && domain.includes(".") ? `https://${domain}` : "");
 
     const matchedMeta = KNOWN_PLACE_METADATA[domain] || (domain ? Object.entries(KNOWN_PLACE_METADATA).find(([k]) => domain.includes(k) || k.includes(domain))?.[1] : null);
     if (matchedMeta) {
       if (!banner && matchedMeta.bannerUrl) banner = matchedMeta.bannerUrl;
       if (!logo && matchedMeta.logoUrl) logo = matchedMeta.logoUrl;
+      if (!website && matchedMeta.website) website = matchedMeta.website;
+    }
+
+    if (!logo && domain && domain.includes(".")) {
+      logo = `https://cdn.brandfetch.io/${domain}/icon`;
     }
 
     return {
@@ -6261,7 +6291,12 @@ Return JSON:
         siteName = domain;
       }
       
-      res.json({ title, description, image, logo, siteName, domain, url: finalUrl });
+      const cleanDomain = domain.replace(/^www\./i, "").toLowerCase();
+      if (!logo) {
+        logo = `https://cdn.brandfetch.io/${cleanDomain}/icon`;
+      }
+      
+      res.json({ title, description, image, logo, siteName, domain: cleanDomain, url: finalUrl });
     } catch (e) {
       console.error('SERVER ERROR:', e);
       res.status(500).json({ error: e.message });

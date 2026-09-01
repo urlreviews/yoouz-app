@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { extractDomain } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -22,50 +22,62 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]",
   fallbackTextClassName = "font-black text-2xl sm:text-3xl text-white drop-shadow-md"
 }) => {
-  // Extract clean domain
+  // Extract clean domain from any source
   const resolvedDomain = React.useMemo(() => {
     if (domain) return extractDomain(domain);
     if (website) return extractDomain(website);
     if (logoUrl) return extractDomain(logoUrl);
+    if (name) return extractDomain(name);
     return null;
-  }, [domain, website, logoUrl]);
+  }, [domain, website, logoUrl, name]);
 
-    // Build the fallback cascade list
-    const cascadeItems = React.useMemo(() => {
-      const items: { url: string; fit: "contain" | "cover" }[] = [];
-  
-      // 1. Direct scraped logoUrl (if available and valid)
-      // Check if it's a generic favicon
-      const isFavicon = logoUrl && (logoUrl.includes("favicon") || logoUrl.includes("gstatic.com") || logoUrl.includes("google.com/s2"));
+  // Build the fallback cascade list
+  const cascadeItems = React.useMemo(() => {
+    const items: { url: string; fit: "contain" | "cover" }[] = [];
+    const seen = new Set<string>();
 
-      if (logoUrl && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image")) && !logoUrl.includes("ui-avatars") && !logoUrl.includes("dicebear") && !isFavicon) {
-        items.push({ url: logoUrl, fit: "contain" });
-      }
-  
-      // 2. High-resolution brand logo retrieval APIs (Professional assets)
-      if (resolvedDomain) {
-        items.push({ url: `https://logos.hunter.io/${resolvedDomain}`, fit: "contain" });
-        items.push({ url: `https://unavatar.io/${resolvedDomain}?fallback=false`, fit: "contain" });
-      }
-  
-      // 3. Fallback to bannerUrl / ogImage (high quality brand representation!)
-      // This guarantees we always have a gorgeous picture (e.g. from the page banner) if no brand logo is found!
-      if (bannerUrl && (bannerUrl.startsWith("http://") || bannerUrl.startsWith("https://") || bannerUrl.startsWith("data:image"))) {
-        items.push({ url: bannerUrl, fit: "cover" });
-      }
+    const addItem = (url: string | null | undefined, fit: "contain" | "cover" = "contain") => {
+      if (!url) return;
+      const clean = url.trim();
+      if (!clean || clean === "data:;" || clean.startsWith("data:;") || seen.has(clean)) return;
+      seen.add(clean);
+      items.push({ url: clean, fit });
+    };
 
-      // 4. Reliable Google High-Res Favicon (256px) as secondary resort
-      if (resolvedDomain) {
-        items.push({ url: `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`, fit: "contain" });
-      }
+    // 1. Direct match for known high-quality brand vector logos
+    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
+      addItem(KNOWN_BRAND_LOGOS[resolvedDomain], "contain");
+    }
 
-      // 5. Explicit logoUrl (even if it's a favicon)
-      if (logoUrl && isFavicon && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image"))) {
-        items.push({ url: logoUrl, fit: "contain" });
-      }
+    // 2. Direct scraped or explicitly provided logoUrl (if valid and not a generic favicon)
+    const isFavicon = logoUrl && (logoUrl.includes("favicon") || logoUrl.includes("gstatic.com") || logoUrl.includes("google.com/s2"));
+    if (logoUrl && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image")) && !logoUrl.includes("ui-avatars") && !logoUrl.includes("dicebear") && !isFavicon) {
+      addItem(logoUrl, "contain");
+    }
 
-      return items;
-    }, [resolvedDomain, logoUrl, bannerUrl]);
+    // 3. Known high-res brand banner or explicit bannerUrl (instant visual representation)
+    if (resolvedDomain && KNOWN_BRAND_BANNERS[resolvedDomain]) {
+      addItem(KNOWN_BRAND_BANNERS[resolvedDomain], "cover");
+    }
+    if (bannerUrl && (bannerUrl.startsWith("http://") || bannerUrl.startsWith("https://") || bannerUrl.startsWith("data:image")) && !bannerUrl.includes("ui-avatars")) {
+      addItem(bannerUrl, "cover");
+    }
+
+    // 4. High-resolution brand logo retrieval APIs (Real brand fetchers)
+    if (resolvedDomain) {
+      addItem(`https://cdn.brandfetch.io/${resolvedDomain}/icon`, "contain");
+      addItem(`https://unavatar.io/${resolvedDomain}?fallback=false`, "contain");
+      addItem(`https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`, "contain");
+      addItem(`https://logos.hunter.io/${resolvedDomain}`, "contain");
+    }
+
+    // 5. Explicit logoUrl fallback if it was a favicon
+    if (logoUrl && isFavicon && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image"))) {
+      addItem(logoUrl, "contain");
+    }
+
+    return items;
+  }, [resolvedDomain, logoUrl, bannerUrl]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasFailedAll, setHasFailedAll] = useState(false);
@@ -91,7 +103,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   };
 
   if (hasFailedAll || cascadeItems.length === 0) {
-    // Strip bg-white and other bg- colors to ensure the fallback gradient displays properly and is not overridden by a white background
+    // Strip bg-white and other bg- colors to ensure the fallback gradient displays properly
     const fallbackBgClass = className
       .split(" ")
       .filter((c) => !c.startsWith("bg-") && !c.includes("bg-"))

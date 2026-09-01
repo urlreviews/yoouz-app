@@ -46,6 +46,7 @@ import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlace
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
+import { KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getCleanLogoUrl } from "../utils/logoUtils";
 import { CopoBusinessPricingModal } from "./CopoBusinessPricingModal";
 import { CopoShareModal } from "./CopoShareModal";
 import { CopoBusinessClaimModal } from "./CopoBusinessClaimModal";
@@ -309,7 +310,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     }
   }, [place.id, place.website, drawerDomain, reviewBannerUrl, onUpdatePlace]);
 
-  const effectiveBanner = fetchedBannerUrl || reviewBannerUrl || place.bannerUrl || place.ogImage || "";
+  const effectiveBanner =
+    fetchedBannerUrl ||
+    reviewBannerUrl ||
+    place.bannerUrl ||
+    place.ogImage ||
+    (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]) ||
+    "";
 
   // Check if photos are authentic place photos
   const allPhotos = Array.from(
@@ -334,10 +341,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const hasAuthenticPhoto = allPhotos.length > 0;
 
   const primaryLogoUrl = React.useMemo(() => {
-    if (place.logoUrl) return getCleanLogoUrl(place.logoUrl, drawerDomain);
-    if (place.avatarUrl && !place.avatarUrl.includes("favicons")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
+    if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
+    if (place.logoUrl && !place.logoUrl.startsWith("data:;")) return getCleanLogoUrl(place.logoUrl, drawerDomain);
+    if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);
-    if (place.avatarUrl) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
+    if (place.avatarUrl && !place.avatarUrl.startsWith("data:;")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     if (hasAuthenticPhoto) return allPhotos[0];
     return null;
   }, [place, drawerDomain, hasAuthenticPhoto, allPhotos]);

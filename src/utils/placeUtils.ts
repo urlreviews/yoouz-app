@@ -1,5 +1,5 @@
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { getCleanLogoUrl } from "./logoUtils";
+import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./logoUtils";
 
 /**
  * Cleanly extracts domain name from URL or text string
@@ -333,12 +333,20 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
   const existing = existingPlaces.find((p) => isPlaceReviewMatch(video, p));
   const domain = extractCleanDomain(video.placeWebsite || video.placeName || video.placeId);
   const cleanId = video.placeId || (domain ? domain.replace(/[^a-zA-Z0-9]/g, "-") : `place-${Date.now()}`);
-  const reviewBanner = (video as any).placeBannerUrl || (video as any).bannerUrl || (video as any).ogImage || "";
-  const reviewLogo = video.placeLogoUrl || (domain ? getCleanLogoUrl(null, domain) || "" : "");
+  const reviewBanner =
+    (video as any).placeBannerUrl ||
+    (video as any).bannerUrl ||
+    (video as any).ogImage ||
+    (domain && KNOWN_BRAND_BANNERS[domain]) ||
+    "";
+  const reviewLogo =
+    video.placeLogoUrl ||
+    (domain && KNOWN_BRAND_LOGOS[domain]) ||
+    (domain ? getCleanLogoUrl(null, domain) || "" : "");
 
   if (existing) {
-    const banner = existing.bannerUrl || existing.ogImage || reviewBanner || "";
-    const logo = existing.logoUrl || existing.avatarUrl || reviewLogo || "";
+    const banner = existing.bannerUrl || existing.ogImage || reviewBanner || (domain && KNOWN_BRAND_BANNERS[domain]) || "";
+    const logo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) || (existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) || reviewLogo || (domain && KNOWN_BRAND_LOGOS[domain]) || "";
     const website = (existing.website && !existing.website.includes("maps.google.com")) 
       ? existing.website 
       : (video.placeWebsite || (domain ? `https://${domain}` : ""));

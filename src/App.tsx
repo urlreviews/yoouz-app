@@ -38,7 +38,7 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanForFirestore } from "./utils/cleanFirestore";
 import { getRawVideoBlobFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount } from "./utils/placeUtils";
-import { getCleanLogoUrl } from "./utils/logoUtils";
+import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { resolveVideoPosterUrl } from "./utils/videoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import {
@@ -1502,30 +1502,43 @@ export function App() {
       const next = [...prev];
       videos.forEach((v) => {
         const idx = next.findIndex((p) => isPlaceReviewMatch(v, p));
+        const reviewDomain = extractCleanDomain(v.placeWebsite || v.placeName || v.placeId);
+        const knownBanner = reviewDomain && KNOWN_BRAND_BANNERS[reviewDomain] ? KNOWN_BRAND_BANNERS[reviewDomain] : "";
+        const knownLogo = reviewDomain && KNOWN_BRAND_LOGOS[reviewDomain] ? KNOWN_BRAND_LOGOS[reviewDomain] : "";
+
         if (idx === -1) {
           const newPlace = synthesizePlaceFromReview(v, next);
           next.push(newPlace);
           modified = true;
         } else {
-          // If existing place is missing banner, logo, or website, enrich it from the video review!
+          // If existing place is missing banner, logo, or website, enrich it from the video review or known metadata!
           const existing = next[idx];
-          const reviewBanner = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
-          const reviewLogo = v.placeLogoUrl;
-          const reviewDomain = extractCleanDomain(v.placeWebsite || v.placeName || v.placeId);
+          const reviewBanner = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage || knownBanner;
+          const reviewLogo = v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") ? v.placeLogoUrl : (knownLogo || existing.logoUrl);
           const reviewWebsite = v.placeWebsite || (reviewDomain && reviewDomain.includes(".") ? `https://${reviewDomain}` : "");
           const currentWebsite = existing.website && existing.website.trim() !== "" && !existing.website.includes("maps.google.com") ? existing.website : "";
           const effectiveWeb = currentWebsite || reviewWebsite || (existing.brandDomain && existing.brandDomain.includes(".") ? `https://${existing.brandDomain}` : "");
 
-          if ((!existing.bannerUrl && reviewBanner) || (!existing.ogImage && reviewBanner) || (!existing.logoUrl && reviewLogo) || (!existing.website && effectiveWeb)) {
+          const effectiveBanner = existing.bannerUrl || existing.ogImage || reviewBanner || knownBanner || "";
+          const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) || (existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) || reviewLogo || knownLogo || "";
+
+          if (
+            (!existing.bannerUrl && effectiveBanner) ||
+            (!existing.ogImage && effectiveBanner) ||
+            (!existing.logoUrl && effectiveLogo) ||
+            (!existing.website && effectiveWeb) ||
+            (!existing.brandDomain && reviewDomain) ||
+            (existing.bannerUrl === "" && effectiveBanner !== "")
+          ) {
             next[idx] = {
               ...existing,
-              bannerUrl: existing.bannerUrl || reviewBanner || "",
-              ogImage: existing.ogImage || reviewBanner || "",
-              logoUrl: existing.logoUrl || reviewLogo || existing.logoUrl,
-              avatarUrl: existing.avatarUrl || reviewLogo || existing.avatarUrl,
+              bannerUrl: effectiveBanner || existing.bannerUrl || "",
+              ogImage: effectiveBanner || existing.ogImage || "",
+              logoUrl: effectiveLogo || existing.logoUrl || "",
+              avatarUrl: effectiveLogo || existing.avatarUrl || "",
               website: effectiveWeb || existing.website || "",
               brandDomain: existing.brandDomain || reviewDomain || undefined,
-              photos: existing.photos && existing.photos.length > 0 ? existing.photos : (reviewBanner ? [reviewBanner] : [])
+              photos: existing.photos && existing.photos.length > 0 ? existing.photos : (effectiveBanner ? [effectiveBanner] : [])
             };
             modified = true;
           }
