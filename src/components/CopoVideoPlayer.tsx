@@ -361,7 +361,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         document.body.style.overflow === "hidden" ||
         moreMenuVideo !== null ||
         document.querySelector(
-          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer"
+          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer"
         ) !== null
       ) {
         return;
@@ -440,7 +440,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         document.body.style.overflow === "hidden" ||
         moreMenuVideo !== null ||
         document.querySelector(
-          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer"
+          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer"
         ) !== null
       ) {
         return;
