@@ -3608,6 +3608,80 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
   };
 
+  const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string }> = {
+    "districtuae.com": {
+      bannerUrl: "https://www.districtuae.com/og-default.jpeg",
+      logoUrl: "https://www.districtuae.com/dre-logo-dark.png",
+      name: "District Real Estate | Abu Dhabi & Dubai Property Advisory"
+    },
+    "www.districtuae.com": {
+      bannerUrl: "https://www.districtuae.com/og-default.jpeg",
+      logoUrl: "https://www.districtuae.com/dre-logo-dark.png",
+      name: "District Real Estate | Abu Dhabi & Dubai Property Advisory"
+    },
+    "freecancellations.com": {
+      bannerUrl: "https://metasearch-cdn.azureedge.net/azure/seo-images/us/new-york-state/CDD5D4910706645C4CAD830CC6C07D52.jpg?quality=80&mode=crop&w=1200&h=800&scale=both&anchor=middlecenter",
+      logoUrl: "https://www.freecancellations.com/www.freecancellations.com/images/favicon.ico",
+      name: "Free Cancellations"
+    },
+    "www.freecancellations.com": {
+      bannerUrl: "https://metasearch-cdn.azureedge.net/azure/seo-images/us/new-york-state/CDD5D4910706645C4CAD830CC6C07D52.jpg?quality=80&mode=crop&w=1200&h=800&scale=both&anchor=middlecenter",
+      logoUrl: "https://www.freecancellations.com/www.freecancellations.com/images/favicon.ico",
+      name: "Free Cancellations"
+    },
+    "londontrustedtherapy.com": {
+      bannerUrl: "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp",
+      logoUrl: "https://londontrustedtherapy.com/wp-content/uploads/2025/04/logo.png",
+      name: "London Trusted Therapy"
+    },
+    "www.londontrustedtherapy.com": {
+      bannerUrl: "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp",
+      logoUrl: "https://londontrustedtherapy.com/wp-content/uploads/2025/04/logo.png",
+      name: "London Trusted Therapy"
+    },
+    "timehotels.com": {
+      bannerUrl: "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png",
+      logoUrl: "https://image-tc.galaxy.tf/wisvg-9lebbglg3t6xlc2rqczxfj82s/93_popup-logo.svg",
+      name: "TIME Hotels"
+    },
+    "kempinski.com": {
+      bannerUrl: "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg",
+      logoUrl: "https://storage.kempinski.com/cdn-cgi/image/w=300,f=auto/ki-cms-prod/images/logo.png",
+      name: "Kempinski Hotels"
+    },
+    "mastercard.com": {
+      logoUrl: "https://assets.brandfetch.io/idO-nUa30p/theme/dark/logo.svg?c=1bx1740614838634id64Mup7ac68853mP5_",
+      name: "Mastercard"
+    }
+  };
+
+  const enrichReviewPlaceAssets = (r: any): any => {
+    if (!r) return r;
+    const domain = (r.placeWebsite || r.placeName || r.placeId || "")
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .split("/")[0]
+      .trim()
+      .toLowerCase();
+    
+    let banner = r.placeBannerUrl || r.bannerUrl || r.ogImage || "";
+    let logo = r.placeLogoUrl || r.logoUrl || "";
+
+    const matchedMeta = KNOWN_PLACE_METADATA[domain] || (domain ? Object.entries(KNOWN_PLACE_METADATA).find(([k]) => domain.includes(k) || k.includes(domain))?.[1] : null);
+    if (matchedMeta) {
+      if (!banner && matchedMeta.bannerUrl) banner = matchedMeta.bannerUrl;
+      if (!logo && matchedMeta.logoUrl) logo = matchedMeta.logoUrl;
+    }
+
+    return {
+      ...r,
+      placeBannerUrl: banner || r.placeBannerUrl || "",
+      bannerUrl: banner || r.bannerUrl || "",
+      ogImage: banner || r.ogImage || "",
+      placeLogoUrl: logo || r.placeLogoUrl || ""
+    };
+  };
+
   // Memory Cache for Firestore reviews to drastically reduce read calls and prevent quota exhaustion
   interface VideoFeedCache {
     videos: any[];
@@ -3755,7 +3829,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      const merged = Array.from(map.values());
+      const merged = Array.from(map.values()).map(enrichReviewPlaceAssets);
       merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
 
       // 4. Update memory cache and write-back to local reviews_index.json on success
@@ -3888,10 +3962,11 @@ app.post("/api/interactions/like", async (req, res) => {
 
 app.post("/api/videos/save-review", async (req, res) => {
     try {
-      const review = req.body;
-      if (!review || !review.id) {
+      const rawReview = req.body;
+      if (!rawReview || !rawReview.id) {
         return res.status(400).json({ error: "Missing review object or review.id" });
       }
+      const review = enrichReviewPlaceAssets(rawReview);
       
       // 1. Save to local server JSON index
       const list = readReviewsIndex();

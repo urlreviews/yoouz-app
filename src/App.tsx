@@ -1501,11 +1501,27 @@ export function App() {
       let modified = false;
       const next = [...prev];
       videos.forEach((v) => {
-        const exists = next.some((p) => isPlaceReviewMatch(v, p));
-        if (!exists) {
+        const idx = next.findIndex((p) => isPlaceReviewMatch(v, p));
+        if (idx === -1) {
           const newPlace = synthesizePlaceFromReview(v, next);
           next.push(newPlace);
           modified = true;
+        } else {
+          // If existing place is missing banner or logo, enrich it from the video review!
+          const existing = next[idx];
+          const reviewBanner = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
+          const reviewLogo = v.placeLogoUrl;
+          if ((!existing.bannerUrl && reviewBanner) || (!existing.ogImage && reviewBanner) || (!existing.logoUrl && reviewLogo)) {
+            next[idx] = {
+              ...existing,
+              bannerUrl: existing.bannerUrl || reviewBanner || "",
+              ogImage: existing.ogImage || reviewBanner || "",
+              logoUrl: existing.logoUrl || reviewLogo || existing.logoUrl,
+              avatarUrl: existing.avatarUrl || reviewLogo || existing.avatarUrl,
+              photos: existing.photos && existing.photos.length > 0 ? existing.photos : (reviewBanner ? [reviewBanner] : [])
+            };
+            modified = true;
+          }
         }
       });
       return modified ? next : prev;
@@ -1554,6 +1570,7 @@ export function App() {
         found = {
           id: searchId,
           name: domain || searchId,
+          brandDomain: domain || undefined,
           category: "Establishment",
           categoryType: "all",
           address: domain ? "Online / Verified" : "Google Maps Location",
@@ -1575,11 +1592,34 @@ export function App() {
           lat: 37.7749,
           lng: -122.4194,
           bannerUrl: "",
+          ogImage: "",
           avatarUrl: domain ? getCleanLogoUrl(null, domain) || "" : "",
+          logoUrl: domain ? getCleanLogoUrl(null, domain) || "" : "",
           isSavedToProfile: true
         } as Place;
       }
     }
+
+    if (found && (!found.bannerUrl || !found.ogImage)) {
+      const matchingVideoWithBanner = videos.find(
+        (v) =>
+          (isPlaceReviewMatch(v, found!) || v.placeId === found!.id) &&
+          Boolean((v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage)
+      );
+      if (matchingVideoWithBanner) {
+        const banner = (matchingVideoWithBanner as any).placeBannerUrl || (matchingVideoWithBanner as any).bannerUrl || (matchingVideoWithBanner as any).ogImage;
+        const logo = matchingVideoWithBanner.placeLogoUrl;
+        found = {
+          ...found,
+          bannerUrl: found.bannerUrl || banner,
+          ogImage: found.ogImage || banner,
+          logoUrl: found.logoUrl || logo || found.logoUrl,
+          avatarUrl: found.avatarUrl || logo || found.avatarUrl,
+          photos: found.photos && found.photos.length > 0 ? found.photos : [banner]
+        };
+      }
+    }
+
     return found;
   }, [places, selectedPlaceIdForDrawer, videos]);
 

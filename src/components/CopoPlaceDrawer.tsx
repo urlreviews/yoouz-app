@@ -104,13 +104,15 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [bannerError, setBannerError] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(false);
+  const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
 
-  // Reset image errors when place changes
+  // Reset image errors and banner state when place changes
   useEffect(() => {
     setBannerError(false);
     setLogoError(false);
+    setFetchedBannerUrl(null);
   }, [place?.id]);
 
   // Tab switching with scroll to top
@@ -217,27 +219,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return list;
   }, [rawPlaceVideos, starFilter, reviewSort]);
 
-  // Check if photos are authentic place photos
-  const allPhotos = Array.from(
-    new Set([
-      place.bannerUrl,
-      place.ogImage,
-      ...(place.photos || [])
-    ])
-  ).filter((p): p is string => {
-    if (!p || p.startsWith("blob:") || p.startsWith("data:")) return false;
-    // Always preserve bannerUrl, ogImage or logoUrl if they are the only assets
-    if (p === place.bannerUrl || p === place.ogImage || p === place.logoUrl) return true;
-    const lower = p.toLowerCase();
-    // Only filter out obvious small icons if we have other photos
-    if (lower.includes("favicon") || lower.includes(".ico")) {
-      return false;
-    }
-    return true;
-  });
-
-  const hasAuthenticPhoto = allPhotos.length > 0;
-
   const drawerDomain = React.useMemo(() => {
     if (place.brandDomain) return place.brandDomain;
     if (place.website) {
@@ -247,8 +228,87 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         return null;
       }
     }
+    const cleanFromId = extractCleanDomain(place.id);
+    if (cleanFromId && cleanFromId.includes(".")) return cleanFromId;
     return null;
   }, [place]);
+
+  // Check if any video review for this place has a high quality banner or logo
+  const reviewBannerUrl = React.useMemo(() => {
+    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && !place.bannerUrl.startsWith("data:")) return place.bannerUrl;
+    if (place.ogImage && !place.ogImage.startsWith("blob:") && !place.ogImage.startsWith("data:")) return place.ogImage;
+    for (const v of rawPlaceVideos) {
+      const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
+      if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://"))) {
+        return b;
+      }
+    }
+    for (const v of (allVideos || [])) {
+      if (isPlaceReviewMatch(v, place)) {
+        const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
+        if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://"))) {
+          return b;
+        }
+      }
+    }
+    return null;
+  }, [place, rawPlaceVideos, allVideos]);
+
+  // Background auto-enrichment: If banner is not present on place, fetch fresh metadata from website
+  useEffect(() => {
+    const targetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
+    if (!reviewBannerUrl && targetUrl) {
+      let isMounted = true;
+      fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (isMounted && data) {
+            if (data.image) {
+              setFetchedBannerUrl(data.image);
+            }
+            if (onUpdatePlace && (data.image || data.logo || data.title)) {
+              onUpdatePlace({
+                ...place,
+                bannerUrl: data.image || place.bannerUrl,
+                ogImage: data.image || place.ogImage,
+                logoUrl: data.logo || place.logoUrl,
+                avatarUrl: data.logo || place.avatarUrl,
+                brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
+                photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
+              });
+            }
+          }
+        })
+        .catch(() => {});
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [place.id, place.website, drawerDomain, reviewBannerUrl, onUpdatePlace]);
+
+  const effectiveBanner = fetchedBannerUrl || reviewBannerUrl || place.bannerUrl || place.ogImage || "";
+
+  // Check if photos are authentic place photos
+  const allPhotos = Array.from(
+    new Set([
+      effectiveBanner,
+      place.bannerUrl,
+      place.ogImage,
+      ...(place.photos || [])
+    ])
+  ).filter((p): p is string => {
+    if (!p || p.startsWith("blob:") || p.startsWith("data:")) return false;
+    // Always preserve effectiveBanner, bannerUrl, ogImage or logoUrl
+    if (p === effectiveBanner || p === place.bannerUrl || p === place.ogImage || p === place.logoUrl) return true;
+    const lower = p.toLowerCase();
+    // Only filter out obvious small icons if we have other photos
+    if (lower.includes("favicon") || lower.includes(".ico")) {
+      return false;
+    }
+    return true;
+  });
+
+  const hasAuthenticPhoto = allPhotos.length > 0;
 
   const primaryLogoUrl = React.useMemo(() => {
     if (place.logoUrl) return getCleanLogoUrl(place.logoUrl, drawerDomain);
@@ -496,11 +556,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
         {/* Overlapping Business Logo/Avatar Badge - Official High-Res Brand Logo */}
         <CopoBrandLogo
-          domain={place.brandDomain}
+          domain={drawerDomain || place.brandDomain}
           name={formatBusinessName(place.name)}
           website={place.website}
-          logoUrl={place.logoUrl}
-          bannerUrl={place.bannerUrl || place.ogImage}
+          logoUrl={primaryLogoUrl || place.logoUrl}
+          bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
           className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-800 bg-white shadow-2xl flex items-center justify-center z-20 p-2 ring-1 ring-black/10"
           imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[18px] [image-rendering:-webkit-optimize-contrast]"
           fallbackTextClassName="font-black text-3xl sm:text-5xl text-white drop-shadow-md"

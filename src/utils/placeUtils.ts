@@ -331,18 +331,27 @@ export function isAuthorMatch(
  */
 export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Place[] = []): Place {
   const existing = existingPlaces.find((p) => isPlaceReviewMatch(video, p));
+  const domain = extractCleanDomain(video.placeWebsite || video.placeName || video.placeId);
+  const cleanId = video.placeId || (domain ? domain.replace(/[^a-zA-Z0-9]/g, "-") : `place-${Date.now()}`);
+  const reviewBanner = (video as any).placeBannerUrl || (video as any).bannerUrl || (video as any).ogImage || "";
+  const reviewLogo = video.placeLogoUrl || (domain ? getCleanLogoUrl(null, domain) || "" : "");
+
   if (existing) {
+    const banner = existing.bannerUrl || existing.ogImage || reviewBanner || "";
+    const logo = existing.logoUrl || existing.avatarUrl || reviewLogo || "";
     return {
       ...existing,
       totalReviews: Math.max(existing.totalReviews || 1, (existing.totalReviews || 0) + 1),
       rating: video.rating || existing.rating || 5.0,
-      avatarUrl: existing.avatarUrl || video.placeLogoUrl || "",
-      website: existing.website || video.placeWebsite || ""
+      avatarUrl: logo,
+      logoUrl: logo,
+      website: existing.website || video.placeWebsite || (domain ? `https://${domain}` : ""),
+      brandDomain: existing.brandDomain || domain || undefined,
+      bannerUrl: banner,
+      ogImage: banner || existing.ogImage || "",
+      photos: Array.from(new Set([...(existing.photos || []), ...(banner ? [banner] : [])]))
     };
   }
-
-  const domain = extractCleanDomain(video.placeWebsite || video.placeName || video.placeId);
-  const cleanId = video.placeId || (domain ? domain.replace(/[^a-zA-Z0-9]/g, "-") : `place-${Date.now()}`);
 
   return {
     id: cleanId,
@@ -356,9 +365,12 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     rating: video.rating || 5.0,
     totalReviews: 1,
     ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-    avatarUrl: video.placeLogoUrl || (domain ? getCleanLogoUrl(null, domain) || "" : ""),
-    bannerUrl: video.thumbnailUrl || "",
-    photos: video.thumbnailUrl ? [video.thumbnailUrl] : [],
+    avatarUrl: reviewLogo,
+    logoUrl: reviewLogo,
+    brandDomain: domain || undefined,
+    bannerUrl: reviewBanner,
+    ogImage: reviewBanner,
+    photos: reviewBanner ? [reviewBanner] : [],
     openingHours: "Available 24/7",
     isOpen: true,
     phone: "",
