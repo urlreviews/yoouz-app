@@ -1521,6 +1521,7 @@ export function App() {
 
           const effectiveBanner = knownBanner || existing.bannerUrl || existing.ogImage || reviewBanner || "";
           const effectiveLogo = knownLogo || ((existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) ? existing.avatarUrl : (reviewLogo || "")));
+          const effectiveDescription = v.placeDescription || (existing.description && !existing.description.includes("Verified video review destination") && !existing.description.includes("Verified Yoouz business listing") ? existing.description : "");
 
           if (
             (!existing.bannerUrl && effectiveBanner) ||
@@ -1528,7 +1529,8 @@ export function App() {
             (!existing.logoUrl && effectiveLogo) ||
             (!existing.website && effectiveWeb) ||
             (!existing.brandDomain && reviewDomain) ||
-            (existing.bannerUrl === "" && effectiveBanner !== "")
+            (existing.bannerUrl === "" && effectiveBanner !== "") ||
+            (effectiveDescription && (!existing.description || existing.description.includes("Verified video review destination") || existing.description.includes("Verified Yoouz business listing")))
           ) {
             next[idx] = {
               ...existing,
@@ -1538,6 +1540,7 @@ export function App() {
               avatarUrl: effectiveLogo || existing.avatarUrl || "",
               website: effectiveWeb || existing.website || "",
               brandDomain: existing.brandDomain || reviewDomain || undefined,
+              description: effectiveDescription || existing.description || "",
               photos: existing.photos && existing.photos.length > 0 ? existing.photos : (effectiveBanner ? [effectiveBanner] : [])
             };
             modified = true;
@@ -2924,7 +2927,8 @@ export function App() {
               avatarUrl: p.avatarUrl || newReview.placeLogoUrl || p.logoUrl || "",
               bannerUrl: p.bannerUrl || newReview.placeBannerUrl || p.ogImage || "",
               ogImage: p.ogImage || newReview.placeBannerUrl || p.bannerUrl || "",
-              website: p.website || newReview.placeWebsite || ""
+              website: p.website || newReview.placeWebsite || "",
+              description: newReview.placeDescription || (p.description && !p.description.includes("Verified video review destination") && !p.description.includes("Verified Yoouz business listing") ? p.description : "") || p.description || ""
             };
             return targetPlace;
           }

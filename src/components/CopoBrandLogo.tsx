@@ -44,22 +44,22 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       items.push({ url: clean, fit });
     };
 
-    // 1. Direct match for known high-quality brand vector logos
-    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
-      addItem(KNOWN_BRAND_LOGOS[resolvedDomain], "contain");
-    }
-
-    // 2. Direct scraped or explicitly provided logoUrl (if valid and not a generic favicon)
+    // 1. Direct scraped or explicitly provided logoUrl (if valid and not a generic placeholder)
     const isFavicon = logoUrl && (logoUrl.includes("favicon") || logoUrl.includes("gstatic.com") || logoUrl.includes("google.com/s2"));
     if (logoUrl && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image")) && !logoUrl.includes("ui-avatars") && !logoUrl.includes("dicebear") && !isFavicon) {
       addItem(logoUrl, "contain");
     }
 
-    // 3. High-resolution brand logo retrieval APIs
+    // 2. Direct match for known high-quality brand vector logos
+    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
+      addItem(KNOWN_BRAND_LOGOS[resolvedDomain], "contain");
+    }
+
+    // 3. Lightning-fast Google Cloud High-Res Favicon CDN & DuckDuckGo Favicon CDN (10-30ms)
     if (resolvedDomain) {
-      addItem(`https://unavatar.io/${resolvedDomain}?fallback=false`, "contain");
-      addItem(`https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`, "contain");
       addItem(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`, "contain");
+      addItem(`https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`, "contain");
+      addItem(`https://unavatar.io/${resolvedDomain}?fallback=false`, "contain");
     }
 
     // 4. Explicit logoUrl fallback if it was a favicon
@@ -116,6 +116,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       <img
         src={currentItem.url}
         alt={name || "Brand Logo"}
+        loading="eager"
+        decoding="async"
         className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"}`}
         referrerPolicy="no-referrer"
         onError={handleImageError}

@@ -940,6 +940,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       placeWebsite: selectedPlace.website || "",
       placeLogoUrl: getPlaceLogoUrl(selectedPlace) || selectedPlace.logoUrl || selectedPlace.avatarUrl || "",
       placeBannerUrl: selectedPlace.bannerUrl || selectedPlace.ogImage || "",
+      placeDescription: selectedPlace.description || "",
       author: {
         name: currentUser?.name || "Verified Reviewer",
         //handle: currentUser?.email ? `@${currentUser.email.split("@")[0]}` : "@yoouz_user",

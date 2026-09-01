@@ -93,6 +93,7 @@ export interface VideoReview {
   placeWebsite?: string;
   placeLogoUrl?: string;
   placeBannerUrl?: string;
+  placeDescription?: string;
   author: {
     name: string;
     handle?: string;

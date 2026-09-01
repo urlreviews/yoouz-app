@@ -278,10 +278,24 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return null;
   }, [place, rawPlaceVideos, allVideos]);
 
-  // Background auto-enrichment: If banner is not present on place, fetch fresh metadata from website
+  // Background auto-enrichment: Fetch and sync rich metadata & business description from URL
   useEffect(() => {
     const targetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
-    if (!reviewBannerUrl && targetUrl) {
+    const isGenericDesc = !place.description ||
+      place.description.includes("Verified video review destination") ||
+      place.description.includes("Verified Yoouz business listing") ||
+      place.description.includes("Verified Google Maps") ||
+      place.description === "No description available.";
+    const isGenericName = !place.name ||
+      place.name === place.brandDomain ||
+      place.name === drawerDomain ||
+      place.name.toLowerCase().includes("hostinger") ||
+      place.name.toLowerCase().includes("untitled") ||
+      place.name.toLowerCase() === "website";
+    const needsBanner = !reviewBannerUrl && !place.bannerUrl && !place.ogImage;
+    const needsLogo = !place.logoUrl || place.logoUrl.startsWith("data:;") || place.logoUrl.includes("760X310");
+
+    if (targetUrl && (isGenericDesc || isGenericName || needsBanner || needsLogo)) {
       let isMounted = true;
       fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
         .then((res) => (res.ok ? res.json() : null))
@@ -290,9 +304,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             if (data.image) {
               setFetchedBannerUrl(data.image);
             }
-            if (onUpdatePlace && (data.image || data.logo || data.title)) {
+            if (onUpdatePlace && (data.image || data.logo || data.title || data.description)) {
               onUpdatePlace({
                 ...place,
+                name: (data.title && isGenericName) ? data.title : place.name,
+                description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
                 bannerUrl: data.image || place.bannerUrl,
                 ogImage: data.image || place.ogImage,
                 logoUrl: data.logo || place.logoUrl,
@@ -308,7 +324,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         isMounted = false;
       };
     }
-  }, [place.id, place.website, drawerDomain, reviewBannerUrl, onUpdatePlace]);
+  }, [place.id, place.website, place.description, place.name, drawerDomain, reviewBannerUrl, onUpdatePlace]);
 
   const effectiveBanner =
     fetchedBannerUrl ||

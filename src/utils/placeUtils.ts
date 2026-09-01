@@ -350,6 +350,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     const website = (existing.website && !existing.website.includes("maps.google.com")) 
       ? existing.website 
       : (video.placeWebsite || (domain ? `https://${domain}` : ""));
+    const description = video.placeDescription || (existing.description && !existing.description.includes("Verified video review destination") && !existing.description.includes("Verified Yoouz business listing") ? existing.description : "") || existing.description || "";
     return {
       ...existing,
       totalReviews: Math.max(existing.totalReviews || 1, (existing.totalReviews || 0) + 1),
@@ -360,9 +361,12 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
       brandDomain: existing.brandDomain || domain || undefined,
       bannerUrl: banner,
       ogImage: banner || existing.ogImage || "",
+      description: description || existing.description,
       photos: Array.from(new Set([...(existing.photos || []), ...(banner ? [banner] : [])]))
     };
   }
+
+  const initialDescription = video.placeDescription || "";
 
   return {
     id: cleanId,
@@ -389,7 +393,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     priceRange: "N/A",
     isSavedToProfile: true,
     plusCode: "",
-    description: `Verified video review destination for ${formatBusinessName(video.placeName || domain)}.`,
+    description: initialDescription || `Verified video review destination for ${formatBusinessName(video.placeName || domain)}.`,
     popularKeywords: [{ tag: "Verified", count: 1 }],
     amenities: [],
     topDishes: []
