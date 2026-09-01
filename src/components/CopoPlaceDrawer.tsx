@@ -220,18 +220,41 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [rawPlaceVideos, starFilter, reviewSort]);
 
   const drawerDomain = React.useMemo(() => {
-    if (place.brandDomain) return place.brandDomain;
+    if (place.brandDomain) return extractCleanDomain(place.brandDomain);
     if (place.website) {
-      try {
-        return new URL(place.website).hostname.replace(/^www\./, "");
-      } catch {
-        return null;
-      }
+      const d = extractCleanDomain(place.website);
+      if (d && d.includes(".")) return d;
     }
     const cleanFromId = extractCleanDomain(place.id);
     if (cleanFromId && cleanFromId.includes(".")) return cleanFromId;
+    const cleanFromName = extractCleanDomain(place.name);
+    if (cleanFromName && cleanFromName.includes(".")) return cleanFromName;
     return null;
   }, [place]);
+
+  const effectiveWebsite = React.useMemo(() => {
+    if (place.website && place.website.trim() !== "" && !place.website.includes("maps.google.com")) {
+      const w = place.website.trim();
+      return w.startsWith("http://") || w.startsWith("https://") ? w : `https://${w}`;
+    }
+    if (drawerDomain) {
+      return `https://${drawerDomain}`;
+    }
+    if (place.brandDomain) {
+      const d = extractCleanDomain(place.brandDomain);
+      if (d) return `https://${d}`;
+    }
+    const cleanFromId = extractCleanDomain(place.id);
+    if (cleanFromId && cleanFromId.includes(".")) {
+      return `https://${cleanFromId}`;
+    }
+    return null;
+  }, [place, drawerDomain]);
+
+  const displayWebsiteClean = React.useMemo(() => {
+    if (!effectiveWebsite) return null;
+    return effectiveWebsite.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "");
+  }, [effectiveWebsite]);
 
   // Check if any video review for this place has a high quality banner or logo
   const reviewBannerUrl = React.useMemo(() => {
@@ -328,9 +351,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   );
 
   const hasGenuineWebsite = Boolean(
-    place.website &&
-    place.website.trim() !== "" &&
-    !place.website.includes("maps.google.com")
+    effectiveWebsite &&
+    effectiveWebsite.trim() !== "" &&
+    !effectiveWebsite.includes("maps.google.com")
   );
 
   const hasGenuineHours = Boolean(
@@ -362,7 +385,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const openEditModal = () => {
     setEditPhone(hasGenuinePhone ? (place.phone || "") : "");
-    setEditWebsite(hasGenuineWebsite ? (place.website || "") : "");
+    setEditWebsite(effectiveWebsite || place.website || "");
     setEditHours(hasGenuineHours ? (place.openingHours || "") : "");
     
     // Clear URL-based fallback addresses so they can enter a real clean address
@@ -388,10 +411,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const handleSaveBusinessInfo = (e: React.FormEvent) => {
     e.preventDefault();
     if (onUpdatePlace) {
+      const cleanWebsite = editWebsite.trim();
       const updated: Place = {
         ...place,
         phone: editPhone.trim(),
-        website: editWebsite.trim(),
+        website: cleanWebsite,
+        brandDomain: cleanWebsite ? extractCleanDomain(cleanWebsite) : place.brandDomain,
         openingHours: editHours.trim(),
         address: editAddress.trim(),
         description: editDescription.trim(),
@@ -637,14 +662,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? "review" : "reviews"})
           </span>
           <span className="text-zinc-700">·</span>
-          {place.website ? (
+          {effectiveWebsite ? (
             <a 
-              href={place.website} 
+              href={effectiveWebsite} 
               target="_blank" 
               rel="noreferrer" 
-              className="text-zinc-300 hover:text-white hover:underline font-medium truncate max-w-[140px]"
+              className="text-zinc-300 hover:text-white hover:underline font-medium truncate max-w-[180px]"
             >
-              {place.website.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}
+              {displayWebsiteClean}
             </a>
           ) : (
             <span className="text-zinc-400 font-medium">{place.category || "Establishment"}</span>
@@ -987,29 +1012,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
                     <div className="flex items-center gap-3 truncate w-full">
                       <Globe className="w-5 h-5 text-zinc-300 shrink-0" />
-                      {hasUpgraded ? (
-                        hasGenuineWebsite ? (
-                          <a
-                            href={place.website}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-zinc-300 hover:text-white hover:underline font-medium truncate"
-                          >
-                            {place.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}
-                          </a>
-                        ) : (
-                          <span className="text-xs text-zinc-500">Website not provided</span>
-                        )
+                      {effectiveWebsite ? (
+                        <a
+                          href={effectiveWebsite}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium truncate flex items-center gap-1.5"
+                        >
+                          <span className="truncate">{displayWebsiteClean}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                        </a>
                       ) : (
-                        <div className="flex items-center justify-between w-full">
-                          <span className="text-xs text-zinc-600 blur-[3px] select-none">www.example.com</span>
-                          {isUserOwner && (
-                            <button onClick={() => setIsPricingModalOpen(true)} className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-1 rounded-full border border-zinc-700 font-bold flex items-center gap-1 shrink-0">
-                              <Lock className="w-3 h-3" />
-                              Unlock Link
-                            </button>
-                          )}
-                        </div>
+                        <span className="text-xs text-zinc-500">Website not provided</span>
                       )}
                     </div>
                   </div>

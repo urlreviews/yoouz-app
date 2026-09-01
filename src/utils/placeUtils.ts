@@ -339,13 +339,16 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
   if (existing) {
     const banner = existing.bannerUrl || existing.ogImage || reviewBanner || "";
     const logo = existing.logoUrl || existing.avatarUrl || reviewLogo || "";
+    const website = (existing.website && !existing.website.includes("maps.google.com")) 
+      ? existing.website 
+      : (video.placeWebsite || (domain ? `https://${domain}` : ""));
     return {
       ...existing,
       totalReviews: Math.max(existing.totalReviews || 1, (existing.totalReviews || 0) + 1),
       rating: video.rating || existing.rating || 5.0,
       avatarUrl: logo,
       logoUrl: logo,
-      website: existing.website || video.placeWebsite || (domain ? `https://${domain}` : ""),
+      website: website || "",
       brandDomain: existing.brandDomain || domain || undefined,
       bannerUrl: banner,
       ogImage: banner || existing.ogImage || "",

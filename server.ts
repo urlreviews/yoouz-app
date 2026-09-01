@@ -3666,6 +3666,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     
     let banner = r.placeBannerUrl || r.bannerUrl || r.ogImage || "";
     let logo = r.placeLogoUrl || r.logoUrl || "";
+    let website = r.placeWebsite || (domain && domain.includes(".") ? `https://${domain}` : "");
 
     const matchedMeta = KNOWN_PLACE_METADATA[domain] || (domain ? Object.entries(KNOWN_PLACE_METADATA).find(([k]) => domain.includes(k) || k.includes(domain))?.[1] : null);
     if (matchedMeta) {
@@ -3678,7 +3679,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       placeBannerUrl: banner || r.placeBannerUrl || "",
       bannerUrl: banner || r.bannerUrl || "",
       ogImage: banner || r.ogImage || "",
-      placeLogoUrl: logo || r.placeLogoUrl || ""
+      placeLogoUrl: logo || r.placeLogoUrl || "",
+      placeWebsite: website || r.placeWebsite || ""
     };
   };
 
