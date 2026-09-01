@@ -7968,6 +7968,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     <title>${safeTitle}</title>
     <meta name="description" content="${safeDesc}" />
     <meta name="keywords" content="${safeKeywords}" />
+    ${meta.robots ? `<meta name="robots" content="${meta.robots}" />` : ""}
     
     <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
     <meta property="og:site_name" content="Yoouz" />
@@ -8057,6 +8058,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     let twitterCard = "summary_large_image";
     let structuredData: any = null;
     let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
+    let robots = "";
+    if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin/")) {
+      robots = "noindex, nofollow";
+    }
 
     const videoIdMatch = pathname.match(/\/video\/(rev-[a-zA-Z0-9-]+)/);
     const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9-]+)/);
@@ -8421,6 +8426,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       twitterCard,
       url: fullUrl,
       keywords,
+      robots,
       structuredData
     };
   }

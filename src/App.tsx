@@ -100,7 +100,7 @@ export function App() {
     // Immediate sync from URL on boot to prevent flash of home
     try {
       const pathname = window.location.pathname;
-      if (pathname === "/admin" || pathname.startsWith("/admin")) return "admin";
+      if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin")) return "admin";
       if (pathname === "/business" || pathname.startsWith("/business/") || pathname === "/portal" || pathname === "/business-dashboard") return "business";
       if (pathname === "/discover") return "discover";
       if (pathname === "/following") return "following";
@@ -228,7 +228,7 @@ export function App() {
   useEffect(() => {
     const syncFromUrl = () => {
       try {
-        if (window.location.pathname === "/admin" || window.location.pathname.startsWith("/admin")) {
+        if (window.location.pathname === "/yoouzadmin" || window.location.pathname.startsWith("/yoouzadmin")) {
           setActiveSection("admin");
           return;
         }
@@ -3051,7 +3051,7 @@ export function App() {
               setSelectedPlaceIdForDrawer(null);
               setSelectedAuthorForDrawer(null);
               setActiveSection("admin");
-              window.history.pushState(null, "", "/admin");
+              window.history.pushState(null, "", "/yoouzadmin");
               return;
             } else if ((activeSection as string) === "admin" && (section as string) !== "admin") {
               window.history.pushState(null, "", "/");
