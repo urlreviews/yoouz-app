@@ -93,7 +93,32 @@ function getResendFromEmail(fallback: string = "Yoouz <onboarding@resend.dev>"):
   return envFrom;
 }
 
+const globalUploadsDir = path.join(process.cwd(), "uploads");
+const reviewsIndexPath = path.join(globalUploadsDir, "reviews_index.json");
+
+function readReviewsIndex(): any[] {
+  try {
+    if (fs.existsSync(reviewsIndexPath)) {
+      const raw = fs.readFileSync(reviewsIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
 const defaultCommunityUsers = [
+  {
+    id: "4samet-user-id",
+    uid: "4samet-user-id",
+    name: "Samet",
+    handle: "@samet",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLtE8R7n91f-0eFh94h90p2z-K4G57VbA9_c=s96-c",
+    email: "4samet@gmail.com",
+    bio: "Yoouz Founder & Reviewer.",
+    isVerified: true,
+    followersCount: 0
+  },
   {
     id: "louis42111-user-id",
     uid: "louis42111-user-id",
@@ -117,17 +142,318 @@ const defaultCommunityUsers = [
     followersCount: 1
   },
   {
+    id: "aouisesme-alias-user-id",
+    uid: "aouisesme-alias-user-id",
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    email: "aouisesme@gmail.com",
+    bio: "Community reviewer on Yoouz.",
+    isVerified: true,
+    followersCount: 1
+  },
+  {
     id: "avr6566gd-user-id",
     uid: "avr6566gd-user-id",
     name: "avt ertuop",
     handle: "@avr6566gd",
-    avatar: "https://ui-avatars.com/api/?name=avt+ertuop&background=1a73e8&color=fff",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
     email: "avr6566gd@gmail.com",
     bio: "Community reviewer on Yoouz.",
     isVerified: true,
     followersCount: 0
+  },
+  {
+    id: "david-johnson-user-id",
+    uid: "david-johnson-user-id",
+    name: "David Johnson",
+    handle: "@davidjohnson",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    email: "ygf@usa.com",
+    bio: "Verified reviewer & local explorer.",
+    isVerified: true,
+    followersCount: 0
   }
 ];
+
+const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; avatar: string; bio?: string }> = {
+  "4samet@gmail.com": {
+    name: "Samet",
+    handle: "@samet",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLtE8R7n91f-0eFh94h90p2z-K4G57VbA9_c=s96-c",
+    bio: "Yoouz Founder & Reviewer."
+  },
+  "samet": {
+    name: "Samet",
+    handle: "@samet",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLtE8R7n91f-0eFh94h90p2z-K4G57VbA9_c=s96-c",
+    bio: "Yoouz Founder & Reviewer."
+  },
+  "aouisesmee": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "aouisesmee@gmail.com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "aouisesme": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "aouisesme@gmail.com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "biz riv": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "bizriv": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "louis42111": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "louis42111@gmail.com": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "avt ertuop": {
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "avr6566gd": {
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "avr6566gd@gmail.com": {
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "ygf@usa.com": {
+    name: "David Johnson",
+    handle: "@davidjohnson",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    bio: "Verified reviewer & local explorer."
+  },
+  "david johnson": {
+    name: "David Johnson",
+    handle: "@davidjohnson",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    bio: "Verified reviewer & local explorer."
+  }
+};
+
+// Global Multi-Layer User Profile Resolver (Checks memory, BunnyDB, SQL, Firestore, and Review Indexes)
+async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any | null> {
+  if (!emailOrId || typeof emailOrId !== 'string') return null;
+  const clean = emailOrId.trim().toLowerCase();
+  const cleanWithoutAt = clean.startsWith('@') ? clean.substring(1) : clean;
+  const username = clean.includes('@') ? clean.split('@')[0] : clean;
+  const uid = `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+  // Layer 1: Check Predefined Known Community Map
+  const knownMatch = KNOWN_COMMUNITY_USERS_SERVER[clean] || 
+                     KNOWN_COMMUNITY_USERS_SERVER[cleanWithoutAt] || 
+                     KNOWN_COMMUNITY_USERS_SERVER[username];
+  if (knownMatch) {
+    const fName = knownMatch.name.split(' ')[0] || knownMatch.name;
+    const lName = knownMatch.name.includes(' ') ? knownMatch.name.split(' ').slice(1).join(' ') : '';
+    return {
+      uid,
+      id: uid,
+      email: clean.includes('@') ? clean : `${clean}@gmail.com`,
+      name: knownMatch.name,
+      firstName: fName,
+      lastName: lName,
+      handle: knownMatch.handle,
+      avatar: knownMatch.avatar,
+      bio: knownMatch.bio || "Community reviewer on Yoouz.",
+      isVerified: true,
+      role: 'user',
+      isNewUser: false
+    };
+  }
+
+  // Layer 2: Check defaultCommunityUsers list
+  const du = defaultCommunityUsers.find((u) => 
+    u.email?.toLowerCase() === clean || 
+    u.handle?.toLowerCase().replace(/^@+/, '') === clean ||
+    u.name?.toLowerCase() === clean ||
+    u.id === clean ||
+    u.uid === clean
+  );
+  if (du) {
+    const fName = du.name.split(' ')[0] || du.name;
+    const lName = du.name.includes(' ') ? du.name.split(' ').slice(1).join(' ') : '';
+    return {
+      ...du,
+      uid: du.uid || uid,
+      id: du.id || uid,
+      firstName: fName,
+      lastName: lName,
+      isNewUser: false
+    };
+  }
+
+  // Layer 3: Check BunnyDB users table
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      const userRows = await bunnyDb.execute({
+        sql: "SELECT id, email, name, data FROM users WHERE id = ? OR email = ? OR id = ? LIMIT 1",
+        args: [uid, clean, clean]
+      });
+      if (userRows.rows.length > 0 && userRows.rows[0]) {
+        const row: any = userRows.rows[0];
+        let parsed: any = {};
+        if (row.data) {
+          parsed = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+        }
+        const candidateName = parsed.name || row.name;
+        if (candidateName && candidateName !== 'Registered User') {
+          return {
+            uid: parsed.uid || row.id || uid,
+            id: parsed.id || row.id || uid,
+            email: parsed.email || row.email || clean,
+            name: candidateName,
+            firstName: parsed.firstName || candidateName.split(' ')[0] || candidateName,
+            lastName: parsed.lastName || (candidateName.includes(' ') ? candidateName.split(' ').slice(1).join(' ') : ''),
+            avatar: parsed.avatar || '',
+            handle: parsed.handle || `@${candidateName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+            bio: parsed.bio || "Community reviewer on Yoouz.",
+            city: parsed.city || '',
+            country: parsed.country || '',
+            location: parsed.location || '',
+            isVerified: true,
+            role: parsed.role || 'user',
+            isNewUser: false
+          };
+        }
+      }
+    }
+  } catch (err) {}
+
+  // Layer 4: Check Drizzle SQL `users` table
+  try {
+    const sqlUsers = await db.select().from(users).where(eq(users.email, clean));
+    if (sqlUsers && sqlUsers.length > 0) {
+      const u = sqlUsers[0];
+      if (u.name && u.name !== 'Registered User') {
+        return {
+          uid: u.uid || uid,
+          id: u.uid || uid,
+          email: u.email,
+          name: u.name,
+          firstName: u.name.split(' ')[0] || u.name,
+          lastName: u.name.includes(' ') ? u.name.split(' ').slice(1).join(' ') : '',
+          avatar: u.avatar || '',
+          handle: `@${u.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+          isNewUser: false
+        };
+      }
+    }
+  } catch (err) {}
+
+  // Layer 5: Check Drizzle SQL `firestore_users` table
+  try {
+    const fsUsers = await db.select().from(firestore_users);
+    for (const fsu of fsUsers) {
+      const d: any = fsu.data;
+      if (d && (d.email?.toLowerCase() === clean || fsu.id === clean || d.uid === clean || d.handle?.toLowerCase() === `@${clean}`)) {
+        if (d.name && d.name !== 'Registered User') {
+          return {
+            ...d,
+            uid: d.uid || fsu.id || uid,
+            id: d.uid || fsu.id || uid,
+            isNewUser: false
+          };
+        }
+      }
+    }
+  } catch (err) {}
+
+  // Layer 6: Check Firestore Admin (users & firestore_users collections)
+  if (adminDb) {
+    try {
+      const snap = await adminDb.collection("users").doc(clean).get();
+      if (snap.exists) {
+        const d = snap.data();
+        if (d && d.name && d.name !== 'Registered User') return { ...d, uid: snap.id, isNewUser: false };
+      }
+      const snapUid = await adminDb.collection("users").doc(uid).get();
+      if (snapUid.exists) {
+        const d = snapUid.data();
+        if (d && d.name && d.name !== 'Registered User') return { ...d, uid: snapUid.id, isNewUser: false };
+      }
+      const qSnap = await adminDb.collection("users").where("email", "==", clean).limit(1).get();
+      if (!qSnap.empty) {
+        const doc = qSnap.docs[0];
+        const d = doc.data();
+        if (d && d.name && d.name !== 'Registered User') return { ...d, uid: doc.id, isNewUser: false };
+      }
+    } catch (e) {}
+  }
+
+  // Layer 7: Check existing video reviews in uploads/reviews_index.json
+  try {
+    const localList = readReviewsIndex();
+    const match = localList.find((vr: any) => {
+      const vrEmail = (vr.userEmail || vr.userId || "").toLowerCase().trim();
+      const authorName = (vr.author?.name || vr.authorName || "").toLowerCase().trim();
+      const authorHandle = (vr.author?.handle || vr.authorHandle || "").toLowerCase().trim().replace(/^@+/, "");
+      return vrEmail === clean || authorName === clean || authorHandle === clean || authorHandle === username;
+    });
+    if (match) {
+      const a = match.author || {};
+      const authorName = a.name || match.authorName || username;
+      const authorAvatar = a.avatar || match.authorAvatar;
+      const fName = authorName.split(' ')[0] || authorName;
+      const lName = authorName.includes(' ') ? authorName.split(' ').slice(1).join(' ') : '';
+      return {
+        uid: match.userId || uid,
+        id: match.userId || uid,
+        email: clean.includes('@') ? clean : (match.userEmail || `${clean}@gmail.com`),
+        name: authorName,
+        firstName: fName,
+        lastName: lName,
+        handle: a.handle || match.authorHandle || `@${username}`,
+        avatar: authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a73e8&color=fff`,
+        bio: a.bio || "Community reviewer on Yoouz.",
+        isVerified: true,
+        role: 'user',
+        isNewUser: false
+      };
+    }
+  } catch (e) {}
+
+  return null;
+}
 
 interface BusinessVerificationRecord {
   email: string;
@@ -2684,6 +3010,17 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
   try {
     const { collection: colName, id } = req.params;
 
+    // Special handler for users collection: use multi-layer resolver first for consistent attributes
+    if (colName === 'users') {
+      const resolved = await resolveUserProfileFromAnySource(id);
+      if (resolved) {
+        return res.json({
+          ...resolved,
+          isNewUser: false
+        });
+      }
+    }
+
     // 1. Try Bunny Database (Cloud libSQL)
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
@@ -2729,6 +3066,12 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           if (record) return res.json({ id: record.id, ...record.data });
         }
       } catch (sqlErr) {}
+    }
+
+    // 5. Try resolving user profile from any source if collection is users
+    if (colName === 'users') {
+      const resolved = await resolveUserProfileFromAnySource(id);
+      if (resolved) return res.json(resolved);
     }
 
     res.status(404).json({ error: 'Not found' });
@@ -3851,65 +4194,40 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       userVerificationStore.delete(cleanEmail);
 
-      let existingUser: any = null;
-      try {
-        const bunnyDb = getBunnyDb();
-        if (bunnyDb) {
-          const userRows = await bunnyDb.execute({
-            sql: "SELECT data FROM users WHERE id = ? OR email = ? LIMIT 1",
-            args: [`usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`, cleanEmail]
-          });
-          if (userRows.rows.length > 0 && userRows.rows[0].data) {
-            existingUser = typeof userRows.rows[0].data === 'string' ? JSON.parse(userRows.rows[0].data as string) : userRows.rows[0].data;
-          }
-        }
-      } catch (err) {
-        console.warn("Could not check existing user in BunnyDB:", err);
-      }
-
-      // Check Drizzle ORM / Cloud SQL for user if not found in BunnyDB
-      if (!existingUser) {
-        try {
-          const sqlUsers = await db.select().from(users).where(eq(users.email, cleanEmail));
-          if (sqlUsers && sqlUsers.length > 0) {
-            const sqlUser = sqlUsers[0];
-            existingUser = {
-              ...sqlUser,
-              name: sqlUser.name,
-              firstName: sqlUser.name?.split(' ')[0] || '',
-              lastName: sqlUser.name?.includes(' ') ? sqlUser.name.split(' ').slice(1).join(' ') : '',
-              avatar: sqlUser.avatar
-            };
-          }
-        } catch (err) {
-          console.warn("Could not check existing user in SQL:", err);
-        }
-      }
+      // Resolve existing user across all memory, database, and review sources
+      let existingUser: any = await resolveUserProfileFromAnySource(cleanEmail);
 
       const fName = storedFirstName ? String(storedFirstName).trim() : (existingUser?.firstName || (existingUser?.name ? existingUser.name.split(' ')[0] : ''));
       const lName = storedLastName ? String(storedLastName).trim() : (existingUser?.lastName || (existingUser?.name && existingUser.name.includes(' ') ? existingUser.name.split(' ').slice(1).join(' ') : ''));
-      const fullName = fName && lName ? `${fName} ${lName}` : (fName || existingUser?.name || cleanEmail.split('@')[0]);
+      const fullName = (existingUser?.name && !existingUser.name.includes('@')) 
+        ? existingUser.name 
+        : (fName && lName ? `${fName} ${lName}` : (fName || cleanEmail.split('@')[0]));
       const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
+
+      const isKnown = Boolean(existingUser) && Boolean(existingUser?.name) && existingUser.name !== 'Registered User' && existingUser.name !== 'User';
 
       const userSession = {
         uid: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        id: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
         email: cleanEmail,
         name: fullName,
-        firstName: fName,
+        firstName: fName || fullName.split(' ')[0] || fullName,
         lastName: lName,
         city: existingUser?.city || '',
         country: existingUser?.country || '',
+        location: existingUser?.location || '',
         avatar: existingUser?.avatar || '',
+        handle: existingUser?.handle || `@${(existingUser?.name || cleanEmail.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+        bio: existingUser?.bio || "Community reviewer on Yoouz.",
         initial,
         role: existingUser?.role || 'user',
-        isNewUser: !existingUser || (!existingUser.firstName && !existingUser.name),
+        isNewUser: !isKnown,
         authProvider: 'resend_magic_link',
         token: `usr_sess_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`,
         verifiedAt: new Date().toISOString()
       };
 
-      // Save/update user session in Bunny Database ONLY if they are an existing user
-      // We do not want incomplete signups (who haven't filled out their profile) to appear in the DB
+      // Save/update user session in Bunny Database & Drizzle SQL
       if (!userSession.isNewUser) {
         try {
           const bunnyDb = getBunnyDb();
@@ -3917,18 +4235,33 @@ app.post("/api/videos/save-review", async (req, res) => {
             await bunnyDb.execute({
               sql: `INSERT INTO users (id, email, name, data, updatedAt) 
                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
-                    ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                    ON CONFLICT(id) DO UPDATE SET name = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
               args: [
                 userSession.uid,
                 cleanEmail,
                 userSession.name,
                 JSON.stringify(userSession),
+                userSession.name,
                 JSON.stringify(userSession)
               ]
             });
           }
         } catch (saveErr) {
           console.warn("Could not persist verified user to BunnyDB:", saveErr);
+        }
+
+        try {
+          const existingSql = await db.select().from(users).where(eq(users.email, cleanEmail));
+          if (existingSql.length === 0) {
+            await db.insert(users).values({
+              uid: userSession.uid,
+              email: cleanEmail,
+              name: userSession.name,
+              avatar: userSession.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userSession.name)}&background=27272a&color=fff&bold=true&size=128`
+            });
+          }
+        } catch (sqlErr) {
+          console.warn("Could not save verified user to SQL DB:", sqlErr);
         }
       }
 

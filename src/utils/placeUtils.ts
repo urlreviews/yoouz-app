@@ -398,6 +398,18 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
     bio: "Community reviewer on Yoouz."
   },
+  "aouisesme": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "aouisesme@gmail.com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
   "biz riv": {
     name: "Biz Riv",
     handle: "@bizriv",
@@ -439,6 +451,18 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
     bio: "Community reviewer on Yoouz."
+  },
+  "ygf@usa.com": {
+    name: "David Johnson",
+    handle: "@davidjohnson",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    bio: "Verified reviewer & local explorer."
+  },
+  "david johnson": {
+    name: "David Johnson",
+    handle: "@davidjohnson",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    bio: "Verified reviewer & local explorer."
   }
 };
 

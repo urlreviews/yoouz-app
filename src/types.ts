@@ -58,7 +58,17 @@ export interface UserProfile {
   email: string;
   avatar: string;
   
+  id?: string;
+  uid?: string;
   userId?: string;
+  firstName?: string;
+  lastName?: string;
+  city?: string;
+  country?: string;
+  handle?: string;
+  role?: string;
+  isNewUser?: boolean;
+  initial?: string;
   bio?: string;
   banner?: string;
   location?: string;
@@ -112,6 +122,7 @@ export interface VideoReview {
   caption: string;
   dishOrItem?: string;
   likes: number;
+  likesCount?: number;
   shares?: number;
   isLiked: boolean;
   commentsCount: number;

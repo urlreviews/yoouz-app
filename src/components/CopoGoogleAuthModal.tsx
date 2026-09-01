@@ -4,6 +4,7 @@ import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from ".
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
 import { locationData } from "../utils/locationData";
+import { KNOWN_COMMUNITY_USERS } from "../utils/placeUtils";
 import { Country, State, City } from "country-state-city";
 
 export type AuthIntent = 
@@ -180,14 +181,38 @@ export const CopoAuthPrompt: React.FC<{
         throw new Error(data.error || "Invalid code. Please check your inbox and try again.");
       }
 
-      const returnedUser = data.user;
+      let returnedUser = data.user;
+
+      // Check if user is known locally via KNOWN_COMMUNITY_USERS or saved profile
+      const cleanEmail = email.trim().toLowerCase();
+      const knownCommunity = KNOWN_COMMUNITY_USERS[cleanEmail] || 
+                             KNOWN_COMMUNITY_USERS[cleanEmail.split('@')[0]] ||
+                             KNOWN_COMMUNITY_USERS[cleanEmail.replace(/[^a-z0-9]/g, '')];
+
+      if (knownCommunity) {
+        returnedUser = {
+          ...returnedUser,
+          name: returnedUser?.name && !returnedUser.name.includes('@') ? returnedUser.name : knownCommunity.name,
+          firstName: returnedUser?.firstName || knownCommunity.name.split(' ')[0] || knownCommunity.name,
+          lastName: returnedUser?.lastName || (knownCommunity.name.includes(' ') ? knownCommunity.name.split(' ').slice(1).join(' ') : ''),
+          handle: knownCommunity.handle,
+          avatar: (returnedUser?.avatar && !returnedUser.avatar.includes('ui-avatars')) ? returnedUser.avatar : knownCommunity.avatar,
+          bio: returnedUser?.bio || knownCommunity.bio,
+          isNewUser: false
+        };
+      }
+
       setTempUser(returnedUser);
 
-      // If existing user already has a saved name, log in immediately
-      if (returnedUser && !returnedUser.isNewUser && returnedUser.name && !returnedUser.name.includes('@')) {
+      // Determine if user is already registered and complete
+      const hasValidName = Boolean(returnedUser?.name && returnedUser.name.trim().length > 0 && returnedUser.name !== 'Registered User' && returnedUser.name !== 'User');
+      const isExistingUser = !returnedUser?.isNewUser || Boolean(knownCommunity) || (hasValidName && !returnedUser?.name?.includes('@'));
+
+      if (isExistingUser && (hasValidName || returnedUser?.firstName)) {
+        // Existing user recognized -> log in immediately
         completeLogin(returnedUser);
       } else {
-        // New user or missing profile details -> proceed to Step 3 (Profile Setup)
+        // Genuine new user -> proceed to Step 3 (Profile Setup)
         if (returnedUser?.firstName) setFirstName(returnedUser.firstName);
         if (returnedUser?.lastName) setLastName(returnedUser.lastName);
         if (returnedUser?.city) setCity(returnedUser.city);
