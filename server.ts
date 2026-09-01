@@ -121,7 +121,7 @@ const defaultCommunityUsers = [
     uid: "avr6566gd-user-id",
     name: "avt ertuop",
     handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    avatar: "https://ui-avatars.com/api/?name=avt+ertuop&background=1a73e8&color=fff",
     email: "avr6566gd@gmail.com",
     bio: "Community reviewer on Yoouz.",
     isVerified: true,
@@ -3867,6 +3867,25 @@ app.post("/api/videos/save-review", async (req, res) => {
         console.warn("Could not check existing user in BunnyDB:", err);
       }
 
+      // Check Drizzle ORM / Cloud SQL for user if not found in BunnyDB
+      if (!existingUser) {
+        try {
+          const sqlUsers = await db.select().from(users).where(eq(users.email, cleanEmail));
+          if (sqlUsers && sqlUsers.length > 0) {
+            const sqlUser = sqlUsers[0];
+            existingUser = {
+              ...sqlUser,
+              name: sqlUser.name,
+              firstName: sqlUser.name?.split(' ')[0] || '',
+              lastName: sqlUser.name?.includes(' ') ? sqlUser.name.split(' ').slice(1).join(' ') : '',
+              avatar: sqlUser.avatar
+            };
+          }
+        } catch (err) {
+          console.warn("Could not check existing user in SQL:", err);
+        }
+      }
+
       const fName = storedFirstName ? String(storedFirstName).trim() : (existingUser?.firstName || (existingUser?.name ? existingUser.name.split(' ')[0] : ''));
       const lName = storedLastName ? String(storedLastName).trim() : (existingUser?.lastName || (existingUser?.name && existingUser.name.includes(' ') ? existingUser.name.split(' ').slice(1).join(' ') : ''));
       const fullName = fName && lName ? `${fName} ${lName}` : (fName || existingUser?.name || cleanEmail.split('@')[0]);
@@ -3969,6 +3988,26 @@ app.post("/api/videos/save-review", async (req, res) => {
             JSON.stringify(profile)
           ]
         });
+      }
+
+      // Also persist to Drizzle SQL DB
+      try {
+        const existingSql = await db.select().from(users).where(eq(users.uid, uid));
+        if (existingSql.length === 0) {
+          await db.insert(users).values({
+            uid,
+            email: cleanEmail,
+            name: fullName,
+            avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`
+          });
+        } else {
+          await db.update(users).set({
+            name: fullName,
+            avatar: profile.avatar || existingSql[0].avatar
+          }).where(eq(users.uid, uid));
+        }
+      } catch (sqlErr) {
+        console.warn("Could not save profile to SQL DB:", sqlErr);
       }
 
       return res.json({
