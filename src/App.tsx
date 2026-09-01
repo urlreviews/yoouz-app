@@ -8,7 +8,6 @@ import { AEOBlock } from "./components/AEOBlock";
 import { CopoVideoPlayer } from "./components/CopoVideoPlayer";
 // QR Widget intentionally removed per user request
 import { CopoSearchView } from "./components/CopoSearchView";
-import { CopoRecordReviewView } from "./components/CopoRecordReviewView";
 import { CopoMobileSearchView } from "./components/CopoMobileSearchView";
 import { GlobalUploadToast } from "./components/GlobalUploadToast";
 import { CopoMapView } from "./components/CopoMapView";
@@ -3195,7 +3194,7 @@ export function App() {
               />
             )}
             {activeSection === "record_review" && (
-              <CopoRecordReviewView
+              <CopoSearchView
                 key={recordReviewResetKey}
                 places={places}
                 videos={videos}
