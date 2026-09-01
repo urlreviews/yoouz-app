@@ -622,7 +622,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <h2 className="text-2xl font-bold text-white md:text-white tracking-tight leading-tight [overflow-wrap:anywhere]">
               {(() => {
                 const name = formatBusinessName(place.name) || "";
-                if (!isClaimed) return <span>{name}</span>;
                 const words = name.split(" ");
                 const lastWord = words.pop();
                 return (

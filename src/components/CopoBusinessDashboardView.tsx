@@ -3643,7 +3643,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     </div>
                                   </div>
                                   <div className="pt-2">
-                                    <h4 className="font-extrabold text-xs text-white truncate">{currentPlace.name}</h4>
+                                    <h4 className="font-extrabold text-xs text-white truncate flex items-center gap-1">
+                                      <span className="truncate">{currentPlace.name}</span>
+                                      <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
+                                    </h4>
                                     <p className="text-[10px] text-zinc-400 truncate">{currentPlace.address}</p>
                                     <div className="flex items-center gap-1 mt-1">
                                       <Star className="w-3 h-3 fill-white text-white" />
@@ -4728,7 +4731,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
 
               <div>
-                <h2 className="font-black text-white text-lg tracking-tight">{currentPlace.name}</h2>
+                <h2 className="font-black text-white text-lg tracking-tight flex items-center gap-1.5 justify-center">
+                  <span>{currentPlace.name}</span>
+                  <CheckCircle className="w-5 h-5 fill-white text-black shrink-0" />
+                </h2>
                 <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1 mt-0.5">
                   <span>★ 4.9</span>
                   <span className="text-zinc-400 font-normal">({placeVideos.length} Video Reviews on Yoouz)</span>
