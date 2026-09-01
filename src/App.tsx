@@ -1654,40 +1654,34 @@ export function App() {
     // Priority 0: Fullscreen Feed Context (when user clicked a video from a Creator or Business or Profile to watch fullscreen with TikTok scroll)
     if (fullscreenFeedContext) {
       if (fullscreenFeedContext.type === "creator" && fullscreenFeedContext.authorData) {
-        const filtered = visibleVideos.filter(v => isAuthorMatch(v, fullscreenFeedContext.authorData!));
-        if (filtered.length > 0) return filtered;
+        return visibleVideos.filter(v => isAuthorMatch(v, fullscreenFeedContext.authorData!));
       }
       if (fullscreenFeedContext.type === "place" && (fullscreenFeedContext.placeData || fullscreenFeedContext.id)) {
         const placeId = fullscreenFeedContext.placeData?.id || fullscreenFeedContext.id;
         const placeName = fullscreenFeedContext.placeData?.name;
-        const filtered = visibleVideos.filter(v => 
+        return visibleVideos.filter(v => 
           (placeId && (v.placeId === placeId || isPlaceReviewMatch(v, placeId))) ||
           (placeName && (v.placeName === placeName || isPlaceReviewMatch(v, placeName)))
         );
-        if (filtered.length > 0) return filtered;
       }
       if (fullscreenFeedContext.type === "profile") {
-        return userVideos.length > 0 ? userVideos : (visibleVideos.length > 0 ? visibleVideos : videos);
+        return userVideos;
       }
-      // If fullscreen context exists but yielded no matches (e.g. data still loading), fallback to visible
-      if (visibleVideos.length > 0) return visibleVideos;
     }
 
     // Priority 1: Business/Place context (if viewing a specific place)
     if (isPlaceView && drawerPlace) {
-      const filtered = visibleVideos.filter(v => 
+      return visibleVideos.filter(v => 
         v.placeId === drawerPlace.id || 
         v.placeName === drawerPlace.name ||
         isPlaceReviewMatch(v, drawerPlace.id) ||
         isPlaceReviewMatch(v, drawerPlace.name)
       );
-      if (filtered.length > 0) return filtered;
     }
 
     // Priority 2: Creator context (if viewing a specific author profile)
     if (isCreatorView && selectedAuthorForDrawer) {
-      const filtered = visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
-      if (filtered.length > 0) return filtered;
+      return visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
     }
 
     // Priority 3: User Profile context
