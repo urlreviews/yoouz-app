@@ -35,7 +35,7 @@ import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleFirestoreError, OperationType } from "./lib/firebase";
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/firebase";
-import { cleanForFirestore } from "./utils/cleanFirestore";
+import { cleanUndefinedFields, cleanForFirestore } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";

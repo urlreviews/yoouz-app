@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
-import { cleanForFirestore } from "../utils/cleanFirestore";
+import { cleanUndefinedFields, cleanForFirestore } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { initFaceDetection, detectFaceInVideo } from "../utils/faceDetector";
 import { formatBusinessName } from "../utils/placeUtils";

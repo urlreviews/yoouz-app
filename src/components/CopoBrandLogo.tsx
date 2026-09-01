@@ -59,6 +59,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     if (resolvedDomain) {
       addItem(`https://unavatar.io/${resolvedDomain}?fallback=false`, "contain");
       addItem(`https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`, "contain");
+      addItem(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`, "contain");
     }
 
     // 4. Explicit logoUrl fallback if it was a favicon

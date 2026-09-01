@@ -5944,15 +5944,63 @@ Return JSON:
               title = getMetaContent('title') || $('title').text() || domain;
               description = getMetaContent('description') || '';
 
+              const getCleanImgSrc = ($el: any): string => {
+                if (!$el || $el.length === 0) return '';
+                
+                // 1. Check data-srcset / srcset for highest quality candidate
+                const dataSrcset = $el.attr('data-srcset') || $el.attr('srcset') || '';
+                if (dataSrcset) {
+                  const parts = dataSrcset.split(',').map((p: string) => p.trim().split(' ')[0]).filter(Boolean);
+                  const valid = parts.filter((s: string) => !s.startsWith('data:') && !s.includes('blank.gif') && !s.includes('pixel.gif'));
+                  if (valid.length > 0) {
+                    return valid[valid.length - 1]; // Pick largest resolution candidate
+                  }
+                }
+
+                // 2. Check lazy loading attributes in order of quality
+                const candidateAttrs = [
+                  'data-orig-file',
+                  'data-large-file',
+                  'data-original',
+                  'data-src',
+                  'data-lazy-src',
+                  'data-retina-src',
+                  'data-highres',
+                  'data-high-res-src',
+                  'data-full-url',
+                  'src'
+                ];
+
+                for (const attr of candidateAttrs) {
+                  const val = $el.attr(attr);
+                  if (val && typeof val === 'string' && val.trim() !== '') {
+                    const trimmed = val.trim();
+                    if (
+                      !trimmed.startsWith('data:image/gif;base64') &&
+                      !trimmed.startsWith('data:image/png;base64') &&
+                      !trimmed.startsWith('data:image/jpeg;base64') &&
+                      trimmed !== 'data:;' &&
+                      !trimmed.startsWith('data:;') &&
+                      !trimmed.includes('blank.gif') &&
+                      !trimmed.includes('pixel.gif') &&
+                      !trimmed.includes('star.png') &&
+                      !trimmed.includes('testimonials-star') &&
+                      !trimmed.includes('placeholder.png')
+                    ) {
+                      return trimmed;
+                    }
+                  }
+                }
+                return '';
+              };
+
               const scriptLogos: string[] = [];
               const scriptImages: string[] = [];
 
-              // 1. Scan all script blocks for image/logo patterns (especially for SPAs, Next.js, and Hydration data)
+              // 1. Scan script blocks for image/logo patterns
               $('script').each((i, el) => {
                 const text = $(el).html() || '';
-                if (text.length > 300000) {
-                  return; // Skip excessively large minified script blocks to maintain performance
-                }
+                if (text.length > 300000) return;
                 
                 const fullUrlRegex = /(?:https?:)?\/\/[^\s"'()<>`#]+?\.(?:jpg|jpeg|png|webp|svg)(?:[\/\?#][^\s"'()<>`#]*)?/gi;
                 const relativePathRegex = /\/(?:wp-content|images|uploads|_next|static|assets|media|content)\/[^\s"'()<>`#]+?\.(?:jpg|jpeg|png|webp|svg)(?:[\/\?#][^\s"'()<>`#]*)?/gi;
@@ -5984,7 +6032,8 @@ Return JSON:
                 });
               });
 
-              // 2. Support JSON-LD images and schemas (Yoast, SEO plugins, Next.js schemas)
+              // 2. Support JSON-LD schemas
+              let jsonLdLogo = '';
               try {
                 $('script[type="application/ld+json"]').each((i, el) => {
                   try {
@@ -5995,6 +6044,7 @@ Return JSON:
                         const lower = item.toLowerCase();
                         if (lower.startsWith('http') && (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp') || lower.endsWith('.svg'))) {
                           if (lower.includes('logo')) {
+                            if (!jsonLdLogo) jsonLdLogo = item;
                             scriptLogos.push(item);
                           } else if (!lower.includes('icon') && !lower.includes('avatar') && !lower.includes('star')) {
                             scriptImages.push(item);
@@ -6002,8 +6052,13 @@ Return JSON:
                         }
                       } else if (typeof item === 'object') {
                         if (item.logo) {
-                          if (typeof item.logo === 'string') scriptLogos.push(item.logo);
-                          else if (typeof item.logo === 'object' && item.logo.url) scriptLogos.push(item.logo.url);
+                          if (typeof item.logo === 'string') {
+                            if (!jsonLdLogo) jsonLdLogo = item.logo;
+                            scriptLogos.push(item.logo);
+                          } else if (typeof item.logo === 'object' && item.logo.url) {
+                            if (!jsonLdLogo) jsonLdLogo = item.logo.url;
+                            scriptLogos.push(item.logo.url);
+                          }
                         }
                         if (item.image) {
                           if (typeof item.image === 'string') scriptImages.push(item.image);
@@ -6029,26 +6084,22 @@ Return JSON:
                                    $(`meta[itemprop="image"]`).attr('content') ||
                                    '';
 
-              // Only accept metadata image if it's not a generic logo, small icon, or svg
               if (rawMetaImage && !rawMetaImage.toLowerCase().endsWith('.svg') && !rawMetaImage.toLowerCase().includes('logo') && !rawMetaImage.toLowerCase().includes('icon')) {
                 image = rawMetaImage;
               }
 
-              // If image is still empty/invalid, build a weighted candidates list across styles, elements, and script extractions
               if (!image) {
                 const candidates: { src: string; weight: number }[] = [];
 
-                // Add script/JSON-LD discovered images (highly trustworthy for modern SPA platforms!)
                 scriptImages.forEach(src => {
                   let weight = 100;
                   const lower = src.toLowerCase();
                   if (lower.includes('attorney') || lower.includes('team') || lower.includes('group') || lower.includes('headshot')) weight += 500;
-                  if (lower.includes('office') || lower.includes('banner') || lower.includes('hero') || lower.includes('bg') || lower.includes('background') || lower.includes('firm')) weight += 300;
+                  if (lower.includes('office') || lower.includes('banner') || lower.includes('hero') || lower.includes('bg') || lower.includes('background') || lower.includes('firm') || lower.includes('plumber')) weight += 300;
                   if (lower.endsWith('.svg')) weight -= 200; 
                   candidates.push({ src, weight });
                 });
 
-                // Scan style attributes and custom lazy/data background attributes for background images
                 $('[data-bg], [data-bg-image], [style*="background-image"], [style*="background:"]').each((i, el) => {
                   let bgUrl = $(el).attr('data-bg') || $(el).attr('data-bg-image') || '';
                   if (!bgUrl) {
@@ -6061,10 +6112,9 @@ Return JSON:
                   }
                 });
 
-                // Scan normal HTML image tags
                 $('img').each((i, el) => {
-                  const src = $(el).attr('data-lazy-src') || $(el).attr('data-src') || $(el).attr('src');
-                  if (!src || src.startsWith('data:') || src.includes('testimonials-star') || src.includes('star.png')) return;
+                  const src = getCleanImgSrc($(el));
+                  if (!src) return;
                   
                   const lowerSrc = src.toLowerCase();
                   if (lowerSrc.includes('logo') || lowerSrc.includes('icon') || lowerSrc.includes('avatar') || lowerSrc.includes('spinner') || lowerSrc.endsWith('.svg')) return;
@@ -6074,11 +6124,10 @@ Return JSON:
                   const area = (width || 201) * (height || 201);
                   
                   let weight = area > 500000 ? 400 : 200;
-                  if (lowerSrc.includes('attorney') || lowerSrc.includes('team') || lowerSrc.includes('group') || lowerSrc.includes('firm')) weight += 100;
+                  if (lowerSrc.includes('attorney') || lowerSrc.includes('team') || lowerSrc.includes('group') || lowerSrc.includes('firm') || lowerSrc.includes('hero')) weight += 100;
                   candidates.push({ src, weight });
                 });
 
-                // Preload tags as final fallback
                 const preloadImg = $('link[rel="preload"][as="image"]').first().attr('href');
                 if (preloadImg && !preloadImg.toLowerCase().endsWith('.svg') && !preloadImg.toLowerCase().includes('logo') && !preloadImg.toLowerCase().includes('icon')) {
                   candidates.push({ src: preloadImg, weight: 150 });
@@ -6094,7 +6143,6 @@ Return JSON:
                 if (!urlStr) return '';
                 let cleaned = urlStr;
 
-                // 1. Wix media URLs (e.g., static.wixstatic.com/media/ID/v1/fill/...)
                 if (cleaned.includes('wixstatic.com/media/')) {
                   const wixMatch = cleaned.match(/^(https?:\/\/static\.wixstatic\.com\/media\/[^/]+)/);
                   if (wixMatch) {
@@ -6102,31 +6150,26 @@ Return JSON:
                   }
                 }
 
-                // 2. WordPress Jetpack/Photon (e.g., i0.wp.com/.../image.jpg?resize=150,150)
                 if (cleaned.includes('i0.wp.com/') || cleaned.includes('i1.wp.com/') || cleaned.includes('i2.wp.com/') || cleaned.includes('i3.wp.com/')) {
                   cleaned = cleaned.split('?')[0];
                 }
 
-                // 3. WordPress native thumbnails (e.g., name-150x150.jpg, name-300x200.png)
                 const wpThumbRegex = /(-\d+x\d+)(\.[a-zA-Z0-9]+)$/;
                 if (wpThumbRegex.test(cleaned)) {
                   cleaned = cleaned.replace(wpThumbRegex, '$2');
                 }
 
-                // 4. Shopify images (e.g., name_150x150.jpg, name_thumb.jpg)
                 if (cleaned.includes('/cdn.shopify.com/')) {
                   const shopifyRegex = /_({?)(?:pico|icon|thumb|small|compact|medium|large|grande|1024x1024|2048x2048|\d+x\d+)(}?)(?=\.[a-zA-Z0-9]+$|\?)/;
                   cleaned = cleaned.replace(shopifyRegex, '');
                 }
 
-                // 5. Squarespace (e.g. ?format=300w -> convert to ?format=1500w)
                 if (cleaned.includes('squarespace.com') || cleaned.includes('images.squarespace-cdn.com')) {
                   if (cleaned.includes('?format=')) {
                     cleaned = cleaned.replace(/\?format=\d+w/, '?format=1500w').replace(/&format=\d+w/, '&format=1500w');
                   }
                 }
 
-                // 6. Generic low-resolution parameters (w=, h=, width=, height=, size=)
                 try {
                   const parsed = new URL(cleaned);
                   let changed = false;
@@ -6186,63 +6229,100 @@ Return JSON:
     
               logo = '';
     
-              // 4. EXTRACT LOGO
-              // Priority 1: From script/JSON-LD direct logos
-              if (scriptLogos.length > 0) {
-                logo = scriptLogos[0];
-              }
+              // 4. EXTRACT BRAND LOGO (HIGH-FIDELITY PRIORITY)
+              // Priority 1: High-priority visible DOM Logo Selectors (Header, Navbar, Brand, custom-logo)
+              const domLogoSelectors = [
+                'header img.custom-logo',
+                'nav img.custom-logo',
+                '.site-header img.custom-logo',
+                '.custom-logo',
+                'header .navbar-brand img',
+                'nav .navbar-brand img',
+                '.navbar-brand img',
+                'header a[href="/"] img',
+                'nav a[href="/"] img',
+                `header a[href*="${domain}"] img`,
+                'header img[class*="logo" i]',
+                'nav img[class*="logo" i]',
+                'header img[id*="logo" i]',
+                'nav img[id*="logo" i]',
+                'header img[alt*="logo" i]',
+                'nav img[alt*="logo" i]',
+                'img[class*="custom-logo" i]',
+                'img[class*="site-logo" i]',
+                'img[class*="navbar-logo" i]',
+                'img[class*="header-logo" i]',
+                'img[class*="brand-logo" i]',
+                'img[class*="logo" i]',
+                'img[id*="logo" i]',
+                'img[alt*="logo" i]',
+                'header img',
+                'nav img'
+              ];
 
-              // Priority 2: From explicit HTML image tags containing 'logo'
-              if (!logo) {
-                $('img').each((i, el) => {
-                  const src = $(el).attr('data-lazy-src') || $(el).attr('data-src') || $(el).attr('src') || '';
-                  const alt = $(el).attr('alt') || '';
-                  const id = $(el).attr('id') || '';
-                  const cls = $(el).attr('class') || '';
-                  if (src && (src.toLowerCase().includes('logo') || alt.toLowerCase().includes('logo') || id.toLowerCase().includes('logo') || cls.toLowerCase().includes('logo'))) {
-                    if (!src.startsWith('data:image/svg+xml') && !src.includes('testimonials-star') && !src.includes('star.png')) {
-                      logo = src;
-                      return false; // break loop
-                    }
+              for (const sel of domLogoSelectors) {
+                if (logo) break;
+                $(sel).each((i, el) => {
+                  if (logo) return;
+                  const src = getCleanImgSrc($(el));
+                  if (src) {
+                    logo = src;
                   }
                 });
               }
-    
-              // Priority 3: Apple touch icons
+
+              // Priority 2: High-Resolution Apple Touch Icons
               if (!logo) {
                 const appleTouch = $('link[rel="apple-touch-icon"]').attr('href') || 
                                    $('link[rel="apple-touch-icon-precomposed"]').attr('href');
-                if (appleTouch) {
+                if (appleTouch && !appleTouch.startsWith('data:')) {
                   logo = appleTouch;
                 }
               }
     
-              // Priority 4: Large Icons
+              // Priority 3: Large Multi-resolution Favicons (e.g. 192x192, 180x180, 512x512)
               if (!logo) {
-                const largeIcons = $('link[rel="icon"][sizes]');
+                const largeIcons = $('link[rel="icon"][sizes], link[rel="shortcut icon"][sizes]');
                 let bestSize = 0;
                 largeIcons.each((i, el) => {
                   const sizesAttr = $(el).attr('sizes');
-                  if (sizesAttr) {
+                  const href = $(el).attr('href');
+                  if (sizesAttr && href && !href.startsWith('data:')) {
                     const width = parseInt(sizesAttr.split('x')[0], 10);
                     if (width > bestSize) {
                       bestSize = width;
-                      logo = $(el).attr('href') || '';
+                      logo = href;
                     }
                   }
                 });
               }
-    
-              // Priority 5: Standard icons
+
+              // Priority 4: JSON-LD direct logo schemas
+              if (!logo && jsonLdLogo) {
+                logo = jsonLdLogo;
+              }
+
+              // Priority 5: Meta logo tags
               if (!logo) {
-                logo = $('link[rel="icon"]').first().attr('href') || 
-                       $('link[rel="shortcut icon"]').first().attr('href') ||
-                       $('link[rel="fluid-icon"]').first().attr('href');
+                const metaLogo = getMetaContent('logo');
+                if (metaLogo && !metaLogo.startsWith('data:')) {
+                  logo = metaLogo;
+                }
+              }
+
+              // Priority 6: Script extractions
+              if (!logo && scriptLogos.length > 0) {
+                logo = scriptLogos[0];
               }
     
-              // Priority 6: Meta logo tags
+              // Priority 7: Standard favicon
               if (!logo) {
-                logo = getMetaContent('logo');
+                const standardFavicon = $('link[rel="icon"]').first().attr('href') || 
+                                       $('link[rel="shortcut icon"]').first().attr('href') ||
+                                       $('link[rel="fluid-icon"]').first().attr('href');
+                if (standardFavicon && !standardFavicon.startsWith('data:')) {
+                  logo = standardFavicon;
+                }
               }
     
               if (logo) {
@@ -6253,8 +6333,7 @@ Return JSON:
                 }
                 logo = getHighQualityImageUrl(logo);
               } else {
-                // Never fall back to the banner image to avoid duplicate visual assets.
-                // Instead, use Google's High-Resolution favicon service as the definitive fallback.
+                // Google High-Resolution favicon service fallback
                 logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256`;
               }
 
