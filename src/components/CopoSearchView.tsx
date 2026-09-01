@@ -190,6 +190,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     ? videos.filter(v => isPlaceReviewMatch(v, searchedPlace)) 
     : [];
 
+  const averageRating = placeVideos.length > 0
+    ? placeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / placeVideos.length
+    : 0;
+  const totalReviewsCount = placeVideos.length;
+
   return (
     <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center p-6 pt-10 pb-[calc(env(safe-area-inset-bottom,16px)+88px)] select-none">
       {!searchedPlace ? (
@@ -341,10 +346,26 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       );
                     })()}
                   </h2>
-                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline flex items-center gap-1.5 font-medium text-sm">
+                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline flex items-center gap-1.5 font-medium text-sm mt-1 mb-2">
                     <Globe className="w-4 h-4 text-zinc-400" />
                     {searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}
                   </a>
+                  
+                  {/* Star Rating Row */}
+                  {totalReviewsCount > 0 && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-5 h-5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "fill-zinc-800 text-zinc-800"}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-white font-bold text-lg">{averageRating.toFixed(1)}</span>
+                      <span className="text-zinc-400 font-medium text-sm">({totalReviewsCount} {totalReviewsCount === 1 ? 'review' : 'reviews'})</span>
+                    </div>
+                  )}
                   {searchedPlace.description && (
                     <p className="text-zinc-300 mt-4 max-w-2xl text-sm leading-relaxed">
                       {searchedPlace.description}

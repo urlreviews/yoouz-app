@@ -189,8 +189,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   // Compute dynamic stats based on actual video reviews
   const dynamicReviewCount = rawPlaceVideos.length;
   const dynamicAvgRating = dynamicReviewCount > 0 
-    ? rawPlaceVideos.reduce((acc, v) => acc + v.rating, 0) / dynamicReviewCount 
-    : (place.rating || 5.0);
+    ? rawPlaceVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / dynamicReviewCount 
+    : 0;
 
   const placeVideos = React.useMemo(() => {
     let list = [...rawPlaceVideos];
@@ -664,21 +664,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         </div>
 
         <div className="flex items-center gap-2 flex-wrap text-sm">
-          <div className="flex items-center gap-1">
-            <span className="font-bold text-white md:text-white">{dynamicAvgRating.toFixed(1)}</span>
-            <div className="flex items-center text-zinc-300">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-3.5 h-3.5 ${
-                    i < Math.floor(dynamicAvgRating)
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-zinc-700"
-                  }`}
-                />
-              ))}
+          {dynamicReviewCount > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-white md:text-white">{dynamicAvgRating.toFixed(1)}</span>
+              <div className="flex items-center text-zinc-300 gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-3.5 h-3.5 ${
+                      i < Math.round(dynamicAvgRating)
+                        ? "fill-amber-400 text-amber-400"
+                        : "fill-zinc-800 text-zinc-800"
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           <span className="text-zinc-400 font-medium">
             ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? "review" : "reviews"})
           </span>
