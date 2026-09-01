@@ -346,7 +346,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
 
   if (existing) {
     const banner = existing.bannerUrl || existing.ogImage || reviewBanner || (domain && KNOWN_BRAND_BANNERS[domain]) || "";
-    const logo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) || (existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) || reviewLogo || (domain && KNOWN_BRAND_LOGOS[domain]) || "";
+    const logo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) ? existing.avatarUrl : (reviewLogo || (domain && KNOWN_BRAND_LOGOS[domain]) || ""));
     const website = (existing.website && !existing.website.includes("maps.google.com")) 
       ? existing.website 
       : (video.placeWebsite || (domain ? `https://${domain}` : ""));

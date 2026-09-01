@@ -1520,7 +1520,7 @@ export function App() {
           const effectiveWeb = currentWebsite || reviewWebsite || (existing.brandDomain && existing.brandDomain.includes(".") ? `https://${existing.brandDomain}` : "");
 
           const effectiveBanner = existing.bannerUrl || existing.ogImage || reviewBanner || knownBanner || "";
-          const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) || (existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) || reviewLogo || knownLogo || "";
+          const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) ? existing.avatarUrl : (reviewLogo || knownLogo || ""));
 
           if (
             (!existing.bannerUrl && effectiveBanner) ||

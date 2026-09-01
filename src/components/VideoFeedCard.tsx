@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { formatBusinessName, resolveSafeAuthor } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, extractCleanDomain } from "../utils/placeUtils";
 import { resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";

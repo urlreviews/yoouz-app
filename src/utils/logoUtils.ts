@@ -131,8 +131,6 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
     </svg>`),
   "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2023/12/760X310.png",
   "districtuae.com": "https://www.districtuae.com/dre-logo-dark.png",
-  "londontrustedtherapy.com": "https://icons.duckduckgo.com/ip3/londontrustedtherapy.com.ico",
-  "ups.com": "https://cdn.brandfetch.io/ups.com/icon",
   "tajhotels.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#292524"/>

@@ -46,7 +46,7 @@ import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlace
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getCleanLogoUrl } from "../utils/logoUtils";
+import { KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "../utils/logoUtils";
 import { CopoBusinessPricingModal } from "./CopoBusinessPricingModal";
 import { CopoShareModal } from "./CopoShareModal";
 import { CopoBusinessClaimModal } from "./CopoBusinessClaimModal";

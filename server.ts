@@ -3608,16 +3608,18 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
   };
 
-  const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string }> = {
+  const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
     "districtuae.com": {
       bannerUrl: "https://www.districtuae.com/og-default.jpeg",
       logoUrl: "https://www.districtuae.com/dre-logo-dark.png",
-      name: "District Real Estate | Abu Dhabi & Dubai Property Advisory"
+      name: "District Real Estate | Abu Dhabi & Dubai Property Advisory",
+      website: "https://www.districtuae.com"
     },
     "www.districtuae.com": {
       bannerUrl: "https://www.districtuae.com/og-default.jpeg",
       logoUrl: "https://www.districtuae.com/dre-logo-dark.png",
-      name: "District Real Estate | Abu Dhabi & Dubai Property Advisory"
+      name: "District Real Estate | Abu Dhabi & Dubai Property Advisory",
+      website: "https://www.districtuae.com"
     },
     "freecancellations.com": {
       bannerUrl: "https://metasearch-cdn.azureedge.net/azure/seo-images/us/new-york-state/CDD5D4910706645C4CAD830CC6C07D52.jpg?quality=80&mode=crop&w=1200&h=800&scale=both&anchor=middlecenter",
@@ -3654,12 +3656,6 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       logoUrl: "https://thecapitalavenue.com/wp-content/uploads/2023/12/760X310.png",
       name: "The Capital Avenue Real Estate - Abu Dhabi",
       website: "https://thecapitalavenue.com"
-    },
-    "districtuae.com": {
-      bannerUrl: "https://www.districtuae.com/og-default.jpeg",
-      logoUrl: "https://www.districtuae.com/dre-logo-dark.png",
-      name: "District Real Estate | Abu Dhabi & Dubai Property Advisory",
-      website: "https://www.districtuae.com"
     },
     "mastercard.com": {
       logoUrl: "https://assets.brandfetch.io/idO-nUa30p/theme/dark/logo.svg?c=1bx1740614838634id64Mup7ac68853mP5_",
