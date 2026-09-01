@@ -1,3 +1,4 @@
+import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { NavSection, Place, VideoReview, UserProfile, VideoAuthor } from '../types';
 import { getDisplayViews } from '../utils/placeUtils';
@@ -801,6 +802,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Buffer rendering until the logo and banner are ready
+  const criticalImagesLoaded = useCriticalImagesLoaded([currentPlace?.logoUrl, currentPlace?.bannerUrl], 1500);
   const [commandQuery, setCommandQuery] = useState('');
   const [reviewsSearchQuery, setReviewsSearchQuery] = useState('');
 
@@ -1128,6 +1132,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   return (
     <div className="w-screen h-[100dvh] flex bg-zinc-950 select-none antialiased overflow-hidden font-sans text-white copo-business-dashboard">
+      <div className={`w-full h-full flex transition-opacity duration-200 ${criticalImagesLoaded ? "opacity-100" : "opacity-0"}`}>
       {/* Left Google Enterprise Navigation Sidebar */}
       <aside className="w-64 lg:w-72 bg-zinc-950 border-r border-zinc-800/80 flex flex-col justify-between shrink-0 select-none overflow-y-auto hidden md:flex z-50 copo-business-sidebar">
         <div className="flex flex-col">
@@ -4791,6 +4796,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         </div>
       )}
 
+      </div>
     </div>
   );
 };

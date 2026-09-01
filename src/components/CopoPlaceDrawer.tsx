@@ -1,3 +1,4 @@
+import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useEffect } from "react";
 import {
   X,
@@ -103,6 +104,11 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [claimAsOwner, setClaimAsOwner] = useState(false);
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [bannerError, setBannerError] = useState(false);
+  
+  // Instantly load the banner and logo into memory BEFORE rendering the UI
+  // to avoid the network fetch flicker.
+  const criticalImagesLoaded = useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
+
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(false);
   const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
@@ -509,6 +515,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
+        <div className={`flex flex-col h-full w-full transition-opacity duration-200 ${criticalImagesLoaded ? "opacity-100" : "opacity-0"}`}>
         {/* Mobile Pull Handle Indicator */}
         <div 
           {...swipeProps}
@@ -1759,7 +1766,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         </div>
       )}
-
+      
+      </div>
     </aside>
 
       {/* Google-style Share Modal Popup */}

@@ -27,6 +27,7 @@ import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
 import { getVideoBlobFromIndexedDB, saveVideoBlobToIndexedDB } from "../lib/videoStorage";
 import { triggerHaptic } from "../utils/haptics";
+import { preloadBusinessAssets } from "../utils/preloadUtils";
 
 interface VideoFeedCardProps {
   video: VideoReview;
@@ -452,6 +453,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   };
 
   const safeAuthor = resolveSafeAuthor(video);
+
+  // Preload high-priority assets when the card is active or near-active
+  useEffect(() => {
+    if (isActive || isNear) {
+      preloadBusinessAssets(
+        video.placeLogoUrl,
+        video.placeBannerUrl,
+        safeAuthor.avatar
+      );
+    }
+  }, [isActive, isNear, video.placeLogoUrl, video.placeBannerUrl, safeAuthor.avatar]);
 
 
   const videoJsonLd = {
