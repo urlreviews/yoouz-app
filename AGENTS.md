@@ -12,3 +12,9 @@
 ## UI/UX
 
 - **Dark Mode First**: The mobile PWA experience should default to a high-quality dark theme for all recording and search overlays.
+
+## Communication & Git Exports
+- **Mandatory Commit Message**: At the end of every response where changes were made to the codebase, the AI MUST append a clear, concise Git commit message summarizing the changes. Format it exactly as:
+**Commit Message:**
+`feat/fix/chore: Short description of the changes`
+This ensures that the user can seamlessly copy/paste or the system can automatically include it when pushing to GitHub.

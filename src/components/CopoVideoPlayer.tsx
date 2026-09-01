@@ -504,9 +504,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <div className="w-20 h-20 rounded-[28px] bg-zinc-800 border border-zinc-700 shadow-xl flex items-center justify-center text-white mb-6">
             <Video className="w-10 h-10 text-white" />
           </div>
-          <span className="inline-block px-3 py-1 bg-white/10 text-white border border-white/20 rounded-full text-xs font-semibold uppercase tracking-wider mb-3">
-            Real Users Only
-          </span>
           <h2 className="text-xl font-bold text-white mb-2">
             No Video Reviews Yet
           </h2>
