@@ -116,7 +116,11 @@ export function useFeedPagination() {
               });
               
               const merged = Array.from(map.values());
-              merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+              merged.sort((a, b) => {
+                const aTime = a.createdAtMs || (a.id && a.id.startsWith('rev-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
+                const bTime = b.createdAtMs || (b.id && b.id.startsWith('rev-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
+                return bTime - aTime;
+              });
               
               // Persist to cache
               try { localStorage.setItem("yoouz_cached_videos_v20", JSON.stringify(merged.slice(0, 50))); } catch(e){}

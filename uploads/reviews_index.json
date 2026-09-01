@@ -36,8 +36,23 @@
     "dishOrItem": "Dubai Digital Park",
     "likes": 1,
     "isLiked": true,
-    "commentsCount": 0,
-    "comments": [],
+    "commentsCount": 1,
+    "comments": [
+      {
+        "id": "comm-1788280929392-e7926",
+        "authorName": "aouisesmee",
+        "authorHandle": "aouisesmee",
+        "authorAvatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+        "text": "thanks",
+        "createdAt": "Just now",
+        "createdAtMs": 1788280929392,
+        "likesCount": 0,
+        "isLiked": false,
+        "isOwner": false,
+        "isCreator": true,
+        "replies": []
+      }
+    ],
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
@@ -79,7 +94,7 @@
       "photosCount": 0,
       "isVerified": true
     },
-    "rating": 5,
+    "rating": 4,
     "durationSeconds": 7,
     "videoUrl": "https://rev1.b-cdn.net/videos/rev-1788277000192-c9ypn.mp4",
     "bunnyVideoId": "rev-1788277000192-c9ypn",
@@ -92,8 +107,23 @@
     "dishOrItem": "Toptech Belgium SRL - Plombier et Chauffagiste - Plombier Chauffagiste",
     "likes": 1,
     "isLiked": true,
-    "commentsCount": 0,
-    "comments": [],
+    "commentsCount": 1,
+    "comments": [
+      {
+        "id": "comm-1788281771648-2h10j",
+        "authorName": "aouisesmee",
+        "authorHandle": "aouisesmee",
+        "authorAvatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+        "text": "thansk",
+        "createdAt": "Just now",
+        "createdAtMs": 1788281771648,
+        "likesCount": 0,
+        "isLiked": false,
+        "isOwner": false,
+        "isCreator": true,
+        "replies": []
+      }
+    ],
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,

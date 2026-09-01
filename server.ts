@@ -3706,6 +3706,10 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       logo = `https://cdn.brandfetch.io/${domain}/icon`;
     }
 
+    // Proxy framerusercontent to bypass CORP restrictions in iframe
+    if (banner && banner.includes("framerusercontent.com")) banner = `/api/proxy-image?url=${encodeURIComponent(banner)}`;
+    if (logo && logo.includes("framerusercontent.com")) logo = `/api/proxy-image?url=${encodeURIComponent(logo)}`;
+
     return {
       ...r,
       placeBannerUrl: banner || r.placeBannerUrl || "",
@@ -3864,7 +3868,11 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       }
 
       const merged = Array.from(map.values()).map(enrichReviewPlaceAssets);
-      merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+      merged.sort((a, b) => {
+        const aTime = a.createdAtMs || (a.id && a.id.startsWith('rev-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
+        const bTime = b.createdAtMs || (b.id && b.id.startsWith('rev-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
+        return bTime - aTime;
+      });
 
       // 4. Update memory cache and write-back to local reviews_index.json on success
       if (bunnyFetchSuccess || firestoreFetchSuccess) {
@@ -5271,6 +5279,36 @@ app.post("/api/videos/save-review", async (req, res) => {
   });
 
 
+  // Photo proxy for generic images (prevents exposing API key & CORS/CORP issues)
+  app.get("/api/proxy-image", async (req, res) => {
+    try {
+      const imageUrl = req.query.url as string;
+      if (!imageUrl) return res.status(400).send("Missing url parameter");
+      
+      const response = await fetch(imageUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        }
+      });
+      
+      if (!response.ok) {
+        return res.status(response.status).send(`Failed to fetch image: ${response.statusText}`);
+      }
+      
+      const buffer = await response.arrayBuffer();
+      const contentType = response.headers.get("content-type") || "image/jpeg";
+      
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      res.send(Buffer.from(buffer));
+    } catch (err: any) {
+      res.status(500).json({ error: "Failed to proxy image", details: err.message });
+    }
+  });
+
   // Photo proxy for Google Places API images (prevents exposing API key & CORS issues)
   app.get("/api/places/photo", async (req, res) => {
     try {
@@ -6592,6 +6630,9 @@ Return JSON:
       if (!logo) {
         logo = `https://cdn.brandfetch.io/${cleanDomain}/icon`;
       }
+      
+      if (image && image.includes('framerusercontent.com')) image = `/api/proxy-image?url=${encodeURIComponent(image)}`;
+      if (logo && logo.includes('framerusercontent.com')) logo = `/api/proxy-image?url=${encodeURIComponent(logo)}`;
       
       res.json({ title, description, image, logo, siteName, domain: cleanDomain, url: finalUrl });
     } catch (e) {

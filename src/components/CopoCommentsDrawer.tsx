@@ -537,7 +537,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       {/* Comment Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`font-bold text-white text-xs truncate ${(!comment.isOwner && onSelectAuthor && comment.authorHandle) ? "cursor-pointer hover:underline" : ""}`} onClick={() => !comment.isOwner && onSelectAuthor && comment.authorHandle && onSelectAuthor(comment.authorHandle, comment.authorName, comment.authorAvatar)}>
+                          <span className={`font-bold text-zinc-100 text-xs break-all sm:break-words leading-tight ${(!comment.isOwner && onSelectAuthor && comment.authorHandle) ? "cursor-pointer hover:underline" : ""}`} onClick={() => !comment.isOwner && onSelectAuthor && comment.authorHandle && onSelectAuthor(comment.authorHandle, comment.authorName, comment.authorAvatar)}>
                             {displayName}
                           </span>
 
@@ -702,7 +702,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                   />
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className={`font-bold text-white text-[11px] truncate ${(!reply.isOwner && onSelectAuthor && reply.authorHandle) ? "cursor-pointer hover:underline" : ""}`} onClick={() => !reply.isOwner && onSelectAuthor && reply.authorHandle && onSelectAuthor(reply.authorHandle, reply.authorName, reply.authorAvatar)}>
+                                      <span className={`font-bold text-zinc-100 text-[11px] break-all sm:break-words leading-tight ${(!reply.isOwner && onSelectAuthor && reply.authorHandle) ? "cursor-pointer hover:underline" : ""}`} onClick={() => !reply.isOwner && onSelectAuthor && reply.authorHandle && onSelectAuthor(reply.authorHandle, reply.authorName, reply.authorAvatar)}>
                                         {replyDisplayName}
                                       </span>
 

@@ -212,6 +212,9 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
 
   if (url && (url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))) {
     if (!url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
+      if (url.includes("framerusercontent.com") || url.includes("images.weserv.nl")) {
+        return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      }
       return url;
     }
   }
