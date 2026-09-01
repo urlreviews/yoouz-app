@@ -5915,12 +5915,12 @@ Return JSON:
       try {
         const fetchResponse = await fetch(url, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9'
           },
           redirect: 'follow',
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
         });
         
         if (fetchResponse.ok) {
@@ -5941,8 +5941,20 @@ Return JSON:
                        '';
               };
               
-              title = getMetaContent('title') || $('title').text() || domain;
-              description = getMetaContent('description') || '';
+              const rawTitle = getMetaContent('title') || $('title').text() || '';
+              description = getMetaContent('description') || $('meta[name="description"]').attr('content') || '';
+
+              const isGenericOrPlaceholderTitle = (t: string) => {
+                if (!t) return true;
+                const lower = t.trim().toLowerCase();
+                const genericList = [
+                  'hostinger horizons', 'react app', 'vite + react', 'vite app', 'create react app',
+                  'document', 'untitled', 'untitled document', 'home', 'home page', 'homepage',
+                  'my app', 'web app', 'website', 'just another wordpress site', 'wix.com',
+                  'squarespace', 'elementor', 'site title', 'default title', 'loading...', 'app', 'index'
+                ];
+                return genericList.includes(lower) || lower.startsWith('loading') || lower.startsWith('untitled');
+              };
 
               const getCleanImgSrc = ($el: any): string => {
                 if (!$el || $el.length === 0) return '';
@@ -5996,27 +6008,33 @@ Return JSON:
 
               const scriptLogos: string[] = [];
               const scriptImages: string[] = [];
+              const extractedPhrases: string[] = [];
 
-              // 1. Scan script blocks for image/logo patterns
-              $('script').each((i, el) => {
-                const text = $(el).html() || '';
-                if (text.length > 300000) return;
-                
+              const extractAssetsFromText = (text: string, baseUrl: string) => {
+                if (!text || text.length > 5000000) return;
                 const fullUrlRegex = /(?:https?:)?\/\/[^\s"'()<>`#]+?\.(?:jpg|jpeg|png|webp|svg)(?:[\/\?#][^\s"'()<>`#]*)?/gi;
-                const relativePathRegex = /\/(?:wp-content|images|uploads|_next|static|assets|media|content)\/[^\s"'()<>`#]+?\.(?:jpg|jpeg|png|webp|svg)(?:[\/\?#][^\s"'()<>`#]*)?/gi;
+                const relativePathRegex = /\/(?:wp-content|images|uploads|_next|static|assets|media|content|img)\/[^\s"'()<>`#]+?\.(?:jpg|jpeg|png|webp|svg)(?:[\/\?#][^\s"'()<>`#]*)?/gi;
 
                 const fullMatches = text.match(fullUrlRegex) || [];
                 const relativeMatches = text.match(relativePathRegex) || [];
 
                 [...fullMatches, ...relativeMatches].forEach(match => {
-                  const lower = match.toLowerCase();
                   let cleaned = match;
                   try {
                     cleaned = decodeURIComponent(match);
                   } catch (e) {}
 
-                  if (lower.includes('logo')) {
-                    scriptLogos.push(cleaned);
+                  if (!cleaned.startsWith('http')) {
+                    try {
+                      cleaned = new URL(cleaned, baseUrl).toString();
+                    } catch (e) { return; }
+                  }
+
+                  const lower = cleaned.toLowerCase();
+                  if (lower.includes('logo') || lower.includes('brand')) {
+                    if (!lower.includes('placeholder') && !lower.includes('blank.gif') && !lower.includes('pixel.gif')) {
+                      scriptLogos.push(cleaned);
+                    }
                   } else if (
                     !lower.includes('icon') && 
                     !lower.includes('avatar') && 
@@ -6025,32 +6043,81 @@ Return JSON:
                     !lower.includes('arrow') &&
                     !lower.includes('bullet') &&
                     !lower.includes('check') &&
-                    !lower.includes('marker')
+                    !lower.includes('marker') &&
+                    !lower.includes('pixel') &&
+                    !lower.includes('blank.gif')
                   ) {
                     scriptImages.push(cleaned);
                   }
                 });
+
+                const phrases = text.match(/["\x27\x60]([A-Z][A-Za-z0-9\s&,.\-]{8,80})["\x27\x60]/g);
+                if (phrases) {
+                  phrases.forEach(p => {
+                    const clean = p.slice(1, -1).trim();
+                    if (
+                      !clean.includes('React') && 
+                      !clean.includes('Error') && 
+                      !clean.includes('Component') && 
+                      !clean.includes('Expected') && 
+                      !clean.includes('Unexpected') && 
+                      !clean.includes('Cannot') && 
+                      !clean.includes('Invariant') &&
+                      !clean.includes('Listener') &&
+                      !clean.includes('Warning') &&
+                      !clean.includes('modulepreload') &&
+                      clean.length >= 8 && clean.length <= 80
+                    ) {
+                      extractedPhrases.push(clean);
+                    }
+                  });
+                }
+              };
+
+              // 1. Scan inline script blocks
+              $('script').each((i, el) => {
+                const text = $(el).html() || '';
+                if (text) extractAssetsFromText(text, finalUrl);
               });
 
-              // 2. Support JSON-LD schemas
+              // 2. Fetch external JS bundles (crucial for Single Page Apps: Vite, React, Vue, Angular, Hostinger Horizons, Webpack, Nuxt, Next client)
+              const scriptSrcs: string[] = [];
+              $('script[src]').each((i, el) => {
+                const src = $(el).attr('src');
+                if (src) {
+                  try {
+                    scriptSrcs.push(new URL(src, finalUrl).toString());
+                  } catch (e) {}
+                }
+              });
+
+              for (const src of scriptSrcs.slice(0, 4)) {
+                try {
+                  const sRes = await fetch(src, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined });
+                  if (sRes.ok) {
+                    const jsText = await sRes.text();
+                    extractAssetsFromText(jsText, finalUrl);
+                  }
+                } catch (e) {}
+              }
+
+              // 3. Support JSON-LD schemas
               let jsonLdLogo = '';
+              let jsonLdName = '';
+              let jsonLdDesc = '';
               try {
                 $('script[type="application/ld+json"]').each((i, el) => {
                   try {
                     const json = JSON.parse($(el).html() || '{}');
                     const traverseSchema = (item: any) => {
                       if (!item) return;
-                      if (typeof item === 'string') {
-                        const lower = item.toLowerCase();
-                        if (lower.startsWith('http') && (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp') || lower.endsWith('.svg'))) {
-                          if (lower.includes('logo')) {
-                            if (!jsonLdLogo) jsonLdLogo = item;
-                            scriptLogos.push(item);
-                          } else if (!lower.includes('icon') && !lower.includes('avatar') && !lower.includes('star')) {
-                            scriptImages.push(item);
-                          }
+                      if (typeof item === 'object') {
+                        if (item.name && typeof item.name === 'string' && !jsonLdName) {
+                          jsonLdName = item.name;
                         }
-                      } else if (typeof item === 'object') {
+                        if (item.description && typeof item.description === 'string' && !jsonLdDesc) {
+                          jsonLdDesc = item.description;
+                        }
                         if (item.logo) {
                           if (typeof item.logo === 'string') {
                             if (!jsonLdLogo) jsonLdLogo = item.logo;
@@ -6076,7 +6143,52 @@ Return JSON:
                 });
               } catch (e) {}
 
-              // 3. EXTRACT BANNER IMAGE
+              // 4. Resolve Title (with generic placeholder filter)
+              const cleanTitleString = (str: string) => {
+                return str.replace(/\s+(?:logo|icon|brand|badge|watermark)$/i, '').trim();
+              };
+
+              if (!isGenericOrPlaceholderTitle(rawTitle)) {
+                title = cleanTitleString(rawTitle);
+              } else if (jsonLdName && !isGenericOrPlaceholderTitle(jsonLdName)) {
+                title = cleanTitleString(jsonLdName);
+              } else {
+                const domainKeyword = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+                
+                // Match exact brand phrases from bundle
+                const exactBrandCandidate = extractedPhrases.find(p => {
+                  const lower = p.toLowerCase();
+                  return !lower.endsWith('logo') && !lower.endsWith('icon') && (lower.includes(domainKeyword) || (lower.includes('plumbing') && lower.includes('heating')));
+                });
+
+                const fullTitleCandidate = exactBrandCandidate || extractedPhrases.find(p => {
+                  const lower = p.toLowerCase();
+                  return !lower.endsWith('logo') && !lower.endsWith('icon') && (lower.includes(' - ') || lower.includes(' | '));
+                });
+
+                const matchingPhrase = fullTitleCandidate || extractedPhrases.find(p => {
+                  const pClean = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+                  return !p.toLowerCase().endsWith('logo') && (pClean.includes(domainKeyword) || domainKeyword.includes(pClean) || p.toLowerCase().includes('services') || p.toLowerCase().includes('solutions')) && p.length < 85;
+                });
+
+                if (matchingPhrase) {
+                  title = cleanTitleString(matchingPhrase);
+                } else if (extractedPhrases.length > 0) {
+                  title = cleanTitleString(extractedPhrases[0]);
+                } else {
+                  const namePart = domain.split('.')[0];
+                  title = namePart
+                    .replace(/[-_]/g, ' ')
+                    .replace(/([a-z])([A-Z])/g, '$1 $2')
+                    .replace(/\b\w/g, c => c.toUpperCase());
+                }
+              }
+
+              if (!description && jsonLdDesc) {
+                description = jsonLdDesc;
+              }
+
+              // 5. EXTRACT BANNER IMAGE
               const rawMetaImage = getMetaContent('image') || 
                                    getMetaContent('image:url') || 
                                    getMetaContent('image:secure_url') || 
@@ -6095,7 +6207,9 @@ Return JSON:
                   let weight = 100;
                   const lower = src.toLowerCase();
                   if (lower.includes('attorney') || lower.includes('team') || lower.includes('group') || lower.includes('headshot')) weight += 500;
-                  if (lower.includes('office') || lower.includes('banner') || lower.includes('hero') || lower.includes('bg') || lower.includes('background') || lower.includes('firm') || lower.includes('plumber')) weight += 300;
+                  if (lower.includes('office') || lower.includes('banner') || lower.includes('hero') || lower.includes('bg') || lower.includes('background') || lower.includes('firm') || lower.includes('work') || lower.includes('service')) weight += 300;
+                  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp')) weight += 150;
+                  if (lower.endsWith('.png')) weight += 50;
                   if (lower.endsWith('.svg')) weight -= 200; 
                   candidates.push({ src, weight });
                 });
@@ -6229,7 +6343,7 @@ Return JSON:
     
               logo = '';
     
-              // 4. EXTRACT BRAND LOGO (HIGH-FIDELITY PRIORITY)
+              // 6. EXTRACT BRAND LOGO (HIGH-FIDELITY PRIORITY)
               // Priority 1: High-priority visible DOM Logo Selectors (Header, Navbar, Brand, custom-logo)
               const domLogoSelectors = [
                 'header img.custom-logo',
@@ -6310,9 +6424,10 @@ Return JSON:
                 }
               }
 
-              // Priority 6: Script extractions
+              // Priority 6: Script / JS bundle discovered logos (e.g., dia-logo-no-background-VswmS.png)
               if (!logo && scriptLogos.length > 0) {
-                logo = scriptLogos[0];
+                const bestLogo = scriptLogos.find(l => l.toLowerCase().includes('no-background') || l.toLowerCase().includes('logo')) || scriptLogos[0];
+                logo = bestLogo;
               }
     
               // Priority 7: Standard favicon

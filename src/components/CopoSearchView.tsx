@@ -88,13 +88,21 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              const fetchedBanner = data.image || "";
              
              if (foundPlace) {
-               // Enrich existing place with missing metadata
+               // Enrich existing place with fresh metadata
+               const isGenericName = (n: string) => {
+                 if (!n) return true;
+                 const l = n.toLowerCase();
+                 return l.includes("hostinger") || l.includes("untitled") || l.includes("react app") || l.includes("vite app") || l === "website" || l === foundPlace?.brandDomain;
+               };
+
                foundPlace = {
                  ...foundPlace,
+                 name: (data.title && (isGenericName(foundPlace.name) || foundPlace.name === foundPlace.brandDomain)) ? data.title : foundPlace.name,
                  logoUrl: fetchedLogo || foundPlace.logoUrl,
                  avatarUrl: fetchedLogo || foundPlace.avatarUrl,
                  bannerUrl: fetchedBanner || foundPlace.bannerUrl,
                  ogImage: fetchedBanner || foundPlace.ogImage,
+                 photos: (fetchedBanner && (!foundPlace.photos || foundPlace.photos.length === 0)) ? [fetchedBanner] : (foundPlace.photos || []),
                  description: data.description || foundPlace.description,
                };
                if (onAddPlace) {
