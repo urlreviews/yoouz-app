@@ -578,6 +578,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <img
               src={allPhotos[0]}
               alt=""
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
               className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-125"
               referrerPolicy="no-referrer"
             />
@@ -585,6 +588,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <img
               src={allPhotos[0]}
               alt={formatBusinessName(place.name)}
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
               className="relative z-10 w-full h-full object-contain p-0"
               referrerPolicy="no-referrer"
               onError={() => setBannerError(true)}

@@ -1234,7 +1234,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
               <div className="w-8 h-8 rounded-xl bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 overflow-hidden">
                 {currentPlace.logoUrl ? (
-                  <img src={currentPlace.logoUrl} className="w-full h-full object-cover" />
+                  <img src={currentPlace.logoUrl} loading="eager" decoding="sync" fetchPriority="high" className="w-full h-full object-cover" />
                 ) : (
                   (currentPlace.name?.charAt(0).toUpperCase() || 'B')
                 )}
@@ -1312,7 +1312,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 >
                   <div className="w-6 h-6 rounded-lg bg-zinc-800 text-white flex items-center justify-center text-[10.5px] font-black overflow-hidden shrink-0">
                     {currentPlace.logoUrl ? (
-                      <img src={currentPlace.logoUrl} className="w-full h-full object-cover" />
+                      <img src={currentPlace.logoUrl} loading="eager" decoding="sync" fetchPriority="high" className="w-full h-full object-cover" />
                     ) : (
                       (currentPlace.name?.charAt(0).toUpperCase() || 'B')
                     )}
@@ -3629,6 +3629,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     <img
                                       src={currentPlace.bannerUrl || currentPlace.ogImage || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'}
                                       alt="Cover"
+                                      loading="eager"
+                                      decoding="sync"
+                                      fetchPriority="high"
                                       className="w-full h-full object-cover"
                                       referrerPolicy="no-referrer"
                                     />
@@ -4118,7 +4121,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <div className="flex items-center gap-4 mb-6">
                                 <div className="w-14 h-14 rounded-[18px] bg-[#18181b] border border-white/[0.1] flex items-center justify-center text-2xl font-black text-white shrink-0 overflow-hidden shadow-inner">
                                   {currentPlace.logoUrl ? (
-                                    <img src={currentPlace.logoUrl} className="w-full h-full object-cover" />
+                                    <img src={currentPlace.logoUrl} loading="eager" decoding="sync" fetchPriority="high" className="w-full h-full object-cover" />
                                   ) : (
                                     (profileName.charAt(0).toUpperCase() || 'B')
                                   )}

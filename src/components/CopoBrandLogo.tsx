@@ -117,7 +117,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         src={currentItem.url}
         alt={name || "Brand Logo"}
         loading="eager"
-        decoding="async"
+        decoding="sync"
+        fetchPriority="high"
         className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"}`}
         referrerPolicy="no-referrer"
         onError={handleImageError}

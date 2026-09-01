@@ -577,6 +577,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         <img
           src={posterUrl}
           alt={video.caption || formatBusinessName(video.placeName) || "Video review poster"}
+          loading="eager"
+          decoding="sync"
+          fetchPriority="high"
           className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-150 z-10 ${
             isActive && isPlaying ? "opacity-0" : "opacity-100"
           }`}
@@ -831,6 +834,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               <img
                 src={safeAuthor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`}
                 alt={safeAuthor.name}
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
                 className="w-full h-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
