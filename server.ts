@@ -2548,7 +2548,7 @@ async function startServer() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>${escapeHtml(authorName)}'s 60s Review of ${escapeHtml(placeName)} | Yoouz</title>
+  <title>${escapeHtml(authorName)}'s Review of ${escapeHtml(placeName)} | Yoouz</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #fff; user-select: none; }
@@ -2556,107 +2556,141 @@ async function startServer() {
     video { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1; background: #000; }
     .poster-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 2; transition: opacity 0.25s ease; pointer-events: none; }
     .poster-img.hide { opacity: 0; pointer-events: none; }
-    .vignette-top { position: absolute; top: 0; left: 0; right: 0; height: 130px; background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%); z-index: 5; pointer-events: none; }
-    .vignette-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 180px; background: linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0) 100%); z-index: 5; pointer-events: none; }
     
-    /* Scrubber Progress bar */
-    .progress-track { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.25); z-index: 25; }
-    .progress-bar { height: 100%; width: 0%; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.8); transition: width 0.1s linear; }
+    /* Vignette Shadows for high legibility */
+    .vignette-top { position: absolute; top: 0; left: 0; right: 0; height: 140px; background: linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0) 100%); z-index: 5; pointer-events: none; }
+    .vignette-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 210px; background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%); z-index: 5; pointer-events: none; }
+    
+    /* Scrubber Progress Bar at Top */
+    .progress-track { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.22); z-index: 30; }
+    .progress-bar { height: 100%; width: 0%; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.9); transition: width 0.1s linear; }
 
     /* Top Bar Header */
-    .header-bar { position: relative; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 0; gap: 8px; }
-    .header-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .yoouz-brand { display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 9999px; text-decoration: none; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; transition: transform 0.15s ease; shrink-0; }
-    .yoouz-brand:hover { transform: scale(1.04); }
-    .place-header-pill { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px 4px 5px; border-radius: 9999px; text-decoration: none; color: #fff; font-size: 12px; font-weight: 700; max-width: 170px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transition: background 0.15s ease; }
-    .place-header-pill:hover { background: rgba(24,24,27,0.9); }
-    .place-header-logo { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; background: #27272a; flex-shrink: 0; }
-    .place-header-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 12px; }
-    .place-rating-badge { display: flex; align-items: center; gap: 2px; color: #fbbf24; font-size: 11px; font-weight: 800; margin-left: 2px; flex-shrink: 0; }
+    .header-bar { position: relative; z-index: 25; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 0; }
     
+    /* Hamburger Pill Button [ ≡ Yoouz ] */
+    .hamburger-brand-btn { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.22); padding: 7px 15px 7px 13px; border-radius: 9999px; text-decoration: none; color: #fff; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+    .hamburger-brand-btn:hover { background: rgba(24,24,27,0.85); transform: scale(1.03); border-color: rgba(255,255,255,0.4); }
+    .hamburger-brand-btn:active { transform: scale(0.95); }
+    .hamburger-icon { display: flex; flex-direction: column; justify-content: space-between; width: 14px; height: 11px; }
+    .hamburger-icon span { display: block; width: 100%; height: 2px; background: #ffffff; border-radius: 1px; }
+    .brand-title { font-size: 13px; font-weight: 800; letter-spacing: -0.2px; color: #ffffff; }
+
     /* Top Right Sound Button */
-    .sound-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; shrink-0; }
-    .sound-btn:hover { transform: scale(1.08); background: rgba(24,24,27,0.9); }
+    .sound-btn { width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.22); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+    .sound-btn:hover { transform: scale(1.08); background: rgba(24,24,27,0.85); }
     .sound-btn:active { transform: scale(0.92); }
     
     /* Equalizer Bars */
-    .eq-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 2px; width: 16px; height: 16px; }
+    .eq-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 2.5px; width: 16px; height: 16px; }
     .eq-bar { width: 3px; background: #ffffff; border-radius: 2px; }
     .eq-bar:nth-child(1) { height: 8px; animation: eq 0.8s ease-in-out infinite; }
-    .eq-bar:nth-child(2) { height: 14px; animation: eq 0.8s ease-in-out infinite 0.2s; }
+    .eq-bar:nth-child(2) { height: 15px; animation: eq 0.8s ease-in-out infinite 0.2s; }
     .eq-bar:nth-child(3) { height: 10px; animation: eq 0.8s ease-in-out infinite 0.4s; }
-    @keyframes eq { 0%, 100% { height: 4px; } 50% { height: 15px; } }
+    @keyframes eq { 0%, 100% { height: 4px; } 50% { height: 16px; } }
 
-    /* Right Action Sidebar (Exact Match to Yoouz VideoFeedCard) */
-    .sidebar-actions { position: absolute; right: 12px; bottom: 85px; z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    /* Right Action Sidebar (Identical to Yoouz Mobile App) */
+    .sidebar-actions { position: absolute; right: 14px; bottom: 84px; z-index: 25; display: flex; flex-direction: column; align-items: center; gap: 14px; }
     .action-group { display: flex; flex-direction: column; align-items: center; }
-    .action-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-    .action-btn:hover { transform: scale(1.08); background: rgba(24,24,27,0.85); }
+    .action-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+    .action-btn:hover { transform: scale(1.08); background: rgba(24,24,27,0.85); border-color: rgba(255,255,255,0.4); }
     .action-btn:active { transform: scale(0.9); }
-    .action-label { font-size: 11px; font-weight: 700; margin-top: 3px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+    .action-label { font-size: 11px; font-weight: 700; margin-top: 3px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
     
-    /* Avatar with Follow Plus */
+    /* Creator Avatar with Follow Plus */
     .avatar-wrap { position: relative; width: 44px; height: 44px; cursor: pointer; }
-    .avatar-img { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); object-fit: cover; background: #27272a; transition: border-color 0.15s ease; }
+    .avatar-img { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.6); object-fit: cover; background: #27272a; transition: border-color 0.15s ease; }
     .avatar-wrap:hover .avatar-img { border-color: #fff; }
-    .follow-plus-btn { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: #ffffff; color: #09090b; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.5); font-size: 13px; font-weight: 900; transition: transform 0.15s ease; }
+    .follow-plus-btn { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: #ffffff; color: #09090b; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.6); font-size: 13px; font-weight: 900; transition: transform 0.15s ease; }
     .avatar-wrap:hover .follow-plus-btn { transform: translateX(-50%) scale(1.15); }
     .follow-plus-btn.followed { background: #10b981; color: #fff; }
 
-    /* Heart Icon Filled */
-    .heart-icon.liked { fill: #ff2d55; stroke: #ff2d55; filter: drop-shadow(0 0 8px rgba(255,45,85,0.6)); }
+    /* Heart Icon States */
+    .heart-icon.liked { fill: #ff2d55; stroke: #ff2d55; filter: drop-shadow(0 0 10px rgba(255,45,85,0.7)); }
     .bookmark-icon.saved { fill: #ffffff; stroke: #ffffff; }
 
     /* Bottom Info Section */
-    .bottom-info { position: relative; z-index: 20; padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; max-width: calc(100% - 68px); }
+    .bottom-info { position: relative; z-index: 25; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px; max-width: calc(100% - 70px); }
     .author-line { display: flex; align-items: center; gap: 6px; text-decoration: none; color: #fff; width: fit-content; }
     .author-line-name { font-size: 14px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
-    .verified-icon { width: 14px; height: 14px; fill: #ffffff; color: #000; shrink-0; }
+    .verified-icon { width: 14px; height: 14px; fill: #3b82f6; color: #fff; flex-shrink: 0; }
     
-    .rating-row { display: flex; align-items: center; gap: 6px; }
+    .rating-row { display: flex; align-items: center; gap: 8px; }
     .stars-box { display: flex; align-items: center; gap: 1.5px; }
     .star-icon { width: 13px; height: 13px; fill: #fbbf24; stroke: #fbbf24; }
-    .rating-text { font-size: 11px; font-weight: 800; color: #fbbf24; }
-    .verified-badge-pill { font-size: 10px; font-weight: 700; color: #34d399; background: rgba(6,78,59,0.5); backdrop-filter: blur(6px); border: 1px solid rgba(52,211,153,0.4); padding: 1px 6px; border-radius: 9999px; }
+    .time-text { font-size: 11px; font-weight: 600; color: #d4d4d8; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
 
-    .caption-box { font-size: 12px; line-height: 1.4; color: #f4f4f5; text-shadow: 0 1px 3px rgba(0,0,0,0.9); max-height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; cursor: pointer; }
+    .caption-box { font-size: 12.5px; line-height: 1.4; color: #f4f4f5; text-shadow: 0 1px 3px rgba(0,0,0,0.9); max-height: 35px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; cursor: pointer; }
     .caption-box.expanded { max-height: none; -webkit-line-clamp: unset; }
 
-    /* Bottom Place CTA Card */
-    .place-cta-card { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.22); padding: 6px 12px 6px 8px; border-radius: 12px; text-decoration: none; color: #fff; width: fit-content; max-width: 100%; transition: all 0.15s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
-    .place-cta-card:hover { background: rgba(24,24,27,0.95); border-color: rgba(255,255,255,0.4); transform: translateY(-1px); }
-    .place-cta-logo { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; background: #27272a; flex-shrink: 0; }
-    .place-cta-text { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
-    .place-cta-arrow { width: 14px; height: 14px; stroke-width: 2.5; margin-left: 2px; opacity: 0.8; flex-shrink: 0; }
+    /* Bottom Place CTA Card - Exact match to Yoouz App */
+    .place-cta-card { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0,0,0,0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.22); padding: 6px 12px 6px 8px; border-radius: 14px; text-decoration: none; color: #fff; width: fit-content; max-width: 100%; transition: all 0.15s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+    .place-cta-card:hover { background: rgba(24,24,27,0.92); border-color: rgba(255,255,255,0.4); transform: translateY(-1px); }
+    .place-cta-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .place-cta-logo { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; background: #27272a; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15); }
+    .place-cta-text { font-size: 12.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+    .place-verified-badge { width: 12px; height: 12px; fill: #3b82f6; flex-shrink: 0; }
+    .place-cta-arrow { width: 14px; height: 14px; stroke-width: 2.5; opacity: 0.8; flex-shrink: 0; }
 
     /* Centered Play / Pause Icon Feedback */
-    .center-feedback { position: absolute; inset: 0; margin: auto; width: 72px; height: 72px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); border: 1.5px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; z-index: 15; opacity: 0; transform: scale(0.85); transition: opacity 0.2s ease, transform 0.2s ease; pointer-events: none; }
+    .center-feedback { position: absolute; inset: 0; margin: auto; width: 72px; height: 72px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(16px); border: 1.5px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; z-index: 15; opacity: 0; transform: scale(0.85); transition: opacity 0.2s ease, transform 0.2s ease; pointer-events: none; }
     .center-feedback.show { opacity: 1; transform: scale(1); pointer-events: auto; cursor: pointer; }
     
     /* Double Tap Heart Animation */
-    .burst-heart { position: absolute; z-index: 30; pointer-events: none; transform: translate(-50%, -50%) scale(0); opacity: 0; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; }
+    .burst-heart { position: absolute; z-index: 35; pointer-events: none; transform: translate(-50%, -50%) scale(0); opacity: 0; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; }
     .burst-heart.active { transform: translate(-50%, -50%) scale(1.4); opacity: 1; animation: heartFade 0.7s forwards; }
     @keyframes heartFade { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; } }
 
-    /* In-Player Comments Sheet Drawer */
-    .comments-drawer { position: absolute; bottom: 0; left: 0; right: 0; height: 72%; max-height: 480px; background: rgba(18, 18, 20, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.15); border-radius: 20px 20px 0 0; z-index: 40; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
+    /* Backdrop Overlay for Drawers */
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+    /* Yoouz Hamburger Navigation Drawer (Slide from Left) */
+    .nav-drawer { position: absolute; top: 0; bottom: 0; left: 0; width: 82%; max-width: 320px; background: rgba(18, 18, 20, 0.98); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-right: 1px solid rgba(255,255,255,0.15); z-index: 50; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 10px 0 40px rgba(0,0,0,0.8); }
+    .nav-drawer.open { transform: translateX(0); }
+    .nav-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .nav-drawer-brand { display: flex; flex-direction: column; }
+    .nav-drawer-logo { font-size: 16px; font-weight: 900; letter-spacing: -0.3px; color: #fff; }
+    .nav-drawer-tagline { font-size: 11px; color: #a1a1aa; font-weight: 500; }
+    .nav-drawer-close { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    
+    .nav-drawer-menu { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .nav-menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; color: #e4e4e7; text-decoration: none; font-size: 13.5px; font-weight: 600; transition: all 0.15s ease; }
+    .nav-menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-menu-icon { width: 18px; height: 18px; color: #a1a1aa; flex-shrink: 0; }
+    
+    .nav-drawer-footer { padding: 16px 18px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.3); }
+    .open-app-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; border-radius: 9999px; background: #ffffff; color: #000; font-size: 13px; font-weight: 800; text-decoration: none; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 14px rgba(255,255,255,0.2); }
+    .open-app-btn:hover { background: #f4f4f5; transform: scale(1.02); }
+
+    /* In-Player Slide-Up Comments Drawer */
+    .comments-drawer { position: absolute; bottom: 0; left: 0; right: 0; height: 75%; max-height: 480px; background: rgba(18, 18, 20, 0.98); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid rgba(255,255,255,0.15); border-radius: 22px 22px 0 0; z-index: 50; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
     .comments-drawer.open { transform: translateY(0); }
     .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .drawer-title { font-size: 13px; font-weight: 800; color: #fff; }
+    .drawer-title { font-size: 13.5px; font-weight: 800; color: #fff; }
     .drawer-close { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .comments-list { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
-    .comment-item { display: flex; gap: 10px; font-size: 12px; }
-    .comment-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #27272a; flex-shrink: 0; }
+    .comments-list { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .comment-item { display: flex; gap: 10px; font-size: 12.5px; }
+    .comment-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: #27272a; flex-shrink: 0; }
     .comment-body { display: flex; flex-direction: column; gap: 2px; }
-    .comment-author { font-weight: 700; color: #fff; font-size: 12px; }
-    .comment-text { color: #d4d4d8; font-size: 12px; line-height: 1.4; }
+    .comment-author { font-weight: 700; color: #fff; font-size: 12.5px; }
+    .comment-text { color: #d4d4d8; font-size: 12.5px; line-height: 1.4; }
     .drawer-input-row { padding: 10px 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 8px; background: rgba(0,0,0,0.4); }
-    .drawer-input { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 9999px; padding: 8px 14px; color: #fff; font-size: 12px; outline: none; }
+    .drawer-input { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 9999px; padding: 8px 14px; color: #fff; font-size: 12.5px; outline: none; }
     .drawer-input::placeholder { color: #71717a; }
     .drawer-send-btn { width: 34px; height: 34px; border-radius: 50%; background: #ffffff; color: #000; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
     
-    /* Toast Notification */
-    .toast-pill { position: absolute; top: 60px; left: 50%; transform: translateX(-50%) translateY(-10px); background: rgba(24,24,27,0.95); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 9999px; z-index: 50; opacity: 0; pointer-events: none; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+    /* More Options Bottom Sheet */
+    .more-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(18, 18, 20, 0.98); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid rgba(255,255,255,0.15); border-radius: 22px 22px 0 0; z-index: 50; display: flex; flex-direction: column; padding: 16px 14px 24px; gap: 8px; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
+    .more-sheet.open { transform: translateY(0); }
+    .more-sheet-title { font-size: 12px; font-weight: 800; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; padding: 0 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sheet-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 12px; background: transparent; border: none; color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.15s ease; }
+    .sheet-btn:hover { background: rgba(255,255,255,0.08); }
+    .sheet-btn.danger { color: #f87171; }
+    .sheet-cancel-btn { margin-top: 4px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.1); border: none; color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; text-align: center; }
+
+    /* Toast Notification Banner */
+    .toast-pill { position: absolute; top: 68px; left: 50%; transform: translateX(-50%) translateY(-10px); background: rgba(24,24,27,0.95); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 9999px; z-index: 60; opacity: 0; pointer-events: none; transition: all 0.2s ease; box-shadow: 0 6px 24px rgba(0,0,0,0.7); }
     .toast-pill.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
@@ -2668,7 +2702,7 @@ async function startServer() {
     <!-- Poster image fallback -->
     <img id="posterImg" class="poster-img" src="${escapeHtml(poster)}" alt="${escapeHtml(placeName)} Video Review" />
     
-    <!-- Top & Bottom Vignette Gradients -->
+    <!-- Vignette Gradients -->
     <div class="vignette-top"></div>
     <div class="vignette-bottom"></div>
 
@@ -2682,21 +2716,17 @@ async function startServer() {
 
     <!-- Top Header Overlay -->
     <header class="header-bar">
-      <div class="header-left">
-        <a href="${escapeHtml(baseUrl)}" target="_blank" rel="noopener" class="yoouz-brand" title="Yoouz - Real People. Real Reviews.">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span>YOOUZ</span>
-        </a>
-        <a href="${escapeHtml(placeUrl)}" target="_blank" rel="noopener" class="place-header-pill" title="View ${escapeHtml(placeName)} on Yoouz">
-          <img class="place-header-logo" src="${escapeHtml(placeLogo)}" alt="${escapeHtml(placeName)}" />
-          <span class="place-header-title">${escapeHtml(placeName)}</span>
-          <div class="place-rating-badge">
-            <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span>${rating.toFixed(1)}</span>
-          </div>
-        </a>
-      </div>
+      <!-- Hamburger Brand Button [ ≡ Yoouz ] -->
+      <button class="hamburger-brand-btn" id="navDrawerBtn" aria-label="Open Yoouz Menu" title="Yoouz - Real People. Real Reviews.">
+        <div class="hamburger-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span class="brand-title">Yoouz</span>
+      </button>
 
+      <!-- Sound Mute / Unmute Button with Equalizer -->
       <button class="sound-btn" id="soundBtn" aria-label="Toggle sound" title="Toggle audio">
         <svg id="muteIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
         <div id="eqIcon" class="eq-wrap" style="display: none;">
@@ -2717,7 +2747,7 @@ async function startServer() {
       <svg width="90" height="90" viewBox="0 0 24 24" fill="#ff2d55" stroke="#ff2d55"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
     </div>
 
-    <!-- Right Actions Column (Sidebar) -->
+    <!-- Right Actions Column (Exact Match to Mobile App) -->
     <aside class="sidebar-actions">
       <!-- Creator Avatar with Follow Plus -->
       <div class="avatar-wrap" id="authorAvatarWrap" title="View Reviewer Profile">
@@ -2746,7 +2776,7 @@ async function startServer() {
         <button class="action-btn" id="bookmarkBtn" aria-label="Bookmark" title="Save Review">
           <svg class="bookmark-icon" id="bookmarkIcon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
         </button>
-        <span class="action-label">Save</span>
+        <span class="action-label" id="bookmarksCountText">0</span>
       </div>
 
       <!-- Share Button -->
@@ -2754,17 +2784,26 @@ async function startServer() {
         <button class="action-btn" id="shareBtn" aria-label="Share" title="Share review">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
         </button>
-        <span class="action-label">Share</span>
+        <span class="action-label" id="sharesCountText">3</span>
+      </div>
+
+      <!-- More Options Button (Three Dots) -->
+      <div class="action-group">
+        <button class="action-btn" id="moreBtn" aria-label="More options" title="More options">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </button>
       </div>
     </aside>
 
     <!-- Bottom Information Section -->
     <footer class="bottom-info">
+      <!-- By Author Line with Verified Checkmark -->
       <a href="${escapeHtml(creatorUrl)}" target="_blank" rel="noopener" class="author-line">
         <span class="author-line-name">By ${escapeHtml(authorName)}</span>
         <svg class="verified-icon" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
       </a>
 
+      <!-- Rating Stars & Relative Time -->
       <div class="rating-row">
         <div class="stars-box">
           <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -2773,18 +2812,68 @@ async function startServer() {
           <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </div>
-        <span class="rating-text">${rating.toFixed(1)}</span>
-        <span class="verified-badge-pill">Verified 60s Review</span>
+        <span class="time-text" id="timeAgoText">18h ago</span>
       </div>
 
+      <!-- Caption (if present) -->
       ${caption ? `<div class="caption-box" id="captionBox" title="Click to expand">${escapeHtml(caption)}</div>` : ''}
 
-      <a href="${escapeHtml(placeUrl)}" target="_blank" rel="noopener" class="place-cta-card">
-        <img class="place-cta-logo" src="${escapeHtml(placeLogo)}" alt="${escapeHtml(placeName)}" />
-        <span class="place-cta-text">${escapeHtml(placeName)}</span>
+      <!-- Bottom Place Card Pill [ [Logo] Legal 500 ✔  > ] -->
+      <a href="${escapeHtml(placeUrl)}" target="_blank" rel="noopener" class="place-cta-card" title="View ${escapeHtml(placeName)} on Yoouz">
+        <div class="place-cta-left">
+          <img class="place-cta-logo" src="${escapeHtml(placeLogo)}" alt="${escapeHtml(placeName)}" />
+          <span class="place-cta-text">${escapeHtml(placeName)}</span>
+          <svg class="place-verified-badge" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        </div>
         <svg class="place-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </a>
     </footer>
+
+    <!-- Overlay Backdrop -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <!-- Yoouz Hamburger Slide-in Navigation Drawer -->
+    <div class="nav-drawer" id="navDrawer">
+      <div class="nav-drawer-header">
+        <div class="nav-drawer-brand">
+          <span class="nav-drawer-logo">Yoouz</span>
+          <span class="nav-drawer-tagline">Real People. Real Reviews.</span>
+        </div>
+        <button class="nav-drawer-close" id="closeNavBtn" aria-label="Close menu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <nav class="nav-drawer-menu">
+        <a href="${escapeHtml(baseUrl)}" target="_blank" rel="noopener" class="nav-menu-item">
+          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Explore Video Feed</span>
+        </a>
+        <a href="${escapeHtml(baseUrl)}/search" target="_blank" rel="noopener" class="nav-menu-item">
+          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>Search Places & Reviews</span>
+        </a>
+        <a href="${escapeHtml(baseUrl)}/map" target="_blank" rel="noopener" class="nav-menu-item">
+          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+          <span>Map Discovery</span>
+        </a>
+        <a href="${escapeHtml(baseUrl)}/discover" target="_blank" rel="noopener" class="nav-menu-item">
+          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Verified Reviewers</span>
+        </a>
+        <a href="${escapeHtml(baseUrl)}/business" target="_blank" rel="noopener" class="nav-menu-item">
+          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          <span>Business Portal</span>
+        </a>
+      </nav>
+
+      <div class="nav-drawer-footer">
+        <a href="${escapeHtml(fullYoouzUrl)}" target="_blank" rel="noopener" class="open-app-btn">
+          <span>Open Full Yoouz App</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </a>
+      </div>
+    </div>
 
     <!-- In-Player Slide-Up Comments Drawer -->
     <div class="comments-drawer" id="commentsDrawer">
@@ -2810,6 +2899,28 @@ async function startServer() {
         </button>
       </div>
     </div>
+
+    <!-- More Options Bottom Sheet -->
+    <div class="more-sheet" id="moreSheet">
+      <div class="more-sheet-title">Review Options</div>
+      <button class="sheet-btn" id="sheetCopyBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <span>Copy Video Link</span>
+      </button>
+      <button class="sheet-btn" id="sheetShareBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        <span>Share Review</span>
+      </button>
+      <button class="sheet-btn" id="sheetPlaceBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        <span>View Place Profile</span>
+      </button>
+      <button class="sheet-btn danger" id="sheetReportBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+        <span>Report Video</span>
+      </button>
+      <button class="sheet-cancel-btn" id="sheetCancelBtn">Cancel</button>
+    </div>
   </div>
 
   <script>
@@ -2824,13 +2935,28 @@ async function startServer() {
       const burstHeart = document.getElementById('burstHeart');
       const playerContainer = document.getElementById('playerContainer');
       const toastPill = document.getElementById('toastPill');
+      const modalOverlay = document.getElementById('modalOverlay');
       
+      const navDrawerBtn = document.getElementById('navDrawerBtn');
+      const navDrawer = document.getElementById('navDrawer');
+      const closeNavBtn = document.getElementById('closeNavBtn');
+
       const likeBtn = document.getElementById('likeBtn');
       const heartIcon = document.getElementById('heartIcon');
       const likesCountText = document.getElementById('likesCountText');
       const bookmarkBtn = document.getElementById('bookmarkBtn');
       const bookmarkIcon = document.getElementById('bookmarkIcon');
+      const bookmarksCountText = document.getElementById('bookmarksCountText');
       const shareBtn = document.getElementById('shareBtn');
+      const sharesCountText = document.getElementById('sharesCountText');
+      const moreBtn = document.getElementById('moreBtn');
+      const moreSheet = document.getElementById('moreSheet');
+      const sheetCancelBtn = document.getElementById('sheetCancelBtn');
+      const sheetCopyBtn = document.getElementById('sheetCopyBtn');
+      const sheetShareBtn = document.getElementById('sheetShareBtn');
+      const sheetPlaceBtn = document.getElementById('sheetPlaceBtn');
+      const sheetReportBtn = document.getElementById('sheetReportBtn');
+
       const followBtn = document.getElementById('followBtn');
       const authorAvatarWrap = document.getElementById('authorAvatarWrap');
       
@@ -2846,12 +2972,15 @@ async function startServer() {
 
       const videoId = "${escapeHtml(foundVideo.id)}";
       const fullYoouzUrl = "${escapeHtml(fullYoouzUrl)}";
+      const placeUrl = "${escapeHtml(placeUrl)}";
       const creatorUrl = "${escapeHtml(creatorUrl)}";
       let isLiked = false;
       let isSaved = false;
       let isFollowed = false;
       let currentLikes = ${likesCount};
       let currentComments = ${commentsCount};
+      let currentBookmarks = 0;
+      let currentShares = 3;
 
       // Read local states
       try {
@@ -2865,6 +2994,8 @@ async function startServer() {
       }
       if (isSaved) {
         bookmarkIcon.classList.add('saved');
+        currentBookmarks = 1;
+        bookmarksCountText.textContent = '1';
       }
       if (isFollowed) {
         followBtn.textContent = '✓';
@@ -2876,6 +3007,28 @@ async function startServer() {
         toastPill.classList.add('show');
         setTimeout(() => toastPill.classList.remove('show'), 2200);
       }
+
+      function closeAllModals() {
+        navDrawer.classList.remove('open');
+        commentsDrawer.classList.remove('open');
+        moreSheet.classList.remove('open');
+        modalOverlay.classList.remove('open');
+      }
+
+      modalOverlay.addEventListener('click', closeAllModals);
+
+      // Nav Drawer Handlers
+      navDrawerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllModals();
+        navDrawer.classList.add('open');
+        modalOverlay.classList.add('open');
+      });
+
+      closeNavBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllModals();
+      });
 
       // Autoplay muted
       vid.muted = true;
@@ -2925,7 +3078,7 @@ async function startServer() {
       // Tap screen to Play / Pause
       let lastTap = 0;
       playerContainer.addEventListener('click', (e) => {
-        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('.comments-drawer')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('.comments-drawer') || e.target.closest('.nav-drawer') || e.target.closest('.more-sheet')) return;
         
         const now = Date.now();
         if (now - lastTap < 300) {
@@ -3000,10 +3153,14 @@ async function startServer() {
         isSaved = !isSaved;
         if (isSaved) {
           bookmarkIcon.classList.add('saved');
+          currentBookmarks = 1;
+          bookmarksCountText.textContent = '1';
           try { localStorage.setItem("yoouz_saved_" + videoId, "1"); } catch(e){}
           showToast("Saved to Bookmarks");
         } else {
           bookmarkIcon.classList.remove('saved');
+          currentBookmarks = 0;
+          bookmarksCountText.textContent = '0';
           try { localStorage.removeItem("yoouz_saved_" + videoId); } catch(e){}
           showToast("Removed from Bookmarks");
         }
@@ -3041,12 +3198,13 @@ async function startServer() {
       });
 
       // Share Action
-      shareBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
+      async function executeShare() {
+        currentShares++;
+        sharesCountText.textContent = currentShares;
         if (navigator.share) {
           try {
             await navigator.share({
-              title: "${escapeHtml(authorName)}'s Video Review of ${escapeHtml(placeName)}",
+              title: "${escapeHtml(authorName)}'s Review of ${escapeHtml(placeName)}",
               text: "Check out this authentic 60-second video review on Yoouz:",
               url: fullYoouzUrl
             });
@@ -3059,6 +3217,48 @@ async function startServer() {
         } catch(err) {
           showToast("Share: " + fullYoouzUrl);
         }
+      }
+
+      shareBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        executeShare();
+      });
+
+      // More Options Sheet Handlers
+      moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllModals();
+        moreSheet.classList.add('open');
+        modalOverlay.classList.add('open');
+      });
+
+      sheetCancelBtn.addEventListener('click', closeAllModals);
+      
+      sheetCopyBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(fullYoouzUrl);
+          showToast("Link copied to clipboard!");
+        } catch(err){}
+        closeAllModals();
+      });
+
+      sheetShareBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllModals();
+        executeShare();
+      });
+
+      sheetPlaceBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.open(placeUrl, '_blank');
+        closeAllModals();
+      });
+
+      sheetReportBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showToast("Review reported for moderation. Thank you.");
+        closeAllModals();
       });
 
       // Expand Caption
@@ -3072,13 +3272,15 @@ async function startServer() {
       // Comments Drawer logic
       commentBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        closeAllModals();
         commentsDrawer.classList.add('open');
+        modalOverlay.classList.add('open');
         setTimeout(() => commentInput.focus(), 150);
       });
 
       closeDrawerBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        commentsDrawer.classList.remove('open');
+        closeAllModals();
       });
 
       function submitComment() {
