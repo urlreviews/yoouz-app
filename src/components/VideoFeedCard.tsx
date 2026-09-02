@@ -89,7 +89,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   businessBannerUrl,
   cardRef,
   localBlobUrl,
-  hasUserStartedFeed = true,
+  hasUserStartedFeed = false,
   onStartFeed,
   onRecordView
 }) => {
@@ -332,7 +332,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     triggerHaptic("light");
 
-    if (el.paused) {
+    if (el.paused || isManuallyPaused) {
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       el.muted = isMuted;
@@ -342,6 +342,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       if (el.error) {
         handleVideoError();
         return;
+      }
+
+      if (el.readyState === 0) {
+        el.load();
       }
 
       const playPromise = el.play();
