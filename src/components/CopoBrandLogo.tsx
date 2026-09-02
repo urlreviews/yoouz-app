@@ -72,14 +72,21 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasFailedAll, setHasFailedAll] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Reset indices if props change
   useEffect(() => {
     setCurrentIndex(0);
     setHasFailedAll(cascadeItems.length === 0);
+    setIsLoaded(false);
   }, [cascadeItems]);
 
+  const handleImageLoad = () => {
+    setIsLoaded(true);
+  };
+
   const handleImageError = () => {
+    setIsLoaded(false);
     if (currentIndex < cascadeItems.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
@@ -93,18 +100,24 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return cleaned.charAt(0).toUpperCase();
   };
 
-  if (hasFailedAll || cascadeItems.length === 0) {
-    // Strip bg-white and other bg- colors to ensure the fallback gradient displays properly
-    const fallbackBgClass = className
-      .split(" ")
-      .filter((c) => !c.startsWith("bg-") && !c.includes("bg-"))
-      .join(" ");
+  // Strip bg-white and other bg- colors to ensure the fallback gradient displays properly
+  const fallbackBgClass = className
+    .split(" ")
+    .filter((c) => !c.startsWith("bg-") && !c.includes("bg-"))
+    .join(" ");
 
+  const fallbackElement = (
+    <div className={`${fallbackBgClass} bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center shadow-inner border border-zinc-700/60 w-full h-full absolute inset-0`}>
+      <span className={fallbackTextClassName}>
+        {getInitials()}
+      </span>
+    </div>
+  );
+
+  if (hasFailedAll || cascadeItems.length === 0) {
     return (
-      <div className={`${fallbackBgClass} bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center shadow-inner border border-zinc-700/60`}>
-        <span className={fallbackTextClassName}>
-          {getInitials()}
-        </span>
+      <div className={`relative ${className.replace(/bg-[a-zA-Z0-9\-]+/, "bg-transparent").replace(/p-\d+/, "p-0")}`}>
+        {fallbackElement}
       </div>
     );
   }
@@ -112,15 +125,20 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const currentItem = cascadeItems[currentIndex];
 
   return (
-    <div className={className}>
+    <div className={`relative ${className} ${!isLoaded ? "bg-transparent border-transparent ring-0 shadow-none p-0 overflow-hidden" : ""}`}>
+      {/* Show text fallback instantly while loading */}
+      {!isLoaded && fallbackElement}
+      
+      {/* Load the image, hide until loaded */}
       <img
         src={currentItem.url}
         alt={name || "Brand Logo"}
         loading="eager"
         decoding="sync"
         fetchPriority="high"
-        className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"}`}
+        className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"} ${isLoaded ? "opacity-100" : "opacity-0 absolute inset-0 w-full h-full pointer-events-none"}`}
         referrerPolicy="no-referrer"
+        onLoad={handleImageLoad}
         onError={handleImageError}
       />
     </div>
