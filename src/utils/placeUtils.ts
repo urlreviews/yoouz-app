@@ -158,12 +158,38 @@ export function formatBusinessName(name?: string | null): string {
           return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
         })
         .filter(Boolean);
-      
+        
       return words.join(' ');
     }
     return domain;
   }
   
+  // Clean up scraped SEO titles (e.g., "BrandName | The Best Service in Town")
+  // We look for common delimiters like |, -, –, or — surrounded by spaces, or just |
+  const seoDelimiters = [
+    " | ", "|", 
+    " - ", 
+    " – ", // en-dash
+    " — ", // em-dash
+    " : "
+  ];
+
+  for (const delimiter of seoDelimiters) {
+    if (trimmed.includes(delimiter)) {
+      // Split and take the first part
+      const potentialName = trimmed.split(delimiter)[0].trim();
+      // Only use it if it leaves us with something reasonable (at least 2 chars)
+      if (potentialName.length > 1) {
+        trimmed = potentialName;
+        break; // Stop after first successful split to avoid over-truncating
+      }
+    }
+  }
+
+  // Remove CamelCase joined navigation text like "Legal 500MenuCloseMoreMoreMore"
+  // This looks for a lowercase letter followed by an uppercase letter where the uppercase starts a known bad word
+  trimmed = trimmed.replace(/([a-z0-9])(Menu|Close|More|Search|Login|Sign|Cart).*/g, '$1').trim();
+
   // If it's a single word without spaces, capitalize first letter
   if (!trimmed.includes(" ") && trimmed.length > 1) {
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
