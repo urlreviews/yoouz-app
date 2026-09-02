@@ -60,6 +60,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"share" | "embed" | "preview">("share");
+  const [embedLayout, setEmbedLayout] = useState<"reel" | "card" | "widget">("reel");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Determine active states based on general share or video share
@@ -118,8 +119,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     subtitle?.toLowerCase().includes("business") || 
     shareUrl.includes("/place/")
   );
-
-  const [embedLayout, setEmbedLayout] = useState<"reel" | "card" | "widget">("reel");
 
   // Generate Embed URLs and Code
   const embedVideoId = video?.id || (shareUrl.includes('/video/') ? shareUrl.split('/video/')[1]?.split('?')[0] : null);
