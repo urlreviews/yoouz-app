@@ -238,7 +238,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       onRequireAuth?.();
       return;
     }
-    setCommentText((prev) => prev + emoji);
+    setCommentText((prev) => (prev + emoji).slice(0, 300));
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -251,7 +251,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       onRequireAuth?.();
       return;
     }
-    const text = commentText.trim();
+    const text = commentText.trim().slice(0, 300);
     if (!text) return;
 
     if (postAsOwner && !replyingTo && onAddOwnerResponse) {
@@ -887,13 +887,13 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   alt={currentUser?.name || "You"}
                   className="w-8 h-8 rounded-full object-cover border border-zinc-800 shrink-0"
                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- <div className="relative flex-1">
+                 <div className="relative flex-1">
                   <input
                     ref={inputRef}
                     type="text"
                     value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    maxLength={500}
+                    onChange={(e) => setCommentText(e.target.value.slice(0, 300))}
+                    maxLength={300}
                     placeholder={
                       replyingTo
                         ? `Reply to ${replyingTo.name}...`
@@ -911,18 +911,34 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={!commentText.trim()}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer ${
-                    postAsOwner
-                      ? "bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40"
-                      : "bg-zinc-800 hover:bg-zinc-700 text-white disabled:opacity-40"
-                  }`}
-                  title="Send comment"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    id="comment-char-counter"
+                    className={`text-[11px] font-mono tracking-tight select-none transition-colors ${
+                      commentText.length >= 300
+                        ? "text-red-400 font-bold"
+                        : commentText.length >= 260
+                        ? "text-amber-400 font-medium"
+                        : "text-zinc-500"
+                    }`}
+                  >
+                    {commentText.length}/300
+                  </span>
+
+                  <button
+                    type="submit"
+                    id="btn-send-comment"
+                    disabled={!commentText.trim() || commentText.length > 300}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer ${
+                      postAsOwner
+                        ? "bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40"
+                        : "bg-zinc-800 hover:bg-zinc-700 text-white disabled:opacity-40"
+                    }`}
+                    title="Send comment"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
               </form>
             </>
           )}
