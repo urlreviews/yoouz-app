@@ -1776,20 +1776,9 @@ export function App() {
       }
     }
 
-    // Priority 1: Business/Place context (if viewing a specific place)
-    if (isPlaceView && drawerPlace) {
-      return visibleVideos.filter(v => 
-        v.placeId === drawerPlace.id || 
-        v.placeName === drawerPlace.name ||
-        isPlaceReviewMatch(v, drawerPlace.id) ||
-        isPlaceReviewMatch(v, drawerPlace.name)
-      );
-    }
+    
 
-    // Priority 2: Creator context (if viewing a specific author profile)
-    if (isCreatorView && selectedAuthorForDrawer) {
-      return visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
-    }
+    
 
     // Priority 3: User Profile context
     if (activeSection === "profile") {
@@ -1877,6 +1866,7 @@ export function App() {
     const targetVid = videos.find((v) => v.id === videoId);
     if (!targetVid) return;
 
+    previousVideoIndexRef.current = currentVideoIndex; // Save background feed index before going fullscreen
     if (source === "creator" || isCreatorView) {
       const author = targetVid.author || selectedAuthorForDrawer;
       if (!author) return;
@@ -1943,9 +1933,17 @@ export function App() {
     } else {
       // Default (search, map, bookmarks, home): open place view with this video as the ONLY context
       setFullscreenFeedContext(null);
+      setSelectedPlaceIdForDrawer(targetVid.placeId);
       setSelectedAuthorForDrawer(null);
-      setSelectedPlaceIdForDrawer(targetVid.placeId || targetVid.placeName);
-      setPendingVideoId(videoId);
+      setActiveSection("home");
+      
+      const vids = videos.filter((v) => v.placeId === targetVid.placeId || v.placeName === targetVid.placeName);
+      const idx = vids.findIndex(v => v.id === videoId);
+      if (idx !== -1) {
+        setCurrentVideoIndex(idx);
+      } else {
+        setPendingVideoId(videoId);
+      }
     }
   };
 
@@ -1974,6 +1972,7 @@ export function App() {
         handleGoToProfile();
       }
       setFullscreenFeedContext(null);
+      setCurrentVideoIndex(previousVideoIndexRef.current);
     } else if (isCreatorView || isPlaceView) {
       handleCloseDrawers();
     } else {
@@ -2025,8 +2024,7 @@ export function App() {
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
-    // Restore the index from before the drawer was opened
-    setCurrentVideoIndex(previousVideoIndexRef.current);
+    
     if (previousSectionRef.current) {
       setActiveSection(previousSectionRef.current);
       previousSectionRef.current = null;
@@ -2038,11 +2036,9 @@ export function App() {
     if (activeSection !== "home") {
       previousSectionRef.current = activeSection;
     }
-    previousVideoIndexRef.current = currentVideoIndex; // Save feed index
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
-    setCurrentVideoIndex(0);
   };
 
   // Handle Likes - fully synced with Firestore
@@ -3273,10 +3269,8 @@ export function App() {
               onOpenComments={(v) => setActiveCommentVideo(v)}
               onOpenPlace={handleOpenPlaceDrawer}
               onOpenCreator={(author) => {
-                  previousVideoIndexRef.current = currentVideoIndex; // Save feed index
                   setSelectedPlaceIdForDrawer(null);
                   setSelectedAuthorForDrawer(author);
-                  setCurrentVideoIndex(0);
                 }}
               onOpenShare={handleOpenShare}
               onOpenReport={(v) => handleOpenReport({ type: "video", video: v })}
@@ -3398,11 +3392,8 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 currentUser={currentUser}
                 onOpenCreator={(author) => {
-                  previousVideoIndexRef.current = currentVideoIndex; // Save feed index
                   setSelectedPlaceIdForDrawer(null);
                   setSelectedAuthorForDrawer(author);
-                  setActiveSection("home");
-                  setCurrentVideoIndex(0);
                 }}
                 onToggleFollow={handleToggleFollow}
                 onStartChat={handleStartChat}
@@ -3567,10 +3558,8 @@ export function App() {
                 onUnblockUser={handleUnblockUser}
                 allUsers={allRegisteredUsers}
                 onOpenCreator={(author) => {
-                  previousVideoIndexRef.current = currentVideoIndex; // Save feed index
                   setSelectedPlaceIdForDrawer(null);
                   setSelectedAuthorForDrawer(author);
-                  setCurrentVideoIndex(0);
                 }}
                 onDeleteThread={(threadId) => {
                   deleteChatThreadFromFirestore(threadId);
@@ -3635,10 +3624,8 @@ export function App() {
                 onOpenPlace={handleOpenPlaceDrawer}
                 onNavigateHome={handleGoHome}
                 onOpenCreator={(author) => {
-                  previousVideoIndexRef.current = currentVideoIndex; // Save feed index
                   setSelectedPlaceIdForDrawer(null);
                   setSelectedAuthorForDrawer(author);
-                  setCurrentVideoIndex(0);
                 }}
                 onToggleFollow={handleToggleFollow}
                 onToggleFollowPlace={handleToggleFollowPlace}
@@ -3750,7 +3737,6 @@ export function App() {
         placeName={activeCommentVideo?.placeName}
         onSelectAuthor={(handle, name, avatar) => {
           setActiveCommentVideo(null); // Close the drawer first
-          previousVideoIndexRef.current = currentVideoIndex; // Save feed index
           
           // Then open the creator profile
           setSelectedAuthorForDrawer({

@@ -150,6 +150,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       setHasUserStartedFeed(true);
 
       // Update refs and trigger state change immediately to prevent race conditions
+      const isJump = Math.abs(targetIndex - currentIndexRef.current) > 1;
       currentIndexRef.current = targetIndex;
       lastObserverIndexRef.current = targetIndex;
       onSelectVideoIndex(targetIndex);
@@ -159,7 +160,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (cardEl && container) {
         isProgrammaticScrollRef.current = true;
         const targetTop = cardEl.offsetTop - container.offsetTop;
-        container.scrollTo({ top: targetTop, behavior });
+        container.scrollTo({ top: targetTop, behavior: isJump ? "auto" : behavior });
 
         if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
         scrollTimeoutRef.current = setTimeout(() => {
@@ -318,6 +319,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {
     if (currentIndex !== lastObserverIndexRef.current) {
+      const isJump = Math.abs(currentIndex - currentIndexRef.current) > 1;
       lastObserverIndexRef.current = currentIndex;
       currentIndexRef.current = currentIndex;
 
@@ -326,7 +328,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (cardEl && container) {
         isProgrammaticScrollRef.current = true;
         const targetTop = cardEl.offsetTop - container.offsetTop;
-        container.scrollTo({ top: targetTop, behavior: "smooth" });
+        container.scrollTo({ top: targetTop, behavior: isJump ? "auto" : "smooth" });
 
         if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
         scrollTimeoutRef.current = setTimeout(() => {
