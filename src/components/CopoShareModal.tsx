@@ -106,23 +106,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   const shareUrl = rawShareUrl.replace(/\/place\/www-/g, '/place/');
 
-  // Generate Embed URLs and Code
-  const embedVideoId = video?.id || (shareUrl.includes('/video/') ? shareUrl.split('/video/')[1]?.split('?')[0] : null);
-  const embedUrl = embedVideoId ? `${window.location.origin}/embed/video/${embedVideoId}` : `${window.location.origin}/embed`;
-  const iframeEmbedCode = `<iframe src="${embedUrl}" width="360" height="640" style="border:0;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
-
-  const handleCopyEmbed = async () => {
-    try {
-      await navigator.clipboard.writeText(iframeEmbedCode);
-      triggerHaptic("success");
-      setEmbedCopied(true);
-      showToast("Embed code copied to clipboard");
-      setTimeout(() => setEmbedCopied(false), 2000);
-    } catch (err) {
-      console.warn("Failed to copy embed code:", err);
-    }
-  };
-
   const title = isVideoMode && video
     ? `${video.author?.name || "Reviewer"}'s 60s review of ${video.placeName || "Business"}`
     : (explicitTitle || "Yoouz - Real People. Real Reviews.");
@@ -135,6 +118,35 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     subtitle?.toLowerCase().includes("business") || 
     shareUrl.includes("/place/")
   );
+
+  const [embedLayout, setEmbedLayout] = useState<"reel" | "card" | "widget">("reel");
+
+  // Generate Embed URLs and Code
+  const embedVideoId = video?.id || (shareUrl.includes('/video/') ? shareUrl.split('/video/')[1]?.split('?')[0] : null);
+  const embedPlaceId = isBusiness && shareUrl.includes('/place/') ? shareUrl.split('/place/')[1]?.split('?')[0] : null;
+  
+  let embedUrl = `${window.location.origin}/embed`;
+  if (embedVideoId) {
+    embedUrl = `${window.location.origin}/embed/video/${embedVideoId}`;
+  } else if (embedPlaceId) {
+    embedUrl = `${window.location.origin}/embed/place/${embedPlaceId}`;
+  }
+
+  const iframeWidth = embedLayout === "widget" ? "100%" : embedLayout === "card" ? "320" : "360";
+  const iframeHeight = embedLayout === "widget" ? "520" : embedLayout === "card" ? "480" : "640";
+  const iframeEmbedCode = `<iframe src="${embedUrl}?layout=${embedLayout}" width="${iframeWidth}" height="${iframeHeight}" style="border:0;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+
+  const handleCopyEmbed = async () => {
+    try {
+      await navigator.clipboard.writeText(iframeEmbedCode);
+      triggerHaptic("success");
+      setEmbedCopied(true);
+      showToast("Embed code copied to clipboard");
+      setTimeout(() => setEmbedCopied(false), 2000);
+    } catch (err) {
+      console.warn("Failed to copy embed code:", err);
+    }
+  };
 
   const isCreator = !isVideoMode && (
     subtitle?.toLowerCase().includes("reviewer") || 
@@ -804,8 +816,48 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40 flex items-start gap-2.5">
                 <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  <span className="font-bold text-white">Embed Anywhere:</span> Paste this responsive HTML snippet into your WordPress, Shopify, Webflow, or custom site.
+                  <span className="font-bold text-white">Embed Anywhere:</span> Paste this responsive HTML snippet into your WordPress, Shopify, Webflow, or custom website.
                 </p>
+              </div>
+
+              {/* Format Selector */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Embed Layout</span>
+                <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-900 border border-zinc-800 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setEmbedLayout("reel")}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                      embedLayout === "reel"
+                        ? "bg-white text-black shadow"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <span>📱 9:16 Reel</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmbedLayout("card")}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                      embedLayout === "card"
+                        ? "bg-white text-black shadow"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <span>🎴 Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmbedLayout("widget")}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                      embedLayout === "widget"
+                        ? "bg-white text-black shadow"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <span>🌐 Full Width</span>
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -856,16 +908,22 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Embed Live Preview */}
+              {/* Embed Live Preview in Realistic Smartphone Frame */}
               <div className="pt-2">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">Live Player Preview</span>
-                <div className="rounded-2xl border border-zinc-800 bg-black overflow-hidden shadow-2xl flex justify-center p-3">
-                  <iframe
-                    src={embedUrl}
-                    title="Yoouz Embed Preview"
-                    className="w-full max-w-[260px] h-[320px] rounded-xl border-0 bg-black shadow-lg"
-                    loading="lazy"
-                  />
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Live Player Preview</span>
+                  <span className="text-[10px] font-medium text-zinc-500">Interactive 9:16 Mobile Player</span>
+                </div>
+                <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 overflow-hidden shadow-2xl flex justify-center p-4">
+                  <div className="relative w-full max-w-[280px] sm:max-w-[310px] aspect-[9/16] h-[490px] sm:h-[550px] rounded-[24px] border-4 border-zinc-800 bg-black overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+                    <iframe
+                      src={`${embedUrl}?layout=${embedLayout}`}
+                      title="Yoouz Embed Preview"
+                      className="w-full h-full border-0 bg-black"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

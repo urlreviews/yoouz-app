@@ -2438,23 +2438,73 @@ async function startServer() {
     }
   });
 
-  // Standalone Embedded Video Player Route (/embed/video/:id & /embed/v/:id)
-  app.get(["/embed/video/:videoId", "/embed/v/:videoId"], async (req: any, res: any) => {
+  // Standalone Embedded Video Player Route (/embed/video/:id, /embed/v/:id, /embed/place/:placeId, /embed/widget)
+  app.get(["/embed/video/:videoId", "/embed/v/:videoId", "/embed/place/:placeId", "/embed/p/:placeId", "/embed/:placeId", "/embed", "/embed/widget"], async (req: any, res: any) => {
     try {
-      const videoId = req.params.videoId;
-      let foundVideo: any = null;
-
-      if (typeof adminDb !== 'undefined' && adminDb) {
+      let videoId = req.params.videoId || req.query.videoId || req.query.v || req.query.video;
+      const placeId = req.params.placeId || req.query.placeId || req.query.place || req.query.p;
+      
+      let allVideos: any[] = [];
+      if (typeof readReviewsIndex === 'function') {
         try {
-          const snap不易 = await adminDb.collection("videoReviews").doc(videoId).get();
-          if (snap不易.exists) foundVideo = { id: snap不易.id, ...snap不易.data() };
+          allVideos = readReviewsIndex() || [];
         } catch (e) {}
       }
-      if (!foundVideo && typeof readReviewsIndex === 'function') {
-        try {
-          const localList = readReviewsIndex();
-          foundVideo = localList.find((v: any) => v.id === videoId);
-        } catch (e) {}
+
+      if (allVideos.length === 0) {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          try {
+            const rows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY createdAt DESC LIMIT 50");
+            allVideos = (rows.rows || []).map((r: any) => {
+              let parsed: any = {};
+              try { parsed = JSON.parse(r.data || '{}'); } catch(e){}
+              return {
+                id: r.id,
+                placeId: r.placeId || parsed.placeId,
+                placeName: r.placeName || parsed.placeName,
+                author: {
+                  name: r.authorName || parsed.author?.name || 'Verified Reviewer',
+                  avatar: r.authorAvatar || parsed.author?.avatar,
+                  isVerified: true
+                },
+                rating: Number(r.rating || parsed.rating || 5),
+                videoUrl: r.videoUrl || parsed.videoUrl,
+                thumbnailUrl: r.thumbnailUrl || parsed.thumbnailUrl || parsed.videoThumbnail,
+                caption: parsed.caption || '',
+                likes: Number(r.likesCount || parsed.likes || parsed.likesCount || 0),
+                commentsCount: Number(parsed.commentsCount || 0),
+                ...parsed
+              };
+            });
+          } catch(e) {}
+        }
+      }
+
+      // If placeId provided without videoId, find videos for that place
+      let playlist: any[] = [];
+      if (placeId) {
+        const cleanPlace = String(placeId).toLowerCase().trim();
+        playlist = allVideos.filter((v: any) => 
+          (v.placeId && String(v.placeId).toLowerCase() === cleanPlace) ||
+          (v.placeName && String(v.placeName).toLowerCase().includes(cleanPlace))
+        );
+        if (playlist.length > 0 && !videoId) {
+          videoId = playlist[0].id;
+        }
+      }
+
+      let foundVideo: any = null;
+      if (videoId) {
+        foundVideo = allVideos.find((v: any) => v.id === videoId);
+      }
+
+      if (!foundVideo && playlist.length > 0) {
+        foundVideo = playlist[0];
+      }
+
+      if (!foundVideo && allVideos.length > 0) {
+        foundVideo = allVideos[0];
       }
 
       let host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -2476,11 +2526,16 @@ async function startServer() {
       const videoSrc = foundVideo.videoUrl || "";
       const poster = foundVideo.videoThumbnail || foundVideo.thumbnailUrl || "";
       const authorName = foundVideo.author?.name || foundVideo.authorName || "Verified Customer";
-      const authorAvatar = foundVideo.author?.avatar || foundVideo.authorAvatar || `${baseUrl}/api/avatar?name=${encodeURIComponent(authorName)}`;
-      const placeName的的 = foundVideo.placeName || "Business";
+      const authorAvatar = foundVideo.author?.avatar || foundVideo.authorAvatar || `${baseUrl}/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true`;
+      const placeName = foundVideo.placeName || "Business";
       const rating = Number(foundVideo.rating || 5);
       const caption = foundVideo.caption || "";
+      const likesCount = Number(foundVideo.likes || foundVideo.likesCount || 12);
+      const commentsCount = Number(foundVideo.commentsCount || (foundVideo.comments ? foundVideo.comments.length : 4));
       const fullYoouzUrl = `${baseUrl}/video/${encodeURIComponent(foundVideo.id)}`;
+      const placeUrl = `${baseUrl}/place/${encodeURIComponent(foundVideo.placeId || placeName)}`;
+      const creatorUrl = `${baseUrl}/@${encodeURIComponent(authorName.toLowerCase().replace(/\s+/g, '-'))}`;
+      const placeLogo = foundVideo.placeLogoUrl || `${baseUrl}/api/avatar?name=${encodeURIComponent(placeName)}&background=18181b&color=fff&bold=true`;
 
       // Allow embedding in any iframe
       res.removeHeader("X-Frame-Options");
@@ -2488,143 +2543,617 @@ async function startServer() {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Content-Type", "text/html; charset=utf-8");
 
-      const stars = Array.from({ length: 5 }, (_, i) => 
-        `<svg class="star ${i < Math.round(rating) ? 'filled' : ''}" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
-      ).join('');
-
       return res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>${escapeHtml(authorName)}'s Video Review of ${escapeHtml(placeName的的)} | Yoouz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>${escapeHtml(authorName)}'s 60s Review of ${escapeHtml(placeName)} | Yoouz</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #09090b; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #fff; user-select: none; }
-    .player-wrap { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000; }
-    video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-    .overlay-top { position: absolute; top: 0; left: 0; right: 0; padding: 16px 14px 40px; background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%); display: flex; align-items: center; justify-content: space-between; z-index: 10; pointer-events: none; }
-    .place-badge { display: flex; align-items: center; gap: 8px; background: rgba(24, 24, 27, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 9999px; pointer-events: auto; text-decoration: none; color: #fff; max-width: 75%; }
-    .place-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rating-pill { display: flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 800; color: #fbbf24; }
-    .star { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; }
-    .star.filled { fill: #fbbf24; stroke: #fbbf24; }
-    .yoouz-watermark { display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); padding: 4px 8px; border-radius: 8px; text-decoration: none; color: #fff; font-size: 11px; font-weight: 800; pointer-events: auto; letter-spacing: 0.5px; }
-    .overlay-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px 14px 16px; background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); display: flex; flex-direction: column; gap: 8px; z-index: 10; pointer-events: none; }
-    .author-row { display: flex; align-items: center; gap: 8px; pointer-events: auto; }
-    .author-avatar { width: 32px; height: 32px; border-radius: 9999px; border: 1.5px solid rgba(255,255,255,0.3); object-fit: cover; }
-    .author-info { display: flex; flex-direction: column; }
-    .author-name { font-size: 13px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-    .verified-tag { font-size: 10px; font-weight: 600; color: #34d399; display: flex; align-items: center; gap: 3px; }
-    .caption-text { font-size: 12px; line-height: 1.4; color: #e4e4e7; text-shadow: 0 1px 3px rgba(0,0,0,0.8); max-height: 36px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; pointer-events: auto; }
-    .action-row { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; pointer-events: auto; }
-    .cta-btn { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #000; font-size: 12px; font-weight: 800; padding: 6px 12px; border-radius: 9999px; text-decoration: none; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-    .cta-btn:hover { background: #e4e4e7; transform: scale(1.02); }
-    .audio-btn { width: 32px; height: 32px; border-radius: 9999px; background: rgba(24,24,27,0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; }
-    .play-center { position: absolute; inset: 0; margin: auto; width: 64px; height: 64px; border-radius: 9999px; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); border: 1.5px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; opacity: 0; transition: opacity 0.2s ease, transform 0.15s ease; pointer-events: none; }
-    .play-center.show { opacity: 1; pointer-events: auto; }
-    .play-center:hover { transform: scale(1.08); background: rgba(0,0,0,0.7); }
-    .progress-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.2); z-index: 20; }
-    .progress-fill { height: 100%; width: 0%; background: #fff; transition: width 0.1s linear; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #fff; user-select: none; }
+    .player-container { position: relative; width: 100%; height: 100%; max-width: 480px; margin: 0 auto; background: #000; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+    video { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1; background: #000; }
+    .poster-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 2; transition: opacity 0.25s ease; pointer-events: none; }
+    .poster-img.hide { opacity: 0; pointer-events: none; }
+    .vignette-top { position: absolute; top: 0; left: 0; right: 0; height: 130px; background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%); z-index: 5; pointer-events: none; }
+    .vignette-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 180px; background: linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0) 100%); z-index: 5; pointer-events: none; }
+    
+    /* Scrubber Progress bar */
+    .progress-track { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.25); z-index: 25; }
+    .progress-bar { height: 100%; width: 0%; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.8); transition: width 0.1s linear; }
+
+    /* Top Bar Header */
+    .header-bar { position: relative; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 0; gap: 8px; }
+    .header-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .yoouz-brand { display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 9999px; text-decoration: none; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; transition: transform 0.15s ease; shrink-0; }
+    .yoouz-brand:hover { transform: scale(1.04); }
+    .place-header-pill { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px 4px 5px; border-radius: 9999px; text-decoration: none; color: #fff; font-size: 12px; font-weight: 700; max-width: 170px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transition: background 0.15s ease; }
+    .place-header-pill:hover { background: rgba(24,24,27,0.9); }
+    .place-header-logo { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; background: #27272a; flex-shrink: 0; }
+    .place-header-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 12px; }
+    .place-rating-badge { display: flex; align-items: center; gap: 2px; color: #fbbf24; font-size: 11px; font-weight: 800; margin-left: 2px; flex-shrink: 0; }
+    
+    /* Top Right Sound Button */
+    .sound-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; shrink-0; }
+    .sound-btn:hover { transform: scale(1.08); background: rgba(24,24,27,0.9); }
+    .sound-btn:active { transform: scale(0.92); }
+    
+    /* Equalizer Bars */
+    .eq-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 2px; width: 16px; height: 16px; }
+    .eq-bar { width: 3px; background: #ffffff; border-radius: 2px; }
+    .eq-bar:nth-child(1) { height: 8px; animation: eq 0.8s ease-in-out infinite; }
+    .eq-bar:nth-child(2) { height: 14px; animation: eq 0.8s ease-in-out infinite 0.2s; }
+    .eq-bar:nth-child(3) { height: 10px; animation: eq 0.8s ease-in-out infinite 0.4s; }
+    @keyframes eq { 0%, 100% { height: 4px; } 50% { height: 15px; } }
+
+    /* Right Action Sidebar (Exact Match to Yoouz VideoFeedCard) */
+    .sidebar-actions { position: absolute; right: 12px; bottom: 85px; z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .action-group { display: flex; flex-direction: column; align-items: center; }
+    .action-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    .action-btn:hover { transform: scale(1.08); background: rgba(24,24,27,0.85); }
+    .action-btn:active { transform: scale(0.9); }
+    .action-label { font-size: 11px; font-weight: 700; margin-top: 3px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+    
+    /* Avatar with Follow Plus */
+    .avatar-wrap { position: relative; width: 44px; height: 44px; cursor: pointer; }
+    .avatar-img { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); object-fit: cover; background: #27272a; transition: border-color 0.15s ease; }
+    .avatar-wrap:hover .avatar-img { border-color: #fff; }
+    .follow-plus-btn { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: #ffffff; color: #09090b; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.5); font-size: 13px; font-weight: 900; transition: transform 0.15s ease; }
+    .avatar-wrap:hover .follow-plus-btn { transform: translateX(-50%) scale(1.15); }
+    .follow-plus-btn.followed { background: #10b981; color: #fff; }
+
+    /* Heart Icon Filled */
+    .heart-icon.liked { fill: #ff2d55; stroke: #ff2d55; filter: drop-shadow(0 0 8px rgba(255,45,85,0.6)); }
+    .bookmark-icon.saved { fill: #ffffff; stroke: #ffffff; }
+
+    /* Bottom Info Section */
+    .bottom-info { position: relative; z-index: 20; padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; max-width: calc(100% - 68px); }
+    .author-line { display: flex; align-items: center; gap: 6px; text-decoration: none; color: #fff; width: fit-content; }
+    .author-line-name { font-size: 14px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
+    .verified-icon { width: 14px; height: 14px; fill: #ffffff; color: #000; shrink-0; }
+    
+    .rating-row { display: flex; align-items: center; gap: 6px; }
+    .stars-box { display: flex; align-items: center; gap: 1.5px; }
+    .star-icon { width: 13px; height: 13px; fill: #fbbf24; stroke: #fbbf24; }
+    .rating-text { font-size: 11px; font-weight: 800; color: #fbbf24; }
+    .verified-badge-pill { font-size: 10px; font-weight: 700; color: #34d399; background: rgba(6,78,59,0.5); backdrop-filter: blur(6px); border: 1px solid rgba(52,211,153,0.4); padding: 1px 6px; border-radius: 9999px; }
+
+    .caption-box { font-size: 12px; line-height: 1.4; color: #f4f4f5; text-shadow: 0 1px 3px rgba(0,0,0,0.9); max-height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; cursor: pointer; }
+    .caption-box.expanded { max-height: none; -webkit-line-clamp: unset; }
+
+    /* Bottom Place CTA Card */
+    .place-cta-card { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.22); padding: 6px 12px 6px 8px; border-radius: 12px; text-decoration: none; color: #fff; width: fit-content; max-width: 100%; transition: all 0.15s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+    .place-cta-card:hover { background: rgba(24,24,27,0.95); border-color: rgba(255,255,255,0.4); transform: translateY(-1px); }
+    .place-cta-logo { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; background: #27272a; flex-shrink: 0; }
+    .place-cta-text { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+    .place-cta-arrow { width: 14px; height: 14px; stroke-width: 2.5; margin-left: 2px; opacity: 0.8; flex-shrink: 0; }
+
+    /* Centered Play / Pause Icon Feedback */
+    .center-feedback { position: absolute; inset: 0; margin: auto; width: 72px; height: 72px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); border: 1.5px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; z-index: 15; opacity: 0; transform: scale(0.85); transition: opacity 0.2s ease, transform 0.2s ease; pointer-events: none; }
+    .center-feedback.show { opacity: 1; transform: scale(1); pointer-events: auto; cursor: pointer; }
+    
+    /* Double Tap Heart Animation */
+    .burst-heart { position: absolute; z-index: 30; pointer-events: none; transform: translate(-50%, -50%) scale(0); opacity: 0; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; }
+    .burst-heart.active { transform: translate(-50%, -50%) scale(1.4); opacity: 1; animation: heartFade 0.7s forwards; }
+    @keyframes heartFade { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; } }
+
+    /* In-Player Comments Sheet Drawer */
+    .comments-drawer { position: absolute; bottom: 0; left: 0; right: 0; height: 72%; max-height: 480px; background: rgba(18, 18, 20, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.15); border-radius: 20px 20px 0 0; z-index: 40; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
+    .comments-drawer.open { transform: translateY(0); }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .drawer-title { font-size: 13px; font-weight: 800; color: #fff; }
+    .drawer-close { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .comments-list { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .comment-item { display: flex; gap: 10px; font-size: 12px; }
+    .comment-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #27272a; flex-shrink: 0; }
+    .comment-body { display: flex; flex-direction: column; gap: 2px; }
+    .comment-author { font-weight: 700; color: #fff; font-size: 12px; }
+    .comment-text { color: #d4d4d8; font-size: 12px; line-height: 1.4; }
+    .drawer-input-row { padding: 10px 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 8px; background: rgba(0,0,0,0.4); }
+    .drawer-input { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 9999px; padding: 8px 14px; color: #fff; font-size: 12px; outline: none; }
+    .drawer-input::placeholder { color: #71717a; }
+    .drawer-send-btn { width: 34px; height: 34px; border-radius: 50%; background: #ffffff; color: #000; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    
+    /* Toast Notification */
+    .toast-pill { position: absolute; top: 60px; left: 50%; transform: translateX(-50%) translateY(-10px); background: rgba(24,24,27,0.95); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 9999px; z-index: 50; opacity: 0; pointer-events: none; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+    .toast-pill.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
-  <div class="player-wrap" id="wrap">
-    <video id="vid" src="${escapeHtml(videoSrc)}" poster="${escapeHtml(poster)}" playsinline loop preload="metadata"></video>
+  <div class="player-container" id="playerContainer">
+    <!-- Video Player Element -->
+    <video id="vid" src="${escapeHtml(videoSrc)}" playsinline loop preload="metadata" crossorigin="anonymous"></video>
     
-    <div class="play-center" id="playBtn">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <!-- Poster image fallback -->
+    <img id="posterImg" class="poster-img" src="${escapeHtml(poster)}" alt="${escapeHtml(placeName)} Video Review" />
+    
+    <!-- Top & Bottom Vignette Gradients -->
+    <div class="vignette-top"></div>
+    <div class="vignette-bottom"></div>
+
+    <!-- Scrubber Progress Bar -->
+    <div class="progress-track">
+      <div class="progress-bar" id="progressBar"></div>
     </div>
 
-    <div class="overlay-top">
-      <a href="${escapeHtml(fullYoouzUrl)}" target="_blank" rel="noopener" class="place-badge">
-        <span class="place-name">${escapeHtml(placeName的的)}</span>
-        <div class="rating-pill">
-          <svg class="star filled" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span>${rating.toFixed(1)}</span>
-        </div>
-      </a>
-      <a href="${escapeHtml(baseUrl)}" target="_blank" rel="noopener" class="yoouz-watermark">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <span>YOOUZ</span>
-      </a>
-    </div>
+    <!-- Toast Notification Banner -->
+    <div class="toast-pill" id="toastPill">Link copied to clipboard</div>
 
-    <div class="overlay-bottom">
-      <div class="author-row">
-        <img class="author-avatar" src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" />
-        <div class="author-info">
-          <span class="author-name">${escapeHtml(authorName)}</span>
-          <span class="verified-tag">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-            Verified 60s Review
-          </span>
-        </div>
+    <!-- Top Header Overlay -->
+    <header class="header-bar">
+      <div class="header-left">
+        <a href="${escapeHtml(baseUrl)}" target="_blank" rel="noopener" class="yoouz-brand" title="Yoouz - Real People. Real Reviews.">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>YOOUZ</span>
+        </a>
+        <a href="${escapeHtml(placeUrl)}" target="_blank" rel="noopener" class="place-header-pill" title="View ${escapeHtml(placeName)} on Yoouz">
+          <img class="place-header-logo" src="${escapeHtml(placeLogo)}" alt="${escapeHtml(placeName)}" />
+          <span class="place-header-title">${escapeHtml(placeName)}</span>
+          <div class="place-rating-badge">
+            <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>${rating.toFixed(1)}</span>
+          </div>
+        </a>
       </div>
 
-      ${caption ? `<div class="caption-text">${escapeHtml(caption)}</div>` : ''}
+      <button class="sound-btn" id="soundBtn" aria-label="Toggle sound" title="Toggle audio">
+        <svg id="muteIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        <div id="eqIcon" class="eq-wrap" style="display: none;">
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+        </div>
+      </button>
+    </header>
 
-      <div class="action-row">
-        <a href="${escapeHtml(fullYoouzUrl)}" target="_blank" rel="noopener" class="cta-btn">
-          <span>Watch on Yoouz</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-        </a>
-        <button class="audio-btn" id="muteBtn" aria-label="Toggle sound">
-          <svg id="muteIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+    <!-- Center Play/Pause Feedback Button -->
+    <div class="center-feedback" id="playCenterBtn">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="#ffffff"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+    </div>
+
+    <!-- Double Tap Burst Heart Element -->
+    <div class="burst-heart" id="burstHeart">
+      <svg width="90" height="90" viewBox="0 0 24 24" fill="#ff2d55" stroke="#ff2d55"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    </div>
+
+    <!-- Right Actions Column (Sidebar) -->
+    <aside class="sidebar-actions">
+      <!-- Creator Avatar with Follow Plus -->
+      <div class="avatar-wrap" id="authorAvatarWrap" title="View Reviewer Profile">
+        <img class="avatar-img" src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" />
+        <div class="follow-plus-btn" id="followBtn" title="Follow reviewer">+</div>
+      </div>
+
+      <!-- Like Heart Button -->
+      <div class="action-group">
+        <button class="action-btn" id="likeBtn" aria-label="Like review" title="Like review">
+          <svg class="heart-icon" id="heartIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        <span class="action-label" id="likesCountText">${likesCount}</span>
+      </div>
+
+      <!-- Comments Bubble Button -->
+      <div class="action-group">
+        <button class="action-btn" id="commentBtn" aria-label="View comments" title="Comments">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </button>
+        <span class="action-label" id="commentsCountText">${commentsCount}</span>
+      </div>
+
+      <!-- Bookmark / Save Button -->
+      <div class="action-group">
+        <button class="action-btn" id="bookmarkBtn" aria-label="Bookmark" title="Save Review">
+          <svg class="bookmark-icon" id="bookmarkIcon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <span class="action-label">Save</span>
+      </div>
+
+      <!-- Share Button -->
+      <div class="action-group">
+        <button class="action-btn" id="shareBtn" aria-label="Share" title="Share review">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        </button>
+        <span class="action-label">Share</span>
+      </div>
+    </aside>
+
+    <!-- Bottom Information Section -->
+    <footer class="bottom-info">
+      <a href="${escapeHtml(creatorUrl)}" target="_blank" rel="noopener" class="author-line">
+        <span class="author-line-name">By ${escapeHtml(authorName)}</span>
+        <svg class="verified-icon" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      </a>
+
+      <div class="rating-row">
+        <div class="stars-box">
+          <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg class="star-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <span class="rating-text">${rating.toFixed(1)}</span>
+        <span class="verified-badge-pill">Verified 60s Review</span>
+      </div>
+
+      ${caption ? `<div class="caption-box" id="captionBox" title="Click to expand">${escapeHtml(caption)}</div>` : ''}
+
+      <a href="${escapeHtml(placeUrl)}" target="_blank" rel="noopener" class="place-cta-card">
+        <img class="place-cta-logo" src="${escapeHtml(placeLogo)}" alt="${escapeHtml(placeName)}" />
+        <span class="place-cta-text">${escapeHtml(placeName)}</span>
+        <svg class="place-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </a>
+    </footer>
+
+    <!-- In-Player Slide-Up Comments Drawer -->
+    <div class="comments-drawer" id="commentsDrawer">
+      <div class="drawer-header">
+        <span class="drawer-title" id="drawerTitle">Comments (${commentsCount})</span>
+        <button class="drawer-close" id="closeDrawerBtn" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
-    </div>
-
-    <div class="progress-bar">
-      <div class="progress-fill" id="pFill"></div>
+      <div class="comments-list" id="commentsList">
+        <div class="comment-item">
+          <img class="comment-avatar" src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}" />
+          <div class="comment-body">
+            <span class="comment-author">${escapeHtml(authorName)} <span style="font-size:10px; color:#34d399; font-weight:600;">(Author)</span></span>
+            <span class="comment-text">${escapeHtml(caption || "Thanks for watching my authentic 60-second review on Yoouz!")}</span>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-input-row">
+        <input type="text" class="drawer-input" id="commentInput" placeholder="Add a verified comment..." />
+        <button class="drawer-send-btn" id="sendCommentBtn" aria-label="Send comment">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
-    const vid = document.getElementById('vid');
-    const playBtn integer = document.getElementById('playBtn');
-    const muteBtn = document.getElementById('muteBtn');
-    const muteIcon = document.getElementById('muteIcon');
-    const pFill = document.getElementById('pFill');
-    const wrap = document.getElementById('wrap');
+    (function() {
+      const vid = document.getElementById('vid');
+      const posterImg = document.getElementById('posterImg');
+      const progressBar = document.getElementById('progressBar');
+      const soundBtn = document.getElementById('soundBtn');
+      const muteIcon = document.getElementById('muteIcon');
+      const eqIcon = document.getElementById('eqIcon');
+      const playCenterBtn = document.getElementById('playCenterBtn');
+      const burstHeart = document.getElementById('burstHeart');
+      const playerContainer = document.getElementById('playerContainer');
+      const toastPill = document.getElementById('toastPill');
+      
+      const likeBtn = document.getElementById('likeBtn');
+      const heartIcon = document.getElementById('heartIcon');
+      const likesCountText = document.getElementById('likesCountText');
+      const bookmarkBtn = document.getElementById('bookmarkBtn');
+      const bookmarkIcon = document.getElementById('bookmarkIcon');
+      const shareBtn = document.getElementById('shareBtn');
+      const followBtn = document.getElementById('followBtn');
+      const authorAvatarWrap = document.getElementById('authorAvatarWrap');
+      
+      const commentBtn = document.getElementById('commentBtn');
+      const commentsDrawer = document.getElementById('commentsDrawer');
+      const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+      const commentInput = document.getElementById('commentInput');
+      const sendCommentBtn = document.getElementById('sendCommentBtn');
+      const commentsList = document.getElementById('commentsList');
+      const drawerTitle = document.getElementById('drawerTitle');
+      const commentsCountText = document.getElementById('commentsCountText');
+      const captionBox = document.getElementById('captionBox');
 
-    // Auto-play muted on load
-    vid.muted = true;
-    vid.play().catch(() => {
-      playBtn.classList.add('show');
-    });
+      const videoId = "${escapeHtml(foundVideo.id)}";
+      const fullYoouzUrl = "${escapeHtml(fullYoouzUrl)}";
+      const creatorUrl = "${escapeHtml(creatorUrl)}";
+      let isLiked = false;
+      let isSaved = false;
+      let isFollowed = false;
+      let currentLikes = ${likesCount};
+      let currentComments = ${commentsCount};
 
-    wrap.addEventListener('click', (e) => {
-      if (e.target.closest('a') || e.target.closest('button')) return;
-      if (vid.paused) {
-        vid.play();
-        playBtn.classList.remove('show');
-      } else {
-        vid.pause();
-        playBtn.classList.add('show');
+      // Read local states
+      try {
+        isLiked = localStorage.getItem("yoouz_liked_" + videoId) === "1";
+        isSaved = localStorage.getItem("yoouz_saved_" + videoId) === "1";
+        isFollowed = localStorage.getItem("yoouz_followed_${escapeHtml(authorName.toLowerCase())}") === "1";
+      } catch(e){}
+
+      if (isLiked) {
+        heartIcon.classList.add('liked');
       }
-    });
-
-    playBtn.addEventListener('click', () => {
-      vid.play();
-      playBtn.classList.remove('show');
-    });
-
-    muteBtn.addEventListener('click', () => {
-      vid.muted integer = !vid.muted;
-      if (vid.muted) {
-        muteIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
-      } else {
-        muteIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+      if (isSaved) {
+        bookmarkIcon.classList.add('saved');
       }
-    });
-
-    vid.addEventListener('timeupdate', () => {
-      if (vid.duration) {
-        const pct = (vid.currentTime / vid.duration) * 100;
-        pFill.style.width = pct + '%';
+      if (isFollowed) {
+        followBtn.textContent = '✓';
+        followBtn.classList.add('followed');
       }
-    });
+
+      function showToast(msg) {
+        toastPill.textContent = msg;
+        toastPill.classList.add('show');
+        setTimeout(() => toastPill.classList.remove('show'), 2200);
+      }
+
+      // Autoplay muted
+      vid.muted = true;
+      const playPromise = vid.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          posterImg.classList.add('hide');
+        }).catch(() => {
+          playCenterBtn.classList.add('show');
+        });
+      }
+
+      // Timeupdate scrubber
+      vid.addEventListener('timeupdate', () => {
+        if (vid.duration) {
+          const pct = (vid.currentTime / vid.duration) * 100;
+          progressBar.style.width = pct + '%';
+        }
+      });
+
+      vid.addEventListener('playing', () => {
+        posterImg.classList.add('hide');
+        playCenterBtn.classList.remove('show');
+        updateSoundUI();
+      });
+
+      // Sound toggle
+      function updateSoundUI() {
+        if (vid.muted) {
+          muteIcon.style.display = 'block';
+          eqIcon.style.display = 'none';
+        } else {
+          muteIcon.style.display = 'none';
+          eqIcon.style.display = 'flex';
+        }
+      }
+
+      soundBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vid.muted = !vid.muted;
+        if (!vid.muted && vid.paused) {
+          vid.play().catch(()=>{});
+        }
+        updateSoundUI();
+      });
+
+      // Tap screen to Play / Pause
+      let lastTap = 0;
+      playerContainer.addEventListener('click', (e) => {
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('.comments-drawer')) return;
+        
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          // Double Tap: Burst Like Heart
+          triggerDoubleTapLike(e.clientX, e.clientY);
+          lastTap = 0;
+          return;
+        }
+        lastTap = now;
+
+        if (vid.paused) {
+          vid.play().then(() => {
+            playCenterBtn.classList.remove('show');
+          }).catch(()=>{});
+        } else {
+          vid.pause();
+          playCenterBtn.classList.add('show');
+        }
+      });
+
+      playCenterBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vid.play().then(() => {
+          playCenterBtn.classList.remove('show');
+        }).catch(()=>{});
+      });
+
+      function triggerDoubleTapLike(x, y) {
+        const rect = playerContainer.getBoundingClientRect();
+        const posX = x - rect.left;
+        const posY = y - rect.top;
+        burstHeart.style.left = posX + 'px';
+        burstHeart.style.top = posY + 'px';
+        burstHeart.classList.remove('active');
+        void burstHeart.offsetWidth;
+        burstHeart.classList.add('active');
+
+        if (!isLiked) {
+          toggleLike();
+        }
+      }
+
+      // Like Button Action
+      function toggleLike() {
+        isLiked = !isLiked;
+        if (isLiked) {
+          currentLikes++;
+          heartIcon.classList.add('liked');
+          try { localStorage.setItem("yoouz_liked_" + videoId, "1"); } catch(e){}
+        } else {
+          currentLikes = Math.max(0, currentLikes - 1);
+          heartIcon.classList.remove('liked');
+          try { localStorage.removeItem("yoouz_liked_" + videoId); } catch(e){}
+        }
+        likesCountText.textContent = currentLikes;
+
+        fetch("/api/interactions/like", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: videoId, isLiked: isLiked, likesCount: currentLikes, userId: "guest_embed" })
+        }).catch(()=>{});
+      }
+
+      likeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleLike();
+      });
+
+      // Bookmark / Save Action
+      bookmarkBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isSaved = !isSaved;
+        if (isSaved) {
+          bookmarkIcon.classList.add('saved');
+          try { localStorage.setItem("yoouz_saved_" + videoId, "1"); } catch(e){}
+          showToast("Saved to Bookmarks");
+        } else {
+          bookmarkIcon.classList.remove('saved');
+          try { localStorage.removeItem("yoouz_saved_" + videoId); } catch(e){}
+          showToast("Removed from Bookmarks");
+        }
+        fetch("/api/interactions/bookmark", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: videoId, isBookmarked: isSaved, userId: "guest_embed" })
+        }).catch(()=>{});
+      });
+
+      // Follow Action
+      function toggleFollow() {
+        isFollowed = !isFollowed;
+        if (isFollowed) {
+          followBtn.textContent = '✓';
+          followBtn.classList.add('followed');
+          try { localStorage.setItem("yoouz_followed_${escapeHtml(authorName.toLowerCase())}", "1"); } catch(e){}
+          showToast("Following ${escapeHtml(authorName)}");
+        } else {
+          followBtn.textContent = '+';
+          followBtn.classList.remove('followed');
+          try { localStorage.removeItem("yoouz_followed_${escapeHtml(authorName.toLowerCase())}"); } catch(e){}
+          showToast("Unfollowed");
+        }
+      }
+
+      followBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFollow();
+      });
+
+      authorAvatarWrap.addEventListener('click', (e) => {
+        if (e.target === followBtn) return;
+        window.open(creatorUrl, "_blank");
+      });
+
+      // Share Action
+      shareBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: "${escapeHtml(authorName)}'s Video Review of ${escapeHtml(placeName)}",
+              text: "Check out this authentic 60-second video review on Yoouz:",
+              url: fullYoouzUrl
+            });
+            return;
+          } catch(err){}
+        }
+        try {
+          await navigator.clipboard.writeText(fullYoouzUrl);
+          showToast("Link copied to clipboard!");
+        } catch(err) {
+          showToast("Share: " + fullYoouzUrl);
+        }
+      });
+
+      // Expand Caption
+      if (captionBox) {
+        captionBox.addEventListener('click', (e) => {
+          e.stopPropagation();
+          captionBox.classList.toggle('expanded');
+        });
+      }
+
+      // Comments Drawer logic
+      commentBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        commentsDrawer.classList.add('open');
+        setTimeout(() => commentInput.focus(), 150);
+      });
+
+      closeDrawerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        commentsDrawer.classList.remove('open');
+      });
+
+      function submitComment() {
+        const text = (commentInput.value || "").trim();
+        if (!text) return;
+        
+        const newComment = document.createElement('div');
+        newComment.className = 'comment-item';
+        newComment.innerHTML = '<img class="comment-avatar" src="${escapeHtml(baseUrl)}/api/avatar?name=Guest&background=3b82f6&color=fff" alt="Guest" />' +
+          '<div class="comment-body">' +
+            '<span class="comment-author">You</span>' +
+            '<span class="comment-text">' + escapeHTML(text) + '</span>' +
+          '</div>';
+        
+        commentsList.appendChild(newComment);
+        commentsList.scrollTop = commentsList.scrollHeight;
+        commentInput.value = '';
+
+        currentComments++;
+        commentsCountText.textContent = currentComments;
+        drawerTitle.textContent = 'Comments (' + currentComments + ')';
+        showToast("Comment posted!");
+
+        fetch("/api/interactions/comment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            videoId: videoId,
+            userId: "guest_embed",
+            comment: {
+              id: "c_" + Date.now(),
+              authorName: "Guest Viewer",
+              text: text,
+              createdAt: new Date().toISOString()
+            }
+          })
+        }).catch(()=>{});
+      }
+
+      function escapeHTML(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      sendCommentBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        submitComment();
+      });
+
+      commentInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          submitComment();
+        }
+      });
+
+      // Load initial comments from backend if available
+      fetch("/api/interactions/comments?videoId=" + encodeURIComponent(videoId))
+        .then(r => r.json())
+        .then(data => {
+          if (data && Array.isArray(data.comments) && data.comments.length > 0) {
+            data.comments.forEach(c => {
+              const item = document.createElement('div');
+              item.className = 'comment-item';
+              item.innerHTML = '<img class="comment-avatar" src="' + (c.authorAvatar || "${escapeHtml(baseUrl)}/api/avatar?name=" + encodeURIComponent(c.authorName || 'Guest')) + '" alt="' + escapeHTML(c.authorName || 'Guest') + '" />' +
+                '<div class="comment-body">' +
+                  '<span class="comment-author">' + escapeHTML(c.authorName || 'Guest') + '</span>' +
+                  '<span class="comment-text">' + escapeHTML(c.text || '') + '</span>' +
+                '</div>';
+              commentsList.appendChild(item);
+            });
+            currentComments = Math.max(currentComments, data.comments.length + 1);
+            commentsCountText.textContent = currentComments;
+            drawerTitle.textContent = 'Comments (' + currentComments + ')';
+          }
+        }).catch(()=>{});
+    })();
   </script>
 </body>
 </html>`);
@@ -3893,6 +4422,36 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
   // Save Video Review metadata endpoint (persists review record on server and Firestore)
   
+  app.get("/api/interactions/comments", async (req, res) => {
+    try {
+      const videoId = typeof req.query.videoId === 'string' ? req.query.videoId : '';
+      if (!videoId) return res.json({ comments: [] });
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const result = await bunnyDb.execute({
+          sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
+          args: [videoId]
+        });
+        const comments = (result.rows || []).map((row: any) => {
+          let parsed: any = {};
+          try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
+          return {
+            id: row.id,
+            videoId: row.videoId,
+            userId: row.userId,
+            authorName: row.userName || parsed.authorName || 'Guest',
+            authorAvatar: row.userAvatar || parsed.authorAvatar,
+            text: row.text,
+            createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+          };
+        });
+        return res.json({ comments });
+      }
+      return res.json({ comments: [] });
+    } catch (err: any) {
+      return res.json({ comments: [] });
+    }
+  });
   
   app.post("/api/interactions/comment", async (req, res) => {
     try {
