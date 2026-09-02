@@ -2645,23 +2645,53 @@ async function startServer() {
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
     .modal-overlay.open { opacity: 1; pointer-events: auto; }
 
-    /* Yoouz Hamburger Navigation Drawer (Slide from Left) */
-    .nav-drawer { position: absolute; top: 0; bottom: 0; left: 0; width: 82%; max-width: 320px; background: rgba(18, 18, 20, 0.98); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-right: 1px solid rgba(255,255,255,0.15); z-index: 50; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 10px 0 40px rgba(0,0,0,0.8); }
+    /* Yoouz Hamburger Navigation Drawer (Slide from Left) - 100% Mobile Parity */
+    .nav-drawer { position: absolute; top: 0; bottom: 0; left: 0; width: 85%; max-width: 340px; background: #09090b; border-right: 1px solid rgba(255,255,255,0.12); z-index: 50; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 12px 0 40px rgba(0,0,0,0.85); overflow: hidden; }
     .nav-drawer.open { transform: translateX(0); }
-    .nav-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .nav-drawer-brand { display: flex; flex-direction: column; }
-    .nav-drawer-logo { font-size: 16px; font-weight: 900; letter-spacing: -0.3px; color: #fff; }
-    .nav-drawer-tagline { font-size: 11px; color: #a1a1aa; font-weight: 500; }
-    .nav-drawer-close { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     
-    .nav-drawer-menu { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 6px; }
-    .nav-menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; color: #e4e4e7; text-decoration: none; font-size: 13.5px; font-weight: 600; transition: all 0.15s ease; }
-    .nav-menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
-    .nav-menu-icon { width: 18px; height: 18px; color: #a1a1aa; flex-shrink: 0; }
+    .nav-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 14px; border-bottom: 1px solid rgba(255,255,255,0.1); background: #09090b; position: sticky; top: 0; z-index: 2; }
+    .nav-brand-group { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; }
+    .nav-logo-box { width: 38px; height: 38px; border-radius: 12px; background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(255,255,255,0.15); flex-shrink: 0; }
+    .nav-brand-col { display: flex; flex-direction: column; }
+    .nav-brand-row { display: flex; align-items: center; gap: 6px; }
+    .nav-brand-title { font-size: 17px; font-weight: 900; letter-spacing: -0.3px; color: #fff; line-height: 1.1; }
+    .nav-beta-badge { font-size: 9px; font-weight: 800; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 1px 5px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .nav-brand-subtitle { font-size: 10.5px; color: #a1a1aa; font-weight: 500; margin-top: 1px; }
+    .nav-drawer-close { width: 32px; height: 32px; border-radius: 50%; background: #18181b; border: 1px solid rgba(255,255,255,0.12); color: #a1a1aa; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; flex-shrink: 0; }
+    .nav-drawer-close:hover { color: #fff; background: #27272a; }
     
-    .nav-drawer-footer { padding: 16px 18px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.3); }
-    .open-app-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; border-radius: 9999px; background: #ffffff; color: #000; font-size: 13px; font-weight: 800; text-decoration: none; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 14px rgba(255,255,255,0.2); }
-    .open-app-btn:hover { background: #f4f4f5; transform: scale(1.02); }
+    .nav-drawer-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px 14px 20px; display: flex; flex-direction: column; gap: 16px; }
+    
+    /* Community Card */
+    .community-card { background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 4px; }
+    .community-header { display: flex; align-items: center; gap: 6px; color: #fff; font-size: 13.5px; font-weight: 700; }
+    .community-desc { font-size: 11.5px; color: #a1a1aa; line-height: 1.4; margin-top: 2px; }
+    .community-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 10px 14px; border-radius: 12px; background: #ffffff; color: #09090b; font-size: 12px; font-weight: 800; text-decoration: none; margin-top: 8px; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 12px rgba(255,255,255,0.15); }
+    .community-btn:hover { background: #f4f4f5; transform: scale(1.02); }
+    
+    /* Nav Sections */
+    .nav-section { display: flex; flex-direction: column; gap: 4px; }
+    .nav-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #71717a; padding: 0 8px; margin-bottom: 2px; }
+    
+    .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; color: #d4d4d8; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.15s ease; }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: #ffffff; }
+    .nav-item.active { background: #18181b; border: 1px solid rgba(255,255,255,0.1); color: #ffffff; font-weight: 700; }
+    .nav-item-left { display: flex; align-items: center; gap: 10px; }
+    .nav-item-icon { width: 17px; height: 17px; color: #a1a1aa; flex-shrink: 0; }
+    .nav-item:hover .nav-item-icon, .nav-item.active .nav-item-icon { color: #ffffff; }
+    .nav-chevron { width: 14px; height: 14px; color: #71717a; flex-shrink: 0; }
+    
+    .nav-badge-url { font-size: 9px; font-weight: 700; font-family: monospace; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 1px 5px; border-radius: 4px; }
+    .nav-badge-pro { font-size: 9px; font-weight: 800; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 1px 6px; border-radius: 9999px; text-transform: uppercase; }
+    
+    /* Hero Record Button */
+    .drawer-record-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px 16px; border-radius: 16px; background: #ffffff; color: #09090b; font-size: 13px; font-weight: 800; text-decoration: none; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 16px rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+    .drawer-record-btn:hover { background: #f4f4f5; transform: scale(1.02); }
+
+    /* Footer Legal Links */
+    .drawer-footer-links { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 11px; color: #71717a; padding: 4px 0 10px; }
+    .drawer-footer-link { color: #71717a; text-decoration: none; transition: color 0.15s ease; }
+    .drawer-footer-link:hover { color: #d4d4d8; }
 
     /* In-Player Slide-Up Comments Drawer */
     .comments-drawer { position: absolute; bottom: 0; left: 0; right: 0; height: 75%; max-height: 480px; background: rgba(18, 18, 20, 0.98); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid rgba(255,255,255,0.15); border-radius: 22px 22px 0 0; z-index: 50; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
@@ -2832,46 +2862,153 @@ async function startServer() {
     <!-- Overlay Backdrop -->
     <div class="modal-overlay" id="modalOverlay"></div>
 
-    <!-- Yoouz Hamburger Slide-in Navigation Drawer -->
+    <!-- Yoouz Hamburger Slide-in Navigation Drawer (100% Mobile App Parity) -->
     <div class="nav-drawer" id="navDrawer">
+      <!-- Header with Logo, Beta Badge and Close Button -->
       <div class="nav-drawer-header">
-        <div class="nav-drawer-brand">
-          <span class="nav-drawer-logo">Yoouz</span>
-          <span class="nav-drawer-tagline">Real People. Real Reviews.</span>
-        </div>
+        <a href="${escapeHtml(baseUrl)}" target="_blank" rel="noopener" class="nav-brand-group">
+          <div class="nav-logo-box">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="#09090b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <div class="nav-brand-col">
+            <div class="nav-brand-row">
+              <span class="nav-brand-title">Yoouz</span>
+              <span class="nav-beta-badge">Beta</span>
+            </div>
+            <span class="nav-brand-subtitle">Real People. Real Reviews.</span>
+          </div>
+        </a>
         <button class="nav-drawer-close" id="closeNavBtn" aria-label="Close menu">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
 
-      <nav class="nav-drawer-menu">
-        <a href="${escapeHtml(baseUrl)}" target="_blank" rel="noopener" class="nav-menu-item">
-          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-          <span>Explore Video Feed</span>
-        </a>
-        <a href="${escapeHtml(baseUrl)}/search" target="_blank" rel="noopener" class="nav-menu-item">
-          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <span>Search Places & Reviews</span>
-        </a>
-        <a href="${escapeHtml(baseUrl)}/map" target="_blank" rel="noopener" class="nav-menu-item">
-          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
-          <span>Map Discovery</span>
-        </a>
-        <a href="${escapeHtml(baseUrl)}/discover" target="_blank" rel="noopener" class="nav-menu-item">
-          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          <span>Verified Reviewers</span>
-        </a>
-        <a href="${escapeHtml(baseUrl)}/business" target="_blank" rel="noopener" class="nav-menu-item">
-          <svg class="nav-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-          <span>Business Portal</span>
-        </a>
-      </nav>
+      <!-- Scrollable Navigation Items -->
+      <div class="nav-drawer-scroll">
+        <!-- Join the Community Card -->
+        <div class="community-card">
+          <div class="community-header">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+            <span>Join the Community</span>
+          </div>
+          <p class="community-desc">Sign in to record video reviews, follow creators, and save your favorite places.</p>
+          <a href="${escapeHtml(baseUrl)}/?auth=signin" target="_blank" rel="noopener" class="community-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+            <span>Sign In / Register</span>
+          </a>
+        </div>
 
-      <div class="nav-drawer-footer">
-        <a href="${escapeHtml(fullYoouzUrl)}" target="_blank" rel="noopener" class="open-app-btn">
-          <span>Open Full Yoouz App</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        <!-- Menu & Features Section -->
+        <div class="nav-section">
+          <div class="nav-section-title">Menu & Features</div>
+          
+          <a href="${escapeHtml(baseUrl)}" target="_blank" rel="noopener" class="nav-item active">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              <span>Home Feed</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/search" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <span>Search Websites & Places</span>
+            </div>
+            <span class="nav-badge-url">URL</span>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/discover" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+              <span>Discover Creators & Spots</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/following" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+              <span>Following</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/messages" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              <span>Direct Messages</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/notifications" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <span>Notifications</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/bookmarks" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+              <span>Saved Bookmarks</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/business" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <span>For Businesses & Owners</span>
+            </div>
+            <span class="nav-badge-pro">PRO</span>
+          </a>
+        </div>
+
+        <!-- Hero Record Button -->
+        <a href="${escapeHtml(baseUrl)}/?action=record" target="_blank" rel="noopener" class="drawer-record-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+          <span>Record Video Review</span>
         </a>
+
+        <!-- Trust & Support Section -->
+        <div class="nav-section">
+          <div class="nav-section-title">Trust & Support</div>
+          <a href="${escapeHtml(baseUrl)}/trust" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <span>Trust Protocol & Guidelines</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/help" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span>Help & FAQs</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+
+          <a href="${escapeHtml(baseUrl)}/contact" target="_blank" rel="noopener" class="nav-item">
+            <div class="nav-item-left">
+              <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <span>Contact Support</span>
+            </div>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+        </div>
+
+        <!-- Footer Links -->
+        <div class="drawer-footer-links">
+          <a href="${escapeHtml(baseUrl)}/terms" target="_blank" rel="noopener" class="drawer-footer-link">Terms</a>
+          <span>&bull;</span>
+          <a href="${escapeHtml(baseUrl)}/privacy" target="_blank" rel="noopener" class="drawer-footer-link">Privacy Policy</a>
+          <span>&bull;</span>
+          <span>&copy; 2026 Yoouz</span>
+        </div>
       </div>
     </div>
 
