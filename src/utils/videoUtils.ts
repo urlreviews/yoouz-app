@@ -120,17 +120,34 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(video.videoData);
   }
 
-  // 3. Primary videoUrl (if already pointing to Bunny CDN or external CDN, prioritize directly)
-  if (video.videoUrl && (video.videoUrl.includes("b-cdn.net") || video.videoUrl.includes("bunnycdn.com"))) {
-    const norm = normalizeVideoUrl(video.videoUrl);
-    if (norm && !sources.includes(norm)) sources.push(norm);
+  // 3. Normalized Primary videoUrl
+  const normalizedPrimary = normalizeVideoUrl(video.videoUrl);
+  if (normalizedPrimary && !sources.includes(normalizedPrimary)) {
+    sources.push(normalizedPrimary);
   }
 
-  // 4. Direct Bunny CDN Pull Zone Edge URLs (Sub-10ms global edge delivery)
+  // 4. Local Server streaming endpoint
+  if (video.id) {
+    const serverStream = `/api/videos/stream/${video.id}.mp4`;
+    if (!sources.includes(serverStream)) {
+      sources.push(serverStream);
+    }
+  }
+
+  // 5. Fallback video URLs from document
+  if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
+    for (const fb of video.fallbackVideoUrls) {
+      const norm = normalizeVideoUrl(fb);
+      if (norm && !sources.includes(norm)) {
+        sources.push(norm);
+      }
+    }
+  }
+
+  // 6. Direct Bunny CDN Pull Zone Edge URLs (as secondary mirror / fallback)
   if (activeBunnyPullZone) {
     const cleanZone = activeBunnyPullZone.replace(/\/+$/, "");
     
-    // Check if videoUrl had a specific filename (e.g. rev-xxx.mp4)
     if (video.videoUrl) {
       const match = video.videoUrl.match(/rev-[a-zA-Z0-9_\-\.]+/);
       if (match && match[0]) {
@@ -149,31 +166,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 5. Normalized Primary videoUrl
-  const normalizedPrimary = normalizeVideoUrl(video.videoUrl);
-  if (normalizedPrimary && !sources.includes(normalizedPrimary)) {
-    sources.push(normalizedPrimary);
-  }
-
-  // 6. Fallback video URLs from document
-  if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
-    for (const fb of video.fallbackVideoUrls) {
-      const norm = normalizeVideoUrl(fb);
-      if (norm && !sources.includes(norm)) {
-        sources.push(norm);
-      }
-    }
-  }
-
-  // 7. Local Server streaming endpoint
-  if (video.id) {
-    const serverStream = `/api/videos/stream/${video.id}.mp4`;
-    if (!sources.includes(serverStream)) {
-      sources.push(serverStream);
-    }
-  }
-
-  // 8. Static default MP4 asset
+  // 7. Static default MP4 asset
   if (!sources.includes("/default-review.mp4")) {
     sources.push("/default-review.mp4");
   }
