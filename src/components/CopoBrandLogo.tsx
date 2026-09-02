@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { extractDomain, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 
 interface CopoBrandLogoProps {
@@ -23,7 +23,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   fallbackTextClassName = "font-black text-2xl sm:text-3xl text-white drop-shadow-md"
 }) => {
   // Extract clean domain from any source
-  const resolvedDomain = React.useMemo(() => {
+  const resolvedDomain = useMemo(() => {
     if (domain) return extractDomain(domain);
     if (website) return extractDomain(website);
     if (logoUrl) return extractDomain(logoUrl);
@@ -31,96 +31,50 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [domain, website, logoUrl, name]);
 
-  // Build the fallback cascade list
-  const cascadeItems = React.useMemo(() => {
-    const items: { url: string; fit: "contain" | "cover" }[] = [];
-    const seen = new Set<string>();
-
-    const addItem = (url: string | null | undefined, fit: "contain" | "cover" = "contain") => {
-      if (!url) return;
-      const clean = url.trim();
-      if (!clean || clean === "data:;" || clean.startsWith("data:;") || seen.has(clean)) return;
-      seen.add(clean);
-      items.push({ url: clean, fit });
-    };
-
-    // 1. Direct scraped or explicitly provided logoUrl (if valid and not a generic placeholder)
+  const { src, isCover } = useMemo(() => {
+    // 1. Known high quality vectors
+    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
+      return { src: KNOWN_BRAND_LOGOS[resolvedDomain], isCover: false };
+    }
+    
+    // 2. Direct scraped logo (skip if it looks like a generic favicon, since gstatic is better)
     const isFavicon = logoUrl && (logoUrl.includes("favicon") || logoUrl.includes("gstatic.com") || logoUrl.includes("google.com/s2"));
     if (logoUrl && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image")) && !logoUrl.includes("ui-avatars") && !logoUrl.includes("dicebear") && !isFavicon) {
-      addItem(logoUrl, "contain");
+      return { src: logoUrl, isCover: false };
     }
-
-    // 2. Direct match for known high-quality brand vector logos
-    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
-      addItem(KNOWN_BRAND_LOGOS[resolvedDomain], "contain");
-    }
-
-    // 3. Lightning-fast Google Cloud High-Res Favicon CDN & DuckDuckGo Favicon CDN (10-30ms)
+    
+    // 3. Fallback to Google Favicon CDN
     if (resolvedDomain) {
-      addItem(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`, "contain");
-      addItem(`https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`, "contain");
-      addItem(`https://unavatar.io/${resolvedDomain}?fallback=false`, "contain");
+      return { src: `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`, isCover: false };
     }
+    
+    // 4. ui-avatars native fallback if NO domain and NO logoUrl
+    const avatarName = name ? name.replace(/^(een|a|the)\s+/i, "").trim() : "Place";
+    return { 
+      src: `https://ui-avatars.com/api/?name=${encodeURIComponent(avatarName)}&background=18181b&color=ffffff&size=256&font-size=0.4&bold=true`, 
+      isCover: false 
+    };
+  }, [resolvedDomain, logoUrl, name]);
 
-    // 4. Explicit logoUrl fallback if it was a favicon
-    if (logoUrl && isFavicon && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image"))) {
-      addItem(logoUrl, "contain");
-    }
-
-    return items;
-  }, [resolvedDomain, logoUrl]);
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [hasFailedAll, setHasFailedAll] = useState(false);
-
-  // Reset indices if props change
-  useEffect(() => {
-    setCurrentIndex(0);
-    setHasFailedAll(cascadeItems.length === 0);
-  }, [cascadeItems]);
-
-  const handleImageError = () => {
-    if (currentIndex < cascadeItems.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      setHasFailedAll(true);
-    }
-  };
-
-  const getInitials = () => {
-    if (!name) return "P";
-    const cleaned = name.replace(/^(een|a|the)\s+/i, "").trim();
-    return cleaned.charAt(0).toUpperCase();
-  };
-
-  if (hasFailedAll || cascadeItems.length === 0) {
-    const fallbackClassName = className
-        .split(" ")
-        .filter((c) => !c.startsWith("bg-") && !c.includes("bg-"))
-        .join(" ") + " bg-gradient-to-br from-zinc-800 via-zinc-900 to-black";
-
-    return (
-      <div className={fallbackClassName}>
-        <span className={fallbackTextClassName}>
-          {getInitials()}
-        </span>
-      </div>
-    );
-  }
-
-  const currentItem = cascadeItems[currentIndex];
+  const fallbackUrl = useMemo(() => {
+    const avatarName = name ? name.replace(/^(een|a|the)\s+/i, "").trim() : "Place";
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(avatarName)}&background=18181b&color=ffffff&size=256&font-size=0.4&bold=true`;
+  }, [name]);
 
   return (
     <div className={className}>
       <img
-        src={currentItem.url}
+        src={src}
         alt={name || "Brand Logo"}
-        loading="eager"
-        decoding="sync"
-        fetchPriority="high"
-        className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"}`}
+        loading="lazy"
+        decoding="async"
+        className={`${imageClassName} ${isCover ? "object-cover" : "object-contain"}`}
         referrerPolicy="no-referrer"
-        onError={handleImageError}
+        onError={(e) => {
+          if ((e.currentTarget as HTMLImageElement).src !== fallbackUrl) {
+            (e.currentTarget as HTMLImageElement).src = fallbackUrl;
+          }
+        }}
       />
     </div>
   );
