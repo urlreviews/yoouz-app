@@ -11,9 +11,6 @@ import {
   Bookmark,
   User,
   Menu,
-  Youtube,
-  Instagram,
-  Facebook,
   Video,
   Shield,
   Download
@@ -149,75 +146,31 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           </nav>
         </div>
 
-        {/* Footer & Social Media Channels */}
-        <div className="px-3 pt-4 border-t border-zinc-800/80 text-xs text-zinc-400 flex flex-col gap-3">
-          <div className="flex items-center gap-1.5">
-            <a
-              href="https://youtube.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
-              title="YouTube"
-            >
-              <Youtube className="w-3.5 h-3.5" strokeWidth={2} />
-            </a>
-            <a
-              href="https://x.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
-              title="X"
-            >
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </a>
-            <a
-              href="https://tiktok.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
-              title="TikTok"
-            >
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298 0 .59.04.87.12V9.4a6.34 6.34 0 0 0-6.63 6.31A6.34 6.34 0 0 0 10.06 22a6.34 6.34 0 0 0 6.32-6.33V9.58a8.28 8.28 0 0 0 4.88 1.58V7.71a4.83 4.83 0 0 1-1.67-1.02z" />
-              </svg>
-            </a>
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
-              title="Instagram"
-            >
-              <Instagram className="w-3.5 h-3.5" strokeWidth={2} />
-            </a>
-            <a
-              href="https://www.facebook.com/yoouz.official/"
-              target="_blank"
-              rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
-              title="Facebook (@yoouz.official)"
-            >
-              <Facebook className="w-3.5 h-3.5" strokeWidth={2} />
-            </a>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-zinc-500">
+        {/* Footer & Legal Links */}
+        <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-500">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
               className="hover:text-zinc-300 transition-colors cursor-pointer bg-transparent border-none p-0"
             >
               Privacy
             </button>
-            <span>•</span>
+            <span className="text-zinc-600">•</span>
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : onSelectSection("more")}
               className="hover:text-zinc-300 transition-colors cursor-pointer bg-transparent border-none p-0"
             >
               Terms
             </button>
+            <span className="text-zinc-600">•</span>
+            <button
+              onClick={() => onSelectSection("more")}
+              className="hover:text-zinc-300 transition-colors cursor-pointer bg-transparent border-none p-0"
+            >
+              About
+            </button>
           </div>
-          <p className="text-[11px] text-zinc-500">© 2026 Yoouz • All rights reserved.</p>
+          <p className="text-[11px] text-zinc-500 font-normal">© 2026 Yoouz. All rights reserved.</p>
         </div>
       </aside>
 

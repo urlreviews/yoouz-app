@@ -24,9 +24,6 @@ import {
   UploadCloud,
   X,
   FileText,
-  Youtube,
-  Instagram,
-  Facebook,
   MessageSquare,
   Compass,
   UserPlus,
@@ -1239,60 +1236,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         </section>
 
         {/* 4. Google-Standard Footer */}
-        <footer className="pt-10 border-t border-zinc-800 text-center space-y-4 text-xs text-zinc-400">
-          <div className="flex items-center justify-center gap-3">
-            <a
-              href="https://youtube.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
-              title="YouTube"
-            >
-              <Youtube className="w-4 h-4" />
-            </a>
-            <a
-              href="https://x.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
-              title="X"
-            >
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </a>
-            <a
-              href="https://tiktok.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
-              title="TikTok"
-            >
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298 0 .59.04.87.12V9.4a6.34 6.34 0 0 0-6.63 6.31A6.34 6.34 0 0 0 10.06 22a6.34 6.34 0 0 0 6.32-6.33V9.58a8.28 8.28 0 0 0 4.88 1.58V7.71a4.83 4.83 0 0 1-1.67-1.02z" />
-              </svg>
-            </a>
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
-              title="Instagram"
-            >
-              <Instagram className="w-4 h-4" />
-            </a>
-            <a
-              href="https://www.facebook.com/yoouz.official/"
-              target="_blank"
-              rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
-              title="Facebook (@yoouz.official)"
-            >
-              <Facebook className="w-4 h-4" />
-            </a>
-          </div>
-
-          <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-400 pt-1 flex-wrap">
+        <footer className="pt-8 pb-14 border-t border-zinc-800 text-center space-y-3.5 text-xs text-zinc-400">
+          <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-400 flex-wrap">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : null}
               className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
@@ -1323,7 +1268,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               Yoouz Trust Network • San Francisco, CA
             </p>
             <p className="text-[11px] text-zinc-500">
-              © 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews..
+              © 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews.
             </p>
           </div>
         </footer>

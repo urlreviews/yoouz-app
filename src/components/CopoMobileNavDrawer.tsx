@@ -19,10 +19,7 @@ import {
   Lock,
   HelpCircle,
   MessageSquare,
-  Sparkles,
-  Youtube,
-  Instagram,
-  Facebook
+  Sparkles
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { triggerHaptic } from "../utils/haptics";
@@ -441,84 +438,31 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             </div>
           )}
 
-          {/* Legal & Social Footer */}
-          <div className="pt-4 pb-6 space-y-4">
-            <div className="flex items-center justify-center gap-3 text-xs text-zinc-500">
+          {/* Legal & Version Footer */}
+          <div className="pt-5 pb-8 space-y-2 border-t border-zinc-800/80 mt-2">
+            <div className="flex items-center justify-center gap-3 text-xs text-zinc-400">
               <button
                 onClick={() => {
                   if (onOpenLegal) onOpenLegal("terms");
                   onClose();
                 }}
-                className="hover:text-zinc-300 transition-colors cursor-pointer"
+                className="hover:text-zinc-200 transition-colors cursor-pointer"
               >
                 Terms of Service
               </button>
-              <span>•</span>
+              <span className="text-zinc-600">•</span>
               <button
                 onClick={() => {
                   if (onOpenLegal) onOpenLegal("privacy");
                   onClose();
                 }}
-                className="hover:text-zinc-300 transition-colors cursor-pointer"
+                className="hover:text-zinc-200 transition-colors cursor-pointer"
               >
                 Privacy Policy
               </button>
             </div>
 
-            {/* Social Icons */}
-            <div className="flex items-center justify-center gap-3">
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
-                title="YouTube"
-              >
-                <Youtube className="w-4 h-4" />
-              </a>
-              <a
-                href="https://x.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
-                title="X (Twitter)"
-              >
-                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
-                title="TikTok"
-              >
-                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.65a6.34 6.34 0 0 0 10.86 4.48A6.33 6.33 0 0 0 15.86 16v-7a8.28 8.28 0 0 0 4.84 1.57v-3.5a4.84 4.84 0 0 1-1.11-.38z" />
-                </svg>
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
-                title="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href="https://www.facebook.com/yoouz.official/"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
-                title="Facebook (@yoouz.official)"
-              >
-                <Facebook className="w-4 h-4" />
-              </a>
-            </div>
-
-            <p className="text-[10px] text-center text-zinc-600 font-mono">
+            <p className="text-[11px] text-center text-zinc-500 font-mono">
               Yoouz Mobile PWA • v2.4.0
             </p>
           </div>
