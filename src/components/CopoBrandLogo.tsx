@@ -72,21 +72,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasFailedAll, setHasFailedAll] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   // Reset indices if props change
   useEffect(() => {
     setCurrentIndex(0);
     setHasFailedAll(cascadeItems.length === 0);
-    setIsLoaded(false);
   }, [cascadeItems]);
 
-  const handleImageLoad = () => {
-    setIsLoaded(true);
-  };
-
   const handleImageError = () => {
-    setIsLoaded(false);
     if (currentIndex < cascadeItems.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
@@ -100,19 +93,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return cleaned.charAt(0).toUpperCase();
   };
 
-  const isActuallyLoaded = isLoaded && !hasFailedAll && cascadeItems.length > 0;
-
-  // We use the base className, but if it's NOT loaded, we replace bg-* with our gradient.
-  const wrapperClassName = isActuallyLoaded
-    ? className
-    : className
+  if (hasFailedAll || cascadeItems.length === 0) {
+    const fallbackClassName = className
         .split(" ")
         .filter((c) => !c.startsWith("bg-") && !c.includes("bg-"))
         .join(" ") + " bg-gradient-to-br from-zinc-800 via-zinc-900 to-black";
 
-  if (hasFailedAll || cascadeItems.length === 0) {
     return (
-      <div className={wrapperClassName}>
+      <div className={fallbackClassName}>
         <span className={fallbackTextClassName}>
           {getInitials()}
         </span>
@@ -123,26 +111,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const currentItem = cascadeItems[currentIndex];
 
   return (
-    <div className={wrapperClassName}>
-      {/* Show text fallback instantly while loading */}
-      {!isLoaded && (
-        <span className={fallbackTextClassName}>
-          {getInitials()}
-        </span>
-      )}
-      
-      {/* Load the image, hide until loaded */}
+    <div className={className}>
       <img
         src={currentItem.url}
         alt={name || "Brand Logo"}
         loading="eager"
         decoding="sync"
         fetchPriority="high"
-        className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"} ${
-          isLoaded ? "opacity-100" : "opacity-0 absolute inset-0 w-full h-full pointer-events-none"
-        }`}
+        className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"}`}
         referrerPolicy="no-referrer"
-        onLoad={handleImageLoad}
         onError={handleImageError}
       />
     </div>
