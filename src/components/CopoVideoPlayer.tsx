@@ -131,6 +131,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [videos]);
 
+  const mainRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isProgrammaticScrollRef = useRef<boolean>(false);
@@ -340,41 +341,46 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [currentIndex]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIndexRef.current < videos.length - 1) {
       scrollToCard(currentIndexRef.current + 1, "smooth");
     }
-  };
+  }, [videos.length, scrollToCard]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentIndexRef.current > 0) {
       scrollToCard(currentIndexRef.current - 1, "smooth");
     }
-  };
+  }, [scrollToCard]);
 
-  // Desktop Mouse Wheel Navigation: smoothly step to previous/next video without getting stuck
+  // Desktop Mouse Wheel & Trackpad Navigation: smoothly step strictly 1 video at a time without multi-skipping
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const mainEl = mainRef.current || containerRef.current;
+    if (!mainEl) return;
 
     let wheelTimeout: NodeJS.Timeout | null = null;
     let isWheeling = false;
 
     const handleWheel = (e: WheelEvent) => {
+      // If user is inside an open popup, comment drawer, modal, input, or textarea, allow normal native scroll
+      const targetEl = e.target as HTMLElement | null;
       if (
         document.body.style.overflow === "hidden" ||
         moreMenuVideo !== null ||
-        document.querySelector(
-          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer"
+        targetEl?.closest?.(
+          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer, textarea, input, select, [contenteditable='true']"
         ) !== null
       ) {
         return;
       }
 
-      // If wheel delta is significant, cleanly trigger next / previous reel step
-      if (Math.abs(e.deltaY) > 28) {
-        e.preventDefault();
-        if (isWheeling) return;
+      // Intercept wheel event on desktop to guarantee exactly 1 video transition per scroll gesture
+      e.preventDefault();
+
+      if (isWheeling) return;
+
+      // Threshold check to filter out tiny trackpad micro-jitters
+      if (Math.abs(e.deltaY) >= 15) {
         isWheeling = true;
 
         if (e.deltaY > 0) {
@@ -392,13 +398,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (wheelTimeout) clearTimeout(wheelTimeout);
         wheelTimeout = setTimeout(() => {
           isWheeling = false;
-        }, 380);
+        }, 520);
       }
     };
 
-    container.addEventListener("wheel", handleWheel, { passive: false });
+    mainEl.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
-      container.removeEventListener("wheel", handleWheel);
+      mainEl.removeEventListener("wheel", handleWheel);
       if (wheelTimeout) clearTimeout(wheelTimeout);
     };
   }, [videos.length, moreMenuVideo, scrollToCard]);
@@ -415,7 +421,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         });
       } catch (e) {}
     }
-  }, [currentIndex, videos.length]);
+  }, [currentIndex, videos.length, handleNext, handlePrev]);
 
   // Sound toggle with localStorage caching
   const toggleMute = (e?: React.MouseEvent) => {
@@ -429,7 +435,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     unlockAudioSession();
   };
 
-  // Keyboard navigation
+  // Keyboard navigation: ArrowDown/ArrowUp, PageDown/PageUp, Space/Shift+Space, Mute
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -457,12 +463,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         return;
       }
 
-      if (e.key === "ArrowUp") {
+      if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
         handlePrev();
-      } else if (e.key === "ArrowDown") {
+      } else if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
         handleNext();
+      } else if (e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handlePrev();
+        } else {
+          handleNext();
+        }
       } else if (e.key === "m" || e.key === "M") {
         toggleMute();
       }
@@ -470,7 +483,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentIndex, videos.length, isMuted, moreMenuVideo]);
+  }, [handleNext, handlePrev, isMuted, moreMenuVideo]);
 
   if (!currentVideo) {
     if (isLoading) {
@@ -531,15 +544,23 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
   return (
     <main
+      ref={mainRef}
       id="copo-main-feed-container"
-      className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 select-none"
+      data-hide-scrollbar="true"
+      className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]"
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
       <div className="w-full h-full md:h-auto md:w-auto flex items-center md:justify-center gap-4 relative md:max-h-[95vh] md:p-3">
         {/* Scroll Snap Feed Container */}
         <div
           ref={containerRef}
-          className="w-full h-full md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y no-scrollbar hide-scrollbar [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
-          style={{ WebkitOverflowScrolling: "touch" }}
+          data-hide-scrollbar="true"
+          className="w-full h-full md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none"
+          }}
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
