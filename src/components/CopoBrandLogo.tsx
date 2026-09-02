@@ -45,7 +45,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     
     // 3. Fallback to Google Favicon CDN
     if (resolvedDomain) {
-      return { src: `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`, isCover: false };
+      return { src: `/api/favicon?domain=${encodeURIComponent(resolvedDomain)}`, isCover: false };
     }
     
     // 4. ui-avatars native fallback if NO domain and NO logoUrl
