@@ -520,33 +520,105 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
 };
 
 /**
+ * Global User Registry and in-memory cache for instant synchronous resolution across all views
+ */
+let memoryUserRegistry: Record<string, any> = {};
+
+export function updateUserRegistry(users: any[] | any): void {
+  if (!users) return;
+  const list = Array.isArray(users) ? users : [users];
+  list.forEach((u) => {
+    if (!u) return;
+    const emailKey = (u.email || "").toLowerCase().trim();
+    const nameKey = (u.name || "").toLowerCase().replace(/^@+/, "").trim();
+    const handleKey = (u.handle || "").toLowerCase().replace(/^@+/, "").trim();
+    const uidKey = (u.uid || u.userId || u.id || "").toLowerCase().trim();
+
+    const entry = {
+      name: u.name,
+      handle: u.handle || (u.name ? `@${u.name.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "@user"),
+      avatar: u.avatar,
+      bio: u.bio,
+      banner: u.banner,
+      location: u.location,
+      email: u.email
+    };
+
+    if (emailKey) memoryUserRegistry[emailKey] = entry;
+    if (nameKey) memoryUserRegistry[nameKey] = entry;
+    if (handleKey) memoryUserRegistry[handleKey] = entry;
+    if (uidKey) memoryUserRegistry[uidKey] = entry;
+  });
+
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("yoouz_users_registry_cache", JSON.stringify(memoryUserRegistry));
+    } catch (e) {}
+  }
+}
+
+export function getUserFromRegistry(key: string): any {
+  if (!key) return null;
+  const cleanKey = key.toLowerCase().replace(/^@+/, "").trim();
+  if (memoryUserRegistry[cleanKey]) return memoryUserRegistry[cleanKey];
+
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("yoouz_users_registry_cache");
+      if (stored) {
+        memoryUserRegistry = JSON.parse(stored);
+        if (memoryUserRegistry[cleanKey]) return memoryUserRegistry[cleanKey];
+      }
+    } catch (e) {}
+  }
+  return null;
+}
+
+/**
  * Robustly resolves the real author name and authentic avatar photo for a video review.
  * Guarantees that authentic Google profile photos and uploaded user pictures are always preserved
  * and never replaced with generic fallback initial icons or placeholder names.
  */
-export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null): string {
+export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null, handle?: string | null): string {
+  if (!avatarUrl || avatarUrl === "data:;" || avatarUrl.trim() === "") {
+    return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
+  }
+
+  // Filter out video files or paths accidentally stored as avatars
   if (
-    !avatarUrl ||
-    avatarUrl.includes("ui-avatars.com") ||
-    avatarUrl.includes("dicebear") ||
     avatarUrl.includes(".mp4") ||
     avatarUrl.includes("/api/videos/") ||
     avatarUrl.includes("rev-") ||
-    avatarUrl === "data:;"
+    avatarUrl.startsWith("blob:")
   ) {
-    return generateGoogleLetterAvatarSvg(name || "User", 128);
+    return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
   }
+
+  // If it's already an SVG data URI or base64 image, return directly
+  if (avatarUrl.startsWith("data:image/")) {
+    return avatarUrl;
+  }
+
   // Proxy Google User Content to bypass Firefox / Safari tracking protection and CORP headers
-  if (avatarUrl.includes("googleusercontent.com")) {
+  if (avatarUrl.includes("googleusercontent.com") && !avatarUrl.startsWith("/api/proxy-image")) {
     return `/api/proxy-image?url=${encodeURIComponent(avatarUrl)}`;
   }
+
   return avatarUrl;
 }
 
 export function resolveSafeAuthor(
   video: Partial<VideoReview> | null | undefined,
-  currentUserOverride?: UserProfile | null
+  currentUserOverride?: UserProfile | null,
+  allUsersList?: any[]
 ): VideoAuthor {
+  if (allUsersList && allUsersList.length > 0) {
+    updateUserRegistry(allUsersList);
+  }
+  if (currentUserOverride) {
+    updateUserRegistry(currentUserOverride);
+  }
+
   const authorObj = (video?.author && typeof video.author === "object") ? video.author : ({} as any);
   
   // 1. Determine raw name candidate
@@ -577,24 +649,28 @@ export function resolveSafeAuthor(
     } catch (e) {}
   }
 
-  // 3. Match against known community users
+  // 3. Match against known community users and user registry
   const nameKey = rawName.toLowerCase().replace(/^@+/, "");
-  const userKey = (video?.userId || video?.userEmail || "").toLowerCase().trim();
-  const knownMatch = KNOWN_COMMUNITY_USERS[nameKey] || KNOWN_COMMUNITY_USERS[userKey];
+  const userKey = (video?.userId || video?.userEmail || (authorObj as any).userId || (authorObj as any).email || "").toLowerCase().trim();
+  const handleKey = (authorObj.handle || "").toLowerCase().replace(/^@+/, "");
 
-  let finalName = knownMatch?.name || (rawName && rawName.toLowerCase() !== "reviewer" ? rawName : "Yoouz Reviewer");
-  let finalHandle = knownMatch?.handle || authorObj.handle || `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}`;
+  const registryMatch = getUserFromRegistry(userKey) || getUserFromRegistry(nameKey) || getUserFromRegistry(handleKey);
+  const knownMatch = KNOWN_COMMUNITY_USERS[nameKey] || KNOWN_COMMUNITY_USERS[userKey] || KNOWN_COMMUNITY_USERS[handleKey];
+
+  let finalName = registryMatch?.name || knownMatch?.name || (rawName && rawName.toLowerCase() !== "reviewer" ? rawName : "Yoouz Reviewer");
+  let finalHandle = registryMatch?.handle || knownMatch?.handle || authorObj.handle || `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}`;
   if (!finalHandle.startsWith("@")) finalHandle = `@${finalHandle}`;
 
-  // 4. Resolve authentic avatar
-  let candidateAvatar = authorObj.avatar || (video as any)?.authorAvatar || (video as any)?.avatar;
+  // 4. Resolve authentic candidate avatar
+  let candidateAvatar = registryMatch?.avatar || authorObj.avatar || (video as any)?.authorAvatar || (video as any)?.avatar;
 
   // Filter out invalid video file paths mistakenly passed as avatars
   if (
     candidateAvatar &&
     (candidateAvatar.includes("/api/videos/") ||
       candidateAvatar.includes(".mp4") ||
-      candidateAvatar.includes("rev-"))
+      candidateAvatar.includes("rev-") ||
+      candidateAvatar === "data:;")
   ) {
     candidateAvatar = "";
   }
@@ -606,21 +682,14 @@ export function resolveSafeAuthor(
     (activeUser.name && activeUser.name.toLowerCase() === nameKey)
   )) {
     if (activeUser.name) finalName = activeUser.name;
-    if (activeUser.avatar && (!candidateAvatar || candidateAvatar.includes("ui-avatars"))) candidateAvatar = activeUser.avatar;
+    if (activeUser.avatar) candidateAvatar = activeUser.avatar;
   }
 
-  let finalAvatar = "";
-  if (candidateAvatar && !candidateAvatar.includes("dicebear") && !candidateAvatar.includes("ui-avatars.com")) {
-    finalAvatar = getSafeAvatarUrl(candidateAvatar, finalName);
-  } else if (knownMatch?.avatar) {
-    finalAvatar = getSafeAvatarUrl(knownMatch.avatar, finalName);
-  } else if (candidateAvatar) {
-    finalAvatar = getSafeAvatarUrl(candidateAvatar, finalName);
-  } else if (activeUser?.avatar) {
-    finalAvatar = getSafeAvatarUrl(activeUser.avatar, finalName);
-  } else {
-    finalAvatar = generateGoogleLetterAvatarSvg(finalName, 128);
+  if (!candidateAvatar && knownMatch?.avatar) {
+    candidateAvatar = knownMatch.avatar;
   }
+
+  const finalAvatar = getSafeAvatarUrl(candidateAvatar, finalName, finalHandle);
 
   return {
     name: finalName,
@@ -632,8 +701,8 @@ export function resolveSafeAuthor(
     videoReviewCount: authorObj.videoReviewCount ?? 1,
     photosCount: authorObj.photosCount ?? 0,
     isFollowed: authorObj.isFollowed ?? false,
-    bio: knownMatch?.bio || authorObj.bio,
-    banner: authorObj.banner,
-    location: authorObj.location
+    bio: registryMatch?.bio || knownMatch?.bio || authorObj.bio,
+    banner: registryMatch?.banner || authorObj.banner,
+    location: registryMatch?.location || authorObj.location
   };
 }

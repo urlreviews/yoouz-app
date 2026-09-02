@@ -37,7 +37,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleF
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/firebase";
 import { cleanUndefinedFields, cleanForFirestore } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { resolveVideoPosterUrl } from "./utils/videoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
@@ -1152,6 +1152,18 @@ export function App() {
 
       // Keep videos state in sync with updated author avatar and name
       if (updated.avatar || updated.name) {
+        updateUserRegistry(nextProfile);
+        setAllRegisteredUsers((prevUsers) => {
+          const index = prevUsers.findIndex((u) => 
+            u.email === nextProfile.email || u.uid === nextProfile.uid || u.name === nextProfile.name
+          );
+          if (index >= 0) {
+            const copy = [...prevUsers];
+            copy[index] = { ...copy[index], ...nextProfile };
+            return copy;
+          }
+          return [nextProfile, ...prevUsers];
+        });
         setVideos((prevVideos) =>
           prevVideos.map((v) => {
             if (isAuthorMatch(v, nextProfile)) {
@@ -3142,6 +3154,7 @@ export function App() {
           author={selectedAuthorForDrawer}
           allVideos={videos}
           currentUser={currentUser}
+          allUsers={allRegisteredUsers}
           activeVideoId={activeFeedVideos[currentVideoIndex]?.id}
           onClose={handleCloseDrawers}
           onSelectVideo={(videoId) => handleSelectVideoById(videoId, "creator")}
@@ -3275,6 +3288,7 @@ export function App() {
               onOpenShare={handleOpenShare}
               onOpenReport={(v) => handleOpenReport({ type: "video", video: v })}
               currentUser={currentUser}
+              allUsers={allRegisteredUsers}
               onDeleteVideo={handleDeleteUserVideo}
               onUpdateVideoReview={handleUpdateVideoReview}
               onHideVideo={(vidId) => {

@@ -20,7 +20,7 @@ import {
   MapPin
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
@@ -37,6 +37,7 @@ interface CopoCreatorDrawerProps {
   author: VideoAuthor | null;
   allVideos: VideoReview[];
   currentUser?: UserProfile | null;
+  allUsers?: any[];
   activeVideoId?: string;
   onClose: () => void;
   onSelectVideo: (videoId: string) => void;
@@ -54,6 +55,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   author,
   allVideos,
   currentUser,
+  allUsers,
   activeVideoId,
   onClose,
   onSelectVideo,
@@ -208,46 +210,26 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       ? (authorVideos.reduce((acc, v) => acc + v.rating, 0) / authorVideos.length).toFixed(1)
       : "5.0";
 
-  // Resolve genuine profile avatar (Google photo, user-uploaded photo, or clean initials avatar - never video frames)
-  const authorKey = (author.name || "").toLowerCase().replace(/^@+/, "");
-  const knownMatch = KNOWN_COMMUNITY_USERS[authorKey] || KNOWN_COMMUNITY_USERS[(author as any).userId?.toLowerCase() || ""];
+  // Resolve genuine profile author & avatar with unified resolver (guarantees 100% parity with video feed)
+  const safeCreator = resolveSafeAuthor(
+    {
+      author: {
+        ...author,
+        avatar: liveUserProfile?.avatar || (isOwner && currentUser?.avatar ? currentUser.avatar : author.avatar),
+        name: liveUserProfile?.name || (isOwner && currentUser?.name ? currentUser.name : author.name),
+        bio: liveUserProfile?.bio || author.bio,
+        banner: liveUserProfile?.banner || author.banner,
+        location: liveUserProfile?.location || author.location
+      },
+      userId: (author as any)?.userId || (isOwner ? currentUser?.email : undefined),
+      userEmail: (author as any)?.email || (isOwner ? currentUser?.email : undefined)
+    },
+    currentUser,
+    allUsers || (liveUserProfile ? [liveUserProfile] : [])
+  );
 
-  let effectiveAvatar = "";
-  if (isOwner && currentUser?.avatar && !currentUser.avatar.includes("dicebear")) {
-    effectiveAvatar = currentUser.avatar;
-  } else if (liveUserProfile?.avatar && (!liveUserProfile.avatar.includes("dicebear") && !liveUserProfile.avatar.includes("ui-avatars"))) {
-    effectiveAvatar = liveUserProfile.avatar;
-  } else if (videoWithAuthenticAvatar?.author?.avatar) {
-    effectiveAvatar = videoWithAuthenticAvatar.author.avatar;
-  } else if (knownMatch?.avatar) {
-    effectiveAvatar = knownMatch.avatar;
-  } else if (
-    author.avatar &&
-    !author.avatar.includes("dicebear") &&
-    !author.avatar.includes("unsplash") &&
-    !author.avatar.includes("/api/videos/") &&
-    !author.avatar.includes(".mp4") &&
-    !author.avatar.includes("rev-")
-  ) {
-    effectiveAvatar = author.avatar;
-  }
-
-  // If the avatar URL looks like a video review artifact or invalid placeholder, fallback to Google-style 1-letter avatar
-  if (
-    !effectiveAvatar ||
-    effectiveAvatar.includes("unsplash") ||
-    effectiveAvatar.includes("dicebear") ||
-    effectiveAvatar.includes("/api/videos/") ||
-    effectiveAvatar.includes(".mp4") ||
-    effectiveAvatar.includes("rev-") ||
-    effectiveAvatar.includes("ui-avatars.com")
-  ) {
-    effectiveAvatar = generateGoogleLetterAvatarSvg(author.name || currentUser?.name || "User", 128, author.handle || author.name);
-  } else {
-    effectiveAvatar = getSafeAvatarUrl(effectiveAvatar, author.name);
-  }
-
-  let effectiveBanner = isOwner && currentUser?.banner 
+  const effectiveAvatar = safeCreator.avatar;
+  const effectiveBanner = isOwner && currentUser?.banner 
     ? currentUser.banner 
     : (liveUserProfile?.banner || author?.banner);
 

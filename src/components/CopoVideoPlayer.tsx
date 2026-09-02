@@ -51,6 +51,7 @@ interface CopoVideoPlayerProps {
   onOpenMenu?: () => void;
   onLoadMore?: () => void;
   currentUser?: any;
+  allUsers?: any[];
   onDeleteVideo?: (videoId: string) => void;
   onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[] }) => void;
   isPaused?: boolean;
@@ -82,6 +83,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   onOpenMenu,
   onLoadMore,
   currentUser,
+  allUsers,
   onDeleteVideo,
   onUpdateVideoReview,
   isPaused = false,
@@ -552,6 +554,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isActive={isCardActive}
                 isNear={isCardNear}
                 isMuted={isMuted}
+                allUsers={allUsers}
+                currentUser={currentUser}
                 activeSubTab={activeSubTab}
                 onSelectSubTab={onSelectSubTab}
                 hasUserStartedFeed={hasUserStartedFeed}

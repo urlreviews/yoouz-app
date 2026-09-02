@@ -38,6 +38,8 @@ interface VideoFeedCardProps {
   isMuted: boolean;
   isPlaying?: boolean;
   progressPercent?: number;
+  allUsers?: any[];
+  currentUser?: any;
   
   activeSubTab?: FeedSubTab;
   onSelectSubTab?: (tab: FeedSubTab) => void;
@@ -71,6 +73,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   isActive,
   isNear,
   isMuted,
+  allUsers,
+  currentUser,
   activeSubTab,
   onSelectSubTab,
   onToggleMute,
@@ -409,7 +413,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     triggerDoubleTapLike(e.clientX, e.clientY);
   };
 
-  const safeAuthor = resolveSafeAuthor(video);
+  const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
 
   // Preload high-priority assets when the card is active or near-active
   useEffect(() => {
@@ -801,7 +805,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               title={`View ${safeAuthor.name} Profile`}
             >
               <img
-                src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name)}
+                src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle)}
                 alt={safeAuthor.name}
                 loading={isActive || isNear ? "eager" : "lazy"}
                 decoding="async"
@@ -810,7 +814,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 referrerPolicy="no-referrer"
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement;
-                  const fallback = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128);
+                  const fallback = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128, safeAuthor.handle || safeAuthor.name);
                   if (target.src !== fallback) {
                     target.src = fallback;
                   }
