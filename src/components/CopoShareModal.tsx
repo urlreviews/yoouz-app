@@ -67,6 +67,15 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const isVideoMode = Boolean(video);
   const isOpen = isVideoMode ? Boolean(video) : Boolean(explicitIsOpen);
 
+  // Reset copied states and messages whenever the modal opens or changes target
+  useEffect(() => {
+    if (isOpen) {
+      setCopied(false);
+      setEmbedCopied(false);
+      setToastMessage(null);
+    }
+  }, [isOpen, explicitShareUrl, video?.id]);
+
   // Lock background body scroll cleanly whenever modal is active
   useEffect(() => {
     if (!isOpen) return;
@@ -388,8 +397,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const mobileMessagingPlatforms = [
     {
       id: "copy",
-      name: "Copy link",
-      icon: copied ? <Check className="w-5.5 h-5.5 stroke-[2.5] text-emerald-400" /> : <Link2 className="w-5.5 h-5.5 stroke-[2.2]" />,
+      name: copied ? "Copied" : "Copy link",
+      icon: copied ? <Check className="w-5.5 h-5.5 stroke-[2.5] text-white" /> : <Link2 className="w-5.5 h-5.5 stroke-[2.2]" />,
       onClick: handleCopy
     },
     {
@@ -587,8 +596,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
         {/* Toast Feedback Notification Banner */}
         {toastMessage && (
-          <div className="mx-5 mb-2 py-1.5 px-3 rounded-xl bg-emerald-950/80 border border-emerald-800/80 text-emerald-300 text-xs font-medium flex items-center justify-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-            <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
+          <div className="mx-5 mb-2 py-2 px-3.5 rounded-xl bg-zinc-900 border border-zinc-700/80 text-zinc-100 text-xs font-medium flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 shadow-md">
+            <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
             <span>{toastMessage}</span>
           </div>
         )}
@@ -665,13 +674,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       type="button"
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
                         copied
-                          ? "bg-emerald-500 text-black font-extrabold"
+                          ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600 active:scale-95"
                           : "bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95"
                       }`}
                     >
                       {copied ? (
                         <>
-                          <Check className="w-3.5 h-3.5 text-black stroke-[3]" />
+                          <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
                           <span>Copied</span>
                         </>
                       ) : (
@@ -742,7 +751,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       className="group flex flex-col items-center gap-1.5 shrink-0 focus:outline-none cursor-pointer transition-transform active:scale-95"
                       title={platform.name}
                     >
-                      <div className="w-13 h-13 rounded-full bg-zinc-900 border border-zinc-800/90 flex items-center justify-center text-zinc-200 group-hover:text-white group-hover:border-zinc-700 group-active:bg-zinc-800 transition-all duration-200 shadow-sm">
+                      <div className={`w-13 h-13 rounded-full ${platform.id === 'copy' && copied ? 'bg-zinc-800 border-zinc-600 text-white shadow-md' : 'bg-zinc-900 border-zinc-800/90 text-zinc-200'} border flex items-center justify-center group-hover:text-white group-hover:border-zinc-700 group-active:bg-zinc-800 transition-all duration-200 shadow-sm`}>
                         {platform.icon}
                       </div>
                       <span className="text-[11px] font-medium text-zinc-300 group-hover:text-white text-center truncate max-w-[64px] leading-tight select-none">
@@ -863,8 +872,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">HTML iFrame Code</span>
                   {embedCopied && (
-                    <span className="text-[11px] font-bold text-emerald-400 animate-in fade-in flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" /> Copied!
+                    <span className="text-[11px] font-bold text-zinc-300 animate-in fade-in flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5 text-white" /> Copied!
                     </span>
                   )}
                 </div>
@@ -888,13 +897,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     type="button"
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-md ${
                       embedCopied
-                        ? "bg-emerald-500 text-black font-black"
+                        ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600 active:scale-95"
                         : "bg-white text-black hover:bg-zinc-200 active:scale-95"
                     }`}
                   >
                     {embedCopied ? (
                       <>
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
                         <span>Copied HTML!</span>
                       </>
                     ) : (
