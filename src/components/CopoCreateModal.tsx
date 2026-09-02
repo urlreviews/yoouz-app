@@ -26,9 +26,9 @@ import {
 import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
 import { cleanUndefinedFields, cleanForFirestore } from "../utils/cleanData";
-import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { initFaceDetection, detectFaceInVideo } from "../utils/faceDetector";
-import { formatBusinessName } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { triggerHaptic } from "../utils/haptics";
 
@@ -926,25 +926,45 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       } catch (b64Err) {}
     }
 
+    const placeDomain = extractCleanDomain(selectedPlace.website || selectedPlace.name || selectedPlace.id);
+    const cleanPlaceName = formatBusinessName(selectedPlace.name || placeDomain) || selectedPlace.name;
+    const resolvedPlaceLogo = (selectedPlace.logoUrl && !selectedPlace.logoUrl.startsWith("data:;"))
+      ? selectedPlace.logoUrl
+      : (selectedPlace.avatarUrl && !selectedPlace.avatarUrl.startsWith("data:;"))
+      ? selectedPlace.avatarUrl
+      : (placeDomain && KNOWN_BRAND_LOGOS[placeDomain])
+      ? KNOWN_BRAND_LOGOS[placeDomain]
+      : getPlaceLogoUrl(selectedPlace) || "";
+    const resolvedPlaceBanner = selectedPlace.bannerUrl || selectedPlace.ogImage || (placeDomain && KNOWN_BRAND_BANNERS[placeDomain]) || "";
+
+    const resolvedAuthor = resolveSafeAuthor({
+      author: {
+        name: currentUser?.name || (currentUser?.email ? currentUser.email.split("@")[0] : "Verified Reviewer"),
+        avatar: currentUser?.avatar || ""
+      },
+      userId: currentUser?.email,
+      userEmail: currentUser?.email
+    }, currentUser);
+
     const newReview: VideoReview = {
       id: reviewId,
       userId: currentUser?.email || "guest@yoouz.com",
       userEmail: currentUser?.email || "guest@yoouz.com",
       createdAtMs: Date.now(),
       placeId: selectedPlace.id,
-      placeName: selectedPlace.name,
+      placeName: cleanPlaceName,
       placeCategory: selectedPlace.category || "General",
       placeAddress: selectedPlace.address || "Verified Location",
       placeCity: selectedPlace.city || "Online",
       placeRating: rating || 5,
-      placeWebsite: selectedPlace.website || "",
-      placeLogoUrl: getPlaceLogoUrl(selectedPlace) || selectedPlace.logoUrl || selectedPlace.avatarUrl || "",
-      placeBannerUrl: selectedPlace.bannerUrl || selectedPlace.ogImage || "",
+      placeWebsite: selectedPlace.website || (placeDomain ? `https://${placeDomain}` : ""),
+      placeLogoUrl: resolvedPlaceLogo,
+      placeBannerUrl: resolvedPlaceBanner,
       placeDescription: selectedPlace.description || "",
       author: {
-        name: currentUser?.name || "Verified Reviewer",
-        //handle: currentUser?.email ? `@${currentUser.email.split("@")[0]}` : "@yoouz_user",
-        avatar: currentUser?.avatar || `/api/avatar?name=${encodeURIComponent(currentUser?.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
+        name: resolvedAuthor.name || "Verified Reviewer",
+        handle: resolvedAuthor.handle || "@reviewer",
+        avatar: resolvedAuthor.avatar || getSafeAvatarUrl(currentUser?.avatar, resolvedAuthor.name),
         isLocalGuide: true,
         localGuideLevel: 7,
         videoReviewCount: 1,
@@ -958,8 +978,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       videoData: base64Backup,
       fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean),
       thumbnailUrl: finalThumbnail,
-      caption: `Video review for ${selectedPlace.name}`,
-      dishOrItem: selectedPlace.name,
+      caption: `Video review for ${cleanPlaceName}`,
+      dishOrItem: cleanPlaceName,
       likes: 1,
       isLiked: true,
       commentsCount: 0,

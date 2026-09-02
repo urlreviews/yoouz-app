@@ -134,25 +134,50 @@ export function formatBusinessName(name?: string | null): string {
   if (!name) return "";
   let trimmed = name.trim();
   
-  // If it contains URL protocols, www, or domain endings, clean it through extractCleanDomain
+  // 1. Remove concatenated navigation text & spam keywords like "MenuCloseMoreMoreMore..."
+  trimmed = trimmed.replace(/(?:Menu|Close|More|Search|Login|Sign|Cart|Navigation|Toggle|Header|Footer|Cookies|Accept|Privacy|Skip to content){2,}.*$/i, '').trim();
+  trimmed = trimmed.replace(/([a-z0-9])(?:Menu|Close|More|Search|Login|Sign|Cart|Toggle|Header|Footer).*/i, '$1').trim();
+  
+  // 2. Strip standard SEO abbreviations like "L500 | Legal 500" -> "Legal 500"
+  if (/^L500\s*[|\-–—:]\s*/i.test(trimmed)) {
+    trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
+  }
+
+  // 3. Clean up scraped SEO titles (e.g., "BrandName | The Best Service in Town" or "BrandName – The Clients Guide...")
+  const seoDelimiters = [" | ", " – ", " — ", " - ", " : ", " • "];
+  for (const delimiter of seoDelimiters) {
+    if (trimmed.includes(delimiter)) {
+      const parts = trimmed.split(delimiter).map(p => p.trim()).filter(Boolean);
+      if (parts.length > 0) {
+        const first = parts[0];
+        if (first.length >= 2 && first.length <= 40) {
+          trimmed = first;
+          break;
+        } else if (parts[1] && parts[1].length >= 2 && parts[1].length <= 40) {
+          trimmed = parts[1];
+          break;
+        }
+      }
+    }
+  }
+
+  // 4. If it is an explicit URL or domain (e.g. "https://...", "www.domain.com", "domain.com", "tajhotels-com")
   if (
     trimmed.includes("://") || 
     trimmed.startsWith("www.") || 
     trimmed.startsWith("www-") ||
-    /\.[a-z]{2,}(\/|$)/i.test(trimmed) ||
+    /^[a-z0-9-]+(?:\.[a-z]{2,})+$/i.test(trimmed) ||
     /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed)
   ) {
     const domain = extractCleanDomain(trimmed);
     const namePart = domain.split('.')[0];
     
     if (namePart) {
-      // Split by common delimiters and capitalize
       const words = namePart
-        .replace(/([a-z])([A-Z])/g, '$1 $2') // split camelCase
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
         .split(/[-_ ]+/)
         .map(word => {
           if (!word) return "";
-          // Common lowercase words for names
           const lowerCaseWords = ["of", "the", "and", "in", "at"];
           const lowerWord = word.toLowerCase();
           if (lowerCaseWords.includes(lowerWord)) return lowerWord;
@@ -164,34 +189,8 @@ export function formatBusinessName(name?: string | null): string {
     }
     return domain;
   }
-  
-  // Clean up scraped SEO titles (e.g., "BrandName | The Best Service in Town")
-  // We look for common delimiters like |, -, –, or — surrounded by spaces, or just |
-  const seoDelimiters = [
-    " | ", "|", 
-    " - ", 
-    " – ", // en-dash
-    " — ", // em-dash
-    " : "
-  ];
 
-  for (const delimiter of seoDelimiters) {
-    if (trimmed.includes(delimiter)) {
-      // Split and take the first part
-      const potentialName = trimmed.split(delimiter)[0].trim();
-      // Only use it if it leaves us with something reasonable (at least 2 chars)
-      if (potentialName.length > 1) {
-        trimmed = potentialName;
-        break; // Stop after first successful split to avoid over-truncating
-      }
-    }
-  }
-
-  // Remove CamelCase joined navigation text like "Legal 500MenuCloseMoreMoreMore"
-  // This looks for a lowercase letter followed by an uppercase letter where the uppercase starts a known bad word
-  trimmed = trimmed.replace(/([a-z0-9])(Menu|Close|More|Search|Login|Sign|Cart).*/g, '$1').trim();
-
-  // If it's a single word without spaces, capitalize first letter
+  // 5. If it's a single word without spaces, capitalize first letter
   if (!trimmed.includes(" ") && trimmed.length > 1) {
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   }

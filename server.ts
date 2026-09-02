@@ -2476,7 +2476,7 @@ async function startServer() {
       const videoSrc = foundVideo.videoUrl || "";
       const poster = foundVideo.videoThumbnail || foundVideo.thumbnailUrl || "";
       const authorName = foundVideo.author?.name || foundVideo.authorName || "Verified Customer";
-      const authorAvatar = foundVideo.author?.avatar || foundVideo.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=27272a&color=fff`;
+      const authorAvatar = foundVideo.author?.avatar || foundVideo.authorAvatar || `${baseUrl}/api/avatar?name=${encodeURIComponent(authorName)}`;
       const placeName的的 = foundVideo.placeName || "Business";
       const rating = Number(foundVideo.rating || 5);
       const caption = foundVideo.caption || "";
@@ -6875,6 +6875,101 @@ Return JSON:
     }
   });
 
+  // High-performance image proxy to bypass browser tracking blockers (Firefox ETP, Safari ITP, AdBlockers)
+  app.get("/api/proxy-image", async (req: any, res: any) => {
+    try {
+      const rawUrl = req.query.url;
+      if (!rawUrl || typeof rawUrl !== 'string') {
+        const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#18181b"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">Y</text></svg>`;
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.send(fallbackSvg);
+      }
+
+      const targetUrl = decodeURIComponent(rawUrl.trim());
+      
+      // If it is already a data URI or SVG
+      if (targetUrl.startsWith('data:image/svg+xml;utf8,')) {
+        const svgContent = decodeURIComponent(targetUrl.replace('data:image/svg+xml;utf8,', ''));
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=604800');
+        return res.send(svgContent);
+      }
+      if (targetUrl.startsWith('data:image')) {
+        const parts = targetUrl.split(',');
+        const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/png';
+        const buffer = Buffer.from(parts[1], 'base64');
+        res.setHeader('Content-Type', mime);
+        res.setHeader('Cache-Control', 'public, max-age=604800');
+        return res.send(buffer);
+      }
+
+      const response = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+        }
+      });
+
+      if (!response.ok) {
+        // Deterministic fallback avatar SVG instead of throwing an error
+        const initial = targetUrl.split('/').pop()?.charAt(0)?.toUpperCase() || 'U';
+        const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#27272a"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">${initial}</text></svg>`;
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.send(fallbackSvg);
+      }
+
+      const contentType = response.headers.get('content-type') || 'image/jpeg';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+      const arrayBuffer = await response.arrayBuffer();
+      return res.send(Buffer.from(arrayBuffer));
+    } catch (err: any) {
+      console.warn("Proxy image fallback:", err.message);
+      const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#18181b"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">Y</text></svg>`;
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.send(fallbackSvg);
+    }
+  });
+
+  // Dynamic SVG avatar generation endpoint
+  app.get("/api/avatar", (req: any, res: any) => {
+    const rawName = (req.query.name as string) || "User";
+    const cleanName = rawName.trim().replace(/^@+/, "");
+    const initial = (cleanName.charAt(0) || "U").toUpperCase();
+    
+    let hash = 0;
+    for (let i = 0; i < cleanName.length; i++) {
+      hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colors = [
+      { bg: "#1e3a8a", text: "#93c5fd" }, // Blue
+      { bg: "#14532d", text: "#86efac" }, // Green
+      { bg: "#701a75", text: "#f0abfc" }, // Fuchsia
+      { bg: "#7c2d12", text: "#fdba74" }, // Orange
+      { bg: "#1e293b", text: "#cbd5e1" }, // Slate
+      { bg: "#312e81", text: "#a5b4fc" }, // Indigo
+      { bg: "#064e3b", text: "#6ee7b7" }, // Emerald
+      { bg: "#831843", text: "#f472b6" }, // Pink
+    ];
+    const palette = colors[Math.abs(hash) % colors.length];
+    
+    const svg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <rect width="128" height="128" rx="64" fill="${palette.bg}"/>
+      <text x="64" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="56" font-weight="800" fill="${palette.text}" letter-spacing="-1">${initial}</text>
+    </svg>`;
+    
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.send(svg);
+  });
+
   // SEO Robots.txt
 
   app.get('/robots.txt', (req: any, res: any) => {
@@ -8745,11 +8840,39 @@ function formatBusinessName(name?: string | null): string {
   if (!name) return "";
   let trimmed = name.trim();
   
+  // 1. Remove concatenated navigation text & spam keywords like "MenuCloseMoreMoreMore..."
+  trimmed = trimmed.replace(/(?:Menu|Close|More|Search|Login|Sign|Cart|Navigation|Toggle|Header|Footer|Cookies|Accept|Privacy|Skip to content){2,}.*$/i, '').trim();
+  trimmed = trimmed.replace(/([a-z0-9])(?:Menu|Close|More|Search|Login|Sign|Cart|Toggle|Header|Footer).*/i, '$1').trim();
+  
+  // 2. Strip standard SEO abbreviations like "L500 | Legal 500" -> "Legal 500"
+  if (/^L500\s*[|\-–—:]\s*/i.test(trimmed)) {
+    trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
+  }
+
+  // 3. Clean up scraped SEO titles (e.g., "BrandName | The Best Service in Town" or "BrandName – The Clients Guide...")
+  const seoDelimiters = [" | ", " – ", " — ", " - ", " : ", " • "];
+  for (const delimiter of seoDelimiters) {
+    if (trimmed.includes(delimiter)) {
+      const parts = trimmed.split(delimiter).map(p => p.trim()).filter(Boolean);
+      if (parts.length > 0) {
+        const first = parts[0];
+        if (first.length >= 2 && first.length <= 40) {
+          trimmed = first;
+          break;
+        } else if (parts[1] && parts[1].length >= 2 && parts[1].length <= 40) {
+          trimmed = parts[1];
+          break;
+        }
+      }
+    }
+  }
+
+  // 4. If it is an explicit URL or domain
   if (
     trimmed.includes("://") || 
     trimmed.startsWith("www.") || 
     trimmed.startsWith("www-") ||
-    /\.[a-z]{2,}(\/|$)/i.test(trimmed) ||
+    /^[a-z0-9-]+(?:\.[a-z]{2,})+$/i.test(trimmed) ||
     /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed)
   ) {
     const domain = cleanDomainName(trimmed);
