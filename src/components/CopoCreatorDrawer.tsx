@@ -17,7 +17,9 @@ import {
   MoreVertical,
   Play,
   ThumbsUp,
-  MapPin
+  MapPin,
+  Bookmark,
+  BookmarkCheck
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor } from "../utils/placeUtils";
@@ -72,8 +74,43 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [copiedNotification, setCopiedNotification] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
   const contentRef = useRef<HTMLDivElement | null>(null);
+
+  const [isSaved, setIsSaved] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("yoouz_saved_creators");
+      if (saved && author?.name) {
+        const list: string[] = JSON.parse(saved);
+        return list.includes(author.name.toLowerCase());
+      }
+    } catch (e) {}
+    return false;
+  });
+
+  const handleToggleSaveCreator = () => {
+    triggerHaptic("light");
+    if (!author?.name) return;
+    try {
+      const saved = localStorage.getItem("yoouz_saved_creators");
+      let list: string[] = saved ? JSON.parse(saved) : [];
+      const cleanName = author.name.toLowerCase();
+      let nextState = false;
+      if (list.includes(cleanName)) {
+        list = list.filter((n) => n !== cleanName);
+        nextState = false;
+        setCopiedNotification("Removed reviewer from Saved");
+      } else {
+        list.push(cleanName);
+        nextState = true;
+        setCopiedNotification("Saved reviewer to bookmarks");
+      }
+      localStorage.setItem("yoouz_saved_creators", JSON.stringify(list));
+      setIsSaved(nextState);
+      setTimeout(() => setCopiedNotification(""), 3000);
+    } catch (e) {}
+  };
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editAvatar, setEditAvatar] = useState("");
@@ -557,6 +594,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </button>
           </div>
 
+          {copiedNotification && (
+            <div className="absolute top-14 right-3 bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg z-40 animate-in fade-in border border-zinc-800">
+              {copiedNotification}
+            </div>
+          )}
+
           {/* Overlapping Creator Avatar - Exact squircle shape and styling matching Business Profile Logo */}
           <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-800 bg-zinc-900 shadow-2xl flex items-center justify-center z-20 p-1.5 ring-1 ring-white/10 overflow-hidden group">
             <img
@@ -702,61 +745,76 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         <div ref={contentRef} className="flex-1 overflow-y-auto divide-y divide-zinc-800 bg-zinc-950" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
           {/* Action Buttons Row */}
           <div className="px-5 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-2">
-            {onStartChat && (
+            {onStartChat ? (
               <button
-                onClick={() => onStartChat(author.name, author.name, effectiveAvatar)}
+                id="btn-chat-creator"
+                onClick={() => {
+                  triggerHaptic("light");
+                  onStartChat(author.name, author.name, effectiveAvatar);
+                }}
                 className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                title={`Chat with ${author.name}`}
               >
                 <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
                   <MessageSquare className="w-5 h-5 text-zinc-200" />
                 </div>
                 <span className="font-semibold text-[11px] text-zinc-300">Chat</span>
               </button>
-            )}
+            ) : null}
 
             <button
-              onClick={() => handleTabClick("reviews")}
+              id="btn-save-creator"
+              onClick={handleToggleSaveCreator}
               className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              title={isSaved ? "Saved Reviewer" : "Save Reviewer"}
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors ${
+                  isSaved
+                    ? "bg-white text-zinc-950"
+                    : "bg-zinc-800 text-zinc-300 border border-zinc-700 group-hover:bg-zinc-700"
+                }`}
+              >
+                {isSaved ? (
+                  <BookmarkCheck className="w-5 h-5 fill-zinc-950" />
+                ) : (
+                  <Bookmark className="w-5 h-5" />
+                )}
+              </div>
+              <span className="font-semibold text-[11px] text-zinc-300">
+                {isSaved ? "Saved" : "Save"}
+              </span>
+            </button>
+
+            <button
+              id="btn-creator-video-reviews"
+              onClick={() => {
+                triggerHaptic("light");
+                handleTabClick("reviews");
+              }}
+              className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              title="View Video Reviews"
             >
               <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
                 <Video className="w-5 h-5 text-zinc-200" />
               </div>
-              <span className="font-semibold text-[11px] text-zinc-300">Reviews</span>
+              <span className="font-semibold text-[11px] text-zinc-300">Video Reviews</span>
             </button>
 
             <button
-              onClick={handleShare}
+              id="btn-share-creator-action"
+              onClick={() => {
+                triggerHaptic("light");
+                handleShare();
+              }}
               className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              title="Share Profile"
             >
               <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
                 <Share2 className="w-5 h-5 text-zinc-200" />
               </div>
               <span className="font-semibold text-[11px] text-zinc-300">Share</span>
             </button>
-
-            {isOwner ? (
-              <button
-                onClick={() => setIsEditModalOpen(true)}
-                className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md">
-                  <Edit3 className="w-5 h-5 text-zinc-950" />
-                </div>
-                <span className="font-semibold text-[11px] text-zinc-300">Edit</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => onToggleFollow(author.name)}
-                className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
-                  author.isFollowed ? "bg-zinc-800 text-zinc-300 border border-zinc-700" : "bg-white text-zinc-950"
-                }`}>
-                  {author.isFollowed ? <UserCheck className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
-                </div>
-                <span className="font-semibold text-[11px] text-zinc-300">{author.isFollowed ? "Following" : "Follow"}</span>
-              </button>
-            )}
           </div>
 
           {/* Tab 1: OVERVIEW */}
