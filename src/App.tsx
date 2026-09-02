@@ -37,7 +37,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleF
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/firebase";
 import { cleanUndefinedFields, cleanForFirestore } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { resolveVideoPosterUrl } from "./utils/videoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
@@ -1060,14 +1060,39 @@ export function App() {
         if (res.ok) {
           const list = await res.json();
           if (!isCancelled && Array.isArray(list)) {
-            setAllRegisteredUsers(list.filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined")));
+            const validUsers = list.filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+            setAllRegisteredUsers(validUsers);
+            updateUserRegistry(validUsers);
+
+            // Synchronize author details across all videos in memory
+            setVideos((prevVideos) => {
+              let hasChanged = false;
+              const nextVideos = prevVideos.map((v) => {
+                const refreshedAuthor = resolveSafeAuthor(v, currentUser, validUsers);
+                if (
+                  refreshedAuthor.location !== v.author?.location ||
+                  refreshedAuthor.avatar !== v.author?.avatar ||
+                  refreshedAuthor.bio !== v.author?.bio ||
+                  refreshedAuthor.banner !== (v.author as any)?.banner ||
+                  refreshedAuthor.name !== v.author?.name
+                ) {
+                  hasChanged = true;
+                  return {
+                    ...v,
+                    author: refreshedAuthor
+                  };
+                }
+                return v;
+              });
+              return hasChanged ? nextVideos : prevVideos;
+            });
           }
         }
       } catch (e) {}
     };
 
     fetchAllUsers();
-    const interval = setInterval(fetchAllUsers, 4000);
+    const interval = setInterval(fetchAllUsers, 2500);
 
     if (db) {
       try {
@@ -1189,6 +1214,18 @@ export function App() {
           return v;
         })
       );
+
+      setSelectedAuthorForDrawer((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          name: nextProfile.name,
+          avatar: nextProfile.avatar,
+          location: nextProfile.location,
+          bio: nextProfile.bio,
+          banner: (nextProfile as any).banner
+        };
+      });
 
       return nextProfile;
     });

@@ -204,6 +204,18 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
     if (!authorIdentifier) return;
 
+    if (allUsers && allUsers.length > 0) {
+      const matched = allUsers.find((u: any) => {
+        const uName = (u.name || "").trim().toLowerCase();
+        const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
+        const uEmail = (u.email || "").split("@")[0].toLowerCase();
+        return uName === authorIdentifier || uHandle === authorIdentifier || uEmail === authorIdentifier;
+      });
+      if (matched) {
+        setLiveUserProfile(matched);
+      }
+    }
+
     let isMounted = true;
     fetch(`/api/nosql/users`)
       .then((res) => res.json())
@@ -224,7 +236,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [author?.name]);
+  }, [author?.name, allUsers]);
 
   if (!author) return null;
 
@@ -265,10 +277,25 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     allUsers || (liveUserProfile ? [liveUserProfile] : [])
   );
 
-  const effectiveAvatar = safeCreator.avatar;
+  const effectiveAvatar = isOwner && currentUser?.avatar
+    ? currentUser.avatar
+    : (liveUserProfile?.avatar || safeCreator.avatar || author.avatar);
+
   const effectiveBanner = isOwner && currentUser?.banner 
     ? currentUser.banner 
-    : (liveUserProfile?.banner || author?.banner);
+    : (liveUserProfile?.banner || safeCreator.banner || author?.banner);
+
+  const displayName = isOwner && currentUser?.name
+    ? currentUser.name
+    : (liveUserProfile?.name || safeCreator.name || author.name || "Reviewer");
+
+  const displayLocation = isOwner && currentUser?.location
+    ? currentUser.location
+    : (liveUserProfile?.location || safeCreator.location || author.location);
+
+  const displayBio = isOwner && currentUser?.bio
+    ? currentUser.bio
+    : (liveUserProfile?.bio || safeCreator.bio || author.bio || "Food and lifestyle explorer sharing verified reviews and authentic experiences.");
 
   const handleShare = () => {
     setIsShareModalOpen(true);
@@ -421,14 +448,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       }
     }
 
+    const updatedProfile = {
+      name: cleanName,
+      bio: editBio.trim(),
+      avatar: finalAvatar,
+      banner: editBanner || currentUser?.banner,
+      location: combinedLocation
+    };
+
+    setLiveUserProfile((prev) => ({
+      ...(prev || {}),
+      ...updatedProfile
+    }));
+
     if (onUpdateProfile) {
-      onUpdateProfile({
-        name: cleanName,
-        bio: editBio.trim(),
-        avatar: finalAvatar,
-        banner: editBanner || currentUser?.banner,
-        location: combinedLocation
-      });
+      onUpdateProfile(updatedProfile);
     }
     setIsEditModalOpen(false);
   };
@@ -632,7 +666,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <div className="min-w-0 flex-1 pr-2">
               <h2 className="text-2xl font-bold text-white tracking-tight leading-tight [overflow-wrap:anywhere]">
                 {(() => {
-                  const name = (isOwner && currentUser ? currentUser.name : author.name) || "";
+                  const name = displayName || "";
                   const words = name.split(" ");
                   const lastWord = words.pop();
                   return (
@@ -692,12 +726,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <span className="text-zinc-400 font-medium">
               {(author.followersCount || 0) + (author.isFollowed ? 1 : 0)} followers
             </span>
-            {((isOwner && currentUser?.location) || author.location) && (
+            {displayLocation && (
               <div className="flex items-center gap-1.5">
                 <span className="text-zinc-700">·</span>
                 <span className="text-zinc-400 text-xs font-medium flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  <span>{isOwner && currentUser?.location ? currentUser.location : author.location}</span>
+                  <span>{displayLocation}</span>
                 </span>
               </div>
             )}
@@ -836,9 +870,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   )}
                 </div>
                 <p className="text-zinc-300 text-sm leading-relaxed font-normal">
-                  {isOwner && currentUser?.bio
-                    ? currentUser.bio
-                    : author.bio || (author as any).bio || "Food and lifestyle explorer sharing verified reviews and authentic experiences."}
+                  {displayBio}
                 </p>
 
                 {/* Badges / Status Card */}
@@ -999,9 +1031,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   Reviewer Biography
                 </h3>
                 <p className="text-zinc-300 text-sm leading-relaxed">
-                  {isOwner && currentUser?.bio
-                    ? currentUser.bio
-                    : author.bio || (author as any).bio || "Food explorer linking real businesses and authentic video reviews."}
+                  {displayBio}
                 </p>
               </div>
 
@@ -1029,14 +1059,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 </div>
               </div>
 
-              {((isOwner && currentUser?.location) || author.location) && (
+              {displayLocation && (
                 <div className="pt-4 border-t border-zinc-800 space-y-1">
                   <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-1">
                     Location
                   </h3>
                   <p className="text-sm font-semibold text-zinc-200 flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-zinc-400" />
-                    <span>{isOwner && currentUser?.location ? currentUser.location : author.location}</span>
+                    <span>{displayLocation}</span>
                   </p>
                 </div>
               )}

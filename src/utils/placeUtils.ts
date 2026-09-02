@@ -676,11 +676,13 @@ export function resolveSafeAuthor(
   }
 
   // Check if active user matches this video
+  let isActiveUserMatch = false;
   if (activeUser && (
     (activeUser.email && (activeUser.email.toLowerCase() === userKey || activeUser.email.toLowerCase() === (video?.userEmail || "").toLowerCase())) ||
     (activeUser.name && activeUser.name.toLowerCase() === finalName.toLowerCase()) ||
     (activeUser.name && activeUser.name.toLowerCase() === nameKey)
   )) {
+    isActiveUserMatch = true;
     if (activeUser.name) finalName = activeUser.name;
     if (activeUser.avatar) candidateAvatar = activeUser.avatar;
   }
@@ -690,6 +692,18 @@ export function resolveSafeAuthor(
   }
 
   const finalAvatar = getSafeAvatarUrl(candidateAvatar, finalName, finalHandle);
+
+  const finalBio = (isActiveUserMatch && activeUser?.bio)
+    ? activeUser.bio
+    : (registryMatch?.bio || knownMatch?.bio || authorObj.bio);
+
+  const finalBanner = (isActiveUserMatch && (activeUser as any)?.banner)
+    ? (activeUser as any).banner
+    : (registryMatch?.banner || authorObj.banner);
+
+  const finalLocation = (isActiveUserMatch && activeUser?.location)
+    ? activeUser.location
+    : (registryMatch?.location || authorObj.location);
 
   return {
     name: finalName,
@@ -701,8 +715,8 @@ export function resolveSafeAuthor(
     videoReviewCount: authorObj.videoReviewCount ?? 1,
     photosCount: authorObj.photosCount ?? 0,
     isFollowed: authorObj.isFollowed ?? false,
-    bio: registryMatch?.bio || knownMatch?.bio || authorObj.bio,
-    banner: registryMatch?.banner || authorObj.banner,
-    location: registryMatch?.location || authorObj.location
+    bio: finalBio,
+    banner: finalBanner,
+    location: finalLocation
   };
 }

@@ -3796,7 +3796,11 @@ app.get('/api/nosql/:collection', async (req, res) => {
               ...localAuthor,
               ...existingAuthor,
               name: existingAuthor.name || localAuthor.name || r.authorName || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId),
-              avatar: existingAuthor.avatar || localAuthor.avatar || r.authorAvatar
+              avatar: existingAuthor.avatar || localAuthor.avatar || r.authorAvatar,
+              location: existingAuthor.location || localAuthor.location,
+              bio: existingAuthor.bio || localAuthor.bio,
+              banner: existingAuthor.banner || localAuthor.banner,
+              handle: existingAuthor.handle || localAuthor.handle
             };
             itemMap.set(r.id, {
               ...r,
@@ -4044,6 +4048,50 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
         }
         writeReviewsIndex(list);
       } catch (e) {}
+    }
+
+    // 3. If users collection is updated, instantly propagate the creator's updated city, country, location, bio, avatar, and banner
+    // across all reviews created by this user so all visitors immediately see the updated profile data
+    if (colName === 'users' && data) {
+      try {
+        const list = readReviewsIndex();
+        let changed = false;
+        const targetName = (data.name || '').trim().toLowerCase();
+        const targetEmail = (data.email || '').trim().toLowerCase();
+        const targetUid = (data.uid || id || '').trim().toLowerCase();
+
+        list.forEach((item: any) => {
+          const itemAuthor = (item && typeof item.author === 'object' && item.author) ? item.author : {};
+          const itemName = (itemAuthor.name || item.authorName || '').trim().toLowerCase();
+          const itemEmail = (item.userEmail || itemAuthor.email || '').trim().toLowerCase();
+          const itemUid = (item.userId || itemAuthor.userId || itemAuthor.uid || '').trim().toLowerCase();
+
+          const isMatch = (targetUid && (itemUid === targetUid)) ||
+                          (targetEmail && (itemEmail === targetEmail)) ||
+                          (targetName && (itemName === targetName));
+
+          if (isMatch) {
+            item.author = {
+              ...itemAuthor,
+              name: data.name || itemAuthor.name,
+              handle: data.handle || itemAuthor.handle,
+              avatar: data.avatar || itemAuthor.avatar,
+              bio: data.bio !== undefined ? data.bio : itemAuthor.bio,
+              banner: data.banner !== undefined ? data.banner : itemAuthor.banner,
+              location: data.location !== undefined ? data.location : itemAuthor.location
+            };
+            if (data.avatar) item.authorAvatar = data.avatar;
+            if (data.name) item.authorName = data.name;
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          writeReviewsIndex(list);
+        }
+      } catch (syncErr) {
+        console.warn("Notice updating reviews author info on user profile change:", syncErr);
+      }
     }
 
     // 3. If SQL is active, mirror to Drizzle
