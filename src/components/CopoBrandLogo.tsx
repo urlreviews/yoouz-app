@@ -100,24 +100,22 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return cleaned.charAt(0).toUpperCase();
   };
 
-  // Strip bg-white and other bg- colors to ensure the fallback gradient displays properly
-  const fallbackBgClass = className
-    .split(" ")
-    .filter((c) => !c.startsWith("bg-") && !c.includes("bg-"))
-    .join(" ");
+  const isActuallyLoaded = isLoaded && !hasFailedAll && cascadeItems.length > 0;
 
-  const fallbackElement = (
-    <div className={`${fallbackBgClass} bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center shadow-inner border border-zinc-700/60 w-full h-full absolute inset-0`}>
-      <span className={fallbackTextClassName}>
-        {getInitials()}
-      </span>
-    </div>
-  );
+  // We use the base className, but if it's NOT loaded, we replace bg-* with our gradient.
+  const wrapperClassName = isActuallyLoaded
+    ? className
+    : className
+        .split(" ")
+        .filter((c) => !c.startsWith("bg-") && !c.includes("bg-"))
+        .join(" ") + " bg-gradient-to-br from-zinc-800 via-zinc-900 to-black";
 
   if (hasFailedAll || cascadeItems.length === 0) {
     return (
-      <div className={`relative ${className.replace(/bg-[a-zA-Z0-9\-]+/, "bg-transparent").replace(/p-\d+/, "p-0")}`}>
-        {fallbackElement}
+      <div className={wrapperClassName}>
+        <span className={fallbackTextClassName}>
+          {getInitials()}
+        </span>
       </div>
     );
   }
@@ -125,9 +123,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const currentItem = cascadeItems[currentIndex];
 
   return (
-    <div className={`relative ${className} ${!isLoaded ? "bg-transparent border-transparent ring-0 shadow-none p-0 overflow-hidden" : ""}`}>
+    <div className={wrapperClassName}>
       {/* Show text fallback instantly while loading */}
-      {!isLoaded && fallbackElement}
+      {!isLoaded && (
+        <span className={fallbackTextClassName}>
+          {getInitials()}
+        </span>
+      )}
       
       {/* Load the image, hide until loaded */}
       <img
@@ -136,7 +138,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         loading="eager"
         decoding="sync"
         fetchPriority="high"
-        className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"} ${isLoaded ? "opacity-100" : "opacity-0 absolute inset-0 w-full h-full pointer-events-none"}`}
+        className={`${imageClassName} ${currentItem.fit === "cover" ? "object-cover" : "object-contain"} ${
+          isLoaded ? "opacity-100" : "opacity-0 absolute inset-0 w-full h-full pointer-events-none"
+        }`}
         referrerPolicy="no-referrer"
         onLoad={handleImageLoad}
         onError={handleImageError}
