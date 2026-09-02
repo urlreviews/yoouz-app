@@ -143,7 +143,8 @@ export function App() {
   const [recordReviewResetKey, setRecordReviewResetKey] = useState<number>(0);
 
   // 3. Drawers & Modals States
-  const previousSectionRef = useRef<NavSection | null>(null);
+    const previousSectionRef = useRef<NavSection | null>(null);
+  const previousVideoIndexRef = useRef<number>(0);
   const [selectedPlaceIdForDrawer, setSelectedPlaceIdForDrawer] = useState<string | null>(null);
   const [selectedAuthorForDrawer, setSelectedAuthorForDrawer] = useState<VideoAuthor | null>(null);
   const [pendingVideoId, setPendingVideoId] = useState<string | null>(null);
@@ -2024,7 +2025,8 @@ export function App() {
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
-    setCurrentVideoIndex(0);
+    // Restore the index from before the drawer was opened
+    setCurrentVideoIndex(previousVideoIndexRef.current);
     if (previousSectionRef.current) {
       setActiveSection(previousSectionRef.current);
       previousSectionRef.current = null;
@@ -2036,6 +2038,7 @@ export function App() {
     if (activeSection !== "home") {
       previousSectionRef.current = activeSection;
     }
+    previousVideoIndexRef.current = currentVideoIndex; // Save feed index
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
@@ -3270,10 +3273,11 @@ export function App() {
               onOpenComments={(v) => setActiveCommentVideo(v)}
               onOpenPlace={handleOpenPlaceDrawer}
               onOpenCreator={(author) => {
-                setSelectedPlaceIdForDrawer(null);
-                setSelectedAuthorForDrawer(author);
-                setCurrentVideoIndex(0);
-              }}
+                  previousVideoIndexRef.current = currentVideoIndex; // Save feed index
+                  setSelectedPlaceIdForDrawer(null);
+                  setSelectedAuthorForDrawer(author);
+                  setCurrentVideoIndex(0);
+                }}
               onOpenShare={handleOpenShare}
               onOpenReport={(v) => handleOpenReport({ type: "video", video: v })}
               currentUser={currentUser}
@@ -3394,6 +3398,7 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 currentUser={currentUser}
                 onOpenCreator={(author) => {
+                  previousVideoIndexRef.current = currentVideoIndex; // Save feed index
                   setSelectedPlaceIdForDrawer(null);
                   setSelectedAuthorForDrawer(author);
                   setActiveSection("home");
@@ -3562,6 +3567,7 @@ export function App() {
                 onUnblockUser={handleUnblockUser}
                 allUsers={allRegisteredUsers}
                 onOpenCreator={(author) => {
+                  previousVideoIndexRef.current = currentVideoIndex; // Save feed index
                   setSelectedPlaceIdForDrawer(null);
                   setSelectedAuthorForDrawer(author);
                   setCurrentVideoIndex(0);
@@ -3629,6 +3635,7 @@ export function App() {
                 onOpenPlace={handleOpenPlaceDrawer}
                 onNavigateHome={handleGoHome}
                 onOpenCreator={(author) => {
+                  previousVideoIndexRef.current = currentVideoIndex; // Save feed index
                   setSelectedPlaceIdForDrawer(null);
                   setSelectedAuthorForDrawer(author);
                   setCurrentVideoIndex(0);
@@ -3743,6 +3750,7 @@ export function App() {
         placeName={activeCommentVideo?.placeName}
         onSelectAuthor={(handle, name, avatar) => {
           setActiveCommentVideo(null); // Close the drawer first
+          previousVideoIndexRef.current = currentVideoIndex; // Save feed index
           
           // Then open the creator profile
           setSelectedAuthorForDrawer({

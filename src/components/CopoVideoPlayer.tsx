@@ -554,7 +554,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 onSelectSubTab={onSelectSubTab}
                 hasUserStartedFeed={hasUserStartedFeed}
                 onStartFeed={() => setHasUserStartedFeed(true)}
-                localBlobUrl={localBlobUrls[vid.id] || null}
+                
                 onToggleMute={toggleMute}
                 onForceMute={() => setIsMuted(true)}
                 onOpenComments={onOpenComments}

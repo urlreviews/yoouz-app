@@ -22,10 +22,10 @@ import {
 import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { formatBusinessName, resolveSafeAuthor, extractCleanDomain } from "../utils/placeUtils";
-import { resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
-import { getVideoBlobFromIndexedDB, saveVideoBlobToIndexedDB } from "../lib/videoStorage";
+import {  saveVideoBlobToIndexedDB } from "../lib/videoStorage";
 import { triggerHaptic } from "../utils/haptics";
 import { preloadBusinessAssets } from "../utils/preloadUtils";
 
@@ -37,7 +37,7 @@ interface VideoFeedCardProps {
   isMuted: boolean;
   isPlaying?: boolean;
   progressPercent?: number;
-  localBlobUrl?: string | null;
+  
   activeSubTab?: FeedSubTab;
   onSelectSubTab?: (tab: FeedSubTab) => void;
   onToggleMute: (e?: React.MouseEvent) => void;
@@ -88,7 +88,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   businessLogoUrl,
   businessBannerUrl,
   cardRef,
-  localBlobUrl,
+  
   hasUserStartedFeed = false,
   onStartFeed,
   onRecordView
@@ -102,7 +102,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   }, [isManuallyPaused]);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
   const [progressPercent, setProgressPercent] = useState<number>(0);
-  const [cascadeIndex, setCascadeIndex] = useState<number>(0);
+  
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
   const [showPlayPauseFeedback, setShowPlayPauseFeedback] = useState<"play" | "pause" | null>(null);
   const [showMuteFeedback, setShowMuteFeedback] = useState<"muted" | "unmuted" | null>(null);
@@ -114,56 +114,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
 
-  const [cachedLocalUrl, setCachedLocalUrl] = useState<string | null>(null);
-
-  // Fallback video cascade list
-  const cascade = React.useMemo(() => {
-    return resolvePlayableVideoSourcesCascade(video, cachedLocalUrl || localBlobUrl);
-  }, [video, cachedLocalUrl, localBlobUrl]);
-
   const hasUserStartedFeedRef = useRef(hasUserStartedFeed);
   useEffect(() => {
     hasUserStartedFeedRef.current = hasUserStartedFeed;
   }, [hasUserStartedFeed]);
 
-  // Read local IndexedDB blob URL if available
-  useEffect(() => {
-    let active = true;
-    if (video?.id) {
-      getVideoBlobFromIndexedDB(video.id).then((url) => {
-        if (active && url) {
-          setCachedLocalUrl(url);
-          console.log(`⚡ [VideoFeedCard] Loaded video ${video.id} instantly from local IndexedDB cache!`);
-        }
-      });
-    }
-    return () => {
-      active = false;
-    };
-  }, [video?.id]);
 
-  // Establish stable source to prevent mobile Safari/Chrome pipeline resets
-  const [activeSource, setActiveSource] = useState<string>(() => {
-    return localBlobUrl || cachedLocalUrl || cascade[0] || "/default-review.mp4";
-  });
-
-  useEffect(() => {
-    const newCascadeSource = cascade[cascadeIndex] || "/default-review.mp4";
-    const resolvedBlob = localBlobUrl || cachedLocalUrl;
-    
-    if (resolvedBlob && resolvedBlob !== activeSource) {
-      // If we are already playing a network source smoothly, avoid disruptive swap.
-      // Otherwise, swap to the much faster local blob.
-      if (!isPlaying || !isActive) {
-        setActiveSource(resolvedBlob);
-      }
-    } else if (!resolvedBlob && newCascadeSource !== activeSource && !activeSource.startsWith("blob:")) {
-      // Error recovery: cascade index advanced, we must swap
-      setActiveSource(newCascadeSource);
-    }
-  }, [localBlobUrl, cachedLocalUrl, cascade, cascadeIndex, activeSource, isActive, isPlaying]);
-
-  const currentSource = activeSource;
+  // Establish a single, stable, optimized CDN source.
+  // We completely bypass IndexedDB caching for large blobs on mobile, 
+  // relying purely on the browser's optimized HTTP byte-range caching & edge CDNs.
+  const currentSource = React.useMemo(() => {
+    return resolvePlayableVideoSource(video);
+  }, [video]);
 
   // High-fidelity poster URL
   const posterUrl = React.useMemo(() => {
@@ -304,20 +266,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isActive, video]);
 
-  // Handle video error and advance through cascade
+  // Simple error handler for single source
   const handleVideoError = useCallback(() => {
     console.warn(`[VideoFeedCard] Source failed for video ${video.id}: ${currentSource}`);
-    setCascadeIndex((prev) => {
-      const next = prev + 1;
-      if (next < cascade.length) {
-        const nextSrc = cascade[next];
-        setActiveSource(nextSrc);
-        return next;
-      }
-      setActiveSource("/default-review.mp4");
-      return prev;
-    });
-  }, [cascade, currentSource, video.id]);
+  }, [currentSource, video.id]);
 
   // Click card to toggle Play / Pause (TikTok style)
   const togglePlayPause = (e?: React.MouseEvent) => {
@@ -535,7 +487,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             id={`video-element-${video.id}`}
             src={currentSource}
             poster={resolveVideoPosterUrl(video)}
-            preload={isActive || isNear ? "auto" : "metadata"}
+            preload={isActive ? "auto" : (isNear ? "metadata" : "none")}
             autoPlay={false}
             playsInline
             webkit-playsinline="true"
@@ -593,9 +545,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         <img
           src={posterUrl}
           alt={video.caption || formatBusinessName(video.placeName) || "Video review poster"}
-          loading="eager"
-          decoding="sync"
-          fetchPriority="high"
+          loading={isActive || isNear ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={isActive ? "high" : "auto"}
           className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-150 z-10 ${
             isActive && isPlaying ? "opacity-0" : "opacity-100"
           }`}
@@ -850,9 +802,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               <img
                 src={safeAuthor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`}
                 alt={safeAuthor.name}
-                loading="eager"
-                decoding="sync"
-                fetchPriority="high"
+                loading={isActive || isNear ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={isActive ? "high" : "auto"}
                 className="w-full h-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
