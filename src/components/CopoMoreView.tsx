@@ -1291,6 +1291,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
             >
               <Linkedin className="w-4 h-4" />
             </a>
+            <a
+              href="https://www.facebook.com/yoouz.official/"
+              target="_blank"
+              rel="noreferrer"
+              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
+              title="Facebook (@yoouz.official)"
+            >
+              <Facebook className="w-4 h-4" />
+            </a>
           </div>
 
           <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-400 pt-1 flex-wrap">

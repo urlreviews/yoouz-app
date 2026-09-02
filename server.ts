@@ -3646,7 +3646,55 @@ async function startServer() {
     res.status(404).send("Not found");
   });
 
-  app.get("/brand-assets", (req, res) => {
+  app.get("/download/facebook-cover", (req, res) => {
+    const p = path.join(process.cwd(), "public", "yoouz-facebook-cover.png");
+    if (fs.existsSync(p)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-facebook-cover.png"');
+      res.setHeader("Content-Type", "image/png");
+      return res.sendFile(p);
+    }
+    const svgP = path.join(process.cwd(), "public", "yoouz-facebook-cover.svg");
+    if (fs.existsSync(svgP)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-facebook-cover.svg"');
+      res.setHeader("Content-Type", "image/svg+xml");
+      return res.sendFile(svgP);
+    }
+    res.status(404).send("Not found");
+  });
+
+  app.get("/download/facebook-cover-amber", (req, res) => {
+    const p = path.join(process.cwd(), "public", "yoouz-facebook-cover-amber.png");
+    if (fs.existsSync(p)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-facebook-cover-amber.png"');
+      res.setHeader("Content-Type", "image/png");
+      return res.sendFile(p);
+    }
+    const svgP = path.join(process.cwd(), "public", "yoouz-facebook-cover-amber.svg");
+    if (fs.existsSync(svgP)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-facebook-cover-amber.svg"');
+      res.setHeader("Content-Type", "image/svg+xml");
+      return res.sendFile(svgP);
+    }
+    res.status(404).send("Not found");
+  });
+
+  app.get("/download/facebook-avatar", (req, res) => {
+    const p = path.join(process.cwd(), "public", "yoouz-facebook-avatar.png");
+    if (fs.existsSync(p)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-facebook-avatar.png"');
+      res.setHeader("Content-Type", "image/png");
+      return res.sendFile(p);
+    }
+    const svgP = path.join(process.cwd(), "public", "yoouz-facebook-avatar.svg");
+    if (fs.existsSync(svgP)) {
+      res.setHeader("Content-Disposition", 'attachment; filename="yoouz-facebook-avatar.png"');
+      res.setHeader("Content-Type", "image/svg+xml");
+      return res.sendFile(svgP);
+    }
+    res.status(404).send("Not found");
+  });
+
+  app.get(["/brand-assets", "/facebook-assets"], (req, res) => {
     const brandPath = path.join(process.cwd(), "public", "brand-assets.html");
     if (fs.existsSync(brandPath)) {
       res.setHeader("Content-Type", "text/html; charset=utf-8");

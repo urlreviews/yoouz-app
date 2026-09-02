@@ -517,6 +517,15 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               >
                 <Linkedin className="w-4 h-4" />
               </a>
+              <a
+                href="https://www.facebook.com/yoouz.official/"
+                target="_blank"
+                rel="noreferrer"
+                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
+                title="Facebook (@yoouz.official)"
+              >
+                <Facebook className="w-4 h-4" />
+              </a>
             </div>
 
             <p className="text-[10px] text-center text-zinc-600 font-mono">

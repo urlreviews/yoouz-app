@@ -1,0 +1,175 @@
+<svg width="1640" height="624" viewBox="0 0 1640 624" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Deep obsidian luxury canvas with rich violet-amber ambient depth -->
+    <linearGradient id="darkBgGradRefined" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e24"/>
+      <stop offset="50%" stop-color="#121216"/>
+      <stop offset="100%" stop-color="#0a0a0d"/>
+    </linearGradient>
+
+    <!-- Warm Amber Glow focused on top & sides so center avatar zone has nice contrast -->
+    <radialGradient id="ambientLighting" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.18"/>
+      <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Category Icon Definition Helpers - High contrast white & warm gold -->
+    <g id="icon-fork-knife-dark">
+      <path d="M-6 -10v8a4 4 0 0 0 4 4v8M2 -10v20M-2 -10v5M6 -10v6a3 3 0 0 1-3 3M6 -1v9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-coffee-dark">
+      <path d="M-9 -4h14a2 2 0 0 1 2 2v4a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-4a2 2 0 0 1 2-2zM7 -1h2a2.5 2.5 0 0 1 0 5h-2M-10 11h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-video-camera-dark">
+      <rect x="-10" y="-7" width="14" height="14" rx="3" stroke="currentColor" stroke-width="2.2"/>
+      <path d="M4 -2l7-4v12l-7-4v-4z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="-3" cy="0" r="2.2" fill="currentColor"/>
+    </g>
+
+    <g id="icon-cocktail-dark">
+      <path d="M-9 -8h18l-9 10v7M-4 9h8M-5 -3h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-star-dark">
+      <path d="M0 -9l2.4 5 5.5.8-4 3.9.9 5.5L0 3.6l-4.8 2.6.9-5.5-4-3.9 5.5-.8z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-pin-dark">
+      <path d="M0 -9c-4 0-7 3-7 7 0 5 7 11 7 11s7-6 7-11c0-4-3-7-7-7z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="0" cy="-2" r="2.2" fill="currentColor"/>
+    </g>
+
+    <g id="icon-store-dark">
+      <path d="M-9 -3l2-6h14l2 6M-9 -3v11h18v-11M-9 -3a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-bed-dark">
+      <path d="M-10 6v-14M-10 1h16a4 4 0 0 1 4 4v1M10 6v-5M-10 6h20M-6 -4a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-burger-dark">
+      <path d="M-9 -2a9 9 0 0 1 18 0h-18zM-9 5h18a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2zM-10 1.5h20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-sparkles-dark">
+      <path d="M0 -9l1.5 5.5L7 -2l-5.5 1.5L0 7l-1.5-5.5L-7 -2l5.5-1.5zM6 -7l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" stroke="currentColor" stroke-width="2.0" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-music-dark">
+      <path d="M-4 6V-7l11-3v13M-4 -2l11-3M-4 6a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM7 3a3 3 0 1 1-3-3 3 3 0 0 1 3 3z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-pizza-dark">
+      <path d="M-8 -6a16 16 0 0 1 16 0l-8 15zM-3 -1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM2 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-ice-cream-dark">
+      <path d="M-6 -2a6 6 0 0 1 12 0c0 2-2 3-3 3h-6c-1 0-3-1-3-3zM-3 1l3 9 3-9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="icon-heart-dark">
+      <path d="M0 6.5l-6-6a4.2 4.2 0 0 1 6-6 4.2 4.2 0 0 1 6 6z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1640" height="624" fill="url(#darkBgGradRefined)"/>
+  <rect width="1640" height="624" fill="url(#ambientLighting)"/>
+
+  <!-- High-Clarity Crisp Icons (White: 0.85 opacity, Gold: 0.95 opacity) -->
+  <!-- ROW 1 (y = 65) -->
+  <g transform="translate(0, 65)" color="#f4f4f5" opacity="0.75">
+    <g transform="translate(70, 0)"><use href="#icon-fork-knife-dark"/></g>
+    <g transform="translate(180, 0)" color="#fbbf24"><use href="#icon-video-camera-dark"/></g>
+    <g transform="translate(290, 0)"><use href="#icon-coffee-dark"/></g>
+    <g transform="translate(400, 0)"><use href="#icon-cocktail-dark"/></g>
+    <g transform="translate(510, 0)" color="#fbbf24"><use href="#icon-star-dark"/></g>
+    <g transform="translate(620, 0)"><use href="#icon-burger-dark"/></g>
+    <g transform="translate(730, 0)"><use href="#icon-pin-dark"/></g>
+    <g transform="translate(840, 0)"><use href="#icon-store-dark"/></g>
+    <g transform="translate(950, 0)" color="#fbbf24"><use href="#icon-sparkles-dark"/></g>
+    <g transform="translate(1060, 0)"><use href="#icon-ice-cream-dark"/></g>
+    <g transform="translate(1170, 0)"><use href="#icon-bed-dark"/></g>
+    <g transform="translate(1280, 0)"><use href="#icon-music-dark"/></g>
+    <g transform="translate(1390, 0)"><use href="#icon-pizza-dark"/></g>
+    <g transform="translate(1500, 0)"><use href="#icon-heart-dark"/></g>
+    <g transform="translate(1590, 0)"><use href="#icon-fork-knife-dark"/></g>
+  </g>
+
+  <!-- ROW 2 (y = 190) -->
+  <g transform="translate(0, 190)" color="#ffffff" opacity="0.88">
+    <g transform="translate(40, 0)"><use href="#icon-coffee-dark"/></g>
+    <g transform="translate(150, 0)" color="#fbbf24"><use href="#icon-star-dark"/></g>
+    <g transform="translate(260, 0)"><use href="#icon-pizza-dark"/></g>
+    <g transform="translate(370, 0)" color="#fbbf24"><use href="#icon-video-camera-dark"/></g>
+    <g transform="translate(480, 0)"><use href="#icon-pin-dark"/></g>
+    <g transform="translate(590, 0)"><use href="#icon-cocktail-dark"/></g>
+    <g transform="translate(700, 0)"><use href="#icon-fork-knife-dark"/></g>
+    <g transform="translate(810, 0)" color="#fbbf24"><use href="#icon-sparkles-dark"/></g>
+    <g transform="translate(920, 0)"><use href="#icon-burger-dark"/></g>
+    <g transform="translate(1030, 0)"><use href="#icon-store-dark"/></g>
+    <g transform="translate(1140, 0)" color="#fbbf24"><use href="#icon-video-camera-dark"/></g>
+    <g transform="translate(1250, 0)"><use href="#icon-coffee-dark"/></g>
+    <g transform="translate(1360, 0)"><use href="#icon-bed-dark"/></g>
+    <g transform="translate(1470, 0)" color="#fbbf24"><use href="#icon-star-dark"/></g>
+    <g transform="translate(1570, 0)"><use href="#icon-cocktail-dark"/></g>
+  </g>
+
+  <!-- ROW 3 (y = 312) -->
+  <g transform="translate(0, 312)" color="#f4f4f5" opacity="0.82">
+    <g transform="translate(80, 0)"><use href="#icon-burger-dark"/></g>
+    <g transform="translate(190, 0)"><use href="#icon-store-dark"/></g>
+    <g transform="translate(300, 0)"><use href="#icon-music-dark"/></g>
+    <g transform="translate(410, 0)"><use href="#icon-bed-dark"/></g>
+    <g transform="translate(520, 0)" color="#fbbf24"><use href="#icon-video-camera-dark"/></g>
+    <g transform="translate(630, 0)"><use href="#icon-heart-dark"/></g>
+    <g transform="translate(740, 0)"><use href="#icon-ice-cream-dark"/></g>
+    <g transform="translate(850, 0)"><use href="#icon-pin-dark"/></g>
+    <g transform="translate(960, 0)" color="#fbbf24"><use href="#icon-star-dark"/></g>
+    <g transform="translate(1070, 0)"><use href="#icon-fork-knife-dark"/></g>
+    <g transform="translate(1180, 0)"><use href="#icon-pizza-dark"/></g>
+    <g transform="translate(1290, 0)" color="#fbbf24"><use href="#icon-sparkles-dark"/></g>
+    <g transform="translate(1400, 0)"><use href="#icon-coffee-dark"/></g>
+    <g transform="translate(1510, 0)"><use href="#icon-burger-dark"/></g>
+  </g>
+
+  <!-- ROW 4 (y = 435) -->
+  <g transform="translate(0, 435)" color="#ffffff" opacity="0.85">
+    <g transform="translate(50, 0)" color="#fbbf24"><use href="#icon-sparkles-dark"/></g>
+    <g transform="translate(160, 0)"><use href="#icon-fork-knife-dark"/></g>
+    <g transform="translate(270, 0)"><use href="#icon-pin-dark"/></g>
+    <g transform="translate(380, 0)"><use href="#icon-burger-dark"/></g>
+    <g transform="translate(490, 0)"><use href="#icon-coffee-dark"/></g>
+    <g transform="translate(600, 0)" color="#fbbf24"><use href="#icon-star-dark"/></g>
+    <g transform="translate(710, 0)"><use href="#icon-store-dark"/></g>
+    <g transform="translate(820, 0)" color="#fbbf24"><use href="#icon-video-camera-dark"/></g>
+    <g transform="translate(930, 0)"><use href="#icon-cocktail-dark"/></g>
+    <g transform="translate(1040, 0)"><use href="#icon-pizza-dark"/></g>
+    <g transform="translate(1150, 0)"><use href="#icon-heart-dark"/></g>
+    <g transform="translate(1260, 0)"><use href="#icon-music-dark"/></g>
+    <g transform="translate(1370, 0)"><use href="#icon-bed-dark"/></g>
+    <g transform="translate(1480, 0)"><use href="#icon-ice-cream-dark"/></g>
+    <g transform="translate(1580, 0)"><use href="#icon-fork-knife-dark"/></g>
+  </g>
+
+  <!-- ROW 5 (y = 555) -->
+  <g transform="translate(0, 555)" color="#f4f4f5" opacity="0.70">
+    <g transform="translate(90, 0)" color="#fbbf24"><use href="#icon-video-camera-dark"/></g>
+    <g transform="translate(200, 0)"><use href="#icon-cocktail-dark"/></g>
+    <g transform="translate(310, 0)"><use href="#icon-ice-cream-dark"/></g>
+    <g transform="translate(420, 0)"><use href="#icon-pizza-dark"/></g>
+    <g transform="translate(530, 0)"><use href="#icon-store-dark"/></g>
+    <g transform="translate(640, 0)"><use href="#icon-bed-dark"/></g>
+    <g transform="translate(750, 0)" color="#fbbf24"><use href="#icon-star-dark"/></g>
+    <g transform="translate(860, 0)"><use href="#icon-fork-knife-dark"/></g>
+    <g transform="translate(970, 0)"><use href="#icon-coffee-dark"/></g>
+    <g transform="translate(1080, 0)"><use href="#icon-pin-dark"/></g>
+    <g transform="translate(1190, 0)"><use href="#icon-burger-dark"/></g>
+    <g transform="translate(1300, 0)" color="#fbbf24"><use href="#icon-video-camera-dark"/></g>
+    <g transform="translate(1410, 0)"><use href="#icon-sparkles-dark"/></g>
+    <g transform="translate(1520, 0)"><use href="#icon-cocktail-dark"/></g>
+  </g>
+</svg>
