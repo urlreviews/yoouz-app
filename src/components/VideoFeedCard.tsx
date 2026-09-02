@@ -21,13 +21,14 @@ import {
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { formatBusinessName, resolveSafeAuthor, extractCleanDomain } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
 import {  saveVideoBlobToIndexedDB } from "../lib/videoStorage";
 import { triggerHaptic } from "../utils/haptics";
 import { preloadBusinessAssets } from "../utils/preloadUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 interface VideoFeedCardProps {
   video: VideoReview;
@@ -772,7 +773,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               website={video.placeWebsite}
               logoUrl={businessLogoUrl || video?.placeLogoUrl}
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
-              className="w-9 h-9 rounded-lg bg-white border border-white/40 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm group-hover:scale-105 transition-transform"
+              className="w-9 h-9 rounded-lg bg-zinc-900 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm group-hover:scale-105 transition-transform"
               imageClassName="w-full h-full object-contain rounded-[5px] [image-rendering:-webkit-optimize-contrast]"
               fallbackTextClassName="font-extrabold text-sm text-white"
             />
@@ -800,15 +801,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               title={`View ${safeAuthor.name} Profile`}
             >
               <img
-                src={safeAuthor.avatar || `/api/avatar?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`}
+                src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name)}
                 alt={safeAuthor.name}
                 loading={isActive || isNear ? "eager" : "lazy"}
-          decoding="async"
-          fetchPriority={isActive ? "high" : "auto"}
+                decoding="async"
+                fetchPriority={isActive ? "high" : "auto"}
                 className="w-full h-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`;
+                  const target = e.currentTarget as HTMLImageElement;
+                  const fallback = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128);
+                  if (target.src !== fallback) {
+                    target.src = fallback;
+                  }
                 }}
               />
             </button>

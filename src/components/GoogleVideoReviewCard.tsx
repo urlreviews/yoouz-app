@@ -18,6 +18,8 @@ import { VideoReview } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { resolvePlayableVideoSource, normalizeVideoUrl } from "../utils/videoUtils";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 interface GoogleVideoReviewCardProps {
   review: VideoReview;
@@ -93,11 +95,18 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
         <div className="flex items-center gap-3">
           <div className="relative">
             <img
-              src={review.author.avatar || `/api/avatar?name=${encodeURIComponent(review.author.name || "User")}&background=27272a&color=fff`}
+              src={getSafeAvatarUrl(review.author.avatar, review.author.name)}
               alt={review.author.name}
               className="w-10 h-10 rounded-full object-cover border border-zinc-700"
               referrerPolicy="no-referrer"
-             onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                const fallback = generateGoogleLetterAvatarSvg(review.author.name || "User", 128);
+                if (target.src !== fallback) {
+                  target.src = fallback;
+                }
+              }}
+            />
           </div>
 
           <div>

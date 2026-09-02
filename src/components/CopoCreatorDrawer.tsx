@@ -20,7 +20,7 @@ import {
   MapPin
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
@@ -243,6 +243,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     effectiveAvatar.includes("ui-avatars.com")
   ) {
     effectiveAvatar = generateGoogleLetterAvatarSvg(author.name || currentUser?.name || "User", 128, author.handle || author.name);
+  } else {
+    effectiveAvatar = getSafeAvatarUrl(effectiveAvatar, author.name);
   }
 
   let effectiveBanner = isOwner && currentUser?.banner 
@@ -576,12 +578,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {/* Overlapping Creator Avatar - Exact squircle shape and styling matching Business Profile Logo */}
           <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-800 bg-zinc-900 shadow-2xl flex items-center justify-center z-20 p-1.5 ring-1 ring-white/10 overflow-hidden group">
             <img
-              src={effectiveAvatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
+              src={effectiveAvatar || generateGoogleLetterAvatarSvg(author.name || "User", 128)}
               alt={author.name}
               className="w-full h-full object-cover rounded-[16px] sm:rounded-[18px] [image-rendering:-webkit-optimize-contrast]"
               referrerPolicy="no-referrer"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`;
+                const target = e.currentTarget as HTMLImageElement;
+                const fallback = generateGoogleLetterAvatarSvg(author.name || "User", 128);
+                if (target.src !== fallback) {
+                  target.src = fallback;
+                }
               }} /> 
  {isOwner && (
               <button

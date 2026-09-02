@@ -1,5 +1,6 @@
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./logoUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 /**
  * Cleanly extracts domain name from URL or text string
@@ -524,6 +525,25 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
  * Guarantees that authentic Google profile photos and uploaded user pictures are always preserved
  * and never replaced with generic fallback initial icons or placeholder names.
  */
+export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null): string {
+  if (
+    !avatarUrl ||
+    avatarUrl.includes("ui-avatars.com") ||
+    avatarUrl.includes("dicebear") ||
+    avatarUrl.includes(".mp4") ||
+    avatarUrl.includes("/api/videos/") ||
+    avatarUrl.includes("rev-") ||
+    avatarUrl === "data:;"
+  ) {
+    return generateGoogleLetterAvatarSvg(name || "User", 128);
+  }
+  // Proxy Google User Content to bypass Firefox / Safari tracking protection and CORP headers
+  if (avatarUrl.includes("googleusercontent.com")) {
+    return `/api/proxy-image?url=${encodeURIComponent(avatarUrl)}`;
+  }
+  return avatarUrl;
+}
+
 export function resolveSafeAuthor(
   video: Partial<VideoReview> | null | undefined,
   currentUserOverride?: UserProfile | null
@@ -592,15 +612,15 @@ export function resolveSafeAuthor(
 
   let finalAvatar = "";
   if (candidateAvatar && !candidateAvatar.includes("dicebear") && !candidateAvatar.includes("ui-avatars.com")) {
-    finalAvatar = candidateAvatar;
+    finalAvatar = getSafeAvatarUrl(candidateAvatar, finalName);
   } else if (knownMatch?.avatar) {
-    finalAvatar = knownMatch.avatar;
+    finalAvatar = getSafeAvatarUrl(knownMatch.avatar, finalName);
   } else if (candidateAvatar) {
-    finalAvatar = candidateAvatar;
+    finalAvatar = getSafeAvatarUrl(candidateAvatar, finalName);
   } else if (activeUser?.avatar) {
-    finalAvatar = activeUser.avatar;
+    finalAvatar = getSafeAvatarUrl(activeUser.avatar, finalName);
   } else {
-    finalAvatar = `/api/avatar?name=${encodeURIComponent(finalName)}&background=27272a&color=fff&bold=true&size=128`;
+    finalAvatar = generateGoogleLetterAvatarSvg(finalName, 128);
   }
 
   return {

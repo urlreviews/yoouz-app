@@ -22,6 +22,8 @@ import { formatRecordedDate } from "../utils/dateUtils";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import { resolvePlayableVideoSource, normalizeVideoUrl } from "../utils/videoUtils";
 import { useGlobalMute } from "../hooks/useGlobalMute";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 interface GoogleVideoPlayerModalProps {
   reviews: VideoReview[];
@@ -307,12 +309,19 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
               title={`View ${currentReview.author?.name || 'Customer'}'s Profile`}
             >
               <img
-                src={currentReview.author.avatar}
+                src={getSafeAvatarUrl(currentReview.author.avatar, currentReview.author.name)}
                 alt={currentReview.author.name}
                 className="w-9 h-9 rounded-full object-cover border border-white/30 group-hover:border-white transition-all"
                 referrerPolicy="no-referrer"
-               onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- <div>
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  const fallback = generateGoogleLetterAvatarSvg(currentReview.author.name || "User", 128);
+                  if (target.src !== fallback) {
+                    target.src = fallback;
+                  }
+                }}
+              />
+              <div>
                 <h4 className="font-semibold text-sm flex items-center gap-1 group-hover:text-zinc-200 transition-colors min-w-0">
                   <span className="truncate">{currentReview.author.name}</span>
                   {currentReview.author.isVerified && (

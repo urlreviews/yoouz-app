@@ -3664,7 +3664,6 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       website: "https://thecapitalavenue.com"
     },
     "mastercard.com": {
-      logoUrl: "https://assets.brandfetch.io/idO-nUa30p/theme/dark/logo.svg?c=1bx1740614838634id64Mup7ac68853mP5_",
       name: "Mastercard"
     }
   };
@@ -3691,7 +3690,9 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     
     let banner = r.placeBannerUrl || r.bannerUrl || r.ogImage || "";
     let logo = r.placeLogoUrl || r.logoUrl || "";
-    if (logo === "data:;" || logo.startsWith("data:;")) logo = "";
+    if (logo === "data:;" || logo.startsWith("data:;") || logo.includes("brandfetch.io") || logo.includes("gstatic.com/faviconV2")) {
+      logo = "";
+    }
 
     let website = r.placeWebsite || (domain && domain.includes(".") ? `https://${domain}` : "");
 
@@ -3700,10 +3701,6 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       if (!banner && matchedMeta.bannerUrl) banner = matchedMeta.bannerUrl;
       if (!logo && matchedMeta.logoUrl) logo = matchedMeta.logoUrl;
       if (!website && matchedMeta.website) website = matchedMeta.website;
-    }
-
-    if (!logo && domain && domain.includes(".")) {
-      logo = `https://cdn.brandfetch.io/${domain}/icon`;
     }
 
     // Proxy framerusercontent to bypass CORP restrictions in iframe
@@ -6003,25 +6000,27 @@ Return JSON:
   };
 
   
-  // Fast, zero-dependency local Avatar generator (bypasses tracking blockers for ui-avatars.com)
+  // Fast, zero-dependency Google-style Material Avatar generator (bypasses tracking blockers)
   app.get("/api/avatar", (req, res) => {
     try {
       const name = String(req.query.name || "User");
-      const bg = String(req.query.background || req.query.bg || "27272a").replace("#", "");
-      const color = String(req.query.color || "ffffff").replace("#", "");
-      
       const cleanName = name.replace(/^(een|a|the)\s+/i, "").trim() || "U";
-      let initials = cleanName.substring(0, 2).toUpperCase();
-      if (cleanName.includes(" ")) {
-        const parts = cleanName.split(" ").filter(p => p.length > 0);
-        if (parts.length > 1) {
-          initials = (parts[0][0] + parts[1][0]).toUpperCase();
-        }
+      const char = cleanName.charAt(0).toUpperCase() || "U";
+
+      const PALETTE = [
+        '#E53935', '#D81B60', '#8E24AA', '#5E35B1', '#3949AB', 
+        '#1E88E5', '#039BE5', '#00ACC1', '#00897B', '#43A047', 
+        '#7CB342', '#FB8C00', '#F4511E', '#6D4C41', '#546E7A'
+      ];
+      let hash = 0;
+      for (let i = 0; i < cleanName.length; i++) {
+        hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
       }
+      const bg = PALETTE[Math.abs(hash) % PALETTE.length];
       
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-        <rect width="256" height="256" fill="#${bg}"/>
-        <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="#${color}" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="110">${initials}</text>
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+        <rect width="128" height="128" rx="64" fill="${bg}"/>
+        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="64px">${char}</text>
       </svg>`;
       
       res.setHeader("Content-Type", "image/svg+xml");
