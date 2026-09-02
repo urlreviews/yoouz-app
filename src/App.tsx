@@ -1103,7 +1103,7 @@ export function App() {
     };
   }, []);
 
-  const handleUpdateProfile = (updated: { name?: string; bio?: string; avatar?: string; location?: string }) => {
+  const handleUpdateProfile = (updated: { name?: string; bio?: string; avatar?: string; banner?: string; location?: string; handle?: string }) => {
     setCurrentUser((prev) => {
       if (!prev) return null;
       const nextProfile: UserProfile = {
@@ -1111,13 +1111,15 @@ export function App() {
         name: updated.name !== undefined ? updated.name : prev.name,
         bio: updated.bio !== undefined ? updated.bio : prev.bio,
         avatar: updated.avatar !== undefined ? updated.avatar : prev.avatar,
-        location: updated.location !== undefined ? updated.location : prev.location
+        banner: updated.banner !== undefined ? updated.banner : (prev as any).banner,
+        location: updated.location !== undefined ? updated.location : prev.location,
+        handle: updated.handle !== undefined ? updated.handle : (prev as any).handle
       };
       try {
         localStorage.setItem("copo_user_profile", JSON.stringify(nextProfile));
         const userUid = auth.currentUser?.uid || (nextProfile.email ? nextProfile.email.replace(/[^a-zA-Z0-9]/g, '_') : 'guest');
         
-        // Mirror to BunnyDB
+        // Mirror to BunnyDB (Cloud NoSQL)
         fetch(`/api/nosql/users/${userUid}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1125,8 +1127,10 @@ export function App() {
             data: {
               uid: userUid,
               name: nextProfile.name,
+              handle: (nextProfile as any).handle || "",
               email: nextProfile.email,
               avatar: nextProfile.avatar,
+              banner: (nextProfile as any).banner || "",
               bio: nextProfile.bio,
               location: nextProfile.location || "",
               lastLogin: Date.now()
@@ -1135,12 +1139,15 @@ export function App() {
           })
         }).catch(() => {});
 
+        // Save to Firebase Firestore database
         if (auth.currentUser && db) {
           setDoc(doc(db, "users", auth.currentUser.uid), {
             uid: auth.currentUser.uid,
             name: nextProfile.name,
+            handle: (nextProfile as any).handle || "",
             email: nextProfile.email,
             avatar: nextProfile.avatar,
+            banner: (nextProfile as any).banner || "",
             bio: nextProfile.bio,
             location: nextProfile.location || "",
             lastLogin: Date.now()
@@ -1150,36 +1157,38 @@ export function App() {
         }
       } catch (e) {}
 
-      // Keep videos state in sync with updated author avatar and name
-      if (updated.avatar || updated.name) {
-        updateUserRegistry(nextProfile);
-        setAllRegisteredUsers((prevUsers) => {
-          const index = prevUsers.findIndex((u) => 
-            u.email === nextProfile.email || u.uid === nextProfile.uid || u.name === nextProfile.name
-          );
-          if (index >= 0) {
-            const copy = [...prevUsers];
-            copy[index] = { ...copy[index], ...nextProfile };
-            return copy;
-          }
-          return [nextProfile, ...prevUsers];
-        });
-        setVideos((prevVideos) =>
-          prevVideos.map((v) => {
-            if (isAuthorMatch(v, nextProfile)) {
-              return {
-                ...v,
-                author: {
-                  ...v.author,
-                  name: nextProfile.name,
-                  avatar: nextProfile.avatar
-                }
-              };
-            }
-            return v;
-          })
+      // Keep user registry and videos state in sync with updated author info
+      updateUserRegistry(nextProfile);
+      setAllRegisteredUsers((prevUsers) => {
+        const index = prevUsers.findIndex((u) => 
+          u.email === nextProfile.email || u.uid === nextProfile.uid || u.name === nextProfile.name
         );
-      }
+        if (index >= 0) {
+          const copy = [...prevUsers];
+          copy[index] = { ...copy[index], ...nextProfile };
+          return copy;
+        }
+        return [nextProfile, ...prevUsers];
+      });
+
+      setVideos((prevVideos) =>
+        prevVideos.map((v) => {
+          if (isAuthorMatch(v, nextProfile)) {
+            return {
+              ...v,
+              author: {
+                ...v.author,
+                name: nextProfile.name,
+                avatar: nextProfile.avatar,
+                location: nextProfile.location,
+                bio: nextProfile.bio,
+                banner: (nextProfile as any).banner
+              }
+            };
+          }
+          return v;
+        })
+      );
 
       return nextProfile;
     });
