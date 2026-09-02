@@ -42,7 +42,7 @@ function normalizeReview(v: any): VideoReview {
       author: v?.author || { 
         name: "Verified Reviewer", 
         handle: "@user", 
-        avatar: `https://ui-avatars.com/api/?name=Reviewer&background=27272a&color=fff` 
+        avatar: `/api/avatar?name=Reviewer&background=27272a&color=fff` 
       },
       createdAtMs: v?.createdAtMs || Date.now()
     } as VideoReview;

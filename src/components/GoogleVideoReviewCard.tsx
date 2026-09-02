@@ -93,11 +93,11 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
         <div className="flex items-center gap-3">
           <div className="relative">
             <img
-              src={review.author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.author.name || "User")}&background=27272a&color=fff`}
+              src={review.author.avatar || `/api/avatar?name=${encodeURIComponent(review.author.name || "User")}&background=27272a&color=fff`}
               alt={review.author.name}
               className="w-10 h-10 rounded-full object-cover border border-zinc-700"
               referrerPolicy="no-referrer"
-            />
+             onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
           </div>
 
           <div>

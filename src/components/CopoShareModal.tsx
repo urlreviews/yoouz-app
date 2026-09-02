@@ -611,7 +611,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     alt={title}
                     className="w-10 h-10 rounded-full object-cover border border-zinc-700 shrink-0"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
+                      (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
                     }}
                   />
                 ) : (
@@ -908,7 +908,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                           alt={title}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
+                            (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
                           }}
                         />
                       ) : (

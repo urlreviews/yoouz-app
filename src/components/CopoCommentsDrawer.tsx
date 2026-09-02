@@ -123,7 +123,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     }
 
     const nameToUse = formatCommentAuthorName(authorName, isOwner);
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(nameToUse)}&background=1a73e8&color=fff&bold=true&size=128`;
+    return `/api/avatar?name=${encodeURIComponent(nameToUse)}&background=1a73e8&color=fff&bold=true&size=128`;
   };
 
   // Determine if logged-in user is the creator of this video review
@@ -886,9 +886,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   )}
                   alt={currentUser?.name || "You"}
                   className="w-8 h-8 rounded-full object-cover border border-zinc-800 shrink-0"
-                />
-
-                <div className="relative flex-1">
+                 onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="relative flex-1">
                   <input
                     ref={inputRef}
                     type="text"

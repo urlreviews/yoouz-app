@@ -425,8 +425,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         onClick={() => {
           triggerHaptic("light");
           onClose();
-        }} 
-      />
+        }} />
 
       <aside
         id="google-maps-creator-panel"
@@ -577,15 +576,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {/* Overlapping Creator Avatar - Exact squircle shape and styling matching Business Profile Logo */}
           <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-800 bg-zinc-900 shadow-2xl flex items-center justify-center z-20 p-1.5 ring-1 ring-white/10 overflow-hidden group">
             <img
-              src={effectiveAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
+              src={effectiveAvatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
               alt={author.name}
               className="w-full h-full object-cover rounded-[16px] sm:rounded-[18px] [image-rendering:-webkit-optimize-contrast]"
               referrerPolicy="no-referrer"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`;
-              }}
-            />
-            {isOwner && (
+                (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`;
+              }} /> 
+ {isOwner && (
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-[16px] sm:rounded-[18px]"
@@ -1063,8 +1061,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="flex flex-col items-center gap-3">
                 <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                   <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-700 shadow-md relative">
-                    <img src={editAvatar || currentUser?.avatar} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" referrerPolicy="no-referrer" />
-                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                    <img src={editAvatar || currentUser?.avatar || `/api/avatar?name=${encodeURIComponent(currentUser?.name || "User")}&background=27272a&color=fff`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" referrerPolicy="no-referrer" onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(currentUser?.name || "User")}&background=27272a&color=fff`; }} /> 
+ <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                       <Camera className="w-6 h-6" />
                     </div>
                   </div>
@@ -1133,8 +1131,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     setEditCountry(country);
                     setEditCity("");
                     setEditState("");
-                  }} 
-                />
+                  }} />
 
                 {editCountry && (() => {
                   const selectedCountryObj = Country.getAllCountries().find(c => c.name === editCountry);

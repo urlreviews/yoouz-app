@@ -355,7 +355,7 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
                   alt={video.author.name}
                   className="w-8 h-8 rounded-full object-cover ring-1 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
                   referrerPolicy="no-referrer"
-                />
+                 onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-300 font-bold flex items-center justify-center text-xs group-hover:bg-zinc-700 group-hover:text-white transition-colors shrink-0">
                   {(video.author?.name || 'C').charAt(0).toUpperCase()}
@@ -1589,9 +1589,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             className="absolute top-0 transform -translate-x-1/2 bg-zinc-800 md:bg-zinc-900 text-white md:text-white rounded-xl px-3 py-1.5 shadow-xl  border border-zinc-700 md:border-zinc-800 pointer-events-none z-30 flex flex-col items-center text-xs animate-in fade-in zoom-in-95 duration-100"
                             style={{ 
                               left: `${(hoveredChartPoint / (chartData.points.length - 1)) * 92 + 4}%` 
-                            }}
-                          >
-                            <span className="font-extrabold text-sm text-white md:text-white">
+                            }}> 
+ <span className="font-extrabold text-sm text-white md:text-white">
                               {chartData.points[hoveredChartPoint].toLocaleString()} {chartData.unit}
                             </span>
                             <span className="text-[10px] text-zinc-400 md:text-zinc-400 font-medium">
@@ -1773,8 +1772,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               alt={vid.dishOrItem || 'Video Review'}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               referrerPolicy="no-referrer"
-                            />
-                            <div data-video-overlay="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/40 flex flex-col justify-between p-3 text-white">
+                             onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div data-video-overlay="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/40 flex flex-col justify-between p-3 text-white">
                               <div className="flex items-center justify-between">
                                 <span className="px-2 py-1 rounded-full bg-black/60 backdrop-blur-md text-[9px] font-black text-white flex items-center gap-1 border border-white/20">
                                   <Video className="w-2.5 h-2.5 text-zinc-300" /> VIDEO REVIEW
@@ -1813,8 +1812,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 alt={vid.author?.name}
                                 className="w-8 h-8 rounded-full object-cover ring-1 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
                                 referrerPolicy="no-referrer"
-                              />
-                              <div className="truncate flex-1 min-w-0">
+                               onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="truncate flex-1 min-w-0">
                                 <div className="text-sm font-bold text-white group-hover:text-zinc-300 transition-colors truncate">
                                   {vid.author?.name || 'Customer Review'}
                                 </div>
@@ -1966,9 +1965,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 alt={video.dishOrItem || 'Video Review'}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 referrerPolicy="no-referrer"
-                              />
-                              
-                              {/* Video Badges & Play Overlay */}
+                               onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ {/* Video Badges & Play Overlay */}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-3 text-white">
                                 <div className="flex items-center justify-between gap-1">
                                   <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 border border-white/20">
@@ -2006,8 +2004,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     alt={video.author?.name}
                                     className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
                                     referrerPolicy="no-referrer"
-                                  />
-                                  <div className="min-w-0">
+                                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                       <span className="font-bold text-sm text-white group-hover:text-zinc-300 transition-colors truncate">
                                         {video.author?.name || 'Customer Review'}
@@ -2203,12 +2201,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       video.comments.map((comment) => (
                                         <div key={comment.id} className="flex items-start gap-3 bg-zinc-950 p-3 rounded-xl border border-zinc-800 shadow-2xs">
                                           <img
-                                            src={comment.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.authorName)}&background=random`}
+                                            src={comment.authorAvatar || `/api/avatar?name=${encodeURIComponent(comment.authorName)}&background=random`}
                                             alt={comment.authorName}
                                             className="w-8 h-8 rounded-full object-cover shrink-0"
                                             referrerPolicy="no-referrer"
-                                          />
-                                          <div className="flex-1 min-w-0 space-y-1">
+                                           onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="flex-1 min-w-0 space-y-1">
                                             <div className="flex items-center justify-between">
                                               <div className="flex items-center gap-1.5">
                                                 <span className="text-xs font-bold text-zinc-200">{comment.authorName}</span>
@@ -3479,7 +3477,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       {(() => {
                         const activePreviewVideo = placeVideos[0] || videos[0];
                         const previewAuthorName = activePreviewVideo?.author?.name || currentUser?.name || 'Elena Rostova';
-                        const previewAuthorAvatar = activePreviewVideo?.author?.avatar || currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(previewAuthorName)}&background=27272a&color=fff`;
+                        const previewAuthorAvatar = activePreviewVideo?.author?.avatar || currentUser?.avatar || `/api/avatar?name=${encodeURIComponent(previewAuthorName)}&background=27272a&color=fff`;
                         const previewRating = activePreviewVideo?.rating || 5;
                         const previewLikes = activePreviewVideo?.likes || 12;
                         const previewComments = (activePreviewVideo?.comments?.length || activePreviewVideo?.commentsCount || 2) + (activePreviewVideo?.ownerResponse ? 1 : 0);
@@ -4534,10 +4532,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           setSelectedPlaceId(session.placeId);
           setCurrentPlan('pro');
           setIsClaiming(false);
-        }}
-      />
+        }} />
 
-      {/* Interactive Command Palette Modal (⌘K) */}
+ {/* Interactive Command Palette Modal (⌘K) */}
       {isCommandPaletteOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-start justify-center pt-16 md:pt-24 px-4 animate-in fade-in duration-150">
           <div 
@@ -4634,8 +4631,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           }}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-zinc-800 transition-colors cursor-pointer group"
                         >
-                          <img src={v.author?.avatar} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-zinc-200" />
-                          <div className="min-w-0 flex-1">
+                          <img src={v.author?.avatar} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-zinc-200"  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="min-w-0 flex-1">
                             <div className="text-xs font-bold text-white truncate">{v.author?.name}</div>
                             <div className="text-[10px] text-zinc-400 truncate">{v.caption}</div>
                           </div>

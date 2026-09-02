@@ -187,7 +187,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         list.push({
           id: uId,
           name: uName,
-          avatar: u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(uName)}&background=1a73e8&color=fff`,
+          avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(uName)}&background=1a73e8&color=fff`,
           //handle: u.name || uName.toLowerCase().replace(/\s+/g, ""),
           email: uEmail,
           bio: u.bio || "Local Guide & Reviewer"
@@ -208,7 +208,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         list.push({
           id: aId,
           name: aName,
-          avatar: v.author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(aName)}&background=1a73e8&color=fff`,
+          avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(aName)}&background=1a73e8&color=fff`,
           //handle: v.author.name,
           email: aEmail,
           bio: v.author.bio || "Community Creator"
@@ -519,7 +519,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         email: matchUser.email || (id && id.includes('@') ? id : undefined),
         userId: matchUser.userId || matchUser.id || id,
         id: matchUser.id || matchUser.userId || id,
-        avatar: matchUser.avatar || avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=1a73e8&color=fff`,
+        avatar: matchUser.avatar || avatar || `/api/avatar?name=${encodeURIComponent(name || "User")}&background=1a73e8&color=fff`,
         bio: matchUser.bio || "Local Guide & Food Reviewer on Yoouz. Sharing authentic local culinary discoveries.",
         followersCount: matchUser.followersCount || 145,
         videoReviewCount: 8,
@@ -538,7 +538,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       email: id && id.includes('@') ? id : undefined,
       userId: id,
       id: id,
-      avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=1a73e8&color=fff`,
+      avatar: avatar || `/api/avatar?name=${encodeURIComponent(name || "User")}&background=1a73e8&color=fff`,
       bio: "Local food & travel reviewer on Yoouz. Exploring top rated places and sharing honest video reviews.",
       followersCount: 145,
       videoReviewCount: 6,
@@ -722,11 +722,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                       >
                         <img
-                          src={thread.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(thread.senderName || "User")}&background=27272a&color=fff`}
+                          src={thread.senderAvatar || `/api/avatar?name=${encodeURIComponent(thread.senderName || "User")}&background=27272a&color=fff`}
                           alt={thread.senderName}
                           className="w-11 h-11 rounded-full object-cover border border-zinc-800"
-                        />
-                        {threadBlocked ? (
+                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ {threadBlocked ? (
                           <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-red-500 ring-2 ring-zinc-950 flex items-center justify-center text-white" title="Blocked user">
                             <X className="w-2.5 h-2.5" />
                           </span>
@@ -792,10 +792,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                     >
                       <img
-                        src={activeThread.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeThread.senderName || "User")}&background=27272a&color=fff`}
+                        src={activeThread.senderAvatar || `/api/avatar?name=${encodeURIComponent(activeThread.senderName || "User")}&background=27272a&color=fff`}
                         alt={activeThread.senderName}
                         className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800"
-                      />
+                       onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                     </button>
 
                     <div className="min-w-0">
@@ -922,10 +922,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                       >
                         <img
-                          src={activeThread.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeThread.senderName || "User")}&background=1a73e8&color=fff`}
+                          src={activeThread.senderAvatar || `/api/avatar?name=${encodeURIComponent(activeThread.senderName || "User")}&background=1a73e8&color=fff`}
                           alt={activeThread.senderName}
                           className="w-8 h-8 rounded-full object-cover border border-zinc-800 md:border-zinc-800"
-                        />
+                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                       </button>
                       <div className="space-y-1 max-w-md">
                         <button
@@ -958,10 +958,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                         >
                           <img
-                            src={msg.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || "User")}&background=1a73e8&color=fff`}
+                            src={msg.senderAvatar || `/api/avatar?name=${encodeURIComponent(msg.senderName || "User")}&background=1a73e8&color=fff`}
                             alt={msg.senderName}
                             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800 md:border-zinc-800"
-                          />
+                           onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                         </button>
                         <div className={`flex flex-col space-y-1 max-w-sm sm:max-w-md ${msg.isMe ? "items-end text-right" : "items-start text-left"}`}>
                           <button
@@ -1004,9 +1004,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                       const target = e.currentTarget as HTMLImageElement;
                                       // Do not fallback to avatar, just use a generic placeholder for the video review
                                       target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-                                    }}
-                                  />
-                                  <div className="absolute inset-0 bg-black/20 group-hover/card:bg-black/30 transition-colors flex items-center justify-center">
+                                    }} /> 
+ <div className="absolute inset-0 bg-black/20 group-hover/card:bg-black/30 transition-colors flex items-center justify-center">
                                     <div className="w-12 h-12 rounded-full bg-zinc-800/95 text-white flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
                                       <Play className="w-5 h-5 fill-current translate-x-0.5" />
                                     </div>
@@ -1132,9 +1131,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                         } else {
                                           target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
                                         }
-                                      }}
-                                    />
-                                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                      }} />
+
+ <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
                                       <Play className="w-3.5 h-3.5 fill-white text-white" />
                                     </div>
                                   </div>
@@ -1311,8 +1310,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         src={recipient.avatar}
                         alt={recipient.name}
                         className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
-                      />
-                      <div className="min-w-0">
+                       onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="min-w-0">
                         <p className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">
                           {recipient.name}
                         </p>

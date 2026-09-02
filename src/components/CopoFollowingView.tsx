@@ -249,11 +249,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md rounded-full pl-1 pr-2.5 py-1 text-white hover:bg-black/60 transition-colors"
                         >
                           <img
-                            src={video.author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(video.author.name || "User")}&background=27272a&color=fff`}
+                            src={video.author.avatar || `/api/avatar?name=${encodeURIComponent(video.author.name || "User")}&background=27272a&color=fff`}
                             alt={video.author.name}
                             className="w-5 h-5 rounded-full object-cover border border-white/20"
-                          />
-                          <span className="text-[9.5px] font-extrabold truncate max-w-[80px]">
+                           onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <span className="text-[9.5px] font-extrabold truncate max-w-[80px]">
                             {video.author.name}
                           </span>
                         </div>
@@ -302,11 +302,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group"
                         >
                           <img
-                            src={author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
+                            src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
                             alt={author.name}
                             className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
-                          />
-                          <div className="min-w-0 flex-1 text-left">
+                           onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="min-w-0 flex-1 text-left">
                             <div className="flex items-center gap-1 font-bold text-xs sm:text-sm text-white truncate">
                               <span className="truncate">{author.name}</span>
                               {author.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}
@@ -389,11 +389,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group"
                           >
                             <img
-                              src={author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
+                              src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
                               alt={author.name}
                               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
-                            />
-                            <div className="min-w-0 flex-1 text-left">
+                             onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="min-w-0 flex-1 text-left">
                               <div className="flex items-center gap-1 font-bold text-xs sm:text-sm text-white truncate">
                                 <span className="truncate">{author.name}</span>
                                 {author.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}
@@ -446,11 +446,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group"
                         >
                           <img
-                            src={author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
+                            src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
                             alt={author.name}
                             className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
-                          />
-                          <div className="min-w-0 flex-1 text-left">
+                           onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="min-w-0 flex-1 text-left">
                             <div className="flex items-center gap-1 font-bold text-xs sm:text-sm text-white truncate">
                               <span className="truncate">{author.name}</span>
                               {author.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}

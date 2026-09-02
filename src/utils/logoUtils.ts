@@ -304,9 +304,9 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return place.avatarUrl;
   }
 
-  // 4. DuckDuckGo Crisp Favicon for domain
+  // 4. Secure Local Favicon Proxy (Bypasses tracking blockers)
   if (cleanDomain && cleanDomain.includes(".")) {
-    return `https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`;
+    return `/api/favicon?domain=${cleanDomain}`;
   }
 
   return null;

@@ -800,7 +800,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               title={`View ${safeAuthor.name} Profile`}
             >
               <img
-                src={safeAuthor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`}
+                src={safeAuthor.avatar || `/api/avatar?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`}
                 alt={safeAuthor.name}
                 loading={isActive || isNear ? "eager" : "lazy"}
           decoding="async"
@@ -808,7 +808,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 className="w-full h-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`;
+                  (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(safeAuthor.name || "User")}&background=27272a&color=f4f4f5`;
                 }}
               />
             </button>

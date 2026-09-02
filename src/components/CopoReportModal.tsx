@@ -319,7 +319,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     src={target.author.avatar}
                     alt="Author avatar"
                     className="w-10 h-10 rounded-full object-cover shrink-0 border border-zinc-800"
-                  />
+                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                 ) : (
                   <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
                     <Flag className="w-4 h-4 text-zinc-400" />

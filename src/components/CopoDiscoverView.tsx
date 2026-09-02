@@ -90,7 +90,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
       ) {
         return avatar;
       }
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=27272a&color=fff&bold=true&size=128`;
+      return `/api/avatar?name=${encodeURIComponent(name || "User")}&background=27272a&color=fff&bold=true&size=128`;
     };
 
     // 1. Add reviewers from real video reviews
@@ -347,8 +347,8 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                           alt={reviewer.author.name}
                           className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 group-hover:scale-105 transition-transform"
                           referrerPolicy="no-referrer"
-                        />
-                        {reviewer.author.isVerified && (
+                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ {reviewer.author.isVerified && (
                           <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-zinc-800 text-white rounded-full flex items-center justify-center ring-2 ring-zinc-900">
                             <CheckCircle className="w-3 h-3 fill-current" />
                           </div>

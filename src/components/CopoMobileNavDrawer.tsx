@@ -131,7 +131,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                       alt={currentUser.name}
                       className="w-12 h-12 rounded-xl object-cover ring-2 ring-zinc-700 shrink-0"
                       referrerPolicy="no-referrer"
-                    />
+                     onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0">
                       {currentUser.name?.charAt(0).toUpperCase() || "U"}

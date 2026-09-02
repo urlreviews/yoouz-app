@@ -311,8 +311,8 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                 alt={currentReview.author.name}
                 className="w-9 h-9 rounded-full object-cover border border-white/30 group-hover:border-white transition-all"
                 referrerPolicy="no-referrer"
-              />
-              <div>
+               onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div>
                 <h4 className="font-semibold text-sm flex items-center gap-1 group-hover:text-zinc-200 transition-colors min-w-0">
                   <span className="truncate">{currentReview.author.name}</span>
                   {currentReview.author.isVerified && (

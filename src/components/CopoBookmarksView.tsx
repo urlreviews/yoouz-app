@@ -237,11 +237,11 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       {/* Author / recommender */}
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <img
-                          src={video.author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(video.author.name || "User")}&background=1a73e8&color=fff`}
+                          src={video.author.avatar || `/api/avatar?name=${encodeURIComponent(video.author.name || "User")}&background=1a73e8&color=fff`}
                           alt={video.author.name}
                           className="w-4.5 h-4.5 rounded-full border border-zinc-800 md:border-zinc-800"
-                        />
-                        <span className="text-[10px] text-zinc-500 md:text-zinc-400 font-bold">
+                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <span className="text-[10px] text-zinc-500 md:text-zinc-400 font-bold">
                           Recommended by <span className="text-zinc-300 md:text-zinc-400 hover:underline">{video.author.name}</span>
                         </span>
                       </div>

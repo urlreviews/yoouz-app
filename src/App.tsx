@@ -330,7 +330,7 @@ export function App() {
           });
           const authorObj: VideoAuthor = matchingVid?.author || {
             name: rawParam.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(rawParam)}&background=27272a&color=fff&bold=true&size=128`,
+            avatar: `/api/avatar?name=${encodeURIComponent(rawParam)}&background=27272a&color=fff&bold=true&size=128`,
             isVerified: true,
             isFollowed: false
           };
@@ -2374,7 +2374,7 @@ export function App() {
 
     const authorAvatar =
       validCurrentAvatar ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
+      `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
 
     const newCommentItem: ReviewComment = {
       id: `comm-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -2741,7 +2741,7 @@ export function App() {
             id: `owner_comm_${videoId}`,
             authorName: `${placeName} (Owner)`,
             authorHandle: "owner",
-            authorAvatar: placeLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`,
+            authorAvatar: placeLogo || `/api/avatar?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`,
             text: text.trim(),
             createdAt: "Just now",
       createdAtMs: Date.now(),
@@ -3484,7 +3484,7 @@ export function App() {
                           user: {
                             name: "Yoouz Admin Team",
                             //handle: "yoouz",
-                            avatar: "https://ui-avatars.com/api/?name=Yoouz+Admin&background=27272a&color=fff&bold=true",
+                            avatar: "/api/avatar?name=Yoouz+Admin&background=27272a&color=fff&bold=true",
                             email: "admin@yoouz.com"
                           },
                           text: notif.message,
@@ -3742,7 +3742,7 @@ export function App() {
           setSelectedAuthorForDrawer({
             name: name || handle,
             //handle: handle,
-            avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || handle || "User")}&background=27272a&color=fff&bold=true&size=128`,
+            avatar: avatar || `/api/avatar?name=${encodeURIComponent(name || handle || "User")}&background=27272a&color=fff&bold=true&size=128`,
             isVerified: false,
             isFollowed: false
           });

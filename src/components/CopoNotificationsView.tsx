@@ -427,12 +427,12 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     {/* Avatar with Badge Overlay */}
                     <div className="relative shrink-0 select-none">
                       <img
-                        src={notif.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`}
+                        src={notif.user.avatar || `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`}
                         alt={notif.user.name}
                         className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800 shadow-2xs grayscale"
                         referrerPolicy="no-referrer"
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
+                          (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
                         }}
                       />
                       <span className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center text-[9px] shadow-xs ${badgeStyles.bg}`}>
@@ -517,7 +517,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             if (notif.user?.avatar && target.src !== notif.user.avatar) {
                               target.src = notif.user.avatar;
                             } else {
-                              target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(notif.user.name || "Video")}&background=27272a&color=fff`;
+                              target.src = `/api/avatar?name=${encodeURIComponent(notif.user.name || "Video")}&background=27272a&color=fff`;
                             }
                           }}
                         />

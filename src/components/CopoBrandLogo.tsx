@@ -32,15 +32,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }, [domain, website, logoUrl, name]);
 
   const { src, isCover } = useMemo(() => {
-    // 1. Known high quality vectors
+    // 1. Explicit Logo URL passed down (e.g. from Database places array!) ALWAYS prefer this first!
+    if (logoUrl && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image"))) {
+      return { src: logoUrl, isCover: false };
+    }
+
+    // 2. Known high quality vectors
     if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
       return { src: KNOWN_BRAND_LOGOS[resolvedDomain], isCover: false };
-    }
-    
-    // 2. Direct scraped logo (skip if it looks like a generic favicon, since gstatic is better)
-    const isFavicon = logoUrl && (logoUrl.includes("favicon") || logoUrl.includes("gstatic.com") || logoUrl.includes("google.com/s2"));
-    if (logoUrl && (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image")) && !logoUrl.includes("ui-avatars") && !logoUrl.includes("dicebear") && !isFavicon) {
-      return { src: logoUrl, isCover: false };
     }
     
     // 3. Fallback to Google Favicon CDN
@@ -51,14 +50,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     // 4. ui-avatars native fallback if NO domain and NO logoUrl
     const avatarName = name ? name.replace(/^(een|a|the)\s+/i, "").trim() : "Place";
     return { 
-      src: `https://ui-avatars.com/api/?name=${encodeURIComponent(avatarName)}&background=18181b&color=ffffff&size=256&font-size=0.4&bold=true`, 
+      src: `/api/avatar?name=${encodeURIComponent(avatarName)}&background=18181b&color=ffffff&size=256&font-size=0.4&bold=true`, 
       isCover: false 
     };
   }, [resolvedDomain, logoUrl, name]);
 
   const fallbackUrl = useMemo(() => {
     const avatarName = name ? name.replace(/^(een|a|the)\s+/i, "").trim() : "Place";
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(avatarName)}&background=18181b&color=ffffff&size=256&font-size=0.4&bold=true`;
+    return `/api/avatar?name=${encodeURIComponent(avatarName)}&background=18181b&color=ffffff&size=256&font-size=0.4&bold=true`;
   }, [name]);
 
   return (

@@ -14,8 +14,8 @@ export const CopoClubsView: React.FC<CopoClubsViewProps> = ({
   onSelectClubVideos
 }) => {
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white p-4 md:p-8" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white p-4 md:p-8" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}> 
+ <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div>
           <h2 className="text-2xl font-black text-white flex items-center gap-2">
@@ -47,7 +47,7 @@ export const CopoClubsView: React.FC<CopoClubsViewProps> = ({
                     src={club.avatar}
                     alt={club.name}
                     className="w-12 h-12 rounded-2xl object-cover border-2 border-zinc-800 shadow-lg"
-                  />
+                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                 </div>
               </div>
 

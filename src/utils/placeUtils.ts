@@ -600,7 +600,7 @@ export function resolveSafeAuthor(
   } else if (activeUser?.avatar) {
     finalAvatar = activeUser.avatar;
   } else {
-    finalAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(finalName)}&background=27272a&color=fff&bold=true&size=128`;
+    finalAvatar = `/api/avatar?name=${encodeURIComponent(finalName)}&background=27272a&color=fff&bold=true&size=128`;
   }
 
   return {

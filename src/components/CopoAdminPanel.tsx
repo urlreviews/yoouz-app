@@ -254,7 +254,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         handle: cleanHandle,
         avatar:
           u.avatar ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
+          `/api/avatar?name=${encodeURIComponent(u.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
         isVerified: true,
         isRegisteredAccount: true,
         role: u.role || (u.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
@@ -301,7 +301,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           handle: vCleanHandle,
           avatar:
             author.avatar ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
+            `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
           isVerified: author.isVerified !== false,
           isRegisteredAccount: Boolean(vUserId),
           role: "Creator",
@@ -2000,7 +2000,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     >
                       <div className="flex items-center gap-3.5">
                         <div className="w-12 h-12 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0">
-                          <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                          <img src={user.avatar} alt="" className="w-full h-full object-cover"  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
@@ -2105,11 +2105,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         <img
-                          src={item.comment.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.comment.authorName)}&background=27272a&color=fff&bold=true`}
+                          src={item.comment.authorAvatar || `/api/avatar?name=${encodeURIComponent(item.comment.authorName)}&background=27272a&color=fff&bold=true`}
                           alt=""
                           className="w-10 h-10 rounded-full object-cover bg-zinc-950 shrink-0"
-                        />
-                        <div className="min-w-0">
+                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-bold text-white text-sm">{item.comment.authorName}</span>
                             <span className="text-xs text-zinc-400">@{item.comment.authorHandle}</span>
@@ -2432,11 +2432,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                 <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-950 border border-zinc-800">
                   <img
-                    src={previewVideo.author?.avatar || "https://ui-avatars.com/api/?name=Reviewer&background=27272a&color=fff&bold=true"}
+                    src={previewVideo.author?.avatar || "/api/avatar?name=Reviewer&background=27272a&color=fff&bold=true"}
                     alt=""
                     className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <div>
+                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div>
                     <h4 className="font-bold text-sm text-white">{previewVideo.author?.name || "Reviewer"}</h4>
                     <p className="text-xs text-zinc-400">@{previewVideo.author?.name || "user"}</p>
                   </div>
@@ -2909,7 +2909,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
       totalReviews: 1,
       videoReviewCount: 0,
       ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-      avatarUrl: logoUrl.trim() || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=27272a&color=fff&bold=true`,
+      avatarUrl: logoUrl.trim() || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff&bold=true`,
       logoUrl: logoUrl.trim(),
       bannerUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80",
       photos: [],

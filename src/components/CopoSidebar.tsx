@@ -122,7 +122,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                             isActive ? "ring-white" : "ring-zinc-700"
                           }`}
                           referrerPolicy="no-referrer"
-                        />
+                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                       ) : (
                         <Icon
                           className={`w-5 h-5 shrink-0 transition-colors ${
@@ -278,7 +278,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                             isActive ? "ring-white" : "ring-zinc-700"
                           }`}
                           referrerPolicy="no-referrer"
-                        />
+                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                       ) : (
                         <Icon
                           className={`w-[22px] h-[22px] shrink-0 ${
@@ -308,8 +308,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
         id="copo-mobile-bottom-nav"
         aria-label="Mobile Navigation"
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800/90 text-white shadow-[0_-8px_30px_rgba(0,0,0,0.8)]"
-        style={{ paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))" }}
-      >
+        style={{ paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))" }}>
         <div className="flex items-center justify-around px-2 pt-2 pb-1 max-w-lg mx-auto relative">
           {/* 1. Home */}
           <button
@@ -446,7 +445,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     : "ring-zinc-700"
                 }`}
                 referrerPolicy="no-referrer"
-              />
+               onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
             ) : (
               <User
                 className={`w-[22px] h-[22px] transition-transform duration-200 ${

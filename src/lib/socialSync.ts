@@ -74,7 +74,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     user: {
       name: params.user.name || "Yoouz Member",
       ////handle: (params.user.name || "").replace(/^@/, "") || params.user.name?.toLowerCase().replace(/\s+/g, "") || "member",
-      avatar: params.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(params.user.name || "User")}&background=27272a&color=fff`,
+      avatar: params.user.avatar || `/api/avatar?name=${encodeURIComponent(params.user.name || "User")}&background=27272a&color=fff`,
       email: senderEmail
     },
     text: params.text,
@@ -152,7 +152,7 @@ export function subscribeToNotifications(
               user: {
                 name: data.user?.name || "Yoouz Member",
                 ////handle: data.user?.name ? `@${data.user.name.replace(/^@/, "")}` : "@member",
-                avatar: data.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user?.name || "User")}&background=27272a&color=fff`
+                avatar: data.user?.avatar || `/api/avatar?name=${encodeURIComponent(data.user?.name || "User")}&background=27272a&color=fff`
               },
               text: data.text || "",
               timestamp: data.timestamp || "Recently",
@@ -297,7 +297,7 @@ export function subscribeToChats(
           if (isParticipant) {
             // Find other participant info
             let otherName = data.senderName || data.recipientName || "Yoouz Member";
-            let otherAvatar = data.senderAvatar || data.recipientAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherName)}&background=27272a&color=fff`;
+            let otherAvatar = data.senderAvatar || data.recipientAvatar || `/api/avatar?name=${encodeURIComponent(otherName)}&background=27272a&color=fff`;
             let otherId = data.senderId || data.recipientId || docSnap.id;
 
             if (data.participantProfiles && typeof data.participantProfiles === "object") {
@@ -366,7 +366,7 @@ export function subscribeToChats(
               return {
                 id: m.id || `msg_${Date.now()}_${Math.random()}`,
                 senderName: m.senderName || "Member",
-                senderAvatar: m.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.senderName || "User")}&background=27272a&color=fff`,
+                senderAvatar: m.senderAvatar || `/api/avatar?name=${encodeURIComponent(m.senderName || "User")}&background=27272a&color=fff`,
                 text: m.text || "",
                 timestamp: m.timestamp || "Just now",
                 createdAtMs: m.createdAt,
@@ -445,7 +445,7 @@ export async function sendChatMessageToFirestore(
     senderId: userEmail || currentUser.name,
     senderEmail: userEmail,
     senderName: currentUser.name || "Local Guide",
-    senderAvatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || "User")}&background=27272a&color=fff`,
+    senderAvatar: currentUser.avatar || `/api/avatar?name=${encodeURIComponent(currentUser.name || "User")}&background=27272a&color=fff`,
     text: messageText.trim(),
     timestamp: "Just now",
     createdAt: Date.now(),

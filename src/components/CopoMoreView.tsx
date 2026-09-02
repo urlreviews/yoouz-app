@@ -438,8 +438,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     alt={currentUser.name || "User Avatar"}
                     className="w-14 h-14 rounded-2xl object-cover border border-zinc-700 shadow-xs"
                     referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white text-zinc-950 rounded-full flex items-center justify-center shadow-xs">
+                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+ <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white text-zinc-950 rounded-full flex items-center justify-center shadow-xs">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </div>
                 </div>

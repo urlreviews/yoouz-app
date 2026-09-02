@@ -944,7 +944,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       author: {
         name: currentUser?.name || "Verified Reviewer",
         //handle: currentUser?.email ? `@${currentUser.email.split("@")[0]}` : "@yoouz_user",
-        avatar: currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
+        avatar: currentUser?.avatar || `/api/avatar?name=${encodeURIComponent(currentUser?.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
         isLocalGuide: true,
         localGuideLevel: 7,
         videoReviewCount: 1,
