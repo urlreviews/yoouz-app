@@ -95,6 +95,7 @@ function getResendFromEmail(fallback: string = "Yoouz <onboarding@resend.dev>"):
 
 const globalUploadsDir = path.join(process.cwd(), "uploads");
 const reviewsIndexPath = path.join(globalUploadsDir, "reviews_index.json");
+const deletedReviewsIndexPath = path.join(globalUploadsDir, "deleted_reviews_index.json");
 
 function readReviewsIndex(): any[] {
   try {
@@ -106,6 +107,47 @@ function readReviewsIndex(): any[] {
   } catch (e) {}
   return [];
 }
+
+function writeReviewsIndex(list: any[]): void {
+  try {
+    fs.writeFileSync(reviewsIndexPath, JSON.stringify(list, null, 2), "utf8");
+  } catch (e) {
+    console.warn("Failed to write reviews index:", e);
+  }
+}
+
+function readDeletedReviewsIndex(): string[] {
+  try {
+    if (fs.existsSync(deletedReviewsIndexPath)) {
+      const raw = fs.readFileSync(deletedReviewsIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function recordDeletedReviewId(id: string): void {
+  if (!id) return;
+  try {
+    const list = readDeletedReviewsIndex();
+    const strId = String(id);
+    if (!list.includes(strId)) {
+      list.push(strId);
+      fs.writeFileSync(deletedReviewsIndexPath, JSON.stringify(list, null, 2), "utf8");
+    }
+  } catch (e) {}
+}
+
+interface VideoFeedCache {
+  videos: any[];
+  lastFetched: number;
+}
+const feedCache: VideoFeedCache = {
+  videos: [],
+  lastFetched: 0
+};
+const CACHE_TTL_MS = 5 * 1000;
 
 const defaultCommunityUsers = [
   {
@@ -3744,6 +3786,109 @@ const getNoSqlTable = (col: string) => {
   }
 };
 
+async function purgeVideoFromAllStores(videoId: string) {
+  if (!videoId) return { success: false, error: "Missing videoId" };
+
+  console.log(`🗑️ [Server] Live purging video review ${videoId} from all databases and storage...`);
+
+  // 1. Record in persistent blacklist index
+  recordDeletedReviewId(videoId);
+
+  // 2. Remove from local reviews_index.json
+  try {
+    const list = readReviewsIndex();
+    const filtered = list.filter((item: any) => item && item.id !== videoId);
+    writeReviewsIndex(filtered);
+  } catch (e) {
+    console.warn("Failed to remove video from reviews_index.json:", e);
+  }
+
+  // 3. Purge from in-memory feed cache & force immediate fresh fetch
+  try {
+    feedCache.videos = feedCache.videos.filter((item: any) => item && item.id !== videoId);
+    feedCache.lastFetched = 0;
+  } catch (e) {}
+
+  // 4. Delete from Bunny Cloud Database (libSQL)
+  const bunnyClient = getBunnyDb();
+  if (bunnyClient) {
+    try {
+      await bunnyClient.execute({
+        sql: `DELETE FROM videoReviews WHERE id = ?`,
+        args: [videoId]
+      });
+      await bunnyClient.execute({
+        sql: `DELETE FROM videos WHERE id = ?`,
+        args: [videoId]
+      });
+      console.log(`🐰 [Server] BunnyDB successfully purged review ${videoId}`);
+    } catch (bErr: any) {
+      console.warn("BunnyDB video purge error:", bErr?.message || bErr);
+    }
+  }
+
+  // 5. Delete from Firestore Admin if active
+  if (adminDb) {
+    try {
+      await (adminDb as any).collection("videoReviews").doc(videoId).delete();
+      await (adminDb as any).collection("videos").doc(videoId).delete();
+      console.log(`🔥 [Server] Firestore successfully purged review ${videoId}`);
+    } catch (fErr: any) {
+      console.warn("Firestore video delete error:", fErr?.message || fErr);
+    }
+  }
+
+  // 6. Delete from PostgreSQL (Drizzle) if active
+  if (getDb()) {
+    try {
+      const table = getNoSqlTable('videoReviews');
+      if (table) await (db as any).delete(table).where(eq(table.id, videoId));
+      const vTable = getNoSqlTable('videos');
+      if (vTable) await (db as any).delete(vTable).where(eq(vTable.id, videoId));
+    } catch (sqlErr: any) {
+      console.warn("Postgres video delete error:", sqlErr?.message || sqlErr);
+    }
+  }
+
+  // 7. Remove local video files from uploads and uploads/videos
+  const serverUploadsVideosDir = path.join(globalUploadsDir, "videos");
+  const candidates = [
+    path.join(globalUploadsDir, `${videoId}.mp4`),
+    path.join(globalUploadsDir, `${videoId}.webm`),
+    path.join(globalUploadsDir, `${videoId}.mov`),
+    path.join(globalUploadsDir, videoId),
+    path.join(serverUploadsVideosDir, `${videoId}.mp4`),
+    path.join(serverUploadsVideosDir, `${videoId}.webm`),
+    path.join(serverUploadsVideosDir, `${videoId}.mov`),
+    path.join(serverUploadsVideosDir, videoId)
+  ];
+  candidates.forEach((p) => {
+    if (fs.existsSync(p)) {
+      try { fs.unlinkSync(p); } catch (e) {}
+    }
+  });
+
+  // 8. Purge from Bunny CDN storage
+  const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
+  const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME;
+  const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
+  if (bunnyAccessKey && bunnyStorageZone) {
+    const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
+    const extensions = ['.mp4', '.webm', '.mov', ''];
+    for (const ext of extensions) {
+      try {
+        const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${videoId}${ext}`;
+        fetch(bunnyUrl, {
+          method: 'DELETE',
+          headers: { 'AccessKey': bunnyAccessKey }
+        }).catch(() => {});
+      } catch (err) {}
+    }
+  }
+
+  return { success: true, videoId };
+}
+
 app.get('/api/nosql/:collection', async (req, res) => {
   try {
     const colName = req.params.collection;
@@ -3906,6 +4051,11 @@ app.get('/api/nosql/:collection', async (req, res) => {
       });
 
       items = Array.from(userMap.values());
+    }
+
+    if (colName === 'videoReviews' || colName === 'videos') {
+      const deletedIds = readDeletedReviewsIndex();
+      items = items.filter((item: any) => item && item.id && !deletedIds.includes(String(item.id)));
     }
 
     res.json(items);
@@ -4121,6 +4271,11 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   try {
     const { collection: colName, id } = req.params;
 
+    if (colName === 'videoReviews' || colName === 'videos') {
+      await purgeVideoFromAllStores(id);
+      return res.json({ success: true, id, message: "Video permanently purged live." });
+    }
+
     // 1. Delete from Bunny Database (Cloud libSQL) if configured
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
@@ -4139,7 +4294,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       } catch (fErr) {}
     }
 
-    // 2. Delete from Drizzle if active
+    // 3. Delete from Drizzle if active
     if (getDb()) {
       try {
         const table = getNoSqlTable(colName);
@@ -4147,58 +4302,6 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           await db.delete(table).where(eq(table.id, id));
         }
       } catch (sqlErr) {}
-    }
-
-    // 3. If deleting a video review, purge local files and index
-    if (colName === 'videoReviews' || colName === 'videos') {
-      // 1. Remove from local reviews_index.json
-      const reviewsIndexPath = path.join(uploadsDir, "reviews_index.json");
-      try {
-        if (fs.existsSync(reviewsIndexPath)) {
-          const raw = fs.readFileSync(reviewsIndexPath, "utf8");
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            const filtered = parsed.filter((item: any) => item.id !== id);
-            fs.writeFileSync(reviewsIndexPath, JSON.stringify(filtered, null, 2), "utf8");
-          }
-        }
-      } catch (e) {}
-
-      // 2. Remove local files from disk
-      const serverUploadsVideosDir = path.join(process.cwd(), "uploads", "videos");
-      const candidates = [
-        path.join(uploadsDir, `${id}.mp4`),
-        path.join(uploadsDir, `${id}.webm`),
-        path.join(uploadsDir, `${id}.mov`),
-        path.join(uploadsDir, id),
-        path.join(serverUploadsVideosDir, `${id}.mp4`),
-        path.join(serverUploadsVideosDir, `${id}.webm`),
-        path.join(serverUploadsVideosDir, `${id}.mov`),
-        path.join(serverUploadsVideosDir, id)
-      ];
-      candidates.forEach((p) => {
-        if (fs.existsSync(p)) {
-          try { fs.unlinkSync(p); } catch (e) {}
-        }
-      });
-
-      // 3. Purge from Bunny CDN if configured
-      const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
-      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME;
-      const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
-      if (bunnyAccessKey && bunnyStorageZone) {
-        const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-        const extensions = ['.mp4', '.webm', '.mov', ''];
-        for (const ext of extensions) {
-          try {
-            const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${id}${ext}`;
-            await fetch(bunnyUrl, {
-              method: 'DELETE',
-              headers: { 'AccessKey': bunnyAccessKey }
-            });
-          } catch (err) {}
-        }
-      }
     }
 
     res.json({ success: true });
@@ -4538,26 +4641,6 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     });
   });
 
-  const reviewsIndexPath = path.join(serverUploadsDir, "reviews_index.json");
-  const readReviewsIndex = (): any[] => {
-    try {
-      if (fs.existsSync(reviewsIndexPath)) {
-        const raw = fs.readFileSync(reviewsIndexPath, "utf8");
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {}
-    return [];
-  };
-
-  const writeReviewsIndex = (list: any[]) => {
-    try {
-      fs.writeFileSync(reviewsIndexPath, JSON.stringify(list, null, 2), "utf8");
-    } catch (e) {
-      console.warn("Failed to write reviews index:", e);
-    }
-  };
-
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
     "districtuae.com": {
       bannerUrl: "https://www.districtuae.com/og-default.jpeg",
@@ -4667,22 +4750,13 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     };
   };
 
-  // Memory Cache for Firestore reviews to drastically reduce read calls and prevent quota exhaustion
-  interface VideoFeedCache {
-    videos: any[];
-    lastFetched: number;
-  }
-  const feedCache: VideoFeedCache = {
-    videos: [],
-    lastFetched: 0
-  };
-  const CACHE_TTL_MS = 5 * 1000; // 5 seconds cache for real-time responsiveness
-
   // Get Video Feed endpoint (combines server index with Firestore and uploaded videos with memory caching & write-back resiliency)
   app.get("/api/videos/feed", async (_req, res) => {
     try {
       const now = Date.now();
-      const localList = readReviewsIndex();
+      const deletedIds = readDeletedReviewsIndex();
+      const deletedSet = new Set(deletedIds);
+      const localList = readReviewsIndex().filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
       
       // If we have a valid memory cache AND we are not due for a live fetch, serve from cache
       const isCacheValid = (now - feedCache.lastFetched < CACHE_TTL_MS) && feedCache.videos.length > 0;
@@ -4691,16 +4765,16 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         // Merge memory cache with localList (in case any brand-new reviews were just saved to the local file)
         const map = new Map<string, any>();
         feedCache.videos.forEach((r: any) => {
-          if (r && r.id) map.set(r.id, r);
+          if (r && r.id && !deletedSet.has(String(r.id))) map.set(r.id, r);
         });
         localList.forEach((r: any) => {
-          if (r && r.id && r.videoUrl) {
+          if (r && r.id && r.videoUrl && !deletedSet.has(String(r.id))) {
             map.set(r.id, { ...(map.get(r.id) || {}), ...r });
           }
         });
         const merged = Array.from(map.values());
         merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-        return res.json({ success: true, videos: merged });
+        return res.json({ success: true, videos: merged, deletedIds });
       }
 
       // Otherwise, fetch from sources to refresh cache
@@ -4708,7 +4782,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       
       // 1. Populate from local file baseline
       localList.forEach((r: any) => {
-        if (r && r.id && r.videoUrl) map.set(r.id, r);
+        if (r && r.id && r.videoUrl && !deletedSet.has(String(r.id))) map.set(r.id, r);
       });
 
       // 2. Fetch live records from Bunny Cloud Database (Primary persistent store)
@@ -4718,7 +4792,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         try {
           const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY createdAt DESC LIMIT 100");
           bunnyRows.rows.forEach((r: any) => {
-            if (r && r.id) {
+            if (r && r.id && !deletedSet.has(String(r.id))) {
               const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
               const existing = map.get(r.id) || {};
               const mergedAuthor = {
@@ -4756,7 +4830,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         try {
           const dbRecords = await db.select().from(firestore_video_reviews);
           dbRecords.forEach((r: any) => {
-            if (r && r.id && r.data) {
+            if (r && r.id && r.data && !deletedSet.has(String(r.id))) {
               const existing = map.get(r.id) || {};
               const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
               const incomingAuthor = (typeof r.data.author === 'object' && r.data.author) ? r.data.author : {};
@@ -4779,7 +4853,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           const snapshot = await adminDb.collection("videoReviews").get();
           snapshot.forEach((docSnap: any) => {
             const data = docSnap.data();
-            if (data) {
+            if (data && !deletedSet.has(String(docSnap.id))) {
               const existing = map.get(docSnap.id) || {};
               const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
               const incomingAuthor = (typeof data.author === 'object' && data.author) ? data.author : {};
@@ -4800,16 +4874,16 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           if (feedCache.videos.length > 0) {
             const cachedMap = new Map<string, any>();
             feedCache.videos.forEach((r: any) => {
-              if (r && r.id) cachedMap.set(r.id, r);
+              if (r && r.id && !deletedSet.has(String(r.id))) cachedMap.set(r.id, r);
             });
             localList.forEach((r: any) => {
-              if (r && r.id && r.videoUrl) {
+              if (r && r.id && r.videoUrl && !deletedSet.has(String(r.id))) {
                 cachedMap.set(r.id, { ...(cachedMap.get(r.id) || {}), ...r });
               }
             });
             const mergedCached = Array.from(cachedMap.values());
             mergedCached.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-            return res.json({ success: true, videos: mergedCached });
+            return res.json({ success: true, videos: mergedCached, deletedIds });
           }
         }
       }
@@ -4835,7 +4909,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         feedCache.lastFetched = now - CACHE_TTL_MS + (60 * 1000);
       }
 
-      return res.json({ success: true, videos: merged });
+      return res.json({ success: true, videos: merged, deletedIds });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -5174,6 +5248,180 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       return res.json({ success: true, videoId, review: updatedReview });
     } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Live video deletion endpoint for creators/users (purges from BunnyDB, Postgres, Firestore, files, and updates indexes immediately)
+  app.post(["/api/videos/delete", "/api/videos/:id/delete"], async (req, res) => {
+    try {
+      const videoId = req.params.id || req.body?.videoId || req.body?.id;
+      if (!videoId) {
+        return res.status(400).json({ error: "Missing videoId" });
+      }
+      const result = await purgeVideoFromAllStores(String(videoId));
+      return res.json({ success: true, videoId: String(videoId), message: "Video permanently deleted across all stores." });
+    } catch (err: any) {
+      console.error("Live video delete error:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete(["/api/videos/:id", "/api/videos/delete/:id"], async (req, res) => {
+    try {
+      const videoId = req.params.id;
+      if (!videoId) {
+        return res.status(400).json({ error: "Missing videoId" });
+      }
+      const result = await purgeVideoFromAllStores(String(videoId));
+      return res.json({ success: true, videoId: String(videoId), message: "Video permanently deleted across all stores." });
+    } catch (err: any) {
+      console.error("Live video delete error:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Live User Profile Update (propagates to users table, videoReviews authors, memory feed cache, and indexes for instant global updates)
+  app.post(["/api/users/update-profile", "/api/users/profile"], async (req, res) => {
+    try {
+      const { uid, id: bodyId, email, name, handle, avatar, bio, banner, location } = req.body || {};
+      const targetUserId = uid || bodyId;
+      if (!targetUserId && !email && !name) {
+        return res.status(400).json({ error: "Missing user identification (uid, email, or name)" });
+      }
+
+      console.log(`👤 [Server] Live updating profile for user ${targetUserId || email || name}...`);
+
+      const nextName = (name || "").trim();
+      const nextHandle = (handle || "").trim();
+      const nextAvatar = (avatar || "").trim();
+      const nextBio = (bio || "").trim();
+      const nextBanner = (banner || "").trim();
+      const nextLocation = (location || "").trim();
+
+      const profileObj = {
+        id: targetUserId || `usr-${Date.now()}`,
+        uid: targetUserId || `usr-${Date.now()}`,
+        email: (email || "").toLowerCase().trim(),
+        name: nextName,
+        handle: nextHandle.startsWith("@") ? nextHandle : (nextHandle ? `@${nextHandle}` : `@${nextName.toLowerCase().replace(/[^a-z0-9]/g, "")}`),
+        avatar: nextAvatar,
+        bio: nextBio,
+        banner: nextBanner,
+        location: nextLocation,
+        updatedAt: Date.now()
+      };
+
+      // 1. Update Bunny Database users table and cascade to videoReviews authors
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          await bunnyDb.execute({
+            sql: `INSERT INTO users (id, email, name, avatar, bio, data, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    avatar = excluded.avatar,
+                    bio = excluded.bio,
+                    data = excluded.data,
+                    updatedAt = CURRENT_TIMESTAMP`,
+            args: [profileObj.id, profileObj.email, profileObj.name, profileObj.avatar, profileObj.bio, JSON.stringify(profileObj)]
+          });
+
+          // Cascade author updates across all existing videos in BunnyDB
+          const matchingReviews = await bunnyDb.execute({
+            sql: `SELECT id, data FROM videoReviews WHERE userId = ? OR authorName = ?`,
+            args: [targetUserId || "", profileObj.name]
+          });
+
+          for (const row of matchingReviews.rows) {
+            if (row && row.id) {
+              let rData: any = {};
+              try {
+                rData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+              } catch (e) {}
+
+              const updatedAuthor = {
+                ...(rData.author || {}),
+                name: profileObj.name || rData.author?.name,
+                handle: profileObj.handle || rData.author?.handle,
+                avatar: profileObj.avatar || rData.author?.avatar,
+                bio: profileObj.bio || rData.author?.bio,
+                banner: profileObj.banner || rData.author?.banner,
+                location: profileObj.location || rData.author?.location
+              };
+
+              const newRowData = {
+                ...rData,
+                authorName: profileObj.name || rData.authorName,
+                authorAvatar: profileObj.avatar || rData.authorAvatar,
+                author: updatedAuthor
+              };
+
+              await bunnyDb.execute({
+                sql: `UPDATE videoReviews SET authorName = ?, authorAvatar = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [profileObj.name, profileObj.avatar, JSON.stringify(newRowData), row.id]
+              });
+            }
+          }
+        } catch (bErr: any) {
+          console.warn("BunnyDB profile update notice:", bErr?.message || bErr);
+        }
+      }
+
+      // 2. Cascade author updates into local reviews_index.json
+      try {
+        const localIndex = readReviewsIndex();
+        let indexUpdated = false;
+        localIndex.forEach((r: any) => {
+          const isMatch = (targetUserId && (r.userId === targetUserId || r.author?.id === targetUserId)) ||
+                          (profileObj.name && (r.authorName === profileObj.name || r.author?.name === profileObj.name)) ||
+                          (profileObj.email && r.author?.email === profileObj.email);
+          if (isMatch) {
+            indexUpdated = true;
+            if (profileObj.name) {
+              r.authorName = profileObj.name;
+              if (r.author) r.author.name = profileObj.name;
+            }
+            if (profileObj.avatar) {
+              r.authorAvatar = profileObj.avatar;
+              if (r.author) r.author.avatar = profileObj.avatar;
+            }
+            if (profileObj.handle && r.author) r.author.handle = profileObj.handle;
+            if (profileObj.bio && r.author) r.author.bio = profileObj.bio;
+            if (profileObj.banner && r.author) r.author.banner = profileObj.banner;
+            if (profileObj.location && r.author) r.author.location = profileObj.location;
+          }
+        });
+        if (indexUpdated) {
+          writeReviewsIndex(localIndex);
+        }
+      } catch (e) {}
+
+      // 3. Clear feed cache to force instant fresh fetch on next client poll
+      feedCache.lastFetched = 0;
+
+      // 4. Update Firestore users collection if active
+      if (adminDb) {
+        try {
+          await adminDb.collection("users").doc(profileObj.id).set(profileObj, { merge: true });
+        } catch (fErr) {}
+      }
+
+      // 5. Update Postgres if active
+      if (getDb()) {
+        try {
+          const userTable = getNoSqlTable('users');
+          if (userTable) {
+            await (db as any).insert(userTable).values({ id: profileObj.id, data: profileObj })
+              .onConflictDoUpdate({ target: (userTable as any).id, set: { data: profileObj } });
+          }
+        } catch (sErr) {}
+      }
+
+      return res.json({ success: true, profile: profileObj, message: "Profile updated globally across all feeds." });
+    } catch (err: any) {
+      console.error("Profile update error:", err);
       return res.status(500).json({ error: err.message });
     }
   });
@@ -5994,68 +6242,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         return res.status(400).json({ error: "Missing videoId" });
       }
 
-      // Remove from server index
-      const list = readReviewsIndex();
-      const filtered = list.filter((item: any) => item.id !== videoId);
-      writeReviewsIndex(filtered);
-
-      // 1. Delete from PostgreSQL
-      try {
-        const table = getNoSqlTable('videoReviews');
-        if (table) await db.delete(table).where(eq(table.id, videoId));
-      } catch (err) {
-        console.error("Postgres delete error:", err);
-      }
-
-      // 1b. Delete from Bunny Database (libSQL)
-      const bunnyClient = getBunnyDb();
-      if (bunnyClient) {
-        try {
-          await bunnyClient.execute({
-            sql: `DELETE FROM videoReviews WHERE id = ?`,
-            args: [videoId]
-          });
-        } catch (bErr) {
-          console.warn("BunnyDB single delete error:", bErr);
-        }
-      }
-
-      // 2. Remove local video files from uploads and uploads/videos
-      const serverUploadsVideosDir = path.join(process.cwd(), "uploads", "videos");
-      const candidates = [
-        path.join(uploadsDir, `${videoId}.mp4`),
-        path.join(uploadsDir, `${videoId}.webm`),
-        path.join(uploadsDir, `${videoId}.mov`),
-        path.join(uploadsDir, videoId),
-        path.join(serverUploadsVideosDir, `${videoId}.mp4`),
-        path.join(serverUploadsVideosDir, `${videoId}.webm`),
-        path.join(serverUploadsVideosDir, `${videoId}.mov`),
-        path.join(serverUploadsVideosDir, videoId)
-      ];
-      candidates.forEach((p) => {
-        if (fs.existsSync(p)) {
-          try { fs.unlinkSync(p); } catch (e) {}
-        }
-      });
-
-      // 3. Purge from Bunny CDN if configured
-      const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
-      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME;
-      const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
-      if (bunnyAccessKey && bunnyStorageZone) {
-        const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-        const extensions = ['.mp4', '.webm', '.mov', ''];
-        for (const ext of extensions) {
-          try {
-            const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${videoId}${ext}`;
-            await fetch(bunnyUrl, {
-              method: 'DELETE',
-              headers: { 'AccessKey': bunnyAccessKey }
-            });
-          } catch (err) {}
-        }
-      }
-
+      await purgeVideoFromAllStores(String(videoId));
       return res.json({ success: true, message: `Video ${videoId} deleted successfully without affecting user account` });
     } catch (err: any) {
       console.error("Admin video delete error:", err);
@@ -6071,75 +6258,11 @@ app.post("/api/videos/save-review", async (req, res) => {
         return res.status(400).json({ error: "Missing videoIds array" });
       }
 
-      // Remove from server index
-      const list = readReviewsIndex();
-      const filtered = list.filter((item: any) => !videoIds.includes(item.id));
-      writeReviewsIndex(filtered);
-
-      // Delete from PostgreSQL
-      try {
-        const table = getNoSqlTable('videoReviews');
-        if (table) {
-          for (const id of videoIds) {
-            await db.delete(table).where(eq(table.id, id));
-          }
-        }
-      } catch (err) {
-        console.error("Postgres bulk delete error:", err);
-      }
-
-      // Delete from Bunny Database (libSQL)
-      const bunnyClient = getBunnyDb();
-      if (bunnyClient) {
-        try {
-          for (const id of videoIds) {
-            await bunnyClient.execute({
-              sql: `DELETE FROM videoReviews WHERE id = ?`,
-              args: [id]
-            });
-          }
-        } catch (bErr) {
-          console.warn("BunnyDB bulk delete error:", bErr);
+      for (const id of videoIds) {
+        if (id) {
+          await purgeVideoFromAllStores(String(id));
         }
       }
-
-      const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
-      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME;
-      const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
-
-      const serverUploadsVideosDir = path.join(process.cwd(), "uploads", "videos");
-
-      videoIds.forEach((id: string) => {
-        const candidates = [
-          path.join(uploadsDir, `${id}.mp4`),
-          path.join(uploadsDir, `${id}.webm`),
-          path.join(uploadsDir, `${id}.mov`),
-          path.join(uploadsDir, id),
-          path.join(serverUploadsVideosDir, `${id}.mp4`),
-          path.join(serverUploadsVideosDir, `${id}.webm`),
-          path.join(serverUploadsVideosDir, `${id}.mov`),
-          path.join(serverUploadsVideosDir, id)
-        ];
-        candidates.forEach((p) => {
-          if (fs.existsSync(p)) {
-            try { fs.unlinkSync(p); } catch (e) {}
-          }
-        });
-
-        if (bunnyAccessKey && bunnyStorageZone) {
-          const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-          const extensions = ['.mp4', '.webm', '.mov', ''];
-          extensions.forEach(async (ext) => {
-            try {
-              const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${id}${ext}`;
-              await fetch(bunnyUrl, {
-                method: 'DELETE',
-                headers: { 'AccessKey': bunnyAccessKey }
-              });
-            } catch (err) {}
-          });
-        }
-      });
 
       return res.json({ success: true, count: videoIds.length });
     } catch (err: any) {

@@ -74,6 +74,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [videoToDeleteInDrawer, setVideoToDeleteInDrawer] = useState<VideoReview | null>(null);
   const [copiedNotification, setCopiedNotification] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -204,7 +205,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
     if (!authorIdentifier) return;
 
-    if (allUsers && allUsers.length > 0) {
+    if (isOwner && currentUser) {
+      setLiveUserProfile((prev) => ({ ...(prev || {}), ...currentUser }));
+    } else if (allUsers && allUsers.length > 0) {
       const matched = allUsers.find((u: any) => {
         const uName = (u.name || "").trim().toLowerCase();
         const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
@@ -233,10 +236,24 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       })
       .catch(() => {});
 
+    // Listen for live global profile updates
+    const handleProfileUpdate = (e: any) => {
+      const p = e?.detail;
+      if (!p) return;
+      const pName = (p.name || "").trim().toLowerCase();
+      const pHandle = (p.handle || "").replace(/^@+/, "").trim().toLowerCase();
+      const pEmail = (p.email || "").split("@")[0].toLowerCase();
+      if (pName === authorIdentifier || pHandle === authorIdentifier || pEmail === authorIdentifier) {
+        setLiveUserProfile((prev) => ({ ...(prev || {}), ...p }));
+      }
+    };
+    window.addEventListener("copo-profile-updated", handleProfileUpdate);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("copo-profile-updated", handleProfileUpdate);
     };
-  }, [author?.name, allUsers]);
+  }, [author?.name, allUsers, isOwner, currentUser]);
 
   if (!author) return null;
 
@@ -417,7 +434,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanName = currentUser?.name || "Reviewer";
+    const cleanName = editName.trim() || currentUser?.name || "Reviewer";
     
     // Construct premium location string from structured fields
     const locParts = [editCity.trim(), editState.trim(), editCountry.trim()].filter(Boolean);
@@ -1006,6 +1023,19 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                           <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                         </div>
+                        {isOwner && onDeleteVideo && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVideoToDeleteInDrawer(v);
+                            }}
+                            className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-red-600/90 text-zinc-300 hover:text-white backdrop-blur-xs transition-colors z-10 cursor-pointer shadow-xs"
+                            title="Delete video review"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </button>
+                        )}
                         <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
                           <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
                             {getDisplayUrlAsDomain(v)}
@@ -1174,12 +1204,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 </div>
                 {bannerError && <p className="text-xs text-zinc-300 font-semibold">{bannerError}</p>}
               </div>
-              {/* Name Field (Read-only) */}
+              {/* Name Field */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">Name</label>
-                <div className="px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl">
-                  <span className="text-sm font-semibold text-zinc-300">{currentUser?.name || "Reviewer"}</span>
-                </div>
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">Display Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value.slice(0, 50))}
+                  placeholder="Your Name"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                />
               </div>
 
               {/* Bio Field */}
@@ -1320,6 +1354,45 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         avatarUrl={author.avatar || (isOwner && currentUser?.avatar ? currentUser.avatar : undefined)}
         bannerUrl={(isOwner && currentUser?.banner ? currentUser.banner : undefined)}
       />
+
+      {/* Video Delete Confirmation Modal */}
+      {videoToDeleteInDrawer && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1.5">
+              <h3 className="text-lg font-bold text-white tracking-tight">Delete Video Review?</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                This will permanently delete your review for <span className="text-zinc-200 font-semibold">{videoToDeleteInDrawer.placeName || "this place"}</span> globally from all feeds, databases, and storage.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setVideoToDeleteInDrawer(null)}
+                className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-sm transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const vidId = videoToDeleteInDrawer.id;
+                  setVideoToDeleteInDrawer(null);
+                  if (vidId && onDeleteVideo) {
+                    onDeleteVideo(vidId);
+                  }
+                }}
+                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-600/30 cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

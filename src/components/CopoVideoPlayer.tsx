@@ -102,11 +102,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
   // Edit Rating State
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
+  const [videoConfirmDelete, setVideoConfirmDelete] = useState<VideoReview | null>(null);
   const [editRating, setEditRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [localBlobUrls, setLocalBlobUrls] = useState<Record<string, string>>({});
+
+  // Safety clamp if a video deletion causes currentIndex to exceed new feed bounds
+  useEffect(() => {
+    if (videos.length > 0 && currentIndex >= videos.length) {
+      onSelectVideoIndex(Math.max(0, videos.length - 1));
+    }
+  }, [videos.length, currentIndex, onSelectVideoIndex]);
 
   // Asynchronously resolve IndexedDB blob URLs for all loaded videos to feed them synchronously to the children cards
   useEffect(() => {
@@ -749,10 +757,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   <button
                     id="btn-more-option-delete"
                     onClick={() => {
-                      const idToDelete = moreMenuVideo.id;
+                      const v = moreMenuVideo;
                       setMoreMenuVideo(null);
-                      if (idToDelete && onDeleteVideo) {
-                        onDeleteVideo(idToDelete);
+                      if (v) {
+                        setVideoConfirmDelete(v);
                       }
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
@@ -1032,6 +1040,47 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Creator Review Permanent Deletion Confirmation Modal */}
+      {videoConfirmDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1.5">
+              <h3 className="text-lg font-bold text-white tracking-tight">Delete Video Review?</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                This will permanently delete your review for <span className="text-zinc-200 font-semibold">{videoConfirmDelete.placeName || "this place"}</span> globally from all feeds, databases, and storage.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                id="btn-cancel-delete-video"
+                onClick={() => setVideoConfirmDelete(null)}
+                className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-sm transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-delete-video"
+                onClick={() => {
+                  const id = videoConfirmDelete.id;
+                  setVideoConfirmDelete(null);
+                  if (id && onDeleteVideo) {
+                    onDeleteVideo(id);
+                  }
+                }}
+                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-600/30 cursor-pointer"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>

@@ -1144,7 +1144,24 @@ export function App() {
         localStorage.setItem("copo_user_profile", JSON.stringify(nextProfile));
         const userUid = auth.currentUser?.uid || (nextProfile.email ? nextProfile.email.replace(/[^a-zA-Z0-9]/g, '_') : 'guest');
         
-        // Mirror to BunnyDB (Cloud NoSQL)
+        // 1. Live server profile update (propagates to users table, videoReviews author, memory feed cache, and indexes)
+        fetch('/api/users/update-profile', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uid: userUid,
+            id: userUid,
+            name: nextProfile.name,
+            handle: (nextProfile as any).handle || "",
+            email: nextProfile.email,
+            avatar: nextProfile.avatar,
+            banner: (nextProfile as any).banner || "",
+            bio: nextProfile.bio,
+            location: nextProfile.location || ""
+          })
+        }).catch((err) => console.warn("Live profile update error:", err));
+
+        // 2. Mirror to BunnyDB (Cloud NoSQL)
         fetch(`/api/nosql/users/${userUid}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1164,7 +1181,10 @@ export function App() {
           })
         }).catch(() => {});
 
-        // Save to Firebase Firestore database
+        // 3. Dispatch global profile event
+        window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: nextProfile }));
+
+        // 4. Save to Firebase Firestore database
         if (auth.currentUser && db) {
           setDoc(doc(db, "users", auth.currentUser.uid), {
             uid: auth.currentUser.uid,
@@ -1271,20 +1291,43 @@ export function App() {
   };
 
   const handleDeleteUserVideo = async (vidId: string) => {
+    if (!vidId) return;
     try {
+      console.log(`🗑️ [App] Deleting video ${vidId} live across all stores...`);
+
+      // 1. Instantly remove from local active state
+      setVideos((prev) => prev.filter((v) => v.id !== vidId));
+
+      // 2. Add to client deleted IDs cache
+      try {
+        const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+        const deletedList = JSON.parse(deletedStr);
+        if (!deletedList.includes(vidId)) {
+          deletedList.push(vidId);
+          localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedList));
+        }
+      } catch (e) {}
+
+      // 3. Broadcast window event for any open feed listeners
+      window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: vidId } }));
+
+      // 4. Live Server API call: permanently purge across BunnyDB, files, Bunny CDN, reviews_index.json & feedCache
+      fetch("/api/videos/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId: vidId })
+      }).catch((e) => console.warn("Live video deletion notice:", e));
+
+      // 5. Also issue DELETE to nosql proxy endpoint
+      fetch(`/api/nosql/videoReviews/${encodeURIComponent(vidId)}`, {
+        method: "DELETE"
+      }).catch(() => {});
+
+      // 6. Delete from client Firestore if configured
       if (db) {
         await deleteDoc(doc(db, "videoReviews", vidId)).catch(() => {});
         await deleteDoc(doc(db, "videos", vidId)).catch(() => {});
       }
-      
-      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-      const deletedList = JSON.parse(deletedStr);
-      if (!deletedList.includes(vidId)) {
-        deletedList.push(vidId);
-        localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedList));
-      }
-      
-      setVideos(prev => prev.filter(v => v.id !== vidId));
     } catch(e) {
       console.warn("Delete video error:", e);
     }

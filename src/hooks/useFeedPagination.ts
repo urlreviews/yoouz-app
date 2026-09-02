@@ -85,44 +85,69 @@ export function useFeedPagination() {
         const res = await fetch(`/api/videos/feed?t=${Date.now()}`);
         if (res.ok && active) {
           const data = await res.json();
-          if (data && Array.isArray(data.videos) && data.videos.length > 0) {
-            const valid = data.videos.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
+          const serverDeletedIds: string[] = Array.isArray(data?.deletedIds) ? data.deletedIds : [];
+          const allDeletedSet = new Set([...deletedIds, ...serverDeletedIds]);
+
+          if (serverDeletedIds.length > 0) {
+            try {
+              localStorage.setItem("copo_deleted_videos", JSON.stringify(Array.from(allDeletedSet)));
+            } catch (e) {}
+          }
+
+          if (data && Array.isArray(data.videos)) {
+            const valid = data.videos
+              .filter((v: any) => v && v.id && !allDeletedSet.has(String(v.id)))
+              .map(normalizeReview);
             
             setVideos((prev) => {
-              const map = new Map<string, VideoReview>();
-              
-              // Seed map with existing state
-              prev.forEach(v => {
-                map.set(v.id, v);
-              });
-
-              // Server videos update matching IDs with latest ratings, views, likes, etc.
-              valid.forEach(v => {
-                const existing = map.get(v.id);
-                if (existing) {
-                  map.set(v.id, {
-                    ...existing,
-                    ...v,
-                    rating: v.rating !== undefined ? v.rating : existing.rating,
-                    placeRating: v.placeRating !== undefined ? v.placeRating : (v.rating !== undefined ? v.rating : existing.placeRating),
-                    likes: typeof v.likes === 'number' ? v.likes : existing.likes,
-                    views: typeof v.views === 'number' ? v.views : existing.views,
-                    isLiked: existing.isLiked !== undefined ? existing.isLiked : v.isLiked,
-                    isBookmarked: existing.isBookmarked !== undefined ? existing.isBookmarked : v.isBookmarked
+              // Track local optimistic state (likes, bookmarks, views)
+              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; views?: number }>();
+              prev.forEach((v) => {
+                if (v && v.id) {
+                  interactionMap.set(v.id, {
+                    isLiked: v.isLiked,
+                    isBookmarked: v.isBookmarked,
+                    likes: v.likes,
+                    views: v.views
                   });
-                } else {
-                  map.set(v.id, v);
                 }
               });
-              
-              const merged = Array.from(map.values());
+
+              // Keep any fresh local pending uploads that haven't hit the server feed yet (within last 60s)
+              const nowMs = Date.now();
+              const pendingLocalVideos = prev.filter(
+                (v) =>
+                  v &&
+                  v.id &&
+                  !allDeletedSet.has(String(v.id)) &&
+                  (v as any).isLocalUpload &&
+                  nowMs - (v.createdAtMs || 0) < 60000 &&
+                  !valid.some((sv) => sv.id === v.id)
+              );
+
+              // Server videos are authoritative: if a video was deleted on server, it is dropped here!
+              const mergedServerVideos = valid.map((v) => {
+                const local = interactionMap.get(v.id);
+                if (local) {
+                  return {
+                    ...v,
+                    isLiked: local.isLiked !== undefined ? local.isLiked : v.isLiked,
+                    isBookmarked: local.isBookmarked !== undefined ? local.isBookmarked : v.isBookmarked,
+                    likes: typeof local.likes === 'number' && local.likes > v.likes ? local.likes : v.likes,
+                    views: typeof local.views === 'number' && local.views > v.views ? local.views : v.views
+                  };
+                }
+                return v;
+              });
+
+              const merged = [...pendingLocalVideos, ...mergedServerVideos];
               merged.sort((a, b) => {
                 const aTime = a.createdAtMs || (a.id && a.id.startsWith('rev-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
                 const bTime = b.createdAtMs || (b.id && b.id.startsWith('rev-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
                 return bTime - aTime;
               });
               
-              // Persist to cache
+              // Persist fresh feed to cache
               try { localStorage.setItem("yoouz_cached_videos_v20", JSON.stringify(merged.slice(0, 50))); } catch(e){}
               
               return merged;
@@ -143,6 +168,15 @@ export function useFeedPagination() {
         setTimeout(() => { if (active) setIsLoading(false); }, 1500);
       }
     };
+
+    // Listen for live video deletion events in current window
+    const handleVideoDeletedEvent = (e: any) => {
+      const deletedId = e?.detail?.videoId;
+      if (deletedId) {
+        setVideos((prev) => prev.filter((v) => v.id !== deletedId));
+      }
+    };
+    window.addEventListener("copo-video-deleted", handleVideoDeletedEvent);
 
     // Initial load
     loadData(false);
@@ -167,6 +201,7 @@ export function useFeedPagination() {
     return () => {
       active = false;
       clearInterval(interval);
+      window.removeEventListener("copo-video-deleted", handleVideoDeletedEvent);
       window.removeEventListener("focus", handleVisibilityOrFocus);
       document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
     };
