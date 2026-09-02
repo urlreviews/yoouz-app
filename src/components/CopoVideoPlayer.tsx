@@ -91,11 +91,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = videos[currentIndex] || videos[0];
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
 
   // Reset feed initiation when switching subtabs or context
   useEffect(() => {
-    setHasUserStartedFeed(false);
+    setHasUserStartedFeed(true);
   }, [activeSubTab, contextKey]);
 
   // Edit Rating State
