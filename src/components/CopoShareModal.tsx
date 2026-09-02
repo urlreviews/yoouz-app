@@ -8,7 +8,6 @@ import {
   Check,
   Share2,
   Flag,
-  Linkedin,
   Code,
   ExternalLink,
   Sparkles,
@@ -369,12 +368,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       onClick: () => window.open(`https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(title || "Yoouz Video Review")}`, "_blank", "noopener,noreferrer")
     },
     {
-      id: "linkedin",
-      name: "LinkedIn",
-      icon: <Linkedin className="w-5.5 h-5.5" />,
-      onClick: () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, "_blank", "noopener,noreferrer")
-    },
-    {
       id: "sms",
       name: "Messages",
       icon: <MessageSquare className="w-5.5 h-5.5" />,
@@ -470,12 +463,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       name: "Reddit",
       icon: allSharePlatforms.find((p) => p.id === "reddit")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "reddit")?.onClick
-    },
-    {
-      id: "linkedin",
-      name: "LinkedIn",
-      icon: allSharePlatforms.find((p) => p.id === "linkedin")?.icon,
-      onClick: allSharePlatforms.find((p) => p.id === "linkedin")?.onClick
     },
     {
       id: "email",

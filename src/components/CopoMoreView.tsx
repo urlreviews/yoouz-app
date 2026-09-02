@@ -26,7 +26,6 @@ import {
   FileText,
   Youtube,
   Instagram,
-  Linkedin,
   Facebook,
   MessageSquare,
   Compass,
@@ -1281,15 +1280,6 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               title="Instagram"
             >
               <Instagram className="w-4 h-4" />
-            </a>
-            <a
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer"
-              title="LinkedIn"
-            >
-              <Linkedin className="w-4 h-4" />
             </a>
             <a
               href="https://www.facebook.com/yoouz.official/"

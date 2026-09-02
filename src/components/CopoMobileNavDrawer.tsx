@@ -22,7 +22,6 @@ import {
   Sparkles,
   Youtube,
   Instagram,
-  Linkedin,
   Facebook
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
@@ -507,15 +506,6 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 title="Instagram"
               >
                 <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-all cursor-pointer"
-                title="LinkedIn"
-              >
-                <Linkedin className="w-4 h-4" />
               </a>
               <a
                 href="https://www.facebook.com/yoouz.official/"

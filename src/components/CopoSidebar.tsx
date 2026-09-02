@@ -13,7 +13,6 @@ import {
   Menu,
   Youtube,
   Instagram,
-  Linkedin,
   Facebook,
   Video,
   Shield,
@@ -192,15 +191,6 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               title="Instagram"
             >
               <Instagram className="w-3.5 h-3.5" strokeWidth={2} />
-            </a>
-            <a
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white flex items-center justify-center transition-all shadow-3xs cursor-pointer active:scale-90"
-              title="LinkedIn"
-            >
-              <Linkedin className="w-3.5 h-3.5" strokeWidth={2} />
             </a>
             <a
               href="https://www.facebook.com/yoouz.official/"
