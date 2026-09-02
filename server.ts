@@ -2641,57 +2641,69 @@ async function startServer() {
     .burst-heart.active { transform: translate(-50%, -50%) scale(1.4); opacity: 1; animation: heartFade 0.7s forwards; }
     @keyframes heartFade { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; } }
 
+    /* Hide all scrollbars across browsers */
+    *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
+    * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+
     /* Backdrop Overlay for Drawers */
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
     .modal-overlay.open { opacity: 1; pointer-events: auto; }
 
     /* Yoouz Hamburger Navigation Drawer (Slide from Left) - 100% Mobile Parity */
-    .nav-drawer { position: absolute; top: 0; bottom: 0; left: 0; width: 85%; max-width: 340px; background: #09090b; border-right: 1px solid rgba(255,255,255,0.12); z-index: 50; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 12px 0 40px rgba(0,0,0,0.85); overflow: hidden; }
+    .nav-drawer { position: absolute; top: 0; bottom: 0; left: 0; width: 85%; max-width: 340px; height: 100%; background: #09090b; border-right: 1px solid rgba(39, 39, 42, 0.9); z-index: 50; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 20px 0 50px rgba(0,0,0,0.9); overflow: hidden; user-select: none; }
     .nav-drawer.open { transform: translateX(0); }
     
-    .nav-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 14px; border-bottom: 1px solid rgba(255,255,255,0.1); background: #09090b; position: sticky; top: 0; z-index: 2; }
-    .nav-brand-group { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; }
-    .nav-logo-box { width: 38px; height: 38px; border-radius: 12px; background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(255,255,255,0.15); flex-shrink: 0; }
+    .nav-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; border-bottom: 1px solid rgba(39, 39, 42, 0.8); background: rgba(9, 9, 11, 0.95); position: sticky; top: 0; z-index: 20; }
+    .nav-brand-group { display: flex; items-center: center; gap: 12px; text-decoration: none; color: #fff; cursor: pointer; }
+    .nav-logo-box { width: 40px; height: 40px; border-radius: 16px; background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
     .nav-brand-col { display: flex; flex-direction: column; }
     .nav-brand-row { display: flex; align-items: center; gap: 6px; }
-    .nav-brand-title { font-size: 17px; font-weight: 900; letter-spacing: -0.3px; color: #fff; line-height: 1.1; }
-    .nav-beta-badge { font-size: 9px; font-weight: 800; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 1px 5px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .nav-brand-subtitle { font-size: 10.5px; color: #a1a1aa; font-weight: 500; margin-top: 1px; }
-    .nav-drawer-close { width: 32px; height: 32px; border-radius: 50%; background: #18181b; border: 1px solid rgba(255,255,255,0.12); color: #a1a1aa; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; flex-shrink: 0; }
+    .nav-brand-title { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #ffffff; line-height: 1.1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .nav-beta-badge { font-size: 9px; font-weight: 800; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 2px 6px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .nav-brand-subtitle { font-size: 11px; color: #a1a1aa; font-weight: 500; margin-top: 1px; }
+    .nav-drawer-close { width: 32px; height: 32px; border-radius: 50%; background: #18181b; border: 1px solid #27272a; color: #a1a1aa; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; flex-shrink: 0; }
     .nav-drawer-close:hover { color: #fff; background: #27272a; }
+    .nav-drawer-close:active { transform: scale(0.95); }
     
-    .nav-drawer-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px 14px 20px; display: flex; flex-direction: column; gap: 16px; }
+    .nav-drawer-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px; display: flex; flex-direction: column; gap: 20px; }
     
     /* Community Card */
-    .community-card { background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 4px; }
-    .community-header { display: flex; align-items: center; gap: 6px; color: #fff; font-size: 13.5px; font-weight: 700; }
-    .community-desc { font-size: 11.5px; color: #a1a1aa; line-height: 1.4; margin-top: 2px; }
-    .community-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 10px 14px; border-radius: 12px; background: #ffffff; color: #09090b; font-size: 12px; font-weight: 800; text-decoration: none; margin-top: 8px; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 12px rgba(255,255,255,0.15); }
-    .community-btn:hover { background: #f4f4f5; transform: scale(1.02); }
+    .community-card { background: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 6px; text-align: left; }
+    .community-header { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; font-weight: 700; }
+    .community-desc { font-size: 12px; color: #a1a1aa; line-height: 1.45; margin-top: 2px; }
+    .community-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px 16px; border-radius: 12px; background: #ffffff; color: #09090b; font-size: 12px; font-weight: 800; text-decoration: none; margin-top: 8px; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 14px rgba(255,255,255,0.12); cursor: pointer; }
+    .community-btn:hover { background: #e4e4e7; }
+    .community-btn:active { transform: scale(0.96); }
     
-    /* Nav Sections */
-    .nav-section { display: flex; flex-direction: column; gap: 4px; }
-    .nav-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #71717a; padding: 0 8px; margin-bottom: 2px; }
+    /* Nav Sections with Divider */
+    .nav-section-wrapper { padding-top: 14px; border-top: 1px solid rgba(39, 39, 42, 0.6); display: flex; flex-direction: column; gap: 4px; }
+    .nav-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #71717a; padding: 0 12px; margin-bottom: 4px; }
     
-    .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; color: #d4d4d8; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.15s ease; }
-    .nav-item:hover { background: rgba(255,255,255,0.06); color: #ffffff; }
-    .nav-item.active { background: #18181b; border: 1px solid rgba(255,255,255,0.1); color: #ffffff; font-weight: 700; }
-    .nav-item-left { display: flex; align-items: center; gap: 10px; }
-    .nav-item-icon { width: 17px; height: 17px; color: #a1a1aa; flex-shrink: 0; }
-    .nav-item:hover .nav-item-icon, .nav-item.active .nav-item-icon { color: #ffffff; }
-    .nav-chevron { width: 14px; height: 14px; color: #71717a; flex-shrink: 0; }
+    .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 12px; color: #d4d4d8; text-decoration: none; font-size: 13.5px; font-weight: 500; transition: all 0.15s ease; cursor: pointer; }
+    .nav-item:hover { background: #18181b; color: #ffffff; }
+    .nav-item.active { background: #18181b; border: 1px solid #27272a; color: #ffffff; font-weight: 700; }
+    .nav-item-left { display: flex; align-items: center; gap: 12px; }
+    .nav-item-icon { width: 16px; height: 16px; color: #d4d4d8; flex-shrink: 0; }
+    .nav-chevron { width: 15px; height: 15px; color: #52525b; flex-shrink: 0; }
     
-    .nav-badge-url { font-size: 9px; font-weight: 700; font-family: monospace; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 1px 5px; border-radius: 4px; }
-    .nav-badge-pro { font-size: 9px; font-weight: 800; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 1px 6px; border-radius: 9999px; text-transform: uppercase; }
+    .nav-badge-url { font-size: 10px; font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 2px 6px; border-radius: 4px; }
+    .nav-badge-pro { font-size: 9px; font-weight: 800; background: #27272a; border: 1px solid #3f3f46; color: #d4d4d8; padding: 2px 6px; border-radius: 9999px; text-transform: uppercase; }
     
     /* Hero Record Button */
-    .drawer-record-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px 16px; border-radius: 16px; background: #ffffff; color: #09090b; font-size: 13px; font-weight: 800; text-decoration: none; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 16px rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
-    .drawer-record-btn:hover { background: #f4f4f5; transform: scale(1.02); }
+    .drawer-record-wrapper { padding-top: 14px; border-top: 1px solid rgba(39, 39, 42, 0.6); }
+    .drawer-record-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px 16px; border-radius: 16px; background: #ffffff; color: #09090b; font-size: 13.5px; font-weight: 800; text-decoration: none; transition: transform 0.15s ease, background 0.15s ease; box-shadow: 0 4px 16px rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
+    .drawer-record-btn:hover { background: #e4e4e7; }
+    .drawer-record-btn:active { transform: scale(0.96); }
 
-    /* Footer Legal Links */
-    .drawer-footer-links { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 11px; color: #71717a; padding: 4px 0 10px; }
+    /* Footer Legal & Social */
+    .drawer-footer-wrapper { padding-top: 14px; padding-bottom: 24px; border-top: 1px solid rgba(39, 39, 42, 0.6); display: flex; flex-direction: column; gap: 14px; }
+    .drawer-footer-links { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 12px; color: #71717a; }
     .drawer-footer-link { color: #71717a; text-decoration: none; transition: color 0.15s ease; }
     .drawer-footer-link:hover { color: #d4d4d8; }
+    .drawer-socials { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .drawer-social-icon { width: 32px; height: 32px; border-radius: 50%; background: #18181b; border: 1px solid #27272a; display: flex; align-items: center; justify-content: center; color: #a1a1aa; text-decoration: none; transition: all 0.15s ease; }
+    .drawer-social-icon:hover { color: #ffffff; border-color: #52525b; transform: translateY(-1px); }
+    .drawer-version-tag { font-size: 10px; text-align: center; color: #52525b; font-family: monospace; }
 
     /* In-Player Slide-Up Comments Drawer */
     .comments-drawer { position: absolute; bottom: 0; left: 0; right: 0; height: 75%; max-height: 480px; background: rgba(18, 18, 20, 0.98); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid rgba(255,255,255,0.15); border-radius: 22px 22px 0 0; z-index: 50; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
@@ -2899,7 +2911,7 @@ async function startServer() {
         </div>
 
         <!-- Menu & Features Section -->
-        <div class="nav-section">
+        <div class="nav-section-wrapper">
           <div class="nav-section-title">Menu & Features</div>
           
           <a href="${escapeHtml(baseUrl)}" target="_blank" rel="noopener" class="nav-item active">
@@ -2968,13 +2980,15 @@ async function startServer() {
         </div>
 
         <!-- Hero Record Button -->
-        <a href="${escapeHtml(baseUrl)}/?action=record" target="_blank" rel="noopener" class="drawer-record-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-          <span>Record Video Review</span>
-        </a>
+        <div class="drawer-record-wrapper">
+          <a href="${escapeHtml(baseUrl)}/?action=record" target="_blank" rel="noopener" class="drawer-record-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+            <span>Record Video Review</span>
+          </a>
+        </div>
 
         <!-- Trust & Support Section -->
-        <div class="nav-section">
+        <div class="nav-section-wrapper">
           <div class="nav-section-title">Trust & Support</div>
           <a href="${escapeHtml(baseUrl)}/trust" target="_blank" rel="noopener" class="nav-item">
             <div class="nav-item-left">
@@ -3001,13 +3015,33 @@ async function startServer() {
           </a>
         </div>
 
-        <!-- Footer Links -->
-        <div class="drawer-footer-links">
-          <a href="${escapeHtml(baseUrl)}/terms" target="_blank" rel="noopener" class="drawer-footer-link">Terms</a>
-          <span>&bull;</span>
-          <a href="${escapeHtml(baseUrl)}/privacy" target="_blank" rel="noopener" class="drawer-footer-link">Privacy Policy</a>
-          <span>&bull;</span>
-          <span>&copy; 2026 Yoouz</span>
+        <!-- Footer Legal & Social Links -->
+        <div class="drawer-footer-wrapper">
+          <div class="drawer-footer-links">
+            <a href="${escapeHtml(baseUrl)}/terms" target="_blank" rel="noopener" class="drawer-footer-link">Terms of Service</a>
+            <span>•</span>
+            <a href="${escapeHtml(baseUrl)}/privacy" target="_blank" rel="noopener" class="drawer-footer-link">Privacy Policy</a>
+          </div>
+
+          <div class="drawer-socials">
+            <a href="https://youtube.com" target="_blank" rel="noopener" class="drawer-social-icon" title="YouTube">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+            </a>
+            <a href="https://x.com" target="_blank" rel="noopener" class="drawer-social-icon" title="X">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://tiktok.com" target="_blank" rel="noopener" class="drawer-social-icon" title="TikTok">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.65a6.34 6.34 0 0 0 10.86 4.48A6.33 6.33 0 0 0 15.86 16v-7a8.28 8.28 0 0 0 4.84 1.57v-3.5a4.84 4.84 0 0 1-1.11-.38z"/></svg>
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noopener" class="drawer-social-icon" title="Instagram">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            </a>
+            <a href="https://linkedin.com" target="_blank" rel="noopener" class="drawer-social-icon" title="LinkedIn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+            </a>
+          </div>
+
+          <div class="drawer-version-tag">Yoouz Mobile PWA • v2.4.0</div>
         </div>
       </div>
     </div>
