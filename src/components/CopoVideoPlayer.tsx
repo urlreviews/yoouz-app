@@ -93,11 +93,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = videos[currentIndex] || videos[0];
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
 
-  // Reset feed initiation when switching subtabs or context
+  // Keep feed active when switching subtabs or context
   useEffect(() => {
-    setHasUserStartedFeed(false);
+    setHasUserStartedFeed(true);
   }, [activeSubTab, contextKey]);
 
   // Edit Rating State
@@ -146,7 +146,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentIndexRef = useRef<number>(currentIndex);
   const lastObserverIndexRef = useRef<number>(currentIndex);
-  const touchStartYRef = useRef<number>(0);
 
   // Web Audio API session unlocker to guarantee audio permission
   const unlockAudioSession = useCallback(() => {
@@ -162,25 +161,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     } catch (e) {}
   }, []);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (e.touches && e.touches[0]) {
-      touchStartYRef.current = e.touches[0].clientY;
-      setHasUserStartedFeed(true);
-      unlockAudioSession();
-    }
-  }, [unlockAudioSession]);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (e.touches && e.touches[0]) {
-      const deltaY = touchStartYRef.current - e.touches[0].clientY;
-      if (deltaY > 15) {
-        prefetchUpcomingVideos(videos, currentIndexRef.current);
-      } else if (deltaY < -15 && currentIndexRef.current > 0) {
-        prefetchUpcomingVideos(videos, currentIndexRef.current - 1);
-      }
-    }
-  }, [videos]);
 
   // Sync ref
   useEffect(() => {
@@ -287,46 +267,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [currentIndex, videos, onLoadMore]);
 
-  // High-performance real-time scroll synchronization (guarantees instantaneous card activation during fast swipes)
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    let isTicking = false;
-
-    const handleScroll = () => {
-      if (isProgrammaticScrollRef.current) return;
-
-      if (!isTicking) {
-        window.requestAnimationFrame(() => {
-          if (container && container.clientHeight > 0) {
-            const itemHeight = container.clientHeight;
-            const computedIndex = Math.round(container.scrollTop / itemHeight);
-            if (
-              computedIndex >= 0 &&
-              computedIndex < videos.length &&
-              computedIndex !== currentIndexRef.current
-            ) {
-              setHasUserStartedFeed(true);
-              currentIndexRef.current = computedIndex;
-              lastObserverIndexRef.current = computedIndex;
-              onSelectVideoIndex(computedIndex);
-              prefetchUpcomingVideos(videos, computedIndex);
-            }
-          }
-          isTicking = false;
-        });
-        isTicking = true;
-      }
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-    };
-  }, [videos, onSelectVideoIndex]);
-
-  // IntersectionObserver fallback for precision threshold validation
+  // Ultra-smooth IntersectionObserver index detection (TikTok / Instagram Reels style)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -336,7 +277,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (isProgrammaticScrollRef.current) return;
 
         const visibleEntries = entries.filter(
-          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.45
+          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.55
         );
         if (visibleEntries.length === 0) return;
 
@@ -347,7 +288,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (idxAttr !== null) {
           const idx = parseInt(idxAttr, 10);
           if (!isNaN(idx) && idx !== currentIndexRef.current) {
-            setHasUserStartedFeed(true);
             currentIndexRef.current = idx;
             lastObserverIndexRef.current = idx;
             onSelectVideoIndex(idx);
@@ -357,7 +297,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       },
       {
         root: container,
-        threshold: [0.3, 0.45, 0.6, 0.8, 1.0]
+        threshold: [0.55, 0.75, 0.9]
       }
     );
 
@@ -608,8 +548,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
           className="w-full h-full md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
           style={{
             WebkitOverflowScrolling: "touch",

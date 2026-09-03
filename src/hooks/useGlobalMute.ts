@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
 
-// Industry-standard mobile PWA behavior (matching TikTok, Instagram, YouTube Shorts):
-// Fresh cold sessions ALWAYS start muted so native iOS Safari & Android Chrome autoplay instantly with zero lag,
-// zero permission freezes, and no browser security rejections.
-// Once the user interacts and unmutes during their session, sound remains active across all scrolled videos.
-let globalIsMuted = true;
+// Initialize from localStorage if the user previously set a sound preference
+let globalIsMuted = (() => {
+  try {
+    const saved = localStorage.getItem("yoouz_sound_muted");
+    if (saved !== null) {
+      return saved === "true";
+    }
+  } catch (e) {}
+  // Default to unmuted on interactive web sessions once unlocked, or false for desktop
+  return false;
+})();
 
 const listeners = new Set<(val: boolean) => void>();
 
@@ -21,8 +27,12 @@ export function useGlobalMute() {
   const setIsMuted = (val: boolean | ((prev: boolean) => boolean)) => {
     const nextVal = typeof val === 'function' ? val(globalIsMuted) : val;
     globalIsMuted = nextVal;
+    try {
+      localStorage.setItem("yoouz_sound_muted", String(nextVal));
+    } catch (e) {}
     listeners.forEach(listener => listener(nextVal));
   };
 
   return [isMuted, setIsMuted] as const;
 }
+

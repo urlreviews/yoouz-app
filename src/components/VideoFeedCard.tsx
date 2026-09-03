@@ -99,6 +99,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onRecordView
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const playPromiseRef = useRef<Promise<void> | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isManuallyPaused, setIsManuallyPaused] = useState<boolean>(false);
   const isManuallyPausedRef = useRef<boolean>(false);
@@ -119,15 +120,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
 
-  const hasUserStartedFeedRef = useRef(hasUserStartedFeed);
-  useEffect(() => {
-    hasUserStartedFeedRef.current = hasUserStartedFeed;
-  }, [hasUserStartedFeed]);
-
-
-  // Establish a single, stable, optimized CDN source.
-  // We completely bypass IndexedDB caching for large blobs on mobile, 
-  // relying purely on the browser's optimized HTTP byte-range caching & edge CDNs.
+  // Establish a single, stable, optimized CDN source
   const currentSource = React.useMemo(() => {
     return resolvePlayableVideoSource(video);
   }, [video]);
@@ -137,7 +130,68 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     return resolveVideoPosterUrl(video);
   }, [video]);
 
-  // Sync mute state to video element
+  // Safe async play handler with zero-freeze fallback
+  const safePlay = useCallback(async () => {
+    const el = videoRef.current;
+    if (!el) return;
+
+    el.muted = isMuted;
+    if (!isMuted) {
+      el.volume = 1;
+    }
+
+    try {
+      const promise = el.play();
+      playPromiseRef.current = promise;
+      await promise;
+      setIsPlaying(true);
+      setIsBuffering(false);
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        return;
+      }
+      // If unmuted autoplay blocked by browser policy on cold load:
+      if (!el.muted) {
+        el.muted = true;
+        try {
+          const mutedPromise = el.play();
+          playPromiseRef.current = mutedPromise;
+          await mutedPromise;
+          setIsPlaying(true);
+          setIsBuffering(false);
+        } catch (e) {
+          setIsPlaying(false);
+        }
+      } else {
+        setIsPlaying(false);
+      }
+    } finally {
+      playPromiseRef.current = null;
+    }
+  }, [isMuted]);
+
+  // Safe async pause handler
+  const safePause = useCallback(async (resetTime = false) => {
+    const el = videoRef.current;
+    if (!el) return;
+
+    if (playPromiseRef.current) {
+      try {
+        await playPromiseRef.current;
+      } catch (e) {}
+    }
+
+    try {
+      el.pause();
+      if (resetTime) {
+        el.currentTime = 0;
+      }
+    } catch (e) {}
+    setIsPlaying(false);
+    setIsBuffering(false);
+  }, []);
+
+  // Sync mute state to video element in real time
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
@@ -147,7 +201,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isMuted]);
 
-  // Keep unmuted audio state active on mobile touch events when feed is active
+  // Keep unmuted audio state active on touch gestures
   useEffect(() => {
     if (isActive && !isMuted) {
       const syncAudio = () => {
@@ -169,66 +223,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isActive, isMuted]);
 
-  // Play / Pause video based on card active state and user feed initiation
+  // Play / Pause video based on card active state and manual pause flag
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
-
-    if (shouldPlay) {
+    if (isActive && !isManuallyPaused) {
       setShowPlayPauseFeedback(null);
-      el.muted = isMuted;
-      if (!isMuted) el.volume = 1;
-
-      const playPromise = el.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsPlaying(true);
-            setIsBuffering(false);
-          })
-          .catch(() => {
-            // If browser blocks audio autoplay on this video before gesture:
-            // start playback muted on this element WITHOUT clearing the user's global unmuted preference!
-            el.muted = true;
-            el.play().then(() => {
-              setIsPlaying(true);
-              setIsBuffering(false);
-              // If global preference is unmuted, re-enable audio as soon as user touches or scrolls
-              if (!isMuted) {
-                const tryUnmute = () => {
-                  if (videoRef.current) {
-                    videoRef.current.muted = false;
-                    videoRef.current.volume = 1;
-                  }
-                  window.removeEventListener("touchstart", tryUnmute);
-                  window.removeEventListener("touchmove", tryUnmute);
-                  window.removeEventListener("touchend", tryUnmute);
-                  window.removeEventListener("click", tryUnmute);
-                  window.removeEventListener("scroll", tryUnmute);
-                };
-                window.addEventListener("touchstart", tryUnmute, { once: true, passive: true });
-                window.addEventListener("touchmove", tryUnmute, { once: true, passive: true });
-                window.addEventListener("touchend", tryUnmute, { once: true, passive: true });
-                window.addEventListener("click", tryUnmute, { once: true, passive: true });
-                window.addEventListener("scroll", tryUnmute, { once: true, passive: true });
-              }
-            }).catch(() => {
-              setIsPlaying(false);
-            });
-          });
-      }
+      safePlay();
     } else {
-      // If card is not active, paused, or user hasn't clicked to start the feed:
-      try {
-        el.pause();
-        if (!isActive) {
-          el.currentTime = 0;
-        }
-      } catch (e) {}
-      setIsPlaying(false);
-      setIsBuffering(false);
+      safePause(!isActive);
       if (!isActive) {
         setIsManuallyPaused(false);
         setProgressPercent(0);
@@ -237,11 +241,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
     
     return () => {
-      try {
-        el.pause();
-      } catch (e) {}
+      safePause(false);
     };
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
+  }, [isActive, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
 
   // Record view count when video is active and playing
   useEffect(() => {
@@ -308,7 +310,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     if (onStartFeed && !hasUserStartedFeed) {
       onStartFeed();
-      hasUserStartedFeedRef.current = true;
     }
 
     triggerHaptic("light");
@@ -316,41 +317,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     if (el.paused || isManuallyPaused) {
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
-      el.muted = isMuted;
-      if (!isMuted) el.volume = 1;
-
-      // If video element had a previous error or no source, advance cascade immediately
-      if (el.error) {
-        handleVideoError();
-        return;
-      }
-
-      if (el.readyState === 0) {
-        el.load();
-      }
-
-      const playPromise = el.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsPlaying(true);
-            if (e) triggerFeedback("play");
-          })
-          .catch(() => {
-            el.muted = true;
-            el.play().then(() => {
-              setIsPlaying(true);
-              if (e) triggerFeedback("play");
-            }).catch(() => {
-              handleVideoError();
-            });
-          });
-      }
+      safePlay();
+      if (e) triggerFeedback("play");
     } else {
       isManuallyPausedRef.current = true;
       setIsManuallyPaused(true);
-      el.pause();
-      setIsPlaying(false);
+      safePause(false);
       if (e) triggerFeedback("pause");
     }
   };
@@ -362,13 +334,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     // Direct user tap: activate feed session immediately
     if (onStartFeed && !hasUserStartedFeed) {
       onStartFeed();
-      hasUserStartedFeedRef.current = true;
     }
 
     // Synchronous direct DOM mutation inside the click handler to satisfy iOS Safari
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      if (isMuted) {
+      const nextMuted = !isMuted;
+      videoRef.current.muted = nextMuted;
+      if (!nextMuted) {
         videoRef.current.volume = 1;
         videoRef.current.play().catch(() => {});
       }
@@ -546,15 +518,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              const shouldPlay = isActive && (hasUserStartedFeed || hasUserStartedFeedRef.current) && !isManuallyPausedRef.current;
-              if (shouldPlay && videoRef.current?.paused) {
-                videoRef.current.play().catch(() => {});
+              if (isActive && !isManuallyPausedRef.current && videoRef.current?.paused) {
+                safePlay();
               }
             }}
             onPlaying={() => {
               if (!isActive || isManuallyPausedRef.current) {
-                videoRef.current?.pause();
-                setIsPlaying(false);
+                safePause(false);
                 return;
               }
               setIsPlaying(true);
@@ -707,8 +677,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Initial Start / Paused Center Play Button - shown only on first load before feed starts or when user explicitly pauses */}
-      {isActive && (!hasUserStartedFeed || isManuallyPaused) && !showPlayPauseFeedback && (
+      {/* Center Play Button - shown when user explicitly pauses */}
+      {isActive && isManuallyPaused && !showPlayPauseFeedback && (
         <button
           type="button"
           id={`copo-play-center-btn-${video.id}`}
