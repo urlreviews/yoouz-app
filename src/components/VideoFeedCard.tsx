@@ -504,13 +504,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             className="w-full h-full object-cover absolute inset-0"
             onTimeUpdate={(e) => {
               const t = e.currentTarget;
-              
-              // Strict safety: if feed hasn't been started or card is not active, force pause
-              if ((!hasUserStartedFeed || !isActive || isManuallyPausedRef.current) && !t.paused) {
-                t.pause();
-                return;
-              }
-
               if (t.duration && !isNaN(t.duration) && t.duration > 0) {
                 setProgressPercent((t.currentTime / t.duration) * 100);
               }
@@ -521,20 +514,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              if (isActive && hasUserStartedFeed && !isManuallyPausedRef.current && videoRef.current?.paused) {
-                safePlay();
-              }
-            }}
-            onPlay={() => {
-              if (!hasUserStartedFeed || !isActive || isManuallyPausedRef.current) {
-                videoRef.current?.pause();
-              }
             }}
             onPlaying={() => {
-              if (!isActive || isManuallyPausedRef.current || !hasUserStartedFeed) {
-                safePause(false);
-                return;
-              }
               setIsPlaying(true);
               setIsBuffering(false);
               setIsVideoLoaded(true);
