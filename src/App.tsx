@@ -746,6 +746,23 @@ export function App() {
 
   // Firebase Auth state listener and multi-tab reactive sync
   useEffect(() => {
+    // Purge any accidental blacklist of valid community accounts
+    try {
+      const storedDeleted = localStorage.getItem("yoouz_deleted_users");
+      if (storedDeleted) {
+        const parsed = JSON.parse(storedDeleted);
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter((item: string) => {
+            const s = String(item).toLowerCase();
+            return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2" && !s.includes("4samet");
+          });
+          if (cleaned.length !== parsed.length) {
+            localStorage.setItem("yoouz_deleted_users", JSON.stringify(cleaned));
+          }
+        }
+      }
+    } catch (e) {}
+
     // 1. Process Magic link token if coming from email
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -856,6 +873,8 @@ export function App() {
         }
 
         const profileObj: UserProfile = {
+          id: user.uid || (savedProfile as any)?.id || (savedProfile as any)?.uid || (user.email ? `usr_${user.email.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}` : ''),
+          uid: user.uid || (savedProfile as any)?.uid || (savedProfile as any)?.id || (user.email ? `usr_${user.email.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}` : ''),
           name: user.displayName || savedProfile.name || user.email?.split("@")[0] || "User",
           email: user.email || savedProfile.email || "",
           avatar: validAvatar,
@@ -1093,11 +1112,11 @@ export function App() {
 
   // Account validity checker (logs out if admin deleted user from database)
   useEffect(() => {
-    if (!currentUser || !currentUser.email || currentUser.email.toLowerCase() === "4samet@gmail.com") return;
+    if (!currentUser || !currentUser.email) return;
+    const cleanEmail = currentUser.email.trim().toLowerCase();
+    if (cleanEmail === "4samet@gmail.com" || cleanEmail === "aouisesmee@gmail.com" || cleanEmail.includes("aouisesmee")) return;
 
     let isSubscribed = true;
-    const cleanEmail = currentUser.email.trim().toLowerCase();
-    // Default fallback to the generated ID format from Magic Link
     const generatedUid = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
     const expectedUid = currentUser.id || currentUser.uid || generatedUid;
 
@@ -1105,6 +1124,21 @@ export function App() {
       try {
         const res = await fetch(`/api/nosql/users/${expectedUid}`);
         if (res.status === 404 && isSubscribed) {
+          // Double-check with email as fallback before concluding user is deleted
+          try {
+            const emailRes = await fetch(`/api/nosql/users/${encodeURIComponent(cleanEmail)}`);
+            if (emailRes.ok) return; // User is active and verified by email
+          } catch (e) {}
+
+          // Also verify against active registered users list in state
+          if (allRegisteredUsers && allRegisteredUsers.some((u) => {
+            const ue = (u.email || "").toLowerCase().trim();
+            const ui = (u.id || u.uid || "").toLowerCase().trim();
+            return ue === cleanEmail || ui === expectedUid.toLowerCase() || ui === `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          })) {
+            return;
+          }
+
           console.warn("User account deleted or banned by admin. Logging out automatically.");
           setCurrentUser(null);
           localStorage.removeItem("copo_user");
@@ -1125,13 +1159,13 @@ export function App() {
     // Poll to catch mid-session deletions
     const intervalId = setInterval(() => {
       if (isSubscribed) checkUserBanStatus();
-    }, 15000);
+    }, 30000);
 
     return () => {
       isSubscribed = false;
       clearInterval(intervalId);
     };
-  }, [currentUser, activeSection]);
+  }, [currentUser, activeSection, allRegisteredUsers]);
 
   // Real-time Firestore sync for Direct Messages & Chats
   useEffect(() => {

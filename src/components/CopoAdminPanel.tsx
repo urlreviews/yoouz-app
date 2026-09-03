@@ -216,7 +216,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     try {
       const stored = localStorage.getItem("yoouz_deleted_users") || "[]";
       const arr = JSON.parse(stored);
-      return new Set((Array.isArray(arr) ? arr : []).map((k: string) => String(k).toLowerCase()));
+      const filtered = (Array.isArray(arr) ? arr : []).filter((k: string) => {
+        const s = String(k).toLowerCase();
+        return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2" && !s.includes("4samet");
+      });
+      return new Set(filtered.map((k: string) => String(k).toLowerCase()));
     } catch {
       return new Set();
     }

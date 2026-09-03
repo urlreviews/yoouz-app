@@ -78,7 +78,15 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     let deletedList: string[] = [];
     try {
       const stored = localStorage.getItem("yoouz_deleted_users");
-      if (stored) deletedList = JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          deletedList = parsed.filter((k: string) => {
+            const s = String(k).toLowerCase();
+            return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2" && !s.includes("4samet");
+          });
+        }
+      }
     } catch {}
     const deletedSet = new Set(deletedList.map((k) => String(k).toLowerCase()));
 

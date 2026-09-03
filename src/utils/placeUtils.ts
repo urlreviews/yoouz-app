@@ -445,6 +445,30 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
     bio: "Community reviewer on Yoouz."
   },
+  "usr_aouisesmee_gmail_com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "aouisesmee_gmail_com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "mLiO66HDR9TRvOFdGddGWm30rKu2": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "mlio66hdr9trvofdgddgwm30rku2": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
   "aouisesme": {
     name: "aouisesmee",
     handle: "@aouisesmee",

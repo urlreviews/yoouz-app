@@ -209,6 +209,30 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
     bio: "Community reviewer on Yoouz."
   },
+  "usr_aouisesmee_gmail_com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "aouisesmee_gmail_com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "mLiO66HDR9TRvOFdGddGWm30rKu2": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "mlio66hdr9trvofdgddgwm30rku2": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
   "aouisesme": {
     name: "aouisesmee",
     handle: "@aouisesmee",
@@ -271,19 +295,26 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
   const clean = emailOrId.trim().toLowerCase();
   const cleanWithoutAt = clean.startsWith('@') ? clean.substring(1) : clean;
   const username = clean.includes('@') ? clean.split('@')[0] : clean;
-  const uid = `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const uid = clean.startsWith('usr_') ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const strippedUsr = clean.startsWith('usr_') ? clean.slice(4) : clean;
+  const candidateEmailFromUsr = strippedUsr.includes('_')
+    ? strippedUsr.replace(/_([a-z0-9-]+)_([a-z]{2,})$/, '@$1.$2')
+    : '';
 
   // Layer 1: Check Predefined Known Community Map
   const knownMatch = KNOWN_COMMUNITY_USERS_SERVER[clean] || 
                      KNOWN_COMMUNITY_USERS_SERVER[cleanWithoutAt] || 
-                     KNOWN_COMMUNITY_USERS_SERVER[username];
+                     KNOWN_COMMUNITY_USERS_SERVER[username] ||
+                     KNOWN_COMMUNITY_USERS_SERVER[strippedUsr] ||
+                     (candidateEmailFromUsr ? KNOWN_COMMUNITY_USERS_SERVER[candidateEmailFromUsr] : null);
   if (knownMatch) {
     const fName = knownMatch.name.split(' ')[0] || knownMatch.name;
     const lName = knownMatch.name.includes(' ') ? knownMatch.name.split(' ').slice(1).join(' ') : '';
+    const resolvedEmail = clean.includes('@') ? clean : (candidateEmailFromUsr || `${username}@gmail.com`);
     return {
       uid,
       id: uid,
-      email: clean.includes('@') ? clean : `${clean}@gmail.com`,
+      email: resolvedEmail,
       name: knownMatch.name,
       firstName: fName,
       lastName: lName,
@@ -299,10 +330,13 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
   // Layer 2: Check defaultCommunityUsers list
   const du = defaultCommunityUsers.find((u) => 
     u.email?.toLowerCase() === clean || 
+    (candidateEmailFromUsr && u.email?.toLowerCase() === candidateEmailFromUsr) ||
     u.handle?.toLowerCase().replace(/^@+/, '') === clean ||
     u.name?.toLowerCase() === clean ||
     u.id === clean ||
-    u.uid === clean
+    u.uid === clean ||
+    u.id === strippedUsr ||
+    u.uid === strippedUsr
   );
   if (du) {
     const fName = du.name.split(' ')[0] || du.name;
@@ -322,8 +356,26 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
       const userRows = await bunnyDb.execute({
-        sql: "SELECT id, email, name, data FROM users WHERE id = ? OR email = ? OR id = ? LIMIT 1",
-        args: [uid, clean, clean]
+        sql: `SELECT id, email, name, data FROM users 
+              WHERE id = ? 
+                 OR email = ? 
+                 OR id = ? 
+                 OR id = ? 
+                 OR email = ? 
+                 OR (name IS NOT NULL AND LOWER(name) = ?)
+                 OR data LIKE ?
+                 OR data LIKE ?
+              LIMIT 1`,
+        args: [
+          clean, 
+          clean, 
+          uid, 
+          strippedUsr, 
+          candidateEmailFromUsr || clean, 
+          username,
+          `%"${clean}"%`,
+          candidateEmailFromUsr ? `%"${candidateEmailFromUsr}"%` : `%"${clean}"%`
+        ]
       });
       if (userRows.rows.length > 0 && userRows.rows[0]) {
         const row: any = userRows.rows[0];
@@ -336,7 +388,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
           return {
             uid: parsed.uid || row.id || uid,
             id: parsed.id || row.id || uid,
-            email: parsed.email || row.email || clean,
+            email: parsed.email || row.email || (clean.includes('@') ? clean : candidateEmailFromUsr || ''),
             name: candidateName,
             firstName: parsed.firstName || candidateName.split(' ')[0] || candidateName,
             lastName: parsed.lastName || (candidateName.includes(' ') ? candidateName.split(' ').slice(1).join(' ') : ''),
