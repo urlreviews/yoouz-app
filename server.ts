@@ -273,7 +273,31 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
     bio: "Food explorer linking real businesses and authentic video reviews."
   },
+  "bizriv": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
+  "biz-riv": {
+    name: "Biz Riv",
+    handle: "@bizriv",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
+    bio: "Food explorer linking real businesses and authentic video reviews."
+  },
   "avt ertuop": {
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "avt-ertuop": {
+    name: "avt ertuop",
+    handle: "@avr6566gd",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
+    bio: "Community reviewer on Yoouz."
+  },
+  "avtertuop": {
     name: "avt ertuop",
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
@@ -290,6 +314,24 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
     bio: "Community reviewer on Yoouz."
+  },
+  "aouisesmee": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLu0236aK7z8zD0b4yM4n1b2v3c4=s96-c",
+    bio: "Authentic local reviewer on Yoouz."
+  },
+  "aouisesme": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLu0236aK7z8zD0b4yM4n1b2v3c4=s96-c",
+    bio: "Authentic local reviewer on Yoouz."
+  },
+  "aouisesmee@gmail.com": {
+    name: "aouisesmee",
+    handle: "@aouisesmee",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLu0236aK7z8zD0b4yM4n1b2v3c4=s96-c",
+    bio: "Authentic local reviewer on Yoouz."
   }
 };
 
@@ -297,8 +339,10 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
 async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any | null> {
   if (!emailOrId || typeof emailOrId !== 'string') return null;
   const clean = emailOrId.trim().toLowerCase();
-  const cleanWithoutAt = clean.startsWith('@') ? clean.substring(1) : clean;
-  const username = clean.includes('@') ? clean.split('@')[0] : clean;
+  const cleanWithoutAt = clean.replace(/^@+/, '');
+  const slugWithSpaces = cleanWithoutAt.replace(/[-_]+/g, ' ').trim();
+  const alphaOnly = cleanWithoutAt.replace(/[^a-z0-9]/g, '');
+  const username = clean.includes('@') ? clean.split('@')[0] : cleanWithoutAt;
   const uid = clean.startsWith('usr_') ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
   const strippedUsr = clean.startsWith('usr_') ? clean.slice(4) : clean;
   const candidateEmailFromUsr = strippedUsr.includes('_')
@@ -308,6 +352,8 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
   // Layer 1: Check Predefined Known Community Map
   const knownMatch = KNOWN_COMMUNITY_USERS_SERVER[clean] || 
                      KNOWN_COMMUNITY_USERS_SERVER[cleanWithoutAt] || 
+                     KNOWN_COMMUNITY_USERS_SERVER[slugWithSpaces] ||
+                     KNOWN_COMMUNITY_USERS_SERVER[alphaOnly] ||
                      KNOWN_COMMUNITY_USERS_SERVER[username] ||
                      KNOWN_COMMUNITY_USERS_SERVER[strippedUsr] ||
                      (candidateEmailFromUsr ? KNOWN_COMMUNITY_USERS_SERVER[candidateEmailFromUsr] : null);
@@ -332,16 +378,28 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
   }
 
   // Layer 2: Check defaultCommunityUsers list
-  const du = defaultCommunityUsers.find((u) => 
-    u.email?.toLowerCase() === clean || 
-    (candidateEmailFromUsr && u.email?.toLowerCase() === candidateEmailFromUsr) ||
-    u.handle?.toLowerCase().replace(/^@+/, '') === clean ||
-    u.name?.toLowerCase() === clean ||
-    u.id === clean ||
-    u.uid === clean ||
-    u.id === strippedUsr ||
-    u.uid === strippedUsr
-  );
+  const du = defaultCommunityUsers.find((u) => {
+    const uEmail = (u.email || '').toLowerCase().trim();
+    const uHandle = (u.handle || '').toLowerCase().trim().replace(/^@+/, '');
+    const uName = (u.name || '').toLowerCase().trim();
+    const uId = (u.id || u.uid || '').toLowerCase().trim();
+    const uNameAlpha = uName.replace(/[^a-z0-9]/g, '');
+    const uHandleAlpha = uHandle.replace(/[^a-z0-9]/g, '');
+
+    return uEmail === clean || 
+           uEmail === cleanWithoutAt ||
+           (candidateEmailFromUsr && uEmail === candidateEmailFromUsr) ||
+           uHandle === clean ||
+           uHandle === cleanWithoutAt ||
+           uName === clean ||
+           uName === cleanWithoutAt ||
+           uName === slugWithSpaces ||
+           uId === clean ||
+           uId === strippedUsr ||
+           uNameAlpha === alphaOnly ||
+           uHandleAlpha === alphaOnly ||
+           (uEmail.includes('@') && uEmail.split('@')[0] === cleanWithoutAt);
+  });
   if (du) {
     const fName = du.name.split(' ')[0] || du.name;
     const lName = du.name.includes(' ') ? du.name.split(' ').slice(1).join(' ') : '';
@@ -360,12 +418,13 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
       const userRows = await bunnyDb.execute({
-        sql: `SELECT id, email, name, data FROM users 
+        sql: `SELECT id, email, name, avatar, data FROM users 
               WHERE id = ? 
                  OR email = ? 
                  OR id = ? 
                  OR id = ? 
                  OR email = ? 
+                 OR (name IS NOT NULL AND LOWER(name) = ?)
                  OR (name IS NOT NULL AND LOWER(name) = ?)
                  OR data LIKE ?
                  OR data LIKE ?
@@ -376,8 +435,9 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
           uid, 
           strippedUsr, 
           candidateEmailFromUsr || clean, 
-          username,
-          `%"${clean}"%`,
+          slugWithSpaces,
+          cleanWithoutAt,
+          `%"${cleanWithoutAt}"%`,
           candidateEmailFromUsr ? `%"${candidateEmailFromUsr}"%` : `%"${clean}"%`
         ]
       });
@@ -389,6 +449,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
         }
         const candidateName = parsed.name || row.name;
         if (candidateName && candidateName !== 'Registered User') {
+          const resolvedAv = parsed.avatar || row.avatar || '';
           return {
             uid: parsed.uid || row.id || uid,
             id: parsed.id || row.id || uid,
@@ -396,7 +457,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
             name: candidateName,
             firstName: parsed.firstName || candidateName.split(' ')[0] || candidateName,
             lastName: parsed.lastName || (candidateName.includes(' ') ? candidateName.split(' ').slice(1).join(' ') : ''),
-            avatar: parsed.avatar || '',
+            avatar: resolvedAv,
             handle: parsed.handle || `@${candidateName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
             bio: parsed.bio || "Community reviewer on Yoouz.",
             city: parsed.city || '',
@@ -437,7 +498,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
     const fsUsers = await db.select().from(firestore_users);
     for (const fsu of fsUsers) {
       const d: any = fsu.data;
-      if (d && (d.email?.toLowerCase() === clean || fsu.id === clean || d.uid === clean || d.handle?.toLowerCase() === `@${clean}`)) {
+      if (d && (d.email?.toLowerCase() === clean || fsu.id === clean || d.uid === clean || d.handle?.toLowerCase() === `@${cleanWithoutAt}` || d.name?.toLowerCase() === slugWithSpaces)) {
         if (d.name && d.name !== 'Registered User') {
           return {
             ...d,
@@ -458,6 +519,11 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
         const d = snap.data();
         if (d && d.name && d.name !== 'Registered User') return { ...d, uid: snap.id, isNewUser: false };
       }
+      const snapNoAt = await adminDb.collection("users").doc(cleanWithoutAt).get();
+      if (snapNoAt.exists) {
+        const d = snapNoAt.data();
+        if (d && d.name && d.name !== 'Registered User') return { ...d, uid: snapNoAt.id, isNewUser: false };
+      }
       const snapUid = await adminDb.collection("users").doc(uid).get();
       if (snapUid.exists) {
         const d = snapUid.data();
@@ -474,12 +540,23 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
 
   // Layer 7: Check existing video reviews in uploads/reviews_index.json
   try {
-    const localList = readReviewsIndex();
+    const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
     const match = localList.find((vr: any) => {
       const vrEmail = (vr.userEmail || vr.userId || "").toLowerCase().trim();
-      const authorName = (vr.author?.name || vr.authorName || "").toLowerCase().trim();
-      const authorHandle = (vr.author?.handle || vr.authorHandle || "").toLowerCase().trim().replace(/^@+/, "");
-      return vrEmail === clean || authorName === clean || authorHandle === clean || authorHandle === username;
+      const a = vr.author || {};
+      const authorName = (a.name || vr.authorName || "").toLowerCase().trim();
+      const authorHandle = (a.handle || vr.authorHandle || "").toLowerCase().trim().replace(/^@+/, "");
+      const authorNameAlpha = authorName.replace(/[^a-z0-9]/g, "");
+      const authorHandleAlpha = authorHandle.replace(/[^a-z0-9]/g, "");
+
+      return vrEmail === clean || 
+             vrEmail.split('@')[0] === cleanWithoutAt ||
+             authorName === clean || 
+             authorName === slugWithSpaces ||
+             authorNameAlpha === alphaOnly ||
+             authorHandle === clean || 
+             authorHandle === cleanWithoutAt ||
+             authorHandleAlpha === alphaOnly;
     });
     if (match) {
       const a = match.author || {};
@@ -495,7 +572,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
         firstName: fName,
         lastName: lName,
         handle: a.handle || match.authorHandle || `@${username}`,
-        avatar: authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a73e8&color=fff`,
+        avatar: authorAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff`,
         bio: a.bio || "Community reviewer on Yoouz.",
         isVerified: true,
         role: 'user',
@@ -10010,9 +10087,19 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
          if (!avatarUrl) {
             try {
+               const profile = await resolveUserProfileFromAnySource(rawHandle || rawName);
+               if (profile && profile.avatar) {
+                  avatarUrl = profile.avatar;
+               }
+            } catch(e) {}
+         }
+
+         if (!avatarUrl) {
+            try {
                const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+               const cleanLower = rawHandle.toLowerCase();
                const match = localList.find((v: any) => 
-                  (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === rawHandle.toLowerCase()) ||
+                  (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === cleanLower) ||
                   (v.author?.name && v.author.name.toLowerCase() === rawName.toLowerCase())
                );
                if (match && match.author?.avatar) {
@@ -10025,10 +10112,32 @@ app.get('/api/og-preview-v2', async (req, res) => {
          if (avatarUrl) {
             if (avatarUrl.startsWith('data:')) {
                avatarBuf = decodeDataUrl(avatarUrl);
+            } else if (avatarUrl.startsWith('/api/avatar')) {
+               try {
+                  const initial = (rawName.trim().replace(/^@+/, '').charAt(0) || "U").toUpperCase();
+                  const svg = `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+                     <rect width="300" height="300" rx="150" fill="#1e3a8a"/>
+                     <text x="150" y="195" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="140" font-weight="800" fill="#93c5fd" letter-spacing="-2">${initial}</text>
+                  </svg>`;
+                  avatarBuf = await sharp(Buffer.from(svg)).resize(300, 300).png().toBuffer();
+               } catch(e) {}
+            } else if (avatarUrl.startsWith('/') && !avatarUrl.startsWith('//')) {
+               try {
+                  const localPath = path.join(process.cwd(), avatarUrl);
+                  if (fs.existsSync(localPath)) {
+                     avatarBuf = fs.readFileSync(localPath);
+                  } else {
+                     const resp = await fetch(`http://127.0.0.1:${PORT}${avatarUrl}`);
+                     if (resp.ok) {
+                        const ab = await resp.arrayBuffer();
+                        avatarBuf = Buffer.from(ab);
+                     }
+                  }
+               } catch(e) {}
             } else if (avatarUrl.startsWith('http')) {
                try {
                   const controller = new AbortController();
-                  const timeout = setTimeout(() => controller.abort(), 3000);
+                  const timeout = setTimeout(() => controller.abort(), 4000);
                   const resp = await fetch(avatarUrl, { 
                      signal: controller.signal,
                      headers: {
@@ -10574,7 +10683,9 @@ function injectOpenGraphTags(html: string, meta: any) {
 
     const videoIdMatch = pathname.match(/\/video\/(rev-[a-zA-Z0-9-]+)/);
     const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9-]+)/);
-    const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/);
+    const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || 
+                         pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
+                         pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/);
 
     const videoId = videoIdMatch ? videoIdMatch[1] : (params.get('video') || params.get('v') || params.get('id'));
     let placeId = placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null);
@@ -10836,25 +10947,39 @@ function injectOpenGraphTags(html: string, meta: any) {
           ]
         };
     } else if (creatorHandle) {
-        let authorName = formatBusinessName(creatorHandle.replace(/-/g, ' '));
+        let cleanH = creatorHandle.replace(/^@+/, "");
+        let authorName = formatBusinessName(cleanH.replace(/[-_]+/g, ' '));
         let authorAvatar = "";
+        let authorBio = "Community reviewer on Yoouz.";
 
         try {
-          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-          const cleanH = creatorHandle.toLowerCase().replace(/^@/, '');
-          const match = localList.find((v: any) => 
-            (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === cleanH) ||
-            (v.author?.name && v.author.name.toLowerCase().replace(/\s+/g, '') === cleanH)
-          );
-          if (match && match.author) {
-            if (match.author.name) authorName = match.author.name;
-            if (match.author.avatar) authorAvatar = match.author.avatar;
+          const profile = await resolveUserProfileFromAnySource(creatorHandle);
+          if (profile) {
+            if (profile.name && profile.name !== "Registered User") authorName = profile.name;
+            if (profile.avatar) authorAvatar = profile.avatar;
+            if (profile.handle) cleanH = profile.handle.replace(/^@+/, "");
+            if (profile.bio) authorBio = profile.bio;
           }
         } catch(e) {}
 
-        title = `@${creatorHandle}'s Authentic Video Reviews | Yoouz`;
+        if (!authorAvatar) {
+          try {
+            const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+            const cleanLower = cleanH.toLowerCase();
+            const match = localList.find((v: any) => 
+              (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === cleanLower) ||
+              (v.author?.name && v.author.name.toLowerCase().replace(/\s+/g, '') === cleanLower)
+            );
+            if (match && match.author) {
+              if (match.author.name && match.author.name !== "Registered User") authorName = match.author.name;
+              if (match.author.avatar) authorAvatar = match.author.avatar;
+            }
+          } catch(e) {}
+        }
+
+        title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(creatorHandle)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=12`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=14`;
         twitterCard = "summary_large_image";
     } else if (
         pathname.includes('/vs/') || 

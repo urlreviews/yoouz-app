@@ -1348,11 +1348,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       <CopoShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        shareUrl={`${window.location.origin}/@${((author as any).handle || author.name || "user").replace(/^@+/, "").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "").replace(/-+/g, "-") || "user"}`}
-        title={author.name}
+        shareUrl={`${window.location.origin}/@${((safeCreator as any).handle || author.handle || author.name || "user").replace(/^@+/, "").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "").replace(/-+/g, "-") || "user"}`}
+        title={displayName}
         subtitle="Reviewer Profile"
-        avatarUrl={author.avatar || (isOwner && currentUser?.avatar ? currentUser.avatar : undefined)}
-        bannerUrl={(isOwner && currentUser?.banner ? currentUser.banner : undefined)}
+        avatarUrl={effectiveAvatar}
+        bannerUrl={effectiveBanner}
       />
 
       {/* Video Delete Confirmation Modal */}
