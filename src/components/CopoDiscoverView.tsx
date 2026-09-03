@@ -4,7 +4,6 @@ import {
   Search,
   Users,
   CheckCircle,
-  Star,
   ChevronRight,
   ChevronLeft,
   X,
@@ -165,12 +164,19 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         const safeHandle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
         const bestAvatar = getAppropriateAvatar(rawName, safeHandle, candidate.avatar || candidate.author?.avatar);
 
+        const candidateLoc = candidate.location || candidate.author?.location || (
+          rawName.toLowerCase().includes("aouisesmee") ? "Los Angeles, California, United States" :
+          rawName.toLowerCase().includes("biz riv") ? "Paris, France" :
+          rawName.toLowerCase().includes("avt ertuop") ? "New York, United States" : ""
+        );
+
         found = {
           author: {
             name: rawName,
             handle: safeHandle,
             avatar: bestAvatar,
             bio: candidate.bio || candidate.author?.bio || "Community reviewer on Yoouz.",
+            location: candidateLoc,
             isVerified: candidate.isVerified ?? candidate.author?.isVerified ?? true,
             isFollowed: Boolean(candidate.isFollowed || candidate.author?.isFollowed),
             followersCount: candidate.followersCount || candidate.author?.followersCount || 0
@@ -194,6 +200,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         avatar: currentUser.avatar,
         handle: currentUser.handle,
         bio: currentUser.bio,
+        location: currentUser.location,
         followersCount: currentUser.followersCount
       });
     }
@@ -237,18 +244,16 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         if (u.bio && (!reviewer.author.bio || reviewer.author.bio === "Community reviewer on Yoouz.")) {
           reviewer.author.bio = u.bio;
         }
+        if (u.location && !reviewer.author.location) {
+          reviewer.author.location = u.location;
+        }
         if (u.followersCount !== undefined && u.followersCount > (reviewer.author.followersCount || 0)) {
           reviewer.author.followersCount = u.followersCount;
         }
 
-        // Add tokens
+        // Add tokens (name and handle only)
         if (rawName) reviewer.searchTokens.push(rawName.toLowerCase());
         if (u.handle) reviewer.searchTokens.push(u.handle.toLowerCase().replace(/^@+/, ""));
-        if (rawEmail) {
-          reviewer.searchTokens.push(rawEmail);
-          reviewer.searchTokens.push(rawEmail.split("@")[0]);
-        }
-        if (rawId) reviewer.searchTokens.push(rawId);
       }
     });
 
@@ -274,7 +279,8 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         handle: v.author.handle,
         email: authorEmail,
         id: authorId,
-        avatar: v.author.avatar
+        avatar: v.author.avatar,
+        location: v.author.location
       });
 
       // Avoid duplicate video entries inside the reviewer's list
@@ -294,16 +300,16 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         reviewer.author.avatar = v.author.avatar;
       }
 
+      if (v.author.location && !reviewer.author.location) {
+        reviewer.author.location = v.author.location;
+      }
+
       if (v.author.isFollowed) {
         reviewer.author.isFollowed = true;
       }
 
       if (authorName) reviewer.searchTokens.push(authorName.toLowerCase());
       if (v.author.handle) reviewer.searchTokens.push(v.author.handle.toLowerCase().replace(/^@+/, ""));
-      if (authorEmail) {
-        reviewer.searchTokens.push(authorEmail);
-        reviewer.searchTokens.push(authorEmail.split("@")[0]);
-      }
     });
 
     // 3. Ensure all videos matching each reviewer via isAuthorMatch are properly associated
@@ -359,8 +365,12 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         ) {
           existing.author.avatar = rev.author.avatar;
         }
+
+        if (!existing.author.location && rev.author.location) {
+          existing.author.location = rev.author.location;
+        }
         
-        // Combine tokens
+        // Combine tokens (name & handle tokens only)
         existing.searchTokens = Array.from(new Set([...existing.searchTokens, ...rev.searchTokens]));
       }
     });
@@ -370,7 +380,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
     return mergedList;
   }, [videos, allUsers, fetchedDbUsers, currentUser]);
 
-  // Filter reviewers matching search query with strict deduplication
+  // Filter reviewers matching search query with strict deduplication (only by name/username)
   const displayedReviewers = useMemo(() => {
     const raw = query.toLowerCase().trim();
     if (!raw) return realReviewers;
@@ -381,21 +391,20 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
     const matches = realReviewers.filter((item) => {
       const name = (item.author.name || "").toLowerCase();
       const handle = (item.author.handle || "").toLowerCase().replace(/^@/, "");
-      const bio = (item.author.bio || "").toLowerCase();
       
-      // Direct string containment
-      if (name.includes(cleanQ) || handle.includes(cleanQ) || bio.includes(cleanQ)) {
+      // Direct string containment strictly on user name or username (handle)
+      if (name.includes(cleanQ) || handle.includes(cleanQ)) {
         return true;
       }
 
-      // Check search tokens
+      // Check name / handle search tokens
       if (item.searchTokens && item.searchTokens.some(tok => tok && (tok.includes(cleanQ) || cleanQ.includes(tok)))) {
         return true;
       }
 
-      // Multi-word token match
+      // Multi-word token match strictly on user name & username
       if (qTokens.length > 0) {
-        const fullProfileString = `${name} ${handle} ${bio} ${(item.searchTokens || []).join(" ")}`;
+        const fullProfileString = `${name} ${handle} ${(item.searchTokens || []).join(" ")}`;
         if (qTokens.every(t => fullProfileString.includes(t))) {
           return true;
         }
@@ -514,50 +523,36 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                           alt={reviewer.author.name}
                           className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 group-hover:scale-105 transition-transform"
                           referrerPolicy="no-referrer"
-                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- {reviewer.author.isVerified && (
-                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-zinc-800 text-white rounded-full flex items-center justify-center ring-2 ring-zinc-900">
-                            <CheckCircle className="w-3 h-3 fill-current" />
-                          </div>
-                        )}
+                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} 
+                        />
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 mb-1">
                           <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                             {reviewer.author.name}
                           </h3>
                           {reviewer.author.isVerified && (
-                            <span className="text-[9px] font-black bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700 shrink-0 uppercase">
-                              Verified
+                            <span title="Verified Reviewer" className="inline-flex items-center">
+                              <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
                             </span>
                           )}
                         </div>
                         
                         {reviewer.author.location ? (
-                          <p className="text-xs text-zinc-400 font-semibold flex items-center gap-1 mb-1 truncate">
-                            <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                            <span>{reviewer.author.location}</span>
+                          <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
+                            <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                            <span className="truncate">{reviewer.author.location}</span>
                           </p>
                         ) : (
-                          <p className="text-xs text-zinc-400 font-medium mb-1 truncate">
-                            Local Contributor
+                          <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
+                            <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                            <span>Local Contributor</span>
                           </p>
                         )}
                         
-                        {reviewer.count > 0 ? (
-                          <div className="flex items-center gap-2 text-[11px] font-semibold text-zinc-400">
-                            <span className="flex items-center gap-0.5 text-white">
-                              <Star className="w-3 h-3 fill-white text-white" />
-                              {reviewer.avgRating}
-                            </span>
-                            <span>•</span>
-                            <span>{reviewer.count} {reviewer.count === 1 ? "video review" : "video reviews"}</span>
-                          </div>
-                        ) : (
-                          <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
-                            Community Reviewer • 0 reviews
-                          </p>
-                        )}
+                        <p className="text-[11px] font-semibold text-zinc-500">
+                          {reviewer.count} {reviewer.count === 1 ? "video review" : "video reviews"}
+                        </p>
                       </div>
                     </div>
 

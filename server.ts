@@ -158,6 +158,7 @@ const defaultCommunityUsers = [
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
     email: "louis42111@gmail.com",
     bio: "Food explorer linking real businesses and authentic video reviews.",
+    location: "Paris, France",
     isVerified: true,
     followersCount: 0
   },
@@ -169,6 +170,7 @@ const defaultCommunityUsers = [
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
     email: "aouisesmee@gmail.com",
     bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States",
     isVerified: true,
     followersCount: 1
   },
@@ -180,6 +182,7 @@ const defaultCommunityUsers = [
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
     email: "aouisesme@gmail.com",
     bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States",
     isVerified: true,
     followersCount: 1
   },
@@ -191,6 +194,7 @@ const defaultCommunityUsers = [
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
     email: "avr6566gd@gmail.com",
     bio: "Community reviewer on Yoouz.",
+    location: "New York, United States",
     isVerified: true,
     followersCount: 0
   }
@@ -4119,7 +4123,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
             email: bestEmail,
             avatar: bestAvatar,
             bio: u.bio || existing.bio || "Community reviewer on Yoouz.",
-            location: u.location || existing.location || "",
+            location: u.location || existing.location || (key.includes("aouisesmee") ? "Los Angeles, California, United States" : (key.includes("bizriv") ? "Paris, France" : (key.includes("avtertuop") ? "New York, United States" : ""))),
             isVerified: Boolean(u.isVerified ?? existing.isVerified ?? true),
             followersCount: Math.max(Number(u.followersCount) || 0, Number(existing.followersCount) || 0)
           });
