@@ -87,7 +87,16 @@ export function App() {
   const [places, setPlaces] = useState<Place[]>(() => {
     try {
       const cached = localStorage.getItem("yoouz_cached_places");
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          return parsed.map((p: any) => ({
+            ...p,
+            rating: typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0),
+            totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0)
+          }));
+        }
+      }
     } catch(e){}
     return [];
   });
@@ -1592,7 +1601,9 @@ export function App() {
                 filtered.forEach((p: any) => {
                   const existing = map.get(p.id);
                   const isFollowed = followedPlaces.includes(p.id);
-                  map.set(p.id, { ...existing, ...p, isFollowed });
+                  const rating = typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || existing?.rating || 5.0);
+                  const totalReviews = typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || existing?.totalReviews || 0);
+                  map.set(p.id, { ...existing, ...p, rating, totalReviews, isFollowed });
                 });
                 return Array.from(map.values());
               });
@@ -1620,7 +1631,9 @@ export function App() {
           filtered.forEach(p => {
              const existing = map.get(p.id);
              const isFollowed = followedPlaces.includes(p.id);
-             map.set(p.id, { ...existing, ...p, isFollowed });
+             const rating = typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || existing?.rating || 5.0);
+             const totalReviews = typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || existing?.totalReviews || 0);
+             map.set(p.id, { ...existing, ...p, rating, totalReviews, isFollowed });
           });
           return Array.from(map.values());
         });

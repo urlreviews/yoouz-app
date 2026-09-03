@@ -79,13 +79,13 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
   // Followed businesses/places
   const followedPlaces = useMemo(() => {
-    return places.filter((p) => p.isFollowed);
+    return (places || []).filter((p) => p && p.id && p.isFollowed);
   }, [places]);
 
   // Suggested businesses (popular places, not followed)
   const suggestedPlaces = useMemo(() => {
-    return places
-      .filter((p) => !p.isFollowed)
+    return (places || [])
+      .filter((p) => p && p.id && !p.isFollowed)
       .slice(0, 4);
   }, [places]);
 
@@ -513,14 +513,14 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </h4>
                             <div className="flex items-center gap-1 text-[11px] text-white font-bold mt-0.5">
                               <Star className="w-3.5 h-3.5 fill-white text-white shrink-0" />
-                              <span>{place.rating.toFixed(1)}</span>
-                              <span className="text-zinc-400 font-normal">({place.totalReviews})</span>
+                              <span>{typeof place.rating === "number" && !isNaN(place.rating) ? place.rating.toFixed(1) : (Number(place.rating) || 5.0).toFixed(1)}</span>
+                              <span className="text-zinc-400 font-normal">({place.totalReviews ?? 0})</span>
                             </div>
                             <p className="text-[11px] text-zinc-400 mt-0.5 truncate">{place.address}</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between border-t border-zinc-800 pt-3 mt-1">
-                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{place.category}</span>
+                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{place.category || "Business"}</span>
                           <button
                             onClick={() => onToggleFollowPlace(place.id)}
                             className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-extrabold text-[11px] inline-flex items-center gap-1 transition-colors cursor-pointer"
@@ -568,14 +568,14 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </h4>
                             <div className="flex items-center gap-1 text-[11px] text-white font-bold mt-0.5">
                               <Star className="w-3.5 h-3.5 fill-white text-white shrink-0" />
-                              <span>{place.rating.toFixed(1)}</span>
-                              <span className="text-zinc-400 font-normal">({place.totalReviews})</span>
+                              <span>{typeof place.rating === "number" && !isNaN(place.rating) ? place.rating.toFixed(1) : (Number(place.rating) || 5.0).toFixed(1)}</span>
+                              <span className="text-zinc-400 font-normal">({place.totalReviews ?? 0})</span>
                             </div>
                             <p className="text-[11px] text-zinc-400 mt-0.5 truncate">{place.address}</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between border-t border-zinc-800 pt-3 mt-1">
-                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{place.category}</span>
+                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{place.category || "Business"}</span>
                           <button
                             onClick={() => onToggleFollowPlace(place.id)}
                             className="px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-extrabold text-[11px] inline-flex items-center gap-1 transition-colors cursor-pointer"

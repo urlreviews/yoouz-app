@@ -165,7 +165,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                   {/* Rating Badge */}
                   <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-xs text-[10px] font-bold text-amber-300 flex items-center gap-1">
                     <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                    <span>{video.rating.toFixed(1)}</span>
+                    <span>{typeof video.rating === "number" && !isNaN(video.rating) ? video.rating.toFixed(1) : (Number(video.rating) || 5.0).toFixed(1)}</span>
                   </div>
 
                   {/* Direct Unsave Action */}
@@ -225,7 +225,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       <div className="flex items-center gap-1.5 text-xs text-zinc-400 md:text-zinc-400 mt-1">
                         <div className="flex items-center text-amber-400 md:text-amber-500 font-bold shrink-0">
                           <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
-                          <span>{video.rating.toFixed(1)}</span>
+                          <span>{typeof video.rating === "number" && !isNaN(video.rating) ? video.rating.toFixed(1) : (Number(video.rating) || 5.0).toFixed(1)}</span>
                         </div>
                         <span className="text-zinc-600 md:text-zinc-300">|</span>
                         <div className="flex items-center gap-0.5 truncate text-[11px] font-medium">

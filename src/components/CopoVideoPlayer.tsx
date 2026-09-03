@@ -721,7 +721,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     <div className="flex-1">
                       <div className="font-bold text-white">Edit Star Rating & Review</div>
                       <div className="text-xs text-zinc-400 font-normal">
-                        Update your score ({moreMenuVideo.rating.toFixed(1)} ★) & place rating
+                        Update your score ({typeof moreMenuVideo.rating === "number" && !isNaN(moreMenuVideo.rating) ? moreMenuVideo.rating.toFixed(1) : (Number(moreMenuVideo.rating) || 5.0).toFixed(1)} ★) & place rating
                       </div>
                     </div>
                   </button>
