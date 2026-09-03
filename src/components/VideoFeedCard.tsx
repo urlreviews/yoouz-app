@@ -108,6 +108,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     isManuallyPausedRef.current = isManuallyPaused;
   }, [isManuallyPaused]);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
+  const [isActualMuted, setIsActualMuted] = useState<boolean>(true);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
@@ -381,12 +382,21 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
 
     triggerHaptic("light");
+    
+    const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+
+    // If video was forced muted on mobile by browser policy, the first tap should UNMUTE it, not pause it.
+    if (isMobile && el.muted) {
+      el.muted = false;
+      el.volume = 1;
+      el.play().catch(() => {});
+      return;
+    }
 
     if (el.paused || isManuallyPaused || !hasUserStartedFeed) {
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       
-      const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
       el.muted = isMobile ? false : isMuted;
       if (!el.muted) {
         el.volume = 1;
@@ -597,6 +607,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             x5-playsinline="true"
             x5-video-player-type="h5-page"
             x5-video-player-fullscreen="true"
+            onVolumeChange={() => setIsActualMuted(videoRef.current?.muted ?? true)}
             loop
             muted={isMuted}
             disablePictureInPicture
@@ -780,6 +791,23 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         >
           <Play className="w-9 h-9 fill-white translate-x-0.5" />
         </button>
+      )}
+
+      {/* Mobile "Tap to Unmute" Overlay when autoplay is forced muted */}
+      {isActive && isActualMuted && typeof navigator !== "undefined" && /Mobi|Android|iPhone/i.test(navigator.userAgent) && !showPlayPauseFeedback && (
+        <div className="absolute top-[calc(env(safe-area-inset-top,14px)+62px)] md:top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlayPause(e);
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-xl border border-white/30 text-white shadow-2xl transition-all cursor-pointer group"
+          >
+            <VolumeX className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold tracking-wide text-white drop-shadow">Tap to unmute</span>
+          </button>
+        </div>
       )}
 
       {/* Double-tap Heart Animation (Positioned at tap coords or centered with burst animation) */}
