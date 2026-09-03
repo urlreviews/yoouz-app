@@ -93,12 +93,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = videos[currentIndex] || videos[0];
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
-  // Default to true so videos autoplay immediately like YouTube Shorts & TikTok
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
+  // Mobile autoplays immediately. Desktop requires initial center play click for engagement.
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : true
+  );
 
-  // Reset feed initiation to true on context switch so first card plays immediately
+  // Reset feed initiation on context switch, honoring desktop vs mobile
   useEffect(() => {
-    setHasUserStartedFeed(true);
+    setHasUserStartedFeed(window.innerWidth < 768);
   }, [activeSubTab, contextKey]);
 
   // Edit Rating State
