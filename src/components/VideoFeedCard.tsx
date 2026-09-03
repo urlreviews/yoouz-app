@@ -226,66 +226,32 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
       
-      const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
-
-      if (isMobile) {
-        // True YouTube Shorts mobile web behavior:
-        // Direct unmuted playback attempt on viewport entry
-        el.muted = false;
+      const audioReady = isAudioUnlocked();
+      // On mobile, if audio is unlocked we try to use the global isMuted state.
+      // If it's not unlocked, we must start muted to avoid Safari completely blocking the autoplay.
+      const targetMuted = audioReady ? isMuted : true;
+      
+      el.muted = targetMuted;
+      if (!targetMuted) {
         el.volume = 1;
-        
-        if (el.paused) {
-          const p = el.play();
-          if (p !== undefined) {
-            p.then(() => {
-              setIsPlaying(true);
-              setIsBuffering(false);
-            }).catch((err) => {
-              // Fallback if strict browser policy blocks initial sound:
-              // Starts muted momentarily, then unmutes on the first micro-interaction
-              console.log("[VideoFeedCard] Autoplay with sound restricted, using 150ms fallback bypass:", err);
-              el.muted = true;
-              el.play().then(() => {
-                setIsPlaying(true);
-                setIsBuffering(false);
-                setTimeout(() => {
-                  if (videoRef.current) {
-                    videoRef.current.muted = false;
-                    videoRef.current.volume = 1;
-                  }
-                }, 150);
-              }).catch(() => {
-                setIsPlaying(false);
-              });
-            });
-          }
-        }
-      } else {
-        // Desktop handling
-        const audioReady = isAudioUnlocked();
-        const targetMuted = audioReady ? isMuted : true;
-        el.muted = targetMuted;
-        if (!targetMuted) {
-          el.volume = 1;
-        }
+      }
 
-        if (el.paused) {
-          const p = el.play();
-          if (p !== undefined) {
-            p.then(() => {
+      if (el.paused) {
+        const p = el.play();
+        if (p !== undefined) {
+          p.then(() => {
+            setIsPlaying(true);
+            setIsBuffering(false);
+          }).catch((err) => {
+            console.log("[VideoFeedCard] Autoplay restricted, playing muted:", err);
+            el.muted = true;
+            el.play().then(() => {
               setIsPlaying(true);
               setIsBuffering(false);
-            }).catch((err) => {
-              console.log("[VideoFeedCard] Desktop Autoplay restricted, playing muted:", err);
-              el.muted = true;
-              el.play().then(() => {
-                setIsPlaying(true);
-                setIsBuffering(false);
-              }).catch(() => {
-                setIsPlaying(false);
-              });
+            }).catch(() => {
+              setIsPlaying(false);
             });
-          }
+          });
         }
       }
     } else {
@@ -383,13 +349,25 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     triggerHaptic("light");
     
-    const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+    const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone/i.test(navigator.userAgent);
 
     // If video was forced muted on mobile by browser policy, the first tap should UNMUTE it, not pause it.
     if (isMobile && el.muted) {
       el.muted = false;
       el.volume = 1;
       el.play().catch(() => {});
+      
+      // Flash the unmuted icon
+      if (muteFeedbackTimeoutRef.current) clearTimeout(muteFeedbackTimeoutRef.current);
+      setShowMuteFeedback("unmuted");
+      muteFeedbackTimeoutRef.current = setTimeout(() => {
+        setShowMuteFeedback(null);
+      }, 650);
+      
+      // Make sure global state matches!
+      if (isMuted && onToggleMute) {
+        onToggleMute(e);
+      }
       return;
     }
 
@@ -397,7 +375,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       
-      el.muted = isMobile ? false : isMuted;
+      el.muted = isMuted;
       if (!el.muted) {
         el.volume = 1;
       }
@@ -412,14 +390,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             el.play().then(() => {
               setIsPlaying(true);
               setIsBuffering(false);
-              if (isMobile) {
-                setTimeout(() => {
-                  if (videoRef.current) {
-                    videoRef.current.muted = false;
-                    videoRef.current.volume = 1;
-                  }
-                }, 150);
-              }
             }).catch(() => {
               setIsPlaying(false);
             });
