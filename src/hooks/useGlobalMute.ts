@@ -3,17 +3,16 @@ import { useState, useEffect } from 'react';
 // Track if user has touched/interacted with the viewport during this session
 let hasUserInteracted = false;
 
-// Initialize from localStorage if the user explicitly set a sound preference
-let globalIsMuted = (() => {
-  try {
-    const saved = localStorage.getItem("yoouz_sound_muted");
-    if (saved !== null) {
-      return saved === "true";
-    }
-  } catch (e) {}
-  // Default to false (sound enabled)
-  return false;
-})();
+// Sound is enabled by default across the app
+let globalIsMuted = false;
+
+try {
+  // Clear any old muted state so sound is always on by default
+  const saved = localStorage.getItem("yoouz_sound_muted");
+  if (saved === "true") {
+    localStorage.removeItem("yoouz_sound_muted");
+  }
+} catch (e) {}
 
 const listeners = new Set<(val: boolean) => void>();
 const interactionListeners = new Set<(interacted: boolean) => void>();
@@ -35,7 +34,7 @@ if (typeof window !== 'undefined') {
     triggerAudioUnlock();
   };
 
-  ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown', 'scroll'].forEach(evt => {
+  ['touchstart', 'touchend', 'touchmove', 'pointerdown', 'pointerup', 'click', 'keydown', 'scroll', 'wheel'].forEach(evt => {
     window.addEventListener(evt, onFirstInteraction, { passive: true, capture: true });
   });
 }
