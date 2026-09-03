@@ -634,8 +634,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button */}
-        <div className="flex items-center justify-end gap-2 min-w-[70px]">
+        {/* Right side: Sound Mute / Unmute Toggle Button (Desktop & Laptop screens only - Hidden on Mobile) */}
+        <div className="hidden sm:flex items-center justify-end gap-2 min-w-[70px]">
           <button
             id={`btn-toggle-sound-${video.id}`}
             onClick={(e) => {
@@ -663,24 +663,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </button>
         </div>
       </header>
-
-      {/* YouTube Shorts / Instagram Reels "Tap to Unmute" Floating Pill Banner */}
-      {isActive && isMuted && (
-        <div className="absolute top-[calc(env(safe-area-inset-top,14px)+62px)] md:top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
-          <button
-            type="button"
-            id={`btn-tap-to-unmute-${video.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleMute(e);
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-xl border border-white/30 text-white shadow-2xl transition-all cursor-pointer group"
-          >
-            <VolumeX className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-semibold tracking-wide text-white drop-shadow">Tap to unmute</span>
-          </button>
-        </div>
-      )}
 
       {/* Transient Play/Pause Icon Tap Feedback */}
       {showPlayPauseFeedback && (
