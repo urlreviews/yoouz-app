@@ -4007,25 +4007,128 @@ app.get('/api/nosql/:collection', async (req, res) => {
 
     let items = Array.from(itemMap.values());
 
-    // For 'users' collection, aggregate from firestore_users, SQL users, and video review authors
+    // For 'users' collection, aggregate and consolidate from all sources by unique canonical identity
     if (colName === 'users') {
       const userMap = new Map<string, any>();
       
-      const getUserKey = (u: any) => {
+      const getCanonicalUserKey = (u: any): string => {
         if (!u) return "";
         const email = (u.email || "").toLowerCase().trim();
-        if (email) return email;
         const handle = (u.handle || "").replace(/^@+/, "").toLowerCase().trim();
-        if (handle) return handle;
         const name = (u.name || "").toLowerCase().trim();
-        if (name) return name;
-        return (u.uid || u.id || "").toLowerCase().trim();
+        const id = (u.uid || u.id || "").toLowerCase().trim();
+
+        // 1. Group all aliases for aouisesmee
+        if (
+          email.includes("aouisesmee") || email.includes("aouisesme") ||
+          handle.includes("aouisesmee") || handle.includes("aouisesme") ||
+          name.includes("aouisesmee") || name.includes("aouisesme") ||
+          id.includes("aouisesmee") || id.includes("aouisesme") || id === "mlio66hdr9trvofdgddgwm30rku2"
+        ) {
+          return "usr_canonical_aouisesmee";
+        }
+
+        // 2. Group all aliases for avt ertuop
+        if (
+          name === "avt ertuop" || name.replace(/[^a-z0-9]/g, "") === "avtertuop" ||
+          email === "avr6566gd@gmail.com" || handle === "avr6566gd" || id.includes("avr6566gd")
+        ) {
+          return "usr_canonical_avtertuop";
+        }
+
+        // 3. Group all aliases for Biz Riv
+        if (
+          name === "biz riv" || name.replace(/[^a-z0-9]/g, "") === "bizriv" ||
+          email === "louis42111@gmail.com" || handle === "louis42111" || id.includes("louis42111")
+        ) {
+          return "usr_canonical_bizriv";
+        }
+
+        // 4. Normalized name key
+        const normName = name.replace(/[^a-z0-9]/g, "");
+        if (normName && normName !== "reviewer" && normName !== "user" && normName.length >= 3) {
+          return `usr_name_${normName}`;
+        }
+
+        // 5. Normalized handle key
+        const normHandle = handle.replace(/[^a-z0-9]/g, "");
+        if (normHandle && normHandle !== "user" && normHandle.length >= 3) {
+          return `usr_handle_${normHandle}`;
+        }
+
+        // 6. Normalized email prefix key
+        if (email && email.includes("@")) {
+          const prefix = email.split("@")[0].replace(/[^a-z0-9]/g, "");
+          if (prefix && prefix.length >= 3) return `usr_email_${prefix}`;
+          return `usr_email_${email.replace(/[^a-z0-9]/g, "_")}`;
+        }
+
+        return id || `usr_anon_${Date.now()}`;
       };
 
-      // 1. Add all items from Firestore
+      const mergeUserIntoMap = (u: any) => {
+        if (!u) return;
+        const key = getCanonicalUserKey(u);
+        if (!key) return;
+        const existing = userMap.get(key);
+        if (!existing) {
+          userMap.set(key, { ...u });
+        } else {
+          // Merge preserving the most authentic, complete and verified information
+          const hasRealAvatar = (av: string) => Boolean(
+            av &&
+            !av.includes("ui-avatars") &&
+            !av.includes("dicebear") &&
+            !av.includes("unsplash") &&
+            !av.includes("/api/videos/") &&
+            !av.includes(".mp4")
+          );
+
+          const bestAvatar = (hasRealAvatar(u.avatar) ? u.avatar : "") || 
+                             (hasRealAvatar(existing.avatar) ? existing.avatar : "") || 
+                             u.avatar || 
+                             existing.avatar;
+
+          let bestEmail = (u.email && u.email.includes("@") ? u.email : "") || 
+                            (existing.email && existing.email.includes("@") ? existing.email : "") || 
+                            "";
+          if (u.email === "aouisesmee@gmail.com" || existing.email === "aouisesmee@gmail.com") {
+            bestEmail = "aouisesmee@gmail.com";
+          }
+
+          let bestId = existing.id || u.id;
+          if (key === "usr_canonical_aouisesmee") {
+            bestId = "usr_aouisesmee_gmail_com";
+          }
+
+          const bestName = (u.name && u.name !== "Reviewer" && u.name !== "User" ? u.name : "") || 
+                           (existing.name && existing.name !== "Reviewer" ? existing.name : "") || 
+                           u.name || 
+                           existing.name;
+
+          const rawHandle = (u.handle && u.handle !== "@user" ? u.handle : "") || 
+                            (existing.handle && existing.handle !== "@user" ? existing.handle : "") || 
+                            `@${bestName.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+          const bestHandle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
+
+          userMap.set(key, {
+            ...existing,
+            ...u,
+            name: bestName,
+            handle: bestHandle,
+            email: bestEmail,
+            avatar: bestAvatar,
+            bio: u.bio || existing.bio || "Community reviewer on Yoouz.",
+            location: u.location || existing.location || "",
+            isVerified: Boolean(u.isVerified ?? existing.isVerified ?? true),
+            followersCount: Math.max(Number(u.followersCount) || 0, Number(existing.followersCount) || 0)
+          });
+        }
+      };
+
+      // 1. Add all items from Firestore / BunnyDB
       items.forEach((u: any) => {
-        const key = getUserKey(u);
-        if (key) userMap.set(key, u);
+        mergeUserIntoMap(u);
       });
 
       // 2. Add from SQL users table if available
@@ -4033,18 +4136,15 @@ app.get('/api/nosql/:collection', async (req, res) => {
         try {
           const sqlUsers = await db.select().from(users);
           sqlUsers.forEach((su: any) => {
-            const key = getUserKey(su);
-            if (key && !userMap.has(key)) {
-              userMap.set(key, {
-                id: su.uid || String(su.id),
-                uid: su.uid,
-                name: su.name,
-                email: su.email,
-                avatar: su.avatar,
-                handle: su.email?.split("@")[0] || su.name?.toLowerCase().replace(/[^a-z0-9_]/g, ""),
-                createdAt: su.createdAt
-              });
-            }
+            mergeUserIntoMap({
+              id: su.uid || String(su.id),
+              uid: su.uid,
+              name: su.name,
+              email: su.email,
+              avatar: su.avatar,
+              handle: su.email?.split("@")[0] || su.name?.toLowerCase().replace(/[^a-z0-9_]/g, ""),
+              createdAt: su.createdAt
+            });
           });
         } catch (err) {}
       }
@@ -4058,7 +4158,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
             const authorName = author?.name || vr.authorName;
             const authorHandle = author?.handle || vr.authorHandle || authorName;
             const authorAvatar = author?.avatar || vr.authorAvatar;
-            const obj = {
+            mergeUserIntoMap({
               id: vr.userId || authorHandle,
               uid: vr.userId || authorHandle,
               name: authorName,
@@ -4066,21 +4166,14 @@ app.get('/api/nosql/:collection', async (req, res) => {
               avatar: authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a73e8&color=fff`,
               email: vr.userEmail || "",
               isVerified: true
-            };
-            const key = getUserKey(obj);
-            if (key && !userMap.has(key)) {
-              userMap.set(key, obj);
-            }
+            });
           }
         });
       } catch (err) {}
 
       // 4. Ensure core active community reviewers (Biz Riv, aouisesmee, avt ertuop) are always available
       defaultCommunityUsers.forEach((du) => {
-        const key = getUserKey(du);
-        if (key && !userMap.has(key)) {
-          userMap.set(key, du);
-        }
+        mergeUserIntoMap(du);
       });
 
       items = Array.from(userMap.values());

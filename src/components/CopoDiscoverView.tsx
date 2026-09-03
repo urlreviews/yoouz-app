@@ -69,14 +69,16 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
     };
   }, []);
 
-  // Consolidate real registered users and real authors from video reviews
+  // Consolidate real registered users and real authors from video reviews into unique profiles
   const realReviewers = useMemo(() => {
-    const map = new Map<string, ReviewerData>();
-
-    const getCleanKey = (email?: string, handle?: string, name?: string): string => {
-      if (email && email.includes("@")) return email.toLowerCase().trim();
-      const raw = handle || name || "";
-      return raw.replace(/^@+/, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+    // Helper to sanitize and normalize tokens
+    const normalize = (val?: string | null): string => {
+      if (!val) return "";
+      return String(val)
+        .toLowerCase()
+        .trim()
+        .replace(/^@+/, "")
+        .replace(/[^a-z0-9]/g, "");
     };
 
     const getAppropriateAvatar = (name?: string, handle?: string, avatar?: string): string => {
@@ -93,134 +95,282 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
       return `/api/avatar?name=${encodeURIComponent(name || "User")}&background=27272a&color=fff&bold=true&size=128`;
     };
 
-    // 1. Add reviewers from real video reviews
-    videos.forEach((v) => {
-      if (v.author && (v.author.name || v.author.name)) {
-        const authorName = v.author.name || "Reviewer";
-        const rawHandle = (v.author.name || authorName).replace(/^@+/, "");
-        const normKey = getCleanKey(v.userEmail || v.userId, rawHandle, authorName);
-        if (!normKey) return;
+    // Deep equality check to determine if candidate A and candidate B are the same human creator
+    const areSameReviewer = (a: any, b: any): boolean => {
+      if (!a || !b) return false;
 
-        const bestAvatar = getAppropriateAvatar(authorName, rawHandle, v.author.avatar);
+      // Extract names, handles, emails, ids
+      const aName = normalize(a.name || a.author?.name);
+      const bName = normalize(b.name || b.author?.name);
 
-        const existing = map.get(normKey);
-        if (existing) {
-          existing.count += 1;
-          existing.videos.push(v);
-          const totalRating = existing.videos.reduce((sum, item) => sum + (item.rating || 5), 0);
-          existing.avgRating = Number((totalRating / existing.videos.length).toFixed(1));
-          if (v.author.isFollowed) {
-            existing.author.isFollowed = true;
-          }
-          if (v.author.name && (!existing.author.name || existing.author.name === "Reviewer")) {
-            existing.author.name = v.author.name;
-          }
-          if (!existing.author.avatar || existing.author.avatar.includes("dicebear") || existing.author.avatar.includes("unsplash")) {
-            existing.author.avatar = bestAvatar;
-          }
-        } else {
-          map.set(normKey, {
-            author: {
-              ...v.author,
-              name: authorName,
-              
-              avatar: bestAvatar,
-              isVerified: v.author.isVerified ?? true,
-              isFollowed: Boolean(v.author.isFollowed),
-              followersCount: v.author.followersCount ?? 0,
-              bio: v.author.bio || `Community reviewer on Yoouz.`
-            },
-            count: 1,
-            avgRating: v.rating || 5.0,
-            videos: [v],
-            searchTokens: [
-              authorName.toLowerCase(),
-              rawHandle.toLowerCase(),
-              normKey,
-              (v.userEmail || "").toLowerCase()
-            ]
-          });
-        }
+      const aHandle = normalize(a.handle || a.author?.handle);
+      const bHandle = normalize(b.handle || b.author?.handle);
+
+      const aEmail = (a.email || a.userEmail || "").toLowerCase().trim();
+      const bEmail = (b.email || b.userEmail || "").toLowerCase().trim();
+
+      const aPrefix = aEmail.includes("@") ? normalize(aEmail.split("@")[0]) : "";
+      const bPrefix = bEmail.includes("@") ? normalize(bEmail.split("@")[0]) : "";
+
+      const aId = (a.id || a.uid || a.userId || "").toLowerCase().trim();
+      const bId = (b.id || b.uid || b.userId || "").toLowerCase().trim();
+
+      // 1. Known alias group for aouisesmee
+      const isAouisesmee = (x: any) => {
+        const s = `${x.name || ""} ${x.author?.name || ""} ${x.handle || ""} ${x.author?.handle || ""} ${x.email || x.userEmail || ""} ${x.id || x.uid || x.userId || ""}`.toLowerCase();
+        return s.includes("aouisesmee") || s.includes("aouisesme") || s.includes("mlio66hdr9trvofdgddgwm30rku2");
+      };
+      if (isAouisesmee(a) && isAouisesmee(b)) return true;
+
+      // 2. Direct ID / UID match
+      if (aId && bId && (aId === bId || aId === `usr_${bId}` || bId === `usr_${aId}`)) return true;
+
+      // 3. Direct Email match
+      if (aEmail && bEmail && aEmail === bEmail) return true;
+
+      // 4. Normalized Name match (must not be generic placeholder)
+      const isGeneric = (n: string) => !n || n === "reviewer" || n === "user" || n === "localcontributor" || n === "communityreviewer";
+      if (aName && bName && !isGeneric(aName) && aName === bName) return true;
+      if (aHandle && bHandle && !isGeneric(aHandle) && aHandle === bHandle) return true;
+      if (aName && bHandle && !isGeneric(aName) && aName === bHandle) return true;
+      if (aHandle && bName && !isGeneric(aHandle) && aHandle === bName) return true;
+
+      // 5. Email prefix matching handle or name
+      if (aPrefix && !isGeneric(aPrefix)) {
+        if (aPrefix === bName || aPrefix === bHandle) return true;
       }
-    });
+      if (bPrefix && !isGeneric(bPrefix)) {
+        if (bPrefix === aName || bPrefix === aHandle) return true;
+      }
 
-    // 2. Add real registered users from database / current user
+      // 6. Leverage isAuthorMatch
+      if (isAuthorMatch({ author: a.author || a, userEmail: aEmail, userId: aId } as any, b.author || b)) {
+        return true;
+      }
+      if (isAuthorMatch({ author: b.author || b, userEmail: bEmail, userId: bId } as any, a.author || a)) {
+        return true;
+      }
+
+      return false;
+    };
+
+    const reviewersList: ReviewerData[] = [];
+
+    // Helper to find or create a consolidated reviewer entry
+    const getOrCreateReviewer = (candidate: any): ReviewerData => {
+      let found = reviewersList.find(r => areSameReviewer(r.author, candidate) || areSameReviewer(r, candidate));
+      if (!found) {
+        const rawName = candidate.name || candidate.author?.name || candidate.email?.split("@")[0] || "Reviewer";
+        const rawHandle = candidate.handle || candidate.author?.handle || `@${normalize(rawName)}`;
+        const safeHandle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
+        const bestAvatar = getAppropriateAvatar(rawName, safeHandle, candidate.avatar || candidate.author?.avatar);
+
+        found = {
+          author: {
+            name: rawName,
+            handle: safeHandle,
+            avatar: bestAvatar,
+            bio: candidate.bio || candidate.author?.bio || "Community reviewer on Yoouz.",
+            isVerified: candidate.isVerified ?? candidate.author?.isVerified ?? true,
+            isFollowed: Boolean(candidate.isFollowed || candidate.author?.isFollowed),
+            followersCount: candidate.followersCount || candidate.author?.followersCount || 0
+          },
+          count: 0,
+          avgRating: 5.0,
+          videos: [],
+          searchTokens: []
+        };
+        reviewersList.push(found);
+      }
+      return found;
+    };
+
+    // 1. Process all real registered users & current user first to establish authoritative creator profiles
     const sourceUsers = [...allUsers, ...fetchedDbUsers];
     if (currentUser) {
       sourceUsers.push({
         name: currentUser.name,
         email: currentUser.email,
         avatar: currentUser.avatar,
-        
+        handle: currentUser.handle,
         bio: currentUser.bio,
         followersCount: currentUser.followersCount
       });
     }
 
-    sourceUsers.forEach((u) => {
-      if (u && (u.name || u.email || u.name)) {
-        const rawName = u.name || u.email?.split("@")[0] || "Reviewer";
-        const rawHandle = (u.name || u.email?.split("@")[0] || rawName.toLowerCase().replace(/[^a-z0-9_]/g, "")).replace(/^@+/, "");
-        const normKey = getCleanKey(u.email || u.uid || u.id, rawHandle, rawName);
-        if (!normKey) return;
-
-        const userAvatar = getAppropriateAvatar(rawName, rawHandle, u.avatar);
-
-        const existing = map.get(normKey);
-        if (existing) {
-          if (!existing.author.avatar || existing.author.avatar.includes("ui-avatars") || existing.author.avatar.includes("unsplash")) {
-            if (u.avatar && !u.avatar.includes("unsplash")) existing.author.avatar = u.avatar;
-          }
-          if (u.bio && !existing.author.bio) {
-            existing.author.bio = u.bio;
-          }
-          if (u.followersCount !== undefined && !existing.author.followersCount) {
-            existing.author.followersCount = u.followersCount;
-          }
-          if (u.name && existing.author.name !== u.name) {
-            existing.searchTokens.push(u.name.toLowerCase());
-          }
-          if (u.email) {
-            existing.searchTokens.push(u.email.toLowerCase());
-            existing.searchTokens.push(u.email.split("@")[0].toLowerCase());
-          }
-        } else {
-          const userVideos = videos.filter((v) => isAuthorMatch(v, { name: rawName,  email: u.email }));
-          const totalRating = userVideos.reduce((sum, item) => sum + (item.rating || 5), 0);
-          const avgRating = userVideos.length > 0 ? Number((totalRating / userVideos.length).toFixed(1)) : 5.0;
-
-          map.set(normKey, {
-            author: {
-              name: rawName,
-              
-              avatar: userAvatar,
-              bio: u.bio || "Community reviewer on Yoouz.",
-              isVerified: u.isVerified ?? true,
-              isFollowed: false,
-              followersCount: u.followersCount ?? 0
-            },
-            count: userVideos.length,
-            avgRating: avgRating,
-            videos: userVideos,
-            searchTokens: [
-              rawName.toLowerCase(),
-              rawHandle.toLowerCase(),
-              normKey,
-              (u.email || "").toLowerCase(),
-              (u.email?.split("@")[0] || "").toLowerCase()
-            ]
+    // Read deleted users to ensure banned/purged accounts never appear
+    let deletedUsersSet = new Set<string>();
+    try {
+      const savedDeleted = localStorage.getItem("yoouz_deleted_users");
+      if (savedDeleted) {
+        const parsed = JSON.parse(savedDeleted);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(p => {
+            if (p) deletedUsersSet.add(String(p).toLowerCase().trim());
           });
         }
       }
+    } catch (e) {}
+
+    sourceUsers.forEach((u) => {
+      if (!u) return;
+      const rawName = u.name || u.email?.split("@")[0] || "";
+      const rawEmail = (u.email || "").toLowerCase().trim();
+      const rawId = (u.id || u.uid || "").toLowerCase().trim();
+      
+      // Skip if explicitly deleted
+      if (
+        deletedUsersSet.has(rawName.toLowerCase()) ||
+        deletedUsersSet.has(rawEmail) ||
+        deletedUsersSet.has(rawId)
+      ) {
+        return;
+      }
+
+      if (rawName || rawEmail || u.handle) {
+        const reviewer = getOrCreateReviewer(u);
+        
+        // Upgrade avatar if candidate has authentic photo
+        if (u.avatar && !u.avatar.includes("dicebear") && !u.avatar.includes("unsplash") && !u.avatar.includes("/api/videos/")) {
+          reviewer.author.avatar = u.avatar;
+        }
+        if (u.bio && (!reviewer.author.bio || reviewer.author.bio === "Community reviewer on Yoouz.")) {
+          reviewer.author.bio = u.bio;
+        }
+        if (u.followersCount !== undefined && u.followersCount > (reviewer.author.followersCount || 0)) {
+          reviewer.author.followersCount = u.followersCount;
+        }
+
+        // Add tokens
+        if (rawName) reviewer.searchTokens.push(rawName.toLowerCase());
+        if (u.handle) reviewer.searchTokens.push(u.handle.toLowerCase().replace(/^@+/, ""));
+        if (rawEmail) {
+          reviewer.searchTokens.push(rawEmail);
+          reviewer.searchTokens.push(rawEmail.split("@")[0]);
+        }
+        if (rawId) reviewer.searchTokens.push(rawId);
+      }
     });
 
-    const reviewersList = Array.from(map.values());
-    // Sort by video count descending, then alphabetical
-    reviewersList.sort((a, b) => b.count - a.count || a.author.name.localeCompare(b.author.name));
-    return reviewersList;
+    // 2. Process all video reviews to attach videos and find additional creators
+    videos.forEach((v) => {
+      if (!v || !v.author) return;
+      const authorName = v.author.name || "Reviewer";
+      const authorEmail = (v.userEmail || "").toLowerCase().trim();
+      const authorId = (v.userId || "").toLowerCase().trim();
+
+      // Skip deleted authors
+      if (
+        deletedUsersSet.has(authorName.toLowerCase()) ||
+        deletedUsersSet.has(authorEmail) ||
+        deletedUsersSet.has(authorId)
+      ) {
+        return;
+      }
+
+      const reviewer = getOrCreateReviewer({
+        author: v.author,
+        name: authorName,
+        handle: v.author.handle,
+        email: authorEmail,
+        id: authorId,
+        avatar: v.author.avatar
+      });
+
+      // Avoid duplicate video entries inside the reviewer's list
+      if (!reviewer.videos.some((rv) => rv.id === v.id)) {
+        reviewer.videos.push(v);
+      }
+
+      // Upgrade avatar if video has authentic Google avatar
+      if (
+        v.author.avatar &&
+        !v.author.avatar.includes("dicebear") &&
+        !v.author.avatar.includes("unsplash") &&
+        !v.author.avatar.includes("/api/videos/") &&
+        !v.author.avatar.includes(".mp4") &&
+        !v.author.avatar.includes("rev-")
+      ) {
+        reviewer.author.avatar = v.author.avatar;
+      }
+
+      if (v.author.isFollowed) {
+        reviewer.author.isFollowed = true;
+      }
+
+      if (authorName) reviewer.searchTokens.push(authorName.toLowerCase());
+      if (v.author.handle) reviewer.searchTokens.push(v.author.handle.toLowerCase().replace(/^@+/, ""));
+      if (authorEmail) {
+        reviewer.searchTokens.push(authorEmail);
+        reviewer.searchTokens.push(authorEmail.split("@")[0]);
+      }
+    });
+
+    // 3. Ensure all videos matching each reviewer via isAuthorMatch are properly associated
+    reviewersList.forEach((reviewer) => {
+      videos.forEach((v) => {
+        if (!reviewer.videos.some((rv) => rv.id === v.id)) {
+          if (
+            isAuthorMatch(v, reviewer.author) ||
+            areSameReviewer(reviewer.author, {
+              name: v.author?.name,
+              handle: v.author?.handle,
+              email: v.userEmail,
+              id: v.userId
+            })
+          ) {
+            reviewer.videos.push(v);
+          }
+        }
+      });
+
+      // Calculate video review count & average rating
+      reviewer.count = reviewer.videos.length;
+      const totalRating = reviewer.videos.reduce((sum, item) => sum + (item.rating || 5), 0);
+      reviewer.avgRating = reviewer.videos.length > 0 ? Number((totalRating / reviewer.videos.length).toFixed(1)) : 5.0;
+
+      // Unique search tokens
+      reviewer.searchTokens = Array.from(new Set(reviewer.searchTokens.filter(Boolean)));
+    });
+
+    // 4. Secondary deduplication pass: merge any remaining duplicate reviewer profiles
+    const mergedList: ReviewerData[] = [];
+    reviewersList.forEach((rev) => {
+      const existing = mergedList.find((m) => areSameReviewer(m.author, rev.author));
+      if (!existing) {
+        mergedList.push(rev);
+      } else {
+        // Merge videos
+        rev.videos.forEach((rv) => {
+          if (!existing.videos.some((ev) => ev.id === rv.id)) {
+            existing.videos.push(rv);
+          }
+        });
+        existing.count = existing.videos.length;
+        const total = existing.videos.reduce((s, x) => s + (x.rating || 5), 0);
+        existing.avgRating = existing.videos.length > 0 ? Number((total / existing.videos.length).toFixed(1)) : 5.0;
+        
+        // Upgrade avatar if rev has authentic avatar
+        if (
+          rev.author.avatar &&
+          !rev.author.avatar.includes("ui-avatars") &&
+          !rev.author.avatar.includes("dicebear") &&
+          !rev.author.avatar.includes("unsplash")
+        ) {
+          existing.author.avatar = rev.author.avatar;
+        }
+        
+        // Combine tokens
+        existing.searchTokens = Array.from(new Set([...existing.searchTokens, ...rev.searchTokens]));
+      }
+    });
+
+    // 5. Final Sort: Reviewers with more video reviews first, then alphabetically
+    mergedList.sort((a, b) => b.count - a.count || a.author.name.localeCompare(b.author.name));
+    return mergedList;
   }, [videos, allUsers, fetchedDbUsers, currentUser]);
 
-  // Filter reviewers matching search query
+  // Filter reviewers matching search query with strict deduplication
   const displayedReviewers = useMemo(() => {
     const raw = query.toLowerCase().trim();
     if (!raw) return realReviewers;
@@ -228,9 +378,9 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
     const cleanQ = raw.replace(/^@/, "").trim();
     const qTokens = cleanQ.split(/\s+/).filter(Boolean);
 
-    return realReviewers.filter((item) => {
+    const matches = realReviewers.filter((item) => {
       const name = (item.author.name || "").toLowerCase();
-      const handle = (item.author.name || "").toLowerCase().replace(/^@/, "");
+      const handle = (item.author.handle || "").toLowerCase().replace(/^@/, "");
       const bio = (item.author.bio || "").toLowerCase();
       
       // Direct string containment
@@ -243,7 +393,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         return true;
       }
 
-      // Multi-word token match (e.g. "Biz Riv" matches name "Biz Riv" or initial letters)
+      // Multi-word token match
       if (qTokens.length > 0) {
         const fullProfileString = `${name} ${handle} ${bio} ${(item.searchTokens || []).join(" ")}`;
         if (qTokens.every(t => fullProfileString.includes(t))) {
@@ -253,6 +403,23 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
 
       return false;
     });
+
+    // Strict deduplication guarantee: ensure each creator appears AT MOST ONCE in search results
+    const uniqueReviewers: ReviewerData[] = [];
+    const seenIdentities = new Set<string>();
+
+    for (const r of matches) {
+      const cleanName = (r.author.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const emailToken = (r.searchTokens.find(t => t.includes("@")) || "").toLowerCase().trim();
+      const cleanKey = emailToken || cleanName;
+
+      if (!cleanKey || !seenIdentities.has(cleanKey)) {
+        if (cleanKey) seenIdentities.add(cleanKey);
+        uniqueReviewers.push(r);
+      }
+    }
+
+    return uniqueReviewers;
   }, [realReviewers, query]);
 
   return (
