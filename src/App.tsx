@@ -588,6 +588,78 @@ export function App() {
     }
   };
 
+  const handleAdminDeleteUser = async (userToDelete: any) => {
+    const uId = (userToDelete.id || userToDelete.uid || "").toLowerCase().trim();
+    const uUid = (userToDelete.uid || "").toLowerCase().trim();
+    const uEmail = (userToDelete.email || "").toLowerCase().trim();
+    const uName = (userToDelete.name || "").toLowerCase().trim();
+    const uHandle = (userToDelete.handle || "").replace(/^@+/, "").toLowerCase().trim();
+
+    // 1. Immediately remove from local registered users state
+    setAllRegisteredUsers((prev) =>
+      prev.filter((u) => {
+        const thisId = (u.id || u.uid || "").toLowerCase().trim();
+        const thisUid = (u.uid || "").toLowerCase().trim();
+        const thisEmail = (u.email || "").toLowerCase().trim();
+        const thisName = (u.name || "").toLowerCase().trim();
+        const thisHandle = (u.handle || "").replace(/^@+/, "").toLowerCase().trim();
+
+        if (uId && (thisId === uId || thisId === `usr_${uId}`)) return false;
+        if (uUid && (thisUid === uUid || thisId === uUid)) return false;
+        if (uEmail && thisEmail === uEmail) return false;
+        if (uName && thisName === uName) return false;
+        if (uHandle && thisHandle === uHandle) return false;
+        return true;
+      })
+    );
+
+    // Save to local storage blacklist
+    try {
+      const stored = localStorage.getItem("yoouz_deleted_users") || "[]";
+      let arr: string[] = [];
+      try { arr = JSON.parse(stored); } catch (e) {}
+      if (!Array.isArray(arr)) arr = [];
+      if (uId && !arr.includes(uId)) arr.push(uId);
+      if (uUid && !arr.includes(uUid)) arr.push(uUid);
+      if (uEmail && !arr.includes(uEmail)) {
+        arr.push(uEmail);
+        arr.push(`usr_${uEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
+      }
+      if (uName && !arr.includes(uName)) arr.push(uName);
+      if (uHandle && !arr.includes(uHandle)) arr.push(uHandle);
+      localStorage.setItem("yoouz_deleted_users", JSON.stringify(arr));
+    } catch (e) {}
+
+    // 2. Call backend admin API
+    try {
+      fetch("/api/admin/users/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: userToDelete.id || userToDelete.uid,
+          uid: userToDelete.uid,
+          email: userToDelete.email,
+          name: userToDelete.name,
+          handle: userToDelete.handle
+        })
+      }).catch(() => {});
+      fetch(`/api/nosql/users/${encodeURIComponent(userToDelete.id || userToDelete.uid)}`, {
+        method: "DELETE"
+      }).catch(() => {});
+    } catch (e) {}
+
+    // 3. Delete directly from Firestore
+    try {
+      if (db) {
+        if (userToDelete.id) deleteDoc(doc(db, "users", userToDelete.id)).catch(() => {});
+        if (userToDelete.uid && userToDelete.uid !== userToDelete.id) deleteDoc(doc(db, "users", userToDelete.uid)).catch(() => {});
+        if (uEmail) {
+          deleteDoc(doc(db, "users", `usr_${uEmail.replace(/[^a-zA-Z0-9]/g, '_')}`)).catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+
   // Synchronize URL: Keep it clean (root only) as requested by the user.
   // Synchronize App State to URL (True Client-Side Routing for SEO)
   useEffect(() => {
@@ -1005,7 +1077,7 @@ export function App() {
 
   // Account validity checker (logs out if admin deleted user from database)
   useEffect(() => {
-    if (!currentUser || !currentUser.email) return;
+    if (!currentUser || !currentUser.email || currentUser.email.toLowerCase() === "4samet@gmail.com") return;
 
     let isSubscribed = true;
     const cleanEmail = currentUser.email.trim().toLowerCase();
@@ -1069,7 +1141,22 @@ export function App() {
         if (res.ok) {
           const list = await res.json();
           if (!isCancelled && Array.isArray(list)) {
-            const validUsers = list.filter((u: any) => u.name && u.name !== "Registered User" && u.name !== "Reviewer" && u.email && !u.email.includes("undefined"));
+            let deletedList: string[] = [];
+            try {
+              const stored = localStorage.getItem("yoouz_deleted_users");
+              if (stored) deletedList = JSON.parse(stored);
+            } catch (e) {}
+            const deletedSet = new Set(deletedList.map((k) => String(k).toLowerCase()));
+
+            const validUsers = list.filter((u: any) => {
+              if (!u || !u.name || u.name === "Registered User" || u.name === "Reviewer" || !u.email || u.email.includes("undefined")) return false;
+              const uEmail = (u.email || "").toLowerCase().trim();
+              const uName = (u.name || "").toLowerCase().trim();
+              const uId = (u.id || u.uid || "").toLowerCase().trim();
+              if (uEmail === "4samet@gmail.com" || uName === "samet" || uId === "4samet-user-id" || uId === "usr_4samet_gmail_com") return false;
+              if (deletedSet.has(uEmail) || deletedSet.has(uName) || deletedSet.has(uId)) return false;
+              return true;
+            });
             setAllRegisteredUsers(validUsers);
             updateUserRegistry(validUsers);
 
@@ -1114,9 +1201,28 @@ export function App() {
             });
             if (dbUsers.length > 0) {
               setAllRegisteredUsers((prev) => {
+                let deletedList: string[] = [];
+                try {
+                  const stored = localStorage.getItem("yoouz_deleted_users");
+                  if (stored) deletedList = JSON.parse(stored);
+                } catch (e) {}
+                const deletedSet = new Set(deletedList.map((k) => String(k).toLowerCase()));
+
                 const map = new Map<string, any>();
-                prev.forEach((u) => map.set((u.email || u.uid || u.id || u.name || "").toLowerCase(), u));
-                dbUsers.forEach((u) => map.set((u.email || u.uid || u.id || u.name || "").toLowerCase(), u));
+                prev.forEach((u) => {
+                  const k = (u.email || u.uid || u.id || u.name || "").toLowerCase();
+                  if (k && !deletedSet.has(k) && k !== "4samet@gmail.com" && k !== "samet") {
+                    map.set(k, u);
+                  }
+                });
+                dbUsers.forEach((u) => {
+                  const k = (u.email || u.uid || u.id || u.name || "").toLowerCase();
+                  const uName = (u.name || "").toLowerCase();
+                  const uId = (u.id || u.uid || "").toLowerCase();
+                  if (k && !deletedSet.has(k) && !deletedSet.has(uName) && !deletedSet.has(uId) && k !== "4samet@gmail.com" && uName !== "samet" && uId !== "4samet-user-id") {
+                    map.set(k, u);
+                  }
+                });
                 return Array.from(map.values());
               });
             }
@@ -3664,6 +3770,7 @@ export function App() {
                 places={places}
                 allUsers={allRegisteredUsers}
                 clubs={clubs}
+                onDeleteUser={handleAdminDeleteUser}
                 onDeleteVideo={handleAdminDeleteVideo}
                 onBulkDeleteVideos={handleAdminBulkDeleteVideos}
                 onPurgeAllVideos={handleAdminPurgeAllVideos}

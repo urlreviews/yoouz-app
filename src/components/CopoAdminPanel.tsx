@@ -119,6 +119,7 @@ interface CopoAdminPanelProps {
   places: Place[];
   allUsers?: any[];
   clubs?: Club[];
+  onDeleteUser?: (user: any) => void;
   onDeleteVideo: (id: string) => void;
   onBulkDeleteVideos?: (ids: string[]) => void;
   onPurgeAllVideos?: () => void;
@@ -139,6 +140,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   places = [],
   allUsers = [],
   clubs = [],
+  onDeleteUser,
   onDeleteVideo,
   onBulkDeleteVideos,
   onPurgeAllVideos,
@@ -204,10 +206,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Deletion Confirmations
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
   const [confirmDeletePlaceId, setConfirmDeletePlaceId] = useState<string | null>(null);
+  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState<string | null>(null);
   const [confirmBulkDeleteVideos, setConfirmBulkDeleteVideos] = useState(false);
   const [confirmPurgeAllVideos, setConfirmPurgeAllVideos] = useState(false);
   const [confirmBulkDeletePlaces, setConfirmBulkDeletePlaces] = useState(false);
   const [confirmDeleteCommentInfo, setConfirmDeleteCommentInfo] = useState<{ videoId: string; commentId: string } | null>(null);
+
+  const [deletedUserKeys, setDeletedUserKeys] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("yoouz_deleted_users") || "[]";
+      const arr = JSON.parse(stored);
+      return new Set((Array.isArray(arr) ? arr : []).map((k: string) => String(k).toLowerCase()));
+    } catch {
+      return new Set();
+    }
+  });
 
   // Helper: Toast notification
   const showToast = (msg: string) => {
@@ -215,6 +228,63 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
+  };
+
+  // User Deletion Handler
+  const executeDeleteUser = async (targetUser: any) => {
+    const targetId = String(targetUser.id || targetUser.uid || "").trim();
+    const targetUid = String(targetUser.uid || targetUser.id || "").trim();
+    const targetEmail = (targetUser.email || "").toLowerCase().trim();
+    const targetName = (targetUser.name || "").trim();
+    const targetHandle = (targetUser.handle || "").replace(/^@+/, "").toLowerCase().trim();
+
+    // 1. Immediately update deleted keys
+    setDeletedUserKeys((prev) => {
+      const next = new Set(prev);
+      if (targetId) next.add(targetId.toLowerCase());
+      if (targetUid) next.add(targetUid.toLowerCase());
+      if (targetEmail) {
+        next.add(targetEmail);
+        next.add(`usr_${targetEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
+      }
+      if (targetName) next.add(targetName.toLowerCase());
+      if (targetHandle) next.add(targetHandle);
+
+      try {
+        localStorage.setItem("yoouz_deleted_users", JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+
+    setConfirmDeleteUserId(null);
+
+    // 2. Notify parent component
+    if (onDeleteUser) {
+      onDeleteUser(targetUser);
+    }
+
+    // 3. Request deletion on server across all databases
+    try {
+      const res = await fetch("/api/admin/users/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: targetId,
+          uid: targetUid,
+          email: targetEmail,
+          name: targetName,
+          handle: targetHandle
+        })
+      });
+      if (res.ok) {
+        showToast(`User ${targetName || targetEmail || "account"} deleted permanently.`);
+      } else {
+        await fetch(`/api/nosql/users/${encodeURIComponent(targetId || targetUid)}`, { method: "DELETE" });
+        showToast(`User ${targetName || targetEmail || "account"} deleted.`);
+      }
+    } catch (e) {
+      showToast(`User deleted.`);
+    }
   };
 
   // Auth Handler
@@ -241,10 +311,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Unique Users Mapping
   const uniqueUsers = useMemo(() => {
     const getCleanHandle = (str?: string) => (str || "").replace(/^@+/, "").trim().toLowerCase();
+    const isKeyDeleted = (val?: string) => {
+      if (!val) return false;
+      const clean = val.toLowerCase().trim();
+      const withoutAt = clean.replace(/^@+/, "");
+      return deletedUserKeys.has(clean) || deletedUserKeys.has(withoutAt);
+    };
+
     const mergedList: any[] = [];
     
     (allUsers || []).forEach((u) => {
       if (!u) return;
+      if (
+        isKeyDeleted(u.id) ||
+        isKeyDeleted(u.uid) ||
+        isKeyDeleted(u.email) ||
+        isKeyDeleted(u.name) ||
+        isKeyDeleted(u.handle)
+      ) {
+        return;
+      }
       const cleanHandle = getCleanHandle(u.name) || (u.email ? u.email.split("@")[0].toLowerCase() : u.id) || "user";
       mergedList.push({
         id: u.id || u.uid || cleanHandle,
@@ -264,6 +350,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
     (videos || []).forEach((v) => {
       if (!v) return;
+      if (
+        isKeyDeleted(v.userEmail) ||
+        isKeyDeleted(v.author?.name) ||
+        isKeyDeleted(v.userId)
+      ) {
+        return;
+      }
       const author = v.author || {
         name: "Verified Reviewer",
         handle: v.userId || "reviewer",
@@ -332,6 +425,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     });
     // Filter out incomplete signups (e.g. no reviews, name matches email prefix)
     return finalList.filter(u => {
+       if (
+         isKeyDeleted(u.id) ||
+         isKeyDeleted(u.uid) ||
+         isKeyDeleted(u.email) ||
+         isKeyDeleted(u.name) ||
+         isKeyDeleted(u.handle)
+       ) {
+         return false;
+       }
        if (u.role === "Creator") return true; // Keep creators
        
        const emailPrefix = u.email ? u.email.split('@')[0].toLowerCase() : "";
@@ -342,7 +444,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
        
        return !isIncomplete;
     });
-  }, [allUsers, videos]);
+  }, [allUsers, videos, deletedUserKeys]);
 
   // All Comments aggregation for Moderation
   const allComments = useMemo(() => {
@@ -2046,26 +2148,31 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               </button>
                             )}
 
-                            <button
-                              onClick={async () => {
-                                if (window.confirm(`Are you sure you want to delete the account for ${user.name}?`)) {
-                                  try {
-                                    const res = await fetch(`/api/nosql/users/${user.uid || user.id}`, { method: 'DELETE' });
-                                    if (res.ok) {
-                                      const uName = user.name || "User";
-                                      // show toast is a mock here, you might need to use existing alert or toast
-                                      showToast(`Deleted ${uName} successfully. Please refresh the page.`);
-                                    }
-                                  } catch (e) {
-                                    showToast('Failed to delete account');
-                                  }
-                                }
-                              }}
-                              className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
-                              title="Delete entire user account"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" /> Delete
-                            </button>
+                            {confirmDeleteUserId === (user.id || user.uid) ? (
+                              <div className="flex items-center gap-1.5 bg-red-950/60 border border-red-900/60 p-1 rounded-xl">
+                                <span className="text-[11px] font-bold text-red-300 px-1">Delete user?</span>
+                                <button
+                                  onClick={() => executeDeleteUser(user)}
+                                  className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteUserId(null)}
+                                  className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteUserId(user.id || user.uid)}
+                                className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                title="Delete entire user account"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

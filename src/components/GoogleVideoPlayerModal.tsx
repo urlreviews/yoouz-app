@@ -162,11 +162,20 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
+    let currentUserProfile: any = null;
+    try {
+      const stored = localStorage.getItem("copo_user_profile");
+      if (stored) currentUserProfile = JSON.parse(stored);
+    } catch {}
+    const commentAuthorName = currentUserProfile?.name || "Local Reviewer";
+    const commentAuthorHandle = currentUserProfile?.handle || `@${commentAuthorName.toLowerCase().replace(/[^a-z0-9]/g, "") || "reviewer"}`;
+    const commentAuthorAvatar = currentUserProfile?.avatar || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`;
+
     currentReview.comments.push({
       id: `comm-${Date.now()}`,
-      authorName: "Samet (Local Guide)",
-      authorHandle: "4samet",
-      authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+      authorName: commentAuthorName,
+      authorHandle: commentAuthorHandle,
+      authorAvatar: commentAuthorAvatar,
       text: newComment,
       createdAt: "Just now",
       createdAtMs: Date.now(),

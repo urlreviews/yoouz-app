@@ -427,18 +427,6 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
 }
 
 export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string }> = {
-  "4samet@gmail.com": {
-    name: "Samet",
-    handle: "@samet",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLtE8R7n91f-0eFh94h90p2z-K4G57VbA9_c=s96-c",
-    bio: "Yoouz Founder & Reviewer."
-  },
-  "samet": {
-    name: "Samet",
-    handle: "@samet",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLtE8R7n91f-0eFh94h90p2z-K4G57VbA9_c=s96-c",
-    bio: "Yoouz Founder & Reviewer."
-  },
   "aouisesmee": {
     name: "aouisesmee",
     handle: "@aouisesmee",

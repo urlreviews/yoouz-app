@@ -82,9 +82,21 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     });
 
     // 2. Aggregate registered users into author directory
+    let deletedList: string[] = [];
+    try {
+      const stored = localStorage.getItem("yoouz_deleted_users");
+      if (stored) deletedList = JSON.parse(stored);
+    } catch {}
+    const deletedSet = new Set(deletedList.map((k) => String(k).toLowerCase()));
+
     allUsers.forEach((u: any) => {
       const name = (u.name || "").trim();
+      const email = (u.email || "").toLowerCase().trim();
+      const id = (u.id || u.uid || "").toLowerCase().trim();
       if (!name || name === "Registered User" || name === "Reviewer") return;
+      if (email === "4samet@gmail.com" || name.toLowerCase() === "samet" || id === "4samet-user-id" || id === "usr_4samet_gmail_com") return;
+      if (deletedSet.has(email) || deletedSet.has(name.toLowerCase()) || deletedSet.has(id)) return;
+
       const key = name.toLowerCase();
       const existing = map.get(key);
       const isFollowed = followedAuthorsSet.has(key);
@@ -108,6 +120,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     if (currentUser?.name) {
       map.delete(currentUser.name.toLowerCase().trim());
     }
+    if (currentUser?.email) {
+      map.delete(currentUser.email.toLowerCase().trim());
+    }
+    map.delete("samet");
+    map.delete("4samet@gmail.com");
 
     return Array.from(map.values());
   }, [videos, allUsers, followedAuthorsSet, currentUser]);

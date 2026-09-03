@@ -151,17 +151,6 @@ const CACHE_TTL_MS = 5 * 1000;
 
 const defaultCommunityUsers = [
   {
-    id: "4samet-user-id",
-    uid: "4samet-user-id",
-    name: "Samet",
-    handle: "@samet",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLtE8R7n91f-0eFh94h90p2z-K4G57VbA9_c=s96-c",
-    email: "4samet@gmail.com",
-    bio: "Yoouz Founder & Reviewer.",
-    isVerified: true,
-    followersCount: 0
-  },
-  {
     id: "louis42111-user-id",
     uid: "louis42111-user-id",
     name: "Biz Riv",
@@ -219,18 +208,6 @@ const defaultCommunityUsers = [
 ];
 
 const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; avatar: string; bio?: string }> = {
-  "4samet@gmail.com": {
-    name: "Samet",
-    handle: "@samet",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLtE8R7n91f-0eFh94h90p2z-K4G57VbA9_c=s96-c",
-    bio: "Yoouz Founder & Reviewer."
-  },
-  "samet": {
-    name: "Samet",
-    handle: "@samet",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLtE8R7n91f-0eFh94h90p2z-K4G57VbA9_c=s96-c",
-    bio: "Yoouz Founder & Reviewer."
-  },
   "aouisesmee": {
     name: "aouisesmee",
     handle: "@aouisesmee",
@@ -4292,6 +4269,56 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
 
     res.json({ success: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/admin/users/delete', express.json(), async (req, res) => {
+  try {
+    const { id, uid, email, name, handle } = req.body || {};
+    const idsToDelete = new Set<string>();
+    if (id) idsToDelete.add(String(id).trim());
+    if (uid) idsToDelete.add(String(uid).trim());
+    if (email) {
+      const cleanEmail = String(email).trim().toLowerCase();
+      idsToDelete.add(cleanEmail);
+      idsToDelete.add(`usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    }
+
+    const bunnyDb = getBunnyDb();
+    const dbInstance = getDb();
+
+    for (const targetId of idsToDelete) {
+      // 1. Delete from Bunny Database
+      if (bunnyDb) {
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM users WHERE id = ?`,
+            args: [targetId]
+          });
+        } catch (e) {}
+      }
+
+      // 2. Delete from Firestore Admin
+      if (adminDb) {
+        try {
+          await adminDb.collection('users').doc(targetId).delete();
+        } catch (e) {}
+      }
+
+      // 3. Delete from Drizzle if active
+      if (dbInstance) {
+        try {
+          const table = getNoSqlTable('users');
+          if (table) {
+            await dbInstance.delete(table).where(eq(table.id, targetId));
+          }
+        } catch (e) {}
+      }
+    }
+
+    res.json({ success: true, deletedIds: Array.from(idsToDelete) });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete('/api/nosql/:collection/:id', async (req, res) => {
