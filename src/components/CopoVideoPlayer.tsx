@@ -93,11 +93,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = videos[currentIndex] || videos[0];
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
+  // Default to true so videos autoplay immediately like YouTube Shorts & TikTok
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
 
-  // Reset feed initiation when switching subtabs or context
+  // Reset feed initiation to true on context switch so first card plays immediately
   useEffect(() => {
-    setHasUserStartedFeed(false);
+    setHasUserStartedFeed(true);
   }, [activeSubTab, contextKey]);
 
   // Edit Rating State

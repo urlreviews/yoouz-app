@@ -94,7 +94,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   businessBannerUrl,
   cardRef,
   
-  hasUserStartedFeed = false,
+  hasUserStartedFeed = true,
   onStartFeed,
   onRecordView
 }) => {
