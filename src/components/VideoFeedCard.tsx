@@ -505,9 +505,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onTimeUpdate={(e) => {
               const t = e.currentTarget;
               
-              // Safety: if this card is no longer active and somehow moving, pause it
-              if (!isActive && !t.paused) {
+              // Strict safety: if feed hasn't been started or card is not active, force pause
+              if ((!hasUserStartedFeed || !isActive || isManuallyPausedRef.current) && !t.paused) {
                 t.pause();
+                return;
               }
 
               if (t.duration && !isNaN(t.duration) && t.duration > 0) {
@@ -520,12 +521,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              if (isActive && !isManuallyPausedRef.current && videoRef.current?.paused) {
+              if (isActive && hasUserStartedFeed && !isManuallyPausedRef.current && videoRef.current?.paused) {
                 safePlay();
               }
             }}
+            onPlay={() => {
+              if (!hasUserStartedFeed || !isActive || isManuallyPausedRef.current) {
+                videoRef.current?.pause();
+              }
+            }}
             onPlaying={() => {
-              if (!isActive || isManuallyPausedRef.current) {
+              if (!isActive || isManuallyPausedRef.current || !hasUserStartedFeed) {
                 safePause(false);
                 return;
               }
