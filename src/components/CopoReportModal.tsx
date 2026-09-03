@@ -46,7 +46,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "fake_review",
     title: "Fake or inauthentic review",
     description: "Never visited this location, paid promotion undisclosed, competitor attack",
-    icon: <FileWarning className="w-5 h-5 text-amber-500" />,
+    icon: <FileWarning className="w-5 h-5" />,
     subcategories: [
       "Reviewer did not visit or use this business",
       "Undisclosed paid sponsorship or incentivized review",
@@ -58,7 +58,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "scam_fraud",
     title: "Scam, fraud or misleading information",
     description: "Phishing links, deceptive pricing, fake addresses or deceptive business claims",
-    icon: <ShieldAlert className="w-5 h-5 text-red-500" />,
+    icon: <ShieldAlert className="w-5 h-5" />,
     subcategories: [
       "Fraudulent business or financial scam",
       "Phishing URL or impersonation of official brand",
@@ -70,7 +70,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "harassment_hate",
     title: "Harassment, hate speech or bullying",
     description: "Targeting business staff, racist/sexist slurs, targeted personal attacks",
-    icon: <UserX className="w-5 h-5 text-rose-500" />,
+    icon: <UserX className="w-5 h-5" />,
     subcategories: [
       "Harassment targeting employees, owners or other customers",
       "Hate speech based on race, religion, gender or nationality",
@@ -82,7 +82,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "nudity_adult",
     title: "Nudity, sexual or adult content",
     description: "Sexually explicit behavior, nudity, or adult solicitation",
-    icon: <Flame className="w-5 h-5 text-purple-500" />,
+    icon: <Flame className="w-5 h-5" />,
     subcategories: [
       "Sexually suggestive or explicit video",
       "Nudity or exposed adult content",
@@ -94,7 +94,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "violence_dangerous",
     title: "Violence, dangerous acts or illegal activity",
     description: "Physical altercations, vandalism, weapon display, illegal conduct",
-    icon: <AlertTriangle className="w-5 h-5 text-orange-500" />,
+    icon: <AlertTriangle className="w-5 h-5" />,
     subcategories: [
       "Physical fight, brawl or assault at business venue",
       "Vandalism or property damage",
@@ -106,7 +106,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "privacy_doxxing",
     title: "Privacy violation or doxxing",
     description: "Sharing private phone numbers, home addresses, or secret recordings",
-    icon: <Lock className="w-5 h-5 text-zinc-400" />,
+    icon: <Lock className="w-5 h-5" />,
     subcategories: [
       "Exposing private personal phone number, address or email",
       "Filming people without consent in private areas (e.g. restrooms)",
@@ -118,7 +118,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "copyright_stolen",
     title: "Filming a screen or copyrighted audio",
     description: "Recording a computer/TV screen, broadcast playback, or unauthorized music",
-    icon: <Flag className="w-5 h-5 text-indigo-500" />,
+    icon: <Flag className="w-5 h-5" />,
     subcategories: [
       "Filming a TV, computer monitor, or secondary device screen",
       "Playing unauthorized commercial copyrighted audio/music",
@@ -130,7 +130,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     id: "spam_commercial",
     title: "Spam, crypto or unrelated advertising",
     description: "Unrelated product promotion, repetitive spam comments, external affiliate links",
-    icon: <Send className="w-5 h-5 text-emerald-500" />,
+    icon: <Send className="w-5 h-5" />,
     subcategories: [
       "Crypto, forex, or gambling promotion",
       "Spamming repetitive promotional messages",
@@ -278,8 +278,8 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                 <ArrowLeft className="w-4 h-4" />
               </button>
             )}
-            <div className="w-9 h-9 rounded-xl bg-red-950/60 border border-red-800/50 flex items-center justify-center text-red-400 shrink-0">
-              <Flag className="w-4.5 h-4.5" />
+            <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shrink-0">
+              <Flag className="w-4 h-4 text-zinc-300" />
             </div>
             <div>
               <h3 className="text-base font-bold text-white leading-tight">
@@ -355,9 +355,9 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                   <button
                     key={cat.id}
                     onClick={() => handleSelectCategory(cat)}
-                    className="w-full flex items-start gap-3 p-3 sm:p-3.5 rounded-xl border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/80 text-left transition-all group cursor-pointer bg-zinc-950"
+                    className="w-full flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl border border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-800/50 text-left transition-all group cursor-pointer bg-zinc-950/70"
                   >
-                    <div className="p-2 rounded-lg bg-zinc-900 group-hover:bg-zinc-800 transition-colors shrink-0 mt-0.5">
+                    <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800/90 text-zinc-400 group-hover:text-amber-400 group-hover:border-zinc-700 group-hover:bg-zinc-800/90 transition-all flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                       {cat.icon}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -365,9 +365,9 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                         <p className="text-xs sm:text-sm font-bold text-white group-hover:text-white transition-colors truncate">
                           {cat.title}
                         </p>
-                        <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
+                        <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
                       </div>
-                      <p className="text-[11px] text-zinc-400 line-clamp-2 mt-0.5 leading-snug">
+                      <p className="text-[11px] text-zinc-400 group-hover:text-zinc-300 line-clamp-2 mt-0.5 leading-snug">
                         {cat.description}
                       </p>
                     </div>
@@ -383,11 +383,11 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Left Column: Category Summary & Specific Reasons */}
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-zinc-800/80 border border-zinc-700">
-                    <div className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800">{selectedCategory.icon}</div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/80 border border-zinc-800">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 text-amber-400 flex items-center justify-center shrink-0">{selectedCategory.icon}</div>
                     <div className="min-w-0">
                       <h4 className="text-xs sm:text-sm font-bold text-white truncate">{selectedCategory.title}</h4>
-                      <p className="text-[11px] text-zinc-300 line-clamp-1">{selectedCategory.description}</p>
+                      <p className="text-[11px] text-zinc-400 line-clamp-1">{selectedCategory.description}</p>
                     </div>
                   </div>
 
@@ -401,8 +401,8 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                           key={idx}
                           className={`flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl border cursor-pointer transition-all ${
                             selectedSubcategory === sub
-                              ? "border-white bg-zinc-800 text-white font-medium shadow-3xs"
-                              : "border-zinc-800 hover:border-zinc-700 bg-zinc-950 text-zinc-300"
+                              ? "border-zinc-600 bg-zinc-800/80 text-white font-medium shadow-sm"
+                              : "border-zinc-800/80 hover:border-zinc-700 bg-zinc-950/60 text-zinc-300"
                           }`}
                         >
                           <input
@@ -411,7 +411,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                             value={sub}
                             checked={selectedSubcategory === sub}
                             onChange={() => setSelectedSubcategory(sub)}
-                            className="w-4 h-4 text-white focus:ring-white/20 shrink-0 bg-zinc-900"
+                            className="w-4 h-4 text-amber-400 accent-amber-500 focus:ring-amber-500/20 shrink-0 bg-zinc-900 border-zinc-700 cursor-pointer"
                           />
                           <span className="text-xs leading-snug">{sub}</span>
                         </label>
@@ -433,7 +433,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                         value={additionalDetails}
                         onChange={(e) => setAdditionalDetails(e.target.value)}
                         placeholder="E.g., At 0:14 the video shows false pricing, or this business closed in 2024..."
-                        className="w-full px-3.5 py-2.5 text-xs text-white bg-zinc-950 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/50 transition-all placeholder:text-zinc-500"
+                        className="w-full px-3.5 py-2.5 text-xs text-white bg-zinc-950/80 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-zinc-700 transition-all placeholder:text-zinc-500"
                       />
                     </div>
 
@@ -448,7 +448,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                           value={reporterEmail}
                           onChange={(e) => setReporterEmail(e.target.value)}
                           placeholder="your.email@example.com"
-                          className="w-full pl-9 pr-3 py-2.5 text-xs text-white bg-zinc-950 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/50 transition-all placeholder:text-zinc-500"
+                          className="w-full pl-9 pr-3 py-2.5 text-xs text-white bg-zinc-950/80 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-zinc-700 transition-all placeholder:text-zinc-500"
                         />
                         <Mail className="w-4 h-4 text-zinc-500 absolute left-3 top-3" />
                       </div>
@@ -460,14 +460,14 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     <button
                       type="button"
                       onClick={handleBack}
-                      className="px-4 py-2.5 text-xs font-semibold text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="px-4 py-2.5 text-xs font-semibold text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800/80 transition-colors cursor-pointer"
                     >
                       Back
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting || !selectedSubcategory}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-40 disabled:hover:bg-white text-zinc-950 text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <span>Submitting...</span>
@@ -487,8 +487,8 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
           {/* State 3: Submitted Confirmation Receipt */}
           {isSubmitted && (
             <div className="flex flex-col items-center text-center py-4 px-2">
-              <div className="w-14 h-14 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white mb-3 animate-in zoom-in-50 duration-300">
-                <CheckCircle2 className="w-8 h-8" />
+              <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400 mb-3 animate-in zoom-in-50 duration-300 shadow-md">
+                <CheckCircle2 className="w-7 h-7" />
               </div>
               <h4 className="text-lg font-bold text-white">Thank You for Reporting</h4>
               <p className="text-xs text-zinc-400 mt-1 max-w-sm">
@@ -536,7 +536,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
 
                 <button
                   onClick={handleClose}
-                  className="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition-all mt-1 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all mt-1 cursor-pointer shadow-md"
                 >
                   Done
                 </button>
