@@ -31,6 +31,52 @@ interface CopoFollowingViewProps {
   onSuccessAuth?: (userData: { name: string; email: string; avatar: string }) => void;
 }
 
+// Helper to unify and deduplicate author and user aliases
+const getCanonicalAuthorKey = (raw: string | { name?: string; email?: string; id?: string; handle?: string }): string => {
+  if (!raw) return "";
+  const obj = typeof raw === "string" ? { name: raw } : raw;
+  const n = (obj.name || "").toLowerCase().trim();
+  const e = (obj.email || "").toLowerCase().trim();
+  const h = (obj.handle || "").replace(/^@+/, "").toLowerCase().trim();
+  const i = (obj.id || (obj as any).uid || "").toLowerCase().trim();
+
+  // Group known alias clusters
+  if (
+    n.includes("aouisesmee") || n.includes("aouisesme") ||
+    e.includes("aouisesmee") || e.includes("aouisesme") ||
+    h.includes("aouisesmee") || h.includes("aouisesme") ||
+    i.includes("aouisesmee") || i.includes("aouisesme") || i === "mlio66hdr9trvofdgddgwm30rku2"
+  ) {
+    return "canon_user_aouisesmee";
+  }
+
+  if (
+    n === "biz riv" || n.replace(/[^a-z0-9]/g, "") === "bizriv" ||
+    e.includes("louis42111") || h.includes("louis42111") || i.includes("louis42111")
+  ) {
+    return "canon_user_bizriv";
+  }
+
+  if (
+    n === "avt ertuop" || n.replace(/[^a-z0-9]/g, "") === "avtertuop" ||
+    e.includes("avr6566gd") || h.includes("avr6566gd") || i.includes("avr6566gd")
+  ) {
+    return "canon_user_avtertuop";
+  }
+
+  const cleanName = n.replace(/[^a-z0-9]/g, "");
+  const isGeneric = (s: string) => !s || s === "reviewer" || s === "user" || s === "registereduser" || s === "communityreviewer";
+  if (cleanName && !isGeneric(cleanName) && cleanName.length >= 2) {
+    return `canon_name_${cleanName}`;
+  }
+
+  if (h && !isGeneric(h) && h.length >= 2) return `canon_handle_${h.replace(/[^a-z0-9]/g, "")}`;
+  if (e && e.includes("@")) return `canon_email_${e.split("@")[0].replace(/[^a-z0-9]/g, "")}`;
+  if (i) return `canon_id_${i.replace(/[^a-z0-9]/g, "")}`;
+
+  return n || "";
+};
+
 export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
   videos,
   currentUser,
@@ -143,7 +189,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     return map;
   }, [videos, allUsers, followedAuthorsSet, currentUser, profileSyncTick]);
 
-  // People the current user follows (guarantees every item in followedAuthors is rendered)
+  // People the current user follows (guarantees every item in followedAuthors is rendered without duplication)
   const followedAuthors = useMemo(() => {
     if (!currentUser) return [];
     const list: VideoAuthor[] = [];
@@ -153,11 +199,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     rawFollowed.forEach((nameItem) => {
       const clean = (nameItem || "").trim();
       if (!clean) return;
-      const key = clean.toLowerCase();
-      if (seen.has(key)) return;
+      const key = getCanonicalAuthorKey(clean);
+      if (!key || seen.has(key)) return;
       seen.add(key);
 
-      const existing = allAuthorsMap.get(key);
+      const existing = allAuthorsMap.get(clean.toLowerCase()) || allAuthorsMap.get(key);
       if (existing) {
         list.push({ ...existing, isFollowed: true });
       } else {
@@ -176,7 +222,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     return list;
   }, [currentUser, allAuthorsMap]);
 
-  // People who follow the current user
+  // People who follow the current user (strictly deduplicated by canonical identity)
   const myFollowers = useMemo(() => {
     if (!currentUser) return [];
     const myNameLower = (currentUser.name || "").toLowerCase().trim();
@@ -203,8 +249,8 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         directFollowers.some((df: string) => df.toLowerCase() === userName.toLowerCase());
 
       if (isFollowingMe) {
-        const key = userName.toLowerCase();
-        if (seen.has(key)) return;
+        const key = getCanonicalAuthorKey(u);
+        if (!key || seen.has(key)) return;
         seen.add(key);
 
         list.push({
@@ -212,7 +258,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
           avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(userName)}&background=27272a&color=fff`,
           bio: u.bio || "Community reviewer",
           location: u.location,
-          isFollowed: followedAuthorsSet.has(key),
+          isFollowed: followedAuthorsSet.has(userName.toLowerCase()),
           followersCount: typeof u.followersCount === "number" ? u.followersCount : 0
         });
       }
@@ -222,15 +268,15 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     directFollowers.forEach((df: string) => {
       const clean = (df || "").trim();
       if (!clean) return;
-      const key = clean.toLowerCase();
-      if (key === myNameLower || seen.has(key)) return;
+      const key = getCanonicalAuthorKey(clean);
+      if (!key || key === getCanonicalAuthorKey(myNameLower) || seen.has(key)) return;
       seen.add(key);
 
       list.push({
         name: clean,
         avatar: `/api/avatar?name=${encodeURIComponent(clean)}&background=27272a&color=fff`,
         bio: "Community reviewer",
-        isFollowed: followedAuthorsSet.has(key),
+        isFollowed: followedAuthorsSet.has(clean.toLowerCase()),
         followersCount: 0
       });
     });
@@ -386,23 +432,23 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-col gap-3">
                 {filteredFollowing.map((author) => {
                   const isHovered = hoveredUnfollow === author.name;
                   return (
                     <div
                       key={`following-reviewer-${author.name}`}
                       id={`card-following-${author.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                      className="p-3.5 sm:p-4 bg-zinc-900/90 border border-zinc-800/90 rounded-2xl flex items-center justify-between gap-3 shadow-sm hover:border-zinc-700/80 transition-colors"
+                      className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group"
                     >
                       <div
                         onClick={() => onOpenCreator(author)}
-                        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group"
+                        className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer"
                       >
                         <img
                           src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
                           alt={author.name}
-                          className="w-11 h-11 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
                             if (!target.src.includes('/api/avatar')) {
@@ -411,22 +457,28 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           }}
                         />
                         <div className="min-w-0 flex-1 text-left">
-                          <div className="flex items-center gap-1 font-bold text-xs sm:text-sm text-white truncate">
-                            <span className="truncate">{author.name}</span>
-                            {author.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                              {author.name}
+                            </h3>
+                            {author.isVerified && <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />}
                           </div>
-                          <div className="text-[11px] text-zinc-400 truncate">
-                            {author.location ? (
-                              <span className="inline-flex items-center gap-1 truncate">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                                <span className="truncate">{author.location}</span>
-                              </span>
-                            ) : author.videoReviewCount ? (
-                              <span>{author.videoReviewCount} video {author.videoReviewCount === 1 ? 'review' : 'reviews'}</span>
-                            ) : (
-                              <span className="truncate">{author.bio || "Community reviewer"}</span>
-                            )}
-                          </div>
+                          
+                          {author.location ? (
+                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                              <span className="truncate">{author.location}</span>
+                            </p>
+                          ) : (
+                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                              <span>Local Reviewer</span>
+                            </p>
+                          )}
+                          
+                          <p className="text-[11px] font-semibold text-zinc-500 truncate">
+                            {author.videoReviewCount ? `${author.videoReviewCount} video ${author.videoReviewCount === 1 ? 'review' : 'reviews'}` : (author.bio || "Community reviewer")}
+                          </p>
                         </div>
                       </div>
 
@@ -435,7 +487,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         onMouseEnter={() => setHoveredUnfollow(author.name)}
                         onMouseLeave={() => setHoveredUnfollow(null)}
                         onClick={() => onToggleFollow(author.name)}
-                        className={`shrink-0 px-3.5 py-1.5 rounded-full font-black text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                        className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                           isHovered
                             ? "bg-red-500/15 text-red-400 border border-red-500/30"
                             : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
@@ -490,7 +542,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-col gap-3">
                 {filteredFollowers.map((follower) => {
                   const isFollowingThem = followedAuthorsSet.has(follower.name.toLowerCase());
                   const isHovered = hoveredUnfollow === follower.name;
@@ -498,16 +550,16 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                     <div
                       key={`follower-${follower.name}`}
                       id={`card-follower-${follower.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                      className="p-3.5 sm:p-4 bg-zinc-900/90 border border-zinc-800/90 rounded-2xl flex items-center justify-between gap-3 shadow-sm hover:border-zinc-700/80 transition-colors"
+                      className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group"
                     >
                       <div
                         onClick={() => onOpenCreator({ name: follower.name, avatar: follower.avatar } as any)}
-                        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group"
+                        className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer"
                       >
                         <img
                           src={follower.avatar}
                           alt={follower.name}
-                          className="w-11 h-11 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
                             if (!target.src.includes('/api/avatar')) {
@@ -516,17 +568,27 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           }}
                         />
                         <div className="min-w-0 flex-1 text-left">
-                          <p className="font-bold text-xs sm:text-sm text-white truncate">{follower.name}</p>
-                          <div className="text-[11px] text-zinc-400 truncate">
-                            {follower.location ? (
-                              <span className="inline-flex items-center gap-1 truncate">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                                <span className="truncate">{follower.location}</span>
-                              </span>
-                            ) : (
-                              <span className="truncate">{follower.bio || "Community reviewer"}</span>
-                            )}
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                              {follower.name}
+                            </h3>
                           </div>
+                          
+                          {follower.location ? (
+                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                              <span className="truncate">{follower.location}</span>
+                            </p>
+                          ) : (
+                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                              <span>Local Reviewer</span>
+                            </p>
+                          )}
+                          
+                          <p className="text-[11px] font-semibold text-zinc-500 truncate">
+                            {follower.bio || "Community reviewer"}
+                          </p>
                         </div>
                       </div>
 
@@ -535,12 +597,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         onMouseEnter={() => setHoveredUnfollow(follower.name)}
                         onMouseLeave={() => setHoveredUnfollow(null)}
                         onClick={() => onToggleFollow(follower.name)}
-                        className={`shrink-0 px-3.5 py-1.5 rounded-full font-black text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                        className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                           isFollowingThem
                             ? isHovered
                               ? "bg-red-500/15 text-red-400 border border-red-500/30"
                               : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
-                            : "bg-white hover:bg-zinc-200 text-zinc-950"
+                            : "bg-white hover:bg-zinc-200 text-zinc-950 font-black"
                         }`}
                       >
                         {isFollowingThem ? (

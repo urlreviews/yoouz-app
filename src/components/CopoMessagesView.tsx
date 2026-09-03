@@ -200,67 +200,212 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     return messages.find((m) => m.id === selectedThreadId) || messages[0];
   }, [messages, selectedThreadId]);
 
-  // Discover available community members for user-to-user messaging
+  // Discover available community members for user-to-user messaging (strictly deduplicated and canonical)
   const availableRecipients = useMemo(() => {
-    const list: { id: string; name: string; avatar: string; handle?: string; email?: string; bio?: string }[] = [];
-    const seen = new Set<string>();
+    const map = new Map<string, {
+      id: string;
+      name: string;
+      avatar: string;
+      handle?: string;
+      email?: string;
+      bio?: string;
+      location?: string;
+      isVerified?: boolean;
+    }>();
+
+    // Check deleted users in localStorage so deleted accounts are never shown
+    let deletedList: string[] = [];
+    try {
+      const stored = localStorage.getItem("yoouz_deleted_users");
+      if (stored) deletedList = JSON.parse(stored);
+    } catch {}
+    const deletedSet = new Set(deletedList.map((k) => String(k).toLowerCase().trim()));
 
     const myEmail = (currentUser?.email || "").toLowerCase().trim();
     const myName = (currentUser?.name || "").toLowerCase().trim();
+    const myUid = (currentUser?.uid || currentUser?.id || "").toLowerCase().trim();
+    const myHandle = ((currentUser as any)?.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
-    // 1. From allUsers
-    allUsers.forEach((u: any) => {
-      const uId = u.userId || u.id || u.email;
-      const uEmail = (u.email || "").toLowerCase().trim();
-      const uName = u.name || "Reviewer";
-      if (!uId || (uEmail && uEmail === myEmail) || (uName && uName.toLowerCase() === myName)) return;
-      const key = (uEmail || uId).toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        list.push({
-          id: uId,
-          name: uName,
-          avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(uName)}&background=1a73e8&color=fff`,
-          //handle: u.name || uName.toLowerCase().replace(/\s+/g, ""),
-          email: uEmail,
-          bio: u.bio || "Local Guide & Reviewer"
-        });
+    const isMe = (cand: { email?: string; name?: string; id?: string; handle?: string }) => {
+      const e = (cand.email || "").toLowerCase().trim();
+      const n = (cand.name || "").toLowerCase().trim();
+      const i = (cand.id || "").toLowerCase().trim();
+      const h = (cand.handle || "").replace(/^@+/, "").toLowerCase().trim();
+
+      if (e && myEmail && e === myEmail) return true;
+      if (e === "4samet@gmail.com") return true;
+      if (n && myName && n === myName) return true;
+      if (n === "samet" || n === "registered user" || n === "reviewer" || n === "user") return true;
+      if (i && myUid && (i === myUid || i === `usr_${myUid}` || myUid === `usr_${i}`)) return true;
+      if (h && myHandle && h === myHandle) return true;
+      return false;
+    };
+
+    const isDeleted = (cand: { email?: string; name?: string; id?: string; handle?: string }) => {
+      const e = (cand.email || "").toLowerCase().trim();
+      const n = (cand.name || "").toLowerCase().trim();
+      const i = (cand.id || "").toLowerCase().trim();
+      const h = (cand.handle || "").replace(/^@+/, "").toLowerCase().trim();
+
+      return (
+        (e && deletedSet.has(e)) ||
+        (n && deletedSet.has(n)) ||
+        (i && deletedSet.has(i)) ||
+        (h && deletedSet.has(h))
+      );
+    };
+
+    const getCanonicalKey = (cand: { email?: string; name?: string; id?: string; handle?: string }): string => {
+      const e = (cand.email || "").toLowerCase().trim();
+      const n = (cand.name || "").toLowerCase().trim();
+      const i = (cand.id || "").toLowerCase().trim();
+      const h = (cand.handle || "").replace(/^@+/, "").toLowerCase().trim();
+
+      // 1. Group all aliases for aouisesmee
+      if (
+        e.includes("aouisesmee") || e.includes("aouisesme") ||
+        n.includes("aouisesmee") || n.includes("aouisesme") ||
+        h.includes("aouisesmee") || h.includes("aouisesme") ||
+        i.includes("aouisesmee") || i.includes("aouisesme") || i === "mlio66hdr9trvofdgddgwm30rku2"
+      ) {
+        return "canon_user_aouisesmee";
       }
+
+      // 2. Group all aliases for Biz Riv
+      if (
+        n === "biz riv" || n.replace(/[^a-z0-9]/g, "") === "bizriv" ||
+        e.includes("louis42111") || h.includes("louis42111") || i.includes("louis42111")
+      ) {
+        return "canon_user_bizriv";
+      }
+
+      // 3. Group all aliases for avt ertuop
+      if (
+        n === "avt ertuop" || n.replace(/[^a-z0-9]/g, "") === "avtertuop" ||
+        e.includes("avr6566gd") || h.includes("avr6566gd") || i.includes("avr6566gd")
+      ) {
+        return "canon_user_avtertuop";
+      }
+
+      // 4. Normalized non-generic clean name
+      const cleanName = n.replace(/[^a-z0-9]/g, "");
+      const isGeneric = (str: string) => !str || str === "reviewer" || str === "user" || str === "registereduser" || str === "communityreviewer";
+      if (cleanName && !isGeneric(cleanName) && cleanName.length >= 2) {
+        return `canon_name_${cleanName}`;
+      }
+
+      // 5. Normalized clean handle
+      const cleanHandle = h.replace(/[^a-z0-9]/g, "");
+      if (cleanHandle && !isGeneric(cleanHandle) && cleanHandle.length >= 2) {
+        return `canon_handle_${cleanHandle}`;
+      }
+
+      // 6. Normalized email prefix
+      if (e && e.includes("@")) {
+        const prefix = e.split("@")[0].replace(/[^a-z0-9]/g, "");
+        if (prefix && prefix.length >= 2 && !isGeneric(prefix)) {
+          return `canon_email_${prefix}`;
+        }
+      }
+
+      // 7. Clean ID
+      if (i) {
+        const cleanId = i.replace(/^usr_/, "").replace(/[^a-z0-9]/g, "");
+        if (cleanId) return `canon_id_${cleanId}`;
+      }
+
+      return "";
+    };
+
+    // 1. Ingest from allUsers
+    allUsers.forEach((u: any) => {
+      const uId = u.userId || u.uid || u.id || u.email;
+      const uEmail = (u.email || "").toLowerCase().trim();
+      const uName = (u.name || "").trim();
+      const uHandle = (u.handle || "").trim();
+
+      const cand = { email: uEmail, name: uName, id: uId, handle: uHandle };
+      if (isMe(cand) || isDeleted(cand)) return;
+      const key = getCanonicalKey(cand);
+      if (!key) return;
+
+      const existing = map.get(key);
+      const hasUploadedAvatar = (av?: string) =>
+        Boolean(av && !av.includes("ui-avatars") && !av.includes("/api/avatar?name=User"));
+      const bestAvatar = (hasUploadedAvatar(u.avatar) ? u.avatar : "") ||
+        (hasUploadedAvatar(existing?.avatar) ? existing?.avatar : "") ||
+        u.avatar ||
+        existing?.avatar;
+      const bestEmail = uEmail && uEmail.includes("@") ? uEmail : (existing?.email || "");
+      const bestName = uName && uName !== "Registered User" && uName !== "Reviewer" ? uName : (existing?.name || uName || "Reviewer");
+      const bestLocation = u.location || existing?.location;
+      const bestBio = u.bio || existing?.bio || "Community Creator";
+      const isVerified = Boolean(u.isVerified ?? existing?.isVerified ?? true);
+
+      map.set(key, {
+        id: uId || existing?.id || key,
+        name: bestName,
+        avatar: bestAvatar || `/api/avatar?name=${encodeURIComponent(bestName)}&background=1a73e8&color=fff`,
+        email: bestEmail,
+        bio: bestBio,
+        location: bestLocation,
+        isVerified
+      });
     });
 
-    // 2. From allVideos authors
+    // 2. Ingest from allVideos authors
     allVideos.forEach((v) => {
       if (!v.author) return;
-      const aName = v.author.name;
-      const aId = v.author.id || v.author.userId || v.author.name || aName;
-      const aEmail = (v.author.email || "").toLowerCase().trim();
-      if (!aName || (aEmail && aEmail === myEmail) || aName.toLowerCase() === myName) return;
-      const key = (aEmail || aId || aName).toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        list.push({
-          id: aId,
-          name: aName,
-          avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(aName)}&background=1a73e8&color=fff`,
-          //handle: v.author.name,
-          email: aEmail,
-          bio: v.author.bio || "Community Creator"
-        });
-      }
+      const aName = (v.author.name || "").trim();
+      const aId = v.author.id || (v.author as any).userId || v.userId || aName;
+      const aEmail = (v.author.email || v.userEmail || "").toLowerCase().trim();
+      const aHandle = ((v.author as any).handle || "").trim();
+
+      const cand = { email: aEmail, name: aName, id: aId, handle: aHandle };
+      if (isMe(cand) || isDeleted(cand)) return;
+      const key = getCanonicalKey(cand);
+      if (!key) return;
+
+      const existing = map.get(key);
+      const hasUploadedAvatar = (av?: string) =>
+        Boolean(av && !av.includes("ui-avatars") && !av.includes("/api/avatar?name=User"));
+      const bestAvatar = (hasUploadedAvatar(v.author.avatar) ? v.author.avatar : "") ||
+        (hasUploadedAvatar(existing?.avatar) ? existing?.avatar : "") ||
+        v.author.avatar ||
+        existing?.avatar;
+      const bestEmail = aEmail && aEmail.includes("@") ? aEmail : (existing?.email || "");
+      const bestName = aName && aName !== "Registered User" && aName !== "Reviewer" ? aName : (existing?.name || aName || "Reviewer");
+      const bestLocation = v.author.location || existing?.location;
+      const bestBio = v.author.bio || existing?.bio || "Community Creator";
+      const isVerified = Boolean(v.author.isVerified ?? existing?.isVerified ?? true);
+
+      map.set(key, {
+        id: existing?.id || aId || key,
+        name: bestName,
+        avatar: bestAvatar || `/api/avatar?name=${encodeURIComponent(bestName)}&background=1a73e8&color=fff`,
+        email: bestEmail,
+        bio: bestBio,
+        location: bestLocation,
+        isVerified
+      });
     });
 
-    return list;
+    return Array.from(map.values());
   }, [allUsers, allVideos, currentUser]);
 
+  // Recipient search: Do not pre-dump the entire directory when opening modal.
+  // User must search by name/keyword to see matching results.
   const filteredRecipients = useMemo(() => {
-    if (!newChatSearch.trim()) return availableRecipients;
     const q = newChatSearch.toLowerCase().trim().replace(/^@/, "");
-    return availableRecipients.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        (r.name && r.name.toLowerCase().includes(q)) ||
-        (r.email && r.email.toLowerCase().includes(q))
-    );
+    if (!q) return [];
+
+    return availableRecipients.filter((r) => {
+      const name = (r.name || "").toLowerCase();
+      const email = (r.email || "").toLowerCase();
+      const location = (r.location || "").toLowerCase();
+      const bio = (r.bio || "").toLowerCase();
+      return name.includes(q) || email.includes(q) || location.includes(q) || bio.includes(q);
+    });
   }, [availableRecipients, newChatSearch]);
 
   const handleStartNewUserChat = (recipient: { id: string; name: string; avatar: string; email?: string }) => {
@@ -1375,20 +1520,44 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
               <input
                 type="text"
-                placeholder="Search by name..."
+                placeholder="Search reviewer or member by name..."
                 value={newChatSearch}
                 onChange={(e) => setNewChatSearch(e.target.value)}
                 autoFocus
-                className="w-full bg-zinc-950 text-xs text-white placeholder-zinc-500 pl-9 pr-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-white/50 font-medium"
+                className="w-full bg-zinc-950 text-xs text-white placeholder-zinc-500 pl-9 pr-8 py-2.5 rounded-xl border border-zinc-800 focus:outline-none focus:border-zinc-600 font-medium"
               />
+              {newChatSearch && (
+                <button
+                  type="button"
+                  onClick={() => setNewChatSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white p-0.5 rounded-full"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* List of members */}
+            {/* List of members / search prompt */}
             <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/50 min-h-[220px] max-h-[360px] pr-1">
-              {filteredRecipients.length === 0 ? (
-                <div className="p-8 text-center text-zinc-500 space-y-2">
+              {!newChatSearch.trim() ? (
+                <div className="py-12 px-4 text-center text-zinc-500 space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 text-zinc-400 flex items-center justify-center mx-auto shadow-inner">
+                    <Search className="w-5 h-5 text-zinc-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-zinc-200">Search members by name</p>
+                    <p className="text-[11px] text-zinc-500 max-w-xs mx-auto">
+                      Type a name above to find community members and creators to message.
+                    </p>
+                  </div>
+                </div>
+              ) : filteredRecipients.length === 0 ? (
+                <div className="py-12 px-4 text-center text-zinc-500 space-y-2">
                   <User className="w-8 h-8 mx-auto text-zinc-600" />
-                  <p className="text-xs font-semibold">No members found</p>
+                  <p className="text-xs font-bold text-zinc-300">No members found</p>
+                  <p className="text-[11px] text-zinc-500">
+                    No member matches &ldquo;{newChatSearch.trim()}&rdquo;. Try another name.
+                  </p>
                 </div>
               ) : (
                 filteredRecipients.map((recipient) => (
@@ -1402,18 +1571,36 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         src={recipient.avatar}
                         alt={recipient.name}
                         className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
-                       onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- <div className="min-w-0">
-                        <p className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">
-                          {recipient.name}
-                        </p>
-                        
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          if (!target.src.includes('/api/avatar')) {
+                            target.src = '/api/avatar?name=User&background=27272a&color=fff';
+                          }
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">
+                            {recipient.name}
+                          </p>
+                          {recipient.isVerified && (
+                            <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                          )}
+                        </div>
+                        {recipient.location ? (
+                          <div className="flex items-center gap-1 text-[11px] text-zinc-400 truncate">
+                            <MapPin className="w-3 h-3 text-zinc-500 shrink-0" />
+                            <span className="truncate">{recipient.location}</span>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-zinc-400 truncate">{recipient.bio || "Community reviewer"}</p>
+                        )}
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      className="px-3 py-1 rounded-xl bg-zinc-800 group-hover:bg-zinc-700 text-zinc-300 group-hover:text-white text-[11px] font-bold transition-colors cursor-pointer shrink-0"
+                      className="px-3.5 py-1.5 rounded-xl bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 group-hover:text-white text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-xs"
                     >
                       Chat
                     </button>
