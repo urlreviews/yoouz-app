@@ -846,12 +846,25 @@ export function App() {
           );
         }
 
+        let initialFollowed: string[] = [];
+        try {
+          const storedF = localStorage.getItem("copo_followed_authors");
+          if (storedF) initialFollowed = JSON.parse(storedF);
+        } catch (e) {}
+        if (!initialFollowed.length && Array.isArray(savedProfile.followedAuthors)) {
+          initialFollowed = savedProfile.followedAuthors;
+        }
+
         const profileObj: UserProfile = {
           name: user.displayName || savedProfile.name || user.email?.split("@")[0] || "User",
           email: user.email || savedProfile.email || "",
           avatar: validAvatar,
           bio: savedProfile.bio || "Food explorer linking real businesses and websites with authentic 60-second video reviews.",
-          memberSince: savedProfile.memberSince || "August 2026"
+          memberSince: savedProfile.memberSince || "August 2026",
+          followedAuthors: initialFollowed,
+          followingCount: initialFollowed.length,
+          followersCount: typeof savedProfile.followersCount === "number" ? savedProfile.followersCount : 0,
+          followers: Array.isArray(savedProfile.followers) ? savedProfile.followers : []
         };
 
         setCurrentUser(profileObj);
@@ -882,28 +895,32 @@ export function App() {
                 }
               }
 
+              // Sync follows from Firestore to localStorage
+              let fAuthors = initialFollowed;
+              let fPlaces = [];
+              if (data.followedAuthors && Array.isArray(data.followedAuthors)) {
+                fAuthors = data.followedAuthors;
+                localStorage.setItem("copo_followed_authors", JSON.stringify(fAuthors));
+              }
+              if (data.followedPlaces && Array.isArray(data.followedPlaces)) {
+                fPlaces = data.followedPlaces;
+                localStorage.setItem("copo_followed_places", JSON.stringify(fPlaces));
+              }
+
               const updatedProfile: UserProfile = {
                 ...profileObj,
                 name: data.name || profileObj.name,
                 bio: data.bio || profileObj.bio,
                 avatar: finalAvatar,
                 location: finalLocation,
+                followedAuthors: fAuthors,
+                followingCount: fAuthors.length,
+                followersCount: typeof data.followersCount === "number" ? data.followersCount : (profileObj.followersCount || 0),
+                followers: Array.isArray(data.followers) ? data.followers : (profileObj.followers || [])
               };
               setCurrentUser(updatedProfile);
               try {
                 localStorage.setItem("copo_user_profile", JSON.stringify(updatedProfile));
-                
-                // Sync follows from Firestore to localStorage
-                let fAuthors = [];
-                let fPlaces = [];
-                if (data.followedAuthors && Array.isArray(data.followedAuthors)) {
-                  fAuthors = data.followedAuthors;
-                  localStorage.setItem("copo_followed_authors", JSON.stringify(fAuthors));
-                }
-                if (data.followedPlaces && Array.isArray(data.followedPlaces)) {
-                  fPlaces = data.followedPlaces;
-                  localStorage.setItem("copo_followed_places", JSON.stringify(fPlaces));
-                }
                 
                 // Sync bookmarks and likes to localStorage
                 let sIds = [];
@@ -929,7 +946,6 @@ export function App() {
                   isLiked: lIds.includes(v.id),
                   author: { ...v.author, isFollowed: fAuthors.includes(v.author.name) } 
                 })));
-                
               } catch (e) {}
 
               // If the existing user does not have a location set yet, backfill it via Geo-IP!
@@ -2518,11 +2534,15 @@ export function App() {
     // 3. Update currentUser state immediately
     setCurrentUser((prev) => {
       if (!prev) return prev;
-      return {
+      const nextUser = {
         ...prev,
         followedAuthors: updatedFollowed,
         followingCount: updatedFollowed.length
       };
+      try {
+        localStorage.setItem("copo_user_profile", JSON.stringify(nextUser));
+      } catch (e) {}
+      return nextUser;
     });
 
     // 4. Update videos state immediately so cards from this author reflect state & follower counts
@@ -2622,6 +2642,21 @@ export function App() {
         merge: true
       })
     }).catch(() => {});
+
+    const cleanEmailKey = (currentUser.email || "").toLowerCase().replace(/[^a-z0-9]/g, '_');
+    if (cleanEmailKey && `usr_${cleanEmailKey}` !== followerUid) {
+      fetch(`/api/nosql/users/usr_${cleanEmailKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data: {
+            followedAuthors: updatedFollowed,
+            followingCount: updatedFollowed.length
+          },
+          merge: true
+        })
+      }).catch(() => {});
+    }
 
     // 9. Persist target user's followers in Firestore and NoSQL sync
     const targetDocId = targetUserObj?.id || targetUserObj?.uid;

@@ -4146,7 +4146,21 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
       try {
-        const jsonStr = JSON.stringify(data || {});
+        let finalDataObj = data || {};
+        if (merge !== false) {
+          try {
+            const existingRow = await bunnyDb.execute({
+              sql: `SELECT data FROM ${colName} WHERE id = ? LIMIT 1`,
+              args: [id]
+            });
+            if (existingRow && existingRow.rows && existingRow.rows.length > 0) {
+              const curDataRaw = (existingRow.rows[0] as any).data;
+              let curData = typeof curDataRaw === 'string' ? JSON.parse(curDataRaw) : (curDataRaw || {});
+              finalDataObj = { ...curData, ...(data || {}) };
+            }
+          } catch (mErr) {}
+        }
+        const jsonStr = JSON.stringify(finalDataObj);
         await bunnyDb.execute({
           sql: `INSERT INTO ${colName} (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
@@ -5171,6 +5185,39 @@ app.post("/api/interactions/like", async (req, res) => {
           }
         } catch (uErr) {
           console.warn("Notice updating target user followers in bunnyDb:", uErr);
+        }
+
+        // Also live update follower's followedAuthors and followingCount in bunnyDb users table
+        try {
+          const followerRows = await bunnyDb.execute({
+            sql: `SELECT id, data FROM users WHERE id = ? OR email = ? OR name = ? LIMIT 1`,
+            args: [String(followerUserId), String(followerUserId), String(followerName || "")]
+          });
+          if (followerRows && followerRows.rows && followerRows.rows.length > 0) {
+            const fRow: any = followerRows.rows[0];
+            let fData: any = {};
+            try { fData = typeof fRow.data === 'string' ? JSON.parse(fRow.data) : (fRow.data || {}); } catch(e){}
+            const curFollowed: string[] = Array.isArray(fData.followedAuthors) ? fData.followedAuthors : [];
+            let nextFollowed = [...curFollowed];
+            if (isFollowed) {
+              if (!nextFollowed.some((h) => h.toLowerCase() === targetHandle.toLowerCase())) {
+                nextFollowed.push(targetHandle);
+              }
+            } else {
+              nextFollowed = nextFollowed.filter((h) => h.toLowerCase() !== targetHandle.toLowerCase());
+            }
+            const updatedFData = {
+              ...fData,
+              followedAuthors: nextFollowed,
+              followingCount: nextFollowed.length
+            };
+            await bunnyDb.execute({
+              sql: `UPDATE users SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [JSON.stringify(updatedFData), fRow.id]
+            });
+          }
+        } catch (fErr) {
+          console.warn("Notice updating follower user in bunnyDb:", fErr);
         }
       }
 

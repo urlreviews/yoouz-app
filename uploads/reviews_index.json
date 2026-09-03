@@ -15,7 +15,9 @@
     "viewsCount": 1,
     "author": {
       "name": "aouisesmee",
-      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c"
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+      "handle": "@aouisesmee",
+      "bio": "Community reviewer on Reviuz."
     },
     "placeBannerUrl": "",
     "bannerUrl": "",
@@ -45,7 +47,9 @@
       "localGuideLevel": 7,
       "videoReviewCount": 1,
       "photosCount": 0,
-      "isVerified": true
+      "isVerified": true,
+      "handle": "@aouisesmee",
+      "bio": "Community reviewer on Reviuz."
     },
     "rating": 3,
     "durationSeconds": 7,
@@ -116,7 +120,9 @@
       "localGuideLevel": 7,
       "videoReviewCount": 1,
       "photosCount": 0,
-      "isVerified": true
+      "isVerified": true,
+      "handle": "@aouisesmee",
+      "bio": "Community reviewer on Reviuz."
     },
     "rating": 4,
     "durationSeconds": 7,
@@ -186,7 +192,9 @@
       "localGuideLevel": 7,
       "videoReviewCount": 1,
       "photosCount": 0,
-      "isVerified": true
+      "isVerified": true,
+      "handle": "@aouisesmee",
+      "bio": "Community reviewer on Reviuz."
     },
     "rating": 5,
     "durationSeconds": 8,
@@ -236,7 +244,9 @@
     "viewsCount": 1,
     "author": {
       "name": "aouisesmee",
-      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c"
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+      "handle": "@aouisesmee",
+      "bio": "Community reviewer on Reviuz."
     },
     "placeBannerUrl": "https://thecapitalavenue.com/wp-content/uploads/2025/09/Fay-Valley-33-1.webp",
     "bannerUrl": "https://thecapitalavenue.com/wp-content/uploads/2025/09/Fay-Valley-33-1.webp",
@@ -260,7 +270,9 @@
     "viewsCount": 1,
     "author": {
       "name": "aouisesmee",
-      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c"
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+      "handle": "@aouisesmee",
+      "bio": "Community reviewer on Reviuz."
     },
     "placeBannerUrl": "https://www.districtuae.com/og-default.jpeg",
     "bannerUrl": "https://www.districtuae.com/og-default.jpeg",
@@ -283,7 +295,8 @@
       "photosCount": 0,
       "isLocalGuide": true,
       "localGuideLevel": 7,
-      "videoReviewCount": 1
+      "videoReviewCount": 1,
+      "bio": "Community reviewer on Reviuz."
     },
     "rating": 5,
     "shares": 2,
@@ -339,7 +352,9 @@
       "/api/videos/stream/rev-1787990803895-2ftsu.mp4"
     ],
     "bannerUrl": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png",
-    "ogImage": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png"
+    "ogImage": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png",
+    "authorAvatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
+    "authorName": "aouisesmee"
   },
   {
     "id": "rev-1787774080951-vuu2k",
@@ -837,7 +852,8 @@
       "photosCount": 0,
       "isLocalGuide": true,
       "localGuideLevel": 7,
-      "videoReviewCount": 1
+      "videoReviewCount": 1,
+      "bio": "Community reviewer on Reviuz."
     },
     "placeBannerUrl": "",
     "bannerUrl": "",
