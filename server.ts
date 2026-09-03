@@ -273,12 +273,6 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
     bio: "Food explorer linking real businesses and authentic video reviews."
   },
-  "bizriv": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
   "biz-riv": {
     name: "Biz Riv",
     handle: "@bizriv",
@@ -314,24 +308,6 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
     bio: "Community reviewer on Yoouz."
-  },
-  "aouisesmee": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLu0236aK7z8zD0b4yM4n1b2v3c4=s96-c",
-    bio: "Authentic local reviewer on Yoouz."
-  },
-  "aouisesme": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLu0236aK7z8zD0b4yM4n1b2v3c4=s96-c",
-    bio: "Authentic local reviewer on Yoouz."
-  },
-  "aouisesmee@gmail.com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLu0236aK7z8zD0b4yM4n1b2v3c4=s96-c",
-    bio: "Authentic local reviewer on Yoouz."
   }
 };
 
@@ -10083,80 +10059,135 @@ app.get('/api/og-preview-v2', async (req, res) => {
       if (type === 'creator') {
          const rawName = (req.query.name as string) || (req.query.handle as string) || "Creator";
          const rawHandle = ((req.query.handle as string) || rawName).replace(/^@+/, "");
-         let avatarUrl = (req.query.avatarUrl as string) || "";
+         const cleanLower = rawHandle.toLowerCase();
 
-         if (!avatarUrl) {
-            try {
-               const profile = await resolveUserProfileFromAnySource(rawHandle || rawName);
-               if (profile && profile.avatar) {
-                  avatarUrl = profile.avatar;
-               }
-            } catch(e) {}
+         // 1. Gather all potential avatar URLs from multiple sources in priority order
+         const candidateUrls: string[] = [];
+         if (req.query.avatarUrl && typeof req.query.avatarUrl === 'string') {
+            candidateUrls.push(req.query.avatarUrl);
          }
 
-         if (!avatarUrl) {
-            try {
-               const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-               const cleanLower = rawHandle.toLowerCase();
-               const match = localList.find((v: any) => 
-                  (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === cleanLower) ||
-                  (v.author?.name && v.author.name.toLowerCase() === rawName.toLowerCase())
-               );
-               if (match && match.author?.avatar) {
-                  avatarUrl = match.author.avatar;
+         try {
+            const profile = await resolveUserProfileFromAnySource(rawHandle || rawName);
+            if (profile && profile.avatar && !candidateUrls.includes(profile.avatar)) {
+               candidateUrls.push(profile.avatar);
+            }
+         } catch(e) {}
+
+         try {
+            const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+            const matches = localList.filter((v: any) => 
+               (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === cleanLower) ||
+               (v.author?.name && v.author.name.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanLower.replace(/[^a-z0-9]/g, '')) ||
+               (v.userEmail && v.userEmail.toLowerCase().startsWith(cleanLower))
+            );
+            for (const m of matches) {
+               const av = m.author?.avatar || m.authorAvatar;
+               if (av && !candidateUrls.includes(av)) {
+                  candidateUrls.push(av);
                }
-            } catch(e) {}
+            }
+         } catch(e) {}
+
+         // Try known community user map
+         const kn = KNOWN_COMMUNITY_USERS_SERVER[cleanLower] || KNOWN_COMMUNITY_USERS_SERVER[rawName.toLowerCase()];
+         if (kn && kn.avatar && !candidateUrls.includes(kn.avatar)) {
+            candidateUrls.push(kn.avatar);
          }
+
+         // Try Bunny DB
+         try {
+            const bunnyDb = getBunnyDb();
+            if (bunnyDb) {
+               const res = await bunnyDb.execute({
+                  sql: `SELECT avatar, data FROM users WHERE id = ? OR email LIKE ? OR (name IS NOT NULL AND LOWER(name) = ?) LIMIT 1`,
+                  args: [rawHandle, `%${cleanLower}%`, rawName.toLowerCase()]
+               });
+               if (res.rows && res.rows.length > 0) {
+                  const r: any = res.rows[0];
+                  let parsed: any = {};
+                  if (r.data) {
+                     try { parsed = typeof r.data === 'string' ? JSON.parse(r.data) : r.data; } catch(e) {}
+                  }
+                  const av = parsed.avatar || r.avatar;
+                  if (av && !candidateUrls.includes(av)) candidateUrls.push(av);
+               }
+            }
+         } catch(e) {}
 
          let avatarBuf: Buffer | null = null;
-         if (avatarUrl) {
-            if (avatarUrl.startsWith('data:')) {
-               avatarBuf = decodeDataUrl(avatarUrl);
-            } else if (avatarUrl.startsWith('/api/avatar')) {
-               try {
-                  const initial = (rawName.trim().replace(/^@+/, '').charAt(0) || "U").toUpperCase();
-                  const svg = `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
-                     <rect width="300" height="300" rx="150" fill="#1e3a8a"/>
-                     <text x="150" y="195" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="140" font-weight="800" fill="#93c5fd" letter-spacing="-2">${initial}</text>
-                  </svg>`;
-                  avatarBuf = await sharp(Buffer.from(svg)).resize(300, 300).png().toBuffer();
-               } catch(e) {}
-            } else if (avatarUrl.startsWith('/') && !avatarUrl.startsWith('//')) {
-               try {
-                  const localPath = path.join(process.cwd(), avatarUrl);
-                  if (fs.existsSync(localPath)) {
-                     avatarBuf = fs.readFileSync(localPath);
-                  } else {
-                     const resp = await fetch(`http://127.0.0.1:${PORT}${avatarUrl}`);
-                     if (resp.ok) {
-                        const ab = await resp.arrayBuffer();
-                        avatarBuf = Buffer.from(ab);
+
+         for (const candUrl of candidateUrls) {
+            if (!candUrl || typeof candUrl !== 'string') continue;
+            try {
+               if (candUrl.startsWith('data:')) {
+                  const buf = decodeDataUrl(candUrl);
+                  if (buf && buf.length > 50) {
+                     const meta = await sharp(buf).metadata().catch(() => null);
+                     if (meta && meta.width && meta.height) {
+                        avatarBuf = buf;
+                        break;
                      }
                   }
-               } catch(e) {}
-            } else if (avatarUrl.startsWith('http')) {
-               try {
+               } else if (candUrl.startsWith('/api/avatar')) {
+                  const initial = (rawName.trim().replace(/^@+/, '').charAt(0) || cleanLower.charAt(0) || "U").toUpperCase();
+                  const svg = `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+                     <defs>
+                        <linearGradient id="avInitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                           <stop offset="0%" stop-color="#2563eb"/>
+                           <stop offset="100%" stop-color="#1e3a8a"/>
+                        </linearGradient>
+                     </defs>
+                     <rect width="300" height="300" rx="150" fill="url(#avInitGrad)"/>
+                     <text x="150" y="195" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="140" font-weight="800" fill="#ffffff" letter-spacing="-2">${initial}</text>
+                  </svg>`;
+                  avatarBuf = await sharp(Buffer.from(svg)).resize(300, 300).png().toBuffer();
+                  break;
+               } else if (candUrl.startsWith('/') && !candUrl.startsWith('//')) {
+                  const localPath = path.join(process.cwd(), candUrl);
+                  if (fs.existsSync(localPath)) {
+                     const buf = fs.readFileSync(localPath);
+                     const meta = await sharp(buf).metadata().catch(() => null);
+                     if (meta && meta.width && meta.height) {
+                        avatarBuf = buf;
+                        break;
+                     }
+                  } else {
+                     const resp = await fetch(`http://127.0.0.1:${PORT}${candUrl}`);
+                     if (resp.ok) {
+                        const ab = await resp.arrayBuffer();
+                        const buf = Buffer.from(ab);
+                        const meta = await sharp(buf).metadata().catch(() => null);
+                        if (meta && meta.width && meta.height) {
+                           avatarBuf = buf;
+                           break;
+                        }
+                     }
+                  }
+               } else if (candUrl.startsWith('http')) {
                   const controller = new AbortController();
-                  const timeout = setTimeout(() => controller.abort(), 4000);
-                  const resp = await fetch(avatarUrl, { 
+                  const timeout = setTimeout(() => controller.abort(), 4500);
+                  const resp = await fetch(candUrl, {
                      signal: controller.signal,
                      headers: {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
                      }
                   });
                   clearTimeout(timeout);
                   if (resp.ok) {
                      const ab = await resp.arrayBuffer();
                      const buf = Buffer.from(ab);
-                     if (buf.length > 80) {
+                     if (buf.length > 50) {
                         const meta = await sharp(buf).metadata().catch(() => null);
                         if (meta && meta.width && meta.height) {
                            avatarBuf = buf;
+                           break;
                         }
                      }
                   }
-               } catch(e) {}
-            }
+               }
+            } catch(e) {}
          }
 
          // Pure geometric card layout (1200x630) with NO text elements
@@ -10218,7 +10249,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
               left: 442
             });
          } else {
-            // Sleek silhouette avatar in cobalt ring, ZERO text
+            const initial = (rawName.trim().replace(/^@+/, '').charAt(0) || cleanLower.charAt(0) || "U").toUpperCase();
+            // Sleek initials monogram avatar in cobalt ring, ZERO text distortion
             const fallbackAvatarSvg = `
               <svg width="316" height="316" viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -10228,11 +10260,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
                   </linearGradient>
                 </defs>
                 <circle cx="158" cy="158" r="152" fill="url(#avGrad)" stroke="#60a5fa" stroke-width="5"/>
-                <!-- Vector Silhouette (Pure vector, no text) -->
-                <g fill="#ffffff">
-                  <circle cx="158" cy="120" r="48"/>
-                  <path d="M98 236 C98 188 124 176 158 176 C192 176 218 188 218 236 Z"/>
-                </g>
+                <!-- Monogram Initial Letter -->
+                <text x="158" y="205" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="140" font-weight="800" fill="#ffffff" letter-spacing="-2">${initial}</text>
                 <!-- Verified Checkmark Badge -->
                 <circle cx="248" cy="248" r="32" fill="#3b82f6" stroke="#09090b" stroke-width="4"/>
                 <path d="M236 248 L244 256 L260 240" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -10692,7 +10721,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     if (placeId && placeId.startsWith('www-')) {
       placeId = placeId.replace(/^www-/, '');
     }
-    const creatorHandle = creatorMatch ? creatorMatch[1] : null;
+    const creatorHandle = creatorMatch ? creatorMatch[1] : (params.get('creator') || params.get('user') || params.get('author') || (params.get('handle') && !videoId && !placeId ? params.get('handle') : null));
 
     if (videoId) {
         let foundVideo: any = null;
@@ -10979,7 +11008,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=14`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=16`;
         twitterCard = "summary_large_image";
     } else if (
         pathname.includes('/vs/') || 
