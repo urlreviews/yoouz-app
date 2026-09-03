@@ -225,31 +225,66 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
       
-      // If audio isn't unlocked yet by a user touch, start muted for instant 0ms autoplay
-      const audioReady = isAudioUnlocked();
-      const targetMuted = audioReady ? isMuted : true;
-      el.muted = targetMuted;
-      if (!targetMuted) {
-        el.volume = 1;
-      }
+      const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
 
-      if (el.paused) {
-        const p = el.play();
-        if (p !== undefined) {
-          p.then(() => {
-            setIsPlaying(true);
-            setIsBuffering(false);
-          }).catch((err) => {
-            // WebKit Autoplay Policy fallback: if unmuted autoplay is rejected, mute and play immediately
-            console.log("[VideoFeedCard] Autoplay with sound restricted, playing muted:", err);
-            el.muted = true;
-            el.play().then(() => {
+      if (isMobile) {
+        // True YouTube Shorts mobile web behavior:
+        // Direct unmuted playback attempt on viewport entry
+        el.muted = false;
+        el.volume = 1;
+        
+        if (el.paused) {
+          const p = el.play();
+          if (p !== undefined) {
+            p.then(() => {
               setIsPlaying(true);
               setIsBuffering(false);
-            }).catch(() => {
-              setIsPlaying(false);
+            }).catch((err) => {
+              // Fallback if strict browser policy blocks initial sound:
+              // Starts muted momentarily, then unmutes on the first micro-interaction
+              console.log("[VideoFeedCard] Autoplay with sound restricted, using 150ms fallback bypass:", err);
+              el.muted = true;
+              el.play().then(() => {
+                setIsPlaying(true);
+                setIsBuffering(false);
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.muted = false;
+                    videoRef.current.volume = 1;
+                  }
+                }, 150);
+              }).catch(() => {
+                setIsPlaying(false);
+              });
             });
-          });
+          }
+        }
+      } else {
+        // Desktop handling
+        const audioReady = isAudioUnlocked();
+        const targetMuted = audioReady ? isMuted : true;
+        el.muted = targetMuted;
+        if (!targetMuted) {
+          el.volume = 1;
+        }
+
+        if (el.paused) {
+          const p = el.play();
+          if (p !== undefined) {
+            p.then(() => {
+              setIsPlaying(true);
+              setIsBuffering(false);
+            }).catch((err) => {
+              console.log("[VideoFeedCard] Desktop Autoplay restricted, playing muted:", err);
+              el.muted = true;
+              el.play().then(() => {
+                setIsPlaying(true);
+                setIsBuffering(false);
+              }).catch(() => {
+                setIsPlaying(false);
+              });
+            });
+          }
         }
       }
     } else {
@@ -350,8 +385,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     if (el.paused || isManuallyPaused || !hasUserStartedFeed) {
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
-      el.muted = isMuted;
-      if (!isMuted) {
+      
+      const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+      el.muted = isMobile ? false : isMuted;
+      if (!el.muted) {
         el.volume = 1;
       }
       const p = el.play();
@@ -365,6 +402,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             el.play().then(() => {
               setIsPlaying(true);
               setIsBuffering(false);
+              if (isMobile) {
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.muted = false;
+                    videoRef.current.volume = 1;
+                  }
+                }, 150);
+              }
             }).catch(() => {
               setIsPlaying(false);
             });
