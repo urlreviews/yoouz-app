@@ -1,21 +1,10 @@
 /**
- * Zero-Drop Audio Session Engine for iOS Safari, Android Chrome, and Mobile WebViews.
+ * Clean & resilient Audio Session Engine for iOS Safari, Android Chrome, Desktop, and Mobile WebViews.
  * 
- * Root Cause in Mobile Browsers (WebKit & Blink):
- * When swiping rapidly through a video feed, unmounting/mounting HTML5 video tags causes
- * the browser's audio routing subsystem to momentarily reset audio permissions, forcing newly
- * mounted video tags to reject `.play()` unless `muted = true` is assigned.
- * 
- * Solution:
- * 1. Maintain a persistent, singleton Web Audio Context + Silent Oscillator Carrier
- *    that keeps the mobile OS audio pipeline alive across fast swipes.
- * 2. Pre-prime all new video tags immediately upon instantiation with an active unmuted state.
- * 3. Never reset the user's global unmuted preference during gesture-driven feed transitions.
+ * Unlocks Web Audio on first gesture so that unmuted playback is never blocked by browser policies.
  */
 
 let globalAudioCtx: AudioContext | null = null;
-let silentOscillatorNode: OscillatorNode | null = null;
-let silentGainNode: GainNode | null = null;
 let isAudioSessionUnlocked = false;
 
 export const unlockMobileAudioSession = () => {
@@ -34,18 +23,14 @@ export const unlockMobileAudioSession = () => {
       globalAudioCtx.resume().catch(() => {});
     }
 
-    // Keep an ultra-low frequency (sub-audible) zero-gain carrier running
-    // This instructs iOS Safari & Android Chrome that the page owns an active audio session
-    if (!silentOscillatorNode && globalAudioCtx.state === "running") {
+    // Standard 1-sample silent buffer trigger to unlock iOS audio channel cleanly
+    if (!isAudioSessionUnlocked && globalAudioCtx.state === "running") {
       try {
-        silentGainNode = globalAudioCtx.createGain();
-        silentGainNode.gain.value = 0.0001; // Virtually silent
-        silentGainNode.connect(globalAudioCtx.destination);
-
-        silentOscillatorNode = globalAudioCtx.createOscillator();
-        silentOscillatorNode.frequency.value = 20; // 20Hz (inaudible bottom boundary)
-        silentOscillatorNode.connect(silentGainNode);
-        silentOscillatorNode.start();
+        const buffer = globalAudioCtx.createBuffer(1, 1, 22050);
+        const source = globalAudioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(globalAudioCtx.destination);
+        source.start(0);
         isAudioSessionUnlocked = true;
       } catch (e) {}
     } else if (globalAudioCtx.state === "running") {
@@ -54,18 +39,16 @@ export const unlockMobileAudioSession = () => {
   } catch (e) {}
 };
 
-// Automatically bind to high-priority mobile gesture listeners
+// Bind to mobile & desktop user gestures
 if (typeof window !== "undefined") {
   const primeHandler = () => {
     unlockMobileAudioSession();
   };
 
   window.addEventListener("touchstart", primeHandler, { passive: true });
-  window.addEventListener("touchmove", primeHandler, { passive: true });
   window.addEventListener("touchend", primeHandler, { passive: true });
   window.addEventListener("click", primeHandler, { passive: true });
   window.addEventListener("keydown", primeHandler, { passive: true });
-  window.addEventListener("scroll", primeHandler, { passive: true });
 }
 
 export const isMobileAudioUnlocked = () => isAudioSessionUnlocked;

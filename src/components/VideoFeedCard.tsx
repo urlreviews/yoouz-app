@@ -141,7 +141,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const playPromiseRef = useRef<Promise<void> | null>(null);
   const isMountedRef = useRef<boolean>(true);
 
-  // Clean unmount to immediately release OS hardware video and audio decoders
+  // Clean unmount to release audio/video playback
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -149,19 +149,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       const el = videoRef.current;
       if (el) {
         try {
-          if (playPromiseRef.current) {
-            playPromiseRef.current.then(() => {
-              try {
-                el.pause();
-                el.removeAttribute('src');
-                el.load();
-              } catch (e) {}
-            }).catch(() => {});
-          } else {
-            el.pause();
-            el.removeAttribute('src');
-            el.load();
-          }
+          el.pause();
         } catch (e) {}
       }
     };
@@ -202,111 +190,62 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isActive, isMuted]);
 
-  // Safe async play/pause controller with promise collision prevention (TikTok / Shorts architecture)
+  // Safe play/pause controller
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+    const shouldPlay = isActive && !isManuallyPaused;
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
       el.muted = isMuted;
       if (!isMuted) {
         el.volume = 1;
-        unlockMobileAudioSession();
       }
 
-      // Chain safely behind any pending play promise
-      const executePlay = async () => {
-        if (playPromiseRef.current) {
-          try {
-            await playPromiseRef.current;
-          } catch (e) {}
-        }
-        if (!isMountedRef.current || !videoRef.current) return;
-
-        try {
-          const promise = el.play();
-          playPromiseRef.current = promise;
-          await promise;
-          playPromiseRef.current = null;
+      const p = el.play();
+      if (p !== undefined) {
+        p.then(() => {
           setIsPlaying(true);
           setIsBuffering(false);
           if (!isMuted && el.muted) {
             el.muted = false;
             el.volume = 1;
           }
-        } catch (err: any) {
-          playPromiseRef.current = null;
-          // If browser policy blocked unmuted autoplay, fallback to muted and restore audio on next tick
-          if (err?.name === "NotAllowedError" || err?.name === "AbortError") {
-            try {
-              el.muted = true;
-              const fallbackPromise = el.play();
-              playPromiseRef.current = fallbackPromise;
-              await fallbackPromise;
-              playPromiseRef.current = null;
-              setIsPlaying(true);
-              setIsBuffering(false);
-              if (!isMuted) {
-                setTimeout(() => {
-                  if (videoRef.current && isMountedRef.current) {
-                    unlockMobileAudioSession();
-                    videoRef.current.muted = false;
-                    videoRef.current.volume = 1;
-                  }
-                }, 40);
-              }
-            } catch (e) {
-              playPromiseRef.current = null;
-              setIsPlaying(false);
-            }
-          } else {
+        }).catch((err) => {
+          // If browser blocked unmuted autoplay policy, retry muted to ensure smooth video playback
+          el.muted = true;
+          el.play().then(() => {
+            setIsPlaying(true);
+            setIsBuffering(false);
+          }).catch(() => {
             setIsPlaying(false);
-          }
-        }
-      };
-
-      executePlay();
+          });
+        });
+      }
     } else {
-      const executePause = async () => {
-        if (playPromiseRef.current) {
-          try {
-            await playPromiseRef.current;
-          } catch (e) {}
-        }
-        try {
-          el.pause();
-          if (!isActive) {
-            el.currentTime = 0;
-          }
-        } catch (e) {}
-        setIsPlaying(false);
-        setIsBuffering(false);
+      try {
+        el.pause();
         if (!isActive) {
-          setIsManuallyPaused(false);
-          setProgressPercent(0);
+          el.currentTime = 0;
         }
-        setShowPlayPauseFeedback(null);
-      };
-
-      executePause();
+      } catch (e) {}
+      setIsPlaying(false);
+      setIsBuffering(false);
+      if (!isActive) {
+        setIsManuallyPaused(false);
+        setProgressPercent(0);
+      }
+      setShowPlayPauseFeedback(null);
     }
     
     return () => {
-      const currentEl = videoRef.current;
-      if (currentEl) {
-        if (playPromiseRef.current) {
-          playPromiseRef.current.then(() => {
-            try { currentEl.pause(); } catch (e) {}
-          }).catch(() => {});
-        } else {
-          try { currentEl.pause(); } catch (e) {}
-        }
-      }
+      try {
+        el.pause();
+      } catch (e) {}
     };
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
+  }, [isActive, currentSource, isManuallyPaused]);
 
   // Record view count when video is active and playing
   useEffect(() => {
@@ -611,10 +550,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              const shouldPlay = isActive && (hasUserStartedFeed || hasUserStartedFeedRef.current) && !isManuallyPausedRef.current;
+              const shouldPlay = isActive && !isManuallyPausedRef.current;
               if (shouldPlay && videoRef.current?.paused) {
                 if (!isMuted && videoRef.current) {
-                  unlockMobileAudioSession();
                   videoRef.current.muted = false;
                   videoRef.current.volume = 1;
                 }
