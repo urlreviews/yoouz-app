@@ -610,8 +610,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            // Virtual sliding window (YouTube Shorts / TikTok architecture): mount decoders for active and ±3 adjacent cards
-            const isCardNear = Math.abs(idx - currentIndex) <= 3;
+            // Virtual sliding window (TikTok / YouTube Shorts / Instagram Web architecture):
+            // Strictly cap active hardware decoders to current and immediately adjacent cards (max 3 decoders)
+            // to completely prevent mobile GPU audio/video decoder exhaustion on iOS Safari and Android Chrome.
+            const isCardNear = Math.abs(idx - currentIndex) <= 1;
 
             return (
               <VideoFeedCard
