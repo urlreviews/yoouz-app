@@ -359,7 +359,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                   <p className="text-xs text-zinc-400 leading-relaxed">
                     {searchQuery
                       ? `No reviewer matches "${searchQuery}". Try a different name.`
-                      : "When you follow authentic food reviewers on Yoouz, they will appear here."}
+                      : "When you follow authentic local reviewers on Yoouz, they will appear here."}
                   </p>
                 </div>
                 {searchQuery && (
@@ -454,7 +454,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                   <p className="text-xs text-zinc-400 leading-relaxed">
                     {searchQuery
                       ? `No follower matches "${searchQuery}". Try a different name.`
-                      : "When other foodies and local reviewers follow your profile, they will appear here."}
+                      : "When other local reviewers follow your profile, they will appear here."}
                   </p>
                 </div>
                 {searchQuery && (

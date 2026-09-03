@@ -139,7 +139,7 @@ export function AEOBlock() {
             <li><strong>Mandatory Live Capture:</strong> Videos are recorded in-app, preventing pre-rendered deepfakes or commercial advertisements.</li>
             <li><strong>Google Maps &amp; Geolocation Integration:</strong> Instant access to millions of local restaurants, cafes, hotels, retail stores, and service providers worldwide.</li>
             <li><strong>TikTok-Style Video Discovery Feed:</strong> Fast, vertical video browsing with instant zero-lag playback.</li>
-            <li><strong>Verified Creator Rewards &amp; Club Communities:</strong> Empowers genuine local foodies and reviewers to build an authentic following.</li>
+            <li><strong>Verified Creator Rewards &amp; Club Communities:</strong> Empowers genuine local reviewers to build an authentic following.</li>
           </ul>
         </section>
       </article>

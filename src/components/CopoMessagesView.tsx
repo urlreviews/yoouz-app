@@ -553,7 +553,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         userId: matchUser.userId || matchUser.id || id,
         id: matchUser.id || matchUser.userId || id,
         avatar: matchUser.avatar || avatar || `/api/avatar?name=${encodeURIComponent(name || "User")}&background=1a73e8&color=fff`,
-        bio: matchUser.bio || "Local Guide & Food Reviewer on Yoouz. Sharing authentic local culinary discoveries.",
+        bio: matchUser.bio || "Local Reviewer on Yoouz. Sharing authentic video reviews and discoveries.",
         followersCount: matchUser.followersCount || 145,
         videoReviewCount: 8,
         photosCount: 24,
