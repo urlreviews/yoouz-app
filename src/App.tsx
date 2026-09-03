@@ -2357,59 +2357,181 @@ export function App() {
     }
   };
 
-  const handleToggleFollow = (authorHandle: string) => {
+  const handleToggleFollow = async (authorHandle: string) => {
     if (!currentUser) {
       setAuthIntent('following');
       setIsAuthModalOpen(true);
       return;
     }
-    let newFollowState = true;
-    
-    setVideos((prev) => {
-      const firstMatch = prev.find(v => v.author.name === authorHandle);
-      if (firstMatch) {
-        newFollowState = !firstMatch.author.isFollowed;
-      }
 
-      return prev.map((v) => {
-        if (v.author.name === authorHandle) {
-          return { ...v, author: { ...v.author, isFollowed: newFollowState } };
-        }
-        return v;
-      });
-    });
-    
+    const cleanAuthorHandle = (authorHandle || "").trim();
+    if (!cleanAuthorHandle) return;
+
+    // Determine current follow state accurately from currentUser followedAuthors and localStorage
+    let followedList: string[] = [];
     try {
       const stored = localStorage.getItem("copo_followed_authors") || "[]";
-      let followed = JSON.parse(stored);
-      if (newFollowState && !followed.includes(authorHandle)) followed.push(authorHandle);
-      else if (!newFollowState) followed = followed.filter(h => h !== authorHandle);
-      localStorage.setItem("copo_followed_authors", JSON.stringify(followed));
-      
-      // Persist to Firestore if user is logged in
-      if (auth.currentUser && db) {
-        setDoc(doc(db, "users", auth.currentUser.uid), {
-          followedAuthors: followed
-        }, { merge: true }).catch(err => console.warn("Failed to update followedAuthors:", err));
-      }
-    } catch(e) {}
-    
+      followedList = Array.isArray(JSON.parse(stored)) ? JSON.parse(stored) : [];
+    } catch (e) {
+      followedList = currentUser.followedAuthors || [];
+    }
+    if (currentUser.followedAuthors && Array.isArray(currentUser.followedAuthors)) {
+      currentUser.followedAuthors.forEach((h) => {
+        if (h && !followedList.some((ex) => ex.toLowerCase() === h.toLowerCase())) {
+          followedList.push(h);
+        }
+      });
+    }
+
+    const isCurrentlyFollowed = followedList.some(
+      (h) => h.toLowerCase() === cleanAuthorHandle.toLowerCase()
+    );
+    const newFollowState = !isCurrentlyFollowed;
+
+    // 1. Calculate updated list
+    const updatedFollowed = newFollowState
+      ? [...followedList.filter((h) => h.toLowerCase() !== cleanAuthorHandle.toLowerCase()), cleanAuthorHandle]
+      : followedList.filter((h) => h.toLowerCase() !== cleanAuthorHandle.toLowerCase());
+
+    // 2. Persist to localStorage immediately
+    try {
+      localStorage.setItem("copo_followed_authors", JSON.stringify(updatedFollowed));
+    } catch (e) {}
+
+    // 3. Update currentUser state immediately
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        followedAuthors: updatedFollowed,
+        followingCount: updatedFollowed.length
+      };
+    });
+
+    // 4. Update videos state immediately so cards from this author reflect state & follower counts
+    setVideos((prev) =>
+      prev.map((v) => {
+        if (v.author && v.author.name && v.author.name.toLowerCase() === cleanAuthorHandle.toLowerCase()) {
+          const curCount = typeof v.author.followersCount === "number" ? v.author.followersCount : 0;
+          return {
+            ...v,
+            author: {
+              ...v.author,
+              isFollowed: newFollowState,
+              followersCount: Math.max(0, curCount + (newFollowState ? 1 : -1))
+            }
+          };
+        }
+        return v;
+      })
+    );
+
+    // 5. Update selectedAuthorForDrawer if drawer is open
     setSelectedAuthorForDrawer((prev) => {
-      if (prev && prev.name === authorHandle) {
-        return { ...prev, isFollowed: newFollowState };
+      if (prev && prev.name && prev.name.toLowerCase() === cleanAuthorHandle.toLowerCase()) {
+        const curCount = typeof prev.followersCount === "number" ? prev.followersCount : 0;
+        return {
+          ...prev,
+          isFollowed: newFollowState,
+          followersCount: Math.max(0, curCount + (newFollowState ? 1 : -1))
+        };
       }
       return prev;
     });
 
-    // Send social notification for follow
+    // 6. Update allRegisteredUsers state immediately so follower counts and follower lists reflect live
+    const myIdentifier = currentUser.name || currentUser.email || "Reviewer";
+    let targetUserObj: any = null;
+    setAllRegisteredUsers((prev) =>
+      prev.map((u) => {
+        const isTarget =
+          (u.name && u.name.toLowerCase() === cleanAuthorHandle.toLowerCase()) ||
+          (u.handle && u.handle.toLowerCase() === cleanAuthorHandle.toLowerCase()) ||
+          (u.email && u.email.toLowerCase().startsWith(cleanAuthorHandle.toLowerCase()));
+
+        if (isTarget) {
+          targetUserObj = u;
+          const curCount = typeof u.followersCount === "number" ? u.followersCount : 0;
+          const nextCount = Math.max(0, curCount + (newFollowState ? 1 : -1));
+          const curFollowers = Array.isArray(u.followers) ? u.followers : [];
+          const nextFollowers = newFollowState
+            ? (curFollowers.includes(myIdentifier) ? curFollowers : [...curFollowers, myIdentifier])
+            : curFollowers.filter((f: string) => f !== myIdentifier);
+          return {
+            ...u,
+            followersCount: nextCount,
+            followers: nextFollowers
+          };
+        }
+        return u;
+      })
+    );
+
+    // 7. Persist to server backend API instantly for live database sync across everybody
+    const followerUid = auth.currentUser?.uid || currentUser.uid || currentUser.email || "user";
+    fetch("/api/interactions/follow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        followerUserId: followerUid,
+        followerName: currentUser.name || "Reviewer",
+        followerAvatar: currentUser.avatar || "",
+        targetHandle: cleanAuthorHandle,
+        targetUserId: targetUserObj?.id || targetUserObj?.uid || "",
+        isFollowed: newFollowState
+      })
+    }).catch((err) => console.warn("Notice updating server follow interaction:", err));
+
+    // 8. Persist follower's profile in Firestore and NoSQL sync
+    if (auth.currentUser && db) {
+      setDoc(
+        doc(db, "users", auth.currentUser.uid),
+        {
+          followedAuthors: updatedFollowed,
+          followingCount: updatedFollowed.length
+        },
+        { merge: true }
+      ).catch((err) => console.warn("Failed to update followedAuthors in Firestore:", err));
+    }
+
+    fetch(`/api/nosql/users/${followerUid}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: {
+          followedAuthors: updatedFollowed,
+          followingCount: updatedFollowed.length
+        },
+        merge: true
+      })
+    }).catch(() => {});
+
+    // 9. Persist target user's followers in Firestore and NoSQL sync
+    const targetDocId = targetUserObj?.id || targetUserObj?.uid;
+    if (targetDocId) {
+      fetch(`/api/nosql/users/${targetDocId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data: {
+            followersCount: Math.max(0, ((targetUserObj?.followersCount || 0) + (newFollowState ? 1 : -1))),
+            followers: newFollowState
+              ? Array.from(new Set([...(targetUserObj?.followers || []), myIdentifier]))
+              : (targetUserObj?.followers || []).filter((f: string) => f !== myIdentifier)
+          },
+          merge: true
+        })
+      }).catch(() => {});
+    }
+
+    // 10. Send real-time social notification to target reviewer
     if (newFollowState && currentUser) {
       sendSocialNotification({
-        recipientHandle: authorHandle,
-        recipientEmail: authorHandle.replace(/^@/, ""),
+        recipientHandle: cleanAuthorHandle,
+        recipientEmail: cleanAuthorHandle.replace(/^@/, ""),
         type: "follow",
         user: {
           name: currentUser.name,
-          //handle: currentUser.email ? currentUser.email.split("@")[0] : currentUser.name,
           avatar: currentUser.avatar,
           email: currentUser.email
         },
@@ -3731,6 +3853,7 @@ export function App() {
                 places={places}
                 videos={videos}
                 currentUser={currentUser}
+                allUsers={allRegisteredUsers}
                 onOpenAuth={() => {
                   setAuthIntent('following');
                   setIsAuthModalOpen(true);

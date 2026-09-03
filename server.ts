@@ -5075,7 +5075,135 @@ app.post("/api/interactions/like", async (req, res) => {
         // Note: Currently we don't have bookmarksCount on videoReviews schema, but keeping this robust
       }
       res.json({ success: true });
-    } catch (err) {
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/interactions/follow", async (req, res) => {
+    try {
+      const { followerUserId, followerName, followerAvatar, targetHandle, targetUserId, isFollowed } = req.body || {};
+      if (!followerUserId || !targetHandle) {
+        return res.status(400).json({ error: "Missing followerUserId or targetHandle" });
+      }
+
+      console.log(`🤝 [Follow API] User "${followerName || followerUserId}" ${isFollowed ? "FOLLOWED" : "UNFOLLOWED"} "${targetHandle}"`);
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const followId = `${followerUserId}_${targetHandle.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+        if (isFollowed) {
+          await bunnyDb.execute({
+            sql: "INSERT OR REPLACE INTO follows (id, followerId, followingId, data) VALUES (?, ?, ?, ?)",
+            args: [
+              followId,
+              String(followerUserId),
+              String(targetHandle),
+              JSON.stringify({
+                followerName: followerName || "",
+                followerAvatar: followerAvatar || "",
+                targetUserId: targetUserId || "",
+                createdAt: new Date().toISOString()
+              })
+            ]
+          });
+        } else {
+          await bunnyDb.execute({
+            sql: "DELETE FROM follows WHERE followerId = ? AND followingId = ?",
+            args: [String(followerUserId), String(targetHandle)]
+          });
+          await bunnyDb.execute({
+            sql: "DELETE FROM follows WHERE id = ?",
+            args: [followId]
+          });
+        }
+
+        // Live update target user's follower count and list in bunnyDb users table
+        try {
+          const userRows = await bunnyDb.execute({
+            sql: `SELECT id, data FROM users WHERE name = ? OR email = ? OR id = ? LIMIT 1`,
+            args: [String(targetHandle), String(targetHandle), String(targetUserId || targetHandle)]
+          });
+          if (userRows && userRows.rows && userRows.rows.length > 0) {
+            const targetRow: any = userRows.rows[0];
+            let targetData: any = {};
+            try { targetData = typeof targetRow.data === 'string' ? JSON.parse(targetRow.data) : (targetRow.data || {}); } catch(e){}
+            const curFollowers: string[] = Array.isArray(targetData.followers) ? targetData.followers : [];
+            const followerIdStr = followerName || followerUserId;
+            let updatedFollowers = [...curFollowers];
+            if (isFollowed) {
+              if (!updatedFollowers.includes(followerIdStr)) updatedFollowers.push(followerIdStr);
+            } else {
+              updatedFollowers = updatedFollowers.filter((f: string) => f !== followerIdStr);
+            }
+            const updatedData = {
+              ...targetData,
+              followers: updatedFollowers,
+              followersCount: updatedFollowers.length
+            };
+            await bunnyDb.execute({
+              sql: `UPDATE users SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [JSON.stringify(updatedData), targetRow.id]
+            });
+          }
+        } catch (uErr) {
+          console.warn("Notice updating target user followers in bunnyDb:", uErr);
+        }
+      }
+
+      // Also propagate to Firestore Admin if initialized
+      if (adminDb) {
+        try {
+          const followerRef = (adminDb as any).collection("users").doc(followerUserId);
+          const fDoc = await followerRef.get();
+          if (fDoc.exists) {
+            const curFollowed: string[] = fDoc.data()?.followedAuthors || [];
+            let nextFollowed = [...curFollowed];
+            if (isFollowed && !nextFollowed.includes(targetHandle)) {
+              nextFollowed.push(targetHandle);
+            } else if (!isFollowed) {
+              nextFollowed = nextFollowed.filter((h: string) => h !== targetHandle);
+            }
+            await followerRef.set({
+              followedAuthors: nextFollowed,
+              followingCount: nextFollowed.length
+            }, { merge: true });
+          }
+
+          let targetDocRef = null;
+          if (targetUserId) {
+            targetDocRef = (adminDb as any).collection("users").doc(targetUserId);
+          } else {
+            const snap = await (adminDb as any).collection("users").where("name", "==", targetHandle).limit(1).get();
+            if (!snap.empty) {
+              targetDocRef = snap.docs[0].ref;
+            }
+          }
+          if (targetDocRef) {
+            const tDoc = await targetDocRef.get();
+            if (tDoc.exists) {
+              const curFollowers: string[] = tDoc.data()?.followers || [];
+              const myId = followerName || followerUserId;
+              let nextFollowers = [...curFollowers];
+              if (isFollowed && !nextFollowers.includes(myId)) {
+                nextFollowers.push(myId);
+              } else if (!isFollowed) {
+                nextFollowers = nextFollowers.filter((f: string) => f !== myId);
+              }
+              await targetDocRef.set({
+                followers: nextFollowers,
+                followersCount: nextFollowers.length
+              }, { merge: true });
+            }
+          }
+        } catch (fErr) {
+          console.warn("Firestore follow update notice:", fErr);
+        }
+      }
+
+      res.json({ success: true, isFollowed: Boolean(isFollowed) });
+    } catch (err: any) {
+      console.error("Follow error:", err);
       res.status(500).json({ error: err.message });
     }
   });

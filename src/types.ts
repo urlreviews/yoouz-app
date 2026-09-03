@@ -75,6 +75,7 @@ export interface UserProfile {
   memberSince?: string;
   followersCount?: number;
   followingCount?: number;
+  followers?: string[];
   followedAuthors?: string[];
   followedPlaces?: string[];
 }
