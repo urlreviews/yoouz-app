@@ -185,28 +185,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isMuted]);
 
-  // Keep unmuted audio state active on touch gestures
-  useEffect(() => {
-    if (isActive && !isMuted) {
-      const syncAudio = () => {
-        if (videoRef.current && videoRef.current.muted) {
-          videoRef.current.muted = false;
-          videoRef.current.volume = 1;
-        }
-      };
-      window.addEventListener("touchstart", syncAudio, { passive: true });
-      window.addEventListener("touchmove", syncAudio, { passive: true });
-      window.addEventListener("touchend", syncAudio, { passive: true });
-      window.addEventListener("scroll", syncAudio, { passive: true });
-      return () => {
-        window.removeEventListener("touchstart", syncAudio);
-        window.removeEventListener("touchmove", syncAudio);
-        window.removeEventListener("touchend", syncAudio);
-        window.removeEventListener("scroll", syncAudio);
-      };
-    }
-  }, [isActive, isMuted]);
-
   // Play / Pause video based on card active state, user feed initiation, and manual pause flag
   useEffect(() => {
     const el = videoRef.current;
@@ -226,18 +204,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           p.then(() => {
             setIsPlaying(true);
             setIsBuffering(false);
-          }).catch(() => {
-            if (!el.muted) {
-              el.muted = true;
-              el.play().then(() => {
-                setIsPlaying(true);
-                setIsBuffering(false);
-              }).catch(() => {
-                setIsPlaying(false);
-              });
-            } else {
+          }).catch((err) => {
+            // WebKit Autoplay Policy: if browser rejects unmuted autoplay, mute the video and play, and update global mute state so Tap to Unmute is displayed
+            console.log("[VideoFeedCard] Autoplay with sound restricted, falling back to muted autoplay:", err);
+            el.muted = true;
+            el.play().then(() => {
+              setIsPlaying(true);
+              setIsBuffering(false);
+              // Notify global state so "Tap to unmute" banner and mute icons match
+              onForceMute();
+            }).catch(() => {
               setIsPlaying(false);
-            }
+            });
           });
         }
       }
@@ -253,7 +231,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       setIsPlaying(false);
       setShowPlayPauseFeedback(null);
     }
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
+  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused, onForceMute]);
 
   // Clean unmount safety
   useEffect(() => {
@@ -656,8 +634,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Desktop & Laptop screens - Hidden on Mobile matching YouTube Shorts & TikTok mobile web) */}
-        <div className="hidden sm:flex items-center justify-end gap-2 min-w-[70px]">
+        {/* Right side: Sound Mute / Unmute Toggle Button */}
+        <div className="flex items-center justify-end gap-2 min-w-[70px]">
           <button
             id={`btn-toggle-sound-${video.id}`}
             onClick={(e) => {
@@ -685,6 +663,24 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </button>
         </div>
       </header>
+
+      {/* YouTube Shorts / Instagram Reels "Tap to Unmute" Floating Pill Banner */}
+      {isActive && isMuted && (
+        <div className="absolute top-[calc(env(safe-area-inset-top,14px)+62px)] md:top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
+          <button
+            type="button"
+            id={`btn-tap-to-unmute-${video.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleMute(e);
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-xl border border-white/30 text-white shadow-2xl transition-all cursor-pointer group"
+          >
+            <VolumeX className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold tracking-wide text-white drop-shadow">Tap to unmute</span>
+          </button>
+        </div>
+      )}
 
       {/* Transient Play/Pause Icon Tap Feedback */}
       {showPlayPauseFeedback && (
