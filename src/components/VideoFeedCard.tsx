@@ -130,7 +130,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     return resolveVideoPosterUrl(video);
   }, [video]);
 
-  // Safe async play handler with zero-freeze fallback
+  // Safe async play handler
   const safePlay = useCallback(async () => {
     const el = videoRef.current;
     if (!el) return;
@@ -141,22 +141,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
 
     try {
-      const promise = el.play();
-      playPromiseRef.current = promise;
-      await promise;
+      await el.play();
       setIsPlaying(true);
       setIsBuffering(false);
     } catch (err: any) {
-      if (err.name === "AbortError") {
-        return;
-      }
-      // If unmuted autoplay blocked by browser policy on cold load:
       if (!el.muted) {
         el.muted = true;
         try {
-          const mutedPromise = el.play();
-          playPromiseRef.current = mutedPromise;
-          await mutedPromise;
+          await el.play();
           setIsPlaying(true);
           setIsBuffering(false);
         } catch (e) {
@@ -165,21 +157,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       } else {
         setIsPlaying(false);
       }
-    } finally {
-      playPromiseRef.current = null;
     }
   }, [isMuted]);
 
   // Safe async pause handler
-  const safePause = useCallback(async (resetTime = false) => {
+  const safePause = useCallback((resetTime = false) => {
     const el = videoRef.current;
     if (!el) return;
-
-    if (playPromiseRef.current) {
-      try {
-        await playPromiseRef.current;
-      } catch (e) {}
-    }
 
     try {
       el.pause();
@@ -232,20 +216,55 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
-      safePlay();
+      el.muted = isMuted;
+      if (!isMuted) {
+        el.volume = 1;
+      }
+      if (el.paused) {
+        const p = el.play();
+        if (p !== undefined) {
+          p.then(() => {
+            setIsPlaying(true);
+            setIsBuffering(false);
+          }).catch(() => {
+            if (!el.muted) {
+              el.muted = true;
+              el.play().then(() => {
+                setIsPlaying(true);
+                setIsBuffering(false);
+              }).catch(() => {
+                setIsPlaying(false);
+              });
+            } else {
+              setIsPlaying(false);
+            }
+          });
+        }
+      }
     } else {
-      safePause(!isActive);
+      if (!el.paused) {
+        el.pause();
+      }
       if (!isActive) {
+        el.currentTime = 0;
         setIsManuallyPaused(false);
         setProgressPercent(0);
       }
+      setIsPlaying(false);
       setShowPlayPauseFeedback(null);
     }
-    
+  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
+
+  // Clean unmount safety
+  useEffect(() => {
     return () => {
-      safePause(false);
+      if (videoRef.current) {
+        try {
+          videoRef.current.pause();
+        } catch (e) {}
+      }
     };
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused, safePlay, safePause]);
+  }, []);
 
   // Record view count when video is active and playing
   useEffect(() => {
@@ -319,12 +338,35 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     if (el.paused || isManuallyPaused || !hasUserStartedFeed) {
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
-      safePlay();
+      el.muted = isMuted;
+      if (!isMuted) {
+        el.volume = 1;
+      }
+      const p = el.play();
+      if (p !== undefined) {
+        p.then(() => {
+          setIsPlaying(true);
+          setIsBuffering(false);
+        }).catch(() => {
+          if (!el.muted) {
+            el.muted = true;
+            el.play().then(() => {
+              setIsPlaying(true);
+              setIsBuffering(false);
+            }).catch(() => {
+              setIsPlaying(false);
+            });
+          } else {
+            setIsPlaying(false);
+          }
+        });
+      }
       if (e) triggerFeedback("play");
     } else {
       isManuallyPausedRef.current = true;
       setIsManuallyPaused(true);
-      safePause(false);
+      el.pause();
+      setIsPlaying(false);
       if (e) triggerFeedback("pause");
     }
   };
