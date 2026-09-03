@@ -223,12 +223,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isActive, isMuted]);
 
-  // Play / Pause video based on card active state and manual pause flag
+  // Play / Pause video based on card active state, user feed initiation, and manual pause flag
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    if (isActive && !isManuallyPaused) {
+    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+
+    if (shouldPlay) {
       setShowPlayPauseFeedback(null);
       safePlay();
     } else {
@@ -243,7 +245,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     return () => {
       safePause(false);
     };
-  }, [isActive, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
+  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused, safePlay, safePause]);
 
   // Record view count when video is active and playing
   useEffect(() => {
@@ -314,7 +316,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     triggerHaptic("light");
 
-    if (el.paused || isManuallyPaused) {
+    if (el.paused || isManuallyPaused || !hasUserStartedFeed) {
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       safePlay();
@@ -677,8 +679,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Center Play Button - shown when user explicitly pauses */}
-      {isActive && isManuallyPaused && !showPlayPauseFeedback && (
+      {/* Center Play Button - shown on initial load before feed starts or when user explicitly pauses */}
+      {isActive && (!hasUserStartedFeed || isManuallyPaused) && !showPlayPauseFeedback && (
         <button
           type="button"
           id={`copo-play-center-btn-${video.id}`}
