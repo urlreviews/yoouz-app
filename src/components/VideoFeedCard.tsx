@@ -29,6 +29,7 @@ import {  saveVideoBlobToIndexedDB } from "../lib/videoStorage";
 import { triggerHaptic } from "../utils/haptics";
 import { preloadBusinessAssets } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
+import { unlockMobileAudioSession } from "../utils/audioSessionManager";
 
 interface VideoFeedCardProps {
   video: VideoReview;
@@ -151,11 +152,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   useEffect(() => {
     if (isActive && !isMuted) {
       const syncAudio = () => {
+        unlockMobileAudioSession();
         if (videoRef.current && videoRef.current.muted) {
           videoRef.current.muted = false;
           videoRef.current.volume = 1;
         }
       };
+      // Execute immediate sync
+      syncAudio();
       window.addEventListener("touchstart", syncAudio, { passive: true });
       window.addEventListener("touchmove", syncAudio, { passive: true });
       window.addEventListener("touchend", syncAudio, { passive: true });
@@ -179,7 +183,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
       el.muted = isMuted;
-      if (!isMuted) el.volume = 1;
+      if (!isMuted) {
+        el.volume = 1;
+        unlockMobileAudioSession();
+      }
 
       const playPromise = el.play();
       if (playPromise !== undefined) {
@@ -187,6 +194,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           .then(() => {
             setIsPlaying(true);
             setIsBuffering(false);
+            if (!isMuted && el.muted) {
+              el.muted = false;
+              el.volume = 1;
+            }
           })
           .catch(() => {
             // If browser blocks audio autoplay on this video before gesture:
@@ -198,6 +209,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               // If global preference is unmuted, re-enable audio as soon as user touches or scrolls
               if (!isMuted) {
                 const tryUnmute = () => {
+                  unlockMobileAudioSession();
                   if (videoRef.current) {
                     videoRef.current.muted = false;
                     videoRef.current.volume = 1;
@@ -213,6 +225,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 window.addEventListener("touchend", tryUnmute, { once: true, passive: true });
                 window.addEventListener("click", tryUnmute, { once: true, passive: true });
                 window.addEventListener("scroll", tryUnmute, { once: true, passive: true });
+                // Also schedule immediate microtask check
+                setTimeout(tryUnmute, 50);
               }
             }).catch(() => {
               setIsPlaying(false);

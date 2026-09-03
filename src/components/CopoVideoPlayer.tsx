@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useGlobalMute } from "../hooks/useGlobalMute";
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "../utils/videoUtils";
+import { unlockMobileAudioSession } from "../utils/audioSessionManager";
 import { VideoFeedCard } from "./VideoFeedCard";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import {
@@ -150,17 +151,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
   // Web Audio API session unlocker to guarantee audio permission
   const unlockAudioSession = useCallback(() => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        if (!(window as any).__copoAudioCtx) {
-          (window as any).__copoAudioCtx = new AudioCtx();
-        }
-        if ((window as any).__copoAudioCtx.state === "suspended") {
-          (window as any).__copoAudioCtx.resume();
-        }
-      }
-    } catch (e) {}
+    unlockMobileAudioSession();
   }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
@@ -619,8 +610,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            // Virtual sliding window (YouTube Shorts architecture): only mount decoders for active and immediately adjacent cards
-            const isCardNear = Math.abs(idx - currentIndex) <= 2;
+            // Virtual sliding window (YouTube Shorts / TikTok architecture): mount decoders for active and ±3 adjacent cards
+            const isCardNear = Math.abs(idx - currentIndex) <= 3;
 
             return (
               <VideoFeedCard
