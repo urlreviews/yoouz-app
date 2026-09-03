@@ -916,7 +916,7 @@ export function App() {
 
               // Sync follows from Firestore to localStorage
               let fAuthors = initialFollowed;
-              let fPlaces = [];
+              let fPlaces: string[] = [];
               if (data.followedAuthors && Array.isArray(data.followedAuthors)) {
                 fAuthors = data.followedAuthors;
                 localStorage.setItem("copo_followed_authors", JSON.stringify(fAuthors));
@@ -924,6 +924,10 @@ export function App() {
               if (data.followedPlaces && Array.isArray(data.followedPlaces)) {
                 fPlaces = data.followedPlaces;
                 localStorage.setItem("copo_followed_places", JSON.stringify(fPlaces));
+              } else {
+                try {
+                  fPlaces = JSON.parse(localStorage.getItem("copo_followed_places") || "[]");
+                } catch(e){}
               }
 
               const updatedProfile: UserProfile = {
@@ -933,7 +937,8 @@ export function App() {
                 avatar: finalAvatar,
                 location: finalLocation,
                 followedAuthors: fAuthors,
-                followingCount: fAuthors.length,
+                followedPlaces: fPlaces,
+                followingCount: fAuthors.length + fPlaces.length,
                 followersCount: typeof data.followersCount === "number" ? data.followersCount : (profileObj.followersCount || 0),
                 followers: Array.isArray(data.followers) ? data.followers : (profileObj.followers || [])
               };
@@ -2733,32 +2738,94 @@ export function App() {
       setIsAuthModalOpen(true);
       return;
     }
-    let newFollowState = true;
+    
+    // 1. Determine next follow state
+    const currentPlace = places.find(p => p.id === placeId);
+    let storedFollowed: string[] = [];
+    try {
+      storedFollowed = JSON.parse(localStorage.getItem("copo_followed_places") || "[]");
+    } catch(e){}
+    const currentlyFollowed = Boolean(currentPlace?.isFollowed || storedFollowed.includes(placeId) || (currentUser.followedPlaces || []).includes(placeId));
+    const newFollowState = !currentlyFollowed;
+
+    // 2. Compute next followed places array
+    let updatedFollowedPlaces = [...(currentUser.followedPlaces || storedFollowed)];
+    if (newFollowState) {
+      if (!updatedFollowedPlaces.includes(placeId)) {
+        updatedFollowedPlaces.push(placeId);
+      }
+    } else {
+      updatedFollowedPlaces = updatedFollowedPlaces.filter(id => id !== placeId);
+    }
+
+    // 3. Update places state immediately
     setPlaces((prev) => {
       const updated = prev.map((p) => {
         if (p.id === placeId) {
-          newFollowState = !p.isFollowed;
           return { ...p, isFollowed: newFollowState };
         }
         return p;
       });
       return updated;
     });
-    
+
+    // 4. Update currentUser state & copo_user_profile
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      const nextUser: UserProfile = {
+        ...prev,
+        followedPlaces: updatedFollowedPlaces,
+        followingCount: (prev.followedAuthors?.length || 0) + updatedFollowedPlaces.length
+      };
+      try {
+        localStorage.setItem("copo_user_profile", JSON.stringify(nextUser));
+      } catch(e){}
+      return nextUser;
+    });
+
+    // 5. Update localStorage
     try {
-      const stored = localStorage.getItem("copo_followed_places") || "[]";
-      let followed = JSON.parse(stored);
-      if (newFollowState && !followed.includes(placeId)) followed.push(placeId);
-      else if (!newFollowState) followed = followed.filter(id => id !== placeId);
-      localStorage.setItem("copo_followed_places", JSON.stringify(followed));
-      
-      // Persist to Firestore if user is logged in
-      if (auth.currentUser && db) {
-        setDoc(doc(db, "users", auth.currentUser.uid), {
-          followedPlaces: followed
-        }, { merge: true }).catch(err => console.warn("Failed to update followedPlaces:", err));
-      }
-    } catch(e) {}
+      localStorage.setItem("copo_followed_places", JSON.stringify(updatedFollowedPlaces));
+    } catch(e){}
+
+    // 6. Notify all components listening to profile / follow updates
+    try {
+      window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: { followedPlaces: updatedFollowedPlaces } }));
+    } catch(e){}
+
+    // 7. Persist to live server API (Bunny DB follows table, users table, places table)
+    const followerUid = auth.currentUser?.uid || (currentUser.email ? currentUser.email.replace(/[^a-zA-Z0-9]/g, '_') : 'guest');
+    fetch("/api/interactions/follow-place", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        followerUserId: followerUid,
+        followerName: currentUser.name || currentUser.email || "User",
+        followerAvatar: currentUser.avatar || "",
+        placeId,
+        placeName: currentPlace?.name || placeId,
+        isFollowed: newFollowState
+      })
+    }).catch(err => console.warn("Notice updating server place follow interaction:", err));
+
+    // 8. Persist to Firestore if available
+    if (auth.currentUser && db) {
+      setDoc(doc(db, "users", auth.currentUser.uid), {
+        followedPlaces: updatedFollowedPlaces
+      }, { merge: true }).catch(err => console.warn("Failed to update followedPlaces in Firestore:", err));
+    }
+
+    // 9. Persist to NoSQL endpoint
+    fetch(`/api/nosql/users/${followerUid}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: {
+          followedPlaces: updatedFollowedPlaces
+        },
+        merge: true
+      })
+    }).catch(() => {});
   };
 
   // Handle Adding Comment or Threaded Reply - fully synced with Firestore

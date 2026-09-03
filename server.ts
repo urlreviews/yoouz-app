@@ -5324,7 +5324,114 @@ app.post("/api/interactions/like", async (req, res) => {
 
   app.post("/api/interactions/follow", async (req, res) => {
     try {
-      const { followerUserId, followerName, followerAvatar, targetHandle, targetUserId, isFollowed } = req.body || {};
+      const { followerUserId, followerName, followerAvatar, targetHandle, targetUserId, isFollowed, type, placeId, placeName } = req.body || {};
+      
+      // If this is a business / place follow request, route to place follow logic
+      if (type === "place" || placeId) {
+        const targetPlaceId = placeId || targetHandle;
+        if (!followerUserId || !targetPlaceId) {
+          return res.status(400).json({ error: "Missing followerUserId or placeId" });
+        }
+
+        console.log(`🏢 [Follow API] User "${followerName || followerUserId}" ${isFollowed ? "FOLLOWED" : "UNFOLLOWED"} place "${targetPlaceId}"`);
+
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const cleanPlaceId = String(targetPlaceId).toLowerCase().replace(/[^a-z0-9]/g, '_');
+          const followId = `follow_place_${followerUserId}_${cleanPlaceId}`;
+
+          if (isFollowed) {
+            await bunnyDb.execute({
+              sql: "INSERT OR REPLACE INTO follows (id, followerId, followingId, data) VALUES (?, ?, ?, ?)",
+              args: [
+                followId,
+                String(followerUserId),
+                String(targetPlaceId),
+                JSON.stringify({
+                  type: "place",
+                  placeId: String(targetPlaceId),
+                  placeName: placeName || "",
+                  followerName: followerName || "",
+                  followerAvatar: followerAvatar || "",
+                  createdAt: new Date().toISOString()
+                })
+              ]
+            });
+          } else {
+            await bunnyDb.execute({
+              sql: "DELETE FROM follows WHERE (followerId = ? AND followingId = ?) OR id = ?",
+              args: [String(followerUserId), String(targetPlaceId), followId]
+            });
+          }
+
+          // Live update follower's followedPlaces in bunnyDb users table
+          try {
+            const followerRows = await bunnyDb.execute({
+              sql: `SELECT id, data FROM users WHERE id = ? OR email = ? OR name = ? LIMIT 1`,
+              args: [String(followerUserId), String(followerUserId), String(followerName || "")]
+            });
+            if (followerRows && followerRows.rows && followerRows.rows.length > 0) {
+              const fRow: any = followerRows.rows[0];
+              let fData: any = {};
+              try { fData = typeof fRow.data === 'string' ? JSON.parse(fRow.data) : (fRow.data || {}); } catch(e){}
+              const curFollowedPlaces: string[] = Array.isArray(fData.followedPlaces) ? fData.followedPlaces : [];
+              let nextFollowedPlaces = [...curFollowedPlaces];
+              if (isFollowed) {
+                if (!nextFollowedPlaces.includes(String(targetPlaceId))) {
+                  nextFollowedPlaces.push(String(targetPlaceId));
+                }
+              } else {
+                nextFollowedPlaces = nextFollowedPlaces.filter((id) => id !== String(targetPlaceId));
+              }
+              const updatedFData = {
+                ...fData,
+                followedPlaces: nextFollowedPlaces
+              };
+              await bunnyDb.execute({
+                sql: `UPDATE users SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [JSON.stringify(updatedFData), fRow.id]
+              });
+            }
+          } catch (fErr) {
+            console.warn("Notice updating follower user followedPlaces in bunnyDb:", fErr);
+          }
+
+          // Also live update place's followers in bunnyDb places table if it exists
+          try {
+            const placeRows = await bunnyDb.execute({
+              sql: `SELECT id, data FROM places WHERE id = ? LIMIT 1`,
+              args: [String(targetPlaceId)]
+            });
+            if (placeRows && placeRows.rows && placeRows.rows.length > 0) {
+              const pRow: any = placeRows.rows[0];
+              let pData: any = {};
+              try { pData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {}); } catch(e){}
+              const curFollowers: string[] = Array.isArray(pData.followers) ? pData.followers : [];
+              const followerIdStr = followerName || followerUserId;
+              let nextFollowers = [...curFollowers];
+              if (isFollowed) {
+                if (!nextFollowers.includes(followerIdStr)) nextFollowers.push(followerIdStr);
+              } else {
+                nextFollowers = nextFollowers.filter((f) => f !== followerIdStr);
+              }
+              const updatedPData = {
+                ...pData,
+                followers: nextFollowers,
+                followersCount: nextFollowers.length
+              };
+              await bunnyDb.execute({
+                sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [JSON.stringify(updatedPData), pRow.id]
+              });
+            }
+          } catch (pErr) {
+            console.warn("Notice updating place followers in bunnyDb:", pErr);
+          }
+        }
+
+        return res.json({ success: true, isFollowed: Boolean(isFollowed), placeId: targetPlaceId });
+      }
+
       if (!followerUserId || !targetHandle) {
         return res.status(400).json({ error: "Missing followerUserId or targetHandle" });
       }
@@ -5479,6 +5586,117 @@ app.post("/api/interactions/like", async (req, res) => {
       res.json({ success: true, isFollowed: Boolean(isFollowed) });
     } catch (err: any) {
       console.error("Follow error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated follow-place endpoint alias
+  app.post("/api/interactions/follow-place", async (req, res) => {
+    try {
+      const { followerUserId, followerName, followerAvatar, placeId, placeName, isFollowed } = req.body || {};
+      if (!followerUserId || !placeId) {
+        return res.status(400).json({ error: "Missing followerUserId or placeId" });
+      }
+
+      console.log(`🏢 [Follow-Place API] User "${followerName || followerUserId}" ${isFollowed ? "FOLLOWED" : "UNFOLLOWED"} place "${placeId}"`);
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const cleanPlaceId = String(placeId).toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const followId = `follow_place_${followerUserId}_${cleanPlaceId}`;
+
+        if (isFollowed) {
+          await bunnyDb.execute({
+            sql: "INSERT OR REPLACE INTO follows (id, followerId, followingId, data) VALUES (?, ?, ?, ?)",
+            args: [
+              followId,
+              String(followerUserId),
+              String(placeId),
+              JSON.stringify({
+                type: "place",
+                placeId: String(placeId),
+                placeName: placeName || "",
+                followerName: followerName || "",
+                followerAvatar: followerAvatar || "",
+                createdAt: new Date().toISOString()
+              })
+            ]
+          });
+        } else {
+          await bunnyDb.execute({
+            sql: "DELETE FROM follows WHERE (followerId = ? AND followingId = ?) OR id = ?",
+            args: [String(followerUserId), String(placeId), followId]
+          });
+        }
+
+        // Live update follower's followedPlaces in bunnyDb users table
+        try {
+          const followerRows = await bunnyDb.execute({
+            sql: `SELECT id, data FROM users WHERE id = ? OR email = ? OR name = ? LIMIT 1`,
+            args: [String(followerUserId), String(followerUserId), String(followerName || "")]
+          });
+          if (followerRows && followerRows.rows && followerRows.rows.length > 0) {
+            const fRow: any = followerRows.rows[0];
+            let fData: any = {};
+            try { fData = typeof fRow.data === 'string' ? JSON.parse(fRow.data) : (fRow.data || {}); } catch(e){}
+            const curFollowedPlaces: string[] = Array.isArray(fData.followedPlaces) ? fData.followedPlaces : [];
+            let nextFollowedPlaces = [...curFollowedPlaces];
+            if (isFollowed) {
+              if (!nextFollowedPlaces.includes(String(placeId))) {
+                nextFollowedPlaces.push(String(placeId));
+              }
+            } else {
+              nextFollowedPlaces = nextFollowedPlaces.filter((id) => id !== String(placeId));
+            }
+            const updatedFData = {
+              ...fData,
+              followedPlaces: nextFollowedPlaces
+            };
+            await bunnyDb.execute({
+              sql: `UPDATE users SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [JSON.stringify(updatedFData), fRow.id]
+            });
+          }
+        } catch (fErr) {
+          console.warn("Notice updating follower user followedPlaces in bunnyDb:", fErr);
+        }
+
+        // Also live update place's followers in bunnyDb places table if it exists
+        try {
+          const placeRows = await bunnyDb.execute({
+            sql: `SELECT id, data FROM places WHERE id = ? LIMIT 1`,
+            args: [String(placeId)]
+          });
+          if (placeRows && placeRows.rows && placeRows.rows.length > 0) {
+            const pRow: any = placeRows.rows[0];
+            let pData: any = {};
+            try { pData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {}); } catch(e){}
+            const curFollowers: string[] = Array.isArray(pData.followers) ? pData.followers : [];
+            const followerIdStr = followerName || followerUserId;
+            let nextFollowers = [...curFollowers];
+            if (isFollowed) {
+              if (!nextFollowers.includes(followerIdStr)) nextFollowers.push(followerIdStr);
+            } else {
+              nextFollowers = nextFollowers.filter((f) => f !== followerIdStr);
+            }
+            const updatedPData = {
+              ...pData,
+              followers: nextFollowers,
+              followersCount: nextFollowers.length
+            };
+            await bunnyDb.execute({
+              sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [JSON.stringify(updatedPData), pRow.id]
+            });
+          }
+        } catch (pErr) {
+          console.warn("Notice updating place followers in bunnyDb:", pErr);
+        }
+      }
+
+      res.json({ success: true, isFollowed: Boolean(isFollowed), placeId });
+    } catch (err: any) {
+      console.error("Follow place error:", err);
       res.status(500).json({ error: err.message });
     }
   });

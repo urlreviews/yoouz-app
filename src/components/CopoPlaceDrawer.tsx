@@ -32,6 +32,7 @@ import {
   Mail,
   UserPlus,
   UserCheck,
+  UserMinus,
   MessageSquare,
   MessageSquareOff,
   ShieldAlert,
@@ -112,6 +113,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(false);
   const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
+  const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
 
@@ -642,17 +644,29 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {onToggleFollowPlace && (
             <button
               onClick={() => onToggleFollowPlace(place.id)}
-              className={`px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border ${
+              onMouseEnter={() => setIsHoveredUnfollow(true)}
+              onMouseLeave={() => setIsHoveredUnfollow(false)}
+              className={`px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border whitespace-nowrap active:scale-95 ${
                 place.isFollowed
-                  ? "bg-zinc-800 text-zinc-100 border-zinc-700 hover:bg-zinc-700"
+                  ? isHoveredUnfollow
+                    ? "bg-red-500/15 text-red-400 border-red-500/30"
+                    : "bg-zinc-800 text-zinc-100 border-zinc-700 hover:bg-zinc-700"
                   : "bg-white text-zinc-950 hover:bg-zinc-200 border-white"
               }`}
+              title={place.isFollowed ? (isHoveredUnfollow ? "Unfollow this business" : "You are following this business") : "Follow this business"}
             >
               {place.isFollowed ? (
-                <>
-                  <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                  <span>Following</span>
-                </>
+                isHoveredUnfollow ? (
+                  <>
+                    <UserMinus className="w-3.5 h-3.5" />
+                    <span>Unfollow</span>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>Following</span>
+                  </>
+                )
               ) : (
                 <>
                   <UserPlus className="w-3.5 h-3.5" />

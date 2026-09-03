@@ -9,10 +9,15 @@ import {
   Search,
   X,
   CheckCircle2,
-  MapPin
+  MapPin,
+  Building2,
+  Star,
+  Globe,
+  Store
 } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
+import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain } from "../utils/placeUtils";
 
 interface CopoFollowingViewProps {
   places: Place[];
@@ -78,19 +83,25 @@ const getCanonicalAuthorKey = (raw: string | { name?: string; email?: string; id
 };
 
 export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
-  videos,
+  places = [],
+  videos = [],
   currentUser,
   allUsers = [],
   onOpenHelp,
   onOpenLegal,
   onOpenCreator,
+  onOpenPlace,
   onToggleFollow,
+  onToggleFollowPlace,
   onNavigateHome,
   onSuccessAuth
 }) => {
-  // Pure, clean 2-tab architecture: "following" (Who I Follow) and "followers" (Who Follows Me)
+  // Tabs: "following" (Who I Follow) and "followers" (Who Follows Me)
   const [activeTab, setActiveTab] = useState<"following" | "followers">("following");
+  // Sub-filter inside Following: "all" | "reviewers" | "businesses"
+  const [followingFilter, setFollowingFilter] = useState<"all" | "reviewers" | "businesses">("all");
   const [hoveredUnfollow, setHoveredUnfollow] = useState<string | null>(null);
+  const [hoveredUnfollowPlace, setHoveredUnfollowPlace] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [profileSyncTick, setProfileSyncTick] = useState<number>(0);
 
@@ -113,7 +124,27 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
       if (name) set.add(name.toLowerCase().trim());
     });
     return set;
-  }, [currentUser?.followedAuthors]);
+  }, [currentUser?.followedAuthors, profileSyncTick]);
+
+  // Set of places the current user follows
+  const followedPlacesSet = useMemo(() => {
+    const set = new Set<string>();
+    (currentUser?.followedPlaces || []).forEach((id) => {
+      if (id) set.add(id.toLowerCase().trim());
+    });
+    try {
+      const stored = localStorage.getItem("copo_followed_places");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((id) => {
+            if (id) set.add(String(id).toLowerCase().trim());
+          });
+        }
+      }
+    } catch (e) {}
+    return set;
+  }, [currentUser?.followedPlaces, profileSyncTick]);
 
   // Merge unique reviewers from videos and platform registered users
   const allAuthorsMap = useMemo(() => {
@@ -189,7 +220,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     return map;
   }, [videos, allUsers, followedAuthorsSet, currentUser, profileSyncTick]);
 
-  // People the current user follows (guarantees every item in followedAuthors is rendered without duplication)
+  // People the current user follows
   const followedAuthors = useMemo(() => {
     if (!currentUser) return [];
     const list: VideoAuthor[] = [];
@@ -222,7 +253,107 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     return list;
   }, [currentUser, allAuthorsMap]);
 
-  // People who follow the current user (strictly deduplicated by canonical identity)
+  // Businesses / Places the current user follows
+  const followedPlacesList = useMemo(() => {
+    const list: Place[] = [];
+    const seen = new Set<string>();
+
+    // 1. Check all places with isFollowed or in followedPlacesSet
+    places.forEach((p) => {
+      const pidLower = p.id.toLowerCase().trim();
+      const pSlugLower = extractCleanDomain(p.website || p.name || p.id).replace(/[^a-z0-9]/g, "-");
+      const isFollowed = p.isFollowed || followedPlacesSet.has(pidLower) || followedPlacesSet.has(pSlugLower);
+
+      if (isFollowed && !seen.has(pidLower)) {
+        seen.add(pidLower);
+        seen.add(pSlugLower);
+
+        // Dynamically compute review count and average rating from videos
+        const matchingVideos = videos.filter(
+          (v) =>
+            v.placeId === p.id ||
+            v.placeName?.toLowerCase() === p.name?.toLowerCase() ||
+            (v.placeWebsite && extractCleanDomain(v.placeWebsite) === extractCleanDomain(p.website))
+        );
+        const reviewCount = Math.max(matchingVideos.length, p.videoReviewCount || p.totalReviews || 0);
+        let dynamicRating = p.rating || 5.0;
+        if (matchingVideos.length > 0) {
+          const sum = matchingVideos.reduce((acc, v) => acc + (v.rating || 5), 0);
+          dynamicRating = Number((sum / matchingVideos.length).toFixed(1));
+        }
+
+        list.push({
+          ...p,
+          rating: dynamicRating,
+          totalReviews: reviewCount,
+          isFollowed: true
+        });
+      }
+    });
+
+    // 2. Check any followed places in followedPlacesSet that weren't in places state
+    followedPlacesSet.forEach((pid) => {
+      const pidLower = pid.toLowerCase().trim();
+      if (!seen.has(pidLower)) {
+        seen.add(pidLower);
+        const cleanDomain = extractCleanDomain(pid);
+        const formattedName = formatBusinessName(pid);
+
+        // Match from videos if available
+        const matchingVideos = videos.filter(
+          (v) =>
+            v.placeId.toLowerCase() === pidLower ||
+            v.placeName?.toLowerCase() === formattedName.toLowerCase() ||
+            (v.placeWebsite && extractCleanDomain(v.placeWebsite) === cleanDomain)
+        );
+        const sampleVid = matchingVideos[0];
+        const reviewCount = matchingVideos.length;
+        let dynamicRating = 5.0;
+        if (matchingVideos.length > 0) {
+          const sum = matchingVideos.reduce((acc, v) => acc + (v.rating || 5), 0);
+          dynamicRating = Number((sum / matchingVideos.length).toFixed(1));
+        }
+
+        const logoUrl =
+          sampleVid?.placeLogoUrl ||
+          sampleVid?.placeBannerUrl ||
+          (cleanDomain ? `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128` : "");
+
+        list.push({
+          id: pid,
+          name: formattedName || pid,
+          category: sampleVid?.placeCategory || "Business",
+          categoryType: "all",
+          address: sampleVid?.placeAddress || sampleVid?.placeCity || "Verified Business",
+          city: sampleVid?.placeCity || "Miami, FL",
+          lat: 25.7617,
+          lng: -80.1918,
+          rating: dynamicRating,
+          totalReviews: reviewCount || 1,
+          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: logoUrl,
+          bannerUrl: sampleVid?.placeBannerUrl || "",
+          photos: [],
+          openingHours: "Open now",
+          isOpen: true,
+          phone: "",
+          website: sampleVid?.placeWebsite || (cleanDomain ? `https://${cleanDomain}` : ""),
+          priceRange: "$$",
+          plusCode: "",
+          description: sampleVid?.placeDescription || `Verified business on Yoouz.`,
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          isFollowed: true,
+          logoUrl
+        });
+      }
+    });
+
+    return list;
+  }, [places, videos, followedPlacesSet, profileSyncTick]);
+
+  // People who follow the current user
   const myFollowers = useMemo(() => {
     if (!currentUser) return [];
     const myNameLower = (currentUser.name || "").toLowerCase().trim();
@@ -284,22 +415,34 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     return list;
   }, [allUsers, currentUser, followedAuthorsSet, profileSyncTick]);
 
-  // Filter lists based strictly on reviewer name (no handles, just like Discover)
-  const filteredFollowing = useMemo(() => {
+  // Filtered lists
+  const filteredAuthors = useMemo(() => {
     if (!searchQuery.trim()) return followedAuthors;
     const q = searchQuery.toLowerCase().trim();
-    return followedAuthors.filter((a) =>
-      a.name.toLowerCase().includes(q)
-    );
+    return followedAuthors.filter((a) => a.name.toLowerCase().includes(q) || (a.bio && a.bio.toLowerCase().includes(q)));
   }, [followedAuthors, searchQuery]);
+
+  const filteredPlaces = useMemo(() => {
+    if (!searchQuery.trim()) return followedPlacesList;
+    const q = searchQuery.toLowerCase().trim();
+    return followedPlacesList.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.id.toLowerCase().includes(q) ||
+        (p.website && p.website.toLowerCase().includes(q)) ||
+        (p.address && p.address.toLowerCase().includes(q)) ||
+        (p.city && p.city.toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q))
+    );
+  }, [followedPlacesList, searchQuery]);
 
   const filteredFollowers = useMemo(() => {
     if (!searchQuery.trim()) return myFollowers;
     const q = searchQuery.toLowerCase().trim();
-    return myFollowers.filter((f) =>
-      f.name.toLowerCase().includes(q)
-    );
+    return myFollowers.filter((f) => f.name.toLowerCase().includes(q));
   }, [myFollowers, searchQuery]);
+
+  const totalFollowingCount = followedAuthors.length + followedPlacesList.length;
 
   // Unauthenticated Gating View
   if (!currentUser) {
@@ -338,7 +481,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 <span>Following & Followers</span>
               </h1>
               <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-                Manage who you follow and see who follows your reviews.
+                Manage businesses and reviewers you follow on Yoouz.
               </p>
             </div>
           </div>
@@ -359,7 +502,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
             >
               <span>Following</span>
               <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${activeTab === "following" ? "bg-zinc-200 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-400"}`}>
-                {followedAuthors.length}
+                {totalFollowingCount}
               </span>
             </button>
             <button
@@ -382,15 +525,57 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
           </div>
         </div>
 
+        {/* Sub-Filters inside Following: All, Reviewers, Businesses */}
+        {activeTab === "following" && totalFollowingCount > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button
+              onClick={() => setFollowingFilter("all")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
+                followingFilter === "all"
+                  ? "bg-white text-zinc-950 border-white shadow-xs"
+                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border-zinc-800"
+              }`}
+            >
+              All ({totalFollowingCount})
+            </button>
+            <button
+              onClick={() => setFollowingFilter("businesses")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                followingFilter === "businesses"
+                  ? "bg-white text-zinc-950 border-white shadow-xs"
+                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border-zinc-800"
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Businesses ({followedPlacesList.length})</span>
+            </button>
+            <button
+              onClick={() => setFollowingFilter("reviewers")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                followingFilter === "reviewers"
+                  ? "bg-white text-zinc-950 border-white shadow-xs"
+                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border-zinc-800"
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Reviewers ({followedAuthors.length})</span>
+            </button>
+          </div>
+        )}
+
         {/* Search / Filter Input */}
-        {(followedAuthors.length > 0 || myFollowers.length > 0 || searchQuery) && (
+        {(totalFollowingCount > 0 || myFollowers.length > 0 || searchQuery) && (
           <div className="relative">
             <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`Search ${activeTab === "following" ? "following" : "followers"} by name...`}
+              placeholder={
+                activeTab === "following"
+                  ? "Search followed businesses or reviewers..."
+                  : "Search followers by name..."
+              }
               className="w-full bg-zinc-900/80 border border-zinc-800/80 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-colors"
             />
             {searchQuery && (
@@ -404,22 +589,22 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
           </div>
         )}
 
-        {/* Tab 1: Following List */}
+        {/* Tab 1: Following Content */}
         {activeTab === "following" && (
           <div id="tab-following-content" className="space-y-3 animate-in fade-in duration-150">
-            {filteredFollowing.length === 0 ? (
+            {totalFollowingCount === 0 ? (
               <div id="following-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/90 border border-zinc-800 text-center text-zinc-400 space-y-3 shadow-xs">
                 <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-300 flex items-center justify-center mx-auto">
                   <User className="w-6 h-6" />
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
-                    {searchQuery ? "No matching reviewers found" : "You aren't following anyone yet"}
+                    {searchQuery ? "No matching results found" : "You aren't following anyone yet"}
                   </p>
                   <p className="text-xs text-zinc-400 leading-relaxed">
                     {searchQuery
-                      ? `No reviewer matches "${searchQuery}". Try a different name.`
-                      : "When you follow authentic local reviewers on Yoouz, they will appear here."}
+                      ? `No business or reviewer matches "${searchQuery}". Try a different name.`
+                      : "When you follow businesses or authentic local reviewers on Yoouz, they will appear here."}
                   </p>
                 </div>
                 {searchQuery && (
@@ -433,82 +618,220 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {filteredFollowing.map((author) => {
-                  const isHovered = hoveredUnfollow === author.name;
-                  return (
-                    <div
-                      key={`following-reviewer-${author.name}`}
-                      id={`card-following-${author.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                      className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group"
-                    >
+                {/* 1. Businesses Section */}
+                {(followingFilter === "all" || followingFilter === "businesses") &&
+                  filteredPlaces.map((place) => {
+                    const isHovered = hoveredUnfollowPlace === place.id;
+                    const cleanDomain = extractCleanDomain(place.website || place.id);
+                    const formattedTitle = formatBusinessName(place.name || cleanDomain);
+                    const resolvedLogo =
+                      place.logoUrl ||
+                      place.avatarUrl ||
+                      place.ogImage ||
+                      (cleanDomain ? `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128` : "");
+
+                    return (
                       <div
-                        onClick={() => onOpenCreator(author)}
-                        className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer"
+                        key={`following-place-${place.id}`}
+                        id={`card-following-place-${place.id.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+                        onClick={() => onOpenPlace(place.id)}
+                        className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group cursor-pointer"
                       >
-                        <img
-                          src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
-                          alt={author.name}
-                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            if (!target.src.includes('/api/avatar')) {
-                              target.src = '/api/avatar?name=User&background=27272a&color=fff';
+                        <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
+                          {/* Square/Rounded-XL Business Logo */}
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white p-1.5 border border-zinc-700/80 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
+                            {resolvedLogo ? (
+                              <img
+                                src={resolvedLogo}
+                                alt={formattedTitle}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.style.display = "none";
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.style.display = "flex";
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              style={{ display: resolvedLogo ? "none" : "flex" }}
+                              className="w-full h-full items-center justify-center bg-zinc-950 text-white rounded-lg"
+                            >
+                              <Building2 className="w-6 h-6 text-zinc-300" />
+                            </div>
+                          </div>
+
+                          {/* Business Info */}
+                          <div className="min-w-0 flex-1 text-left space-y-1">
+                            {/* Row 1: Name + Badges */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                                {formattedTitle}
+                              </h3>
+                              <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                              <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded-md border border-zinc-700/60 uppercase tracking-wider shrink-0">
+                                Business
+                              </span>
+                            </div>
+
+                            {/* Row 2: Star Rating & Review Count */}
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-300">
+                              <span className="font-black text-amber-400">
+                                {typeof place.rating === "number" ? place.rating.toFixed(1) : "5.0"}
+                              </span>
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((starIdx) => (
+                                  <Star
+                                    key={starIdx}
+                                    className={`w-3.5 h-3.5 ${
+                                      starIdx <= Math.round(place.rating || 5)
+                                        ? "fill-amber-400 text-amber-400"
+                                        : "fill-zinc-800 text-zinc-700"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-zinc-400 text-[11px] font-medium">
+                                ({place.totalReviews || 1} {place.totalReviews === 1 ? "review" : "reviews"})
+                              </span>
+                            </div>
+
+                            {/* Row 3: Website Domain & Location */}
+                            <div className="flex items-center gap-3 text-xs text-zinc-400 font-medium truncate">
+                              {cleanDomain && (
+                                <span className="flex items-center gap-1 text-zinc-400 truncate hover:text-white transition-colors">
+                                  <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                  <span className="truncate">{cleanDomain}</span>
+                                </span>
+                              )}
+                              {(place.city || place.address) && (
+                                <span className="flex items-center gap-1 text-zinc-400 truncate">
+                                  <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                  <span className="truncate">{place.city || place.address}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Unfollow Button */}
+                        <button
+                          id={`btn-toggle-following-place-${place.id.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+                          onMouseEnter={() => setHoveredUnfollowPlace(place.id)}
+                          onMouseLeave={() => setHoveredUnfollowPlace(null)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onToggleFollowPlace) {
+                              onToggleFollowPlace(place.id);
+                            } else {
+                              onToggleFollow(place.id);
                             }
                           }}
-                        />
-                        <div className="min-w-0 flex-1 text-left">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
-                              {author.name}
-                            </h3>
-                            {author.isVerified && <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />}
-                          </div>
-                          
-                          {author.location ? (
-                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                              <span className="truncate">{author.location}</span>
-                            </p>
+                          className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                            isHovered
+                              ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                              : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
+                          }`}
+                          title={isHovered ? "Unfollow this business" : "You are following this business"}
+                        >
+                          {isHovered ? (
+                            <>
+                              <UserMinus className="w-3.5 h-3.5" />
+                              <span>Unfollow</span>
+                            </>
                           ) : (
-                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                              <span>Local Reviewer</span>
-                            </p>
+                            <>
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                              <span>Following</span>
+                            </>
                           )}
-                          
-                          <p className="text-[11px] font-semibold text-zinc-500 truncate">
-                            {author.videoReviewCount ? `${author.videoReviewCount} video ${author.videoReviewCount === 1 ? 'review' : 'reviews'}` : (author.bio || "Community reviewer")}
-                          </p>
-                        </div>
+                        </button>
                       </div>
+                    );
+                  })}
 
-                      <button
-                        id={`btn-toggle-following-${author.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                        onMouseEnter={() => setHoveredUnfollow(author.name)}
-                        onMouseLeave={() => setHoveredUnfollow(null)}
-                        onClick={() => onToggleFollow(author.name)}
-                        className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
-                          isHovered
-                            ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                            : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
-                        }`}
-                        title={isHovered ? "Unfollow this reviewer" : "You are following this reviewer"}
+                {/* 2. Reviewers Section */}
+                {(followingFilter === "all" || followingFilter === "reviewers") &&
+                  filteredAuthors.map((author) => {
+                    const isHovered = hoveredUnfollow === author.name;
+                    return (
+                      <div
+                        key={`following-reviewer-${author.name}`}
+                        id={`card-following-${author.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+                        onClick={() => onOpenCreator(author)}
+                        className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group cursor-pointer"
                       >
-                        {isHovered ? (
-                          <>
-                            <UserMinus className="w-3.5 h-3.5" />
-                            <span>Unfollow</span>
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                            <span>Following</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
+                        <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
+                          {/* Circular Reviewer Avatar */}
+                          <img
+                            src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
+                            alt={author.name}
+                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              if (!target.src.includes("/api/avatar")) {
+                                target.src = "/api/avatar?name=User&background=27272a&color=fff";
+                              }
+                            }}
+                          />
+                          <div className="min-w-0 flex-1 text-left space-y-0.5">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                                {author.name}
+                              </h3>
+                              {author.isVerified && <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />}
+                            </div>
+
+                            {author.location ? (
+                              <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 truncate">
+                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span className="truncate">{author.location}</span>
+                              </p>
+                            ) : (
+                              <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 truncate">
+                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span>Local Reviewer</span>
+                              </p>
+                            )}
+
+                            <p className="text-[11px] font-semibold text-zinc-500 truncate">
+                              {author.videoReviewCount
+                                ? `${author.videoReviewCount} video ${author.videoReviewCount === 1 ? "review" : "reviews"}`
+                                : author.bio || "Community reviewer"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          id={`btn-toggle-following-${author.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+                          onMouseEnter={() => setHoveredUnfollow(author.name)}
+                          onMouseLeave={() => setHoveredUnfollow(null)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFollow(author.name);
+                          }}
+                          className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                            isHovered
+                              ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                              : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
+                          }`}
+                          title={isHovered ? "Unfollow this reviewer" : "You are following this reviewer"}
+                        >
+                          {isHovered ? (
+                            <>
+                              <UserMinus className="w-3.5 h-3.5" />
+                              <span>Unfollow</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                              <span>Following</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -549,43 +872,41 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                   return (
                     <div
                       key={`follower-${follower.name}`}
-                      id={`card-follower-${follower.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                      className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group"
+                      id={`card-follower-${follower.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+                      onClick={() => onOpenCreator({ name: follower.name, avatar: follower.avatar } as any)}
+                      className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group cursor-pointer"
                     >
-                      <div
-                        onClick={() => onOpenCreator({ name: follower.name, avatar: follower.avatar } as any)}
-                        className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer"
-                      >
+                      <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
                         <img
                           src={follower.avatar}
                           alt={follower.name}
                           className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
-                            if (!target.src.includes('/api/avatar')) {
-                              target.src = '/api/avatar?name=User&background=27272a&color=fff';
+                            if (!target.src.includes("/api/avatar")) {
+                              target.src = "/api/avatar?name=User&background=27272a&color=fff";
                             }
                           }}
                         />
-                        <div className="min-w-0 flex-1 text-left">
-                          <div className="flex items-center gap-1.5 mb-1">
+                        <div className="min-w-0 flex-1 text-left space-y-0.5">
+                          <div className="flex items-center gap-1.5 mb-0.5">
                             <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                               {follower.name}
                             </h3>
                           </div>
-                          
+
                           {follower.location ? (
-                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
+                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 truncate">
                               <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                               <span className="truncate">{follower.location}</span>
                             </p>
                           ) : (
-                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
+                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 truncate">
                               <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                               <span>Local Reviewer</span>
                             </p>
                           )}
-                          
+
                           <p className="text-[11px] font-semibold text-zinc-500 truncate">
                             {follower.bio || "Community reviewer"}
                           </p>
@@ -593,10 +914,13 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                       </div>
 
                       <button
-                        id={`btn-follower-action-${follower.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                        id={`btn-follower-action-${follower.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                         onMouseEnter={() => setHoveredUnfollow(follower.name)}
                         onMouseLeave={() => setHoveredUnfollow(null)}
-                        onClick={() => onToggleFollow(follower.name)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleFollow(follower.name);
+                        }}
                         className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                           isFollowingThem
                             ? isHovered
