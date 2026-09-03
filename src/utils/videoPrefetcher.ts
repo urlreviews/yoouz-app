@@ -1,15 +1,16 @@
-import { normalizeVideoUrl } from "./videoUtils";
+import { normalizeVideoUrl, resolvePlayableVideoSource, resolveVideoPosterUrl } from "./videoUtils";
 import { saveVideoBlobToIndexedDB, getRawVideoBlobFromIndexedDB } from "../lib/videoStorage";
 
 const preloadedUrls = new Set<string>();
 const preloadedPosters = new Set<string>();
 const videoBufferPool: HTMLVideoElement[] = [];
-const MAX_BUFFER_POOL_SIZE = 4;
+const MAX_BUFFER_POOL_SIZE = 6;
 
 /**
  * TikTok / YouTube Shorts-grade Video & Poster Prefetch Engine.
  * Preloads video byte streams, decodes initial frames into GPU cache,
- * and primes poster artwork so when scrolling down, playback starts instantaneously.
+ * and primes poster artwork so when swiping fast up or down on any mobile phone,
+ * playback starts instantaneously without lag or black frames.
  */
 export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
   if (!rawUrl || typeof rawUrl !== "string") return;
@@ -32,6 +33,7 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
       warmVideo.muted = true;
       warmVideo.playsInline = true;
       (warmVideo as any)["webkit-playsinline"] = "true";
+      (warmVideo as any)["x5-playsinline"] = "true";
       warmVideo.src = url;
       warmVideo.load();
 
@@ -59,7 +61,6 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
             .then((blob) => {
               if (blob && blob.size > 1000) {
                 saveVideoBlobToIndexedDB(videoId, blob);
-                console.log(`⚡ [Prefetcher] Cached video ${videoId} in IndexedDB (${blob.size} bytes)`);
               }
             })
             .catch(() => {});
@@ -68,11 +69,11 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
     } catch (e) {}
   }
 
-  // 3. HTTP Byte Range Warm-Up (fallback fetches initial 512KB chunk into browser disk/RAM cache)
+  // 3. HTTP Byte Range Warm-Up (fetches initial 1.5MB chunk into browser disk/RAM cache)
   try {
     fetch(url, {
       method: "GET",
-      headers: { Range: "bytes=0-524287" },
+      headers: { Range: "bytes=0-1572863" },
       mode: "cors",
       cache: "force-cache"
     }).catch(() => {});
@@ -87,7 +88,35 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
   }
 };
 
+/**
+ * Batch-prefetches upcoming and neighboring videos around the current active index.
+ */
+export const prefetchUpcomingVideos = (videos: any[], currentIndex: number) => {
+  if (!videos || videos.length === 0) return;
+  // Lookahead: next 3 videos, lookbehind: previous 1 video
+  const targetIndices = [
+    currentIndex + 1,
+    currentIndex + 2,
+    currentIndex + 3,
+    currentIndex - 1
+  ];
+
+  targetIndices.forEach((idx) => {
+    if (idx >= 0 && idx < videos.length) {
+      const v = videos[idx];
+      if (v) {
+        const src = resolvePlayableVideoSource(v);
+        const poster = resolveVideoPosterUrl(v);
+        if (src && !src.startsWith("blob:")) {
+          prefetchVideo(src, poster);
+        }
+      }
+    }
+  });
+};
+
 export const getCachedVideoUrl = (rawUrl: string) => {
   return normalizeVideoUrl(rawUrl) || rawUrl;
 };
+
 

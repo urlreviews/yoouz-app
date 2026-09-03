@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useGlobalMute } from "../hooks/useGlobalMute";
-import { prefetchVideo } from "../utils/videoPrefetcher";
+import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { VideoFeedCard } from "./VideoFeedCard";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
@@ -146,6 +146,41 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentIndexRef = useRef<number>(currentIndex);
   const lastObserverIndexRef = useRef<number>(currentIndex);
+  const touchStartYRef = useRef<number>(0);
+
+  // Web Audio API session unlocker to guarantee audio permission
+  const unlockAudioSession = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        if (!(window as any).__copoAudioCtx) {
+          (window as any).__copoAudioCtx = new AudioCtx();
+        }
+        if ((window as any).__copoAudioCtx.state === "suspended") {
+          (window as any).__copoAudioCtx.resume();
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches && e.touches[0]) {
+      touchStartYRef.current = e.touches[0].clientY;
+      setHasUserStartedFeed(true);
+      unlockAudioSession();
+    }
+  }, [unlockAudioSession]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches && e.touches[0]) {
+      const deltaY = touchStartYRef.current - e.touches[0].clientY;
+      if (deltaY > 15) {
+        prefetchUpcomingVideos(videos, currentIndexRef.current);
+      } else if (deltaY < -15 && currentIndexRef.current > 0) {
+        prefetchUpcomingVideos(videos, currentIndexRef.current - 1);
+      }
+    }
+  }, [videos]);
 
   // Sync ref
   useEffect(() => {
@@ -181,21 +216,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     },
     [videos.length, onSelectVideoIndex]
   );
-
-  // Web Audio API session unlocker to guarantee audio permission
-  const unlockAudioSession = useCallback(() => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        if (!(window as any).__copoAudioCtx) {
-          (window as any).__copoAudioCtx = new AudioCtx();
-        }
-        if ((window as any).__copoAudioCtx.state === "suspended") {
-          (window as any).__copoAudioCtx.resume();
-        }
-      }
-    } catch (e) {}
-  }, []);
 
   // Listen to all touch/click interactions to prime audio context
   useEffect(() => {
@@ -260,31 +280,53 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
   // Pre-fetch upcoming videos for fast transitions (TikTok/Shorts sliding window)
   useEffect(() => {
-    const next1 = currentIndex + 1;
-    const next2 = currentIndex + 2;
-    const next3 = currentIndex + 3;
-    const prev1 = currentIndex - 1;
-    const prev2 = currentIndex - 2;
-
-    [currentIndex, next1, next2, next3, prev1, prev2].forEach((idx) => {
-      if (idx >= 0 && idx < videos.length) {
-        const v = videos[idx];
-        if (v) {
-          const src = resolvePlayableVideoSource(v);
-          const poster = resolveVideoPosterUrl(v);
-          if (src && !src.startsWith("blob:")) {
-            prefetchVideo(src, poster);
-          }
-        }
-      }
-    });
+    prefetchUpcomingVideos(videos, currentIndex);
 
     if (videos.length > 0 && currentIndex >= videos.length - 3) {
       onLoadMore?.();
     }
   }, [currentIndex, videos, onLoadMore]);
 
-  // IntersectionObserver: accurately pick the card with the highest visible intersection ratio (>= 0.45)
+  // High-performance real-time scroll synchronization (guarantees instantaneous card activation during fast swipes)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let isTicking = false;
+
+    const handleScroll = () => {
+      if (isProgrammaticScrollRef.current) return;
+
+      if (!isTicking) {
+        window.requestAnimationFrame(() => {
+          if (container && container.clientHeight > 0) {
+            const itemHeight = container.clientHeight;
+            const computedIndex = Math.round(container.scrollTop / itemHeight);
+            if (
+              computedIndex >= 0 &&
+              computedIndex < videos.length &&
+              computedIndex !== currentIndexRef.current
+            ) {
+              setHasUserStartedFeed(true);
+              currentIndexRef.current = computedIndex;
+              lastObserverIndexRef.current = computedIndex;
+              onSelectVideoIndex(computedIndex);
+              prefetchUpcomingVideos(videos, computedIndex);
+            }
+          }
+          isTicking = false;
+        });
+        isTicking = true;
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [videos, onSelectVideoIndex]);
+
+  // IntersectionObserver fallback for precision threshold validation
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -309,6 +351,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             currentIndexRef.current = idx;
             lastObserverIndexRef.current = idx;
             onSelectVideoIndex(idx);
+            prefetchUpcomingVideos(videos, idx);
           }
         }
       },
@@ -565,6 +608,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           className="w-full h-full md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
           style={{
             WebkitOverflowScrolling: "touch",

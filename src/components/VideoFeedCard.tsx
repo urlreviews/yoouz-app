@@ -147,6 +147,28 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isMuted]);
 
+  // Keep unmuted audio state active on mobile touch events when feed is active
+  useEffect(() => {
+    if (isActive && !isMuted) {
+      const syncAudio = () => {
+        if (videoRef.current && videoRef.current.muted) {
+          videoRef.current.muted = false;
+          videoRef.current.volume = 1;
+        }
+      };
+      window.addEventListener("touchstart", syncAudio, { passive: true });
+      window.addEventListener("touchmove", syncAudio, { passive: true });
+      window.addEventListener("touchend", syncAudio, { passive: true });
+      window.addEventListener("scroll", syncAudio, { passive: true });
+      return () => {
+        window.removeEventListener("touchstart", syncAudio);
+        window.removeEventListener("touchmove", syncAudio);
+        window.removeEventListener("touchend", syncAudio);
+        window.removeEventListener("scroll", syncAudio);
+      };
+    }
+  }, [isActive, isMuted]);
+
   // Play / Pause video based on card active state and user feed initiation
   useEffect(() => {
     const el = videoRef.current;
@@ -173,7 +195,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             el.play().then(() => {
               setIsPlaying(true);
               setIsBuffering(false);
-              // If global preference is unmuted, re-enable audio as soon as user taps/scrolls
+              // If global preference is unmuted, re-enable audio as soon as user touches or scrolls
               if (!isMuted) {
                 const tryUnmute = () => {
                   if (videoRef.current) {
@@ -181,11 +203,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                     videoRef.current.volume = 1;
                   }
                   window.removeEventListener("touchstart", tryUnmute);
+                  window.removeEventListener("touchmove", tryUnmute);
                   window.removeEventListener("touchend", tryUnmute);
                   window.removeEventListener("click", tryUnmute);
                   window.removeEventListener("scroll", tryUnmute);
                 };
                 window.addEventListener("touchstart", tryUnmute, { once: true, passive: true });
+                window.addEventListener("touchmove", tryUnmute, { once: true, passive: true });
                 window.addEventListener("touchend", tryUnmute, { once: true, passive: true });
                 window.addEventListener("click", tryUnmute, { once: true, passive: true });
                 window.addEventListener("scroll", tryUnmute, { once: true, passive: true });
@@ -492,13 +516,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             id={`video-element-${video.id}`}
             src={currentSource}
             poster={resolveVideoPosterUrl(video)}
-            preload={isActive ? "auto" : (isNear ? "metadata" : "none")}
+            preload="auto"
             autoPlay={false}
             playsInline
             webkit-playsinline="true"
+            x5-playsinline="true"
+            x5-video-player-type="h5-page"
+            x5-video-player-fullscreen="true"
             loop
             muted={isMuted}
             disablePictureInPicture
+            disableRemotePlayback
             className="w-full h-full object-cover absolute inset-0"
             onTimeUpdate={(e) => {
               const t = e.currentTarget;
