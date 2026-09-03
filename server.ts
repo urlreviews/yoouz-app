@@ -10109,88 +10109,20 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
 
       if (type === 'place') {
-         const rawName = (req.query.name as string) || "Business";
-         const rawDomain = cleanDomainName((req.query.domain as string) || (req.query.website as string) || rawName);
-         let explicitLogoUrl = (req.query.logoUrl as string) || "";
-         
-         // Search reviews for place logo if not in query
-         if (!explicitLogoUrl) {
-            try {
-               const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-               const match = localList.find((v: any) => 
-                  (v.placeName && v.placeName.toLowerCase() === rawName.toLowerCase()) || 
-                  (v.placeName && cleanDomainName(v.placeName) === rawDomain) ||
-                  v.placeId === req.query.id ||
-                  (v.placeWebsite && cleanDomainName(v.placeWebsite) === rawDomain)
-               );
-               if (match && (match.placeLogo || match.logoUrl)) {
-                  explicitLogoUrl = match.placeLogo || match.logoUrl;
-               }
-            } catch(e) {}
-         }
+         const rawQueryName = (req.query.name as string) || "";
+         const rawQueryDomain = (req.query.domain as string) || (req.query.website as string) || (req.query.id as string) || "";
+         const explicitLogoUrl = (req.query.logoUrl as string) || "";
 
-         let logoBuf: Buffer | null = null;
+         // Multi-source place resolution
+         let placeObj: any = null;
+         try {
+           placeObj = await resolvePlaceFromAnySource(rawQueryDomain || rawQueryName || (req.query.id as string) || "");
+         } catch (e) {}
 
-         // 1. Direct match for data URL
-         if (explicitLogoUrl && explicitLogoUrl.startsWith("data:")) {
-            logoBuf = decodeDataUrl(explicitLogoUrl);
-         }
+         const rawDomain = cleanDomainName(rawQueryDomain || placeObj?.domain || placeObj?.website || rawQueryName || "business.com");
+         const rawName = formatBusinessName(placeObj?.name || rawQueryName || rawDomain || "Business");
 
-         // 2. Direct match for known brand logos SVG
-         if (!logoBuf && rawDomain && KNOWN_BRAND_LOGOS[rawDomain]) {
-            try {
-               logoBuf = Buffer.from(KNOWN_BRAND_LOGOS[rawDomain]);
-            } catch (e) {}
-         }
-
-         // 3. Fast parallel network fetch from top icon & favicon sources
-         if (!logoBuf) {
-            const candidateUrls: string[] = [];
-            if (explicitLogoUrl && explicitLogoUrl.startsWith("http")) {
-               candidateUrls.push(explicitLogoUrl);
-            }
-            if (rawDomain) {
-               candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${rawDomain}&size=256`);
-               candidateUrls.push(`https://unavatar.io/${rawDomain}?fallback=false`);
-               candidateUrls.push(`https://logos.hunter.io/${rawDomain}`);
-               candidateUrls.push(`https://www.google.com/s2/favicons?domain=${rawDomain}&sz=256`);
-            }
-
-            const fetchPromises = candidateUrls.map(async (u) => {
-               const controller = new AbortController();
-               const timeout = setTimeout(() => controller.abort(), 3000);
-               try {
-                  const resp = await fetch(u, { 
-                     signal: controller.signal,
-                     headers: {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                     }
-                  });
-                  clearTimeout(timeout);
-                  if (resp.ok) {
-                     const ab = await resp.arrayBuffer();
-                     const buf = Buffer.from(ab);
-                     if (buf.length > 80) {
-                        const meta = await sharp(buf).metadata().catch(() => null);
-                        if (meta && meta.width && meta.height) {
-                           return buf;
-                        }
-                     }
-                  }
-               } catch (e) {
-                  clearTimeout(timeout);
-               }
-               return null;
-            });
-
-            const results = await Promise.allSettled(fetchPromises);
-            for (const res of results) {
-               if (res.status === "fulfilled" && res.value) {
-                  logoBuf = res.value;
-                  break;
-               }
-            }
-         }
+         const logoBuf = await fetchPlaceLogoBuffer(rawDomain, rawName, explicitLogoUrl, placeObj);
 
          // Pure geometric card layout (1200x630) with NO text elements
          const baseSvg = `
@@ -10241,24 +10173,15 @@ app.get('/api/og-preview-v2', async (req, res) => {
               left: 420
             });
          } else {
-            // Elegant geometric mark with pure SVG shapes, ZERO text
-            const fallbackSquircleSvg = `
-              <svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="sqGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#ef4444" />
-                    <stop offset="100%" stop-color="#991b1b" />
-                  </linearGradient>
-                </defs>
-                <rect x="4" y="4" width="352" height="352" rx="72" ry="72" fill="url(#sqGrad)" stroke="#fca5a5" stroke-width="3"/>
-                <!-- Geometric Star & Camera Aperture Icon (Pure vector, no text) -->
-                <g fill="#ffffff" transform="translate(180, 180) scale(4.5)">
-                  <path d="M0 -14 L4 -4 L14 -4 L6 2 L9 12 L0 6 L-9 12 L-6 2 L-14 -4 L-4 -4 Z"/>
-                </g>
-              </svg>
-            `;
+            // High-fidelity fallback brand monogram card specifically for THIS business
+            const fallbackMonogramSvg = generateBrandMonogramSvg(rawName || rawDomain, 360);
+            const monogramBuf = await sharp(Buffer.from(fallbackMonogramSvg))
+              .resize(360, 360)
+              .png()
+              .toBuffer();
+
             composites.push({
-              input: Buffer.from(fallbackSquircleSvg),
+              input: monogramBuf,
               top: 135,
               left: 420
             });
@@ -10645,6 +10568,40 @@ const KNOWN_BRAND_LOGOS: Record<string, string> = {
     <rect width="100" height="100" rx="22" fill="#cc0000"/>
     <path d="M26 34 H42 V66 H26 Z M48 34 H64 V66 H48 Z M70 34 H86 V66 H70 Z" fill="#ffffff"/>
   </svg>`,
+  "legal500.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#09090b"/>
+    <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#27272a" stroke-width="2"/>
+    <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#eab308" text-anchor="middle" letter-spacing="-1">L500</text>
+    <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#eab308"/>
+  </svg>`,
+  "www.legal500.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#09090b"/>
+    <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#27272a" stroke-width="2"/>
+    <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#eab308" text-anchor="middle" letter-spacing="-1">L500</text>
+    <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#eab308"/>
+  </svg>`,
+  "districtuae.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#18181b"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
+    <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="26" fill="#38bdf8" text-anchor="middle">DRE</text>
+  </svg>`,
+  "thecapitalavenue.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#0f172a"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#d97706" stroke-width="2.5"/>
+    <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="26" fill="#f59e0b" text-anchor="middle">TCA</text>
+  </svg>`,
+  "digitalparkae.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#0f172a"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
+    <circle cx="50" cy="50" r="26" fill="none" stroke="#22d3ee" stroke-width="2"/>
+    <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle">DP</text>
+  </svg>`,
+  "digitalpark.ae": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#0f172a"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
+    <circle cx="50" cy="50" r="26" fill="none" stroke="#22d3ee" stroke-width="2"/>
+    <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle">DP</text>
+  </svg>`,
   "kempinski.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
     <rect width="100" height="100" rx="22" fill="#18181b"/>
     <polygon points="50,22 58,38 76,38 62,50 67,68 50,56 33,68 38,50 24,38 42,38" fill="#d4af37"/>
@@ -10688,13 +10645,305 @@ const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <rect x="70" y="24" width="6" height="52" rx="3"/>
     </g>
   </svg>`,
+  "coventgardenmassage.co.uk": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#18181b"/>
+    <g fill="#f4f4f5">
+      <rect x="22" y="24" width="6" height="52" rx="3"/>
+      <rect x="34" y="32" width="6" height="44" rx="3"/>
+      <rect x="46" y="20" width="6" height="60" rx="3"/>
+      <rect x="58" y="32" width="6" height="44" rx="3"/>
+      <rect x="70" y="24" width="6" height="52" rx="3"/>
+    </g>
+  </svg>`,
   "spaandmassage.co.uk": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
     <rect width="100" height="100" rx="22" fill="#292524"/>
     <circle cx="50" cy="50" r="38" fill="none" stroke="#d97706" stroke-width="3"/>
     <path d="M50 24 C45 32 36 40 36 50 C36 60 42 66 50 72 C58 66 64 60 64 50 C64 40 55 32 50 24 Z" fill="#f59e0b"/>
     <circle cx="50" cy="46" r="6" fill="#fef3c7"/>
+  </svg>`,
+  "graftonpharmacy.co.uk": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#15803d"/>
+    <rect x="42" y="24" width="16" height="52" rx="4" fill="#ffffff"/>
+    <rect x="24" y="42" width="52" height="16" rx="4" fill="#ffffff"/>
   </svg>`
 };
+
+function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): string {
+  const raw = (nameOrDomain || "Business").replace(/^https?:\/\//i, "").replace(/^www\./i, "").trim();
+  const clean = raw.replace(/\.(com|org|net|io|co|ai|be|ae|uk|co\.uk)$/i, "").trim();
+  
+  let letters = "";
+  if (clean.toLowerCase().startsWith("l500") || clean.toLowerCase() === "legal500" || clean.toLowerCase() === "legal 500") {
+    letters = "L500";
+  } else {
+    const words = clean.split(/[\s\-_\.]+/).filter(w => w.length > 0);
+    if (words.length >= 2) {
+      letters = words.slice(0, 3).map(w => w[0].toUpperCase()).join("");
+    } else if (clean.length > 0) {
+      letters = clean.substring(0, Math.min(3, clean.length)).toUpperCase();
+    } else {
+      letters = "B";
+    }
+  }
+
+  const isGold = letters === "L500" || letters.startsWith("L5");
+  const textColor = isGold ? "#eab308" : "#ffffff";
+  const fontSize = letters.length > 3 ? Math.round(size * 0.28) : letters.length > 2 ? Math.round(size * 0.34) : Math.round(size * 0.44);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+    <defs>
+      <linearGradient id="monoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#18181b"/>
+        <stop offset="100%" stop-color="#09090b"/>
+      </linearGradient>
+    </defs>
+    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="url(#monoGrad)"/>
+    <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="#27272a" stroke-width="3"/>
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${escapeXml(letters)}</text>
+  </svg>`;
+}
+
+// Multi-Source Business Place Resolver (In-Memory, BunnyDB, Firestore, Drizzle SQL)
+async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> {
+  if (!placeIdOrDomain) return null;
+  const raw = placeIdOrDomain.trim();
+  const domain = cleanDomainName(raw);
+  const formattedName = formatBusinessName(raw);
+  const lowerDomain = domain.toLowerCase();
+  const cleanSlug = raw.toLowerCase().replace(/^www[\.-]/, '');
+
+  let place: any = {
+    id: raw,
+    name: formattedName,
+    domain: domain,
+    logoUrl: "",
+    avatarUrl: "",
+    bannerUrl: "",
+    rating: 5.0,
+    reviewCount: 0,
+    reviews: []
+  };
+
+  // 1. In-Memory Video Reviews & Indexes
+  try {
+    const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+    const matchedVideos = localList.filter((v: any) =>
+      (v.placeName && v.placeName.toLowerCase() === formattedName.toLowerCase()) ||
+      (v.placeName && cleanDomainName(v.placeName) === domain) ||
+      v.placeId === raw ||
+      v.placeId === cleanSlug ||
+      (v.placeWebsite && cleanDomainName(v.placeWebsite) === domain)
+    );
+    if (matchedVideos.length > 0) {
+      place.reviews = matchedVideos;
+      place.reviewCount = matchedVideos.length;
+      const first = matchedVideos[0];
+      if (first.placeName) place.name = formatBusinessName(first.placeName);
+      if (first.placeLogo || first.placeLogoUrl || first.logoUrl) {
+        place.logoUrl = first.placeLogo || first.placeLogoUrl || first.logoUrl;
+      }
+      if (first.bannerUrl) place.bannerUrl = first.bannerUrl;
+      const sum = matchedVideos.reduce((acc: number, v: any) => acc + Number(v.rating || 5), 0);
+      place.rating = sum / matchedVideos.length;
+    }
+  } catch (e) {}
+
+  // 2. Bunny DB Query
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      const res = await bunnyDb.execute({
+        sql: `SELECT * FROM places WHERE id = ? OR id = ? OR brandDomain = ? OR website LIKE ? OR LOWER(name) = ? LIMIT 1`,
+        args: [raw, cleanSlug, domain, `%${domain}%`, formattedName.toLowerCase()]
+      });
+      if (res.rows && res.rows.length > 0) {
+        const row: any = res.rows[0];
+        if (row.name) place.name = row.name;
+        if (row.logoUrl && !row.logoUrl.startsWith("data:;")) place.logoUrl = row.logoUrl;
+        if (row.avatarUrl && !row.avatarUrl.startsWith("data:;")) place.avatarUrl = row.avatarUrl;
+        if (row.bannerUrl) place.bannerUrl = row.bannerUrl;
+        if (row.ogImage) place.ogImage = row.ogImage;
+      }
+    }
+  } catch (e) {}
+
+  // 3. Drizzle SQL / Firestore tables
+  try {
+    const activeDb = typeof getDb === 'function' ? getDb() : null;
+    if (activeDb) {
+      const dbPlaces: any = await activeDb.select().from(places).where(eq(places.id, raw)).limit(1).catch(() => []);
+      if (dbPlaces && dbPlaces.length > 0) {
+        const p = dbPlaces[0];
+        if (p.name) place.name = p.name;
+        if (p.logoUrl) place.logoUrl = p.logoUrl;
+        if (p.avatarUrl) place.avatarUrl = p.avatarUrl;
+        if (p.bannerUrl) place.bannerUrl = p.bannerUrl;
+      }
+    }
+  } catch (e) {}
+
+  // 4. Firestore Admin SDK
+  if (typeof adminDb !== 'undefined' && adminDb && (!place.logoUrl || place.name === "Business")) {
+    try {
+      const snap = await adminDb.collection("places").doc(raw).get();
+      if (snap.exists) {
+        const pData = snap.data();
+        if (pData) {
+          if (pData.name) place.name = pData.name;
+          if (pData.logoUrl) place.logoUrl = pData.logoUrl;
+          if (pData.avatarUrl) place.avatarUrl = pData.avatarUrl;
+          if (pData.bannerUrl) place.bannerUrl = pData.bannerUrl;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 5. Direct match for known brand vector logo
+  if (!place.logoUrl && KNOWN_BRAND_LOGOS[domain]) {
+    place.logoUrl = `data:image/svg+xml;utf8,${encodeURIComponent(KNOWN_BRAND_LOGOS[domain])}`;
+  }
+
+  return place;
+}
+
+// In-memory cache for resolved business logo buffers
+const placeLogoBufferCache = new Map<string, { buf: Buffer; timestamp: number }>();
+
+async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUrl?: string, placeObj?: any): Promise<Buffer | null> {
+  const cacheKey = `${domain || ''}_${name || ''}_${explicitLogoUrl || ''}`;
+  if (placeLogoBufferCache.has(cacheKey)) {
+    const cached = placeLogoBufferCache.get(cacheKey)!;
+    if (Date.now() - cached.timestamp < 3600000) {
+      return cached.buf;
+    }
+  }
+
+  let logoBuf: Buffer | null = null;
+  const directUrl = explicitLogoUrl || placeObj?.logoUrl || placeObj?.avatarUrl || placeObj?.icon || "";
+
+  // 1. Direct Data URL
+  if (directUrl && directUrl.startsWith("data:")) {
+    logoBuf = decodeDataUrl(directUrl);
+  }
+
+  // 2. Direct SVG for known brands
+  if (!logoBuf && domain && KNOWN_BRAND_LOGOS[domain]) {
+    try {
+      logoBuf = Buffer.from(KNOWN_BRAND_LOGOS[domain]);
+    } catch (e) {}
+  }
+
+  // 3. Parallel Network Fetch from Top Favicon / Icon CDNs
+  if (!logoBuf) {
+    const candidateUrls: string[] = [];
+    if (directUrl && directUrl.startsWith("http")) {
+      candidateUrls.push(directUrl);
+    }
+    if (domain && domain.includes(".")) {
+      candidateUrls.push(`https://icon.horse/icon/${domain}`);
+      candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256`);
+      candidateUrls.push(`https://unavatar.io/${domain}?fallback=false`);
+      candidateUrls.push(`https://api.faviconkit.com/${domain}/256`);
+      candidateUrls.push(`https://logo.clearbit.com/${domain}`);
+      candidateUrls.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=256`);
+    }
+
+    const fetchPromises = candidateUrls.map(async (u) => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      try {
+        const resp = await fetch(u, {
+          signal: controller.signal,
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "image/png,image/jpeg,image/webp,image/svg+xml,image/*;q=0.9"
+          }
+        });
+        clearTimeout(timeout);
+        if (resp.ok) {
+          const ab = await resp.arrayBuffer();
+          const buf = Buffer.from(ab);
+          if (buf.length > 80) {
+            const meta = await sharp(buf).metadata().catch(() => null);
+            if (meta && meta.width && meta.height) {
+              return buf;
+            }
+          }
+        }
+      } catch (e) {
+        clearTimeout(timeout);
+      }
+      return null;
+    });
+
+    const results = await Promise.allSettled(fetchPromises);
+    for (const res of results) {
+      if (res.status === "fulfilled" && res.value) {
+        logoBuf = res.value;
+        break;
+      }
+    }
+  }
+
+  // 4. Live Scrape fallback for HTML website icons & og:image
+  if (!logoBuf && domain && domain.includes(".")) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      const siteResp = await fetch(`https://${domain}`, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml"
+        }
+      });
+      clearTimeout(timeout);
+      if (siteResp.ok) {
+        const html = await siteResp.text();
+        const appleIconMatch = html.match(/<link[^>]+rel=["'](?:apple-touch-icon|icon|shortcut icon)["'][^>]+href=["']([^"']+)["']/i);
+        const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+        const iconHref = appleIconMatch ? appleIconMatch[1] : (ogImageMatch ? ogImageMatch[1] : null);
+        if (iconHref) {
+          let fullIconUrl = iconHref;
+          if (iconHref.startsWith("//")) {
+            fullIconUrl = `https:${iconHref}`;
+          } else if (iconHref.startsWith("/")) {
+            fullIconUrl = `https://${domain}${iconHref}`;
+          } else if (!iconHref.startsWith("http")) {
+            fullIconUrl = `https://${domain}/${iconHref}`;
+          }
+          const iconResp = await fetch(fullIconUrl, {
+            headers: { "User-Agent": "Mozilla/5.0" }
+          });
+          if (iconResp.ok) {
+            const ab = await iconResp.arrayBuffer();
+            const buf = Buffer.from(ab);
+            if (buf.length > 80) {
+              const meta = await sharp(buf).metadata().catch(() => null);
+              if (meta && meta.width && meta.height) {
+                logoBuf = buf;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 5. If STILL not found: Render a Brand Monogram specifically for THIS business (Never the Yoouz logo!)
+  if (!logoBuf) {
+    try {
+      const monoSvg = generateBrandMonogramSvg(name || domain, 360);
+      logoBuf = await sharp(Buffer.from(monoSvg)).resize(360, 360).png().toBuffer();
+    } catch (e) {}
+  }
+
+  if (logoBuf) {
+    placeLogoBufferCache.set(cacheKey, { buf: logoBuf, timestamp: Date.now() });
+  }
+
+  return logoBuf;
+}
 
 function decodeDataUrl(dataUrl?: string | null): Buffer | null {
   if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) return null;
@@ -11077,34 +11326,35 @@ function injectOpenGraphTags(html: string, meta: any) {
             };
         }
     } else if (placeId) {
-        const domain = cleanDomainName(placeId);
+        let domain = cleanDomainName(placeId);
         let placeName = formatBusinessName(placeId);
         let foundLogo = "";
         let placeVideos: any[] = [];
         let avgRating = 5.0;
+        let placeObj: any = null;
         
         try {
-          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-          placeVideos = localList.filter((v: any) => 
-            (v.placeName && v.placeName.toLowerCase() === placeName.toLowerCase()) || 
-            (v.placeName && cleanDomainName(v.placeName) === domain) ||
-            v.placeId === placeId ||
-            (v.placeWebsite && cleanDomainName(v.placeWebsite) === domain)
-          );
-          if (placeVideos.length > 0) {
-            const first = placeVideos[0];
-            if (first.placeName) placeName = formatBusinessName(first.placeName);
-            foundLogo = first.placeLogo || first.logoUrl || "";
-            const sum = placeVideos.reduce((acc: number, v: any) => acc + Number(v.rating || 5), 0);
-            avgRating = sum / placeVideos.length;
+          placeObj = await resolvePlaceFromAnySource(placeId);
+          if (placeObj) {
+            if (placeObj.name && placeObj.name !== "Business") placeName = placeObj.name;
+            if (placeObj.domain) domain = placeObj.domain;
+            if (placeObj.logoUrl) foundLogo = placeObj.logoUrl;
+            if (placeObj.reviews && placeObj.reviews.length > 0) {
+              placeVideos = placeObj.reviews;
+              avgRating = placeObj.rating || 5.0;
+            }
           }
         } catch(e) {}
+
+        if (!foundLogo && KNOWN_BRAND_LOGOS[domain]) {
+          foundLogo = `data:image/svg+xml;utf8,${encodeURIComponent(KNOWN_BRAND_LOGOS[domain])}`;
+        }
 
         title = `Authentic Video Reviews for ${placeName} | Yoouz`;
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=12`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=20`;
         twitterCard = "summary_large_image";
 
         // Generate rich LocalBusiness + FAQPage Schema with VideoObjects for Google & AI search
