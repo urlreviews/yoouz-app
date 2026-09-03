@@ -22,6 +22,7 @@ interface CopoBusinessAuthLandingProps {
   onSuccessAuth: (session: BusinessSession) => void;
   initialPlace?: Place | null;
   initialMode?: 'signin' | 'claim' | 'demo';
+  onCancelSelectedPlace?: () => void;
 }
 
 export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = ({
@@ -29,11 +30,17 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
   places,
   onSuccessAuth,
   initialPlace = null,
+  initialMode = 'signin',
+  onCancelSelectedPlace,
 }) => {
   // State
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(initialPlace || null);
+
+  useEffect(() => {
+    setSelectedPlace(initialPlace || null);
+  }, [initialPlace]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -247,7 +254,10 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
       {/* 1. Refined Minimal Header */}
       <header className="w-full h-16 bg-zinc-900 border-b border-zinc-800 px-6 flex items-center justify-between shadow-2xs shrink-0 z-30">
         <div 
-          onClick={() => onNavigate('home')}
+          onClick={() => {
+            if (onCancelSelectedPlace) onCancelSelectedPlace();
+            onNavigate('home');
+          }}
           className="flex items-center gap-2.5 cursor-pointer group"
         >
           <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-white text-zinc-950 shadow-sm group-hover:scale-105 transition-transform">
@@ -265,7 +275,10 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
 
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => onNavigate('home')}
+            onClick={() => {
+              if (onCancelSelectedPlace) onCancelSelectedPlace();
+              onNavigate('home');
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 text-xs font-medium transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -323,6 +336,17 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     onClick={() => {
                       setSelectedPlace(null);
                       setErrorMessage(null);
+                      try {
+                        const url = new URL(window.location.href);
+                        if (url.searchParams.has('place') || url.searchParams.has('claim')) {
+                          url.searchParams.delete('place');
+                          url.searchParams.delete('claim');
+                          window.history.replaceState(null, '', url.pathname + (url.search ? url.search : ''));
+                        }
+                      } catch (e) {}
+                      if (onCancelSelectedPlace) {
+                        onCancelSelectedPlace();
+                      }
                     }}
                     className="text-white text-xs font-semibold shrink-0 hover:underline cursor-pointer"
                   >

@@ -3315,6 +3315,8 @@ export function App() {
               return;
             } else if ((activeSection as string) === "business" && (section as string) !== "business") {
               window.history.pushState(null, "", "/");
+              setBusinessClaimTargetPlace(null);
+              setBusinessInitialMode('signin');
             }
             if (!currentUser && ["messages", "notifications", "bookmarks", "following"].includes(section as string)) {
               setAuthIntent(section as AuthIntent);
@@ -3758,6 +3760,8 @@ export function App() {
                 onNavigate={(sec) => {
                   if (sec === "home") {
                     window.history.pushState(null, "", "/");
+                    setBusinessClaimTargetPlace(null);
+                    setBusinessInitialMode('signin');
                   }
                   setActiveSection(sec);
                 }}
@@ -3773,6 +3777,10 @@ export function App() {
                 }}
                 initialPlace={businessClaimTargetPlace}
                 initialMode={businessInitialMode}
+                onClearInitialPlace={() => {
+                  setBusinessClaimTargetPlace(null);
+                  setBusinessInitialMode('signin');
+                }}
                 onSaveOwnerResponse={handleSaveOwnerResponse}
                 onDeleteOwnerResponse={handleDeleteOwnerResponse}
               />
@@ -3908,6 +3916,9 @@ export function App() {
             setActiveSection("business");
             window.history.pushState(null, "", "/business");
             return;
+          } else if ((activeSection as string) === "business" && (section as string) !== "business") {
+            setBusinessClaimTargetPlace(null);
+            setBusinessInitialMode('signin');
           }
           if (!currentUser && ["messages", "notifications", "bookmarks", "following"].includes(section as string)) {
             setAuthIntent(section as AuthIntent);

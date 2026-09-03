@@ -94,6 +94,7 @@ interface CopoBusinessDashboardViewProps {
   onOpenCreator?: (author: VideoAuthor) => void;
   initialPlace?: Place | null;
   initialMode?: 'signin' | 'claim' | 'demo';
+  onClearInitialPlace?: () => void;
   onSaveOwnerResponse?: (videoId: string, text: string) => void;
   onDeleteOwnerResponse?: (videoId: string) => void;
   onClose?: () => void;
@@ -457,6 +458,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onOpenCreator,
   initialPlace = null,
   initialMode = 'signin',
+  onClearInitialPlace,
   onSaveOwnerResponse,
   onDeleteOwnerResponse,
   onClose = () => onNavigate('home')
@@ -515,6 +517,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [isClaiming, setIsClaiming] = useState(initialMode === 'claim');
   const [claimSearchQuery, setClaimSearchQuery] = useState('');
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+
+  useEffect(() => {
+    setIsClaiming(initialMode === 'claim');
+  }, [initialMode]);
 
   // Listen to business auth changes
   useEffect(() => {
@@ -1120,6 +1126,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         places={places}
         initialPlace={initialPlace}
         initialMode={initialMode}
+        onCancelSelectedPlace={() => {
+          setIsClaiming(false);
+          if (onClearInitialPlace) {
+            onClearInitialPlace();
+          }
+        }}
         onSuccessAuth={(session) => {
           setVerifiedBusinessSession(session);
           setSelectedPlaceId(session.placeId);
