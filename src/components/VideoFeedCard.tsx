@@ -255,16 +255,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
 
-  // Clean unmount safety
+  // Clean unmount safety - Release iOS WebKit hardware audio/video decoders
   useEffect(() => {
+    const el = videoRef.current;
     return () => {
-      if (videoRef.current) {
+      if (el) {
         try {
-          videoRef.current.pause();
+          el.pause();
+          el.removeAttribute("src");
+          el.load();
         } catch (e) {}
       }
     };
-  }, []);
+  }, [isActive, isNear]);
 
   // Record view count when video is active and playing
   useEffect(() => {
@@ -532,7 +535,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             id={`video-element-${video.id}`}
             src={currentSource}
             poster={resolveVideoPosterUrl(video)}
-            preload="auto"
+            preload={isActive ? "auto" : "metadata"}
             autoPlay={false}
             playsInline
             webkit-playsinline="true"
