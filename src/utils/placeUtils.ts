@@ -295,7 +295,7 @@ export function isAuthorMatch(
     targetUserId = raw;
     targetUid = raw;
   } else {
-    targetHandle = (authorOrUser.name || "").replace(/^@/, "").trim().toLowerCase();
+    targetHandle = ((authorOrUser as any).handle || authorOrUser.name || "").replace(/^@/, "").trim().toLowerCase();
     targetEmail = ("email" in authorOrUser && authorOrUser.email ? authorOrUser.email : "").trim().toLowerCase();
     targetName = (authorOrUser.name || "").trim().toLowerCase();
     targetUserId = ("userId" in authorOrUser && authorOrUser.userId ? authorOrUser.userId : "").trim().toLowerCase();
@@ -308,7 +308,13 @@ export function isAuthorMatch(
     ).trim().toLowerCase();
   }
 
-  const vHandle = (video.author?.name || "").replace(/^@/, "").trim().toLowerCase();
+  // Guard against generic words matching all reviews
+  const isGeneric = (val: string) => !val || val === "reviewer" || val === "verified reviewer" || val === "user" || val === "guest";
+  if (isGeneric(targetName) && !targetEmail && !targetUserId && !targetUid && isGeneric(targetHandle)) {
+    return false;
+  }
+
+  const vHandle = (video.author?.handle || video.author?.name || "").replace(/^@/, "").trim().toLowerCase();
   const vEmail = (video.userEmail || video.userId || "").trim().toLowerCase();
   const vName = (video.author?.name || "").trim().toLowerCase();
   const vUserId = (video.userId || "").trim().toLowerCase();
@@ -492,18 +498,6 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
     bio: "Community reviewer on Yoouz."
-  },
-  "ygf@usa.com": {
-    name: "David Johnson",
-    handle: "@davidjohnson",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-    bio: "Verified reviewer & local explorer."
-  },
-  "david johnson": {
-    name: "David Johnson",
-    handle: "@davidjohnson",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-    bio: "Verified reviewer & local explorer."
   }
 };
 

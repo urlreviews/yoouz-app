@@ -530,10 +530,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             <Video className="w-10 h-10 text-white" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">
-            No Video Reviews Yet
+            {feedContextTitle ? `No Reviews by ${feedContextTitle}` : "No Video Reviews Yet"}
           </h2>
           <p className="text-sm text-zinc-400 max-w-[280px] mb-8 leading-relaxed">
-            Record the first authentic 60-second video review for any business or place!
+            {feedContextTitle
+              ? `${feedContextTitle} hasn't published any video reviews yet. Follow them to stay updated on their upcoming reviews!`
+              : "Record the first authentic 60-second video review for any business or place!"}
           </p>
           {onOpenCreateModal && (
             <button

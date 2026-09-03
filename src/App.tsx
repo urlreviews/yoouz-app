@@ -1996,9 +1996,20 @@ export function App() {
       }
     }
 
-    
+    // Priority 1: Place Drawer context (business profile open on desktop/mobile)
+    if (isPlaceView && drawerPlace) {
+      const pId = drawerPlace.id;
+      const pName = drawerPlace.name;
+      return visibleVideos.filter(v => 
+        (pId && (v.placeId === pId || isPlaceReviewMatch(v, pId))) ||
+        (pName && (v.placeName === pName || isPlaceReviewMatch(v, pName)))
+      );
+    }
 
-    
+    // Priority 2: Creator Drawer context (creator profile open on desktop/mobile)
+    if (isCreatorView && selectedAuthorForDrawer) {
+      return visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
+    }
 
     // Priority 3: User Profile context
     if (activeSection === "profile") {
@@ -3633,7 +3644,7 @@ export function App() {
               onToggleBookmark={handleToggleBookmark}
               onToggleFollow={handleToggleFollow}
               onGoBack={fullscreenFeedContext ? handleFeedGoBack : undefined}
-              feedContextTitle={fullscreenFeedContext?.title}
+              feedContextTitle={fullscreenFeedContext?.title || (isCreatorView && selectedAuthorForDrawer ? selectedAuthorForDrawer.name : isPlaceView && drawerPlace ? drawerPlace.name : undefined)}
               onGoHome={handleGoHome}
               onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
               onRecordView={handleRecordVideoView}

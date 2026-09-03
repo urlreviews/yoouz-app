@@ -193,17 +193,6 @@ const defaultCommunityUsers = [
     bio: "Community reviewer on Yoouz.",
     isVerified: true,
     followersCount: 0
-  },
-  {
-    id: "david-johnson-user-id",
-    uid: "david-johnson-user-id",
-    name: "David Johnson",
-    handle: "@davidjohnson",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-    email: "ygf@usa.com",
-    bio: "Verified reviewer & local explorer.",
-    isVerified: true,
-    followersCount: 0
   }
 ];
 
@@ -273,18 +262,6 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
     bio: "Community reviewer on Yoouz."
-  },
-  "ygf@usa.com": {
-    name: "David Johnson",
-    handle: "@davidjohnson",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-    bio: "Verified reviewer & local explorer."
-  },
-  "david johnson": {
-    name: "David Johnson",
-    handle: "@davidjohnson",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-    bio: "Verified reviewer & local explorer."
   }
 };
 
@@ -4311,6 +4288,25 @@ app.post('/api/admin/users/delete', express.json(), async (req, res) => {
           if (table) {
             await dbInstance.delete(table).where(eq(table.id, targetId));
           }
+        } catch (e) {}
+      }
+    }
+
+    if (bunnyDb) {
+      if (email) {
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM users WHERE email = ?`,
+            args: [String(email).trim().toLowerCase()]
+          });
+        } catch (e) {}
+      }
+      if (name) {
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM users WHERE name = ?`,
+            args: [String(name).trim()]
+          });
         } catch (e) {}
       }
     }
