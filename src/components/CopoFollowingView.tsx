@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   UserPlus,
   UserCheck,
@@ -8,7 +8,8 @@ import {
   ChevronLeft,
   Search,
   X,
-  CheckCircle2
+  CheckCircle2,
+  MapPin
 } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
@@ -45,6 +46,19 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
   const [activeTab, setActiveTab] = useState<"following" | "followers">("following");
   const [hoveredUnfollow, setHoveredUnfollow] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [profileSyncTick, setProfileSyncTick] = useState<number>(0);
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      setProfileSyncTick((prev) => prev + 1);
+    };
+    window.addEventListener("copo-profile-updated", handleProfileUpdate);
+    window.addEventListener("storage", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("copo-profile-updated", handleProfileUpdate);
+      window.removeEventListener("storage", handleProfileUpdate);
+    };
+  }, []);
 
   // Set of authors the current user follows (case-insensitive for robust matching)
   const followedAuthorsSet = useMemo(() => {
@@ -127,7 +141,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     map.delete("4samet@gmail.com");
 
     return map;
-  }, [videos, allUsers, followedAuthorsSet, currentUser]);
+  }, [videos, allUsers, followedAuthorsSet, currentUser, profileSyncTick]);
 
   // People the current user follows (guarantees every item in followedAuthors is rendered)
   const followedAuthors = useMemo(() => {
@@ -222,7 +236,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     });
 
     return list;
-  }, [allUsers, currentUser, followedAuthorsSet]);
+  }, [allUsers, currentUser, followedAuthorsSet, profileSyncTick]);
 
   // Filter lists based strictly on reviewer name (no handles, just like Discover)
   const filteredFollowing = useMemo(() => {
@@ -401,9 +415,18 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             <span className="truncate">{author.name}</span>
                             {author.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}
                           </div>
-                          <p className="text-[11px] text-zinc-400 truncate">
-                            {author.videoReviewCount ? `${author.videoReviewCount} video ${author.videoReviewCount === 1 ? 'review' : 'reviews'}` : (author.location ? `📍 ${author.location}` : (author.bio || "Community reviewer"))}
-                          </p>
+                          <div className="text-[11px] text-zinc-400 truncate">
+                            {author.location ? (
+                              <span className="inline-flex items-center gap-1 truncate">
+                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span className="truncate">{author.location}</span>
+                              </span>
+                            ) : author.videoReviewCount ? (
+                              <span>{author.videoReviewCount} video {author.videoReviewCount === 1 ? 'review' : 'reviews'}</span>
+                            ) : (
+                              <span className="truncate">{author.bio || "Community reviewer"}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -494,9 +517,16 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         />
                         <div className="min-w-0 flex-1 text-left">
                           <p className="font-bold text-xs sm:text-sm text-white truncate">{follower.name}</p>
-                          <p className="text-[11px] text-zinc-400 truncate">
-                            {follower.location ? `📍 ${follower.location}` : (follower.bio || "Community reviewer")}
-                          </p>
+                          <div className="text-[11px] text-zinc-400 truncate">
+                            {follower.location ? (
+                              <span className="inline-flex items-center gap-1 truncate">
+                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span className="truncate">{follower.location}</span>
+                              </span>
+                            ) : (
+                              <span className="truncate">{follower.bio || "Community reviewer"}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
 

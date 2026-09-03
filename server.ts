@@ -4115,6 +4115,8 @@ app.get('/api/nosql/:collection', async (req, res) => {
                             `@${bestName.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
           const bestHandle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
 
+          const bestLocation = (u.location && u.location.trim()) ? u.location.trim() : (existing.location || "");
+
           userMap.set(key, {
             ...existing,
             ...u,
@@ -4123,19 +4125,24 @@ app.get('/api/nosql/:collection', async (req, res) => {
             email: bestEmail,
             avatar: bestAvatar,
             bio: u.bio || existing.bio || "Community reviewer on Yoouz.",
-            location: u.location || existing.location || (key.includes("aouisesmee") ? "Los Angeles, California, United States" : (key.includes("bizriv") ? "Paris, France" : (key.includes("avtertuop") ? "New York, United States" : ""))),
+            location: bestLocation,
             isVerified: Boolean(u.isVerified ?? existing.isVerified ?? true),
             followersCount: Math.max(Number(u.followersCount) || 0, Number(existing.followersCount) || 0)
           });
         }
       };
 
-      // 1. Add all items from Firestore / BunnyDB
+      // 1. Seed base community templates first as baseline fallback
+      defaultCommunityUsers.forEach((du) => {
+        mergeUserIntoMap(du);
+      });
+
+      // 2. Add all items from Firestore / BunnyDB (these are real saved user accounts that override base templates)
       items.forEach((u: any) => {
         mergeUserIntoMap(u);
       });
 
-      // 2. Add from SQL users table if available
+      // 3. Add from SQL users table if available
       if (getDb()) {
         try {
           const sqlUsers = await db.select().from(users);
@@ -4153,7 +4160,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
         } catch (err) {}
       }
 
-      // 3. Add author profiles from local reviews_index.json
+      // 4. Add author profiles from local reviews_index.json
       try {
         const localList = readReviewsIndex();
         localList.forEach((vr: any) => {
@@ -4169,16 +4176,12 @@ app.get('/api/nosql/:collection', async (req, res) => {
               handle: authorHandle?.startsWith("@") ? authorHandle : `@${authorHandle}`,
               avatar: authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a73e8&color=fff`,
               email: vr.userEmail || "",
+              location: author?.location || vr.location,
               isVerified: true
             });
           }
         });
       } catch (err) {}
-
-      // 4. Ensure core active community reviewers (Biz Riv, aouisesmee, avt ertuop) are always available
-      defaultCommunityUsers.forEach((du) => {
-        mergeUserIntoMap(du);
-      });
 
       items = Array.from(userMap.values());
     }
@@ -5685,6 +5688,23 @@ app.post("/api/videos/save-review", async (req, res) => {
         location: nextLocation,
         updatedAt: Date.now()
       };
+
+      // Keep defaultCommunityUsers in memory in sync with updated location and profile details
+      try {
+        const matchDu = defaultCommunityUsers.find((d) => 
+          (targetUserId && (d.id === targetUserId || d.uid === targetUserId)) ||
+          (profileObj.email && d.email?.toLowerCase() === profileObj.email.toLowerCase()) ||
+          (profileObj.name && d.name?.toLowerCase() === profileObj.name.toLowerCase()) ||
+          (profileObj.handle && d.handle?.toLowerCase() === profileObj.handle.toLowerCase())
+        );
+        if (matchDu) {
+          if (profileObj.name) matchDu.name = profileObj.name;
+          if (profileObj.avatar) matchDu.avatar = profileObj.avatar;
+          if (profileObj.handle) matchDu.handle = profileObj.handle;
+          if (profileObj.bio) matchDu.bio = profileObj.bio;
+          if (profileObj.location) matchDu.location = profileObj.location;
+        }
+      } catch (duErr) {}
 
       // 1. Update Bunny Database users table and cascade to videoReviews authors
       const bunnyDb = getBunnyDb();

@@ -41,6 +41,20 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
 }) => {
   const [query, setQuery] = useState("");
   const [fetchedDbUsers, setFetchedDbUsers] = useState<any[]>([]);
+  const [profileSyncTick, setProfileSyncTick] = useState<number>(0);
+
+  // Instantly re-render when local or global user profile updates occur (e.g. location changed to Brooklyn)
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      setProfileSyncTick((prev) => prev + 1);
+    };
+    window.addEventListener("copo-profile-updated", handleProfileUpdate);
+    window.addEventListener("storage", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("copo-profile-updated", handleProfileUpdate);
+      window.removeEventListener("storage", handleProfileUpdate);
+    };
+  }, []);
 
   // Automatically fetch & poll real registered users from server to ensure instant real-time discoverability
   useEffect(() => {
@@ -166,8 +180,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
 
         const candidateLoc = candidate.location || candidate.author?.location || (
           rawName.toLowerCase().includes("aouisesmee") ? "Los Angeles, California, United States" :
-          rawName.toLowerCase().includes("biz riv") ? "Paris, France" :
-          rawName.toLowerCase().includes("avt ertuop") ? "New York, United States" : ""
+          rawName.toLowerCase().includes("biz riv") ? "Paris, France" : ""
         );
 
         found = {
@@ -191,19 +204,33 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
       return found;
     };
 
+    // Read the most authoritative real-time profile (from state or localStorage)
+    let activeUser = currentUser;
+    try {
+      const saved = localStorage.getItem("copo_user_profile");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          activeUser = { ...(currentUser || {}), ...parsed };
+        }
+      }
+    } catch (e) {}
+
     // 1. Process all real registered users & current user first to establish authoritative creator profiles
-    const sourceUsers = [...allUsers, ...fetchedDbUsers];
-    if (currentUser) {
+    const sourceUsers: any[] = [];
+    if (activeUser) {
       sourceUsers.push({
-        name: currentUser.name,
-        email: currentUser.email,
-        avatar: currentUser.avatar,
-        handle: currentUser.handle,
-        bio: currentUser.bio,
-        location: currentUser.location,
-        followersCount: currentUser.followersCount
+        name: activeUser.name,
+        email: activeUser.email,
+        avatar: activeUser.avatar,
+        handle: activeUser.handle,
+        bio: activeUser.bio,
+        location: activeUser.location,
+        followersCount: activeUser.followersCount,
+        isAuthoritative: true
       });
     }
+    sourceUsers.push(...allUsers, ...fetchedDbUsers);
 
     // Read deleted users to ensure banned/purged accounts never appear
     let deletedUsersSet = new Set<string>();
@@ -244,8 +271,8 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         if (u.bio && (!reviewer.author.bio || reviewer.author.bio === "Community reviewer on Yoouz.")) {
           reviewer.author.bio = u.bio;
         }
-        if (u.location && !reviewer.author.location) {
-          reviewer.author.location = u.location;
+        if (u.location && u.location.trim()) {
+          reviewer.author.location = u.location.trim();
         }
         if (u.followersCount !== undefined && u.followersCount > (reviewer.author.followersCount || 0)) {
           reviewer.author.followersCount = u.followersCount;
@@ -366,8 +393,8 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
           existing.author.avatar = rev.author.avatar;
         }
 
-        if (!existing.author.location && rev.author.location) {
-          existing.author.location = rev.author.location;
+        if (rev.author.location && rev.author.location.trim()) {
+          existing.author.location = rev.author.location.trim();
         }
         
         // Combine tokens (name & handle tokens only)
@@ -375,10 +402,30 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
       }
     });
 
-    // 5. Final Sort: Reviewers with more video reviews first, then alphabetically
+    // 5. Explicitly enforce the active user's latest profile (e.g. location update to Brooklyn) on their card
+    if (activeUser) {
+      mergedList.forEach((r) => {
+        if (areSameReviewer(r.author, activeUser) || areSameReviewer(r, activeUser)) {
+          if (activeUser.location !== undefined && activeUser.location !== null) {
+            r.author.location = activeUser.location;
+          }
+          if (activeUser.name && activeUser.name.trim()) {
+            r.author.name = activeUser.name.trim();
+          }
+          if (activeUser.avatar) {
+            r.author.avatar = activeUser.avatar;
+          }
+          if (activeUser.bio) {
+            r.author.bio = activeUser.bio;
+          }
+        }
+      });
+    }
+
+    // 6. Final Sort: Reviewers with more video reviews first, then alphabetically
     mergedList.sort((a, b) => b.count - a.count || a.author.name.localeCompare(b.author.name));
     return mergedList;
-  }, [videos, allUsers, fetchedDbUsers, currentUser]);
+  }, [videos, allUsers, fetchedDbUsers, currentUser, profileSyncTick]);
 
   // Filter reviewers matching search query with strict deduplication (only by name/username)
   const displayedReviewers = useMemo(() => {
