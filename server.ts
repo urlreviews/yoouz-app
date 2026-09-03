@@ -7921,56 +7921,113 @@ Return JSON:
     const iconPath = path.join(process.cwd(), 'public', 'apple-touch-icon.png');
     if (fs.existsSync(iconPath)) {
       res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
       return res.sendFile(iconPath);
     }
     const fallbackPath = path.join(process.cwd(), 'public', 'icon-512.png');
     if (fs.existsSync(fallbackPath)) {
       res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
       return res.sendFile(fallbackPath);
     }
     return res.redirect('/api/og-image/icon');
   });
 
-  app.get(['/icon-512.png', '/icon-192.png', '/favicon.png', '/favicon.ico'], (req: any, res: any) => {
-    const filename = req.path.replace('/', '') || 'icon-512.png';
-    const filePath = path.join(process.cwd(), 'public', filename === 'favicon.ico' ? 'favicon.png' : filename);
-    if (fs.existsSync(filePath)) {
+  // Dedicated standard ICO endpoint for Google Search, Bing, and browser tabs
+  app.get(['/favicon.ico'], (_req: any, res: any) => {
+    const icoPath = path.join(process.cwd(), 'public', 'favicon.ico');
+    if (fs.existsSync(icoPath)) {
+      res.setHeader('Content-Type', 'image/x-icon');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      return res.sendFile(icoPath);
+    }
+    const pngPath = path.join(process.cwd(), 'public', 'favicon-48x48.png');
+    if (fs.existsSync(pngPath)) {
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.sendFile(pngPath);
+    }
+    return res.redirect('/favicon.svg');
+  });
+
+  // Google Search and Device Favicons (48px multiples per Googlebot guidelines: 48, 96, 144, 192, 512)
+  app.get([
+    '/favicon-48x48.png',
+    '/favicon-96x96.png',
+    '/favicon-144x144.png',
+    '/favicon-192x192.png',
+    '/favicon-512x512.png',
+    '/icon-512.png',
+    '/icon-192.png',
+    '/favicon.png'
+  ], (req: any, res: any) => {
+    const filename = req.path.replace('/', '') || 'favicon-48x48.png';
+    const filePath = path.join(process.cwd(), 'public', filename);
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
       return res.sendFile(filePath);
+    }
+    const fallbackPath = path.join(process.cwd(), 'public', 'favicon.png');
+    if (fs.existsSync(fallbackPath)) {
+      res.setHeader('Content-Type', 'image/png');
+      return res.sendFile(fallbackPath);
     }
     return res.redirect('/api/og-image/icon');
   });
 
-  // Web App Manifest
+  // Web App Manifest (Optimized for Google Search & PWA Discoverability)
   app.get('/manifest.json', (req: any, res: any) => {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
     res.setHeader('Content-Type', 'application/manifest+json');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
     return res.json({
-      name: "Yoouz - Real Video Reviews for Real Businesses & Businesses",
+      name: "Yoouz - Authentic 60-Second Video Reviews",
       short_name: "Yoouz",
-      description: "Authentic 60-second video reviews of local businesses and places. Zero fake text reviews.",
+      description: "Discover local businesses, restaurants, cafes, and websites with 100% authentic 60-second video reviews recorded by real customers. Zero fake text reviews.",
       start_url: `${protocol}://${host}/`,
+      scope: "/",
       display: "standalone",
-      background_color: "#ffffff",
-      theme_color: "#1a73e8",
+      background_color: "#09090b",
+      theme_color: "#09090b",
       orientation: "portrait",
       icons: [
+        {
+          src: `${protocol}://${host}/favicon-48x48.png`,
+          sizes: "48x48",
+          type: "image/png",
+          purpose: "any"
+        },
+        {
+          src: `${protocol}://${host}/favicon-96x96.png`,
+          sizes: "96x96",
+          type: "image/png",
+          purpose: "any"
+        },
         {
           src: `${protocol}://${host}/icon-192.png`,
           sizes: "192x192",
           type: "image/png",
-          purpose: "any maskable"
+          purpose: "any"
+        },
+        {
+          src: `${protocol}://${host}/icon-192.png`,
+          sizes: "192x192",
+          type: "image/png",
+          purpose: "maskable"
         },
         {
           src: `${protocol}://${host}/icon-512.png`,
           sizes: "512x512",
           type: "image/png",
-          purpose: "any maskable"
+          purpose: "any"
+        },
+        {
+          src: `${protocol}://${host}/icon-512.png`,
+          sizes: "512x512",
+          type: "image/png",
+          purpose: "maskable"
         },
         {
           src: `${protocol}://${host}/apple-touch-icon.png`,
@@ -7978,7 +8035,7 @@ Return JSON:
           type: "image/png"
         },
         {
-          src: `${protocol}://${host}/api/og-image/icon`,
+          src: `${protocol}://${host}/favicon.svg`,
           sizes: "512x512",
           type: "image/svg+xml",
           purpose: "any maskable"
@@ -10495,10 +10552,40 @@ function injectOpenGraphTags(html: string, meta: any) {
             "@id": `${baseUrl}/#website`,
             "url": baseUrl,
             "name": "Yoouz",
-            "alternateName": "Yoouz Video Reviews",
+            "alternateName": ["Yoouz Video Reviews", "Yoouz.com", "Yoouz Anti-Fake Reviews"],
+            "description": "Authentic 60-second live video reviews for local businesses, restaurants, cafes, hotels, and websites.",
+            "publisher": {
+              "@id": `${baseUrl}/#organization`
+            },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": `${baseUrl}/search?q={search_term_string}`
+              },
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": `${baseUrl}/#organization`,
+            "name": "Yoouz",
+            "alternateName": "Yoouz Inc.",
+            "url": baseUrl,
+            "logo": {
+              "@type": "ImageObject",
+              "@id": `${baseUrl}/#logo`,
+              "url": `${baseUrl}/icon-512.png`,
+              "caption": "Yoouz Official Logo",
+              "width": 512,
+              "height": 512
+            },
+            "image": `${baseUrl}/og-banner.png`,
+            "slogan": "Real People. Real Reviews.",
+            "description": "Yoouz is the premier authentic video review platform eliminating fake online reviews through live 60-second customer video recordings."
           }
         ]
-      }
+      };
     }
 
     return {
