@@ -29,6 +29,7 @@ import {  saveVideoBlobToIndexedDB } from "../lib/videoStorage";
 import { triggerHaptic } from "../utils/haptics";
 import { preloadBusinessAssets } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
+import { isAudioUnlocked, triggerAudioUnlock } from "../hooks/useGlobalMute";
 
 interface VideoFeedCardProps {
   video: VideoReview;
@@ -178,12 +179,41 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   // Sync mute state to video element in real time
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.muted = isMuted;
-      if (!isMuted) {
-        videoRef.current.volume = 1;
+      if (isAudioUnlocked()) {
+        videoRef.current.muted = isMuted;
+        if (!isMuted) {
+          videoRef.current.volume = 1;
+        }
       }
     }
   }, [isMuted]);
+
+  // When user first touches or swipes anywhere, immediately unlock sound on active video
+  useEffect(() => {
+    if (isActive && !isMuted) {
+      const handleTouchUnlock = () => {
+        triggerAudioUnlock();
+        if (videoRef.current && videoRef.current.muted) {
+          videoRef.current.muted = false;
+          videoRef.current.volume = 1;
+        }
+      };
+
+      if (!isAudioUnlocked()) {
+        window.addEventListener("touchstart", handleTouchUnlock, { passive: true, once: true });
+        window.addEventListener("pointerdown", handleTouchUnlock, { passive: true, once: true });
+        window.addEventListener("scroll", handleTouchUnlock, { passive: true, once: true });
+        return () => {
+          window.removeEventListener("touchstart", handleTouchUnlock);
+          window.removeEventListener("pointerdown", handleTouchUnlock);
+          window.removeEventListener("scroll", handleTouchUnlock);
+        };
+      } else if (videoRef.current && videoRef.current.muted) {
+        videoRef.current.muted = false;
+        videoRef.current.volume = 1;
+      }
+    }
+  }, [isActive, isMuted]);
 
   // Play / Pause video based on card active state, user feed initiation, and manual pause flag
   useEffect(() => {
@@ -194,10 +224,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
-      el.muted = isMuted;
-      if (!isMuted) {
+      
+      // If audio isn't unlocked yet by a user touch, start muted for instant 0ms autoplay
+      const audioReady = isAudioUnlocked();
+      const targetMuted = audioReady ? isMuted : true;
+      el.muted = targetMuted;
+      if (!targetMuted) {
         el.volume = 1;
       }
+
       if (el.paused) {
         const p = el.play();
         if (p !== undefined) {
@@ -205,14 +240,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             setIsPlaying(true);
             setIsBuffering(false);
           }).catch((err) => {
-            // WebKit Autoplay Policy: if browser rejects unmuted autoplay, mute the video and play, and update global mute state so Tap to Unmute is displayed
-            console.log("[VideoFeedCard] Autoplay with sound restricted, falling back to muted autoplay:", err);
+            // WebKit Autoplay Policy fallback: if unmuted autoplay is rejected, mute and play immediately
+            console.log("[VideoFeedCard] Autoplay with sound restricted, playing muted:", err);
             el.muted = true;
             el.play().then(() => {
               setIsPlaying(true);
               setIsBuffering(false);
-              // Notify global state so "Tap to unmute" banner and mute icons match
-              onForceMute();
             }).catch(() => {
               setIsPlaying(false);
             });
@@ -231,7 +264,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       setIsPlaying(false);
       setShowPlayPauseFeedback(null);
     }
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused, onForceMute]);
+  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
 
   // Clean unmount safety
   useEffect(() => {
@@ -304,6 +337,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   // Click card to toggle Play / Pause (TikTok style)
   const togglePlayPause = (e?: React.MouseEvent) => {
     e?.stopPropagation();
+    triggerAudioUnlock();
     const el = videoRef.current;
     if (!el) return;
 
@@ -351,6 +385,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
   const handleToggleMute = (e?: React.MouseEvent) => {
     e?.stopPropagation();
+    triggerAudioUnlock();
     triggerHaptic("selection");
     
     // Direct user tap: activate feed session immediately
