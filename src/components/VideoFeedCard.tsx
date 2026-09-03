@@ -189,32 +189,42 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isMuted]);
 
-  // When user first touches or swipes anywhere, immediately unlock sound on active video
+  // Relentless Audio Sync: If the user wants sound (isMuted = false), but Safari forced it muted,
+  // we use their natural scroll/touch gestures to sneak the unmute command through.
   useEffect(() => {
     if (isActive && !isMuted) {
-      const handleTouchUnlock = () => {
+      const el = videoRef.current;
+      if (!el) return;
+
+      const enforceSound = () => {
         triggerAudioUnlock();
-        if (videoRef.current && videoRef.current.muted) {
-          videoRef.current.muted = false;
-          videoRef.current.volume = 1;
+        if (el.muted) {
+          el.muted = false;
+          el.volume = 1;
         }
       };
 
-      if (!isAudioUnlocked()) {
-        window.addEventListener("touchstart", handleTouchUnlock, { passive: true, once: true });
-        window.addEventListener("pointerdown", handleTouchUnlock, { passive: true, once: true });
-        window.addEventListener("scroll", handleTouchUnlock, { passive: true, once: true });
-        return () => {
-          window.removeEventListener("touchstart", handleTouchUnlock);
-          window.removeEventListener("pointerdown", handleTouchUnlock);
-          window.removeEventListener("scroll", handleTouchUnlock);
-        };
-      } else if (videoRef.current && videoRef.current.muted) {
-        videoRef.current.muted = false;
-        videoRef.current.volume = 1;
+      // Always try to attach to all interactive events if we are active and unmuted,
+      // because iOS Safari can randomly revoke autoplay privileges during scrolling.
+      window.addEventListener("touchstart", enforceSound, { passive: true, capture: true });
+      window.addEventListener("touchend", enforceSound, { passive: true, capture: true });
+      window.addEventListener("scroll", enforceSound, { passive: true, capture: true });
+      window.addEventListener("click", enforceSound, { passive: true, capture: true });
+
+      // And try it once right now in case the browser allows it
+      if (isAudioUnlocked() && el.muted) {
+        el.muted = false;
+        el.volume = 1;
       }
+
+      return () => {
+        window.removeEventListener("touchstart", enforceSound, { capture: true });
+        window.removeEventListener("touchend", enforceSound, { capture: true });
+        window.removeEventListener("scroll", enforceSound, { capture: true });
+        window.removeEventListener("click", enforceSound, { capture: true });
+      };
     }
-  }, [isActive, isMuted]);
+  }, [isActive, isMuted, isActualMuted]);
 
   // Play / Pause video based on card active state, user feed initiation, and manual pause flag
   useEffect(() => {
@@ -763,22 +773,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </button>
       )}
 
-      {/* Mobile "Tap to Unmute" Overlay when autoplay is forced muted */}
-      {isActive && isActualMuted && typeof navigator !== "undefined" && /Mobi|Android|iPhone/i.test(navigator.userAgent) && !showPlayPauseFeedback && (
-        <div className="absolute top-[calc(env(safe-area-inset-top,14px)+62px)] md:top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePlayPause(e);
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-xl border border-white/30 text-white shadow-2xl transition-all cursor-pointer group"
-          >
-            <VolumeX className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-semibold tracking-wide text-white drop-shadow">Tap to unmute</span>
-          </button>
-        </div>
-      )}
 
       {/* Double-tap Heart Animation (Positioned at tap coords or centered with burst animation) */}
       {showHeartAnimation && (
