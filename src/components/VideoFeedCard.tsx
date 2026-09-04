@@ -737,8 +737,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Desktop & Laptop screens only - Hidden on Mobile) */}
-        <div className="hidden sm:flex items-center justify-end gap-2 min-w-[70px]">
+        {/* Right side: Sound Mute / Unmute Toggle Button (Visible on both Mobile & Desktop) */}
+        <div className="flex items-center justify-end gap-2 min-w-[70px]">
           <button
             id={`btn-toggle-sound-${video.id}`}
             onClick={(e) => {
