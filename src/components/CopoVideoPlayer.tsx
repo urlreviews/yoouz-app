@@ -563,8 +563,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            // Virtual sliding window: mount video decoders for active and ±2 adjacent cards for zero-delay scroll transition
-            const isCardNear = Math.abs(idx - currentIndex) <= 2;
+            // Virtual sliding window: ±3 adjacent on desktop (abundant RAM/GPU) and ±2 on mobile (strict hardware decoders)
+            const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+            const bufferRadius = isTouch ? 2 : 3;
+            const isCardNear = Math.abs(idx - currentIndex) <= bufferRadius;
 
             return (
               <VideoFeedCard
