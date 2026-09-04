@@ -372,10 +372,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     triggerHaptic("light");
     
-    const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone/i.test(navigator.userAgent);
-
-    // If video was forced muted on mobile by browser policy, the first tap should UNMUTE it, not pause it.
-    if (isMobile && el.muted) {
+    // If video was forced muted by browser policy or is muted, the first tap should UNMUTE it, not pause it.
+    if (el.muted) {
       el.muted = false;
       el.volume = 1;
       el.play().catch(() => {});
@@ -793,18 +791,29 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Center Play Button - shown on initial load before feed starts or when user explicitly pauses */}
       {isActive && (!hasUserStartedFeed || isManuallyPaused) && !showPlayPauseFeedback && (
-        <button
-          type="button"
-          id={`copo-play-center-btn-${video.id}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            togglePlayPause(e);
-          }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-black/70 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-2xl animate-in zoom-in-90 duration-150 pointer-events-auto cursor-pointer active:scale-90 hover:scale-105 transition-transform"
-          aria-label="Play video"
-        >
-          <Play className="w-9 h-9 fill-white translate-x-0.5" />
-        </button>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-3.5 pointer-events-none">
+          <button
+            type="button"
+            id={`copo-play-center-btn-${video.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlayPause(e);
+            }}
+            className="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-black/70 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-2xl animate-in zoom-in-90 duration-150 pointer-events-auto cursor-pointer active:scale-95 hover:scale-105 transition-all relative group"
+            aria-label="Play video"
+          >
+            {/* Soft pulsing halo ring */}
+            <span className="absolute inset-0 rounded-full border border-white/60 animate-ping opacity-40 duration-1000" style={{ animationDuration: '1.8s' }} />
+            <Play className="w-9 h-9 fill-white translate-x-0.5 group-hover:scale-110 transition-transform duration-200" />
+          </button>
+          
+          <div className="px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-xl text-white font-bold text-xs tracking-wider uppercase select-none animate-bounce flex items-center gap-1.5">
+            <span>Tap to Play</span>
+            {!hasUserStartedFeed && (
+              <span className="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-400/20 leading-none">with Voice</span>
+            )}
+          </div>
+        </div>
       )}
 
 
