@@ -353,10 +353,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     const el = videoRef.current;
     if (!el) return;
 
-    if (onStartFeed && !hasUserStartedFeed) {
-      onStartFeed();
-    }
-
     triggerHaptic("light");
     
     const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone/i.test(navigator.userAgent);
@@ -389,6 +385,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       if (!el.muted) {
         el.volume = 1;
       }
+      // Play IMMEDIATELY with zero delay on click gesture
       const p = el.play();
       if (p !== undefined) {
         p.then(() => {
@@ -408,6 +405,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           }
         });
       }
+
+      // Notify parent to start feed after starting play instantly
+      if (onStartFeed && !hasUserStartedFeed) {
+        onStartFeed();
+      }
+
       if (e) triggerFeedback("play");
     } else {
       isManuallyPausedRef.current = true;
