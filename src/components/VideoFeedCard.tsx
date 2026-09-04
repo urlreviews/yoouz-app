@@ -585,8 +585,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-50 to stay above everything */}
       <div 
-        className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 pointer-events-none"
-        style={{ paddingTop: "max(16px, env(safe-area-inset-top, 16px))" }}
+        className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between px-4 [padding-top:max(54px,calc(env(safe-area-inset-top,0px)+12px))] md:[padding-top:16px] pointer-events-none"
       >
         {/* Left side: Navigation (only if onGoBack) */}
         <div className="pointer-events-auto">
@@ -605,6 +604,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }
                 onGoBack();
               }}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
               className="w-11 h-11 rounded-full bg-zinc-900/90 hover:bg-black backdrop-blur-xl border border-white/30 flex items-center justify-center text-white active:scale-90 transition-all shadow-2xl cursor-pointer"
               title="Go back"
             >
@@ -614,7 +615,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
 
         {/* Center: Context Title if viewing a specific place or category */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 p-4 w-full max-w-[45%] flex justify-center pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 px-4 [padding-top:max(54px,calc(env(safe-area-inset-top,0px)+12px))] md:[padding-top:16px] w-full max-w-[45%] flex justify-center pointer-events-none">
           {feedContextTitle && 
             !feedContextTitle.startsWith("@") && 
             feedContextTitle.trim().toLowerCase() !== (safeAuthor.name || "").trim().toLowerCase() && (
@@ -633,7 +634,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               handleToggleMute(e);
             }}
-            className="w-11 h-11 rounded-full bg-zinc-900/90 hover:bg-black active:scale-90 backdrop-blur-xl border border-white/30 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            className="w-11 h-11 rounded-full bg-zinc-900/90 hover:bg-black active:scale-90 backdrop-blur-xl border border-white/40 ring-1 ring-white/20 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
             title={isMuted ? "Unmute sound" : "Mute sound"}
             aria-label={isMuted ? "Unmute sound" : "Mute sound"}
           >
