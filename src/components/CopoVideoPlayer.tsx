@@ -611,10 +611,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             id="btn-scroll-prev-video"
             onClick={handlePrev}
             disabled={currentIndex <= 0}
-            className={`w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 flex items-center justify-center transition-all shadow-xl ${
+            className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
               currentIndex <= 0
-                ? "opacity-30 cursor-not-allowed text-zinc-600 border-zinc-800"
-                : "text-zinc-200 hover:bg-zinc-800 hover:text-white hover:border-zinc-500 hover:scale-105 active:scale-95 cursor-pointer"
+                ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
+                : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
             }`}
             title="Previous Video (Up Arrow)"
           >
@@ -625,10 +625,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             id="btn-scroll-next-video"
             onClick={handleNext}
             disabled={currentIndex >= videos.length - 1}
-            className={`w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 flex items-center justify-center transition-all shadow-xl ${
+            className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
               currentIndex >= videos.length - 1
-                ? "opacity-30 cursor-not-allowed text-zinc-600 border-zinc-800"
-                : "text-zinc-200 hover:bg-zinc-800 hover:text-white hover:border-zinc-500 hover:scale-105 active:scale-95 cursor-pointer"
+                ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
+                : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
             }`}
             title="Next Video (Down Arrow)"
           >

@@ -27,7 +27,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       <div className="w-full flex items-center p-4 sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800">
         <button 
           onClick={onClose} 
-          className="flex items-center gap-2 text-zinc-400 hover:text-white font-bold transition-colors cursor-pointer"
+          className="flex items-center gap-2 text-white hover:text-zinc-200 font-bold transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-5 h-5" /> Back
         </button>
