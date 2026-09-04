@@ -11663,9 +11663,17 @@ function injectOpenGraphTags(html: string, meta: any) {
       console.warn("Yoouz Server Warning: dist/index.html not found. Ensuring base static serving from cwd.");
     }
 
+    app.get(["/sw.js", "/sw.js*"], (req: any, res: any) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Content-Type', 'application/javascript');
+      res.send(`self.addEventListener('install', (e) => self.skipWaiting()); self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((k) => Promise.all(k.map((c) => caches.delete(c)))).then(() => self.registration.unregister()).then(() => self.clients.claim())); }); self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));`);
+    });
+
     app.use(express.static(distPath, {
       setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) {
+        if (filePath.endsWith('.html') || filePath.endsWith('sw.js') || filePath.endsWith('.json')) {
           res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
           res.setHeader('Pragma', 'no-cache');
           res.setHeader('Expires', '0');

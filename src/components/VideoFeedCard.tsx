@@ -588,9 +588,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 pointer-events-none"
         style={{ paddingTop: "max(16px, env(safe-area-inset-top, 16px))" }}
       >
-        {/* Left side: Navigation / Brand - pointer-events-auto to capture taps */}
+        {/* Left side: Navigation (only if onGoBack) */}
         <div className="pointer-events-auto">
-          {onGoBack ? (
+          {onGoBack && (
             <button
               type="button"
               id={`btn-feed-back-${video.id}`}
@@ -610,20 +610,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             >
               <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
             </button>
-          ) : (
-            <button
-              type="button"
-              id="btn-mobile-menu-drawer"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onOpenMenu) onOpenMenu();
-              }}
-              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-full bg-zinc-900/90 hover:bg-black active:scale-95 backdrop-blur-xl border border-white/30 shadow-2xl cursor-pointer transition-all text-white"
-              title="Open Navigation Menu"
-            >
-              <Menu className="w-5 h-5 text-white shrink-0" strokeWidth={2.5} />
-              <span className="text-[13px] font-bold pr-1">Menu</span>
-            </button>
           )}
         </div>
 
@@ -638,7 +624,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Universal) */}
+        {/* Right side: Sound Mute / Unmute Toggle Button (Universal 100% Identical to Desktop) */}
         <div className="pointer-events-auto">
           <button
             type="button"
@@ -647,39 +633,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               handleToggleMute(e);
             }}
-            className={`flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full backdrop-blur-xl border transition-all cursor-pointer shadow-2xl active:scale-90 ${
-              isMuted 
-                ? "bg-red-600/90 hover:bg-red-600 border-red-300/80 text-white animate-pulse" 
-                : "bg-zinc-900/90 hover:bg-black border-white/30 text-white"
-            }`}
+            className="w-11 h-11 rounded-full bg-zinc-900/90 hover:bg-black active:scale-90 backdrop-blur-xl border border-white/30 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
             title={isMuted ? "Unmute sound" : "Mute sound"}
             aria-label={isMuted ? "Unmute sound" : "Mute sound"}
           >
             {isMuted ? (
-              <>
-                <VolumeX className="w-5 h-5 text-white" />
-                <span className="text-[12px] font-bold pr-0.5">Unmute</span>
-              </>
+              <VolumeX className="w-5 h-5 text-white" />
             ) : (
               <Volume2 className="w-5 h-5 text-white" />
             )}
           </button>
         </div>
       </div>
-
-      {/* Floating Mute/Unmute Pill Banner (TikTok style indicator for muted video) */}
-      {isActive && isMuted && (
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleMute(e);
-          }}
-          className="absolute top-20 right-4 z-40 flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/85 backdrop-blur-xl border border-white/30 text-white shadow-2xl active:scale-95 transition-all cursor-pointer pointer-events-auto"
-        >
-          <VolumeX className="w-4 h-4 text-white animate-pulse" />
-          <span className="text-[11px] font-bold tracking-wide">Tap to Unmute</span>
-        </div>
-      )}
 
       {/* Transient Play/Pause Icon Tap Feedback */}
       {showPlayPauseFeedback && (
@@ -969,33 +934,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </button>
             <span className="text-[12px] font-bold mt-1 text-white drop-shadow">
               {video.sharesCount || video.shares || 0}
-            </span>
-          </div>
-
-          {/* Sound Mute/Unmute Action */}
-          <div className="flex flex-col items-center">
-            <button
-              id={`btn-action-sound-${video.id}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleMute(e);
-              }}
-              className={`w-11 h-11 rounded-full backdrop-blur-md flex items-center justify-center transition-all active:scale-90 cursor-pointer border ${
-                isMuted
-                  ? "bg-red-500/40 border-red-400 text-white hover:bg-red-500/60 animate-pulse shadow-lg"
-                  : "bg-black/40 border-white/20 text-white hover:bg-black/60"
-              }`}
-              title={isMuted ? "Unmute sound" : "Mute sound"}
-              aria-label={isMuted ? "Unmute sound" : "Mute sound"}
-            >
-              {isMuted ? (
-                <VolumeX className="w-5 h-5 text-white" />
-              ) : (
-                <Volume2 className="w-5 h-5 text-white" />
-              )}
-            </button>
-            <span className="text-[11px] font-bold mt-1 text-white drop-shadow">
-              {isMuted ? "Muted" : "Sound"}
             </span>
           </div>
 
