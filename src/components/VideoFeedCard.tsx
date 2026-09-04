@@ -261,8 +261,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         }
       };
 
-      window.addEventListener("touchstart", enforceSoundAndPlay, { passive: true, capture: true });
-      window.addEventListener("pointerdown", enforceSoundAndPlay, { passive: true, capture: true });
+      window.addEventListener("touchstart", enforceSoundAndPlay, { passive: false, capture: true });
+      window.addEventListener("pointerdown", enforceSoundAndPlay, { passive: false, capture: true });
       window.addEventListener("scroll", enforceSoundAndPlay, { passive: true, capture: true });
 
       return () => {
@@ -398,10 +398,23 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       
-      el.muted = isMuted;
-      if (!el.muted) {
+      // If we are starting the feed for the very first time on this click:
+      // 1. Forcefully restart video from the beginning (currentTime = 0)
+      // 2. Force unmute so it plays with Voice
+      if (!hasUserStartedFeed) {
+        el.currentTime = 0;
+        el.muted = false;
         el.volume = 1;
+        if (isMuted && onToggleMute) {
+          onToggleMute(e); // Update global state to unmuted
+        }
+      } else {
+        el.muted = isMuted;
+        if (!isMuted) {
+          el.volume = 1;
+        }
       }
+      
       // Play IMMEDIATELY with zero delay on click gesture
       const p = el.play();
       if (p !== undefined) {
@@ -598,6 +611,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           <video
             ref={videoRef}
             id={`video-element-${video.id}`}
+            data-active={isActive ? "true" : "false"}
             src={currentSource}
             poster={resolveVideoPosterUrl(video)}
             preload="auto"

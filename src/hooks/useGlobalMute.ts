@@ -30,12 +30,33 @@ export function triggerAudioUnlock() {
 
 // Global window listeners to catch the very first touch/click/scroll anywhere
 if (typeof window !== 'undefined') {
-  const onFirstInteraction = () => {
+  const onFirstInteraction = (e: Event) => {
     triggerAudioUnlock();
+
+    // Directly unmute and play the active video within the active synchronous event gesture stack
+    if (!globalIsMuted) {
+      document.querySelectorAll<HTMLVideoElement>("video").forEach((video) => {
+        if (video.getAttribute("data-active") === "true") {
+          try {
+            if (video.muted) {
+              video.muted = false;
+              video.volume = 1;
+              video.play().catch(() => {});
+            }
+          } catch (err) {}
+        }
+      });
+    }
   };
 
-  ['touchstart', 'touchend', 'touchmove', 'pointerdown', 'pointerup', 'click', 'keydown', 'scroll', 'wheel'].forEach(evt => {
-    window.addEventListener(evt, onFirstInteraction, { passive: true, capture: true });
+  // DO NOT use passive: true for core user input events, as it prevents Safari from honoring media actions
+  ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, onFirstInteraction, { passive: false, capture: true });
+  });
+
+  // Use passive: true safely for high-frequency scroll/move events
+  ['touchmove', 'scroll', 'wheel'].forEach(evt => {
+    window.addEventListener(evt, () => triggerAudioUnlock(), { passive: true, capture: true });
   });
 }
 
