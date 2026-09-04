@@ -11641,7 +11641,12 @@ function injectOpenGraphTags(html: string, meta: any) {
           const meta = await resolveMetadataForRequest(req);
           indexTemplate = await vite.transformIndexHtml(req.originalUrl, indexTemplate);
           const finalHtml = injectOpenGraphTags(indexTemplate, meta);
-          return res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(finalHtml);
+          return res.status(200).set({ 
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }).end(finalHtml);
         } catch (e) {
           console.error("Vite Transform Error:", e);
           return next();

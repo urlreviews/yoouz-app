@@ -2319,12 +2319,25 @@ export function App() {
 
   // Open Place Drawer
   const handleOpenPlaceDrawer = (placeId: string) => {
+    // Explicitly pause all playing videos across the DOM immediately
+    document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+      try { v.pause(); } catch (e) {}
+    });
     if (activeSection !== "home") {
       previousSectionRef.current = activeSection;
     }
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
+  };
+
+  // Open Creator Drawer
+  const handleOpenCreatorDrawer = (author: VideoAuthor) => {
+    document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+      try { v.pause(); } catch (e) {}
+    });
+    setSelectedPlaceIdForDrawer(null);
+    setSelectedAuthorForDrawer(author);
   };
 
   // Handle Likes - fully synced with Firestore
@@ -3757,7 +3770,7 @@ export function App() {
         {/* If in Feed View (Home, Clubs) or Place / Creator drawer views: Display center video player */}
         {(isPlaceView || isCreatorView || activeSection === "home" || activeSection === "clubs") && (
             <CopoVideoPlayer
-              isPaused={isCreateModalOpen || isAuthModalOpen || isPlaceView || isCreatorView}
+              isPaused={Boolean(isCreateModalOpen || isAuthModalOpen || selectedPlaceIdForDrawer || selectedAuthorForDrawer || (activeSection !== "home" && activeSection !== "clubs"))}
               contextKey={currentFeedContextKey}
               onOpenCreateModal={() => {
                 if (!currentUser) {
@@ -3781,10 +3794,7 @@ export function App() {
               }}
               onOpenComments={(v) => setActiveCommentVideo(v)}
               onOpenPlace={handleOpenPlaceDrawer}
-              onOpenCreator={(author) => {
-                  setSelectedPlaceIdForDrawer(null);
-                  setSelectedAuthorForDrawer(author);
-                }}
+              onOpenCreator={handleOpenCreatorDrawer}
               onOpenShare={handleOpenShare}
               onOpenReport={(v) => handleOpenReport({ type: "video", video: v })}
               currentUser={currentUser}

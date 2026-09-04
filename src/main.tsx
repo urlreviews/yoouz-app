@@ -17,10 +17,23 @@ if (typeof (window as any).__dismissAppSplash === 'function') {
   (window as any).__dismissAppSplash();
 }
 
-// Register Progressive Web App Service Worker
-if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+// Proactively clear stale cache storage on startup to bust outdated assets
+if (typeof window !== 'undefined' && 'caches' in window) {
+  caches.keys().then((names) => {
+    names.forEach((name) => {
+      if (name !== 'yoouz-pwa-v7-fresh') {
+        caches.delete(name);
+      }
+    });
+  }).catch(() => {});
+}
+
+// Register Progressive Web App Service Worker with auto-update
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`/sw.js?v=${new Date().getTime()}`).catch((err) => {
+    navigator.serviceWorker.register(`/sw.js?v=${Date.now()}`).then((reg) => {
+      reg.update().catch(() => {});
+    }).catch((err) => {
       console.warn('PWA Service Worker registration skipped:', err);
     });
   });

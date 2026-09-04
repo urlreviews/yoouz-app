@@ -734,7 +734,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         >
           <div className="flex flex-col gap-1.5 w-full">
             <button
-              onClick={() => onOpenCreator(safeAuthor)}
+              onClick={() => {
+                if (videoRef.current) {
+                  try { videoRef.current.pause(); } catch (e) {}
+                }
+                pauseOtherVideos();
+                onOpenCreator(safeAuthor);
+              }}
               className="font-bold text-white text-[15px] drop-shadow flex items-center gap-1 hover:underline cursor-pointer bg-transparent border-0 p-0 text-left w-fit"
               title={`View ${safeAuthor.name} Profile`}
             >
@@ -775,7 +781,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
           <button
             id={`pill-place-${video.placeId}`}
-            onClick={() => onOpenPlace(video.placeId)}
+            onClick={() => {
+              if (videoRef.current) {
+                try { videoRef.current.pause(); } catch (e) {}
+              }
+              pauseOtherVideos();
+              onOpenPlace(video.placeId);
+            }}
             className="self-start flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/85 backdrop-blur-md border border-white/20 text-white text-[14px] font-semibold hover:bg-black/95 hover:border-white/40 transition-all w-fit max-w-[100%] text-left group cursor-pointer shadow-lg"
           >
             <CopoBrandLogo
@@ -807,7 +819,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           {/* Creator Avatar */}
           <div className="relative group/avatar">
             <button
-              onClick={() => onOpenCreator(safeAuthor)}
+              onClick={() => {
+                if (videoRef.current) {
+                  try { videoRef.current.pause(); } catch (e) {}
+                }
+                pauseOtherVideos();
+                onOpenCreator(safeAuthor);
+              }}
               className="w-11 h-11 rounded-full p-0.5 border-2 border-white/30 hover:border-white overflow-hidden bg-black transition-colors cursor-pointer"
               title={`View ${safeAuthor.name} Profile`}
             >
