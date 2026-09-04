@@ -736,17 +736,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Bottom Area: Metadata & Actions Container - responsive safe-area positioning */}
+      {/* Bottom Area: Metadata & Actions Container - sits right above mobile bottom nav */}
       <div 
         className="relative z-30 w-full flex items-end justify-between px-3 md:px-5 pt-4 pointer-events-none md:pb-6"
-        style={{ paddingBottom: "max(72px, calc(env(safe-area-inset-bottom, 0px) + 68px))" }}
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 58px)" }}
       >
         
         {/* Bottom Video Metadata & Place Badge */}
         <footer
           id={`copo-video-bottom-info-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-col gap-2.5 pointer-events-auto pr-2 min-w-0 flex-1"
+          className="flex flex-col gap-2 pointer-events-auto pr-2 min-w-0 flex-1"
         >
           <div className="flex flex-col gap-1 w-full">
             <button
@@ -803,7 +803,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               pauseOtherVideos();
               onOpenPlace(video.placeId);
             }}
-            className="self-start flex items-center gap-2 px-3 py-2 rounded-xl bg-black/85 backdrop-blur-xl border border-white/35 text-white text-[14px] font-bold hover:bg-black hover:border-white/60 transition-all w-fit max-w-[82vw] text-left group cursor-pointer shadow-2xl"
+            className="self-start flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/85 backdrop-blur-xl border border-white/35 text-white text-[14px] font-bold hover:bg-black hover:border-white/60 transition-all w-fit max-w-[80vw] text-left group cursor-pointer shadow-2xl"
           >
             <CopoBrandLogo
               domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
@@ -829,10 +829,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         <aside
           id={`copo-video-actions-col-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-col items-center gap-2 sm:gap-2.5 md:gap-3 text-white pointer-events-auto shrink-0 mb-0 md:mb-1"
+          className="flex flex-col items-center gap-3 sm:gap-3.5 text-white pointer-events-auto shrink-0 mb-0 md:mb-1"
         >
           {/* Creator Avatar */}
-          <div className="relative group/avatar mb-0.5">
+          <div className="relative group/avatar mb-1">
             <button
               onClick={() => {
                 if (videoRef.current) {
@@ -841,7 +841,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 pauseOtherVideos();
                 onOpenCreator(safeAuthor);
               }}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full p-0.5 border-2 border-white/60 hover:border-white overflow-hidden bg-black transition-colors cursor-pointer shadow-xl"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border-2 border-white/70 hover:border-white overflow-hidden bg-black transition-colors cursor-pointer shadow-xl"
               title={`View ${safeAuthor.name} Profile`}
             >
               <img
@@ -868,10 +868,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   triggerHaptic("medium");
                   onToggleFollow(safeAuthor.name);
                 }}
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md hover:scale-110 active:scale-90 transition-transform cursor-pointer border border-black"
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md hover:scale-110 active:scale-90 transition-transform cursor-pointer border-2 border-zinc-950"
                 title="Follow"
               >
-                <Plus className="w-3 h-3 stroke-[3] text-zinc-950" />
+                <Plus className="w-3.5 h-3.5 stroke-[3] text-zinc-950" />
               </button>
             )}
           </div>
@@ -884,18 +884,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic(video.isLiked ? "selection" : "medium");
                 onToggleLike(video.id);
               }}
-              className="w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
               title="Like"
             >
               <Heart
-                className={`w-5 h-5 transition-colors ${
+                className={`w-6 h-6 transition-colors ${
                   video.isLiked
                     ? "fill-[#ff2d55] text-[#ff2d55] drop-shadow-sm"
                     : "text-white fill-none stroke-[2.2]"
                 }`}
               />
             </button>
-            <span className="text-[11px] sm:text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+            <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {typeof video.likes === 'number' ? video.likes : (video.likesCount || 0)}
             </span>
           </div>
@@ -908,12 +908,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic("light");
                 onOpenComments(video);
               }}
-              className="w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
               title="Comments"
             >
-              <MessageCircle className="w-5 h-5 text-white stroke-[2.2]" />
+              <MessageCircle className="w-6 h-6 text-white stroke-[2.2]" />
             </button>
-            <span className="text-[11px] sm:text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+            <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {(video.commentsCount || video.comments?.length || 0) + (video.ownerResponse ? 1 : 0)}
             </span>
           </div>
@@ -926,18 +926,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic("selection");
                 onToggleBookmark(video.id);
               }}
-              className="w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
               title="Bookmark Place & Video"
             >
               <Bookmark
-                className={`w-5 h-5 transition-colors ${
+                className={`w-6 h-6 transition-colors ${
                   video.isBookmarked
                     ? "fill-amber-400 text-amber-400 drop-shadow-sm"
                     : "text-white stroke-[2.2]"
                 }`}
               />
             </button>
-            <span className="text-[11px] sm:text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+            <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {video.bookmarksCount || 0}
             </span>
           </div>
@@ -950,12 +950,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic("light");
                 onOpenShare(video);
               }}
-              className="w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
               title="Share Video Review"
             >
-              <Share2 className="w-5 h-5 text-white stroke-[2.2]" />
+              <Share2 className="w-6 h-6 text-white stroke-[2.2]" />
             </button>
-            <span className="text-[11px] sm:text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+            <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {video.sharesCount || video.shares || 0}
             </span>
           </div>
@@ -968,10 +968,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic("light");
                 onOpenMoreMenu(video);
               }}
-              className="w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center hover:scale-105 transition-all active:scale-90 text-white cursor-pointer shadow-xl"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center hover:scale-105 transition-all active:scale-90 text-white cursor-pointer shadow-xl"
               title="More options"
             >
-              <MoreHorizontal className="w-5 h-5 stroke-[2.5] text-white" />
+              <MoreHorizontal className="w-6 h-6 stroke-[2.5] text-white" />
             </button>
           </div>
         </aside>
