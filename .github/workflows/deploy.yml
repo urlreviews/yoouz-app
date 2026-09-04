@@ -53,16 +53,16 @@ jobs:
         run: |
           echo "🚀 Triggering Bunny Magic Containers Auto-Deploy..."
           
-          # 1. Trigger via Bunny API Key if provided
+          # 1. Trigger via Bunny Magic Containers REST API (/mc/apps)
           if [ -n "$BUNNY_API_KEY" ]; then
-            echo "📡 Dispatching Bunny Magic Containers deploy command for app: $BUNNY_APP_ID..."
-            curl -s -X POST "https://api.bunny.net/magic-containers/apps/$BUNNY_APP_ID/deploy" \
+            echo "📡 Dispatching Bunny Magic Containers API commands for app: $BUNNY_APP_ID..."
+            curl -s -X POST "https://api.bunny.net/mc/apps/$BUNNY_APP_ID/deploy" \
               -H "AccessKey: $BUNNY_API_KEY" \
               -H "Content-Type: application/json" || true
-            curl -s -X POST "https://api.bunny.net/magic-containers/apps/$BUNNY_APP_ID/restart" \
+            curl -s -X POST "https://api.bunny.net/mc/apps/$BUNNY_APP_ID/restart" \
               -H "AccessKey: $BUNNY_API_KEY" \
               -H "Content-Type: application/json" || true
-            echo "✅ Bunny Magic Containers auto-deploy signaled successfully!"
+            echo "✅ Bunny Magic Containers API auto-deploy command sent!"
           fi
 
           # 2. Trigger via Webhook if configured
@@ -70,6 +70,7 @@ jobs:
             echo "📡 Pinging Bunny Deploy Webhook..."
             curl -s -f -X POST "$BUNNY_WEBHOOK" && echo "✅ Bunny Webhook triggered successfully!" || echo "⚠️ Webhook pinged."
           fi
+
 
 
 
