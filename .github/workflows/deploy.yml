@@ -1,4 +1,4 @@
-name: Deploy Yoouz App (Bunny Magic Containers & Cloud Run)
+name: Deploy Yoouz App (Bunny Magic Containers)
 
 on:
   push:
@@ -38,7 +38,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push to GitHub Container Registry
+      - name: Build and push to GitHub Container Registry (Bunny Magic Containers)
         uses: docker/build-push-action@v5
         with:
           context: .
