@@ -577,14 +577,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       {/* Vignette Gradients for readable text */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/85 z-10 pointer-events-none" />
 
-      {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-40 to stay firmly above background & video */}
-      <header
-        id={`copo-video-top-brand-${video.id}`}
-        className="w-full absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-3.5 sm:px-4 pt-3.5 md:pt-4 pb-2 pointer-events-none"
+      {/* Top Header Overlay (iOS & Android Universal Ergonomics) - Using explicit absolute positioning for maximum reliability */}
+      <div 
+        className="absolute top-0 left-0 right-0 z-40 flex items-start justify-between p-3.5 sm:p-4 pointer-events-none"
         style={{ paddingTop: "max(14px, env(safe-area-inset-top, 14px))" }}
       >
-        {/* Left side: Back button if inside a place/creator feed, or interactive Drawer Menu & Brand button */}
-        <div className="flex items-center gap-2 min-w-[44px] shrink-0 pointer-events-auto">
+        {/* Left side: Navigation / Brand - pointer-events-auto to capture taps */}
+        <div className="pointer-events-auto">
           {onGoBack ? (
             <button
               type="button"
@@ -613,7 +612,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 e.stopPropagation();
                 if (onOpenMenu) onOpenMenu();
               }}
-              className="md:hidden flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-xl border border-white/25 shadow-md cursor-pointer transition-all text-white"
+              className="flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-xl border border-white/25 shadow-md cursor-pointer transition-all text-white"
               title="Open Navigation Menu"
             >
               <Menu className="w-4 h-4 text-white shrink-0" strokeWidth={2.2} />
@@ -622,19 +621,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Center: Context Title if viewing a specific place or category (never creator person name) */}
-        <div className="flex items-center justify-center px-2 min-w-0 pointer-events-none">
+        {/* Center: Context Title if viewing a specific place or category */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 p-3.5 sm:p-4 w-full max-w-[50%] flex justify-center pointer-events-none">
           {feedContextTitle && 
             !feedContextTitle.startsWith("@") && 
             feedContextTitle.trim().toLowerCase() !== (safeAuthor.name || "").trim().toLowerCase() && (
-            <div className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-bold shadow-md max-w-[150px] sm:max-w-[220px] truncate text-center pointer-events-auto">
+            <div className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold shadow-md truncate text-center pointer-events-auto">
               {feedContextTitle}
             </div>
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Identical on Mobile & Desktop, top right of each video) */}
-        <div className="flex items-center justify-end gap-2 min-w-[44px] shrink-0 pointer-events-auto">
+        {/* Right side: Sound Mute / Unmute Toggle Button (Identical on Mobile & Desktop) */}
+        <div className="pointer-events-auto">
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
@@ -653,7 +652,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             )}
           </button>
         </div>
-      </header>
+      </div>
 
       {/* Transient Play/Pause Icon Tap Feedback */}
       {showPlayPauseFeedback && (

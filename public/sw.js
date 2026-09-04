@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yoouz-pwa-v4';
+const CACHE_NAME = 'yoouz-pwa-v5';
 
 const STATIC_ASSETS = [
   '/',
