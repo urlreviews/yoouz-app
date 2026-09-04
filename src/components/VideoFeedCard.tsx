@@ -22,7 +22,7 @@ import {
 import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
-import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
 import {  saveVideoBlobToIndexedDB } from "../lib/videoStorage";
@@ -121,10 +121,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
 
-  // Establish a single, stable, optimized CDN source
-  const currentSource = React.useMemo(() => {
-    return resolvePlayableVideoSource(video);
+  // Establish prioritized source cascade list (Bunny CDN Edge -> Local Server Stream -> Secondary Mirror -> Fallback)
+  const sourceCandidates = React.useMemo(() => {
+    return resolvePlayableVideoSourcesCascade(video);
   }, [video]);
+  const [sourceIndex, setSourceIndex] = useState<number>(0);
+
+  // Reset source index whenever video changes
+  useEffect(() => {
+    setSourceIndex(0);
+  }, [video?.id]);
+
+  const currentSource = sourceCandidates[sourceIndex] || sourceCandidates[0] || resolvePlayableVideoSource(video);
 
   // High-fidelity poster URL
   const posterUrl = React.useMemo(() => {
@@ -157,38 +165,36 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       el.volume = 1;
     }
 
-    if (el.paused) {
-      const p = el.play();
-      if (p !== undefined) {
-        playPromiseRef.current = p;
-        p.then(() => {
-          playPromiseRef.current = null;
-          setIsPlaying(true);
-          setIsBuffering(false);
-        }).catch((err) => {
-          playPromiseRef.current = null;
-          // If unmuted autoplay is blocked by browser policy without gesture, fallback to muted autoplay (standard YouTube Shorts behavior)
-          if (err?.name === "NotAllowedError" || err?.name === "AbortError") {
-            el.muted = true;
-            const retry = el.play();
-            if (retry !== undefined) {
-              playPromiseRef.current = retry;
-              retry
-                .then(() => {
-                  playPromiseRef.current = null;
-                  setIsPlaying(true);
-                  setIsBuffering(false);
-                })
-                .catch(() => {
-                  playPromiseRef.current = null;
-                  setIsPlaying(false);
-                });
-            }
-          } else {
-            setIsPlaying(false);
+    const p = el.play();
+    if (p !== undefined) {
+      playPromiseRef.current = p;
+      p.then(() => {
+        playPromiseRef.current = null;
+        setIsPlaying(true);
+        setIsBuffering(false);
+      }).catch((err) => {
+        playPromiseRef.current = null;
+        // If unmuted autoplay is blocked by browser policy without gesture, fallback to muted autoplay (standard YouTube Shorts behavior)
+        if (err?.name === "NotAllowedError" || err?.name === "AbortError" || err?.message?.includes("gesture")) {
+          el.muted = true;
+          const retry = el.play();
+          if (retry !== undefined) {
+            playPromiseRef.current = retry;
+            retry
+              .then(() => {
+                playPromiseRef.current = null;
+                setIsPlaying(true);
+                setIsBuffering(false);
+              })
+              .catch(() => {
+                playPromiseRef.current = null;
+                setIsPlaying(false);
+              });
           }
-        });
-      }
+        } else {
+          setIsPlaying(false);
+        }
+      });
     }
   }, [isMuted, pauseOtherVideos]);
 
@@ -229,12 +235,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isMuted]);
 
-  // Play / Pause video based on card active state, user feed initiation, and manual pause flag
+  // Play / Pause video based on card active state and manual pause flag
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+    const shouldPlay = isActive && !isManuallyPaused;
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
@@ -248,7 +254,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       }
       setShowPlayPauseFeedback(null);
     }
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused, safePlay, safePause]);
+  }, [isActive, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
 
 
   // Clean unmount safety
@@ -314,10 +320,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isActive, video]);
 
-  // Simple error handler for single source
+  // Automatic source cascade failover handler
   const handleVideoError = useCallback(() => {
-    console.warn(`[VideoFeedCard] Source failed for video ${video.id}: ${currentSource}`);
-  }, [currentSource, video.id]);
+    console.warn(`[VideoFeedCard] Source failed for video ${video.id} (index ${sourceIndex}): ${currentSource}`);
+    if (sourceIndex + 1 < sourceCandidates.length) {
+      console.log(`[VideoFeedCard] Failing over to next source: ${sourceCandidates[sourceIndex + 1]}`);
+      setSourceIndex((prev) => prev + 1);
+    }
+  }, [currentSource, video.id, sourceIndex, sourceCandidates]);
 
   // Click card to toggle Play / Pause (YouTube Shorts style)
   const togglePlayPause = (e?: React.MouseEvent) => {
@@ -537,6 +547,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
+              if (isActive && !isManuallyPaused) {
+                safePlay();
+              }
             }}
             onPlaying={() => {
               setIsPlaying(true);

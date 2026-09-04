@@ -4,7 +4,9 @@ import { saveVideoBlobToIndexedDB, getRawVideoBlobFromIndexedDB } from "../lib/v
 const preloadedUrls = new Set<string>();
 const preloadedPosters = new Set<string>();
 const videoBufferPool: HTMLVideoElement[] = [];
-const MAX_BUFFER_POOL_SIZE = 6;
+// Keep buffer pool small (1-2) to avoid exhausting iOS WebKit / Android hardware video decoders (limit ~3-4 concurrent streams)
+const isTouchDevice = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+const MAX_BUFFER_POOL_SIZE = isTouchDevice ? 2 : 4;
 
 /**
  * TikTok / YouTube Shorts-grade Video & Poster Prefetch Engine.
@@ -25,7 +27,17 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
     videoId = url.split("/api/videos/stream/")[1]?.replace(/\.[^.]+$/, "") || "";
   }
 
-  // 1. Headless GPU-warmed HTMLVideoElement Pre-buffer (primes decoding pipeline)
+  // 1. High-Performance HTTP Byte Range Warm-Up (fetches initial 1MB chunk into browser edge cache)
+  try {
+    fetch(url, {
+      method: "GET",
+      headers: { Range: "bytes=0-1048575" },
+      mode: "cors",
+      cache: "force-cache"
+    }).catch(() => {});
+  } catch (e) {}
+
+  // 2. Headless GPU-warmed HTMLVideoElement Pre-buffer (primes decoding pipeline)
   try {
     if (typeof document !== "undefined") {
       const warmVideo = document.createElement("video");
@@ -38,17 +50,19 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
       warmVideo.load();
 
       videoBufferPool.push(warmVideo);
-      if (videoBufferPool.length > MAX_BUFFER_POOL_SIZE) {
+      while (videoBufferPool.length > MAX_BUFFER_POOL_SIZE) {
         const oldest = videoBufferPool.shift();
         if (oldest) {
-          oldest.src = "";
-          oldest.load();
+          oldest.removeAttribute("src");
+          try {
+            oldest.load();
+          } catch (e) {}
         }
       }
     }
   } catch (e) {}
 
-  // 2. High-Performance IndexedDB Blob Cache Background Prefetch (stores full video offline)
+  // 3. High-Performance IndexedDB Blob Cache Background Prefetch (stores full video offline)
   if (videoId) {
     try {
       getRawVideoBlobFromIndexedDB(videoId).then((existing) => {
@@ -68,16 +82,6 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
       });
     } catch (e) {}
   }
-
-  // 3. HTTP Byte Range Warm-Up (fetches initial 1.5MB chunk into browser disk/RAM cache)
-  try {
-    fetch(url, {
-      method: "GET",
-      headers: { Range: "bytes=0-1572863" },
-      mode: "cors",
-      cache: "force-cache"
-    }).catch(() => {});
-  } catch (e) {}
 
   // 4. Preload Poster Image if provided
   if (posterUrl && !preloadedPosters.has(posterUrl)) {

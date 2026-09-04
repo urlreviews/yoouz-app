@@ -94,8 +94,25 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Initial feed state: requires user click to start first video (100% identical desktop and mobile)
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
+  // Initial feed state: defaulted to true for instant, seamless TikTok/Shorts mobile autoplay
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
+
+  // Global user interaction listener to ensure autoplay state is active on any swipe, tap, or keypress
+  useEffect(() => {
+    const markFeedActive = () => {
+      setHasUserStartedFeed(true);
+    };
+    window.addEventListener("touchstart", markFeedActive, { passive: true, once: true });
+    window.addEventListener("pointerdown", markFeedActive, { passive: true, once: true });
+    window.addEventListener("scroll", markFeedActive, { passive: true, once: true });
+    window.addEventListener("keydown", markFeedActive, { passive: true, once: true });
+    return () => {
+      window.removeEventListener("touchstart", markFeedActive);
+      window.removeEventListener("pointerdown", markFeedActive);
+      window.removeEventListener("scroll", markFeedActive);
+      window.removeEventListener("keydown", markFeedActive);
+    };
+  }, []);
 
   // Edit Rating State
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
@@ -241,8 +258,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       (entries) => {
         if (isProgrammaticScrollRef.current) return;
 
+        // Early detection: activate next video as soon as swipe crosses 35% threshold
         const visibleEntries = entries.filter(
-          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.55
+          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.35
         );
         if (visibleEntries.length === 0) return;
 
@@ -255,6 +273,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (!isNaN(idx) && idx !== currentIndexRef.current) {
             currentIndexRef.current = idx;
             lastObserverIndexRef.current = idx;
+            setHasUserStartedFeed(true);
             onSelectVideoIndex(idx);
             prefetchUpcomingVideos(videos, idx);
           }
@@ -262,7 +281,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       },
       {
         root: container,
-        threshold: [0.55, 0.75, 0.9]
+        threshold: [0.2, 0.35, 0.55, 0.75, 0.95]
       }
     );
 
@@ -300,6 +319,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         ) {
           currentIndexRef.current = calculatedIndex;
           lastObserverIndexRef.current = calculatedIndex;
+          setHasUserStartedFeed(true);
           onSelectVideoIndex(calculatedIndex);
           prefetchUpcomingVideos(videos, calculatedIndex);
         }
@@ -559,8 +579,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            // Virtual sliding window (YouTube Shorts architecture): only mount decoders for active and immediately adjacent cards
-            const isCardNear = Math.abs(idx - currentIndex) <= 2;
+            // Virtual sliding window (YouTube Shorts / TikTok architecture): mount video decoders only for active and immediate ±1 adjacent cards to preserve iOS/Android hardware decoders
+            const isCardNear = Math.abs(idx - currentIndex) <= 1;
 
             return (
               <VideoFeedCard
