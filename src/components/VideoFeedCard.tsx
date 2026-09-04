@@ -132,49 +132,91 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     return resolveVideoPosterUrl(video);
   }, [video]);
 
-  // Safe async play handler
-  const safePlay = useCallback(async () => {
+
+  // Helper: Synchronously pause all other video elements on the page (Zero Hardware Lockup)
+  const pauseOtherVideos = useCallback(() => {
+    const currentEl = videoRef.current;
+    document.querySelectorAll<HTMLVideoElement>("video").forEach((other) => {
+      if (other !== currentEl && !other.paused) {
+        try {
+          other.pause();
+        } catch (e) {}
+      }
+    });
+  }, []);
+
+  // Safe Play Execution using managed play promise queue
+  const safePlay = useCallback(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    el.muted = isMuted;
-    if (!isMuted) {
+    pauseOtherVideos();
+
+    const audioReady = isAudioUnlocked();
+    const targetMuted = audioReady ? isMuted : true;
+    el.muted = targetMuted;
+    if (!targetMuted) {
       el.volume = 1;
     }
 
-    try {
-      await el.play();
-      setIsPlaying(true);
-      setIsBuffering(false);
-    } catch (err: any) {
-      if (!el.muted) {
-        el.muted = true;
-        try {
-          await el.play();
+    if (el.paused) {
+      const p = el.play();
+      if (p !== undefined) {
+        playPromiseRef.current = p;
+        p.then(() => {
+          playPromiseRef.current = null;
           setIsPlaying(true);
           setIsBuffering(false);
-        } catch (e) {
-          setIsPlaying(false);
-        }
-      } else {
-        setIsPlaying(false);
+        }).catch((err) => {
+          playPromiseRef.current = null;
+          // Fallback to muted playback if unmuted autoplay is rejected by browser policy
+          el.muted = true;
+          const retry = el.play();
+          if (retry !== undefined) {
+            playPromiseRef.current = retry;
+            retry
+              .then(() => {
+                playPromiseRef.current = null;
+                setIsPlaying(true);
+                setIsBuffering(false);
+              })
+              .catch(() => {
+                playPromiseRef.current = null;
+                setIsPlaying(false);
+              });
+          } else {
+            setIsPlaying(false);
+          }
+        });
       }
     }
-  }, [isMuted]);
+  }, [isMuted, pauseOtherVideos]);
 
-  // Safe async pause handler
-  const safePause = useCallback((resetTime = false) => {
+  // Safe Pause Execution waiting for pending play promises
+  const safePause = useCallback(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    try {
-      el.pause();
-      if (resetTime) {
-        el.currentTime = 0;
+    if (playPromiseRef.current) {
+      playPromiseRef.current
+        .then(() => {
+          if (videoRef.current && !videoRef.current.paused) {
+            videoRef.current.pause();
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          playPromiseRef.current = null;
+          setIsPlaying(false);
+        });
+    } else {
+      if (!el.paused) {
+        try {
+          el.pause();
+        } catch (e) {}
       }
-    } catch (e) {}
-    setIsPlaying(false);
-    setIsBuffering(false);
+      setIsPlaying(false);
+    }
   }, []);
 
   // Sync mute state to video element in real time
@@ -189,42 +231,48 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isMuted]);
 
-  // Relentless Audio Sync: If the user wants sound (isMuted = false), but Safari forced it muted,
-  // we use their natural scroll/touch gestures to sneak the unmute command through.
+  // Synchronous Touch-Event Audio Unlock & Immediate Play:
+  // Directly within native user gesture execution stack (touchstart/pointerdown/scroll),
+  // unlock audio session, sync unmuted state, and trigger play synchronously.
   useEffect(() => {
-    if (isActive && !isMuted) {
+    if (isActive) {
       const el = videoRef.current;
       if (!el) return;
 
-      const enforceSound = () => {
+      const enforceSoundAndPlay = () => {
         triggerAudioUnlock();
-        if (el.muted) {
+        pauseOtherVideos();
+
+        if (el.muted && !isMuted) {
           el.muted = false;
           el.volume = 1;
         }
+
+        if (el.paused) {
+          const p = el.play();
+          if (p !== undefined) {
+            playPromiseRef.current = p;
+            p.then(() => {
+              playPromiseRef.current = null;
+              setIsPlaying(true);
+            }).catch(() => {
+              playPromiseRef.current = null;
+            });
+          }
+        }
       };
 
-      // Always try to attach to all interactive events if we are active and unmuted,
-      // because iOS Safari can randomly revoke autoplay privileges during scrolling.
-      window.addEventListener("touchstart", enforceSound, { passive: true, capture: true });
-      window.addEventListener("touchend", enforceSound, { passive: true, capture: true });
-      window.addEventListener("scroll", enforceSound, { passive: true, capture: true });
-      window.addEventListener("click", enforceSound, { passive: true, capture: true });
-
-      // And try it once right now in case the browser allows it
-      if (isAudioUnlocked() && el.muted) {
-        el.muted = false;
-        el.volume = 1;
-      }
+      window.addEventListener("touchstart", enforceSoundAndPlay, { passive: true, capture: true });
+      window.addEventListener("pointerdown", enforceSoundAndPlay, { passive: true, capture: true });
+      window.addEventListener("scroll", enforceSoundAndPlay, { passive: true, capture: true });
 
       return () => {
-        window.removeEventListener("touchstart", enforceSound, { capture: true });
-        window.removeEventListener("touchend", enforceSound, { capture: true });
-        window.removeEventListener("scroll", enforceSound, { capture: true });
-        window.removeEventListener("click", enforceSound, { capture: true });
+        window.removeEventListener("touchstart", enforceSoundAndPlay, { capture: true });
+        window.removeEventListener("pointerdown", enforceSoundAndPlay, { capture: true });
+        window.removeEventListener("scroll", enforceSoundAndPlay, { capture: true });
       };
     }
-  }, [isActive, isMuted, isActualMuted]);
+  }, [isActive, isMuted, pauseOtherVideos]);
 
   // Play / Pause video based on card active state, user feed initiation, and manual pause flag
   useEffect(() => {
@@ -235,48 +283,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     if (shouldPlay) {
       setShowPlayPauseFeedback(null);
-      
-      const audioReady = isAudioUnlocked();
-      // On mobile, if audio is unlocked we try to use the global isMuted state.
-      // If it's not unlocked, we must start muted to avoid Safari completely blocking the autoplay.
-      const targetMuted = audioReady ? isMuted : true;
-      
-      el.muted = targetMuted;
-      if (!targetMuted) {
-        el.volume = 1;
-      }
-
-      if (el.paused) {
-        const p = el.play();
-        if (p !== undefined) {
-          p.then(() => {
-            setIsPlaying(true);
-            setIsBuffering(false);
-          }).catch((err) => {
-            console.log("[VideoFeedCard] Autoplay restricted, playing muted:", err);
-            el.muted = true;
-            el.play().then(() => {
-              setIsPlaying(true);
-              setIsBuffering(false);
-            }).catch(() => {
-              setIsPlaying(false);
-            });
-          });
-        }
-      }
+      safePlay();
     } else {
-      if (!el.paused) {
-        el.pause();
-      }
+      safePause();
       if (!isActive) {
         el.currentTime = 0;
         setIsManuallyPaused(false);
         setProgressPercent(0);
       }
-      setIsPlaying(false);
       setShowPlayPauseFeedback(null);
     }
-  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused]);
+  }, [isActive, currentSource, isMuted, hasUserStartedFeed, isManuallyPaused, safePlay, safePause]);
+
 
   // Clean unmount safety
   useEffect(() => {

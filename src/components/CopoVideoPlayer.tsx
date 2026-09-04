@@ -313,6 +313,44 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [videos, onSelectVideoIndex]);
 
+  // Dual Scroll Engine Fallback: Direct mathematical scroll position tracker
+  // Guarantees index accuracy even if IntersectionObserver drops events during ultra-fast finger swipes on mobile
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let rafId: number | null = null;
+
+    const handleScroll = () => {
+      if (isProgrammaticScrollRef.current) return;
+      if (rafId) cancelAnimationFrame(rafId);
+
+      rafId = requestAnimationFrame(() => {
+        if (!container) return;
+        const containerHeight = container.clientHeight;
+        if (!containerHeight || containerHeight <= 0) return;
+
+        const calculatedIndex = Math.round(container.scrollTop / containerHeight);
+        if (
+          calculatedIndex >= 0 &&
+          calculatedIndex < videos.length &&
+          calculatedIndex !== currentIndexRef.current
+        ) {
+          currentIndexRef.current = calculatedIndex;
+          lastObserverIndexRef.current = calculatedIndex;
+          onSelectVideoIndex(calculatedIndex);
+          prefetchUpcomingVideos(videos, calculatedIndex);
+        }
+      });
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [videos, onSelectVideoIndex]);
+
   // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {
     if (currentIndex !== lastObserverIndexRef.current) {
