@@ -766,44 +766,44 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="px-5 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-2">
             <button
               onClick={handleOpenDirections}
-              className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
             >
               <div className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md">
                 <Navigation className="w-5 h-5 fill-zinc-950" />
               </div>
-              <span className="font-semibold text-[11px] text-zinc-300">Directions</span>
+              <span className="font-bold text-[11px] text-white">Directions</span>
             </button>
 
             <button
               onClick={() => onToggleGrabPlace && onToggleGrabPlace(place)}
-              className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
                   isSaved
                     ? "bg-white text-zinc-950"
-                    : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                    : "bg-zinc-800 text-white border border-zinc-700"
                 }`}
               >
                 {isSaved ? (
                   <BookmarkCheck className="w-5 h-5 fill-zinc-950" />
                 ) : (
-                  <Bookmark className="w-5 h-5" />
+                  <Bookmark className="w-5 h-5 text-white" />
                 )}
               </div>
-              <span className="font-semibold text-[11px] text-zinc-300">
+              <span className="font-bold text-[11px] text-white">
                 {isSaved ? "Saved" : "Save"}
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("reviews")}
-              className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 flex items-center justify-center shadow-sm">
-                <Video className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
+                <Video className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold text-[11px] text-zinc-300">Video Reviews</span>
+              <span className="font-bold text-[11px] text-white">Video Reviews</span>
             </button>
 
             {onStartChat && (
@@ -824,13 +824,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   onStartChat(place.claimedByEmail || place.id, place.name, getPlaceLogoUrl(place));
                 }}
-                className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
                 title={`Chat with ${formatBusinessName(place.name)}`}
               >
-                <div className="w-10 h-10 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 flex items-center justify-center shadow-sm">
-                  <MessageSquare className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
+                  <MessageSquare className="w-5 h-5 text-white" />
                 </div>
-                <span className="font-semibold text-[11px] text-zinc-300">Chat</span>
+                <span className="font-bold text-[11px] text-white">Chat</span>
               </button>
             )}
           </div>
