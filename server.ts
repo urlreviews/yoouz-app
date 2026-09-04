@@ -97,54 +97,6 @@ const globalUploadsDir = path.join(process.cwd(), "uploads");
 const reviewsIndexPath = path.join(globalUploadsDir, "reviews_index.json");
 const deletedReviewsIndexPath = path.join(globalUploadsDir, "deleted_reviews_index.json");
 
-function readReviewsIndex(): any[] {
-  try {
-    if (fs.existsSync(reviewsIndexPath)) {
-      const raw = fs.readFileSync(reviewsIndexPath, "utf8");
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {}
-
-  // Robust seed fallback for new container deployments / mounted volumes
-  const seedCandidates = [
-    path.join(process.cwd(), "public", "seeds", "reviews_index.json"),
-    path.join(process.cwd(), "public", "reviews_index.json"),
-    path.join(process.cwd(), "dist", "reviews_index.json")
-  ];
-
-  for (const seedPath of seedCandidates) {
-    try {
-      if (fs.existsSync(seedPath)) {
-        const raw = fs.readFileSync(seedPath, "utf8");
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          try {
-            if (!fs.existsSync(globalUploadsDir)) {
-              fs.mkdirSync(globalUploadsDir, { recursive: true });
-            }
-            fs.writeFileSync(reviewsIndexPath, raw, "utf8");
-            console.log(`📦 [Server] Auto-initialized ${parsed.length} reviews from seed ${seedPath}`);
-          } catch (writeErr) {
-            console.warn("Notice writing seed reviews index:", writeErr);
-          }
-          return parsed;
-        }
-      }
-    } catch (err) {}
-  }
-
-  return [];
-}
-
-function writeReviewsIndex(list: any[]): void {
-  try {
-    fs.writeFileSync(reviewsIndexPath, JSON.stringify(list, null, 2), "utf8");
-  } catch (e) {
-    console.warn("Failed to write reviews index:", e);
-  }
-}
-
 function readDeletedReviewsIndex(): string[] {
   try {
     if (fs.existsSync(deletedReviewsIndexPath)) {
@@ -163,9 +115,83 @@ function recordDeletedReviewId(id: string): void {
     const strId = String(id);
     if (!list.includes(strId)) {
       list.push(strId);
+      try {
+        if (!fs.existsSync(globalUploadsDir)) {
+          fs.mkdirSync(globalUploadsDir, { recursive: true });
+        }
+      } catch (e) {}
       fs.writeFileSync(deletedReviewsIndexPath, JSON.stringify(list, null, 2), "utf8");
     }
   } catch (e) {}
+}
+
+function readReviewsIndex(): any[] {
+  const deletedSet = new Set(readDeletedReviewsIndex());
+  try {
+    if (fs.existsSync(reviewsIndexPath)) {
+      const raw = fs.readFileSync(reviewsIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+      }
+    }
+  } catch (e) {}
+
+  // Robust seed fallback ONLY if reviews_index.json has NEVER been initialized
+  const seedCandidates = [
+    path.join(process.cwd(), "public", "seeds", "reviews_index.json"),
+    path.join(process.cwd(), "public", "reviews_index.json"),
+    path.join(process.cwd(), "dist", "reviews_index.json")
+  ];
+
+  for (const seedPath of seedCandidates) {
+    try {
+      if (fs.existsSync(seedPath)) {
+        const raw = fs.readFileSync(seedPath, "utf8");
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const filtered = parsed.filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+          try {
+            if (!fs.existsSync(globalUploadsDir)) {
+              fs.mkdirSync(globalUploadsDir, { recursive: true });
+            }
+            fs.writeFileSync(reviewsIndexPath, JSON.stringify(filtered, null, 2), "utf8");
+            console.log(`📦 [Server] Auto-initialized ${filtered.length} reviews from seed ${seedPath}`);
+          } catch (writeErr) {
+            console.warn("Notice writing seed reviews index:", writeErr);
+          }
+          return filtered;
+        }
+      }
+    } catch (err) {}
+  }
+
+  return [];
+}
+
+function writeReviewsIndex(list: any[]): void {
+  try {
+    const deletedSet = new Set(readDeletedReviewsIndex());
+    const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+    fs.writeFileSync(reviewsIndexPath, JSON.stringify(sanitized, null, 2), "utf8");
+  } catch (e) {
+    console.warn("Failed to write reviews index:", e);
+  }
+}
+
+// Live Real-Time Event Bus (Server-Sent Events) for instant cross-device updates (deletions, creations, edits)
+type SseClient = { id: string; res: express.Response };
+const sseClients: Set<SseClient> = new Set();
+
+function broadcastSseEvent(event: { type: string; [key: string]: any }) {
+  const payload = `data: ${JSON.stringify(event)}\n\n`;
+  for (const client of sseClients) {
+    try {
+      client.res.write(payload);
+    } catch (e) {
+      sseClients.delete(client);
+    }
+  }
 }
 
 interface VideoFeedCache {
@@ -176,7 +202,7 @@ const feedCache: VideoFeedCache = {
   videos: [],
   lastFetched: 0
 };
-const CACHE_TTL_MS = 5 * 1000;
+const CACHE_TTL_MS = 3 * 1000;
 
 const defaultCommunityUsers = [
   {
@@ -4005,6 +4031,9 @@ async function purgeVideoFromAllStores(videoId: string) {
     }
   }
 
+  // 9. Instant Live Real-Time Broadcast to all connected clients & devices
+  broadcastSseEvent({ type: "video_deleted", videoId: String(videoId) });
+
   return { success: true, videoId };
 }
 
@@ -5047,6 +5076,42 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       placeWebsite: website || r.placeWebsite || ""
     };
   };
+
+  // Real-Time Server-Sent Events (SSE) Stream for Instant Global Video Updates & Deletions
+  app.get("/api/videos/stream", (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    if (typeof (res as any).flushHeaders === "function") {
+      (res as any).flushHeaders();
+    }
+
+    const clientId = `sse-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const client: SseClient = { id: clientId, res };
+    sseClients.add(client);
+
+    // Initial handshake payload
+    const deletedIds = readDeletedReviewsIndex();
+    try {
+      res.write(`data: ${JSON.stringify({ type: "init", deletedIds, timestamp: Date.now() })}\n\n`);
+    } catch (e) {}
+
+    // Heartbeat to keep connection alive indefinitely
+    const heartbeat = setInterval(() => {
+      try {
+        res.write(`: heartbeat\n\n`);
+      } catch (e) {
+        clearInterval(heartbeat);
+        sseClients.delete(client);
+      }
+    }, 20000);
+
+    req.on("close", () => {
+      clearInterval(heartbeat);
+      sseClients.delete(client);
+    });
+  });
 
   // Get Video Feed endpoint (combines server index with Firestore and uploaded videos with memory caching & write-back resiliency)
   app.get("/api/videos/feed", async (_req, res) => {
@@ -7034,6 +7099,11 @@ app.post("/api/videos/save-review", async (req, res) => {
           } catch (e) {}
         }
       }
+
+      // 3. Reset in-memory feed cache & broadcast real-time purge to all active browsers
+      feedCache.videos = [];
+      feedCache.lastFetched = 0;
+      broadcastSseEvent({ type: "purge_all_videos" });
 
       return res.json({ success: true, message: "All video reviews, users, bookings, and simulated data successfully purged from the server." });
     } catch (err: any) {

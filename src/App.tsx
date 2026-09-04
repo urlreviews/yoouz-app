@@ -420,108 +420,153 @@ export function App() {
   }, []);
 
   const handleAdminDeleteVideo = async (id: string) => {
+    if (!id) return;
+    const targetId = String(id);
+
     // 1. Instantly remove from local videos state
-    setVideos(prev => {
-      const updated = prev.filter(v => v.id !== id);
-      try {
-        // Save to deleted videos list to prevent re-merging from any cache
-        const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-        let deletedVideos: string[] = [];
-        try { deletedVideos = JSON.parse(deletedStr); } catch(e){}
-        if (!deletedVideos.includes(id)) {
-          deletedVideos.push(id);
-          localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
-        }
-        const cached = localStorage.getItem("yoouz_cached_videos_v16");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) {
-            localStorage.setItem("yoouz_cached_videos_v16", JSON.stringify(parsed.filter(v => v.id !== id)));
-          }
-        }
-      } catch (e) {}
-      return updated;
-    });
-    
-    // 2. Call backend admin API for guaranteed deletion (preserves user accounts 100%)
+    setVideos(prev => prev.filter(v => v.id !== targetId));
+
+    // 2. Remove from places reviews list & recalculate counts
+    setPlaces(prev => prev.map(p => {
+      const remainingReviews = (p.reviews || []).filter(r => r.id !== targetId);
+      const wasInPlace = (p.reviews || []).some(r => r.id === targetId);
+      return {
+        ...p,
+        reviews: remainingReviews,
+        totalReviews: Math.max(0, (p.totalReviews || 0) - (wasInPlace ? 1 : 0))
+      };
+    }));
+
+    // 3. Dismiss any active modal/drawer viewing this deleted video
+    setActiveCommentVideo(prev => (prev?.id === targetId ? null : prev));
+    setActiveShareVideo(prev => (prev?.id === targetId ? null : prev));
+
+    // 4. Save to deleted videos list to prevent re-merging from any cache
     try {
+      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+      let deletedVideos: string[] = [];
+      try { deletedVideos = JSON.parse(deletedStr); } catch(e){}
+      if (!deletedVideos.includes(targetId)) {
+        deletedVideos.push(targetId);
+        localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
+      }
+      localStorage.removeItem("copo_videos");
+      localStorage.removeItem("yoouz_cached_videos_v20");
+      localStorage.removeItem("yoouz_cached_videos_v16");
+    } catch (e) {}
+
+    // 5. Broadcast window event for instant local component reactivity
+    window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: targetId } }));
+    
+    // 6. Call backend deletion APIs (purges BunnyDB, files, Bunny CDN, memory cache & broadcasts SSE)
+    try {
+      fetch("/api/videos/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId: targetId })
+      }).catch(() => {});
+
       fetch("/api/admin/videos/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId: id })
-      }).catch((e) => console.warn("Admin backend video delete notice:", e));
+        body: JSON.stringify({ videoId: targetId })
+      }).catch(() => {});
+
+      fetch(`/api/nosql/videoReviews/${encodeURIComponent(targetId)}`, {
+        method: "DELETE"
+      }).catch(() => {});
     } catch (e) {}
 
-    // 3. Delete directly from Firestore
+    // 7. Delete directly from Firestore
     try {
       if (db) {
-        deleteDoc(doc(db, "videoReviews", id)).catch(() => {});
-        deleteDoc(doc(db, "videos", id)).catch(() => {});
+        deleteDoc(doc(db, "videoReviews", targetId)).catch(() => {});
+        deleteDoc(doc(db, "videos", targetId)).catch(() => {});
       }
-    } catch (err) {
-      console.warn("Failed to delete video from Firestore:", err);
-    }
+    } catch (err) {}
   };
 
   const handleAdminBulkDeleteVideos = async (ids: string[]) => {
     if (!ids || ids.length === 0) return;
+    const targetIds = ids.map(String);
+    const idSet = new Set(targetIds);
 
     // 1. Instantly remove from local videos state
-    setVideos(prev => {
-      const updated = prev.filter(v => !ids.includes(v.id));
-      try {
-        // Save deleted video IDs to prevent re-merging
-        const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-        let deletedVideos: string[] = [];
-        try { deletedVideos = JSON.parse(deletedStr); } catch(e){}
-        ids.forEach(id => {
-          if (!deletedVideos.includes(id)) {
-            deletedVideos.push(id);
-          }
-        });
-        localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
-        
-        const cached = localStorage.getItem("yoouz_cached_videos_v16");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) {
-            localStorage.setItem("yoouz_cached_videos_v16", JSON.stringify(parsed.filter(v => !ids.includes(v.id))));
-          }
-        }
-      } catch (e) {}
-      return updated;
+    setVideos(prev => prev.filter(v => !idSet.has(v.id)));
+
+    // 2. Remove from places reviews list
+    setPlaces(prev => prev.map(p => ({
+      ...p,
+      reviews: (p.reviews || []).filter(r => !idSet.has(r.id))
+    })));
+
+    // 3. Dismiss any active modal/drawer viewing any of these deleted videos
+    setActiveCommentVideo(prev => (prev && idSet.has(prev.id) ? null : prev));
+    setActiveShareVideo(prev => (prev && idSet.has(prev.id) ? null : prev));
+
+    // 4. Save deleted video IDs to prevent re-merging
+    try {
+      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+      let deletedVideos: string[] = [];
+      try { deletedVideos = JSON.parse(deletedStr); } catch(e){}
+      targetIds.forEach(id => {
+        if (!deletedVideos.includes(id)) deletedVideos.push(id);
+      });
+      localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
+      localStorage.removeItem("copo_videos");
+      localStorage.removeItem("yoouz_cached_videos_v20");
+      localStorage.removeItem("yoouz_cached_videos_v16");
+    } catch (e) {}
+
+    // 5. Broadcast window events
+    targetIds.forEach(id => {
+      window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: id } }));
     });
     
-    // 2. Call backend admin API
+    // 6. Call backend admin API & video delete endpoints
     try {
       fetch("/api/admin/videos/bulk-delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoIds: ids })
-      }).catch((e) => console.warn("Admin backend bulk delete notice:", e));
+        body: JSON.stringify({ videoIds: targetIds })
+      }).catch(() => {});
+
+      targetIds.forEach(id => {
+        fetch("/api/videos/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: id })
+        }).catch(() => {});
+        fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+      });
     } catch (e) {}
 
-    // 3. Delete directly from Firestore
+    // 7. Delete directly from Firestore
     try {
       if (db) {
-        await Promise.all(ids.map(id => {
+        await Promise.all(targetIds.map(id => {
           deleteDoc(doc(db, "videoReviews", id)).catch(() => {});
           return deleteDoc(doc(db, "videos", id)).catch(() => {});
         }));
       }
-    } catch (err) {
-      console.warn("Failed to bulk delete videos from Firestore:", err);
-    }
+    } catch (err) {}
   };
 
   const handleAdminPurgeAllVideos = async () => {
     // 1. Instantly clear local videos state
     setVideos([]);
+    setPlaces(prev => prev.map(p => ({ ...p, reviews: [], totalReviews: 0 })));
+    setActiveCommentVideo(null);
+    setActiveShareVideo(null);
+
     try {
       localStorage.removeItem("copo_videos");
       localStorage.removeItem("copo_deleted_videos");
+      localStorage.removeItem("yoouz_cached_videos_v20");
       localStorage.removeItem("yoouz_cached_videos_v16");
     } catch (e) {}
+
+    window.dispatchEvent(new CustomEvent("copo-videos-purged"));
 
     // 2. Clear backend uploads on server
     try {
@@ -531,7 +576,6 @@ export function App() {
     // 3. Purge all videoReviews and videos from Firestore
     try {
       if (db) {
-        // Fetch directly from Firestore without relying on local state
         const snap = await getDocs(collection(db, "videoReviews"));
         const deletes = snap.docs.map((d) => deleteDoc(doc(db, "videoReviews", d.id)).catch(console.error));
         await Promise.all(deletes);
@@ -1462,45 +1506,7 @@ export function App() {
 
   const handleDeleteUserVideo = async (vidId: string) => {
     if (!vidId) return;
-    try {
-      console.log(`🗑️ [App] Deleting video ${vidId} live across all stores...`);
-
-      // 1. Instantly remove from local active state
-      setVideos((prev) => prev.filter((v) => v.id !== vidId));
-
-      // 2. Add to client deleted IDs cache
-      try {
-        const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-        const deletedList = JSON.parse(deletedStr);
-        if (!deletedList.includes(vidId)) {
-          deletedList.push(vidId);
-          localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedList));
-        }
-      } catch (e) {}
-
-      // 3. Broadcast window event for any open feed listeners
-      window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: vidId } }));
-
-      // 4. Live Server API call: permanently purge across BunnyDB, files, Bunny CDN, reviews_index.json & feedCache
-      fetch("/api/videos/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId: vidId })
-      }).catch((e) => console.warn("Live video deletion notice:", e));
-
-      // 5. Also issue DELETE to nosql proxy endpoint
-      fetch(`/api/nosql/videoReviews/${encodeURIComponent(vidId)}`, {
-        method: "DELETE"
-      }).catch(() => {});
-
-      // 6. Delete from client Firestore if configured
-      if (db) {
-        await deleteDoc(doc(db, "videoReviews", vidId)).catch(() => {});
-        await deleteDoc(doc(db, "videos", vidId)).catch(() => {});
-      }
-    } catch(e) {
-      console.warn("Delete video error:", e);
-    }
+    await handleAdminDeleteVideo(vidId);
   };
 
   const handleUpdateVideoReview = async (
@@ -3371,19 +3377,11 @@ export function App() {
 
   // Handle Deleting a Video Review
   const handleDeleteVideo = async (videoId: string) => {
+    if (!videoId) return;
     if (!window.confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
       return;
     }
-
-    setVideos((prev) => prev.filter((v) => v.id !== videoId));
-
-    try {
-      if (db) {
-        await deleteDoc(doc(db, "videoReviews", videoId));
-      }
-    } catch (err) {
-      console.warn("Firestore delete video error:", err);
-    }
+    await handleAdminDeleteVideo(videoId);
   };
 
   // Handle Grab / Save Place to Profile

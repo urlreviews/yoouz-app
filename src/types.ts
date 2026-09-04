@@ -232,6 +232,7 @@ export interface Place {
   subscriptionPaymentMethod?: string;
   subscriptionTransactionId?: string;
   subscriptionMessagesSent?: number;
+  reviews?: any[];
 }
 
 export interface Club {

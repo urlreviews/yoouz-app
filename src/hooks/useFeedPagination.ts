@@ -2,6 +2,25 @@ import { useState, useEffect } from 'react';
 import { VideoReview } from '../types';
 import { getDisplayViews, resolveSafeAuthor } from '../utils/placeUtils';
 
+// Helper to record deleted video IDs in localStorage to avoid re-rendering stale caches
+function recordClientDeletedId(id: string) {
+  if (!id) return;
+  try {
+    const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+    let deletedIds: string[] = [];
+    try {
+      const parsed = JSON.parse(deletedStr);
+      if (Array.isArray(parsed)) deletedIds = parsed;
+    } catch (e) {}
+
+    const strId = String(id);
+    if (!deletedIds.includes(strId)) {
+      deletedIds.push(strId);
+      localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedIds));
+    }
+  } catch (e) {}
+}
+
 // Helper to cleanly sanitize and normalize author data
 function normalizeReview(v: any): VideoReview {
   try {
@@ -35,7 +54,6 @@ function normalizeReview(v: any): VideoReview {
     };
   } catch (err) {
     console.error("[DEBUG feed] Critical error in normalizeReview:", err, v);
-    // Fallback to a safe minimal object to avoid breaking the entire feed
     return {
       ...v,
       id: v?.id || `rev-err-${Math.random().toString(36).substring(2, 9)}`,
@@ -169,24 +187,83 @@ export function useFeedPagination() {
       }
     };
 
-    // Listen for live video deletion events in current window
+    // 2. Real-Time Server-Sent Events (SSE) stream for instant cross-device deletions & updates
+    let sse: EventSource | null = null;
+    let sseReconnectTimeout: any = null;
+
+    const setupSse = () => {
+      try {
+        sse = new EventSource("/api/videos/stream");
+
+        sse.onmessage = (event) => {
+          if (!active) return;
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload.type === "video_deleted" && payload.videoId) {
+              const targetId = String(payload.videoId);
+              recordClientDeletedId(targetId);
+              setVideos((prev) => prev.filter((v) => v.id !== targetId));
+              window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: targetId } }));
+            } else if (payload.type === "bulk_videos_deleted" && Array.isArray(payload.videoIds)) {
+              const idSet = new Set(payload.videoIds.map(String));
+              payload.videoIds.forEach((id: string) => recordClientDeletedId(id));
+              setVideos((prev) => prev.filter((v) => !idSet.has(v.id)));
+              payload.videoIds.forEach((id: string) => {
+                window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: id } }));
+              });
+            } else if (payload.type === "purge_all_videos") {
+              setVideos([]);
+              try {
+                localStorage.removeItem("copo_videos");
+                localStorage.removeItem("yoouz_cached_videos_v20");
+                localStorage.removeItem("yoouz_cached_videos_v16");
+              } catch (e) {}
+              window.dispatchEvent(new CustomEvent("copo-videos-purged"));
+            } else if (payload.type === "init" && Array.isArray(payload.deletedIds)) {
+              const serverDelSet = new Set(payload.deletedIds.map(String));
+              payload.deletedIds.forEach((id: string) => recordClientDeletedId(id));
+              setVideos((prev) => prev.filter((v) => !serverDelSet.has(v.id)));
+            }
+          } catch (e) {}
+        };
+
+        sse.onerror = () => {
+          if (sse) {
+            sse.close();
+            sse = null;
+          }
+          if (active) {
+            sseReconnectTimeout = setTimeout(setupSse, 3000);
+          }
+        };
+      } catch (e) {}
+    };
+
+    setupSse();
+
+    // 3. Listen for live video deletion events in current window
     const handleVideoDeletedEvent = (e: any) => {
       const deletedId = e?.detail?.videoId;
       if (deletedId) {
+        recordClientDeletedId(deletedId);
         setVideos((prev) => prev.filter((v) => v.id !== deletedId));
       }
     };
+    const handleVideosPurgedEvent = () => {
+      setVideos([]);
+    };
     window.addEventListener("copo-video-deleted", handleVideoDeletedEvent);
+    window.addEventListener("copo-videos-purged", handleVideosPurgedEvent);
 
     // Initial load
     loadData(false);
 
-    // Live background polling every 5 seconds for instant multi-device rating updates
+    // Live background polling every 3 seconds as ultra-reliable synchronization fallback
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         loadData(true);
       }
-    }, 5000);
+    }, 3000);
 
     // Immediate refresh on tab focus / app resume
     const handleVisibilityOrFocus = () => {
@@ -201,7 +278,13 @@ export function useFeedPagination() {
     return () => {
       active = false;
       clearInterval(interval);
+      if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
+      if (sse) {
+        sse.close();
+        sse = null;
+      }
       window.removeEventListener("copo-video-deleted", handleVideoDeletedEvent);
+      window.removeEventListener("copo-videos-purged", handleVideosPurgedEvent);
       window.removeEventListener("focus", handleVisibilityOrFocus);
       document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
     };
@@ -213,4 +296,3 @@ export function useFeedPagination() {
 
   return { videos, setVideos, isLoading, loadMore, hasMore };
 }
-
