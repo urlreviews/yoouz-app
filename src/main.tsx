@@ -20,7 +20,7 @@ if (typeof (window as any).__dismissAppSplash === 'function') {
 // Register Progressive Web App Service Worker
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
+    navigator.serviceWorker.register(`/sw.js?v=${new Date().getTime()}`).catch((err) => {
       console.warn('PWA Service Worker registration skipped:', err);
     });
   });

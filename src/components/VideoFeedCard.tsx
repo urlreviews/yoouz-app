@@ -577,10 +577,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       {/* Vignette Gradients for readable text */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/85 z-10 pointer-events-none" />
 
-      {/* Top Header Overlay (iOS & Android Universal Ergonomics) - Using explicit absolute positioning for maximum reliability */}
+      {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-50 to stay above everything */}
       <div 
-        className="absolute top-0 left-0 right-0 z-40 flex items-start justify-between p-3.5 sm:p-4 pointer-events-none"
-        style={{ paddingTop: "max(14px, env(safe-area-inset-top, 14px))" }}
+        className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 pointer-events-none"
+        style={{ paddingTop: "max(16px, env(safe-area-inset-top, 16px))" }}
       >
         {/* Left side: Navigation / Brand - pointer-events-auto to capture taps */}
         <div className="pointer-events-auto">
@@ -599,7 +599,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }
                 onGoBack();
               }}
-              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white active:scale-90 transition-all shadow-lg cursor-pointer"
+              className="w-11 h-11 rounded-full bg-zinc-900/90 hover:bg-black backdrop-blur-xl border border-white/30 flex items-center justify-center text-white active:scale-90 transition-all shadow-2xl cursor-pointer"
               title="Go back"
             >
               <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
@@ -612,27 +612,27 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 e.stopPropagation();
                 if (onOpenMenu) onOpenMenu();
               }}
-              className="flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-xl border border-white/25 shadow-md cursor-pointer transition-all text-white"
+              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-full bg-zinc-900/90 hover:bg-black active:scale-95 backdrop-blur-xl border border-white/30 shadow-2xl cursor-pointer transition-all text-white"
               title="Open Navigation Menu"
             >
-              <Menu className="w-4 h-4 text-white shrink-0" strokeWidth={2.2} />
-              <span className="text-xs font-bold tracking-tight text-white drop-shadow">Yoouz</span>
+              <Menu className="w-5 h-5 text-white shrink-0" strokeWidth={2.5} />
+              <span className="text-[13px] font-bold pr-1">Menu</span>
             </button>
           )}
         </div>
 
         {/* Center: Context Title if viewing a specific place or category */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 p-3.5 sm:p-4 w-full max-w-[50%] flex justify-center pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 p-4 w-full max-w-[45%] flex justify-center pointer-events-none">
           {feedContextTitle && 
             !feedContextTitle.startsWith("@") && 
             feedContextTitle.trim().toLowerCase() !== (safeAuthor.name || "").trim().toLowerCase() && (
-            <div className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold shadow-md truncate text-center pointer-events-auto">
+            <div className="px-3.5 py-1.5 rounded-full bg-zinc-900/90 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold shadow-2xl truncate text-center pointer-events-auto">
               {feedContextTitle}
             </div>
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Identical on Mobile & Desktop) */}
+        {/* Right side: Sound Mute / Unmute Toggle Button (Universal) */}
         <div className="pointer-events-auto">
           <button
             type="button"
@@ -641,7 +641,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               handleToggleMute(e);
             }}
-            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 active:scale-90 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white transition-all cursor-pointer shadow-lg"
+            className="w-11 h-11 rounded-full bg-zinc-900/90 hover:bg-black active:scale-90 backdrop-blur-xl border border-white/30 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
             title={isMuted ? "Unmute sound" : "Mute sound"}
             aria-label={isMuted ? "Unmute sound" : "Mute sound"}
           >

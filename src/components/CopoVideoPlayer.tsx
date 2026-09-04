@@ -100,13 +100,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     return window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   };
 
-  // On mobile & desktop: the first video of a feed requires a tap to initiate (standard privacy/UX)
-  // User says: "I need to click the first video to start"
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
+  // Videos autoplay immediately on both mobile & desktop (standard YouTube Shorts / TikTok UX)
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
 
-  // Reset feed initiation on context/page switch
+  // Maintain immediate autoplay across tab & context switches
   useEffect(() => {
-    setHasUserStartedFeed(false);
+    setHasUserStartedFeed(true);
   }, [activeSubTab, contextKey, feedContextTitle]);
 
   // Edit Rating State
