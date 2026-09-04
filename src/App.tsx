@@ -56,8 +56,8 @@ import {
 export function App() {
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
-    // Current App Version Timestamp (Updated: 2026-09-04-V25-MOBILE-PERFECT-BALANCE)
-    const APP_VERSION = "2026-09-04-V25-MOBILE-PERFECT-BALANCE"; 
+    // Current App Version Timestamp (Updated: 2026-09-04-V26-PROXY-CLEAN-DOMAINS)
+    const APP_VERSION = "2026-09-04-V26-PROXY-CLEAN-DOMAINS"; 
     try {
       const savedVersion = localStorage.getItem("yoouz_app_version");
       if (savedVersion && savedVersion !== APP_VERSION) {
