@@ -327,6 +327,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     triggerHaptic("light");
 
+    if (!hasUserStartedFeed) {
+      if (onStartFeed) onStartFeed();
+      isManuallyPausedRef.current = false;
+      setIsManuallyPaused(false);
+      safePlay();
+      if (e) triggerFeedback("play");
+      return;
+    }
+
     if (el.paused || isManuallyPaused) {
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
@@ -482,7 +491,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       id={`copo-video-card-${video.id}`}
       onClick={handleCardClick}
       onDoubleClick={handleDoubleTapLike}
-      className="snap-start snap-always shrink-0 relative w-full h-full md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-between cursor-pointer group"
+      className="snap-start snap-always shrink-0 relative w-full h-full md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-end cursor-pointer group"
     >
       {/* Video Container */}
       <div
@@ -498,7 +507,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             src={currentSource}
             poster={resolveVideoPosterUrl(video)}
             preload="auto"
-            autoPlay={isActive}
+            autoPlay={isActive && hasUserStartedFeed}
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
@@ -568,14 +577,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       {/* Vignette Gradients for readable text */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/85 z-10 pointer-events-none" />
 
-      {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-30 to stay above tap-to-play overlay */}
+      {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-40 to stay firmly above background & video */}
       <header
         id={`copo-video-top-brand-${video.id}`}
         onClick={(e) => e.stopPropagation()}
-        className="relative z-30 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top,14px)+10px)] md:pt-4 pb-2 pointer-events-auto"
+        className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-3.5 sm:px-4 pt-[max(12px,env(safe-area-inset-top,12px))] md:pt-4 pb-2 pointer-events-auto"
       >
         {/* Left side: Back button if inside a place/creator feed, or interactive Drawer Menu & Brand button */}
-        <div className="flex items-center gap-2 min-w-[70px]">
+        <div className="flex items-center gap-2 min-w-[70px] shrink-0">
           {onGoBack ? (
             <button
               id={`btn-feed-back-${video.id}`}
@@ -612,18 +621,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
 
         {/* Center: Context Title if viewing a specific place or category (never creator person name) */}
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center px-2 min-w-0">
           {feedContextTitle && 
             !feedContextTitle.startsWith("@") && 
             feedContextTitle.trim().toLowerCase() !== (safeAuthor.name || "").trim().toLowerCase() && (
-            <div className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-bold shadow-md max-w-[180px] sm:max-w-[240px] truncate text-center">
+            <div className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-bold shadow-md max-w-[150px] sm:max-w-[220px] truncate text-center">
               {feedContextTitle}
             </div>
           )}
         </div>
 
         {/* Right side: Sound Mute / Unmute Toggle Button (Universal for Mobile & Desktop, identical to YouTube Shorts) */}
-        <div className="flex items-center justify-end gap-2 min-w-[70px]">
+        <div className="flex items-center justify-end gap-2 min-w-[70px] shrink-0">
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
@@ -666,20 +675,33 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Center Play Button - shown only when paused (YouTube Shorts style) */}
-      {isActive && isManuallyPaused && !showPlayPauseFeedback && (
-        <button
-          type="button"
-          id={`copo-play-center-btn-${video.id}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            togglePlayPause(e);
-          }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-20 h-20 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-2xl pointer-events-auto cursor-pointer active:scale-95 hover:scale-105 transition-transform"
-          aria-label="Play video"
-        >
-          <Play className="w-9 h-9 fill-white translate-x-0.5" />
-        </button>
+      {/* Center Play Button (On mobile: prominent blue button; video does not start automatically until clicked) */}
+      {isActive && (!hasUserStartedFeed || isManuallyPaused) && !showPlayPauseFeedback && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto">
+          <button
+            type="button"
+            id={`copo-play-center-btn-${video.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlayPause(e);
+            }}
+            className={`w-20 h-20 sm:w-22 sm:h-22 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-2xl ${
+              !hasUserStartedFeed
+                ? "bg-blue-600 hover:bg-blue-500 shadow-[0_0_36px_rgba(37,99,235,0.75)] border-2 border-white/60"
+                : "bg-blue-600 md:bg-black/60 md:backdrop-blur-md shadow-[0_0_28px_rgba(37,99,235,0.6)] md:shadow-2xl border-2 border-white/50 md:border-white/25"
+            }`}
+            aria-label="Play video"
+          >
+            {/* Pulsing gentle invitation ring on mobile for initial start */}
+            {!hasUserStartedFeed && (
+              <span
+                className="absolute inset-0 rounded-full bg-blue-500/40 animate-ping opacity-60 pointer-events-none"
+                style={{ animationDuration: "2s" }}
+              />
+            )}
+            <Play className="w-10 h-10 fill-white text-white translate-x-0.5 drop-shadow-md relative z-10" />
+          </button>
+        </div>
       )}
 
 
@@ -705,7 +727,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       )}
 
       {/* Bottom Area: Metadata & Actions Container - elevated to z-30 */}
-      <div className="relative z-30 w-full flex items-end justify-between px-4 pb-[calc(env(safe-area-inset-bottom,8px)+48px)] md:pb-6 pt-4 pointer-events-none">
+      <div className="relative z-30 w-full flex items-end justify-between px-4 pb-3 md:pb-6 pt-4 pointer-events-none">
         
         {/* Bottom Video Metadata & Place Badge */}
         <footer
