@@ -3555,7 +3555,28 @@ export function App() {
   };
 
   const isUserOwnerOfCommentPlace = useMemo(() => {
-    if (!activeCommentVideo || !currentUser) return false;
+    if (!activeCommentVideo) return false;
+
+    // 1. Check verified business session or claimed places storage
+    try {
+      const rawSession = localStorage.getItem('copo_business_verified_session');
+      if (rawSession) {
+        const sess = JSON.parse(rawSession);
+        if (sess && sess.placeId === activeCommentVideo.placeId) {
+          return true;
+        }
+      }
+      const rawClaimed = localStorage.getItem('copo_claimed_places');
+      if (rawClaimed) {
+        const claimedList = JSON.parse(rawClaimed);
+        if (Array.isArray(claimedList) && claimedList.includes(activeCommentVideo.placeId)) {
+          return true;
+        }
+      }
+    } catch (e) {}
+
+    // 2. Check logged-in user credentials against place
+    if (!currentUser) return false;
     const place = places.find((p) => p.id === activeCommentVideo.placeId);
     if (!place) return false;
     return Boolean(

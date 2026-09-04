@@ -203,6 +203,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           placeId: targetPlace.id,
+          placeName: targetPlace.name,
           website: url,
           expectedTag: `verify_${targetPlace.id || 'business'}`
         })
@@ -211,7 +212,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
       const data = await response.json();
       if (response.ok && data.verified) {
         setTagSuccess(true);
-        const session: BusinessSession = {
+        const session: BusinessSession = data.session || {
           businessEmail: `verified_webmaster@${url.replace(/^https?:\/\//, '').split('/')[0]}`,
           placeId: targetPlace.id || 'place-custom',
           placeName: targetPlace.name || 'Verified Venue',

@@ -7,11 +7,15 @@ import {
   Sparkles, 
   AlertCircle, 
   ArrowLeft, 
-  ChevronRight,
-  ArrowRight,
-  ShieldCheck,
-  Code,
-  QrCode
+  ChevronRight, 
+  ArrowRight, 
+  ShieldCheck, 
+  Code, 
+  QrCode,
+  Copy,
+  Globe,
+  Search,
+  ExternalLink
 } from 'lucide-react';
 import { Place, NavSection } from '../types';
 import { BusinessSession } from './CopoBusinessClaimModal';
@@ -33,21 +37,41 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
   initialMode = 'signin',
   onCancelSelectedPlace,
 }) => {
+  // Verification method: Email magic link vs HTML Code Tag
+  const [authMethod, setAuthMethod] = useState<'email' | 'html_tag'>('email');
+
   // State
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(initialPlace || null);
 
+  // HTML Meta Tag State
+  const [websiteUrl, setWebsiteUrl] = useState<string>(initialPlace?.website || '');
+  const [copiedTag, setCopiedTag] = useState(false);
+  const [tagSuccess, setTagSuccess] = useState(false);
+  const [placeSearchTerm, setPlaceSearchTerm] = useState('');
+  const [isSearchingPlace, setIsSearchingPlace] = useState(false);
+
   useEffect(() => {
     setSelectedPlace(initialPlace || null);
+    if (initialPlace?.website) {
+      setWebsiteUrl(initialPlace.website);
+    }
   }, [initialPlace]);
-  const [searchQuery, setSearchQuery] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // 6-Digit Code State
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Filtered places for HTML tag claiming
+  const filteredPlaces = places.filter(p => 
+    p.name.toLowerCase().includes(placeSearchTerm.toLowerCase()) || 
+    p.address.toLowerCase().includes(placeSearchTerm.toLowerCase()) ||
+    (p.website && p.website.toLowerCase().includes(placeSearchTerm.toLowerCase()))
+  );
 
   // Auto-detect matching place by email domain
   const findMatchingPlaceForEmail = (emailStr: string): Place | null => {
@@ -197,9 +221,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
     // Auto-detect business
     let matched = selectedPlace || findMatchingPlaceForEmail(cleanEmail);
     
-    // If not matched, show error
+    // If not matched, show error with option to verify via HTML tag
     if (!matched) {
-      setErrorMessage('Your email domain does not match any known business. Please claim your business from its official Yoouz page.');
+      setErrorMessage('Email domain does not match a listed venue. Select your business below or use the HTML Code Tag method to verify domain ownership.');
       return;
     }
 
@@ -234,6 +258,17 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
       const data = await response.json();
       if (response.ok && data.success && data.session) {
         localStorage.setItem('copo_business_verified_session', JSON.stringify(data.session));
+        
+        // Save to claimed places list
+        try {
+          const raw = localStorage.getItem('copo_claimed_places') || '[]';
+          const list = JSON.parse(raw);
+          if (!list.includes(placeId)) {
+            list.push(placeId);
+            localStorage.setItem('copo_claimed_places', JSON.stringify(list));
+          }
+        } catch (e) {}
+
         window.dispatchEvent(new CustomEvent('copo_business_auth_changed', { detail: data.session }));
         onSuccessAuth(data.session);
       } else {
@@ -246,7 +281,69 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
     }
   };
 
+  // HTML Meta Tag Verification Handler
+  const currentExpectedTag = `<meta name="yoouz-verification" content="verify_${selectedPlace?.id || 'business'}" />`;
 
+  const handleVerifyWebsiteTag = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const url = websiteUrl.trim() || selectedPlace?.website;
+    if (!url) {
+      setErrorMessage('Please specify your official website URL.');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(null);
+    setTagSuccess(false);
+
+    try {
+      const response = await fetch('/api/business/verify-website-tag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          placeId: selectedPlace?.id || 'place-custom',
+          placeName: selectedPlace?.name || 'Verified Venue',
+          website: url,
+          expectedTag: `verify_${selectedPlace?.id || 'business'}`,
+          userEmail: email.trim() || undefined
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.verified && data.session) {
+        setTagSuccess(true);
+        localStorage.setItem('copo_business_verified_session', JSON.stringify(data.session));
+
+        // Save to claimed places list
+        try {
+          const raw = localStorage.getItem('copo_claimed_places') || '[]';
+          const list = JSON.parse(raw);
+          const pId = selectedPlace?.id || 'place-custom';
+          if (!list.includes(pId)) {
+            list.push(pId);
+            localStorage.setItem('copo_claimed_places', JSON.stringify(list));
+          }
+        } catch (e) {}
+
+        window.dispatchEvent(new CustomEvent('copo_business_auth_changed', { detail: data.session }));
+        setTimeout(() => {
+          onSuccessAuth(data.session);
+        }, 1200);
+      } else {
+        setErrorMessage(data.message || 'Verification meta tag was not detected in your website homepage <head>.');
+      }
+    } catch (err: any) {
+      setErrorMessage('Unable to reach your website server. Please verify the URL and ensure the tag is deployed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCopyTag = () => {
+    navigator.clipboard.writeText(currentExpectedTag);
+    setCopiedTag(true);
+    setTimeout(() => setCopiedTag(false), 2000);
+  };
 
   return (
     <div className="w-full h-full min-h-0 flex-1 overflow-y-auto bg-zinc-950 flex flex-col antialiased text-white selection:bg-zinc-800 selection:text-white copo-business-auth-landing">
@@ -288,23 +385,65 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
       </header>
 
       {/* 2. Main Authentication Card */}
-      <main className="flex-1 max-w-md w-full mx-auto px-4 py-12 sm:py-16 pb-28 flex flex-col items-center justify-start shrink-0">
+      <main className="flex-1 max-w-lg w-full mx-auto px-4 py-8 sm:py-12 pb-28 flex flex-col items-center justify-start shrink-0">
         
         {/* Header */}
-        <div className="text-center w-full mb-8">
+        <div className="text-center w-full mb-6">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Sign in to Yoouz Business
           </h1>
           <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
-            Manage your verified listing, video reviews, and customer engagement.
+            Claim your business, respond to video reviews, and engage customers as the verified owner.
           </p>
         </div>
 
         {/* Card */}
         <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 shadow-xl p-6 sm:p-8 transition-all">
           
-          {/* STEP 1: EMAIL INPUT */}
+          {/* METHOD SWITCHER TABS (Only in initial step) */}
           {step === 'email' && (
+            <div className="flex bg-zinc-950 p-1 rounded-2xl border border-zinc-800 mb-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMethod('email');
+                  setErrorMessage(null);
+                  setTagSuccess(false);
+                }}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  authMethod === 'email'
+                    ? 'bg-zinc-800 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Mail className="w-4 h-4 text-zinc-300" />
+                <span>Work Email</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMethod('html_tag');
+                  setErrorMessage(null);
+                  setTagSuccess(false);
+                }}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  authMethod === 'html_tag'
+                    ? 'bg-zinc-800 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Code className="w-4 h-4 text-blue-400" />
+                <span>HTML Code Tag</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 text-[10px] font-bold border border-blue-500/30">
+                  Instant
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* METHOD 1: EMAIL MAGIC LINK */}
+          {authMethod === 'email' && step === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-zinc-300 mb-1.5">
@@ -324,9 +463,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 </div>
               </div>
 
-              {/* Optional selected venue indicator if previously picked */}
+              {/* Selected venue indicator if picked */}
               {selectedPlace && (
-                <div className="p-2.5 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-between text-xs">
+                <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-between text-xs">
                   <div className="truncate pr-2">
                     <span className="font-semibold text-zinc-200 block truncate">{selectedPlace.name}</span>
                     <span className="text-[11px] text-zinc-400 block truncate">{selectedPlace.address}</span>
@@ -348,17 +487,27 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         onCancelSelectedPlace();
                       }
                     }}
-                    className="text-white text-xs font-semibold shrink-0 hover:underline cursor-pointer"
+                    className="text-zinc-400 text-xs font-semibold shrink-0 hover:text-white hover:underline cursor-pointer"
                   >
-                    Cancel
+                    Change
                   </button>
                 </div>
               )}
 
               {errorMessage && (
-                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
-                  <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
-                  <span>{errorMessage}</span>
+                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-start gap-2.5 text-xs text-zinc-300">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 leading-relaxed">
+                    <p>{errorMessage}</p>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMethod('html_tag')}
+                      className="mt-1.5 text-blue-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Switch to HTML Code Tag verification</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -382,8 +531,8 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
             </form>
           )}
 
-          {/* STEP 2: CODE VERIFICATION */}
-          {step === 'code' && (
+          {/* METHOD 1 STEP 2: CODE VERIFICATION */}
+          {authMethod === 'email' && step === 'code' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="text-center space-y-1">
                 <h2 className="text-base font-bold text-white">Check your inbox</h2>
@@ -442,6 +591,175 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* METHOD 2: HTML META TAG VERIFICATION */}
+          {authMethod === 'html_tag' && (
+            <div className="space-y-4 animate-in fade-in">
+              {/* Place Selection / Confirmation */}
+              {!selectedPlace ? (
+                <div className="space-y-3">
+                  <label className="block text-xs font-bold text-zinc-300">
+                    Select Your Business
+                  </label>
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={placeSearchTerm}
+                      onChange={(e) => setPlaceSearchTerm(e.target.value)}
+                      placeholder="Search business name or address..."
+                      className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-750 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600"
+                    />
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto space-y-1.5 p-1 bg-zinc-950 rounded-xl border border-zinc-800">
+                    {filteredPlaces.slice(0, 5).map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlace(p);
+                          if (p.website) setWebsiteUrl(p.website);
+                          setErrorMessage(null);
+                        }}
+                        className="w-full p-2.5 rounded-lg text-left hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
+                      >
+                        <div className="truncate pr-2">
+                          <p className="text-xs font-bold text-zinc-200 group-hover:text-white truncate">{p.name}</p>
+                          <p className="text-[10px] text-zinc-400 truncate">{p.address}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-zinc-200 shrink-0" />
+                      </button>
+                    ))}
+                    {filteredPlaces.length === 0 && (
+                      <p className="text-xs text-zinc-500 text-center py-4">No matching business found</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Selected Place Banner */}
+                  <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3 truncate pr-2">
+                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-750 flex items-center justify-center shrink-0 text-zinc-300">
+                        <Building2 className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <div className="truncate">
+                        <h3 className="text-xs font-bold text-white truncate">{selectedPlace.name}</h3>
+                        <p className="text-[11px] text-zinc-400 truncate">{selectedPlace.address}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPlace(null);
+                        setErrorMessage(null);
+                      }}
+                      className="text-zinc-400 text-xs font-semibold hover:text-white cursor-pointer px-2 py-1 rounded-md hover:bg-zinc-800"
+                    >
+                      Change
+                    </button>
+                  </div>
+
+                  {/* Target Website URL */}
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center justify-between">
+                      <span>Official Website URL</span>
+                      <span className="text-[10px] text-zinc-500 font-normal">Homepage where tag is placed</span>
+                    </label>
+                    <div className="relative">
+                      <Globe className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="url"
+                        value={websiteUrl}
+                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                        placeholder="https://yourwebsite.com"
+                        className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-750 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600"
+                      />
+                    </div>
+                  </div>
+
+                  {/* HTML Tag Snippet */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-zinc-300 flex items-center gap-1.5">
+                        <Code className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Add this 1-line tag to your HTML</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCopyTag}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px] font-semibold transition-colors cursor-pointer border border-zinc-700"
+                      >
+                        {copiedTag ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span className="text-emerald-400">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy Tag</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl font-mono text-[11.5px] text-blue-300 break-all select-all leading-relaxed">
+                      {currentExpectedTag}
+                    </div>
+
+                    <p className="text-[11px] text-zinc-400 leading-relaxed pt-1">
+                      Paste this tag into the <code className="bg-zinc-800 px-1 py-0.5 rounded-sm text-zinc-200">&lt;head&gt;</code> section of your website homepage (WordPress, Shopify, Wix, Squarespace, or custom code).
+                    </p>
+                  </div>
+
+                  {tagSuccess && (
+                    <div className="p-3.5 bg-emerald-950/50 border border-emerald-800/80 rounded-xl flex items-center gap-3 text-xs text-emerald-200 animate-in zoom-in-95">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                        <Check className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Official Ownership Verified!</p>
+                        <p className="text-[11px] text-emerald-300/80 mt-0.5">
+                          You can now manage your venue and reply to comments as the verified owner.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {errorMessage && (
+                    <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-start gap-2.5 text-xs text-zinc-300">
+                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="leading-relaxed">
+                        <p>{errorMessage}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Verify Button */}
+                  <button
+                    type="button"
+                    onClick={handleVerifyWebsiteTag}
+                    disabled={isLoading || !websiteUrl}
+                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Checking Website Live...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Check Website & Verify Instantly</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

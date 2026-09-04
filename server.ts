@@ -6703,7 +6703,7 @@ app.post("/api/videos/save-review", async (req, res) => {
   // 3. Website Meta Tag Live HTML Crawl Verification
   app.post("/api/business/verify-website-tag", async (req, res) => {
     try {
-      const { placeId, website, expectedTag } = req.body;
+      const { placeId, placeName, website, expectedTag, userEmail } = req.body;
       if (!website || typeof website !== 'string') {
         return res.status(400).json({ error: "Missing website URL to verify." });
       }
@@ -6743,10 +6743,29 @@ app.post("/api/videos/save-review", async (req, res) => {
         console.warn("Website tag crawl warning:", crawlErr?.message);
       }
 
+      let session = null;
+      if (tagFound) {
+        const cleanPlaceId = placeId || 'place-custom';
+        const cleanPlaceName = placeName || 'Verified Business';
+        const cleanDomain = targetUrl.replace(/^https?:\/\//, '').split('/')[0];
+        const bizEmail = userEmail || `owner@${cleanDomain}`;
+        
+        session = {
+          businessEmail: bizEmail,
+          placeId: cleanPlaceId,
+          placeName: cleanPlaceName,
+          verifiedAt: new Date().toISOString(),
+          role: 'business_owner',
+          verificationMethod: 'website_meta_tag',
+          token: `biz_session_tag_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`
+        };
+      }
+
       return res.json({
         success: true,
         verified: tagFound,
         tagFound,
+        session,
         website: targetUrl,
         expectedTag: `<meta name="yoouz-verification" content="${expectedContent}" />`,
         metaTagDetected: metaTagContent || null,
