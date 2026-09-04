@@ -1,9 +1,13 @@
-name: Deploy Yoouz App (Cloud Run + Bunny & Resend)
+name: Deploy Yoouz App (Bunny Magic Containers & Cloud Run)
 
 on:
   push:
     branches:
       - main
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   deploy:
@@ -24,33 +28,56 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Authenticate to Google Cloud
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry (for Bunny Magic Containers)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push to GitHub Container Registry
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:latest
+
+      - name: Trigger Bunny Magic Containers Webhook (if configured)
+        if: env.BUNNY_WEBHOOK != ''
+        env:
+          BUNNY_WEBHOOK: ${{ secrets.BUNNY_DEPLOY_WEBHOOK }}
+        run: |
+          curl -s -X POST "${{ secrets.BUNNY_DEPLOY_WEBHOOK }}" || true
+
+      - name: Authenticate to Google Cloud (Fallback)
+        if: env.GCP_CRED != ''
         id: auth
+        env:
+          GCP_CRED: ${{ secrets.GCP_CREDENTIALS }}
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
-      - name: Set up Cloud SDK
+      - name: Set up Cloud SDK (Fallback)
+        if: env.GCP_CRED != ''
+        env:
+          GCP_CRED: ${{ secrets.GCP_CREDENTIALS }}
         uses: 'google-github-actions/setup-gcloud@v2'
 
-      - name: Deploy to Cloud Run (Backend)
+      - name: Deploy to Cloud Run (Fallback)
+        if: env.GCP_CRED != ''
+        env:
+          GCP_CRED: ${{ secrets.GCP_CREDENTIALS }}
         run: |
           gcloud auth configure-docker --quiet
-          docker build -t gcr.io/gen-lang-client-0669185519/yoouz .
+          docker tag ghcr.io/${{ github.repository }}:latest gcr.io/gen-lang-client-0669185519/yoouz
           docker push gcr.io/gen-lang-client-0669185519/yoouz
-          gcloud run deploy yoouz \
-            --image gcr.io/gen-lang-client-0669185519/yoouz \
-            --platform managed \
-            --region europe-west1 \
-            --set-env-vars NODE_ENV=production,RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}",BUNNY_DATABASE_URL="${{ secrets.BUNNY_DATABASE_URL }}",BUNNY_DATABASE_AUTH_TOKEN="${{ secrets.BUNNY_DATABASE_AUTH_TOKEN }}",BUNNY_STORAGE_API_KEY="${{ secrets.BUNNY_STORAGE_API_KEY }}",BUNNY_STORAGE_ZONE_NAME="${{ secrets.BUNNY_STORAGE_ZONE_NAME }}",BUNNY_PULL_ZONE_URL="${{ secrets.BUNNY_PULL_ZONE_URL }}",GOOGLE_MAPS_PLATFORM_KEY="${{ secrets.GOOGLE_MAPS_PLATFORM_KEY }}" \
-            --allow-unauthenticated
           gcloud run deploy yoouz-app \
             --image gcr.io/gen-lang-client-0669185519/yoouz \
             --platform managed \
             --region europe-west1 \
             --set-env-vars NODE_ENV=production,RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}",BUNNY_DATABASE_URL="${{ secrets.BUNNY_DATABASE_URL }}",BUNNY_DATABASE_AUTH_TOKEN="${{ secrets.BUNNY_DATABASE_AUTH_TOKEN }}",BUNNY_STORAGE_API_KEY="${{ secrets.BUNNY_STORAGE_API_KEY }}",BUNNY_STORAGE_ZONE_NAME="${{ secrets.BUNNY_STORAGE_ZONE_NAME }}",BUNNY_PULL_ZONE_URL="${{ secrets.BUNNY_PULL_ZONE_URL }}",GOOGLE_MAPS_PLATFORM_KEY="${{ secrets.GOOGLE_MAPS_PLATFORM_KEY }}" \
             --allow-unauthenticated
-
-      - name: Deploy to Firebase Hosting
-        run: |
-          npx --yes firebase-tools deploy --only hosting --project gen-lang-client-0669185519 --non-interactive
