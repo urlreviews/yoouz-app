@@ -93,14 +93,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = videos[currentIndex] || videos[0];
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
-  // Mobile autoplays immediately. Desktop requires initial center play click for engagement.
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(
-    typeof window !== 'undefined' ? window.innerWidth < 768 : true
-  );
+  // Feed autoplays immediately on both mobile and desktop
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
 
-  // Reset feed initiation on context switch, honoring desktop vs mobile
+  // Maintain feed initiation on context switch
   useEffect(() => {
-    setHasUserStartedFeed(window.innerWidth < 768);
+    setHasUserStartedFeed(true);
   }, [activeSubTab, contextKey]);
 
   // Edit Rating State

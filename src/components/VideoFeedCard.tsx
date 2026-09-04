@@ -152,10 +152,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     pauseOtherVideos();
 
-    const audioReady = isAudioUnlocked();
-    const targetMuted = audioReady ? isMuted : true;
-    el.muted = targetMuted;
-    if (!targetMuted) {
+    // Direct sound attempt: set target muted to global isMuted state
+    el.muted = isMuted;
+    if (!isMuted) {
       el.volume = 1;
     }
 
@@ -602,7 +601,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             src={currentSource}
             poster={resolveVideoPosterUrl(video)}
             preload="auto"
-            autoPlay={false}
+            autoPlay={isActive}
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
