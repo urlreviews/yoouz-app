@@ -518,7 +518,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             muted={isMuted}
             disablePictureInPicture
             disableRemotePlayback
-            className="w-full h-full object-cover absolute inset-0"
+            className="w-full h-full object-cover absolute inset-0 pointer-events-none"
             onTimeUpdate={(e) => {
               const t = e.currentTarget;
               if (t.duration && !isNaN(t.duration) && t.duration > 0) {
@@ -581,7 +581,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       <header
         id={`copo-video-top-brand-${video.id}`}
         onClick={(e) => e.stopPropagation()}
-        className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-3.5 sm:px-4 pt-[max(12px,env(safe-area-inset-top,12px))] md:pt-4 pb-2 pointer-events-auto"
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-3.5 sm:px-4 pt-3.5 md:pt-4 pb-2 pointer-events-auto"
+        style={{ paddingTop: "max(14px, env(safe-area-inset-top, 14px))" }}
       >
         {/* Left side: Back button if inside a place/creator feed, or interactive Drawer Menu & Brand button */}
         <div className="flex items-center gap-2 min-w-[70px] shrink-0">
@@ -631,7 +634,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Universal for Mobile & Desktop, identical to YouTube Shorts) */}
+        {/* Right side: Sound Mute / Unmute Toggle Button (Identical on Mobile & Desktop, top right of each video) */}
         <div className="flex items-center justify-end gap-2 min-w-[70px] shrink-0">
           <button
             type="button"
@@ -639,6 +642,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               handleToggleMute(e);
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
             }}
             className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 active:scale-90 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white transition-all cursor-pointer shadow-lg pointer-events-auto"
             title={isMuted ? "Unmute sound" : "Mute sound"}
@@ -675,7 +681,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Center Play Button (On mobile: prominent blue button; video does not start automatically until clicked) */}
+      {/* Center Play Button (Click in middle of video to start on first video, exactly like desktop) */}
       {isActive && (!hasUserStartedFeed || isManuallyPaused) && !showPlayPauseFeedback && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto">
           <button
@@ -685,17 +691,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               togglePlayPause(e);
             }}
-            className={`w-20 h-20 sm:w-22 sm:h-22 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-2xl ${
-              !hasUserStartedFeed
-                ? "bg-blue-600 hover:bg-blue-500 shadow-[0_0_36px_rgba(37,99,235,0.75)] border-2 border-white/60"
-                : "bg-blue-600 md:bg-black/60 md:backdrop-blur-md shadow-[0_0_28px_rgba(37,99,235,0.6)] md:shadow-2xl border-2 border-white/50 md:border-white/25"
-            }`}
+            className="w-20 h-20 sm:w-22 sm:h-22 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-2xl bg-black/60 hover:bg-black/80 backdrop-blur-xl border-2 border-white/40 md:border-white/30"
             aria-label="Play video"
           >
-            {/* Pulsing gentle invitation ring on mobile for initial start */}
+            {/* Gentle invitation ping ring for initial start */}
             {!hasUserStartedFeed && (
               <span
-                className="absolute inset-0 rounded-full bg-blue-500/40 animate-ping opacity-60 pointer-events-none"
+                className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-60 pointer-events-none"
                 style={{ animationDuration: "2s" }}
               />
             )}
