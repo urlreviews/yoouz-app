@@ -50,3 +50,7 @@ jobs:
             --region europe-west1 \
             --set-env-vars NODE_ENV=production,RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}",BUNNY_DATABASE_URL="${{ secrets.BUNNY_DATABASE_URL }}",BUNNY_DATABASE_AUTH_TOKEN="${{ secrets.BUNNY_DATABASE_AUTH_TOKEN }}",BUNNY_STORAGE_API_KEY="${{ secrets.BUNNY_STORAGE_API_KEY }}",BUNNY_STORAGE_ZONE_NAME="${{ secrets.BUNNY_STORAGE_ZONE_NAME }}",BUNNY_PULL_ZONE_URL="${{ secrets.BUNNY_PULL_ZONE_URL }}",GOOGLE_MAPS_PLATFORM_KEY="${{ secrets.GOOGLE_MAPS_PLATFORM_KEY }}" \
             --allow-unauthenticated
+
+      - name: Deploy to Firebase Hosting
+        run: |
+          npx --yes firebase-tools deploy --only hosting --project gen-lang-client-0669185519 --non-interactive
