@@ -280,7 +280,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                 className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center border border-white/20 hover:bg-black/70 cursor-pointer"
                 title={isMuted ? "Unmute sound" : "Mute sound"}
               >
-                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+                {isMuted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
               </button>
             </div>
           </div>

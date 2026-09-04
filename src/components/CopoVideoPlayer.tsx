@@ -148,21 +148,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentIndexRef = useRef<number>(currentIndex);
   const lastObserverIndexRef = useRef<number>(currentIndex);
 
-  // Web Audio API session unlocker to guarantee audio permission
-  const unlockAudioSession = useCallback(() => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        if (!(window as any).__copoAudioCtx) {
-          (window as any).__copoAudioCtx = new AudioCtx();
-        }
-        if ((window as any).__copoAudioCtx.state === "suspended") {
-          (window as any).__copoAudioCtx.resume();
-        }
-      }
-    } catch (e) {}
-  }, []);
-
   // Sync ref
   useEffect(() => {
     currentIndexRef.current = currentIndex;
@@ -197,23 +182,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     },
     [videos.length, onSelectVideoIndex]
   );
-
-  // Listen to all touch/click interactions to prime audio context
-  useEffect(() => {
-    const onUserGesture = () => {
-      unlockAudioSession();
-    };
-    window.addEventListener("touchstart", onUserGesture, { passive: true });
-    window.addEventListener("touchend", onUserGesture, { passive: true });
-    window.addEventListener("click", onUserGesture, { passive: true });
-    window.addEventListener("keydown", onUserGesture, { passive: true });
-    return () => {
-      window.removeEventListener("touchstart", onUserGesture);
-      window.removeEventListener("touchend", onUserGesture);
-      window.removeEventListener("click", onUserGesture);
-      window.removeEventListener("keydown", onUserGesture);
-    };
-  }, [unlockAudioSession]);
 
   // Compute Place Logo Map for fast lookups
   const getLogoForVideo = useCallback(
@@ -462,7 +430,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     try {
       localStorage.setItem("yoouz_sound_muted", String(nextMuted));
     } catch {}
-    unlockAudioSession();
   };
 
   // Keyboard navigation: ArrowDown/ArrowUp, PageDown/PageUp, Space/Shift+Space, Mute

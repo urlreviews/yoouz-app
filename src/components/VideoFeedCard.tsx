@@ -29,7 +29,6 @@ import {  saveVideoBlobToIndexedDB } from "../lib/videoStorage";
 import { triggerHaptic } from "../utils/haptics";
 import { preloadBusinessAssets } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
-import { isAudioUnlocked, triggerAudioUnlock } from "../hooks/useGlobalMute";
 
 interface VideoFeedCardProps {
   video: VideoReview;
@@ -152,7 +151,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     pauseOtherVideos();
 
-    // Direct sound attempt: set target muted to global isMuted state
+    // Set muted to global isMuted state
     el.muted = isMuted;
     if (!isMuted) {
       el.volume = 1;
@@ -168,21 +167,23 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           setIsBuffering(false);
         }).catch((err) => {
           playPromiseRef.current = null;
-          // Fallback to muted playback if unmuted autoplay is rejected by browser policy
-          el.muted = true;
-          const retry = el.play();
-          if (retry !== undefined) {
-            playPromiseRef.current = retry;
-            retry
-              .then(() => {
-                playPromiseRef.current = null;
-                setIsPlaying(true);
-                setIsBuffering(false);
-              })
-              .catch(() => {
-                playPromiseRef.current = null;
-                setIsPlaying(false);
-              });
+          // If unmuted autoplay is blocked by browser policy without gesture, fallback to muted autoplay (standard YouTube Shorts behavior)
+          if (err?.name === "NotAllowedError" || err?.name === "AbortError") {
+            el.muted = true;
+            const retry = el.play();
+            if (retry !== undefined) {
+              playPromiseRef.current = retry;
+              retry
+                .then(() => {
+                  playPromiseRef.current = null;
+                  setIsPlaying(true);
+                  setIsBuffering(false);
+                })
+                .catch(() => {
+                  playPromiseRef.current = null;
+                  setIsPlaying(false);
+                });
+            }
           } else {
             setIsPlaying(false);
           }
@@ -221,57 +222,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   // Sync mute state to video element in real time
   useEffect(() => {
     if (videoRef.current) {
-      if (isAudioUnlocked()) {
-        videoRef.current.muted = isMuted;
-        if (!isMuted) {
-          videoRef.current.volume = 1;
-        }
+      videoRef.current.muted = isMuted;
+      if (!isMuted) {
+        videoRef.current.volume = 1;
       }
     }
   }, [isMuted]);
-
-  // Synchronous Touch-Event Audio Unlock & Immediate Play:
-  // Directly within native user gesture execution stack (touchstart/pointerdown/scroll),
-  // unlock audio session, sync unmuted state, and trigger play synchronously.
-  useEffect(() => {
-    if (isActive) {
-      const el = videoRef.current;
-      if (!el) return;
-
-      const enforceSoundAndPlay = () => {
-        triggerAudioUnlock();
-        pauseOtherVideos();
-
-        if (el.muted && !isMuted) {
-          el.muted = false;
-          el.volume = 1;
-        }
-
-        if (el.paused) {
-          const p = el.play();
-          if (p !== undefined) {
-            playPromiseRef.current = p;
-            p.then(() => {
-              playPromiseRef.current = null;
-              setIsPlaying(true);
-            }).catch(() => {
-              playPromiseRef.current = null;
-            });
-          }
-        }
-      };
-
-      window.addEventListener("touchstart", enforceSoundAndPlay, { passive: false, capture: true });
-      window.addEventListener("pointerdown", enforceSoundAndPlay, { passive: false, capture: true });
-      window.addEventListener("scroll", enforceSoundAndPlay, { passive: true, capture: true });
-
-      return () => {
-        window.removeEventListener("touchstart", enforceSoundAndPlay, { capture: true });
-        window.removeEventListener("pointerdown", enforceSoundAndPlay, { capture: true });
-        window.removeEventListener("scroll", enforceSoundAndPlay, { capture: true });
-      };
-    }
-  }, [isActive, isMuted, pauseOtherVideos]);
 
   // Play / Pause video based on card active state, user feed initiation, and manual pause flag
   useEffect(() => {
@@ -363,105 +319,34 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     console.warn(`[VideoFeedCard] Source failed for video ${video.id}: ${currentSource}`);
   }, [currentSource, video.id]);
 
-  // Click card to toggle Play / Pause (TikTok style)
+  // Click card to toggle Play / Pause (YouTube Shorts style)
   const togglePlayPause = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    triggerAudioUnlock();
     const el = videoRef.current;
     if (!el) return;
 
     triggerHaptic("light");
-    
-    // If video was forced muted by browser policy or is muted, the first tap should UNMUTE it, not pause it.
-    if (el.muted) {
-      el.muted = false;
-      el.volume = 1;
-      el.play().catch(() => {});
-      
-      // Flash the unmuted icon
-      if (muteFeedbackTimeoutRef.current) clearTimeout(muteFeedbackTimeoutRef.current);
-      setShowMuteFeedback("unmuted");
-      muteFeedbackTimeoutRef.current = setTimeout(() => {
-        setShowMuteFeedback(null);
-      }, 650);
-      
-      // Make sure global state matches!
-      if (isMuted && onToggleMute) {
-        onToggleMute(e);
-      }
-      return;
-    }
 
-    if (el.paused || isManuallyPaused || !hasUserStartedFeed) {
+    if (el.paused || isManuallyPaused) {
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
-      
-      // If we are starting the feed for the very first time on this click:
-      // 1. Forcefully restart video from the beginning (currentTime = 0)
-      // 2. Force unmute so it plays with Voice
-      if (!hasUserStartedFeed) {
-        el.currentTime = 0;
-        el.muted = false;
-        el.volume = 1;
-        if (isMuted && onToggleMute) {
-          onToggleMute(e); // Update global state to unmuted
-        }
-      } else {
-        el.muted = isMuted;
-        if (!isMuted) {
-          el.volume = 1;
-        }
-      }
-      
-      // Play IMMEDIATELY with zero delay on click gesture
-      const p = el.play();
-      if (p !== undefined) {
-        p.then(() => {
-          setIsPlaying(true);
-          setIsBuffering(false);
-        }).catch(() => {
-          if (!el.muted) {
-            el.muted = true;
-            el.play().then(() => {
-              setIsPlaying(true);
-              setIsBuffering(false);
-            }).catch(() => {
-              setIsPlaying(false);
-            });
-          } else {
-            setIsPlaying(false);
-          }
-        });
-      }
-
-      // Notify parent to start feed after starting play instantly
-      if (onStartFeed && !hasUserStartedFeed) {
-        onStartFeed();
-      }
-
+      safePlay();
       if (e) triggerFeedback("play");
     } else {
       isManuallyPausedRef.current = true;
       setIsManuallyPaused(true);
-      el.pause();
-      setIsPlaying(false);
+      safePause();
       if (e) triggerFeedback("pause");
     }
   };
 
+  // Sound toggle button (YouTube Shorts style)
   const handleToggleMute = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    triggerAudioUnlock();
     triggerHaptic("selection");
-    
-    // Direct user tap: activate feed session immediately
-    if (onStartFeed && !hasUserStartedFeed) {
-      onStartFeed();
-    }
 
-    // Synchronous direct DOM mutation inside the click handler to satisfy iOS Safari
+    const nextMuted = !isMuted;
     if (videoRef.current) {
-      const nextMuted = !isMuted;
       videoRef.current.muted = nextMuted;
       if (!nextMuted) {
         videoRef.current.volume = 1;
@@ -472,7 +357,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     onToggleMute(e);
 
     if (muteFeedbackTimeoutRef.current) clearTimeout(muteFeedbackTimeoutRef.current);
-    setShowMuteFeedback(isMuted ? "unmuted" : "muted");
+    setShowMuteFeedback(nextMuted ? "muted" : "unmuted");
     muteFeedbackTimeoutRef.current = setTimeout(() => {
       setShowMuteFeedback(null);
     }, 650);
@@ -737,9 +622,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Visible on both Mobile & Desktop) */}
+        {/* Right side: Sound Mute / Unmute Toggle Button (Universal for Mobile & Desktop, identical to YouTube Shorts) */}
         <div className="flex items-center justify-end gap-2 min-w-[70px]">
           <button
+            type="button"
             id={`btn-toggle-sound-${video.id}`}
             onClick={(e) => {
               e.stopPropagation();
@@ -747,21 +633,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 active:scale-90 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white transition-all cursor-pointer shadow-lg pointer-events-auto"
             title={isMuted ? "Unmute sound" : "Mute sound"}
+            aria-label={isMuted ? "Unmute sound" : "Mute sound"}
           >
             {isMuted ? (
-              <VolumeX className="w-5 h-5 text-zinc-200" />
+              <VolumeX className="w-5 h-5 text-white" />
             ) : (
-              <div className="flex items-end justify-center gap-[2px] w-5 h-5 relative">
-                {isPlaying ? (
-                  <>
-                    <div className="w-[3px] bg-white rounded-full animate-[equalizer_0.8s_ease-in-out_infinite] h-2"></div>
-                    <div className="w-[3px] bg-white rounded-full animate-[equalizer_0.8s_ease-in-out_infinite_0.2s] h-4"></div>
-                    <div className="w-[3px] bg-white rounded-full animate-[equalizer_0.8s_ease-in-out_infinite_0.4s] h-3"></div>
-                  </>
-                ) : (
-                  <Volume2 className="w-5 h-5 text-white" />
-                )}
-              </div>
+              <Volume2 className="w-5 h-5 text-white" />
             )}
           </button>
         </div>
@@ -789,31 +666,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Center Play Button - shown on initial load before feed starts or when user explicitly pauses */}
-      {isActive && (!hasUserStartedFeed || isManuallyPaused) && !showPlayPauseFeedback && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-3.5 pointer-events-none">
-          <button
-            type="button"
-            id={`copo-play-center-btn-${video.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePlayPause(e);
-            }}
-            className="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-black/70 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-2xl animate-in zoom-in-90 duration-150 pointer-events-auto cursor-pointer active:scale-95 hover:scale-105 transition-all relative group"
-            aria-label="Play video"
-          >
-            {/* Soft pulsing halo ring */}
-            <span className="absolute inset-0 rounded-full border border-white/60 animate-ping opacity-40 duration-1000" style={{ animationDuration: '1.8s' }} />
-            <Play className="w-9 h-9 fill-white translate-x-0.5 group-hover:scale-110 transition-transform duration-200" />
-          </button>
-          
-          <div className="px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-xl text-white font-bold text-xs tracking-wider uppercase select-none animate-bounce flex items-center gap-1.5">
-            <span>Tap to Play</span>
-            {!hasUserStartedFeed && (
-              <span className="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-400/20 leading-none">with Voice</span>
-            )}
-          </div>
-        </div>
+      {/* Center Play Button - shown only when paused (YouTube Shorts style) */}
+      {isActive && isManuallyPaused && !showPlayPauseFeedback && (
+        <button
+          type="button"
+          id={`copo-play-center-btn-${video.id}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePlayPause(e);
+          }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-20 h-20 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-2xl pointer-events-auto cursor-pointer active:scale-95 hover:scale-105 transition-transform"
+          aria-label="Play video"
+        >
+          <Play className="w-9 h-9 fill-white translate-x-0.5" />
+        </button>
       )}
 
 
