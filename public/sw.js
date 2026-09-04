@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yoouz-pwa-v7-fresh';
+const CACHE_NAME = 'yoouz-pwa-v8-fresh';
 
 // Install Event - skip waiting immediately
 self.addEventListener('install', (event) => {
