@@ -587,9 +587,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       <div 
         className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between px-4 [padding-top:max(54px,calc(env(safe-area-inset-top,0px)+12px))] md:[padding-top:16px] pointer-events-none"
       >
-        {/* Left side: Navigation (only if onGoBack) */}
-        <div className="pointer-events-auto">
-          {onGoBack && (
+        {/* Left side: Navigation or Mobile Hamburger Drawer Pill */}
+        <div className="pointer-events-auto flex items-center gap-2">
+          {onGoBack ? (
             <button
               type="button"
               id={`btn-feed-back-${video.id}`}
@@ -606,11 +606,29 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               }}
               onTouchStart={(e) => e.stopPropagation()}
               onTouchEnd={(e) => e.stopPropagation()}
-              className="w-11 h-11 rounded-full bg-zinc-900/90 hover:bg-black backdrop-blur-xl border border-white/30 flex items-center justify-center text-white active:scale-90 transition-all shadow-2xl cursor-pointer"
+              className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-black backdrop-blur-xl border border-white/30 flex items-center justify-center text-white active:scale-90 transition-all shadow-2xl cursor-pointer"
               title="Go back"
             >
               <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
             </button>
+          ) : (
+            onOpenMenu && (
+              <button
+                type="button"
+                id={`btn-mobile-menu-${video.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenMenu();
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                className="flex md:hidden items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/85 hover:bg-black active:scale-95 backdrop-blur-xl border border-white/25 text-white shadow-2xl transition-all cursor-pointer select-none"
+                aria-label="Open menu"
+              >
+                <Menu className="w-4 h-4 text-white shrink-0" />
+                <span className="text-xs font-semibold tracking-wide text-white">Yoouz</span>
+              </button>
+            )
           )}
         </div>
 
@@ -625,7 +643,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Universal 100% Identical to Desktop) */}
+        {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
         <div className="pointer-events-auto">
           <button
             type="button"
@@ -636,7 +654,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
-            className="w-11 h-11 rounded-full bg-zinc-900/90 hover:bg-black active:scale-90 backdrop-blur-xl border border-white/40 ring-1 ring-white/20 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
+            className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-zinc-900/90 hover:bg-black active:scale-90 backdrop-blur-xl border border-white/40 ring-1 ring-white/20 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
             title={isMuted ? "Unmute sound" : "Mute sound"}
             aria-label={isMuted ? "Unmute sound" : "Mute sound"}
           >
