@@ -1,42 +1,52 @@
 import { useState, useEffect } from 'react';
 
-// Read saved preference or default to unmuted (false) like standard desktop/YouTube Shorts
-let globalIsMuted = false;
-try {
-  const saved = localStorage.getItem("yoouz_sound_muted");
-  if (saved !== null) {
-    globalIsMuted = saved === "true";
-  }
-} catch (e) {}
+// Start initial session with muted = true to guarantee 100% browser autoplay policy compliance across all devices
+let globalAudioUnlocked = false;
+let globalIsMuted = true;
 
-const listeners = new Set<(val: boolean) => void>();
+const muteListeners = new Set<(val: boolean) => void>();
+const unlockListeners = new Set<(val: boolean) => void>();
 
 export function useGlobalMute() {
   const [isMuted, setIsMutedState] = useState(globalIsMuted);
+  const [isUnlocked, setIsUnlockedState] = useState(globalAudioUnlocked);
 
   useEffect(() => {
-    listeners.add(setIsMutedState);
+    muteListeners.add(setIsMutedState);
+    unlockListeners.add(setIsUnlockedState);
     return () => {
-      listeners.delete(setIsMutedState);
+      muteListeners.delete(setIsMutedState);
+      unlockListeners.delete(setIsUnlockedState);
     };
   }, []);
 
   const setIsMuted = (val: boolean | ((prev: boolean) => boolean)) => {
     const nextVal = typeof val === 'function' ? val(globalIsMuted) : val;
     globalIsMuted = nextVal;
-    try {
-      localStorage.setItem("yoouz_sound_muted", String(nextVal));
-    } catch (e) {}
-    listeners.forEach(listener => listener(nextVal));
+    if (!nextVal) {
+      globalAudioUnlocked = true;
+      unlockListeners.forEach(listener => listener(true));
+    }
+    muteListeners.forEach(listener => listener(nextVal));
   };
 
-  return [isMuted, setIsMuted] as const;
+  const unlockAudioSession = () => {
+    globalAudioUnlocked = true;
+    globalIsMuted = false;
+    unlockListeners.forEach(listener => listener(true));
+    muteListeners.forEach(listener => listener(false));
+  };
+
+  return [isMuted, setIsMuted, isUnlocked, unlockAudioSession] as const;
 }
 
 export function isAudioUnlocked(): boolean {
-  return true;
+  return globalAudioUnlocked;
 }
 
 export function triggerAudioUnlock() {
-  // Clean no-op kept for any external calls
+  globalAudioUnlocked = true;
+  globalIsMuted = false;
+  unlockListeners.forEach(listener => listener(true));
+  muteListeners.forEach(listener => listener(false));
 }

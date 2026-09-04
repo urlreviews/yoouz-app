@@ -91,7 +91,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   onRecordView
 }) => {
   const currentVideo = videos[currentIndex] || videos[0];
-  const [isMuted, setIsMuted] = useGlobalMute();
+  const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
   // Initial feed state: defaulted to true for instant, seamless TikTok/Shorts mobile autoplay
@@ -437,15 +437,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [currentIndex, videos.length, handleNext, handlePrev]);
 
-  // Sound toggle with localStorage caching
+  // Sound toggle with session audio unlocking
   const toggleMute = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     setHasUserStartedFeed(true);
     const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    try {
-      localStorage.setItem("yoouz_sound_muted", String(nextMuted));
-    } catch {}
+    if (!nextMuted) {
+      unlockAudioSession();
+    } else {
+      setIsMuted(true);
+    }
   };
 
   // Keyboard navigation: ArrowDown/ArrowUp, PageDown/PageUp, Space/Shift+Space, Mute
@@ -596,7 +597,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 onSelectSubTab={onSelectSubTab}
                 hasUserStartedFeed={hasUserStartedFeed}
                 onStartFeed={() => setHasUserStartedFeed(true)}
-                
+                isSessionAudioUnlocked={isSessionAudioUnlocked}
+                onUnlockAudio={unlockAudioSession}
                 onToggleMute={toggleMute}
                 onForceMute={() => setIsMuted(true)}
                 onOpenComments={onOpenComments}

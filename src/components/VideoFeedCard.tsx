@@ -64,6 +64,8 @@ interface VideoFeedCardProps {
   slotRef?: (el: HTMLDivElement | null) => void;
   hasUserStartedFeed?: boolean;
   onStartFeed?: () => void;
+  isSessionAudioUnlocked?: boolean;
+  onUnlockAudio?: () => void;
   onRecordView?: (videoId: string) => void;
 }
 
@@ -96,6 +98,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   
   hasUserStartedFeed = true,
   onStartFeed,
+  isSessionAudioUnlocked = false,
+  onUnlockAudio,
   onRecordView
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -337,6 +341,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     triggerHaptic("light");
 
+    // If audio is locked and video is muted, tapping to play also unlocks audio with sound (Dual Play+Unmute)
+    if (!isSessionAudioUnlocked && isMuted) {
+      onUnlockAudio?.();
+      if (onStartFeed) onStartFeed();
+      el.muted = false;
+      el.volume = 1;
+      isManuallyPausedRef.current = false;
+      setIsManuallyPaused(false);
+      safePlay();
+      if (e) triggerFeedback("play");
+      setShowMuteFeedback("unmuted");
+      return;
+    }
+
     if (!hasUserStartedFeed) {
       if (onStartFeed) onStartFeed();
       isManuallyPausedRef.current = false;
@@ -371,6 +389,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     triggerHaptic("selection");
 
     const nextMuted = !isMuted;
+    if (!nextMuted) {
+      onUnlockAudio?.();
+    }
+
     if (videoRef.current) {
       videoRef.current.muted = nextMuted;
       if (!nextMuted) {
@@ -679,6 +701,39 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Sleek "Tap to Unmute" Overlay Pill (Visible on first video or whenever session audio is locked) */}
+      {isActive && isMuted && (!isSessionAudioUnlocked || index === 0) && (
+        <div className="absolute top-[68px] sm:top-[76px] left-1/2 -translate-x-1/2 z-40 pointer-events-auto animate-in fade-in zoom-in-95 duration-300">
+          <button
+            type="button"
+            id={`btn-tap-unmute-${video.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerHaptic("success");
+              onUnlockAudio?.();
+              if (videoRef.current) {
+                videoRef.current.muted = false;
+                videoRef.current.volume = 1;
+              }
+              onToggleMute(e);
+              safePlay();
+              setShowMuteFeedback("unmuted");
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            className="flex items-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-black/85 hover:bg-black active:scale-95 backdrop-blur-2xl border border-white/35 text-white shadow-2xl transition-all cursor-pointer group select-none"
+            aria-label="Tap to Unmute"
+          >
+            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <VolumeX className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+            </div>
+            <span className="text-xs sm:text-sm font-bold tracking-wide text-white whitespace-nowrap drop-shadow-sm">
+              Tap to Unmute
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Transient Play/Pause Icon Tap Feedback */}
       {showPlayPauseFeedback && (
