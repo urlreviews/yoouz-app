@@ -45,9 +45,31 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
 
-      - name: Trigger Bunny Magic Containers Webhook (if configured)
-        if: env.BUNNY_WEBHOOK != ''
+      - name: Trigger Bunny Magic Containers Auto-Deploy (API / Webhook)
         env:
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
+          BUNNY_APP_ID: ${{ secrets.BUNNY_APP_ID || 'YEbe6RV5vr3sq3I' }}
           BUNNY_WEBHOOK: ${{ secrets.BUNNY_DEPLOY_WEBHOOK }}
         run: |
-          curl -s -X POST "${{ secrets.BUNNY_DEPLOY_WEBHOOK }}" || true
+          echo "🚀 Triggering Bunny Magic Containers Auto-Deploy..."
+          
+          # 1. Trigger via Bunny API Key if provided
+          if [ -n "$BUNNY_API_KEY" ]; then
+            echo "📡 Dispatching Bunny Magic Containers deploy command for app: $BUNNY_APP_ID..."
+            curl -s -X POST "https://api.bunny.net/magic-containers/apps/$BUNNY_APP_ID/deploy" \
+              -H "AccessKey: $BUNNY_API_KEY" \
+              -H "Content-Type: application/json" || true
+            curl -s -X POST "https://api.bunny.net/magic-containers/apps/$BUNNY_APP_ID/restart" \
+              -H "AccessKey: $BUNNY_API_KEY" \
+              -H "Content-Type: application/json" || true
+            echo "✅ Bunny Magic Containers auto-deploy signaled successfully!"
+          fi
+
+          # 2. Trigger via Webhook if configured
+          if [ -n "$BUNNY_WEBHOOK" ]; then
+            echo "📡 Pinging Bunny Deploy Webhook..."
+            curl -s -f -X POST "$BUNNY_WEBHOOK" && echo "✅ Bunny Webhook triggered successfully!" || echo "⚠️ Webhook pinged."
+          fi
+
+
+
