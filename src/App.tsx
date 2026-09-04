@@ -56,8 +56,8 @@ import {
 export function App() {
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
-    // Current App Version Timestamp (Updated: 2026-09-04-V30-CLEAN-PLAY-UNMUTE-AUTOPLAY)
-    const APP_VERSION = "2026-09-04-V30-CLEAN-PLAY-UNMUTE-AUTOPLAY"; 
+    // Current App Version Timestamp (Updated: 2026-09-04-V32-INFINITE-DECODER-RECYCLING-AND-WEB-AUDIO-UNLOCK)
+    const APP_VERSION = "2026-09-04-V32-INFINITE-DECODER-RECYCLING-AND-WEB-AUDIO-UNLOCK"; 
     try {
       const savedVersion = localStorage.getItem("yoouz_app_version");
       if (savedVersion && savedVersion !== APP_VERSION) {

@@ -29,6 +29,7 @@ import {  saveVideoBlobToIndexedDB } from "../lib/videoStorage";
 import { triggerHaptic } from "../utils/haptics";
 import { preloadBusinessAssets } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
+import { ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 
 interface VideoFeedCardProps {
   video: VideoReview;
@@ -255,12 +256,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   }, [isActive, hasUserStartedFeed, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
 
 
-  // Clean unmount safety
+  // Clean unmount safety - aggressively release hardware decoder for WebKit / Blink
   useEffect(() => {
     return () => {
       if (videoRef.current) {
         try {
           videoRef.current.pause();
+          videoRef.current.removeAttribute("src");
+          videoRef.current.load();
         } catch (e) {}
       }
     };
@@ -334,12 +337,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     if (!el) return;
 
     triggerHaptic("light");
+    ensureSharedAudioContextUnlocked();
 
     if (!hasUserStartedFeed) {
-      onUnlockAudio?.();
       if (onStartFeed) onStartFeed();
-      el.muted = false;
-      el.volume = 1;
+      el.muted = isMuted;
+      if (!isMuted) {
+        el.volume = 1;
+      }
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       safePlay();
@@ -361,6 +366,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const handleToggleMute = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     triggerHaptic("selection");
+    ensureSharedAudioContextUnlocked();
 
     const nextMuted = !isMuted;
     if (!nextMuted) {
@@ -529,7 +535,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              if (isActive && !isManuallyPaused) {
+              if (isActive && !isManuallyPaused && hasUserStartedFeed) {
                 safePlay();
               }
             }}

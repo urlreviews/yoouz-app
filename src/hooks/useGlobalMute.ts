@@ -1,8 +1,44 @@
 import { useState, useEffect } from 'react';
 
-// Start initial session with muted = true to guarantee 100% browser autoplay policy compliance across all devices
+// Read persisted sound preference: default to unmuted (false) on fresh visit unless user previously muted
+const getInitialMuteState = (): boolean => {
+  try {
+    const saved = localStorage.getItem("yoouz_sound_muted");
+    if (saved !== null) {
+      return saved === "true";
+    }
+  } catch {}
+  return false; // Unmuted by default
+};
+
 let globalAudioUnlocked = false;
-let globalIsMuted = true;
+let globalIsMuted = getInitialMuteState();
+
+let sharedAudioContext: AudioContext | null = null;
+
+/**
+ * Permanently authorizes audio subsystem across all browsers and devices
+ * by unlocking the Web Audio AudioContext on user gesture.
+ */
+export function ensureSharedAudioContextUnlocked() {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) {
+      if (!sharedAudioContext) {
+        sharedAudioContext = new AudioContextClass();
+      }
+      if (sharedAudioContext.state === 'suspended') {
+        sharedAudioContext.resume().catch(() => {});
+      }
+      const buffer = sharedAudioContext.createBuffer(1, 1, 22050);
+      const source = sharedAudioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(sharedAudioContext.destination);
+      source.start(0);
+    }
+  } catch (e) {}
+}
 
 const muteListeners = new Set<(val: boolean) => void>();
 const unlockListeners = new Set<(val: boolean) => void>();
@@ -23,8 +59,12 @@ export function useGlobalMute() {
   const setIsMuted = (val: boolean | ((prev: boolean) => boolean)) => {
     const nextVal = typeof val === 'function' ? val(globalIsMuted) : val;
     globalIsMuted = nextVal;
+    try {
+      localStorage.setItem("yoouz_sound_muted", String(nextVal));
+    } catch {}
     if (!nextVal) {
       globalAudioUnlocked = true;
+      ensureSharedAudioContextUnlocked();
       unlockListeners.forEach(listener => listener(true));
     }
     muteListeners.forEach(listener => listener(nextVal));
@@ -33,6 +73,10 @@ export function useGlobalMute() {
   const unlockAudioSession = () => {
     globalAudioUnlocked = true;
     globalIsMuted = false;
+    ensureSharedAudioContextUnlocked();
+    try {
+      localStorage.setItem("yoouz_sound_muted", "false");
+    } catch {}
     unlockListeners.forEach(listener => listener(true));
     muteListeners.forEach(listener => listener(false));
   };
@@ -47,6 +91,10 @@ export function isAudioUnlocked(): boolean {
 export function triggerAudioUnlock() {
   globalAudioUnlocked = true;
   globalIsMuted = false;
+  ensureSharedAudioContextUnlocked();
+  try {
+    localStorage.setItem("yoouz_sound_muted", "false");
+  } catch {}
   unlockListeners.forEach(listener => listener(true));
   muteListeners.forEach(listener => listener(false));
 }
