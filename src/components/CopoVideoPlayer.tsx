@@ -94,19 +94,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Helper to determine mobile environment
-  const isMobileClient = () => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  };
+  // Videos autoplay immediately on both mobile & desktop (standard YouTube Shorts / TikTok UX)
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
 
-  // On mobile: videos do not start automatically; user must click the blue play button on each page.
-  // On desktop: feed autoplays immediately.
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(() => !isMobileClient());
-
-  // Reset feed initiation on context/page switch so on mobile, the first video on each page requires tapping the play button
+  // Maintain immediate autoplay across tab & context switches
   useEffect(() => {
-    setHasUserStartedFeed(!isMobileClient());
+    setHasUserStartedFeed(true);
   }, [activeSubTab, contextKey, feedContextTitle]);
 
   // Edit Rating State

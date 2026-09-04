@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yoouz-pwa-v2';
+const CACHE_NAME = 'yoouz-pwa-v4';
 
 const STATIC_ASSETS = [
   '/',
@@ -35,7 +35,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event - Network-First for dynamic / API / HTML; Stale-While-Revalidate for images & static assets
+// Fetch Event - Network-First for dynamic / API / HTML / JS / CSS; Stale-While-Revalidate for images & fonts
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -50,9 +50,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Application Scripts and Styles (Network-First to always deliver latest code immediately)
+  if (url.pathname.match(/\.(js|css)$/)) {
+    event.respondWith(
+      fetch(request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+        }
+        return networkResponse;
+      }).catch(() => caches.match(request))
+    );
+    return;
+  }
+
   // Static Assets / Images / Fonts (Cache-first with network fallback)
   if (
-    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|woff2?|ttf|css|js)$/) ||
+    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|woff2?|ttf)$/) ||
     url.origin.includes('fonts.googleapis.com') ||
     url.origin.includes('fonts.gstatic.com') ||
     url.origin.includes('unpkg.com')

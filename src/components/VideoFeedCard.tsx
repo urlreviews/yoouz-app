@@ -580,16 +580,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-40 to stay firmly above background & video */}
       <header
         id={`copo-video-top-brand-${video.id}`}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => e.stopPropagation()}
-        className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-3.5 sm:px-4 pt-3.5 md:pt-4 pb-2 pointer-events-auto"
+        className="w-full absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-3.5 sm:px-4 pt-3.5 md:pt-4 pb-2 pointer-events-none"
         style={{ paddingTop: "max(14px, env(safe-area-inset-top, 14px))" }}
       >
         {/* Left side: Back button if inside a place/creator feed, or interactive Drawer Menu & Brand button */}
-        <div className="flex items-center gap-2 min-w-[70px] shrink-0">
+        <div className="flex items-center gap-2 min-w-[44px] shrink-0 pointer-events-auto">
           {onGoBack ? (
             <button
+              type="button"
               id={`btn-feed-back-${video.id}`}
               onClick={(e) => {
                 e.stopPropagation();
@@ -602,19 +600,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }
                 onGoBack();
               }}
-              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white active:scale-90 transition-all shadow-lg cursor-pointer pointer-events-auto"
+              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white active:scale-90 transition-all shadow-lg cursor-pointer"
               title="Go back"
             >
               <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
             </button>
           ) : (
             <button
+              type="button"
               id="btn-mobile-menu-drawer"
               onClick={(e) => {
                 e.stopPropagation();
                 if (onOpenMenu) onOpenMenu();
               }}
-              className="md:hidden flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-xl border border-white/25 shadow-md cursor-pointer transition-all text-white pointer-events-auto"
+              className="md:hidden flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-xl border border-white/25 shadow-md cursor-pointer transition-all text-white"
               title="Open Navigation Menu"
             >
               <Menu className="w-4 h-4 text-white shrink-0" strokeWidth={2.2} />
@@ -624,18 +623,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
 
         {/* Center: Context Title if viewing a specific place or category (never creator person name) */}
-        <div className="flex items-center justify-center px-2 min-w-0">
+        <div className="flex items-center justify-center px-2 min-w-0 pointer-events-none">
           {feedContextTitle && 
             !feedContextTitle.startsWith("@") && 
             feedContextTitle.trim().toLowerCase() !== (safeAuthor.name || "").trim().toLowerCase() && (
-            <div className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-bold shadow-md max-w-[150px] sm:max-w-[220px] truncate text-center">
+            <div className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-bold shadow-md max-w-[150px] sm:max-w-[220px] truncate text-center pointer-events-auto">
               {feedContextTitle}
             </div>
           )}
         </div>
 
         {/* Right side: Sound Mute / Unmute Toggle Button (Identical on Mobile & Desktop, top right of each video) */}
-        <div className="flex items-center justify-end gap-2 min-w-[70px] shrink-0">
+        <div className="flex items-center justify-end gap-2 min-w-[44px] shrink-0 pointer-events-auto">
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
@@ -643,10 +642,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               handleToggleMute(e);
             }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-            }}
-            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 active:scale-90 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white transition-all cursor-pointer shadow-lg pointer-events-auto"
+            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 active:scale-90 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white transition-all cursor-pointer shadow-lg"
             title={isMuted ? "Unmute sound" : "Mute sound"}
             aria-label={isMuted ? "Unmute sound" : "Mute sound"}
           >
