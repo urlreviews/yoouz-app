@@ -115,12 +115,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const [progressPercent, setProgressPercent] = useState<number>(0);
   
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
-  const [showPlayPauseFeedback, setShowPlayPauseFeedback] = useState<"play" | "pause" | null>(null);
-  const [showMuteFeedback, setShowMuteFeedback] = useState<"muted" | "unmuted" | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState<boolean>(false);
 
-  const muteFeedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTapTimeRef = useRef<number>(0);
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
@@ -244,10 +240,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && !isManuallyPaused;
+    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
 
     if (shouldPlay) {
-      setShowPlayPauseFeedback(null);
       safePlay();
     } else {
       safePause();
@@ -256,9 +251,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         setIsManuallyPaused(false);
         setProgressPercent(0);
       }
-      setShowPlayPauseFeedback(null);
     }
-  }, [isActive, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
+  }, [isActive, hasUserStartedFeed, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
 
 
   // Clean unmount safety
@@ -341,8 +335,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     triggerHaptic("light");
 
-    // If audio is locked and video is muted, tapping to play also unlocks audio with sound (Dual Play+Unmute)
-    if (!isSessionAudioUnlocked && isMuted) {
+    if (!hasUserStartedFeed) {
       onUnlockAudio?.();
       if (onStartFeed) onStartFeed();
       el.muted = false;
@@ -350,23 +343,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       safePlay();
-      if (e) triggerFeedback("play");
-      setShowMuteFeedback("unmuted");
-      return;
-    }
-
-    if (!hasUserStartedFeed) {
-      if (onStartFeed) onStartFeed();
-      isManuallyPausedRef.current = false;
-      setIsManuallyPaused(false);
-      safePlay();
-      if (e) triggerFeedback("play");
-      return;
-    }
-
-    if (isMuted && !el.paused && !isManuallyPaused) {
-      // Single tap on playing muted video unmutes it (TikTok / Reels UX)
-      handleToggleMute(e);
       return;
     }
 
@@ -374,12 +350,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       safePlay();
-      if (e) triggerFeedback("play");
     } else {
       isManuallyPausedRef.current = true;
       setIsManuallyPaused(true);
       safePause();
-      if (e) triggerFeedback("pause");
     }
   };
 
@@ -402,20 +376,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
 
     onToggleMute(e);
-
-    if (muteFeedbackTimeoutRef.current) clearTimeout(muteFeedbackTimeoutRef.current);
-    setShowMuteFeedback(nextMuted ? "muted" : "unmuted");
-    muteFeedbackTimeoutRef.current = setTimeout(() => {
-      setShowMuteFeedback(null);
-    }, 650);
-  };
-
-  const triggerFeedback = (type: "play" | "pause") => {
-    if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-    setShowPlayPauseFeedback(type);
-    feedbackTimeoutRef.current = setTimeout(() => {
-      setShowPlayPauseFeedback(null);
-    }, 650);
   };
 
   // Double tap to like (supports touch taps & mouse clicks)
@@ -702,63 +662,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       </div>
 
-      {/* Sleek "Tap to Unmute" Overlay Pill (Visible on first video or whenever session audio is locked) */}
-      {isActive && isMuted && (!isSessionAudioUnlocked || index === 0) && (
-        <div className="absolute top-[68px] sm:top-[76px] left-1/2 -translate-x-1/2 z-40 pointer-events-auto animate-in fade-in zoom-in-95 duration-300">
-          <button
-            type="button"
-            id={`btn-tap-unmute-${video.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              triggerHaptic("success");
-              onUnlockAudio?.();
-              if (videoRef.current) {
-                videoRef.current.muted = false;
-                videoRef.current.volume = 1;
-              }
-              onToggleMute(e);
-              safePlay();
-              setShowMuteFeedback("unmuted");
-            }}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
-            className="flex items-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-black/85 hover:bg-black active:scale-95 backdrop-blur-2xl border border-white/35 text-white shadow-2xl transition-all cursor-pointer group select-none"
-            aria-label="Tap to Unmute"
-          >
-            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <VolumeX className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-            </div>
-            <span className="text-xs sm:text-sm font-bold tracking-wide text-white whitespace-nowrap drop-shadow-sm">
-              Tap to Unmute
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* Transient Play/Pause Icon Tap Feedback */}
-      {showPlayPauseFeedback && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-2xl animate-out fade-out zoom-out duration-500 pointer-events-none">
-          {showPlayPauseFeedback === "play" ? (
-            <Play className="w-9 h-9 fill-white translate-x-0.5" />
-          ) : (
-            <Pause className="w-9 h-9 fill-white" />
-          )}
-        </div>
-      )}
-
-      {/* Transient Mute/Unmute Icon Tap Feedback */}
-      {showMuteFeedback && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex flex-col items-center justify-center text-white shadow-2xl animate-out fade-out zoom-out duration-500 pointer-events-none">
-          {showMuteFeedback === "unmuted" ? (
-            <Volume2 className="w-8 h-8 text-white" />
-          ) : (
-            <VolumeX className="w-8 h-8 text-white" />
-          )}
-        </div>
-      )}
-
-      {/* Center Play Button (Click in middle of video to start on first video, exactly like desktop) */}
-      {isActive && (!hasUserStartedFeed || isManuallyPaused) && !showPlayPauseFeedback && (
+      {/* Center Play Button (Shown ONLY when feed is not yet started or video is manually paused) */}
+      {isActive && (!hasUserStartedFeed || isManuallyPaused) && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto">
           <button
             type="button"
@@ -767,16 +672,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               togglePlayPause(e);
             }}
-            className="w-20 h-20 sm:w-22 sm:h-22 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-2xl bg-black/60 hover:bg-black/80 backdrop-blur-xl border-2 border-white/40 md:border-white/30"
+            className="w-20 h-20 sm:w-22 sm:h-22 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-2xl bg-black/65 hover:bg-black/85 backdrop-blur-xl border-2 border-white/40 md:border-white/30"
             aria-label="Play video"
           >
-            {/* Gentle invitation ping ring for initial start */}
-            {!hasUserStartedFeed && (
-              <span
-                className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-60 pointer-events-none"
-                style={{ animationDuration: "2s" }}
-              />
-            )}
             <Play className="w-10 h-10 fill-white text-white translate-x-0.5 drop-shadow-md relative z-10" />
           </button>
         </div>

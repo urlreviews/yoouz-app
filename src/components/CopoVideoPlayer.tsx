@@ -94,25 +94,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Initial feed state: defaulted to true for instant, seamless TikTok/Shorts mobile autoplay
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
-
-  // Global user interaction listener to ensure autoplay state is active on any swipe, tap, or keypress
-  useEffect(() => {
-    const markFeedActive = () => {
-      setHasUserStartedFeed(true);
-    };
-    window.addEventListener("touchstart", markFeedActive, { passive: true, once: true });
-    window.addEventListener("pointerdown", markFeedActive, { passive: true, once: true });
-    window.addEventListener("scroll", markFeedActive, { passive: true, once: true });
-    window.addEventListener("keydown", markFeedActive, { passive: true, once: true });
-    return () => {
-      window.removeEventListener("touchstart", markFeedActive);
-      window.removeEventListener("pointerdown", markFeedActive);
-      window.removeEventListener("scroll", markFeedActive);
-      window.removeEventListener("keydown", markFeedActive);
-    };
-  }, []);
+  // Initial feed state: starts false so first video requires explicit Play to unlock audio & start feed
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
 
   // Edit Rating State
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
