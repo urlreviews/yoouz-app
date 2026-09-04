@@ -54,8 +54,8 @@
     "placeCity": "Online",
     "placeRating": 3,
     "placeWebsite": "https://www.digitalpark.ae/",
-    "placeLogoUrl": "/api/proxy-image?url=%2Fapi%2Fproxy-image%3Furl%3D%252Fapi%252Fproxy-image%253Furl%253D%25252Fapi%25252Fproxy-image%25253Furl%25253Dhttps%2525253A%2525252F%2525252Fframerusercontent.com%2525252Fimages%2525252FCdQo5Y0dHj3iHzYKKSb3W04isg.png",
-    "placeBannerUrl": "/api/proxy-image?url=%2Fapi%2Fproxy-image%3Furl%3D%252Fapi%252Fproxy-image%253Furl%253D%25252Fapi%25252Fproxy-image%25253Furl%25253Dhttps%2525253A%2525252F%2525252Fframerusercontent.com%2525252Fimages%2525252FhpCoE4e77JJYWBUyziSClY6Yirs.png",
+    "placeLogoUrl": "/api/proxy-image?url=%2Fapi%2Fproxy-image%3Furl%3D%252Fapi%252Fproxy-image%253Furl%253Dhttps%25253A%25252F%25252Fframerusercontent.com%25252Fimages%25252FCdQo5Y0dHj3iHzYKKSb3W04isg.png",
+    "placeBannerUrl": "/api/proxy-image?url=%2Fapi%2Fproxy-image%3Furl%3D%252Fapi%252Fproxy-image%253Furl%253Dhttps%25253A%25252F%25252Fframerusercontent.com%25252Fimages%25252FhpCoE4e77JJYWBUyziSClY6Yirs.png",
     "placeDescription": "Explore commercial office spaces, business setup opportunities and integration to the ecosystem of Dubai Silicon Oasis",
     "author": {
       "name": "aouisesmee",
@@ -108,8 +108,8 @@
       "Website"
     ],
     "recordedAt": "Just now",
-    "bannerUrl": "/api/proxy-image?url=%2Fapi%2Fproxy-image%3Furl%3D%252Fapi%252Fproxy-image%253Furl%253D%25252Fapi%25252Fproxy-image%25253Furl%25253Dhttps%2525253A%2525252F%2525252Fframerusercontent.com%2525252Fimages%2525252FhpCoE4e77JJYWBUyziSClY6Yirs.png",
-    "ogImage": "/api/proxy-image?url=%2Fapi%2Fproxy-image%3Furl%3D%252Fapi%252Fproxy-image%253Furl%253D%25252Fapi%25252Fproxy-image%25253Furl%25253Dhttps%2525253A%2525252F%2525252Fframerusercontent.com%2525252Fimages%2525252FhpCoE4e77JJYWBUyziSClY6Yirs.png",
+    "bannerUrl": "/api/proxy-image?url=%2Fapi%2Fproxy-image%3Furl%3D%252Fapi%252Fproxy-image%253Furl%253Dhttps%25253A%25252F%25252Fframerusercontent.com%25252Fimages%25252FhpCoE4e77JJYWBUyziSClY6Yirs.png",
+    "ogImage": "/api/proxy-image?url=%2Fapi%2Fproxy-image%3Furl%3D%252Fapi%252Fproxy-image%253Furl%253Dhttps%25253A%25252F%25252Fframerusercontent.com%25252Fimages%25252FhpCoE4e77JJYWBUyziSClY6Yirs.png",
     "authorName": "aouisesmee",
     "authorAvatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
     "duration": 60,

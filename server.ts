@@ -102,9 +102,38 @@ function readReviewsIndex(): any[] {
     if (fs.existsSync(reviewsIndexPath)) {
       const raw = fs.readFileSync(reviewsIndexPath, "utf8");
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch (e) {}
+
+  // Robust seed fallback for new container deployments / mounted volumes
+  const seedCandidates = [
+    path.join(process.cwd(), "public", "seeds", "reviews_index.json"),
+    path.join(process.cwd(), "public", "reviews_index.json"),
+    path.join(process.cwd(), "dist", "reviews_index.json")
+  ];
+
+  for (const seedPath of seedCandidates) {
+    try {
+      if (fs.existsSync(seedPath)) {
+        const raw = fs.readFileSync(seedPath, "utf8");
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          try {
+            if (!fs.existsSync(globalUploadsDir)) {
+              fs.mkdirSync(globalUploadsDir, { recursive: true });
+            }
+            fs.writeFileSync(reviewsIndexPath, raw, "utf8");
+            console.log(`📦 [Server] Auto-initialized ${parsed.length} reviews from seed ${seedPath}`);
+          } catch (writeErr) {
+            console.warn("Notice writing seed reviews index:", writeErr);
+          }
+          return parsed;
+        }
+      }
+    } catch (err) {}
+  }
+
   return [];
 }
 
