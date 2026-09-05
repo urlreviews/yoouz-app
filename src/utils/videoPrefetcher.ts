@@ -1,18 +1,19 @@
 import { normalizeVideoUrl, resolvePlayableVideoSource, resolveVideoPosterUrl } from "./videoUtils";
 import { saveVideoBlobToIndexedDB, getRawVideoBlobFromIndexedDB } from "../lib/videoStorage";
 
+// Keep track of preloaded video URLs and poster images
 const preloadedUrls = new Set<string>();
 const preloadedPosters = new Set<string>();
-const videoBufferPool: HTMLVideoElement[] = [];
-// Keep buffer pool small (1-2) to avoid exhausting iOS WebKit / Android hardware video decoders (limit ~3-4 concurrent streams)
-const isTouchDevice = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-const MAX_BUFFER_POOL_SIZE = isTouchDevice ? 2 : 4;
 
 /**
- * TikTok / YouTube Shorts-grade Video & Poster Prefetch Engine.
- * Preloads video byte streams, decodes initial frames into GPU cache,
- * and primes poster artwork so when swiping fast up or down on any mobile phone,
- * playback starts instantaneously without lag or black frames.
+ * Universal Mobile & Desktop Video & Poster Prefetch Engine.
+ * Preloads video byte streams using lightweight HTTP Range requests
+ * and primes poster artwork into GPU image cache.
+ * 
+ * CRITICAL FIX FOR BRAVE, FIREFOX & SAFARI:
+ * Never instantiate headless, unmounted <video> elements with .load() in JavaScript.
+ * Unmounted video elements leak hardware media decoders in iOS WebKit, Firefox Gecko,
+ * and Chromium/Brave, causing video freeze or audio cutoff after 3-4 videos.
  */
 export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
   if (!rawUrl || typeof rawUrl !== "string") return;
@@ -27,42 +28,17 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
     videoId = url.split("/api/videos/stream/")[1]?.replace(/\.[^.]+$/, "") || "";
   }
 
-  // 1. High-Performance HTTP Byte Range Warm-Up (fetches initial 1MB chunk into browser edge cache)
+  // 1. High-Performance HTTP Byte Range Warm-Up (fetches initial 512KB chunk into browser edge cache)
   try {
     fetch(url, {
       method: "GET",
-      headers: { Range: "bytes=0-1048575" },
+      headers: { Range: "bytes=0-524287" },
       mode: "cors",
       cache: "force-cache"
     }).catch(() => {});
   } catch (e) {}
 
-  // 2. Headless GPU-warmed HTMLVideoElement Pre-buffer (primes decoding pipeline)
-  try {
-    if (typeof document !== "undefined") {
-      const warmVideo = document.createElement("video");
-      warmVideo.preload = "auto";
-      warmVideo.muted = true;
-      warmVideo.playsInline = true;
-      (warmVideo as any)["webkit-playsinline"] = "true";
-      (warmVideo as any)["x5-playsinline"] = "true";
-      warmVideo.src = url;
-      warmVideo.load();
-
-      videoBufferPool.push(warmVideo);
-      while (videoBufferPool.length > MAX_BUFFER_POOL_SIZE) {
-        const oldest = videoBufferPool.shift();
-        if (oldest) {
-          oldest.removeAttribute("src");
-          try {
-            oldest.load();
-          } catch (e) {}
-        }
-      }
-    }
-  } catch (e) {}
-
-  // 3. High-Performance IndexedDB Blob Cache Background Prefetch (stores full video offline)
+  // 2. High-Performance IndexedDB Blob Cache Background Prefetch (stores full video offline)
   if (videoId) {
     try {
       getRawVideoBlobFromIndexedDB(videoId).then((existing) => {
@@ -79,11 +55,11 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
             })
             .catch(() => {});
         }
-      });
+      }).catch(() => {});
     } catch (e) {}
   }
 
-  // 4. Preload Poster Image if provided
+  // 3. Preload Poster Image into browser image cache
   if (posterUrl && !preloadedPosters.has(posterUrl)) {
     preloadedPosters.add(posterUrl);
     const img = new Image();

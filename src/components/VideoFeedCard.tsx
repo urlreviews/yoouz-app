@@ -143,6 +143,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       if (other !== currentEl) {
         try {
           if (!other.paused) other.pause();
+          other.muted = true;
         } catch (e) {}
       }
     });
@@ -237,10 +238,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-    el.muted = effectiveMuted;
-    if (!effectiveMuted) {
-      el.volume = 1;
+    if (isActive) {
+      const effectiveMuted = isMuted || !isSessionAudioUnlocked;
+      el.muted = effectiveMuted;
+      if (!effectiveMuted) {
+        el.volume = 1;
+      }
+    } else {
+      el.muted = true;
     }
   }, [isMuted, isSessionAudioUnlocked, isActive]);
 
@@ -573,10 +578,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onPause={() => {
               setIsPlaying(false);
-              // Auto-resume if active card was paused unexpectedly by browser pipeline without manual user intent
-              if (isActive && !isManuallyPausedRef.current) {
-                safePlay();
-              }
             }}
             onWaiting={() => {
               if (isActive) setIsBuffering(true);
@@ -683,12 +684,21 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
-            className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
-            title={isMuted || !isSessionAudioUnlocked ? "Unmute sound" : "Mute sound"}
-            aria-label={isMuted || !isSessionAudioUnlocked ? "Unmute sound" : "Mute sound"}
+            className={`h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
+              isMuted || !isSessionAudioUnlocked
+                ? "px-3.5 gap-2 border-white/50 animate-pulse-subtle bg-black/90"
+                : "w-11 md:w-12 md:h-12 border-white/35"
+            }`}
+            title={isMuted || !isSessionAudioUnlocked ? "Tap to unmute" : "Mute sound"}
+            aria-label={isMuted || !isSessionAudioUnlocked ? "Tap to unmute" : "Mute sound"}
           >
             {isMuted || !isSessionAudioUnlocked ? (
-              <VolumeX className="w-5 h-5 text-white stroke-[2.2]" />
+              <>
+                <VolumeX className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
+                <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
+                  Tap to Unmute
+                </span>
+              </>
             ) : (
               <Volume2 className="w-5 h-5 text-white stroke-[2.2]" />
             )}
@@ -710,25 +720,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             aria-label="Play video"
           >
             <Play className="w-10 h-10 fill-white text-white translate-x-0.5 drop-shadow-md relative z-10" />
-          </button>
-        </div>
-      )}
-
-      {/* Tap to Unmute Floating Trigger for Mobile Web & PWA Audio Flow (Shows immediately until session audio is unlocked) */}
-      {isActive && !isSessionAudioUnlocked && !isManuallyPaused && (
-        <div className="absolute bottom-28 md:bottom-24 left-1/2 -translate-x-1/2 z-35 pointer-events-auto">
-          <button
-            type="button"
-            id={`unmute-overlay-${video.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleMute(e);
-            }}
-            onTouchStart={(e) => e.stopPropagation()}
-            className="px-5 py-2.5 rounded-full bg-black/80 hover:bg-black active:scale-95 backdrop-blur-xl border border-white/30 text-white text-sm font-bold shadow-2xl flex items-center gap-2 cursor-pointer animate-pulse-subtle"
-          >
-            <Volume2 className="w-4 h-4 text-white" />
-            <span>Tap to Unmute</span>
           </button>
         </div>
       )}

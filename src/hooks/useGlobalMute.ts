@@ -5,10 +5,11 @@ let globalAudioUnlocked = false;
 let globalIsMuted = true;
 
 let sharedAudioContext: AudioContext | null = null;
+let hasCreatedUnlockBuffer = false;
 
 /**
- * Permanently authorizes audio subsystem across all browsers and devices
- * by unlocking the Web Audio AudioContext on user gesture.
+ * Permanently authorizes audio subsystem across all browsers (Safari, Firefox, Brave)
+ * by unlocking the Web Audio AudioContext on first user gesture.
  */
 export function ensureSharedAudioContextUnlocked() {
   if (typeof window === 'undefined') return;
@@ -21,11 +22,14 @@ export function ensureSharedAudioContextUnlocked() {
       if (sharedAudioContext.state === 'suspended') {
         sharedAudioContext.resume().catch(() => {});
       }
-      const buffer = sharedAudioContext.createBuffer(1, 1, 22050);
-      const source = sharedAudioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(sharedAudioContext.destination);
-      source.start(0);
+      if (!hasCreatedUnlockBuffer && sharedAudioContext.state === 'running') {
+        hasCreatedUnlockBuffer = true;
+        const buffer = sharedAudioContext.createBuffer(1, 1, 22050);
+        const source = sharedAudioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(sharedAudioContext.destination);
+        source.start(0);
+      }
     }
   } catch (e) {}
 }
@@ -56,12 +60,6 @@ export function useGlobalMute() {
       globalAudioUnlocked = true;
       ensureSharedAudioContextUnlocked();
       unlockListeners.forEach(listener => listener(true));
-      if (typeof document !== 'undefined') {
-        document.querySelectorAll<HTMLVideoElement>("video").forEach(v => {
-          v.muted = false;
-          v.volume = 1;
-        });
-      }
     }
     muteListeners.forEach(listener => listener(nextVal));
   };
@@ -73,12 +71,6 @@ export function useGlobalMute() {
     try {
       localStorage.setItem("yoouz_sound_muted", "false");
     } catch {}
-    if (typeof document !== 'undefined') {
-      document.querySelectorAll<HTMLVideoElement>("video").forEach(v => {
-        v.muted = false;
-        v.volume = 1;
-      });
-    }
     unlockListeners.forEach(listener => listener(true));
     muteListeners.forEach(listener => listener(false));
   };
@@ -97,12 +89,6 @@ export function triggerAudioUnlock() {
   try {
     localStorage.setItem("yoouz_sound_muted", "false");
   } catch {}
-  if (typeof document !== 'undefined') {
-    document.querySelectorAll<HTMLVideoElement>("video").forEach(v => {
-      v.muted = false;
-      v.volume = 1;
-    });
-  }
   unlockListeners.forEach(listener => listener(true));
   muteListeners.forEach(listener => listener(false));
 }

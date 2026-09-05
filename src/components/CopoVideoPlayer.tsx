@@ -108,22 +108,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [localBlobUrls, setLocalBlobUrls] = useState<Record<string, string>>({});
 
-  // Mobile End of Feed Toast notification state (replaces intrusive crawling bar)
-  const [showEndOfFeedToast, setShowEndOfFeedToast] = useState<boolean>(false);
-  const endOfFeedToastTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const triggerEndOfFeedToast = useCallback(() => {
-    setShowEndOfFeedToast(true);
-    if (endOfFeedToastTimerRef.current) clearTimeout(endOfFeedToastTimerRef.current);
-    endOfFeedToastTimerRef.current = setTimeout(() => {
-      setShowEndOfFeedToast(false);
-    }, 3200);
-  }, []);
-
   // Safety clamp if a video deletion causes currentIndex to exceed new feed bounds
   useEffect(() => {
-    if (videos.length > 0 && currentIndex >= videos.length) {
-      onSelectVideoIndex(Math.max(0, videos.length - 1));
+    const maxIdx = videos.length > 0 ? videos.length : 0;
+    if (currentIndex > maxIdx) {
+      onSelectVideoIndex(maxIdx);
     }
   }, [videos.length, currentIndex, onSelectVideoIndex]);
 
@@ -166,7 +155,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Robust programmatic scroll function that guarantees instant synchronization
   const scrollToCard = useCallback(
     (targetIndex: number, behavior: ScrollBehavior = "smooth") => {
-      if (targetIndex < 0 || (videos.length > 0 && targetIndex >= videos.length)) return;
+      const maxIdx = videos.length > 0 ? videos.length : 0;
+      if (targetIndex < 0 || targetIndex > maxIdx) return;
 
       // Update refs and trigger state change immediately to prevent race conditions
       const isJump = Math.abs(targetIndex - currentIndexRef.current) > 1;
@@ -261,11 +251,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         const idxAttr = bestEntry.target.getAttribute("data-video-index");
         if (idxAttr !== null) {
           const idx = parseInt(idxAttr, 10);
-          if (!isNaN(idx) && idx >= 0 && idx < videos.length && idx !== currentIndexRef.current) {
+          const maxIdx = videos.length > 0 ? videos.length : 0;
+          if (!isNaN(idx) && idx >= 0 && idx <= maxIdx && idx !== currentIndexRef.current) {
             currentIndexRef.current = idx;
             lastObserverIndexRef.current = idx;
             onSelectVideoIndex(idx);
-            prefetchUpcomingVideos(videos, idx);
+            if (idx < videos.length) {
+              prefetchUpcomingVideos(videos, idx);
+            }
           }
         }
       },
@@ -298,15 +291,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (!containerHeight || containerHeight <= 0) return;
 
       const settledIndex = Math.round(container.scrollTop / containerHeight);
+      const maxIdx = videos.length > 0 ? videos.length : 0;
       if (
         settledIndex >= 0 &&
-        settledIndex < videos.length &&
+        settledIndex <= maxIdx &&
         settledIndex !== currentIndexRef.current
       ) {
         currentIndexRef.current = settledIndex;
         lastObserverIndexRef.current = settledIndex;
         onSelectVideoIndex(settledIndex);
-        prefetchUpcomingVideos(videos, settledIndex);
+        if (settledIndex < videos.length) {
+          prefetchUpcomingVideos(videos, settledIndex);
+        }
       }
     };
 
@@ -347,10 +343,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       // Authorize audio subsystem inside active user gesture
       if (isSessionAudioUnlocked && !isMuted) {
         ensureSharedAudioContextUnlocked();
-        document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
-          v.muted = false;
-          v.volume = 1;
-        });
       }
     };
 
@@ -361,10 +353,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       // Ensure audio permission is propagated during touch completion
       if (isSessionAudioUnlocked && !isMuted) {
         ensureSharedAudioContextUnlocked();
-        document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
-          v.muted = false;
-          v.volume = 1;
-        });
       }
 
       const touch = e.changedTouches[0];
@@ -381,14 +369,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const isSignificantSwipe = swipeRatio >= 0.15 || (Math.abs(deltaY) >= 35 && elapsed < 300);
 
       if (isSignificantSwipe) {
+        const maxIdx = videos.length > 0 ? videos.length : 0;
         let targetIdx = currentIndexRef.current;
         if (deltaY < 0) {
-          // Swiped UP -> Next video
-          if (currentIndexRef.current < videos.length - 1) {
+          // Swiped UP -> Next video or End Card
+          if (currentIndexRef.current < maxIdx) {
             targetIdx = currentIndexRef.current + 1;
-          } else if (videos.length > 0) {
-            // Reached end of feed on mobile
-            triggerEndOfFeedToast();
           }
         } else {
           // Swiped DOWN -> Prev video (stops at first video, does not loop to end)
@@ -398,17 +384,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
 
         if (targetIdx !== currentIndexRef.current) {
-          // If target is within video range, pre-authorize target video right inside this user gesture so Safari never blocks it
-          if (targetIdx < videos.length) {
-            const targetCard = cardRefs.current[targetIdx];
-            const targetVid = targetCard?.querySelector<HTMLVideoElement>("video");
-            if (targetVid && isSessionAudioUnlocked && !isMuted) {
-              targetVid.muted = false;
-              targetVid.volume = 1;
-              targetVid.play().catch(() => {});
-            }
-          }
-
           scrollToCard(targetIdx, "smooth");
         }
       }
@@ -421,7 +396,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       container.removeEventListener("touchstart", handleTouchStart);
       container.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [videos.length, scrollToCard, triggerEndOfFeedToast]);
+  }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
   // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {
@@ -449,7 +424,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     if (isSessionAudioUnlocked && !isMuted) {
       ensureSharedAudioContextUnlocked();
     }
-    if (currentIndexRef.current < videos.length - 1) {
+    const maxIdx = videos.length > 0 ? videos.length : 0;
+    if (currentIndexRef.current < maxIdx) {
       scrollToCard(currentIndexRef.current + 1, "smooth");
     }
   }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
@@ -494,8 +470,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         isWheeling = true;
 
         if (e.deltaY > 0) {
-          // Wheel Down -> Next Video
-          if (currentIndexRef.current < videos.length - 1) {
+          // Wheel Down -> Next Video or End Card
+          const maxIdx = videos.length > 0 ? videos.length : 0;
+          if (currentIndexRef.current < maxIdx) {
             scrollToCard(currentIndexRef.current + 1, "smooth");
           }
         } else {
@@ -677,9 +654,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            // Generous sliding window (±4) ensures upcoming videos are mounted in the DOM
-            // and have their audio authorizations pre-cached during user interaction
-            const bufferRadius = 4;
+            // Adaptive sliding window (±1 on mobile/touch, ±2 on desktop) protects mobile hardware decoders
+            // from crashing or freezing across Brave, Firefox & Safari (WebKit limit ~3-4 decoders)
+            const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+            const bufferRadius = isTouch ? 1 : 2;
             const isCardNear = Math.abs(idx - currentIndex) <= bufferRadius;
 
             return (
@@ -719,28 +697,74 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               />
             );
           })}
-        </div>
 
-        {/* Mobile End of Feed Toast (Shows only when user swipes up at the end of the mobile feed) */}
-        {showEndOfFeedToast && (
-          <div
-            id="mobile-end-of-feed-toast"
-            className="fixed bottom-24 sm:hidden left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-zinc-900/95 backdrop-blur-xl border border-white/20 text-white text-xs font-semibold shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200 pointer-events-auto select-none"
-          >
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>You're all caught up</span>
-            <button
-              type="button"
-              onClick={() => {
-                scrollToCard(0, "smooth");
-                setShowEndOfFeedToast(false);
+          {/* End of Feed Card (Matches Screenshot 2) */}
+          {videos.length > 0 && (
+            <div
+              key="feed-end-card"
+              data-video-index={videos.length}
+              ref={(el) => {
+                cardRefs.current[videos.length] = el;
               }}
-              className="px-2.5 py-1 rounded-full bg-white text-black font-bold text-[11px] hover:bg-zinc-200 active:scale-95 transition-transform cursor-pointer ml-1"
+              className="w-full h-full md:h-[min(88vh,780px)] md:w-auto aspect-[9/16] md:max-w-[440px] snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 bg-black md:bg-zinc-950 md:rounded-3xl border-0 md:border md:border-white/10 text-center select-none relative"
             >
-              Back to first
-            </button>
-          </div>
-        )}
+              {/* Green checkmark circle */}
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mb-5 text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)]">
+                <CheckCircle2 className="w-8 h-8 stroke-[2]" />
+              </div>
+
+              {/* Feed Completed Pill */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-3">
+                FEED COMPLETED
+              </div>
+
+              {/* Title */}
+              <h3 className="text-2xl font-bold text-white tracking-tight mb-2">
+                You're all caught up!
+              </h3>
+
+              {/* Subtitle */}
+              <p className="text-sm text-zinc-400 leading-relaxed mb-8 max-w-[280px]">
+                You've watched all {videos.length} reviews in this feed.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="w-full max-w-[280px] flex flex-col gap-3">
+                <button
+                  type="button"
+                  id="btn-end-card-back-to-top"
+                  onClick={() => scrollToCard(0, "smooth")}
+                  className="w-full py-3.5 px-5 rounded-2xl bg-white hover:bg-zinc-200 active:scale-95 text-black font-bold text-sm transition-all shadow-xl flex items-center justify-center gap-2.5 cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4 stroke-[2.5]" />
+                  <span>Back to First Review</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="btn-end-card-revisit-last"
+                  onClick={() => scrollToCard(videos.length - 1, "smooth")}
+                  className="w-full py-3.5 px-5 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 active:scale-95 text-white font-semibold text-sm transition-all border border-white/15 flex items-center justify-center gap-2.5 cursor-pointer"
+                >
+                  <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                  <span>Revisit Last Review</span>
+                </button>
+
+                {onOpenCreateModal && (
+                  <button
+                    type="button"
+                    id="btn-end-card-record-review"
+                    onClick={onOpenCreateModal}
+                    className="mt-2 text-xs font-medium text-zinc-400 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer py-2"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Record your own review</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Floating Up/Down Navigation Buttons (Desktop) */}
         <div
@@ -764,9 +788,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-next-video"
             onClick={handleNext}
-            disabled={currentIndex >= videos.length - 1}
+            disabled={currentIndex >= (videos.length > 0 ? videos.length : 0)}
             className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-              currentIndex >= videos.length - 1
+              currentIndex >= (videos.length > 0 ? videos.length : 0)
                 ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
                 : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
             }`}
