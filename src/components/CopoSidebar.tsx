@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Home,
   Compass,
@@ -13,9 +13,12 @@ import {
   Menu,
   Video,
   Shield,
-  Download
+  Download,
+  Globe
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
+import { useLanguage } from "../i18n/LanguageContext";
+import { LanguageSelectorModal } from "./LanguageSelectorModal";
 
 interface CopoSidebarProps {
   activeSection: NavSection;
@@ -38,19 +41,21 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
   onOpenCreateModal,
   onOpenLegal
 }) => {
+  const { t, currentLanguageMeta, isRTL } = useLanguage();
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
  
   const navItems = [
-    { id: "home" as NavSection, label: "Home", icon: Home },
-    { id: "search" as NavSection, label: "Search", icon: Search, hasDot: true },
-    { id: "discover" as NavSection, label: "Discover", icon: Compass },
-    { id: "following" as NavSection, label: "Following", icon: UserPlus },
-    { id: "messages" as NavSection, label: "Messages", icon: Mail, badge: unreadMessagesCount },
-    { id: "notifications" as NavSection, label: "Notifications", icon: Bell, badge: unreadNotifsCount },
-    { id: "bookmarks" as NavSection, label: "Bookmarks", icon: Bookmark },
-    { id: "business" as NavSection, label: "For Businesses", icon: Shield },
-    { id: "profile" as NavSection, label: "Profile", icon: User },
-    { id: "more" as NavSection, label: "More", icon: Menu },
-    { id: "record_review" as NavSection, label: "Record Review", icon: Video, isDarkBlue: true }
+    { id: "home" as NavSection, label: t("nav.home", "Home"), icon: Home },
+    { id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search, hasDot: true },
+    { id: "discover" as NavSection, label: t("nav.discover", "Discover"), icon: Compass },
+    { id: "following" as NavSection, label: t("nav.following", "Following"), icon: UserPlus },
+    { id: "messages" as NavSection, label: t("nav.messages", "Messages"), icon: Mail, badge: unreadMessagesCount },
+    { id: "notifications" as NavSection, label: t("nav.notifications", "Notifications"), icon: Bell, badge: unreadNotifsCount },
+    { id: "bookmarks" as NavSection, label: t("nav.bookmarks", "Bookmarks"), icon: Bookmark },
+    { id: "business" as NavSection, label: t("nav.business", "For Businesses"), icon: Shield },
+    { id: "profile" as NavSection, label: t("nav.profile", "Profile"), icon: User },
+    { id: "more" as NavSection, label: t("nav.more", "More"), icon: Menu },
+    { id: "record_review" as NavSection, label: t("nav.record_review", "Record Review"), icon: Video, isDarkBlue: true }
   ];
 
   return (
@@ -146,8 +151,23 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           </nav>
         </div>
 
-        {/* Footer & Legal Links */}
-        <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2">
+        {/* Footer & Language Selector / Legal Links */}
+        <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2.5">
+          {/* Quick Language Switcher Button */}
+          <button
+            id="sidebar-language-selector-btn"
+            onClick={() => setIsLangModalOpen(true)}
+            className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition-all cursor-pointer text-xs font-medium group"
+          >
+            <div className="flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
+              <span>{currentLanguageMeta.nativeName}</span>
+            </div>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 group-hover:bg-zinc-700 group-hover:text-zinc-200 uppercase font-mono">
+              {currentLanguageMeta.code}
+            </span>
+          </button>
+
           <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
@@ -275,7 +295,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 activeSection === "home" ? "font-bold text-white" : "font-medium text-zinc-200"
               }`}
             >
-              Home
+              {t("nav.home", "Home")}
             </span>
           </button>
 
@@ -308,7 +328,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                   : "font-medium text-zinc-200"
               }`}
             >
-              Search
+              {t("nav.search", "Search")}
             </span>
           </button>
 
@@ -329,7 +349,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               <Video className="w-[24px] h-[24px] stroke-[2.2] text-zinc-950" />
             </button>
             <span className="text-[9px] tracking-tight mt-1 font-bold text-white">
-              Record
+              {t("nav.record_review", "Record")}
             </span>
           </div>
 
@@ -364,7 +384,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                   : "font-medium text-zinc-200"
               }`}
             >
-              Inbox
+              {t("nav.messages", "Inbox")}
             </span>
           </button>
 
@@ -403,11 +423,17 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-200"
               }`}
             >
-              {currentUser?.name ? currentUser.name.split(" ")[0] : "Profile"}
+              {currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}
             </span>
           </button>
         </div>
       </nav>
+
+      {/* Language Selection Modal */}
+      <LanguageSelectorModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+      />
     </>
   );
 };

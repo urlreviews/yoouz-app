@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Home,
   Search,
@@ -19,10 +19,13 @@ import {
   Lock,
   HelpCircle,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  Globe
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { triggerHaptic } from "../utils/haptics";
+import { useLanguage } from "../i18n/LanguageContext";
+import { LanguageSelectorModal } from "./LanguageSelectorModal";
 
 interface CopoMobileNavDrawerProps {
   isOpen: boolean;
@@ -55,6 +58,9 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
   onSignOut,
   onOpenEditProfile
 }) => {
+  const { t, currentLanguageMeta, isRTL } = useLanguage();
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+
   if (!isOpen) return null;
 
   const handleNavClick = (section: NavSection) => {
@@ -184,7 +190,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Home className="w-4 h-4 text-white" />
-                <span>Home Feed</span>
+                <span>{t("nav.home", "Home")}</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-400" />
             </button>
@@ -200,7 +206,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Search className="w-4 h-4 text-white" />
-                <span>Search Websites & Places</span>
+                <span>{t("nav.search", "Search Websites & Places")}</span>
               </div>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-white font-mono border border-zinc-700">
                 URL
@@ -218,7 +224,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Compass className="w-4 h-4 text-white" />
-                <span>Discover Creators & Spots</span>
+                <span>{t("nav.discover", "Discover Creators & Spots")}</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-400" />
             </button>
@@ -234,7 +240,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <UserPlus className="w-4 h-4 text-white" />
-                <span>Following</span>
+                <span>{t("nav.following", "Following")}</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-400" />
             </button>
@@ -250,7 +256,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-white" />
-                <span>Direct Messages</span>
+                <span>{t("nav.messages", "Direct Messages")}</span>
               </div>
               {unreadMessagesCount > 0 ? (
                 <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-white font-bold text-[10px] border border-zinc-700">
@@ -272,7 +278,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Bell className="w-4 h-4 text-white" />
-                <span>Notifications</span>
+                <span>{t("nav.notifications", "Notifications")}</span>
               </div>
               {unreadNotifsCount > 0 ? (
                 <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-white font-bold text-[10px] border border-zinc-700">
@@ -294,7 +300,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Bookmark className="w-4 h-4 text-white" />
-                <span>Saved Bookmarks</span>
+                <span>{t("nav.bookmarks", "Saved Bookmarks")}</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-400" />
             </button>
@@ -310,11 +316,29 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Shield className="w-4 h-4 text-white" />
-                <span>For Businesses & Owners</span>
+                <span>{t("nav.business", "For Businesses & Owners")}</span>
               </div>
               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-800 text-white font-bold border border-zinc-700">
                 PRO
               </span>
+            </button>
+
+            {/* Language Selection Row */}
+            <button
+              id="mobile-drawer-language-btn"
+              onClick={() => setIsLangModalOpen(true)}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium bg-zinc-900/90 hover:bg-zinc-850 text-white border border-zinc-800 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Globe className="w-4 h-4 text-zinc-300" />
+                <span>{t("nav.language", "Language")}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-300 font-medium">{currentLanguageMeta.nativeName}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono uppercase">
+                  {currentLanguageMeta.code}
+                </span>
+              </div>
             </button>
           </div>
 
@@ -328,7 +352,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-sm shadow-lg shadow-white/10 border border-white/20 transition-all cursor-pointer active:scale-95"
             >
               <Video className="w-4 h-4 shrink-0 text-zinc-950" />
-              <span>Record Video Review</span>
+              <span>{t("nav.record_review", "Record Video Review")}</span>
             </button>
           </div>
 
@@ -447,6 +471,12 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Language Selector Modal */}
+      <LanguageSelectorModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+      />
     </div>
   );
 };

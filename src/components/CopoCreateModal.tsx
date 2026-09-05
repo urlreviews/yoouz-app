@@ -28,10 +28,10 @@ import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../l
 import { cleanUndefinedFields, cleanForFirestore } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { initFaceDetection, detectFaceInVideo } from "../utils/faceDetector";
-import { preloadNsfwModel, checkDataUrlSafety } from "../utils/nsfwDetector";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { triggerHaptic } from "../utils/haptics";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoCreateModalProps {
   isOpen: boolean;
@@ -54,6 +54,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   currentUser,
   onAddPlace
 }) => {
+  const { t, isRTL } = useLanguage();
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(preselectedPlace || null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -153,7 +154,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     } else {
       setRating(0);
       initFaceDetection().catch(() => {});
-      preloadNsfwModel().catch(() => {});
     }
     return () => {
       stopCamera();
@@ -869,26 +869,33 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     let finalThumbnail = videoThumbnail || "";
 
-    // 0. 100% Free On-Device Neural Safety Check (TensorFlow.js / NSFWJS)
+    // 0. AI Content Safety Moderation Verification (Zero tolerance for nudity/adult/dangerous content)
     const visualPayload = finalThumbnail || videoThumbnail;
     if (visualPayload && visualPayload.startsWith("data:image")) {
       try {
-        const onDeviceSafety = await checkDataUrlSafety(visualPayload);
-        if (onDeviceSafety.flagged || !onDeviceSafety.isSafe) {
-          setIsPublishing(false);
-          setUploadProgress(0);
-          setRecordedVideoBlob(null);
-          setRecordedVideoUrl(null);
-          setVideoThumbnail(null);
-          setErrorMessage(
-            onDeviceSafety.reason ||
-              "Content Safety Violation: Inappropriate or sexually explicit content detected on-device. Video reviews on Yoouz must comply with Community Safety Guidelines. This recording has been blocked and discarded."
-          );
-          triggerHaptic("heavy");
-          return;
+        const modRes = await fetch("/api/videos/moderate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageData: visualPayload,
+            placeName: selectedPlace.name
+          })
+        });
+        if (modRes.ok) {
+          const modData = await modRes.json();
+          if (modData.flagged || modData.isSafe === false) {
+            setIsPublishing(false);
+            setUploadProgress(0);
+            setRecordedVideoBlob(null);
+            setRecordedVideoUrl(null);
+            setVideoThumbnail(null);
+            setErrorMessage("Content Safety Violation: Inappropriate, sexually explicit, or unsafe content was detected. Video reviews on Yoouz must comply with Community Safety Guidelines. This recording has been blocked and discarded.");
+            triggerHaptic("heavy");
+            return;
+          }
         }
       } catch (modErr) {
-        console.warn("On-device safety check notice:", modErr);
+        console.warn("Safety check request notice:", modErr);
       }
     }
 
@@ -1335,16 +1342,16 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 onClick={() => setSelectedPlace(null)}
                 className="px-4 py-2.5 rounded-xl text-zinc-400 md:text-zinc-400 hover:bg-zinc-800 md:hover:bg-zinc-800 font-bold text-sm transition-colors cursor-pointer"
               >
-                Back
+                {t('create.back', 'Back')}
               </button>
               <button
                 onClick={() => {
                   if (!selectedPlace) {
-                    setErrorMessage("Please select a place or business first.");
+                    setErrorMessage(t('create.selectPlaceError', 'Please select a place or business first.'));
                     return;
                   }
                   if (rating === 0) {
-                    setErrorMessage("Please select a star rating before proceeding.");
+                    setErrorMessage(t('create.selectRatingError', 'Please select a star rating before proceeding.'));
                     return;
                   }
                   setErrorMessage(null);
@@ -1353,7 +1360,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 }}
                 className="px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-sm shadow-lg transition-all cursor-pointer flex items-center gap-2 active:scale-95 group"
               >
-                <span>Proceed to Camera</span>
+                <span>{t('create.proceedToCamera', 'Proceed to Camera')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -1538,7 +1545,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       className="px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <RotateCcw className="w-4 h-4" />
-                      <span>Re-record</span>
+                      <span>{t('create.reRecord', 'Re-record')}</span>
                     </button>
 
                     <button
@@ -1552,12 +1559,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       {isPublishing ? (
                         <>
                           <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                          <span>Publishing live...</span>
+                          <span>{t('create.publishing', 'Publishing live...')}</span>
                         </>
                       ) : (
                         <>
                           <Check className="w-4 h-4 stroke-[2.5]" />
-                          <span>Publish Video Review</span>
+                          <span>{t('create.publishReview', 'Publish Video Review')}</span>
                         </>
                       )}
                     </button>

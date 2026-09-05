@@ -84,6 +84,8 @@ import { SearchableComboSelector } from './SearchableComboSelector';
 import { locationData } from "../utils/locationData";
 import { Country, State, City } from "country-state-city";
 import { countryDialData, getDialCodeByCountry, getCountryDialInfo } from '../utils/countries';
+import { useLanguage } from '../i18n/LanguageContext';
+import { LanguageSelectorModal } from './LanguageSelectorModal';
 
 interface CopoBusinessDashboardViewProps {
   onNavigate: (section: NavSection) => void;
@@ -574,6 +576,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onDeleteOwnerResponse,
   onClose = () => onNavigate('home')
 }) => {
+  const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
 
@@ -1379,6 +1383,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             {/* Right: Clean, Uncluttered Utility Bar */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
+              {/* Language Switcher Quick Button */}
+              <button
+                id="biz-header-language-btn"
+                onClick={() => setIsLangModalOpen(true)}
+                className="h-9 px-2.5 flex items-center gap-1.5 text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all text-xs font-bold shrink-0 cursor-pointer"
+                title="Change Platform Language (16 Supported)"
+              >
+                <span className="text-sm select-none">{currentLanguageMeta.flag}</span>
+                <span className="hidden sm:inline text-xs font-mono uppercase font-bold text-zinc-200">
+                  {currentLanguageMeta.code}
+                </span>
+                <Globe className="w-3.5 h-3.5 text-zinc-400" />
+              </button>
+
               {/* Notification Bell */}
               <div className="relative">
                 <button 
@@ -1504,6 +1522,23 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     >
                       <Building2 className="w-4 h-4 text-zinc-400" />
                       <span>Switch or Claim Venue</span>
+                    </button>
+                    
+                    <button 
+                      id="biz-dropdown-language-btn"
+                      onClick={() => {
+                        setShowAccountDropdown(false);
+                        setIsLangModalOpen(true);
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-300 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Globe className="w-4 h-4 text-zinc-400" />
+                        <span>Language / Localization</span>
+                      </div>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 font-mono text-zinc-300">
+                        {currentLanguageMeta.flag} {currentLanguageMeta.code.toUpperCase()}
+                      </span>
                     </button>
                     
                     <button 
@@ -4212,6 +4247,53 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </div>
                     </div>
 
+                    {/* SECTION 6: Language & Localization Settings */}
+                    <div>
+                      <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Globe className="w-3.5 h-3.5" /> Language & Regional Settings (16 Languages)
+                      </h3>
+                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm p-4 sm:p-5 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[13px] font-semibold text-white">Merchant Dashboard Language</div>
+                            <p className="text-xs text-zinc-400 mt-0.5">
+                              Currently active: <strong className="text-white">{currentLanguageMeta.flag} {currentLanguageMeta.name} ({currentLanguageMeta.nativeName})</strong>
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsLangModalOpen(true)}
+                            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer shrink-0"
+                          >
+                            <Globe className="w-3.5 h-3.5 text-zinc-400" />
+                            <span>Switch Language</span>
+                          </button>
+                        </div>
+
+                        {/* Quick 1-tap language chips */}
+                        <div className="pt-2">
+                          <label className="text-[11px] font-bold text-zinc-400 block mb-2">Quick Switch (Popular Languages):</label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {languages.slice(0, 8).map((lang) => (
+                              <button
+                                key={lang.code}
+                                type="button"
+                                onClick={() => setLanguage(lang.code)}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                  language === lang.code
+                                    ? "bg-white text-zinc-950 border-white font-black"
+                                    : "bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
+                                }`}
+                              >
+                                <span>{lang.flag}</span>
+                                <span>{lang.nativeName}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
 
                   {/* Right Column: Premium Live Mobile Preview Widget (5 cols) */}
@@ -4907,6 +4989,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           </div>
         </div>
       )}
+
+      {/* Language Selector Modal */}
+      <LanguageSelectorModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+      />
 
       </div>
     </div>

@@ -40,6 +40,9 @@ import {
   Smartphone
 } from "lucide-react";
 import { UserProfile, NavSection } from "../types";
+import { useLanguage } from "../i18n/LanguageContext";
+import { LanguageSelectorModal } from "./LanguageSelectorModal";
+import { SupportedLanguage } from "../i18n/translations";
 
 interface CopoMoreViewProps {
   currentUser: UserProfile | null;
@@ -68,7 +71,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   onOpenLegal,
   onOpenComparison
 }) => {
-  const [activeTab, setActiveTab] = useState<"about" | "faq" | "business" | "security" | "contact">("about");
+  const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
+  const [activeTab, setActiveTab] = useState<"about" | "faq" | "business" | "security" | "contact" | "language">("about");
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [langSearchFilter, setLangSearchFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [faqCategoryFilter, setFaqCategoryFilter] = useState<"all" | "reviewers" | "business" | "trust" | "technical">("all");
   const [openFaqIds, setOpenFaqIds] = useState<Record<string, boolean>>({
@@ -522,6 +528,18 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
             >
               <Shield className="w-4 h-4" />
               <span>Privacy & Security</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("language")}
+              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                activeTab === "language"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              }`}
+            >
+              <Globe className="w-4 h-4" />
+              <span>{t("nav.language", "Language")} ({currentLanguageMeta.code.toUpperCase()})</span>
             </button>
 
             <button
@@ -1232,6 +1250,155 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               )}
             </div>
           )}
+
+          {/* ========================================================= */}
+          {/* TAB 6: LANGUAGE & INTERNATIONALIZATION (16 LANGUAGES) */}
+          {/* ========================================================= */}
+          {activeTab === "language" && (
+            <div className="space-y-6 animate-in fade-in duration-200 text-left">
+              {/* Active Language Overview Banner */}
+              <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
+                      <Globe className="w-3.5 h-3.5 text-zinc-300" />
+                      <span>{t("common.select_language", "Global Localization & SEO")}</span>
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                      {t("settings.language_preference", "Language & Regional Settings")}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-zinc-400 font-normal">
+                      Switch instantly between 16 natively supported languages with zero reload, RTL bidirectional rendering, and SEO meta tags.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800 px-4 py-3 rounded-2xl shrink-0">
+                    <span className="text-3xl select-none">{currentLanguageMeta.flag}</span>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-white">{currentLanguageMeta.nativeName}</span>
+                        {isRTL && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-bold uppercase">
+                            RTL
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-zinc-400">{currentLanguageMeta.name} ({currentLanguageMeta.code.toUpperCase()})</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Search / Filter Languages */}
+                <div className="relative">
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="more-view-lang-search"
+                    type="text"
+                    value={langSearchFilter}
+                    onChange={(e) => setLangSearchFilter(e.target.value)}
+                    placeholder="Search from 16 languages (e.g., Arabic, Spanish, Hindi, French, Japanese)..."
+                    className="w-full pl-11 pr-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-white transition-colors"
+                  />
+                  {langSearchFilter && (
+                    <button
+                      onClick={() => setLangSearchFilter("")}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Languages Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-2">
+                  {languages
+                    .filter((l) => {
+                      const q = langSearchFilter.toLowerCase().trim();
+                      return (
+                        l.name.toLowerCase().includes(q) ||
+                        l.nativeName.toLowerCase().includes(q) ||
+                        l.code.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((lang) => {
+                      const isSelected = language === lang.code;
+                      return (
+                        <button
+                          key={lang.code}
+                          id={`more-lang-card-${lang.code}`}
+                          onClick={() => setLanguage(lang.code)}
+                          className={`p-4 rounded-2xl transition-all text-left flex items-start justify-between cursor-pointer border ${
+                            isSelected
+                              ? "bg-white text-zinc-950 border-white shadow-lg"
+                              : "bg-zinc-800/60 hover:bg-zinc-800 text-white border-zinc-700/60 hover:border-zinc-600"
+                          }`}
+                        >
+                          <div className="space-y-1 min-w-0 pr-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl leading-none select-none">{lang.flag}</span>
+                              <span className={`text-sm truncate ${isSelected ? "font-black text-zinc-950" : "font-bold text-white"}`}>
+                                {lang.nativeName}
+                              </span>
+                            </div>
+                            <p className={`text-xs truncate ${isSelected ? "text-zinc-700" : "text-zinc-400"}`}>
+                              {lang.name}
+                            </p>
+                            <div className="flex items-center gap-1.5 pt-1">
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
+                                isSelected ? "bg-zinc-950 text-white" : "bg-zinc-700 text-zinc-300"
+                              }`}>
+                                {lang.code}
+                              </span>
+                              {lang.direction === "rtl" && (
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${
+                                  isSelected ? "bg-zinc-950/10 text-zinc-900" : "bg-zinc-700/60 text-zinc-400"
+                                }`}>
+                                  RTL
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {isSelected && (
+                            <div className="w-5 h-5 rounded-full bg-zinc-950 text-white flex items-center justify-center shrink-0 mt-0.5">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Internationalization & SEO Architecture Details */}
+              <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-4">
+                <div className="flex items-center gap-2 text-white font-bold text-base">
+                  <Sparkles className="w-4 h-4 text-zinc-300" />
+                  <h3>100% Free, Zero-Cost High-Speed Architecture & SEO</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 space-y-1.5">
+                    <span className="font-bold text-white block">Client-Side Zero Latency</span>
+                    <p className="text-zinc-400 leading-relaxed">
+                      All translation schemas are compiled into the client bundle, meaning switching languages happens in 0 milliseconds without requesting third-party paid translation APIs.
+                    </p>
+                  </div>
+                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 space-y-1.5">
+                    <span className="font-bold text-white block">Native Bidirectional RTL</span>
+                    <p className="text-zinc-400 leading-relaxed">
+                      Languages like Arabic and Hebrew seamlessly adjust document alignment, flex orders, and directional text flows natively.
+                    </p>
+                  </div>
+                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 space-y-1.5">
+                    <span className="font-bold text-white block">Global Search Engine Crawling</span>
+                    <p className="text-zinc-400 leading-relaxed">
+                      Automatic document `lang`, `dir`, and `og:locale` synchronization empowers Google Bot and international search engines to index localized domain profiles.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 4. Google-Standard Footer */}
@@ -1326,6 +1493,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Language Selector Modal */}
+      <LanguageSelectorModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+      />
     </div>
   );
 };
