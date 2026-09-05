@@ -171,10 +171,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         setIsBuffering(false);
       }).catch((err) => {
         playPromiseRef.current = null;
-        // If unmuted autoplay is blocked by browser policy without gesture, fallback to muted autoplay
-        if (err?.name === "NotAllowedError" || err?.name === "AbortError" || err?.message?.includes("gesture") || err?.message?.includes("interact")) {
+        // If unmuted autoplay is blocked by browser policy without gesture on initial cold load, fallback to muted playback for this element only
+        if (err?.name === "NotAllowedError") {
           el.muted = true;
-          onForceMute();
           const retry = el.play();
           if (retry !== undefined) {
             playPromiseRef.current = retry;
@@ -189,12 +188,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 setIsPlaying(false);
               });
           }
-        } else {
+        } else if (err?.name !== "AbortError") {
           setIsPlaying(false);
         }
       });
     }
-  }, [isMuted, isSessionAudioUnlocked, onForceMute, pauseOtherVideos]);
+  }, [isMuted, isSessionAudioUnlocked, pauseOtherVideos]);
 
   // Safe Pause Execution waiting for pending play promises
   const safePause = useCallback(() => {
@@ -336,8 +335,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     triggerHaptic("light");
     ensureSharedAudioContextUnlocked();
 
-    // If video is playing muted and audio is not yet unlocked in session, first tap unlocks audio and keeps playing seamlessly
-    if (isMuted && !isSessionAudioUnlocked) {
+    // If audio is not yet unlocked in session, first tap unlocks audio and keeps playing seamlessly
+    if (!isSessionAudioUnlocked || isMuted) {
       onUnlockAudio?.();
       el.muted = false;
       el.volume = 1;
@@ -684,8 +683,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Tap to Unmute Floating Trigger for Mobile Web & PWA Audio Flow */}
-      {isActive && isPlaying && (isMuted || !isSessionAudioUnlocked) && (
+      {/* Tap to Unmute Floating Trigger for Mobile Web & PWA Audio Flow (Shows only until session audio is unlocked) */}
+      {isActive && isPlaying && !isSessionAudioUnlocked && (
         <div className="absolute bottom-28 md:bottom-24 left-1/2 -translate-x-1/2 z-35 pointer-events-auto">
           <button
             type="button"
