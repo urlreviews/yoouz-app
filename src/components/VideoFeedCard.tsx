@@ -773,7 +773,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               pauseOtherVideos();
               onOpenPlace(video.placeId);
             }}
-            className="self-start flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/85 backdrop-blur-xl border border-white/35 text-white text-[14px] font-bold hover:bg-black hover:border-white/60 transition-all w-fit max-w-[80vw] text-left group cursor-pointer shadow-2xl"
+            className="self-start flex items-center gap-2.5 sm:gap-3 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-black/85 hover:bg-black/95 backdrop-blur-2xl border border-white/35 hover:border-white/60 text-white transition-all w-fit max-w-[85vw] text-left group cursor-pointer shadow-2xl active:scale-[0.98]"
           >
             <CopoBrandLogo
               domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
@@ -781,17 +781,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               website={video.placeWebsite}
               logoUrl={businessLogoUrl || video?.placeLogoUrl}
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
-              className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/30 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-sm group-hover:scale-105 transition-transform"
-              imageClassName="w-full h-full object-contain rounded-[5px] [image-rendering:-webkit-optimize-contrast]"
-              fallbackTextClassName="font-extrabold text-xs text-white"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white border border-black/10 overflow-hidden flex items-center justify-center shrink-0 p-1 sm:p-1.5 shadow-md group-hover:scale-105 transition-transform ring-1 ring-white/20"
+              imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+              fallbackTextClassName="font-extrabold text-xs text-zinc-900"
             />
             <div className="flex items-center min-w-0 flex-1 gap-1.5">
-              <span className="truncate leading-tight font-extrabold text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:text-white transition-colors">
+              <span className="truncate leading-tight font-extrabold text-[14.5px] sm:text-[15.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:text-white transition-colors">
                 {formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || "Business Place"}
               </span>
               <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 drop-shadow-sm" />
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-white stroke-[2.5] shrink-0 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="w-4 h-4 text-white/90 stroke-[2.5] shrink-0 ml-0.5 group-hover:translate-x-0.5 group-hover:text-white transition-all" />
           </button>
         </footer>
 
