@@ -469,7 +469,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         >
           <div className="flex flex-col gap-0.5 w-full">
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}
@@ -512,7 +513,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
           <button
             id={`pill-place-${video.placeId}`}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               onPauseVideo?.();
               onOpenPlace(video.placeId);
             }}
@@ -547,7 +549,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           {/* Creator Avatar */}
           <div className="relative group/avatar mb-0.5">
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}

@@ -227,6 +227,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     // If we are still on the same video, do NOT reload, do NOT touch isManuallyPaused, and do NOT auto-play!
     if (!isNewVideo) {
+      if (isPaused) {
+        vid.pause();
+        setIsPlaying(false);
+      }
       return () => {
         cancelAnimationFrame(raf);
       };
@@ -251,10 +255,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
     setIsActualMuted(vid.muted);
 
-    isManuallyPausedRef.current = false;
-    setIsManuallyPaused(false);
-    setProgressPercent(0);
-
     // Modern hardware presentation hook: fires the exact millisecond the GPU presents the first frame
     if ("requestVideoFrameCallback" in vid) {
       (vid as any).requestVideoFrameCallback(() => {
@@ -265,6 +265,29 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
       });
     }
+
+    // CHECK IF THIS SHOULD BE PAUSED INITIALLY:
+    // In Drawer contexts (business profile or creator drawer) or when isPaused is active:
+    // The video MUST start paused with the center play symbol displayed and ZERO audio!
+    const isDrawerContext = Boolean(contextKey?.startsWith("place_") || contextKey?.startsWith("creator_"));
+    const shouldStartPaused = Boolean(isPaused || isDrawerContext);
+
+    if (shouldStartPaused) {
+      isManuallyPausedRef.current = true;
+      setIsManuallyPaused(true);
+      setIsPlaying(false);
+      setIsBuffering(false);
+      try {
+        vid.pause();
+      } catch (e) {}
+      return () => {
+        cancelAnimationFrame(raf);
+      };
+    }
+
+    isManuallyPausedRef.current = false;
+    setIsManuallyPaused(false);
+    setProgressPercent(0);
 
     const p = vid.play();
     if (p !== undefined) {
@@ -298,13 +321,48 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       cancelAnimationFrame(raf);
       clearTimeout(viewTimer);
     };
-  }, [currentIndex, videos, isMuted, isSessionAudioUnlocked, onRecordView]);
+  }, [currentIndex, videos, isMuted, isSessionAudioUnlocked, onRecordView, isPaused, contextKey]);
+
+  // Context switch watcher: Immediately pause any active playback and sound when switching contexts
+  const previousContextKeyRef = useRef<string | undefined>(contextKey);
+  useEffect(() => {
+    if (previousContextKeyRef.current !== contextKey) {
+      const vid = feedVideoRef.current;
+      if (vid) {
+        try {
+          vid.pause();
+        } catch (e) {}
+      }
+      setIsPlaying(false);
+      const isDrawerContext = Boolean(contextKey?.startsWith("place_") || contextKey?.startsWith("creator_"));
+      if (isDrawerContext) {
+        isManuallyPausedRef.current = true;
+        setIsManuallyPaused(true);
+      }
+      previousContextKeyRef.current = contextKey;
+    }
+  }, [contextKey]);
+
+  // Direct isPaused watcher: Immediately pause if app pauses playback
+  useEffect(() => {
+    if (isPaused) {
+      const vid = feedVideoRef.current;
+      if (vid) {
+        try {
+          vid.pause();
+        } catch (e) {}
+      }
+      setIsPlaying(false);
+      isManuallyPausedRef.current = true;
+      setIsManuallyPaused(true);
+    }
+  }, [isPaused]);
 
   // Active Watchdog: Auto-recovers video if frozen for > 2.4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       const vid = feedVideoRef.current;
-      if (!vid || vid.paused || isManuallyPausedRef.current) {
+      if (!vid || vid.paused || isManuallyPausedRef.current || isPaused) {
         lastAdvanceTimeRef.current = { time: Date.now(), currentTime: vid?.currentTime || 0 };
         return;
       }
@@ -689,6 +747,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Toggle Play / Pause (Stop / Resume) for the active video
   const handleTogglePlayPause = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
+    if (isPaused) return; // Cannot play while paused by modal or inactive section
     const vid = feedVideoRef.current;
     if (!vid) return;
 
@@ -710,7 +769,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       vid.pause();
       setIsPlaying(false);
     }
-  }, [isSessionAudioUnlocked, isMuted]);
+  }, [isSessionAudioUnlocked, isMuted, isPaused]);
 
   const handlePauseVideo = useCallback(() => {
     isManuallyPausedRef.current = true;
@@ -947,7 +1006,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           }}
         >
           {videos.map((vid, idx) => {
-            const isCardActive = idx === currentIndex && !isPaused;
+            const isCardActive = idx === currentIndex;
             // Adaptive sliding window (±1 on mobile/touch, ±2 on desktop) protects mobile hardware decoders
             // from crashing or freezing across Brave, Firefox & Safari (WebKit limit ~3-4 decoders)
             const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
@@ -962,11 +1021,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isActive={isCardActive}
                 isNear={isCardNear}
                 isMuted={isMuted}
-                isPlaying={isCardActive ? isPlaying : false}
+                isPlaying={isCardActive && !isPaused ? isPlaying : false}
                 isBuffering={isCardActive ? isBuffering : false}
                 progressPercent={isCardActive ? progressPercent : 0}
                 isActualMuted={isActualMuted}
-                isManuallyPaused={isCardActive ? isManuallyPaused : false}
+                isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}
                 hasRenderedFirstFrame={firstFrameRenderedId === vid.id}
                 onTogglePlayPause={handleTogglePlayPause}
                 onPauseVideo={handlePauseVideo}

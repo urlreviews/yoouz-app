@@ -2343,6 +2343,7 @@ export function App() {
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
+    setCurrentVideoIndex(0);
   };
 
   // Open Creator Drawer
@@ -2350,8 +2351,13 @@ export function App() {
     document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
       try { v.pause(); } catch (e) {}
     });
+    if (activeSection !== "home") {
+      previousSectionRef.current = activeSection;
+    }
+    setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(author);
+    setCurrentVideoIndex(0);
   };
 
   // Handle Likes - fully synced with Firestore
@@ -3776,7 +3782,7 @@ export function App() {
         {/* If in Feed View (Home, Clubs) or Place / Creator drawer views: Display center video player */}
         {(isPlaceView || isCreatorView || activeSection === "home" || activeSection === "clubs") && (
             <CopoVideoPlayer
-              isPaused={Boolean(isCreateModalOpen || isAuthModalOpen || selectedPlaceIdForDrawer || selectedAuthorForDrawer || (activeSection !== "home" && activeSection !== "clubs"))}
+              isPaused={Boolean(isCreateModalOpen || isAuthModalOpen || (activeSection !== "home" && activeSection !== "clubs"))}
               contextKey={currentFeedContextKey}
               onOpenCreateModal={() => {
                 if (!currentUser) {
