@@ -1,8 +1,26 @@
 import { useState, useEffect } from 'react';
 
-// Default to muted (true) on fresh document load so browser autoplay is 100% compliant and never blocked
-let globalAudioUnlocked = false;
-let globalIsMuted = true;
+// Retrieve persistent audio preference from localStorage (safely defaulting to false/true on first cold visit)
+const getInitialMuted = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  try {
+    const saved = localStorage.getItem("yoouz_sound_muted");
+    if (saved === "false") return false;
+  } catch {}
+  return true;
+};
+
+const getInitialUnlocked = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const saved = localStorage.getItem("yoouz_sound_muted");
+    if (saved === "false") return true;
+  } catch {}
+  return false;
+};
+
+let globalAudioUnlocked = getInitialUnlocked();
+let globalIsMuted = getInitialMuted();
 
 let sharedAudioContext: AudioContext | null = null;
 let hasCreatedUnlockBuffer = false;

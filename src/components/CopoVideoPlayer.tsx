@@ -99,6 +99,174 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
+  // Persistent Single Hardware-Accelerated Video Player
+  // Ensures strictly 1 hardware decoder session exists across the entire app feed (zero decoder exhaustion, zero 6-video freezes)
+  const feedVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isBuffering, setIsBuffering] = useState<boolean>(false);
+  const [progressPercent, setProgressPercent] = useState<number>(0);
+  const [isActualMuted, setIsActualMuted] = useState<boolean>(true);
+  const [isManuallyPaused, setIsManuallyPaused] = useState<boolean>(false);
+  const isManuallyPausedRef = useRef<boolean>(false);
+  const playPromiseRef = useRef<Promise<void> | null>(null);
+  const lastAdvanceTimeRef = useRef<{ time: number; currentTime: number }>({ time: Date.now(), currentTime: 0 });
+
+  // Initialize singleton video element once
+  useEffect(() => {
+    if (!feedVideoRef.current && typeof document !== "undefined") {
+      const vid = document.createElement("video");
+      vid.id = "copo-persistent-feed-video";
+      vid.playsInline = true;
+      vid.setAttribute("webkit-playsinline", "true");
+      vid.setAttribute("x5-playsinline", "true");
+      vid.setAttribute("x5-video-player-type", "h5-page");
+      vid.setAttribute("x5-video-player-fullscreen", "true");
+      vid.loop = true;
+      vid.autoplay = true;
+      vid.preload = "auto";
+      vid.disablePictureInPicture = true;
+      vid.className = "w-full h-full object-cover absolute inset-0 z-0 pointer-events-none";
+
+      vid.addEventListener("playing", () => {
+        setIsPlaying(true);
+        setIsBuffering(false);
+      });
+      vid.addEventListener("pause", () => {
+        setIsPlaying(false);
+      });
+      vid.addEventListener("waiting", () => {
+        setIsBuffering(true);
+      });
+      vid.addEventListener("canplay", () => {
+        setIsBuffering(false);
+      });
+      vid.addEventListener("timeupdate", () => {
+        if (!vid.paused && vid.currentTime > 0) {
+          setIsPlaying(true);
+          setIsBuffering(false);
+        }
+        if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
+          setProgressPercent((vid.currentTime / vid.duration) * 100);
+        }
+      });
+      vid.addEventListener("volumechange", () => {
+        setIsActualMuted(vid.muted);
+      });
+
+      feedVideoRef.current = vid;
+    }
+
+    return () => {
+      if (feedVideoRef.current) {
+        try {
+          feedVideoRef.current.pause();
+          feedVideoRef.current.removeAttribute("src");
+          feedVideoRef.current.load();
+        } catch (e) {}
+        feedVideoRef.current.remove();
+        feedVideoRef.current = null;
+      }
+    };
+  }, []);
+
+  // Mount the singleton video element into the active card slot and seamlessly play
+  useEffect(() => {
+    const vid = feedVideoRef.current;
+    if (!vid) return;
+
+    if (currentIndex >= videos.length || !videos[currentIndex]) {
+      vid.pause();
+      vid.remove();
+      return;
+    }
+
+    const activeVideo = videos[currentIndex];
+    const mountVideoToActiveSlot = () => {
+      const targetSlot = document.getElementById(`video-slot-${activeVideo.id}`);
+      if (targetSlot && vid.parentElement !== targetSlot) {
+        targetSlot.appendChild(vid);
+      }
+    };
+
+    mountVideoToActiveSlot();
+    const raf = requestAnimationFrame(mountVideoToActiveSlot);
+
+    const nextSrc = resolvePlayableVideoSource(activeVideo);
+    if (vid.src !== nextSrc) {
+      vid.src = nextSrc;
+      vid.load();
+    }
+
+    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
+    vid.muted = effectiveMuted;
+    if (!effectiveMuted) {
+      vid.volume = 1;
+    }
+    setIsActualMuted(vid.muted);
+
+    isManuallyPausedRef.current = false;
+    setIsManuallyPaused(false);
+    setProgressPercent(0);
+
+    const p = vid.play();
+    if (p !== undefined) {
+      playPromiseRef.current = p;
+      p.then(() => {
+        playPromiseRef.current = null;
+        setIsPlaying(true);
+        setIsBuffering(false);
+      }).catch((err) => {
+        playPromiseRef.current = null;
+        if (err?.name === "NotAllowedError") {
+          vid.muted = true;
+          setIsActualMuted(true);
+          vid.play().catch(() => {});
+        } else if (err?.name !== "AbortError") {
+          setIsPlaying(false);
+        }
+      });
+    }
+
+    const viewTimer = setTimeout(() => {
+      if (activeVideo?.id) {
+        onRecordView?.(activeVideo.id);
+      }
+    }, 500);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(viewTimer);
+    };
+  }, [currentIndex, videos, isMuted, isSessionAudioUnlocked, onRecordView]);
+
+  // Active Watchdog: Auto-recovers video if frozen for > 2.4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const vid = feedVideoRef.current;
+      if (!vid || vid.paused || isManuallyPausedRef.current) {
+        lastAdvanceTimeRef.current = { time: Date.now(), currentTime: vid?.currentTime || 0 };
+        return;
+      }
+
+      const now = Date.now();
+      const current = vid.currentTime;
+      const { time: lastTime, currentTime: lastCur } = lastAdvanceTimeRef.current;
+
+      if (Math.abs(current - lastCur) < 0.05 && now - lastTime > 2400) {
+        console.warn("[CopoVideoPlayer Watchdog] Stalled frame detected, recovering playback...");
+        try {
+          vid.currentTime += 0.01;
+          vid.play().catch(() => {});
+        } catch (e) {}
+        lastAdvanceTimeRef.current = { time: now, currentTime: current };
+      } else if (Math.abs(current - lastCur) >= 0.05) {
+        lastAdvanceTimeRef.current = { time: now, currentTime: current };
+      }
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Edit Rating State
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
   const [videoConfirmDelete, setVideoConfirmDelete] = useState<VideoReview | null>(null);
@@ -384,33 +552,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
 
         if (targetIdx !== currentIndexRef.current) {
-          // 1. Immediately pause & mute current video to release audio pipeline cleanly
-          const currentCard = cardRefs.current[currentIndexRef.current];
-          const currentVid = currentCard?.querySelector<HTMLVideoElement>("video");
-          if (currentVid) {
-            try {
-              currentVid.pause();
-              currentVid.muted = true;
-            } catch (e) {}
+          // Pre-authorize singleton player playback synchronously within the touch gesture
+          if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
+            feedVideoRef.current.muted = false;
+            feedVideoRef.current.volume = 1;
+            feedVideoRef.current.play().catch(() => {});
           }
-
-          // 2. Pre-authorize target video playback SYNCHRONOUSLY inside this active touch gesture
-          if (targetIdx < videos.length) {
-            const targetCard = cardRefs.current[targetIdx];
-            const targetVid = targetCard?.querySelector<HTMLVideoElement>("video");
-            if (targetVid) {
-              const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
-              targetVid.muted = shouldBeMuted;
-              if (!shouldBeMuted) {
-                targetVid.volume = 1;
-              }
-              const p = targetVid.play();
-              if (p !== undefined) {
-                p.catch(() => {});
-              }
-            }
-          }
-
           scrollToCard(targetIdx, "smooth");
         }
       }
@@ -454,30 +601,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const maxIdx = videos.length > 0 ? videos.length : 0;
     if (currentIndexRef.current < maxIdx) {
       const nextIdx = currentIndexRef.current + 1;
-
-      // Pause & mute current video
-      const currentCard = cardRefs.current[currentIndexRef.current];
-      const currentVid = currentCard?.querySelector<HTMLVideoElement>("video");
-      if (currentVid) {
-        try {
-          currentVid.pause();
-          currentVid.muted = true;
-        } catch (e) {}
+      if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
+        feedVideoRef.current.muted = false;
+        feedVideoRef.current.volume = 1;
+        feedVideoRef.current.play().catch(() => {});
       }
-
-      // Pre-authorize next video playback synchronously in click gesture
-      if (nextIdx < videos.length) {
-        const targetCard = cardRefs.current[nextIdx];
-        const targetVid = targetCard?.querySelector<HTMLVideoElement>("video");
-        if (targetVid) {
-          const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
-          targetVid.muted = shouldBeMuted;
-          if (!shouldBeMuted) targetVid.volume = 1;
-          const p = targetVid.play();
-          if (p !== undefined) p.catch(() => {});
-        }
-      }
-
       scrollToCard(nextIdx, "smooth");
     }
   }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
@@ -488,31 +616,68 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
     if (currentIndexRef.current > 0) {
       const prevIdx = currentIndexRef.current - 1;
-
-      // Pause & mute current video
-      const currentCard = cardRefs.current[currentIndexRef.current];
-      const currentVid = currentCard?.querySelector<HTMLVideoElement>("video");
-      if (currentVid) {
-        try {
-          currentVid.pause();
-          currentVid.muted = true;
-        } catch (e) {}
+      if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
+        feedVideoRef.current.muted = false;
+        feedVideoRef.current.volume = 1;
+        feedVideoRef.current.play().catch(() => {});
       }
-
-      // Pre-authorize prev video playback synchronously in click gesture
-      const targetCard = cardRefs.current[prevIdx];
-      const targetVid = targetCard?.querySelector<HTMLVideoElement>("video");
-      if (targetVid) {
-        const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
-        targetVid.muted = shouldBeMuted;
-        if (!shouldBeMuted) targetVid.volume = 1;
-        const p = targetVid.play();
-        if (p !== undefined) p.catch(() => {});
-      }
-
       scrollToCard(prevIdx, "smooth");
     }
   }, [scrollToCard, isSessionAudioUnlocked, isMuted]);
+
+  // Toggle Play / Pause for the active video
+  const handleTogglePlayPause = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const vid = feedVideoRef.current;
+    if (!vid) return;
+
+    if (!isSessionAudioUnlocked || isMuted) {
+      unlockAudioSession();
+      vid.muted = false;
+      vid.volume = 1;
+      setIsActualMuted(false);
+      if (vid.paused) {
+        isManuallyPausedRef.current = false;
+        setIsManuallyPaused(false);
+        vid.play().catch(() => {});
+      }
+      return;
+    }
+
+    if (vid.paused || isManuallyPausedRef.current) {
+      isManuallyPausedRef.current = false;
+      setIsManuallyPaused(false);
+      vid.play().catch(() => {});
+    } else {
+      isManuallyPausedRef.current = true;
+      setIsManuallyPaused(true);
+      vid.pause();
+    }
+  }, [isSessionAudioUnlocked, isMuted, unlockAudioSession]);
+
+  // Sound toggle with session audio unlocking
+  const toggleMute = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const vid = feedVideoRef.current;
+    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted;
+    const nextMuted = !isCurrentlyMuted;
+
+    if (!nextMuted) {
+      unlockAudioSession();
+      if (vid) {
+        vid.muted = false;
+        vid.volume = 1;
+        vid.play().catch(() => {});
+      }
+      setIsActualMuted(false);
+    } else {
+      setIsMuted(true);
+      if (vid) {
+        vid.muted = true;
+      }
+      setIsActualMuted(true);
+    }
+  }, [isMuted, isSessionAudioUnlocked, isActualMuted, unlockAudioSession, setIsMuted]);
 
   // Desktop Mouse Wheel & Trackpad Navigation: smoothly step strictly 1 video at a time without multi-skipping
   useEffect(() => {
@@ -523,7 +688,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     let isWheeling = false;
 
     const handleWheel = (e: WheelEvent) => {
-      // If user is inside an open popup, comment drawer, modal, input, or textarea, allow normal native scroll
       const targetEl = e.target as HTMLElement | null;
       if (
         document.body.style.overflow === "hidden" ||
@@ -535,25 +699,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         return;
       }
 
-      // Intercept wheel event on desktop to guarantee exactly 1 video transition per scroll gesture
       e.preventDefault();
-
       if (isWheeling) return;
 
-      // Threshold check to filter out tiny trackpad micro-jitters
       if (Math.abs(e.deltaY) >= 15) {
         isWheeling = true;
 
         if (e.deltaY > 0) {
-          // Wheel Down -> Next Video or End Card
           const maxIdx = videos.length > 0 ? videos.length : 0;
           if (currentIndexRef.current < maxIdx) {
-            scrollToCard(currentIndexRef.current + 1, "smooth");
+            handleNext();
           }
         } else {
-          // Wheel Up -> Previous Video (bounded to start of feed)
           if (currentIndexRef.current > 0) {
-            scrollToCard(currentIndexRef.current - 1, "smooth");
+            handlePrev();
           }
         }
 
@@ -569,7 +728,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       mainEl.removeEventListener("wheel", handleWheel);
       if (wheelTimeout) clearTimeout(wheelTimeout);
     };
-  }, [videos.length, moreMenuVideo, scrollToCard]);
+  }, [videos.length, moreMenuVideo, handleNext, handlePrev]);
 
   // MediaSession Next/Prev Skip Action Handlers for Lock Screen
   useEffect(() => {
@@ -583,18 +742,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         });
       } catch (e) {}
     }
-  }, [currentIndex, videos.length, handleNext, handlePrev]);
-
-  // Sound toggle with session audio unlocking
-  const toggleMute = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    const nextMuted = !isMuted;
-    if (!nextMuted) {
-      unlockAudioSession();
-    } else {
-      setIsMuted(true);
-    }
-  };
+  }, [handleNext, handlePrev]);
 
   // Keyboard navigation: ArrowDown/ArrowUp, PageDown/PageUp, Space/Shift+Space, Mute
   useEffect(() => {
@@ -743,6 +891,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isActive={isCardActive}
                 isNear={isCardNear}
                 isMuted={isMuted}
+                isPlaying={isCardActive ? isPlaying : false}
+                isBuffering={isCardActive ? isBuffering : false}
+                progressPercent={isCardActive ? progressPercent : 0}
+                isActualMuted={isActualMuted}
+                isManuallyPaused={isCardActive ? isManuallyPaused : false}
+                onTogglePlayPause={handleTogglePlayPause}
+                onPauseVideo={() => feedVideoRef.current?.pause()}
                 allUsers={allUsers}
                 currentUser={currentUser}
                 activeSubTab={activeSubTab}
@@ -750,7 +905,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isSessionAudioUnlocked={isSessionAudioUnlocked}
                 onUnlockAudio={unlockAudioSession}
                 onToggleMute={toggleMute}
-                onForceMute={() => setIsMuted(true)}
+                onForceMute={() => {
+                  setIsMuted(true);
+                  if (feedVideoRef.current) feedVideoRef.current.muted = true;
+                }}
                 onOpenComments={onOpenComments}
                 onOpenPlace={onOpenPlace}
                 onOpenCreator={onOpenCreator}

@@ -28,71 +28,58 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
     videoId = url.split("/api/videos/stream/")[1]?.replace(/\.[^.]+$/, "") || "";
   }
 
-  // 1. High-Performance HTTP Byte Range Warm-Up (fetches initial 512KB chunk into browser edge cache)
-  try {
-    fetch(url, {
-      method: "GET",
-      headers: { Range: "bytes=0-524287" },
-      mode: "cors",
-      cache: "force-cache"
-    }).catch(() => {});
-  } catch (e) {}
-
-  // 2. High-Performance IndexedDB Blob Cache Background Prefetch (stores full video offline)
-  if (videoId) {
-    try {
-      getRawVideoBlobFromIndexedDB(videoId).then((existing) => {
-        if (!existing) {
-          fetch(url)
-            .then((res) => {
-              if (res.ok) return res.blob();
-              throw new Error("Fetch failed");
-            })
-            .then((blob) => {
-              if (blob && blob.size > 1000) {
-                saveVideoBlobToIndexedDB(videoId, blob);
-              }
-            })
-            .catch(() => {});
-        }
-      }).catch(() => {});
-    } catch (e) {}
-  }
-
-  // 3. Preload Poster Image into browser image cache
+  // 1. High-Performance Poster Preload (primes GPU texture cache without touching decoders or socket queues)
   if (posterUrl && !preloadedPosters.has(posterUrl)) {
     preloadedPosters.add(posterUrl);
     const img = new Image();
     img.referrerPolicy = "no-referrer";
     img.src = posterUrl;
   }
+
+  // 2. Ultra-Lightweight HTTP Range Warm-Up (fetches only first 128KB header chunk)
+  try {
+    fetch(url, {
+      method: "GET",
+      headers: { Range: "bytes=0-131071" },
+      mode: "cors",
+      cache: "force-cache"
+    }).catch(() => {});
+  } catch (e) {}
 };
 
 /**
- * Batch-prefetches upcoming and neighboring videos around the current active index.
+ * Lightweight lookahead prefetcher for the immediate next video only.
+ * Avoids browser connection starvation and decoder blocking.
  */
 export const prefetchUpcomingVideos = (videos: any[], currentIndex: number) => {
   if (!videos || videos.length === 0) return;
-  // Lookahead: next 3 videos, lookbehind: previous 1 video
-  const targetIndices = [
-    currentIndex + 1,
-    currentIndex + 2,
-    currentIndex + 3,
-    currentIndex - 1
-  ];
-
-  targetIndices.forEach((idx) => {
-    if (idx >= 0 && idx < videos.length) {
-      const v = videos[idx];
-      if (v) {
-        const src = resolvePlayableVideoSource(v);
-        const poster = resolveVideoPosterUrl(v);
-        if (src && !src.startsWith("blob:")) {
-          prefetchVideo(src, poster);
-        }
+  // Lookahead: strictly immediate next video (currentIndex + 1) to conserve connection slots
+  const nextIdx = currentIndex + 1;
+  if (nextIdx < videos.length) {
+    const v = videos[nextIdx];
+    if (v) {
+      const src = resolvePlayableVideoSource(v);
+      const poster = resolveVideoPosterUrl(v);
+      if (src && !src.startsWith("blob:")) {
+        prefetchVideo(src, poster);
       }
     }
-  });
+  }
+
+  // Also prefetch poster only for currentIndex + 2 so images are instant
+  const nextNextIdx = currentIndex + 2;
+  if (nextNextIdx < videos.length) {
+    const nextV = videos[nextNextIdx];
+    if (nextV) {
+      const poster = resolveVideoPosterUrl(nextV);
+      if (poster && !preloadedPosters.has(poster)) {
+        preloadedPosters.add(poster);
+        const img = new Image();
+        img.referrerPolicy = "no-referrer";
+        img.src = poster;
+      }
+    }
+  }
 };
 
 export const getCachedVideoUrl = (rawUrl: string) => {

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { resolvePlayableVideoSource, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, resolveVideoPosterUrl, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import { getSafeAvatarUrl } from "../utils/placeUtils";
@@ -193,33 +193,51 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
 
       {/* 3. Pure Video Review Viewport (100% Video-Only, No Text) */}
       <div className="relative rounded-2xl overflow-hidden bg-black aspect-[9/13] max-h-[360px] w-full max-w-[280px] border border-zinc-800 shadow-sm group cursor-pointer">
-        <video
-          ref={videoRef}
-          src={getReviewVideoSrc(review) || undefined}
-          poster={review.thumbnailUrl || undefined}
-          playsInline
-          loop
-          preload="auto"
-          muted={isMuted}
-          onClick={toggleInlinePlay}
-          onError={(e) => {
-            const el = e.currentTarget;
-            console.warn(`Video playback notice on review card for ${review.id}`);
-            const fallbacks = (review.fallbackVideoUrls || [])
-              .concat(review.videoUrl ? [review.videoUrl] : [])
-              .map(u => normalizeVideoUrl(u))
-              .filter(
-                u =>
-                  u &&
-                  u !== el.src
-              );
-            if (fallbacks.length > 0 && videoRef.current) {
-              videoRef.current.src = fallbacks[0];
-              videoRef.current.load();
-            }
-          }}
-          className="w-full h-full object-cover"
-        />
+        {isPlayingInline ? (
+          <video
+            ref={videoRef}
+            src={getReviewVideoSrc(review) || undefined}
+            poster={resolveVideoPosterUrl(review) || undefined}
+            playsInline
+            autoPlay
+            loop
+            preload="auto"
+            muted={isMuted || !isSessionAudioUnlocked || isActualMuted}
+            onClick={toggleInlinePlay}
+            onError={(e) => {
+              const el = e.currentTarget;
+              console.warn(`Video playback notice on review card for ${review.id}`);
+              const fallbacks = (review.fallbackVideoUrls || [])
+                .concat(review.videoUrl ? [review.videoUrl] : [])
+                .map(u => normalizeVideoUrl(u))
+                .filter(
+                  u =>
+                    u &&
+                    u !== el.src
+                );
+              if (fallbacks.length > 0 && videoRef.current) {
+                videoRef.current.src = fallbacks[0];
+                videoRef.current.load();
+              }
+            }}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full relative" onClick={toggleInlinePlay}>
+            <img
+              src={resolveVideoPosterUrl(review)}
+              alt={review.caption || "Video review"}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/25 shadow-lg group-hover:scale-110 transition-transform">
+                <Play className="w-5 h-5 fill-white ml-0.5" />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Video Overlay Info */}
         <div

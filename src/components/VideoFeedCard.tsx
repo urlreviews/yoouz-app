@@ -37,7 +37,10 @@ interface VideoFeedCardProps {
   isNear: boolean;
   isMuted: boolean;
   isPlaying?: boolean;
+  isBuffering?: boolean;
   progressPercent?: number;
+  isActualMuted?: boolean;
+  isManuallyPaused?: boolean;
   allUsers?: any[];
   currentUser?: any;
   
@@ -46,6 +49,7 @@ interface VideoFeedCardProps {
   onToggleMute: (e?: React.MouseEvent) => void;
   onForceMute?: () => void;
   onTogglePlayPause?: (e?: React.MouseEvent) => void;
+  onPauseVideo?: () => void;
   onOpenComments: (video: VideoReview) => void;
   onOpenPlace: (placeId: string) => void;
   onOpenCreator: (author: VideoAuthor) => void;
@@ -73,12 +77,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   isActive,
   isNear,
   isMuted,
+  isPlaying = false,
+  isBuffering = false,
+  progressPercent = 0,
+  isActualMuted = true,
+  isManuallyPaused = false,
   allUsers,
   currentUser,
   activeSubTab,
   onSelectSubTab,
   onToggleMute,
   onForceMute,
+  onTogglePlayPause,
+  onPauseVideo,
   onOpenComments,
   onOpenPlace,
   onOpenCreator,
@@ -93,231 +104,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   businessLogoUrl,
   businessBannerUrl,
   cardRef,
-  
+  slotRef,
   isSessionAudioUnlocked = false,
   onUnlockAudio,
   onRecordView
 }) => {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const domVideoElementRef = useRef<HTMLVideoElement | null>(null);
-  const playPromiseRef = useRef<Promise<void> | null>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isManuallyPaused, setIsManuallyPaused] = useState<boolean>(false);
-  const isManuallyPausedRef = useRef<boolean>(false);
-  useEffect(() => {
-    isManuallyPausedRef.current = isManuallyPaused;
-  }, [isManuallyPaused]);
-  const [isBuffering, setIsBuffering] = useState<boolean>(false);
-  const [isActualMuted, setIsActualMuted] = useState<boolean>(true);
-  const [progressPercent, setProgressPercent] = useState<number>(0);
-  
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState<boolean>(false);
-
-  // Aggressively force WebKit (Safari), Gecko (Firefox), and Blink (Brave/Chrome) to immediately release hardware decoders
-  const releaseVideoHardwareDecoder = useCallback((el: HTMLVideoElement | null) => {
-    if (!el) return;
-    try {
-      el.pause();
-      el.removeAttribute("src");
-      while (el.firstChild) {
-        el.removeChild(el.firstChild);
-      }
-      el.load(); // Forces WebKit / Blink / Gecko to immediately destroy the hardware decoder session
-    } catch (e) {}
-  }, []);
-
-  // Callback ref: intercepts when video DOM element unmounts or gets replaced to guarantee hardware decoder deallocation
-  const setVideoRef = useCallback(
-    (node: HTMLVideoElement | null) => {
-      const prev = domVideoElementRef.current;
-      if (prev && prev !== node) {
-        releaseVideoHardwareDecoder(prev);
-      }
-      domVideoElementRef.current = node;
-      videoRef.current = node;
-    },
-    [releaseVideoHardwareDecoder]
-  );
-
-  useEffect(() => {
-    return () => {
-      if (domVideoElementRef.current) {
-        releaseVideoHardwareDecoder(domVideoElementRef.current);
-        domVideoElementRef.current = null;
-        videoRef.current = null;
-      }
-    };
-  }, [releaseVideoHardwareDecoder]);
-
+  const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
   const lastTapTimeRef = useRef<number>(0);
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
-
-  // Establish prioritized source cascade list (Bunny CDN Edge -> Local Server Stream -> Secondary Mirror -> Fallback)
-  const sourceCandidates = React.useMemo(() => {
-    return resolvePlayableVideoSourcesCascade(video);
-  }, [video]);
-  const [sourceIndex, setSourceIndex] = useState<number>(0);
-
-  // Reset source index whenever video changes
-  useEffect(() => {
-    setSourceIndex(0);
-  }, [video?.id]);
-
-  const currentSource = sourceCandidates[sourceIndex] || sourceCandidates[0] || resolvePlayableVideoSource(video);
 
   // High-fidelity poster URL
   const posterUrl = React.useMemo(() => {
     return resolveVideoPosterUrl(video);
   }, [video]);
-
-
-  // Helper: Synchronously pause all other video elements on the page (Zero Hardware Lockup)
-  const pauseOtherVideos = useCallback(() => {
-    const currentEl = videoRef.current;
-    document.querySelectorAll<HTMLVideoElement>("video").forEach((other) => {
-      if (other !== currentEl) {
-        try {
-          if (!other.paused) other.pause();
-          other.muted = true;
-        } catch (e) {}
-      }
-    });
-  }, []);
-
-  // Safe Play Execution using managed play promise queue
-  const safePlay = useCallback(() => {
-    const el = videoRef.current;
-    if (!el) return;
-
-    pauseOtherVideos();
-
-    // Respect browser autoplay policy: if session audio is not yet unlocked by a user gesture, keep muted
-    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-    el.muted = effectiveMuted;
-    if (!effectiveMuted) {
-      el.volume = 1;
-    }
-
-    const p = el.play();
-    if (p !== undefined) {
-      playPromiseRef.current = p;
-      p.then(() => {
-        playPromiseRef.current = null;
-        setIsPlaying(true);
-        setIsBuffering(false);
-        setIsActualMuted(el.muted);
-      }).catch((err) => {
-        playPromiseRef.current = null;
-        // If unmuted autoplay is blocked by browser policy without gesture on initial cold load, fallback to muted playback for this element only
-        if (err?.name === "NotAllowedError") {
-          el.muted = true;
-          setIsActualMuted(true);
-          const retry = el.play();
-          if (retry !== undefined) {
-            playPromiseRef.current = retry;
-            retry
-              .then(() => {
-                playPromiseRef.current = null;
-                setIsPlaying(true);
-                setIsBuffering(false);
-                // If session was supposed to be unmuted, restore audio on the very next user touch!
-                if (isSessionAudioUnlocked && !isMuted) {
-                  const restoreAudio = () => {
-                    if (videoRef.current && isActive) {
-                      videoRef.current.muted = false;
-                      videoRef.current.volume = 1;
-                      setIsActualMuted(false);
-                    }
-                  };
-                  window.addEventListener("touchstart", restoreAudio, { once: true, passive: true });
-                  window.addEventListener("pointerdown", restoreAudio, { once: true, passive: true });
-                  window.addEventListener("click", restoreAudio, { once: true, passive: true });
-                }
-              })
-              .catch(() => {
-                playPromiseRef.current = null;
-                setIsPlaying(false);
-              });
-          }
-        } else if (err?.name !== "AbortError") {
-          setIsPlaying(false);
-        }
-      });
-    }
-  }, [isMuted, isSessionAudioUnlocked, pauseOtherVideos, isActive]);
-
-  // Safe Pause Execution waiting for pending play promises
-  const safePause = useCallback(() => {
-    const el = videoRef.current;
-    if (!el) return;
-
-    if (playPromiseRef.current) {
-      playPromiseRef.current
-        .then(() => {
-          if (videoRef.current && !videoRef.current.paused) {
-            videoRef.current.pause();
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          playPromiseRef.current = null;
-          setIsPlaying(false);
-        });
-    } else {
-      if (!el.paused) {
-        try {
-          el.pause();
-        } catch (e) {}
-      }
-      setIsPlaying(false);
-    }
-  }, []);
-
-  // Sync mute state to video element in real time
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-    if (isActive) {
-      const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-      el.muted = effectiveMuted;
-      if (!effectiveMuted) {
-        el.volume = 1;
-      }
-    } else {
-      el.muted = true;
-    }
-  }, [isMuted, isSessionAudioUnlocked, isActive]);
-
-  // Play / Pause video based on card active state and manual pause flag
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-
-    const shouldPlay = isActive && !isManuallyPaused;
-
-    if (shouldPlay) {
-      safePlay();
-    } else {
-      safePause();
-      if (!isActive) {
-        el.currentTime = 0;
-        setIsManuallyPaused(false);
-        setProgressPercent(0);
-      }
-    }
-  }, [isActive, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
-
-  // Record view count when video is active and playing
-  useEffect(() => {
-    if (isActive && video?.id) {
-      const timer = setTimeout(() => {
-        onRecordView?.(video.id);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isActive, video?.id, onRecordView]);
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
   useEffect(() => {
@@ -325,7 +125,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       try {
         const origin = window.location.origin;
         const place = formatBusinessName(video.placeName) || "Business Review";
-        const author = video.author?.name || video.author?.name || "Verified Reviewer";
+        const author = video.author?.name || "Verified Reviewer";
         const caption = video.caption || `${video.rating || 5}★ Video Review of ${place}`;
 
         const artworks: MediaImage[] = [
@@ -350,86 +150,38 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         });
 
         navigator.mediaSession.setActionHandler("play", () => {
-          videoRef.current?.play().catch(() => {});
-          setIsPlaying(true);
+          onTogglePlayPause?.();
         });
         navigator.mediaSession.setActionHandler("pause", () => {
-          videoRef.current?.pause();
-          setIsPlaying(false);
+          onTogglePlayPause?.();
         });
       } catch (e) {}
     }
-  }, [isActive, video]);
+  }, [isActive, video, onTogglePlayPause]);
 
-  // Automatic source cascade failover handler
-  const handleVideoError = useCallback(() => {
-    console.warn(`[VideoFeedCard] Source failed for video ${video.id} (index ${sourceIndex}): ${currentSource}`);
-    if (sourceIndex + 1 < sourceCandidates.length) {
-      console.log(`[VideoFeedCard] Failing over to next source: ${sourceCandidates[sourceIndex + 1]}`);
-      setSourceIndex((prev) => prev + 1);
-    }
-  }, [currentSource, video.id, sourceIndex, sourceCandidates]);
-
-  // Click card to toggle Play / Pause (YouTube Shorts / app.copo.st style)
+  // Click card to toggle Play / Pause
   const togglePlayPause = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const el = videoRef.current;
-    if (!el) return;
-
     triggerHaptic("light");
     ensureSharedAudioContextUnlocked();
 
-    // If audio is not yet unlocked in session, first tap unlocks audio and keeps playing seamlessly
+    // If audio is not yet unlocked in session, first tap unlocks audio
     if (!isSessionAudioUnlocked || isMuted) {
       onUnlockAudio?.();
-      el.muted = false;
-      el.volume = 1;
-      if (el.paused || isManuallyPaused) {
-        isManuallyPausedRef.current = false;
-        setIsManuallyPaused(false);
-        safePlay();
-      }
-      return;
     }
-
-    if (el.paused || isManuallyPaused) {
-      isManuallyPausedRef.current = false;
-      setIsManuallyPaused(false);
-      safePlay();
-    } else {
-      isManuallyPausedRef.current = true;
-      setIsManuallyPaused(true);
-      safePause();
-    }
+    onTogglePlayPause?.(e);
   };
 
-  // Sound toggle button (YouTube Shorts style)
+  // Sound toggle button
   const handleToggleMute = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     triggerHaptic("selection");
     ensureSharedAudioContextUnlocked();
 
-    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted;
-    const nextMuted = !isCurrentlyMuted;
-
-    if (!nextMuted) {
+    if (isMuted || !isSessionAudioUnlocked || isActualMuted) {
       onUnlockAudio?.();
-      setIsActualMuted(false);
     }
-
-    if (videoRef.current) {
-      videoRef.current.muted = nextMuted;
-      if (!nextMuted) {
-        videoRef.current.volume = 1;
-        videoRef.current.play().catch(() => {});
-      }
-    }
-
-    if (isCurrentlyMuted) {
-      onUnlockAudio?.();
-    } else {
-      onToggleMute(e);
-    }
+    onToggleMute(e);
   };
 
   // Double tap to like (supports touch taps & mouse clicks)
@@ -545,73 +297,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       onDoubleClick={handleDoubleTapLike}
       className="snap-start snap-always shrink-0 relative w-full h-full md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-end cursor-pointer group"
     >
-      {/* Video Container */}
+      {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
       <div
         id={`video-slot-${video.id}`}
+        ref={slotRef}
+        data-video-slot="true"
         className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black"
       >
-        {/* Direct Embedded Video Element with Active / Standby Pre-buffering (Sliding Window like YouTube Shorts) */}
-        {(isActive || isNear) && (
-          <video
-            ref={setVideoRef}
-            id={`video-element-${video.id}`}
-            data-active={isActive ? "true" : "false"}
-            src={currentSource}
-            poster={resolveVideoPosterUrl(video)}
-            preload={isActive ? "auto" : "metadata"}
-            autoPlay={isActive}
-            playsInline
-            webkit-playsinline="true"
-            x5-playsinline="true"
-            x5-video-player-type="h5-page"
-            x5-video-player-fullscreen="true"
-            onVolumeChange={() => setIsActualMuted(videoRef.current?.muted ?? true)}
-            loop
-            muted={isActive ? (isMuted || !isSessionAudioUnlocked) : true}
-            disablePictureInPicture
-            disableRemotePlayback
-            className="w-full h-full object-cover absolute inset-0 pointer-events-none"
-            onTimeUpdate={(e) => {
-              const t = e.currentTarget;
-              if (!isPlaying && !t.paused && t.currentTime > 0) {
-                setIsPlaying(true);
-                setIsBuffering(false);
-              }
-              if (t.duration && !isNaN(t.duration) && t.duration > 0) {
-                setProgressPercent((t.currentTime / t.duration) * 100);
-              }
-            }}
-            onLoadedData={() => {
-              setIsVideoLoaded(true);
-              setIsBuffering(false);
-            }}
-            onCanPlay={() => {
-              setIsVideoLoaded(true);
-              setIsBuffering(false);
-            }}
-            onPlaying={() => {
-              setIsPlaying(true);
-              setIsBuffering(false);
-              setIsVideoLoaded(true);
-              if (isActive && isSessionAudioUnlocked && !isMuted && videoRef.current) {
-                videoRef.current.muted = false;
-                videoRef.current.volume = 1;
-              }
-              if (video?.id) {
-                onRecordView?.(video.id);
-              }
-            }}
-            onPause={() => {
-              setIsPlaying(false);
-            }}
-            onWaiting={() => {
-              if (isActive) setIsBuffering(true);
-            }}
-            onError={handleVideoError}
-          />
-        )}
-
-        {/* High-Fidelity Poster (visible until video starts playback or is ready) */}
+        {/* High-Fidelity Poster (visible during loading or until active video starts playback) */}
         <img
           src={posterUrl}
           alt={video.caption || formatBusinessName(video.placeName) || "Video review poster"}
@@ -619,11 +312,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           decoding="async"
           fetchPriority={isActive ? "high" : "auto"}
           className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-200 z-10 ${
-            isActive && (isPlaying || isVideoLoaded) ? "opacity-0 pointer-events-none" : "opacity-100"
+            isActive && isPlaying ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
           referrerPolicy="no-referrer"
         />
       </div>
+
+      {/* Buffering Indicator Spinner (Shown when video is actively buffering network data) */}
+      {isActive && isBuffering && !isManuallyPaused && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full border-3 border-white/20 border-t-white animate-spin" />
+        </div>
+      )}
 
       {/* Progress Bar (Scrubber Indicator at top edge) */}
       {isActive && (
@@ -650,13 +350,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               id={`btn-feed-back-${video.id}`}
               onClick={(e) => {
                 e.stopPropagation();
-                if (videoRef.current) {
-                  try {
-                    videoRef.current.pause();
-                  } catch (err) {
-                    console.warn("Failed to pause video on back button click:", err);
-                  }
-                }
+                onPauseVideo?.();
                 onGoBack();
               }}
               onTouchStart={(e) => e.stopPropagation()}
@@ -785,10 +479,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           <div className="flex flex-col gap-0.5 w-full">
             <button
               onClick={() => {
-                if (videoRef.current) {
-                  try { videoRef.current.pause(); } catch (e) {}
-                }
-                pauseOtherVideos();
+                onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}
               className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] flex items-center gap-1.5 hover:underline cursor-pointer bg-transparent border-0 p-0 text-left w-fit"
@@ -831,10 +522,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           <button
             id={`pill-place-${video.placeId}`}
             onClick={() => {
-              if (videoRef.current) {
-                try { videoRef.current.pause(); } catch (e) {}
-              }
-              pauseOtherVideos();
+              onPauseVideo?.();
               onOpenPlace(video.placeId);
             }}
             className="self-start flex items-center gap-2.5 sm:gap-3 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-black/85 hover:bg-black/95 backdrop-blur-2xl border border-white/35 hover:border-white/60 text-white transition-all w-fit max-w-[85vw] text-left group cursor-pointer shadow-2xl active:scale-[0.98]"
@@ -869,10 +557,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           <div className="relative group/avatar mb-0.5">
             <button
               onClick={() => {
-                if (videoRef.current) {
-                  try { videoRef.current.pause(); } catch (e) {}
-                }
-                pauseOtherVideos();
+                onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border-2 border-white/70 hover:border-white overflow-hidden bg-black transition-colors cursor-pointer shadow-xl"
