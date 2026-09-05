@@ -625,35 +625,31 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [scrollToCard, isSessionAudioUnlocked, isMuted]);
 
-  // Toggle Play / Pause for the active video
+  // Toggle Play / Pause (Stop / Resume) for the active video
   const handleTogglePlayPause = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     const vid = feedVideoRef.current;
     if (!vid) return;
 
-    if (!isSessionAudioUnlocked || isMuted) {
-      unlockAudioSession();
-      vid.muted = false;
-      vid.volume = 1;
-      setIsActualMuted(false);
-      if (vid.paused) {
-        isManuallyPausedRef.current = false;
-        setIsManuallyPaused(false);
-        vid.play().catch(() => {});
-      }
-      return;
-    }
-
     if (vid.paused || isManuallyPausedRef.current) {
+      // Resume / Play
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
+      if (isSessionAudioUnlocked && !isMuted) {
+        vid.muted = false;
+        vid.volume = 1;
+        setIsActualMuted(false);
+      }
       vid.play().catch(() => {});
+      setIsPlaying(true);
     } else {
+      // STOP / PAUSE immediately
       isManuallyPausedRef.current = true;
       setIsManuallyPaused(true);
       vid.pause();
+      setIsPlaying(false);
     }
-  }, [isSessionAudioUnlocked, isMuted, unlockAudioSession]);
+  }, [isSessionAudioUnlocked, isMuted]);
 
   // Sound toggle with session audio unlocking
   const toggleMute = useCallback((e?: React.MouseEvent) => {
@@ -730,10 +726,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [videos.length, moreMenuVideo, handleNext, handlePrev]);
 
-  // MediaSession Next/Prev Skip Action Handlers for Lock Screen
+  // MediaSession Next/Prev Skip and Play/Pause Action Handlers
   useEffect(() => {
     if (typeof window !== "undefined" && "mediaSession" in navigator) {
       try {
+        navigator.mediaSession.setActionHandler("play", () => {
+          handleTogglePlayPause();
+        });
+        navigator.mediaSession.setActionHandler("pause", () => {
+          handleTogglePlayPause();
+        });
+        navigator.mediaSession.setActionHandler("stop", () => {
+          handleTogglePlayPause();
+        });
         navigator.mediaSession.setActionHandler("nexttrack", () => {
           handleNext();
         });
@@ -742,9 +747,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         });
       } catch (e) {}
     }
-  }, [handleNext, handlePrev]);
+  }, [handleNext, handlePrev, handleTogglePlayPause]);
 
-  // Keyboard navigation: ArrowDown/ArrowUp, PageDown/PageUp, Space/Shift+Space, Mute
+  // Keyboard navigation: Space/K (Stop/Play), ArrowDown/ArrowUp, PageDown/PageUp, Mute
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -778,13 +783,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       } else if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
         handleNext();
-      } else if (e.key === " " || e.key === "Spacebar") {
+      } else if (e.key === " " || e.key === "Spacebar" || e.key === "k" || e.key === "K") {
         e.preventDefault();
-        if (e.shiftKey) {
-          handlePrev();
-        } else {
-          handleNext();
-        }
+        handleTogglePlayPause();
       } else if (e.key === "m" || e.key === "M") {
         toggleMute();
       }
@@ -792,7 +793,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNext, handlePrev, isMuted, moreMenuVideo]);
+  }, [handleNext, handlePrev, handleTogglePlayPause, toggleMute, moreMenuVideo]);
 
   if (!currentVideo) {
     if (isLoading) {

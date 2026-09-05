@@ -159,16 +159,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isActive, video, onTogglePlayPause]);
 
-  // Click card to toggle Play / Pause
+  // Click card to toggle Play / Pause (Stop / Resume)
   const togglePlayPause = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     triggerHaptic("light");
     ensureSharedAudioContextUnlocked();
-
-    // If audio is not yet unlocked in session, first tap unlocks audio
-    if (!isSessionAudioUnlocked || isMuted) {
-      onUnlockAudio?.();
-    }
     onTogglePlayPause?.(e);
   };
 
@@ -318,13 +313,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         />
       </div>
 
-      {/* Buffering Indicator Spinner (Shown when video is actively buffering network data) */}
-      {isActive && isBuffering && !isManuallyPaused && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full border-3 border-white/20 border-t-white animate-spin" />
-        </div>
-      )}
-
       {/* Progress Bar (Scrubber Indicator at top edge) */}
       {isActive && (
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/20 z-40 pointer-events-none">
@@ -392,8 +380,46 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
-        <div className="pointer-events-auto">
+        {/* Right side: Stop/Play and Sound Controls */}
+        <div className="pointer-events-auto flex items-center gap-2">
+          {/* Explicit Stop / Play Button */}
+          {isActive && (
+            <button
+              type="button"
+              id={`btn-stop-play-${video.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlayPause(e);
+              }}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              className={`h-11 px-3.5 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center gap-1.5 text-white transition-all cursor-pointer shadow-2xl ${
+                isManuallyPaused
+                  ? "border-emerald-400/60 bg-emerald-950/70 text-emerald-300"
+                  : "border-white/35 text-white"
+              }`}
+              title={isManuallyPaused ? "Resume video (Play)" : "Stop video (Pause)"}
+              aria-label={isManuallyPaused ? "Resume video (Play)" : "Stop video (Pause)"}
+            >
+              {isManuallyPaused ? (
+                <>
+                  <Play className="w-4 h-4 fill-emerald-300 text-emerald-300 translate-x-0.5 shrink-0" />
+                  <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
+                    Play
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Pause className="w-4 h-4 fill-white text-white shrink-0" />
+                  <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
+                    Stop
+                  </span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Sound Mute / Unmute Toggle Button */}
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
