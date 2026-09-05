@@ -49,6 +49,7 @@ export interface ReviewComment {
   isOwner?: boolean;
   likedByCreator?: boolean;
   replyToId?: string;
+  replyToHandle?: string;
   
   replies?: ReviewComment[];
 }
@@ -84,6 +85,7 @@ export interface VideoReview {
   id: string;
   userId?: string;
   userEmail?: string;
+  createdAt?: string;
   createdAtMs?: number;
   placeId: string;
   placeName: string;
@@ -129,18 +131,18 @@ export interface VideoReview {
   isLiked: boolean;
   commentsCount: number;
   comments: ReviewComment[];
-  bookmarksCount: number;
+  bookmarksCount?: number;
   isBookmarked: boolean;
-  repostsCount: number;
+  repostsCount?: number;
   isReposted?: boolean;
   views?: number;
   viewsCount?: number;
   sharesCount: number;
-  recordedAt: string; // e.g. "a week ago", "3 days ago"
+  recordedAt?: string; // e.g. "a week ago", "3 days ago"
   feedCategory?: "discover" | "following" | "clubs";
   clubName?: string;
   transcript?: string;
-  tags: string[];
+  tags?: string[];
   ownerResponse?: {
     text: string;
     respondedAt: string;

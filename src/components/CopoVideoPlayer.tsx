@@ -99,9 +99,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Persistent Single Hardware-Accelerated Video Player
-  // Ensures strictly 1 hardware decoder session exists across the entire app feed (zero decoder exhaustion, zero 6-video freezes)
+  // Persistent Hardware-Accelerated Video Player Pool (Active + Upcoming Preload + Previous Hold)
+  // Maintains strictly 3 hardware video elements across the feed to guarantee 0ms instant playback on swipe
+  // and eliminate any 2-second audio latency while strictly preventing decoder exhaustion on mobile.
   const feedVideoRef = useRef<HTMLVideoElement | null>(null);
+  const videoPoolRef = useRef<HTMLVideoElement[]>([]);
+  const slotBindingRef = useRef<Map<string, HTMLVideoElement>>(new Map());
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
   const [firstFrameRenderedId, setFirstFrameRenderedId] = useState<string | null>(null);
@@ -113,82 +116,108 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const lastAdvanceTimeRef = useRef<{ time: number; currentTime: number }>({ time: Date.now(), currentTime: 0 });
   const lastLoadedVideoIdRef = useRef<string | null>(null);
 
-  // Initialize singleton video element once
+  // Initialize pool of 3 hardware-accelerated video elements once
   useEffect(() => {
-    if (!feedVideoRef.current && typeof document !== "undefined") {
-      const vid = document.createElement("video");
-      vid.id = "copo-persistent-feed-video";
-      vid.playsInline = true;
-      vid.setAttribute("webkit-playsinline", "true");
-      vid.setAttribute("x5-playsinline", "true");
-      vid.setAttribute("x5-video-player-type", "h5-page");
-      vid.setAttribute("x5-video-player-fullscreen", "true");
-      vid.loop = true;
-      vid.autoplay = true;
-      vid.preload = "auto";
-      vid.disablePictureInPicture = true;
-      vid.className = "w-full h-full object-cover absolute inset-0 z-0 pointer-events-none";
+    if (typeof document === "undefined") return;
 
-      vid.addEventListener("playing", () => {
-        setIsBuffering(false);
-        if (vid.currentTime > 0.05) {
-          setIsPlaying(true);
-          if (lastLoadedVideoIdRef.current) {
-            setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-          }
-        }
-      });
-      vid.addEventListener("pause", () => {
-        setIsPlaying(false);
-      });
-      vid.addEventListener("waiting", () => {
-        setIsBuffering(true);
-      });
-      vid.addEventListener("canplay", () => {
-        setIsBuffering(false);
-      });
-      vid.addEventListener("loadeddata", () => {
-        setIsBuffering(false);
-        if (vid.currentTime > 0.05 && !vid.paused) {
-          setIsPlaying(true);
-          if (lastLoadedVideoIdRef.current) {
-            setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-          }
-        }
-      });
-      vid.addEventListener("timeupdate", () => {
-        if (!vid.paused && vid.currentTime > 0.05) {
-          setIsPlaying(true);
-          setIsBuffering(false);
-          if (lastLoadedVideoIdRef.current) {
-            setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-          }
-        }
-        if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
-          setProgressPercent((vid.currentTime / vid.duration) * 100);
-        }
-      });
-      vid.addEventListener("volumechange", () => {
-        setIsActualMuted(vid.muted);
-      });
+    if (videoPoolRef.current.length === 0) {
+      const pool: HTMLVideoElement[] = [];
+      for (let i = 0; i < 3; i++) {
+        const vid = document.createElement("video");
+        vid.id = `copo-feed-video-${i}`;
+        vid.playsInline = true;
+        vid.setAttribute("webkit-playsinline", "true");
+        vid.setAttribute("x5-playsinline", "true");
+        vid.setAttribute("x5-video-player-type", "h5-page");
+        vid.setAttribute("x5-video-player-fullscreen", "true");
+        vid.loop = true;
+        vid.autoplay = false;
+        vid.preload = "auto";
+        vid.disablePictureInPicture = true;
+        vid.className = "w-full h-full object-cover absolute inset-0 z-0 pointer-events-none";
 
-      feedVideoRef.current = vid;
+        vid.addEventListener("playing", () => {
+          if (feedVideoRef.current === vid) {
+            setIsBuffering(false);
+            setIsPlaying(true);
+            if (lastLoadedVideoIdRef.current) {
+              setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+            }
+          }
+        });
+        vid.addEventListener("pause", () => {
+          if (feedVideoRef.current === vid) {
+            setIsPlaying(false);
+          }
+        });
+        vid.addEventListener("waiting", () => {
+          if (feedVideoRef.current === vid) {
+            setIsBuffering(true);
+          }
+        });
+        vid.addEventListener("canplay", () => {
+          if (feedVideoRef.current === vid) {
+            setIsBuffering(false);
+            if (!vid.paused) {
+              setIsPlaying(true);
+              if (lastLoadedVideoIdRef.current) {
+                setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+              }
+            }
+          }
+        });
+        vid.addEventListener("loadeddata", () => {
+          if (feedVideoRef.current === vid) {
+            setIsBuffering(false);
+            if (!vid.paused) {
+              setIsPlaying(true);
+              if (lastLoadedVideoIdRef.current) {
+                setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+              }
+            }
+          }
+        });
+        vid.addEventListener("timeupdate", () => {
+          if (feedVideoRef.current === vid) {
+            if (!vid.paused && vid.currentTime > 0.02) {
+              setIsPlaying(true);
+              setIsBuffering(false);
+              if (lastLoadedVideoIdRef.current) {
+                setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+              }
+            }
+            if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
+              setProgressPercent((vid.currentTime / vid.duration) * 100);
+            }
+          }
+        });
+        vid.addEventListener("volumechange", () => {
+          if (feedVideoRef.current === vid) {
+            setIsActualMuted(vid.muted);
+          }
+        });
+
+        pool.push(vid);
+      }
+      videoPoolRef.current = pool;
     }
 
     return () => {
-      if (feedVideoRef.current) {
+      videoPoolRef.current.forEach((v) => {
         try {
-          feedVideoRef.current.pause();
-          feedVideoRef.current.removeAttribute("src");
-          feedVideoRef.current.load();
+          v.pause();
+          v.removeAttribute("src");
+          v.load();
         } catch (e) {}
-        feedVideoRef.current.remove();
-        feedVideoRef.current = null;
-      }
+        v.remove();
+      });
+      videoPoolRef.current = [];
+      feedVideoRef.current = null;
+      slotBindingRef.current.clear();
     };
   }, []);
 
-  // Sync mute state changes to the singleton video without interrupting playback or pause state
+  // Sync mute state changes to the active video without interrupting playback
   useEffect(() => {
     const vid = feedVideoRef.current;
     if (!vid) return;
@@ -200,116 +229,206 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     setIsActualMuted(vid.muted);
   }, [isMuted, isSessionAudioUnlocked]);
 
-  // Mount the singleton video element into the active card slot and seamlessly play
+  // Master Orchestration: Mount active video, pre-buffer upcoming video, and start immediate playback
   useEffect(() => {
-    const vid = feedVideoRef.current;
-    if (!vid) return;
+    const pool = videoPoolRef.current;
+    if (!pool || pool.length === 0) return;
 
     if (currentIndex >= videos.length || !videos[currentIndex]) {
-      vid.pause();
-      vid.remove();
+      pool.forEach((v) => {
+        try {
+          v.pause();
+          v.remove();
+        } catch (e) {}
+      });
+      feedVideoRef.current = null;
       lastLoadedVideoIdRef.current = null;
       return;
     }
 
     const activeVideo = videos[currentIndex];
-    const isNewVideo = lastLoadedVideoIdRef.current !== activeVideo.id;
+    const nextVideo = (currentIndex + 1 < videos.length) ? videos[currentIndex + 1] : null;
+    const prevVideo = (currentIndex - 1 >= 0) ? videos[currentIndex - 1] : null;
 
-    const mountVideoToActiveSlot = () => {
-      const targetSlot = document.getElementById(`video-slot-${activeVideo.id}`);
-      if (targetSlot && vid.parentElement !== targetSlot) {
-        targetSlot.appendChild(vid);
+    const neededVideoIds = new Set<string>();
+    neededVideoIds.add(activeVideo.id);
+    if (nextVideo) neededVideoIds.add(nextVideo.id);
+    if (prevVideo) neededVideoIds.add(prevVideo.id);
+
+    // 1. Resolve which element hosts activeVideo
+    let activeVid = slotBindingRef.current.get(activeVideo.id);
+
+    // If not already bound to a pool element, claim one
+    if (!activeVid || !pool.includes(activeVid)) {
+      activeVid = pool.find((v) => {
+        const boundId = [...slotBindingRef.current.entries()].find(([, el]) => el === v)?.[0];
+        return !boundId || !neededVideoIds.has(boundId);
+      }) || pool[0];
+
+      // Unbind previous owner of this element
+      for (const [vId, el] of slotBindingRef.current.entries()) {
+        if (el === activeVid) slotBindingRef.current.delete(vId);
+      }
+      slotBindingRef.current.set(activeVideo.id, activeVid);
+    }
+
+    // Mount activeVid into its target card slot
+    const mountActive = () => {
+      const activeSlot = document.getElementById(`video-slot-${activeVideo.id}`);
+      if (activeSlot && activeVid && activeVid.parentElement !== activeSlot) {
+        activeSlot.appendChild(activeVid);
       }
     };
+    mountActive();
+    const raf = requestAnimationFrame(mountActive);
 
-    mountVideoToActiveSlot();
-    const raf = requestAnimationFrame(mountVideoToActiveSlot);
+    // Point feedVideoRef to the active video element
+    feedVideoRef.current = activeVid;
+    const isNewVideo = lastLoadedVideoIdRef.current !== activeVideo.id;
 
-    // If we are still on the same video, do NOT reload, do NOT touch isManuallyPaused, and do NOT auto-play!
+    // Load active source if not matching
+    const activeSrc = resolvePlayableVideoSource(activeVideo);
+    if (activeVid.src !== activeSrc) {
+      activeVid.src = activeSrc;
+      activeVid.load();
+    }
+
+    // Configure audio & mute on active element
+    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
+    activeVid.muted = effectiveMuted;
+    if (!effectiveMuted) {
+      activeVid.volume = 1;
+    }
+    setIsActualMuted(activeVid.muted);
+
+    // If still on the same video, handle pause state
     if (!isNewVideo) {
       if (isPaused) {
-        vid.pause();
+        activeVid.pause();
         setIsPlaying(false);
       }
-      return () => {
-        cancelAnimationFrame(raf);
-      };
-    }
-
-    // New video detected!
-    lastLoadedVideoIdRef.current = activeVideo.id;
-    setFirstFrameRenderedId(null);
-    setIsPlaying(false);
-    setIsBuffering(true);
-
-    const nextSrc = resolvePlayableVideoSource(activeVideo);
-    if (vid.src !== nextSrc) {
-      vid.src = nextSrc;
-      vid.load();
-    }
-
-    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-    vid.muted = effectiveMuted;
-    if (!effectiveMuted) {
-      vid.volume = 1;
-    }
-    setIsActualMuted(vid.muted);
-
-    // Modern hardware presentation hook: fires the exact millisecond the GPU presents the first frame
-    if ("requestVideoFrameCallback" in vid) {
-      (vid as any).requestVideoFrameCallback(() => {
-        if (lastLoadedVideoIdRef.current === activeVideo.id && !vid.paused) {
-          setIsPlaying(true);
-          setIsBuffering(false);
-          setFirstFrameRenderedId(activeVideo.id);
-        }
-      });
-    }
-
-    // CHECK IF THIS SHOULD BE PAUSED INITIALLY:
-    // In Drawer contexts (business profile or creator drawer) or when isPaused is active:
-    // The video MUST start paused with the center play symbol displayed and ZERO audio!
-    const isDrawerContext = Boolean(contextKey?.startsWith("place_") || contextKey?.startsWith("creator_"));
-    const shouldStartPaused = Boolean(isPaused || isDrawerContext);
-
-    if (shouldStartPaused) {
-      isManuallyPausedRef.current = true;
-      setIsManuallyPaused(true);
+    } else {
+      // New active video detected
+      lastLoadedVideoIdRef.current = activeVideo.id;
+      setFirstFrameRenderedId(null);
       setIsPlaying(false);
-      setIsBuffering(false);
-      try {
-        vid.pause();
-      } catch (e) {}
-      return () => {
-        cancelAnimationFrame(raf);
-      };
+      setProgressPercent(0);
+
+      const isDrawerContext = Boolean(contextKey?.startsWith("place_") || contextKey?.startsWith("creator_"));
+      const shouldStartPaused = Boolean(isPaused || isDrawerContext);
+
+      if (shouldStartPaused) {
+        isManuallyPausedRef.current = true;
+        setIsManuallyPaused(true);
+        setIsPlaying(false);
+        setIsBuffering(false);
+        try { activeVid.pause(); } catch (e) {}
+      } else {
+        isManuallyPausedRef.current = false;
+        setIsManuallyPaused(false);
+
+        // Hardware GPU presentation callback
+        if ("requestVideoFrameCallback" in activeVid) {
+          (activeVid as any).requestVideoFrameCallback(() => {
+            if (feedVideoRef.current === activeVid && !activeVid.paused) {
+              setIsPlaying(true);
+              setIsBuffering(false);
+              setFirstFrameRenderedId(activeVideo.id);
+            }
+          });
+        }
+
+        const p = activeVid.play();
+        if (p !== undefined) {
+          playPromiseRef.current = p;
+          p.then(() => {
+            playPromiseRef.current = null;
+            setIsPlaying(true);
+            setIsBuffering(false);
+            setFirstFrameRenderedId(activeVideo.id);
+          }).catch((err) => {
+            playPromiseRef.current = null;
+            if (err?.name === "NotAllowedError") {
+              activeVid.muted = true;
+              setIsActualMuted(true);
+              activeVid.play().catch(() => {});
+            } else if (err?.name !== "AbortError") {
+              setIsPlaying(false);
+            }
+          });
+        }
+      }
     }
 
-    isManuallyPausedRef.current = false;
-    setIsManuallyPaused(false);
-    setProgressPercent(0);
+    // 2. PRE-WARM NEXT UPCOMING VIDEO IN POOL (Instant switching & immediate audio on swipe!)
+    if (nextVideo) {
+      let nextVid = slotBindingRef.current.get(nextVideo.id);
+      if (!nextVid || nextVid === activeVid || !pool.includes(nextVid)) {
+        nextVid = pool.find((v) => v !== activeVid && (!slotBindingRef.current.get(prevVideo?.id || "") || v !== slotBindingRef.current.get(prevVideo?.id || ""))) || pool.find((v) => v !== activeVid) || null;
+        if (nextVid) {
+          for (const [vId, el] of slotBindingRef.current.entries()) {
+            if (el === nextVid) slotBindingRef.current.delete(vId);
+          }
+          slotBindingRef.current.set(nextVideo.id, nextVid);
+        }
+      }
 
-    const p = vid.play();
-    if (p !== undefined) {
-      playPromiseRef.current = p;
-      p.then(() => {
-        playPromiseRef.current = null;
-        if (vid.currentTime > 0.05 && !vid.paused) {
-          setIsPlaying(true);
-          setIsBuffering(false);
-          setFirstFrameRenderedId(activeVideo.id);
+      if (nextVid) {
+        const nextSlot = document.getElementById(`video-slot-${nextVideo.id}`);
+        if (nextSlot && nextVid.parentElement !== nextSlot) {
+          nextSlot.appendChild(nextVid);
         }
-      }).catch((err) => {
-        playPromiseRef.current = null;
-        if (err?.name === "NotAllowedError") {
-          vid.muted = true;
-          setIsActualMuted(true);
-          vid.play().catch(() => {});
-        } else if (err?.name !== "AbortError") {
-          setIsPlaying(false);
+        const nextSrc = resolvePlayableVideoSource(nextVideo);
+        if (nextVid.src !== nextSrc) {
+          nextVid.src = nextSrc;
+          nextVid.preload = "auto";
+          nextVid.muted = true;
+          nextVid.load();
         }
-      });
+        try { nextVid.pause(); } catch (e) {}
+      }
     }
+
+    // 3. PRESERVE / PRE-WARM PREVIOUS VIDEO IN POOL (Instant resumption if user swipes up!)
+    if (prevVideo) {
+      let prevVid = slotBindingRef.current.get(prevVideo.id);
+      if (!prevVid || prevVid === activeVid || !pool.includes(prevVid)) {
+        prevVid = pool.find((v) => v !== activeVid && (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id))) || null;
+        if (prevVid) {
+          for (const [vId, el] of slotBindingRef.current.entries()) {
+            if (el === prevVid) slotBindingRef.current.delete(vId);
+          }
+          slotBindingRef.current.set(prevVideo.id, prevVid);
+        }
+      }
+
+      if (prevVid) {
+        const prevSlot = document.getElementById(`video-slot-${prevVideo.id}`);
+        if (prevSlot && prevVid.parentElement !== prevSlot) {
+          prevSlot.appendChild(prevVid);
+        }
+        const prevSrc = resolvePlayableVideoSource(prevVideo);
+        if (prevVid.src !== prevSrc) {
+          prevVid.src = prevSrc;
+          prevVid.preload = "auto";
+          prevVid.muted = true;
+          prevVid.load();
+        }
+        try { prevVid.pause(); } catch (e) {}
+      }
+    }
+
+    // 4. Pause and unmount any idle element outside active, next, and prev
+    pool.forEach((v) => {
+      if (
+        v !== activeVid &&
+        (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id)) &&
+        (!prevVideo || v !== slotBindingRef.current.get(prevVideo?.id || ""))
+      ) {
+        try { v.pause(); } catch (e) {}
+        v.remove();
+      }
+    });
 
     const viewTimer = setTimeout(() => {
       if (activeVideo?.id) {

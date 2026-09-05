@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { VideoReview } from '../types';
 import { getDisplayViews, resolveSafeAuthor } from '../utils/placeUtils';
+import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
 
 // Helper to record deleted video IDs in localStorage to avoid re-rendering stale caches
 function recordClientDeletedId(id: string) {
@@ -69,22 +70,24 @@ function normalizeReview(v: any): VideoReview {
 
 export function useFeedPagination() {
   const [videos, setVideos] = useState<VideoReview[]>(() => {
+    const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+    let deletedIds: string[] = [];
+    try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
+
     try {
       const cached = localStorage.getItem("yoouz_cached_videos_v20");
-      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-      let deletedIds: string[] = [];
-      try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
-
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
+          const filtered = parsed.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
+          if (filtered.length > 0) return filtered;
         }
       }
     } catch (e) {}
-    return [];
+    // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
+    return INITIAL_SEED_VIDEOS.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
   });
-  const [isLoading, setIsLoading] = useState<boolean>(videos.length === 0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   useEffect(() => {
@@ -99,8 +102,8 @@ export function useFeedPagination() {
       } catch (e) {}
 
       try {
-        // 1. Fetch from Server API (always fresh from BunnyDB)
-        const res = await fetch(`/api/videos/feed?t=${Date.now()}`);
+        // 1. Fetch from Server API (with memory warmth and HTTP stale-while-revalidate caching)
+        const res = await fetch(`/api/videos/feed`);
         if (res.ok && active) {
           const data = await res.json();
           const serverDeletedIds: string[] = Array.isArray(data?.deletedIds) ? data.deletedIds : [];

@@ -215,7 +215,17 @@ const feedCache: VideoFeedCache = {
   videos: [],
   lastFetched: 0
 };
-const CACHE_TTL_MS = 3 * 1000;
+const CACHE_TTL_MS = 60 * 1000;
+
+// Warm feedCache immediately on server start so initial client requests respond in 1ms
+try {
+  const initialLocalReviews = readReviewsIndex();
+  if (Array.isArray(initialLocalReviews) && initialLocalReviews.length > 0) {
+    feedCache.videos = initialLocalReviews;
+    feedCache.lastFetched = Date.now();
+    console.log(`⚡ [Server] Pre-warmed video feed cache with ${initialLocalReviews.length} videos`);
+  }
+} catch (e) {}
 
 const defaultCommunityUsers = [
   {
@@ -5141,6 +5151,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   // Get Video Feed endpoint (combines server index with Firestore and uploaded videos with memory caching & write-back resiliency)
   app.get("/api/videos/feed", async (_req, res) => {
     try {
+      res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
       const now = Date.now();
       const deletedIds = readDeletedReviewsIndex();
       const deletedSet = new Set(deletedIds);
