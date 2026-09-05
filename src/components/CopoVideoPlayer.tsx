@@ -232,8 +232,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [currentIndex, videos, onLoadMore]);
 
-  // Ultra-responsive IntersectionObserver index detection
-  // Uses 50% midpoint threshold so the active card switches seamlessly during the swipe
+  // Ultra-responsive IntersectionObserver index detection (matches app.copo.st active claim threshold)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -243,7 +242,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (isProgrammaticScrollRef.current) return;
 
         const visibleEntries = entries.filter(
-          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5
+          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.4
         );
         if (visibleEntries.length === 0) return;
 
@@ -263,7 +262,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       },
       {
         root: container,
-        threshold: [0.5, 0.75]
+        threshold: [0.25, 0.4, 0.75]
       }
     );
 
@@ -317,6 +316,70 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [videos, onSelectVideoIndex]);
+
+  // app.copo.st Touch Gesture Engine: 15% swipe height threshold & instant flick transition
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let touchStartTime = 0;
+    let isTouchActive = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      touchStartY = touch.clientY;
+      touchStartX = touch.clientX;
+      touchStartTime = Date.now();
+      isTouchActive = true;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!isTouchActive || e.changedTouches.length !== 1) return;
+      isTouchActive = false;
+
+      const touch = e.changedTouches[0];
+      const deltaY = touch.clientY - touchStartY;
+      const deltaX = touch.clientX - touchStartX;
+      const elapsed = Date.now() - touchStartTime;
+      const containerHeight = container.clientHeight || window.innerHeight;
+
+      // Only handle if movement was predominantly vertical
+      if (Math.abs(deltaY) < Math.abs(deltaX) * 1.2) return;
+
+      const swipeRatio = Math.abs(deltaY) / containerHeight;
+      // 15% distance threshold OR fast flick (>35px in <300ms) matching app.copo.st
+      const isSignificantSwipe = swipeRatio >= 0.15 || (Math.abs(deltaY) >= 35 && elapsed < 300);
+
+      if (isSignificantSwipe) {
+        if (deltaY < 0) {
+          // Swiped UP -> Next video
+          if (currentIndexRef.current < videos.length - 1) {
+            scrollToCard(currentIndexRef.current + 1, "smooth");
+          } else if (videos.length > 1) {
+            scrollToCard(0, "smooth");
+          }
+        } else {
+          // Swiped DOWN -> Prev video
+          if (currentIndexRef.current > 0) {
+            scrollToCard(currentIndexRef.current - 1, "smooth");
+          } else if (videos.length > 1) {
+            scrollToCard(videos.length - 1, "smooth");
+          }
+        }
+      }
+    };
+
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [videos.length, scrollToCard]);
 
   // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {

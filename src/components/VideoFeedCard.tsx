@@ -174,7 +174,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         setIsBuffering(false);
       }).catch((err) => {
         playPromiseRef.current = null;
-        // If unmuted autoplay is blocked by browser policy without gesture, fallback to muted autoplay (standard YouTube Shorts behavior)
+        // If unmuted autoplay is blocked by browser policy without gesture, fallback to muted autoplay
         if (err?.name === "NotAllowedError" || err?.name === "AbortError" || err?.message?.includes("gesture")) {
           el.muted = true;
           const retry = el.play();
