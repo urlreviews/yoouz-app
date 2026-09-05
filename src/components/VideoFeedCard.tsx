@@ -380,46 +380,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Stop/Play and Sound Controls */}
-        <div className="pointer-events-auto flex items-center gap-2">
-          {/* Explicit Stop / Play Button */}
-          {isActive && (
-            <button
-              type="button"
-              id={`btn-stop-play-${video.id}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlayPause(e);
-              }}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => e.stopPropagation()}
-              className={`h-11 px-3.5 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center gap-1.5 text-white transition-all cursor-pointer shadow-2xl ${
-                isManuallyPaused
-                  ? "border-emerald-400/60 bg-emerald-950/70 text-emerald-300"
-                  : "border-white/35 text-white"
-              }`}
-              title={isManuallyPaused ? "Resume video (Play)" : "Stop video (Pause)"}
-              aria-label={isManuallyPaused ? "Resume video (Play)" : "Stop video (Pause)"}
-            >
-              {isManuallyPaused ? (
-                <>
-                  <Play className="w-4 h-4 fill-emerald-300 text-emerald-300 translate-x-0.5 shrink-0" />
-                  <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
-                    Play
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Pause className="w-4 h-4 fill-white text-white shrink-0" />
-                  <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
-                    Stop
-                  </span>
-                </>
-              )}
-            </button>
-          )}
-
-          {/* Sound Mute / Unmute Toggle Button */}
+        {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
+        <div className="pointer-events-auto">
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
@@ -451,9 +413,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       </div>
 
-      {/* Center Play Button (Shown ONLY when the user manually paused the video) */}
+      {/* Center Video Player Symbol (Natural Play/Pause in the middle of the video) */}
       {isActive && isManuallyPaused && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto animate-in zoom-in-75 fade-in duration-200">
           <button
             type="button"
             id={`copo-play-center-btn-${video.id}`}
@@ -461,10 +423,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               togglePlayPause(e);
             }}
-            className="w-20 h-20 sm:w-22 sm:h-22 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-2xl bg-black/65 hover:bg-black/85 backdrop-blur-xl border-2 border-white/40 md:border-white/30"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-[0_8px_32px_rgba(0,0,0,0.7)] bg-black/60 hover:bg-black/80 backdrop-blur-md border-2 border-white/40 ring-1 ring-white/20"
             aria-label="Play video"
+            title="Resume Video"
           >
-            <Play className="w-10 h-10 fill-white text-white translate-x-0.5 drop-shadow-md relative z-10" />
+            <Play className="w-10 h-10 sm:w-12 sm:h-12 fill-white text-white translate-x-1 drop-shadow-md relative z-10" />
           </button>
         </div>
       )}

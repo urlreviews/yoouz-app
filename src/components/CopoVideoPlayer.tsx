@@ -110,6 +110,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const isManuallyPausedRef = useRef<boolean>(false);
   const playPromiseRef = useRef<Promise<void> | null>(null);
   const lastAdvanceTimeRef = useRef<{ time: number; currentTime: number }>({ time: Date.now(), currentTime: 0 });
+  const lastLoadedVideoIdRef = useRef<string | null>(null);
 
   // Initialize singleton video element once
   useEffect(() => {
@@ -169,6 +170,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, []);
 
+  // Sync mute state changes to the singleton video without interrupting playback or pause state
+  useEffect(() => {
+    const vid = feedVideoRef.current;
+    if (!vid) return;
+    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
+    vid.muted = effectiveMuted;
+    if (!effectiveMuted) {
+      vid.volume = 1;
+    }
+    setIsActualMuted(vid.muted);
+  }, [isMuted, isSessionAudioUnlocked]);
+
   // Mount the singleton video element into the active card slot and seamlessly play
   useEffect(() => {
     const vid = feedVideoRef.current;
@@ -177,10 +190,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     if (currentIndex >= videos.length || !videos[currentIndex]) {
       vid.pause();
       vid.remove();
+      lastLoadedVideoIdRef.current = null;
       return;
     }
 
     const activeVideo = videos[currentIndex];
+    const isNewVideo = lastLoadedVideoIdRef.current !== activeVideo.id;
+
     const mountVideoToActiveSlot = () => {
       const targetSlot = document.getElementById(`video-slot-${activeVideo.id}`);
       if (targetSlot && vid.parentElement !== targetSlot) {
@@ -191,6 +207,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     mountVideoToActiveSlot();
     const raf = requestAnimationFrame(mountVideoToActiveSlot);
 
+    // If we are still on the same video, do NOT reload, do NOT touch isManuallyPaused, and do NOT auto-play!
+    if (!isNewVideo) {
+      return () => {
+        cancelAnimationFrame(raf);
+      };
+    }
+
+    // New video detected!
+    lastLoadedVideoIdRef.current = activeVideo.id;
     const nextSrc = resolvePlayableVideoSource(activeVideo);
     if (vid.src !== nextSrc) {
       vid.src = nextSrc;
@@ -231,7 +256,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (activeVideo?.id) {
         onRecordView?.(activeVideo.id);
       }
-    }, 500);
+    }, 1000);
 
     return () => {
       cancelAnimationFrame(raf);
@@ -651,6 +676,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [isSessionAudioUnlocked, isMuted]);
 
+  const handlePauseVideo = useCallback(() => {
+    isManuallyPausedRef.current = true;
+    setIsManuallyPaused(true);
+    if (feedVideoRef.current) {
+      feedVideoRef.current.pause();
+    }
+    setIsPlaying(false);
+  }, []);
+
   // Sound toggle with session audio unlocking
   const toggleMute = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -898,7 +932,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isActualMuted={isActualMuted}
                 isManuallyPaused={isCardActive ? isManuallyPaused : false}
                 onTogglePlayPause={handleTogglePlayPause}
-                onPauseVideo={() => feedVideoRef.current?.pause()}
+                onPauseVideo={handlePauseVideo}
                 allUsers={allUsers}
                 currentUser={currentUser}
                 activeSubTab={activeSubTab}
