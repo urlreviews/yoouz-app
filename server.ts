@@ -5063,9 +5063,21 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       if (!website && matchedMeta.website) website = matchedMeta.website;
     }
 
-    // Proxy framerusercontent to bypass CORP restrictions in iframe
-    if (banner && banner.includes("framerusercontent.com")) banner = `/api/proxy-image?url=${encodeURIComponent(banner)}`;
-    if (logo && logo.includes("framerusercontent.com")) logo = `/api/proxy-image?url=${encodeURIComponent(logo)}`;
+    // Proxy framerusercontent to bypass CORP restrictions in iframe without duplicate wrapping
+    const sanitizeProxyUrl = (urlStr?: string | null): string => {
+      if (!urlStr || typeof urlStr !== "string") return "";
+      let clean = urlStr.trim();
+      while (clean.startsWith("/api/proxy-image?url=")) {
+        clean = decodeURIComponent(clean.replace("/api/proxy-image?url=", ""));
+      }
+      if (clean.includes("framerusercontent.com") || clean.includes("googleusercontent.com")) {
+        return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
+      }
+      return clean;
+    };
+
+    if (banner) banner = sanitizeProxyUrl(banner);
+    if (logo) logo = sanitizeProxyUrl(logo);
 
     return {
       ...r,
@@ -7162,35 +7174,7 @@ app.post("/api/videos/save-review", async (req, res) => {
   });
 
 
-  // Photo proxy for generic images (prevents exposing API key & CORS/CORP issues)
-  app.get("/api/proxy-image", async (req, res) => {
-    try {
-      const imageUrl = req.query.url as string;
-      if (!imageUrl) return res.status(400).send("Missing url parameter");
-      
-      const response = await fetch(imageUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-        }
-      });
-      
-      if (!response.ok) {
-        return res.status(response.status).send(`Failed to fetch image: ${response.statusText}`);
-      }
-      
-      const buffer = await response.arrayBuffer();
-      const contentType = response.headers.get("content-type") || "image/jpeg";
-      
-      res.setHeader("Content-Type", contentType);
-      res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-      res.send(Buffer.from(buffer));
-    } catch (err: any) {
-      res.status(500).json({ error: "Failed to proxy image", details: err.message });
-    }
-  });
+
 
   // Photo proxy for Google Places API images (prevents exposing API key & CORS issues)
   app.get("/api/places/photo", async (req, res) => {
@@ -8547,8 +8531,19 @@ Return JSON:
         logo = `https://cdn.brandfetch.io/${cleanDomain}/icon`;
       }
       
-      if (image && image.includes('framerusercontent.com')) image = `/api/proxy-image?url=${encodeURIComponent(image)}`;
-      if (logo && logo.includes('framerusercontent.com')) logo = `/api/proxy-image?url=${encodeURIComponent(logo)}`;
+      const sanitizeProxy = (u?: string | null): string => {
+        if (!u || typeof u !== 'string') return '';
+        let c = u.trim();
+        while (c.startsWith('/api/proxy-image?url=')) {
+          c = decodeURIComponent(c.replace('/api/proxy-image?url=', ''));
+        }
+        if (c.includes('framerusercontent.com') || c.includes('googleusercontent.com')) {
+          return `/api/proxy-image?url=${encodeURIComponent(c)}`;
+        }
+        return c;
+      };
+      if (image) image = sanitizeProxy(image);
+      if (logo) logo = sanitizeProxy(logo);
       
       res.json({ title, description, image, logo, siteName, domain: cleanDomain, url: finalUrl });
     } catch (e) {
@@ -8829,7 +8824,25 @@ Return JSON:
         return res.send(fallbackSvg);
       }
 
-      const targetUrl = decodeURIComponent(rawUrl.trim());
+      // Recursively unwrap if nested or URL encoded
+      let targetUrl = rawUrl.trim();
+      while (targetUrl.includes('/api/proxy-image?url=')) {
+        const parts = targetUrl.split('/api/proxy-image?url=');
+        targetUrl = decodeURIComponent(parts[parts.length - 1]);
+      }
+      try {
+        targetUrl = decodeURIComponent(targetUrl);
+      } catch (e) {}
+
+      targetUrl = targetUrl.trim();
+      if (!targetUrl || targetUrl === 'undefined' || targetUrl === 'null' || targetUrl === 'data:;') {
+        const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#18181b"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">Y</text></svg>`;
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        return res.send(fallbackSvg);
+      }
       
       // If it is already a data URI or SVG
       if (targetUrl.startsWith('data:image/svg+xml;utf8,')) {

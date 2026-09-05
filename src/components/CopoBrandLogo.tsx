@@ -57,7 +57,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       !logoUrl.startsWith("data:;") &&
       (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image"))
     ) {
-      if (logoUrl.startsWith("http://") || logoUrl.startsWith("https://")) {
+      if (logoUrl.startsWith("/api/proxy-image")) {
+        return logoUrl;
+      }
+      if (logoUrl.includes("framerusercontent.com") || logoUrl.includes("googleusercontent.com")) {
         return `/api/proxy-image?url=${encodeURIComponent(logoUrl)}`;
       }
       return logoUrl;

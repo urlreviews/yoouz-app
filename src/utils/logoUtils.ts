@@ -347,6 +347,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
 
   if (url && (url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))) {
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
+      if (url.startsWith("/api/proxy-image")) return url;
       if (url.includes("framerusercontent.com") || url.includes("googleusercontent.com")) {
         return `/api/proxy-image?url=${encodeURIComponent(url)}`;
       }
@@ -387,6 +388,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 
   // 2. Explicit logoUrl provided (if not a broken brandfetch or stub)
   if (place.logoUrl && place.logoUrl.trim() !== "" && !place.logoUrl.includes("brandfetch.io") && place.logoUrl !== "data:;" && !place.logoUrl.startsWith("data:;") && !place.logoUrl.includes("gstatic.com/faviconV2")) {
+    if (place.logoUrl.startsWith("/api/proxy-image")) return place.logoUrl;
     if (place.logoUrl.includes("googleusercontent.com") || place.logoUrl.includes("framerusercontent.com")) {
       return `/api/proxy-image?url=${encodeURIComponent(place.logoUrl)}`;
     }
