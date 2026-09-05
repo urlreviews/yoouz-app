@@ -225,3 +225,20 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="%2318181b"/><stop offset="100%" stop-color="%2309090b"/></linearGradient></defs><rect width="720" height="1280" fill="url(%23g)"/><circle cx="360" cy="540" r="44" fill="%2327272a"/><polygon points="352,520 376,540 352,560" fill="%231a73e8"/><text x="360" y="650" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="bold" fill="%23ffffff" text-anchor="middle">${title}</text><text x="360" y="695" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="%239ca3af" text-anchor="middle">Review by ${author}</text></svg>`;
 }
 
+/**
+ * Aggressively forces WebKit (iOS Safari), Gecko (Firefox), and Blink (Chrome/Brave)
+ * to immediately release hardware video decoders from memory.
+ * This prevents decoder pool exhaustion (freezing after 3-5 videos).
+ */
+export function releaseVideoHardwareDecoder(el: HTMLVideoElement | null) {
+  if (!el) return;
+  try {
+    el.pause();
+    el.removeAttribute("src");
+    while (el.firstChild) {
+      el.removeChild(el.firstChild);
+    }
+    el.load();
+  } catch (e) {}
+}
+

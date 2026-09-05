@@ -20,8 +20,8 @@ import {
 import { VideoReview, VideoAuthor } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
-import { resolvePlayableVideoSource, normalizeVideoUrl } from "../utils/videoUtils";
-import { useGlobalMute } from "../hooks/useGlobalMute";
+import { resolvePlayableVideoSource, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
+import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { getSafeAvatarUrl } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
@@ -50,12 +50,22 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(true);
-  const [isMuted, setIsMuted] = useGlobalMute();
+  const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
+  const [isActualMuted, setIsActualMuted] = useState<boolean>(isMuted || !isSessionAudioUnlocked);
   const [newComment, setNewComment] = useState("");
   const [activeVideoSrc, setActiveVideoSrc] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const currentIndex = reviews.findIndex((r) => r.id === currentReview.id);
+
+  // Immediate decoder release on unmount to prevent 3-5 video decoder freeze
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        releaseVideoHardwareDecoder(videoRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -79,32 +89,64 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
   }, [currentReview?.id, currentReview?.videoUrl, currentReview?.localVideoUrl]);
 
   useEffect(() => {
-    if (videoRef.current && activeVideoSrc) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.muted = isMuted;
+    const el = videoRef.current;
+    if (el && activeVideoSrc) {
+      el.currentTime = 0;
+      const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
+      el.muted = shouldBeMuted;
+      if (!shouldBeMuted) {
+        el.volume = 1;
+      }
       
       if (hasStarted) {
-        videoRef.current.play().then(() => {
-          setIsPlaying(true);
-          if (currentReview?.id) {
-            onRecordView?.(currentReview.id);
-          }
-        }).catch(() => {});
+        const playPromise = el.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+              setIsActualMuted(el.muted);
+              if (currentReview?.id) {
+                onRecordView?.(currentReview.id);
+              }
+            })
+            .catch(() => {
+              // Browser autoplay policy rejected unmuted playback, fallback to muted
+              el.muted = true;
+              setIsActualMuted(true);
+              const retry = el.play();
+              if (retry !== undefined) {
+                retry
+                  .then(() => {
+                    setIsPlaying(true);
+                    if (isSessionAudioUnlocked && !isMuted) {
+                      const restoreAudio = () => {
+                        if (videoRef.current) {
+                          videoRef.current.muted = false;
+                          videoRef.current.volume = 1;
+                          setIsActualMuted(false);
+                        }
+                      };
+                      window.addEventListener("touchstart", restoreAudio, { once: true, passive: true });
+                      window.addEventListener("click", restoreAudio, { once: true, passive: true });
+                    }
+                  })
+                  .catch(() => {});
+              }
+            });
+        }
       } else {
         try {
-          videoRef.current.pause();
+          el.pause();
         } catch (e) {}
         setIsPlaying(false);
       }
     }
     return () => {
-      if (videoRef.current) {
-        try {
-          videoRef.current.pause();
-        } catch (e) {}
+      if (el) {
+        releaseVideoHardwareDecoder(el);
       }
     };
-  }, [activeVideoSrc, currentReview?.id, hasStarted]);
+  }, [activeVideoSrc, currentReview?.id, hasStarted, isMuted, isSessionAudioUnlocked]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -114,11 +156,13 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       if (e.key === " ") {
         e.preventDefault();
         togglePlay();
+      } else if (e.key.toLowerCase() === "m") {
+        handleToggleMute();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentIndex, reviews, hasStarted]);
+  }, [currentIndex, reviews, hasStarted, isMuted, isSessionAudioUnlocked, isActualMuted]);
 
   const handleNext = () => {
     if (currentIndex < reviews.length - 1) {
@@ -143,19 +187,45 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       setIsPlaying(false);
     } else {
       setHasStarted(true);
-      videoRef.current.muted = isMuted;
-      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
+      videoRef.current.muted = shouldBeMuted;
+      if (!shouldBeMuted) {
+        videoRef.current.volume = 1;
+      }
+      videoRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+          setIsActualMuted(videoRef.current?.muted ?? true);
+        })
+        .catch(() => {
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            setIsActualMuted(true);
+            videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+          }
+        });
     }
   };
 
-  const toggleMute = () => {
-    const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    try {
-      localStorage.setItem("yoouz_sound_muted", String(nextMuted));
-    } catch (e) {}
-    if (videoRef.current) {
-      videoRef.current.muted = nextMuted;
+  const handleToggleMute = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    ensureSharedAudioContextUnlocked();
+
+    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted;
+    if (isCurrentlyMuted) {
+      unlockAudioSession();
+      setIsActualMuted(false);
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+        videoRef.current.volume = 1;
+      }
+    } else {
+      setIsMuted(true);
+      setIsActualMuted(true);
+      if (videoRef.current) {
+        videoRef.current.muted = true;
+      }
     }
   };
 
@@ -276,11 +346,28 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
 
             <div className="flex items-center gap-2">
               <button
-                onClick={toggleMute}
-                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center border border-white/20 hover:bg-black/70 cursor-pointer"
-                title={isMuted ? "Unmute sound" : "Mute sound"}
+                type="button"
+                onClick={handleToggleMute}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                className={`h-10 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
+                  isMuted || !isSessionAudioUnlocked || isActualMuted
+                    ? "px-3.5 gap-2 border-white/50 animate-pulse-subtle bg-black/90"
+                    : "w-10 border-white/35"
+                }`}
+                title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+                aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
               >
-                {isMuted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
+                {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
+                  <>
+                    <VolumeX className="w-4 h-4 text-white stroke-[2.2] shrink-0" />
+                    <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
+                      Tap to Unmute
+                    </span>
+                  </>
+                ) : (
+                  <Volume2 className="w-4 h-4 text-white stroke-[2.2]" />
+                )}
               </button>
             </div>
           </div>

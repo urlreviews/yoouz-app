@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { resolvePlayableVideoSource, normalizeVideoUrl } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
+import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import { getSafeAvatarUrl } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
@@ -35,7 +36,8 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
   onShareReview
 }) => {
   const [isPlayingInline, setIsPlayingInline] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
+  const [isActualMuted, setIsActualMuted] = useState<boolean>(isMuted || !isSessionAudioUnlocked);
   const [localBlobUrl, setLocalBlobUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -49,7 +51,7 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
     return () => {
       active = false;
       if (videoRef.current) {
-        try { videoRef.current.pause(); } catch(e) {}
+        releaseVideoHardwareDecoder(videoRef.current);
       }
     };
   }, [review.id]);
@@ -68,20 +70,49 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
       videoRef.current.pause();
       setIsPlayingInline(false);
     } else {
+      ensureSharedAudioContextUnlocked();
+      const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
+      videoRef.current.muted = shouldBeMuted;
       videoRef.current
         .play()
-        .then(() => setIsPlayingInline(true))
+        .then(() => {
+          setIsPlayingInline(true);
+          setIsActualMuted(videoRef.current?.muted ?? true);
+        })
         .catch(() => {
-          onOpenVideoModal(review);
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            setIsActualMuted(true);
+            videoRef.current
+              .play()
+              .then(() => setIsPlayingInline(true))
+              .catch(() => {
+                onOpenVideoModal(review);
+              });
+          } else {
+            onOpenVideoModal(review);
+          }
         });
     }
   };
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+    ensureSharedAudioContextUnlocked();
+    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted;
+    if (isCurrentlyMuted) {
+      unlockAudioSession();
+      setIsActualMuted(false);
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+        videoRef.current.volume = 1;
+      }
+    } else {
+      setIsMuted(true);
+      setIsActualMuted(true);
+      if (videoRef.current) {
+        videoRef.current.muted = true;
+      }
     }
   };
 
@@ -204,11 +235,23 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
 
             <div className="flex items-center gap-1.5">
               <button
+                type="button"
                 onClick={toggleMute}
-                className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/80"
-                title={isMuted ? "Unmute" : "Mute"}
+                className={`rounded-full bg-black/75 hover:bg-black active:scale-95 backdrop-blur-md text-white flex items-center justify-center border transition-all cursor-pointer ${
+                  isMuted || !isSessionAudioUnlocked || isActualMuted
+                    ? "px-2 py-1 gap-1 border-white/40 animate-pulse-subtle"
+                    : "w-7 h-7 border-white/20"
+                }`}
+                title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute"}
               >
-                {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-white" />}
+                {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
+                  <>
+                    <VolumeX className="w-3.5 h-3.5 text-white shrink-0" />
+                    <span className="text-[9px] font-bold">Unmute</span>
+                  </>
+                ) : (
+                  <Volume2 className="w-3.5 h-3.5 text-white" />
+                )}
               </button>
 
               <button

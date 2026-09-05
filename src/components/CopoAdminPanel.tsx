@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import { isAuthorMatch } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
+import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
 
 export const AdminPlaceLogo: React.FC<{
   place: Partial<Place> | null | undefined;
@@ -194,6 +195,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   useEffect(() => {
     setHasVideoStarted(false);
     setIsVideoPlaying(false);
+    return () => {
+      if (videoPlayerRef.current) {
+        releaseVideoHardwareDecoder(videoPlayerRef.current);
+      }
+    };
   }, [previewVideo?.id]);
 
   const [editPlaceModal, setEditPlaceModal] = useState<Place | null>(null);

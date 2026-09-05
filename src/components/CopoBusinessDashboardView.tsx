@@ -75,7 +75,8 @@ import {
 import { CopoBusinessPricingModal } from './CopoBusinessPricingModal';
 import { CopoCreemCheckoutModal } from './CopoCreemCheckoutModal';
 import { QRCodeCanvas } from 'qrcode.react';
-import { normalizeVideoUrl } from '../utils/videoUtils';
+import { normalizeVideoUrl, releaseVideoHardwareDecoder } from '../utils/videoUtils';
+import { useGlobalMute, ensureSharedAudioContextUnlocked } from '../hooks/useGlobalMute';
 import { CopoBrandLogo } from './CopoBrandLogo';
 import { formatRecordedDate } from '../utils/dateUtils';
 import { CountrySelector } from './CountrySelector';
@@ -126,24 +127,69 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
+  const [isActualMuted, setIsActualMuted] = useState<boolean>(isMuted || !isSessionAudioUnlocked);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showCenterFeedback, setShowCenterFeedback] = useState(false);
+
+  // Release hardware video decoders on unmount to prevent 3-5 video decoder freezing
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        releaseVideoHardwareDecoder(videoRef.current);
+      }
+    };
+  }, []);
 
   const videoSrc = useMemo(() => {
     return normalizeVideoUrl(video.videoUrl);
   }, [video.videoUrl]);
 
   useEffect(() => {
-    if (videoRef.current) {
+    const el = videoRef.current;
+    if (el) {
+      const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
+      el.muted = shouldBeMuted;
+      if (!shouldBeMuted) {
+        el.volume = 1;
+      }
       if (hasStarted) {
-        videoRef.current.play().catch(() => {});
+        const p = el.play();
+        if (p !== undefined) {
+          p.then(() => {
+            setIsPlaying(true);
+            setIsActualMuted(el.muted);
+          }).catch(() => {
+            el.muted = true;
+            setIsActualMuted(true);
+            const retry = el.play();
+            if (retry !== undefined) {
+              retry.then(() => {
+                setIsPlaying(true);
+                if (isSessionAudioUnlocked && !isMuted) {
+                  const restoreAudio = () => {
+                    if (videoRef.current) {
+                      videoRef.current.muted = false;
+                      videoRef.current.volume = 1;
+                      setIsActualMuted(false);
+                    }
+                  };
+                  window.addEventListener("touchstart", restoreAudio, { once: true, passive: true });
+                  window.addEventListener("click", restoreAudio, { once: true, passive: true });
+                }
+              }).catch(() => {});
+            }
+          });
+        }
       } else {
-        videoRef.current.pause();
+        try {
+          el.pause();
+        } catch (e) {}
+        setIsPlaying(false);
       }
     }
-  }, [hasStarted, videoSrc]);
+  }, [hasStarted, videoSrc, isMuted, isSessionAudioUnlocked]);
 
   const sanitizedWebsiteUrl = useMemo(() => {
     const raw = websiteUrl || (video as any).websiteUrl || (video as any).placeWebsite;
@@ -160,12 +206,12 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
         e.preventDefault();
         togglePlay();
       } else if (e.key.toLowerCase() === 'm') {
-        setIsMuted(prev => !prev);
+        handleToggleMute();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, isMuted, isSessionAudioUnlocked, isActualMuted]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -173,8 +219,24 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
       setHasStarted(true);
     }
     if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
+      const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
+      videoRef.current.muted = shouldBeMuted;
+      if (!shouldBeMuted) {
+        videoRef.current.volume = 1;
+      }
+      videoRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+          setIsActualMuted(videoRef.current?.muted ?? true);
+        })
+        .catch(() => {
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            setIsActualMuted(true);
+            videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+          }
+        });
     } else {
       videoRef.current.pause();
       setIsPlaying(false);
@@ -183,12 +245,25 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
     setTimeout(() => setShowCenterFeedback(false), 500);
   };
 
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!videoRef.current) return;
-    const nextMuted = !videoRef.current.muted;
-    videoRef.current.muted = nextMuted;
-    setIsMuted(nextMuted);
+  const handleToggleMute = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    ensureSharedAudioContextUnlocked();
+
+    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted;
+    if (isCurrentlyMuted) {
+      unlockAudioSession();
+      setIsActualMuted(false);
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+        videoRef.current.volume = 1;
+      }
+    } else {
+      setIsMuted(true);
+      setIsActualMuted(true);
+      if (videoRef.current) {
+        videoRef.current.muted = true;
+      }
+    }
   };
 
   const handleTimeUpdate = () => {
@@ -238,13 +313,37 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>Customer Review • {placeName}</span>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black transition-colors pointer-events-auto border border-white/10 cursor-pointer"
-            aria-label="Close review"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <button
+              type="button"
+              onClick={handleToggleMute}
+              className={`h-8 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
+                isMuted || !isSessionAudioUnlocked || isActualMuted
+                  ? "px-2.5 gap-1.5 border-white/50 animate-pulse-subtle bg-black/90"
+                  : "w-8 border-white/35"
+              }`}
+              title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+              aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+            >
+              {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
+                <>
+                  <VolumeX className="w-3.5 h-3.5 text-white stroke-[2.2] shrink-0" />
+                  <span className="text-[10px] font-bold tracking-wide select-none whitespace-nowrap">
+                    Tap to Unmute
+                  </span>
+                </>
+              ) : (
+                <Volume2 className="w-3.5 h-3.5 text-white stroke-[2.2]" />
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black transition-colors pointer-events-auto border border-white/10 cursor-pointer"
+              aria-label="Close review"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Video Canvas with Tap-to-Play/Pause */}
@@ -325,11 +424,23 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={toggleMute}
-                  className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-xs text-white transition-colors cursor-pointer border border-white/10"
-                  title={isMuted ? "Unmute" : "Mute"}
+                  type="button"
+                  onClick={handleToggleMute}
+                  className={`h-7 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all cursor-pointer border flex items-center justify-center ${
+                    isMuted || !isSessionAudioUnlocked || isActualMuted
+                      ? "px-2.5 gap-1 border-white/40 animate-pulse-subtle"
+                      : "w-7 border-white/15"
+                  }`}
+                  title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute"}
                 >
-                  {isMuted ? <VolumeX className="w-4 h-4 text-zinc-400" /> : <Volume2 className="w-4 h-4 text-white" />}
+                  {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5 text-white shrink-0" />
+                      <span className="text-[10px] font-bold">Unmute</span>
+                    </>
+                  ) : (
+                    <Volume2 className="w-3.5 h-3.5 text-white" />
+                  )}
                 </button>
               </div>
             </div>

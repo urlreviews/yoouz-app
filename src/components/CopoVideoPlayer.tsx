@@ -384,6 +384,33 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
 
         if (targetIdx !== currentIndexRef.current) {
+          // 1. Immediately pause & mute current video to release audio pipeline cleanly
+          const currentCard = cardRefs.current[currentIndexRef.current];
+          const currentVid = currentCard?.querySelector<HTMLVideoElement>("video");
+          if (currentVid) {
+            try {
+              currentVid.pause();
+              currentVid.muted = true;
+            } catch (e) {}
+          }
+
+          // 2. Pre-authorize target video playback SYNCHRONOUSLY inside this active touch gesture
+          if (targetIdx < videos.length) {
+            const targetCard = cardRefs.current[targetIdx];
+            const targetVid = targetCard?.querySelector<HTMLVideoElement>("video");
+            if (targetVid) {
+              const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
+              targetVid.muted = shouldBeMuted;
+              if (!shouldBeMuted) {
+                targetVid.volume = 1;
+              }
+              const p = targetVid.play();
+              if (p !== undefined) {
+                p.catch(() => {});
+              }
+            }
+          }
+
           scrollToCard(targetIdx, "smooth");
         }
       }
@@ -426,7 +453,32 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
     const maxIdx = videos.length > 0 ? videos.length : 0;
     if (currentIndexRef.current < maxIdx) {
-      scrollToCard(currentIndexRef.current + 1, "smooth");
+      const nextIdx = currentIndexRef.current + 1;
+
+      // Pause & mute current video
+      const currentCard = cardRefs.current[currentIndexRef.current];
+      const currentVid = currentCard?.querySelector<HTMLVideoElement>("video");
+      if (currentVid) {
+        try {
+          currentVid.pause();
+          currentVid.muted = true;
+        } catch (e) {}
+      }
+
+      // Pre-authorize next video playback synchronously in click gesture
+      if (nextIdx < videos.length) {
+        const targetCard = cardRefs.current[nextIdx];
+        const targetVid = targetCard?.querySelector<HTMLVideoElement>("video");
+        if (targetVid) {
+          const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
+          targetVid.muted = shouldBeMuted;
+          if (!shouldBeMuted) targetVid.volume = 1;
+          const p = targetVid.play();
+          if (p !== undefined) p.catch(() => {});
+        }
+      }
+
+      scrollToCard(nextIdx, "smooth");
     }
   }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
@@ -435,7 +487,30 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       ensureSharedAudioContextUnlocked();
     }
     if (currentIndexRef.current > 0) {
-      scrollToCard(currentIndexRef.current - 1, "smooth");
+      const prevIdx = currentIndexRef.current - 1;
+
+      // Pause & mute current video
+      const currentCard = cardRefs.current[currentIndexRef.current];
+      const currentVid = currentCard?.querySelector<HTMLVideoElement>("video");
+      if (currentVid) {
+        try {
+          currentVid.pause();
+          currentVid.muted = true;
+        } catch (e) {}
+      }
+
+      // Pre-authorize prev video playback synchronously in click gesture
+      const targetCard = cardRefs.current[prevIdx];
+      const targetVid = targetCard?.querySelector<HTMLVideoElement>("video");
+      if (targetVid) {
+        const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
+        targetVid.muted = shouldBeMuted;
+        if (!shouldBeMuted) targetVid.volume = 1;
+        const p = targetVid.play();
+        if (p !== undefined) p.catch(() => {});
+      }
+
+      scrollToCard(prevIdx, "smooth");
     }
   }, [scrollToCard, isSessionAudioUnlocked, isMuted]);
 

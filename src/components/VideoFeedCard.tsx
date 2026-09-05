@@ -99,6 +99,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onRecordView
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const domVideoElementRef = useRef<HTMLVideoElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isManuallyPaused, setIsManuallyPaused] = useState<boolean>(false);
@@ -112,6 +113,42 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
   const [isVideoLoaded, setIsVideoLoaded] = useState<boolean>(false);
+
+  // Aggressively force WebKit (Safari), Gecko (Firefox), and Blink (Brave/Chrome) to immediately release hardware decoders
+  const releaseVideoHardwareDecoder = useCallback((el: HTMLVideoElement | null) => {
+    if (!el) return;
+    try {
+      el.pause();
+      el.removeAttribute("src");
+      while (el.firstChild) {
+        el.removeChild(el.firstChild);
+      }
+      el.load(); // Forces WebKit / Blink / Gecko to immediately destroy the hardware decoder session
+    } catch (e) {}
+  }, []);
+
+  // Callback ref: intercepts when video DOM element unmounts or gets replaced to guarantee hardware decoder deallocation
+  const setVideoRef = useCallback(
+    (node: HTMLVideoElement | null) => {
+      const prev = domVideoElementRef.current;
+      if (prev && prev !== node) {
+        releaseVideoHardwareDecoder(prev);
+      }
+      domVideoElementRef.current = node;
+      videoRef.current = node;
+    },
+    [releaseVideoHardwareDecoder]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (domVideoElementRef.current) {
+        releaseVideoHardwareDecoder(domVideoElementRef.current);
+        domVideoElementRef.current = null;
+        videoRef.current = null;
+      }
+    };
+  }, [releaseVideoHardwareDecoder]);
 
   const lastTapTimeRef = useRef<number>(0);
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -170,11 +207,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         playPromiseRef.current = null;
         setIsPlaying(true);
         setIsBuffering(false);
+        setIsActualMuted(el.muted);
       }).catch((err) => {
         playPromiseRef.current = null;
         // If unmuted autoplay is blocked by browser policy without gesture on initial cold load, fallback to muted playback for this element only
         if (err?.name === "NotAllowedError") {
           el.muted = true;
+          setIsActualMuted(true);
           const retry = el.play();
           if (retry !== undefined) {
             playPromiseRef.current = retry;
@@ -186,13 +225,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 // If session was supposed to be unmuted, restore audio on the very next user touch!
                 if (isSessionAudioUnlocked && !isMuted) {
                   const restoreAudio = () => {
-                    if (videoRef.current) {
+                    if (videoRef.current && isActive) {
                       videoRef.current.muted = false;
                       videoRef.current.volume = 1;
+                      setIsActualMuted(false);
                     }
                   };
                   window.addEventListener("touchstart", restoreAudio, { once: true, passive: true });
                   window.addEventListener("pointerdown", restoreAudio, { once: true, passive: true });
+                  window.addEventListener("click", restoreAudio, { once: true, passive: true });
                 }
               })
               .catch(() => {
@@ -205,7 +246,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         }
       });
     }
-  }, [isMuted, isSessionAudioUnlocked, pauseOtherVideos]);
+  }, [isMuted, isSessionAudioUnlocked, pauseOtherVideos, isActive]);
 
   // Safe Pause Execution waiting for pending play promises
   const safePause = useCallback(() => {
@@ -267,20 +308,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       }
     }
   }, [isActive, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
-
-
-  // Clean unmount safety - aggressively release hardware decoder for WebKit / Blink
-  useEffect(() => {
-    return () => {
-      if (videoRef.current) {
-        try {
-          videoRef.current.pause();
-          videoRef.current.removeAttribute("src");
-          videoRef.current.load();
-        } catch (e) {}
-      }
-    };
-  }, []);
 
   // Record view count when video is active and playing
   useEffect(() => {
@@ -382,9 +409,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     triggerHaptic("selection");
     ensureSharedAudioContextUnlocked();
 
-    const nextMuted = !isMuted;
+    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted;
+    const nextMuted = !isCurrentlyMuted;
+
     if (!nextMuted) {
       onUnlockAudio?.();
+      setIsActualMuted(false);
     }
 
     if (videoRef.current) {
@@ -395,7 +425,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       }
     }
 
-    onToggleMute(e);
+    if (isCurrentlyMuted) {
+      onUnlockAudio?.();
+    } else {
+      onToggleMute(e);
+    }
   };
 
   // Double tap to like (supports touch taps & mouse clicks)
@@ -519,7 +553,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         {/* Direct Embedded Video Element with Active / Standby Pre-buffering (Sliding Window like YouTube Shorts) */}
         {(isActive || isNear) && (
           <video
-            ref={videoRef}
+            ref={setVideoRef}
             id={`video-element-${video.id}`}
             data-active={isActive ? "true" : "false"}
             src={currentSource}
@@ -550,19 +584,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onLoadedData={() => {
               setIsVideoLoaded(true);
               setIsBuffering(false);
-              if (isActive && !isManuallyPausedRef.current) {
-                safePlay();
-              }
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              if (isActive && !isManuallyPausedRef.current) {
-                if (isSessionAudioUnlocked && !isMuted && videoRef.current) {
-                  videoRef.current.muted = false;
-                  videoRef.current.volume = 1;
-                }
-                safePlay();
-              }
+              setIsBuffering(false);
             }}
             onPlaying={() => {
               setIsPlaying(true);
@@ -685,14 +710,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
             className={`h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
-              isMuted || !isSessionAudioUnlocked
+              isMuted || !isSessionAudioUnlocked || isActualMuted
                 ? "px-3.5 gap-2 border-white/50 animate-pulse-subtle bg-black/90"
                 : "w-11 md:w-12 md:h-12 border-white/35"
             }`}
-            title={isMuted || !isSessionAudioUnlocked ? "Tap to unmute" : "Mute sound"}
-            aria-label={isMuted || !isSessionAudioUnlocked ? "Tap to unmute" : "Mute sound"}
+            title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+            aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
           >
-            {isMuted || !isSessionAudioUnlocked ? (
+            {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
               <>
                 <VolumeX className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
                 <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
