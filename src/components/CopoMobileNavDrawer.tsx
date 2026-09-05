@@ -74,37 +74,16 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
       {/* Drawer Container (85% max-w-[340px]) */}
       <div className="relative w-[85%] max-w-[340px] h-[100dvh] bg-zinc-950 text-white border-r border-zinc-800 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-300 ease-out select-none">
         
-        {/* Top Header: Official Logo + Close Button */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-800/80 bg-zinc-950/95 sticky top-0 z-20">
-          <div
-            onClick={() => handleNavClick("home")}
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            {/* Yoouz Official Star Logo */}
-            <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-white shadow-[0_4px_14px_rgba(255,255,255,0.15)] border border-white/20 shrink-0">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-white text-xl font-black tracking-tight font-['Google_Sans',sans-serif]">
-                  Yoouz
-                </span>
-                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-300 font-bold uppercase tracking-wider">
-                  Beta
-                </span>
-              </div>
-              <span className="text-[11px] text-zinc-400 font-medium tracking-tight">
-                Real People. Real Reviews.
-              </span>
-            </div>
-          </div>
-
+        {/* Top Header: Sleek Close Button & Top Spacing */}
+        <div className="flex items-center justify-between px-5 pt-[max(16px,calc(env(safe-area-inset-top,0px)+12px))] pb-3 border-b border-zinc-800/80 bg-zinc-950/95 sticky top-0 z-20">
+          <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+            Menu
+          </span>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+            className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-95"
             title="Close menu"
+            aria-label="Close menu"
           >
             <X className="w-4 h-4" />
           </button>

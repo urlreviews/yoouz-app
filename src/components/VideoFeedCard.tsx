@@ -622,11 +622,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
                 onTouchEnd={(e) => e.stopPropagation()}
-                className="flex md:hidden items-center gap-2.5 px-4 h-11 rounded-full bg-black/85 hover:bg-black active:scale-95 backdrop-blur-2xl border border-white/35 text-white shadow-2xl transition-all cursor-pointer select-none"
+                className="flex md:hidden w-11 h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 items-center justify-center text-white shadow-2xl transition-all cursor-pointer select-none"
                 aria-label="Open menu"
+                title="Open menu"
               >
-                <Menu className="w-5 h-5 text-white shrink-0 stroke-[2.5]" />
-                <span className="text-[15px] font-extrabold tracking-wide text-white drop-shadow-sm">Yoouz</span>
+                <Menu className="w-5 h-5 text-white stroke-[2.2]" />
               </button>
             )
           )}
