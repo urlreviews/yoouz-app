@@ -62,8 +62,6 @@ interface VideoFeedCardProps {
   businessBannerUrl?: string | null;
   cardRef: (el: HTMLDivElement | null) => void;
   slotRef?: (el: HTMLDivElement | null) => void;
-  hasUserStartedFeed?: boolean;
-  onStartFeed?: () => void;
   isSessionAudioUnlocked?: boolean;
   onUnlockAudio?: () => void;
   onRecordView?: (videoId: string) => void;
@@ -96,8 +94,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   businessBannerUrl,
   cardRef,
   
-  hasUserStartedFeed = false,
-  onStartFeed,
   isSessionAudioUnlocked = false,
   onUnlockAudio,
   onRecordView
@@ -240,7 +236,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     const el = videoRef.current;
     if (!el) return;
 
-    const shouldPlay = isActive && hasUserStartedFeed && !isManuallyPaused;
+    const shouldPlay = isActive && !isManuallyPaused;
 
     if (shouldPlay) {
       safePlay();
@@ -252,7 +248,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         setProgressPercent(0);
       }
     }
-  }, [isActive, hasUserStartedFeed, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
+  }, [isActive, currentSource, isMuted, isManuallyPaused, safePlay, safePause]);
 
 
   // Clean unmount safety - aggressively release hardware decoder for WebKit / Blink
@@ -329,7 +325,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [currentSource, video.id, sourceIndex, sourceCandidates]);
 
-  // Click card to toggle Play / Pause (YouTube Shorts style)
+  // Click card to toggle Play / Pause (YouTube Shorts / app.copo.st style)
   const togglePlayPause = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     const el = videoRef.current;
@@ -338,15 +334,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     triggerHaptic("light");
     ensureSharedAudioContextUnlocked();
 
-    if (!hasUserStartedFeed) {
-      if (onStartFeed) onStartFeed();
-      el.muted = isMuted;
-      if (!isMuted) {
-        el.volume = 1;
+    // If video is playing muted and audio is not yet unlocked in session, first tap unlocks audio and keeps playing seamlessly
+    if (isMuted && !isSessionAudioUnlocked) {
+      onUnlockAudio?.();
+      el.muted = false;
+      el.volume = 1;
+      if (el.paused || isManuallyPaused) {
+        isManuallyPausedRef.current = false;
+        setIsManuallyPaused(false);
+        safePlay();
       }
-      isManuallyPausedRef.current = false;
-      setIsManuallyPaused(false);
-      safePlay();
       return;
     }
 
@@ -510,7 +507,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             src={currentSource}
             poster={resolveVideoPosterUrl(video)}
             preload="auto"
-            autoPlay={isActive && hasUserStartedFeed}
+            autoPlay={isActive}
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
@@ -534,7 +531,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              if (isActive && !isManuallyPaused && hasUserStartedFeed) {
+              if (isActive && !isManuallyPaused) {
                 safePlay();
               }
             }}
@@ -667,8 +664,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       </div>
 
-      {/* Center Play Button (Shown when feed is not yet started, paused, or stopped) */}
-      {isActive && (!hasUserStartedFeed || isManuallyPaused || !isPlaying) && (
+      {/* Center Play Button (Shown when paused or stopped on desktop/mobile) */}
+      {isActive && (isManuallyPaused || !isPlaying) && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto">
           <button
             type="button"

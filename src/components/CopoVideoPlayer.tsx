@@ -94,9 +94,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Initial feed state: starts false so first video requires explicit Play button click / tap to start (matches screenshot & app.copo.st standard)
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
-
   // Edit Rating State
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
   const [videoConfirmDelete, setVideoConfirmDelete] = useState<VideoReview | null>(null);
@@ -153,9 +150,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const scrollToCard = useCallback(
     (targetIndex: number, behavior: ScrollBehavior = "smooth") => {
       if (targetIndex < 0 || targetIndex >= videos.length) return;
-
-      // Scrolling to a video is an active user engagement: start playback of the target card
-      setHasUserStartedFeed(true);
 
       // Update refs and trigger state change immediately to prevent race conditions
       const isJump = Math.abs(targetIndex - currentIndexRef.current) > 1;
@@ -498,7 +492,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Sound toggle with session audio unlocking
   const toggleMute = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setHasUserStartedFeed(true);
     const nextMuted = !isMuted;
     if (!nextMuted) {
       unlockAudioSession();
@@ -657,8 +650,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 currentUser={currentUser}
                 activeSubTab={activeSubTab}
                 onSelectSubTab={onSelectSubTab}
-                hasUserStartedFeed={hasUserStartedFeed}
-                onStartFeed={() => setHasUserStartedFeed(true)}
                 isSessionAudioUnlocked={isSessionAudioUnlocked}
                 onUnlockAudio={unlockAudioSession}
                 onToggleMute={toggleMute}
