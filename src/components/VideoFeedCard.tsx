@@ -465,7 +465,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         <footer
           id={`copo-video-bottom-info-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-col gap-1.5 pointer-events-auto pr-2 min-w-0 flex-1"
+          className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1"
         >
           <div className="flex flex-col gap-0.5 w-full">
             <button
@@ -518,7 +518,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               onPauseVideo?.();
               onOpenPlace(video.placeId);
             }}
-            className="self-start flex items-center gap-2.5 sm:gap-3 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-black/85 hover:bg-black/95 backdrop-blur-2xl border border-white/35 hover:border-white/60 text-white transition-all w-fit max-w-[85vw] text-left group cursor-pointer shadow-2xl active:scale-[0.98]"
+            className="self-start flex items-center gap-2.5 sm:gap-3 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/85 hover:bg-black/95 backdrop-blur-2xl border border-white/35 hover:border-white/60 text-white transition-all w-fit max-w-[calc(100%-8px)] sm:max-w-[280px] md:max-w-[320px] text-left group cursor-pointer shadow-2xl active:scale-[0.98]"
           >
             <CopoBrandLogo
               domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
@@ -526,17 +526,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               website={video.placeWebsite}
               logoUrl={businessLogoUrl || video?.placeLogoUrl}
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white border border-black/10 overflow-hidden flex items-center justify-center shrink-0 p-1 sm:p-1.5 shadow-md group-hover:scale-105 transition-transform ring-1 ring-white/20"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-black/10 overflow-hidden flex items-center justify-center shrink-0 p-1 sm:p-1.5 shadow-md group-hover:scale-105 transition-transform ring-1 ring-white/20"
               imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
               fallbackTextClassName="font-extrabold text-xs text-zinc-900"
             />
-            <div className="flex items-center min-w-0 flex-1 gap-1.5">
-              <span className="truncate leading-tight font-extrabold text-[14.5px] sm:text-[15.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:text-white transition-colors">
+            <div className="min-w-0 flex-1 py-0.5">
+              <span className="line-clamp-2 [overflow-wrap:anywhere] leading-snug font-extrabold text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:text-white transition-colors">
                 {formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || "Business Place"}
+                <CheckCircle className="inline-block w-3.5 h-3.5 ml-1 align-text-bottom fill-white text-black shrink-0 relative -top-[1px] drop-shadow-sm" />
               </span>
-              <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 drop-shadow-sm" />
             </div>
-            <ChevronRight className="w-4 h-4 text-white/90 stroke-[2.5] shrink-0 ml-0.5 group-hover:translate-x-0.5 group-hover:text-white transition-all" />
+            <ChevronRight className="w-4 h-4 text-white/80 stroke-[2.5] shrink-0 ml-0.5 group-hover:translate-x-0.5 group-hover:text-white transition-all" />
           </button>
         </footer>
 

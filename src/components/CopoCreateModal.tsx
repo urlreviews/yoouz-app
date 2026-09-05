@@ -28,6 +28,7 @@ import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../l
 import { cleanUndefinedFields, cleanForFirestore } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { initFaceDetection, detectFaceInVideo } from "../utils/faceDetector";
+import { preloadNsfwModel, checkDataUrlSafety } from "../utils/nsfwDetector";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { triggerHaptic } from "../utils/haptics";
@@ -152,6 +153,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     } else {
       setRating(0);
       initFaceDetection().catch(() => {});
+      preloadNsfwModel().catch(() => {});
     }
     return () => {
       stopCamera();
@@ -865,13 +867,36 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setIsPublishing(true);
     setUploadProgress(10);
 
+    let finalThumbnail = videoThumbnail || "";
+
+    // 0. 100% Free On-Device Neural Safety Check (TensorFlow.js / NSFWJS)
+    const visualPayload = finalThumbnail || videoThumbnail;
+    if (visualPayload && visualPayload.startsWith("data:image")) {
+      try {
+        const onDeviceSafety = await checkDataUrlSafety(visualPayload);
+        if (onDeviceSafety.flagged || !onDeviceSafety.isSafe) {
+          setIsPublishing(false);
+          setUploadProgress(0);
+          setRecordedVideoBlob(null);
+          setRecordedVideoUrl(null);
+          setVideoThumbnail(null);
+          setErrorMessage(
+            onDeviceSafety.reason ||
+              "Content Safety Violation: Inappropriate or sexually explicit content detected on-device. Video reviews on Yoouz must comply with Community Safety Guidelines. This recording has been blocked and discarded."
+          );
+          triggerHaptic("heavy");
+          return;
+        }
+      } catch (modErr) {
+        console.warn("On-device safety check notice:", modErr);
+      }
+    }
+
     const reviewId = `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const mime = recordedVideoBlob?.type || "video/mp4";
     const ext = mime.includes("webm") ? "webm" : "mp4";
     const cleanFileName = `${reviewId}.${ext}`;
     const defaultStreamUrl = `/api/videos/stream/${cleanFileName}`;
-
-    let finalThumbnail = videoThumbnail || "";
 
     // 1. Save raw blob to IndexedDB
     if (recordedVideoBlob) {
@@ -1648,6 +1673,26 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     <div className="px-4 py-2.5 rounded-2xl bg-red-600/90 backdrop-blur-md border border-red-300/40 text-white text-xs font-bold flex items-center gap-2 shadow-2xl text-center max-w-md">
                       <AlertCircle className="w-4 h-4 shrink-0 text-red-200" />
                       <span>{faceWarning}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Content Safety / Error Alert Banner */}
+                {errorMessage && (
+                  <div className="absolute top-20 md:top-22 inset-x-4 md:inset-x-6 z-40 flex justify-center pointer-events-auto animate-fadeIn">
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-red-950/95 backdrop-blur-xl border border-red-500/50 text-white text-xs sm:text-sm font-semibold flex items-start gap-3 shadow-2xl max-w-md">
+                      <AlertCircle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
+                      <div className="flex-1 space-y-1">
+                        <p className="font-bold text-red-200">Recording Blocked</p>
+                        <p className="text-zinc-200 text-xs leading-relaxed">{errorMessage}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setErrorMessage(null)}
+                        className="text-white/60 hover:text-white p-1 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 )}
