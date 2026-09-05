@@ -67,18 +67,27 @@ function getGeminiClient() {
   return geminiClient;
 }
 
-let resendClient: Resend | null = null;
 function getResendClient(): Resend | null {
-  const rawKey = (process.env.RESEND_API_KEY || "").replace(/^["']|["']$/g, '').trim();
+  const rawKey = (
+    process.env.RESEND_API_KEY ||
+    process.env.RESEND_KEY ||
+    process.env.RESEND_API_TOKEN ||
+    process.env.RESEND_TOKEN ||
+    process.env.VITE_RESEND_API_KEY ||
+    ""
+  ).replace(/^["']|["']$/g, '').trim();
   if (!rawKey) return null;
-  if (!resendClient) {
-    resendClient = new Resend(rawKey);
-  }
-  return resendClient;
+  return new Resend(rawKey);
 }
 
 function getResendFromEmail(fallback: string = "Yoouz <onboarding@resend.dev>"): string {
-  let envFrom = process.env.RESEND_FROM_EMAIL?.trim();
+  let envFrom = (
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.RESEND_FROM ||
+    process.env.VITE_RESEND_FROM_EMAIL ||
+    process.env.MAIL_FROM ||
+    ""
+  ).trim();
   if (!envFrom) {
     return "Yoouz <no-reply@yoouz.com>";
   }
@@ -101,11 +110,20 @@ async function sendResendEmail(params: {
   const resend = getResendClient();
   if (!resend) {
     console.info(`[Email Service] RESEND_API_KEY is not configured. Email to ${JSON.stringify(params.to)} cannot be sent.`);
-    return { success: false, error: "RESEND_API_KEY is not configured on the server." };
+    return { 
+      success: false, 
+      error: "RESEND_API_KEY is not configured on the server. Please add your RESEND_API_KEY to your server environment variables or settings secrets." 
+    };
   }
 
   const defaultSenderName = params.fromName || "Yoouz";
-  const configuredFrom = (process.env.RESEND_FROM_EMAIL || "").replace(/^["']|["']$/g, '').trim();
+  const configuredFrom = (
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.RESEND_FROM ||
+    process.env.VITE_RESEND_FROM_EMAIL ||
+    process.env.MAIL_FROM ||
+    ""
+  ).replace(/^["']|["']$/g, '').trim();
   
   // Potential senders in order of priority:
   // 1. Explicitly configured RESEND_FROM_EMAIL in .env (e.g. no-reply@yoouz.com or onboarding@resend.dev)
