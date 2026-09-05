@@ -95,7 +95,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   contextKey,
   onRecordView
 }) => {
-  const currentVideo = videos[currentIndex] || videos[0];
+  const currentVideo = videos[Math.min(currentIndex, Math.max(0, videos.length - 1))] || videos[0];
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
@@ -108,26 +108,21 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [localBlobUrls, setLocalBlobUrls] = useState<Record<string, string>>({});
 
-  // Mobile Feed Position / Crawling Bar auto-visibility state
-  const [showCrawlingBar, setShowCrawlingBar] = useState<boolean>(false);
-  const crawlingBarTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Mobile End of Feed Toast notification state (replaces intrusive crawling bar)
+  const [showEndOfFeedToast, setShowEndOfFeedToast] = useState<boolean>(false);
+  const endOfFeedToastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const triggerCrawlingBar = useCallback(() => {
-    setShowCrawlingBar(true);
-    if (crawlingBarTimerRef.current) clearTimeout(crawlingBarTimerRef.current);
-    crawlingBarTimerRef.current = setTimeout(() => {
-      setShowCrawlingBar(false);
-    }, 2500);
+  const triggerEndOfFeedToast = useCallback(() => {
+    setShowEndOfFeedToast(true);
+    if (endOfFeedToastTimerRef.current) clearTimeout(endOfFeedToastTimerRef.current);
+    endOfFeedToastTimerRef.current = setTimeout(() => {
+      setShowEndOfFeedToast(false);
+    }, 3200);
   }, []);
-
-  useEffect(() => {
-    triggerCrawlingBar();
-  }, [currentIndex, triggerCrawlingBar]);
 
   // Safety clamp if a video deletion causes currentIndex to exceed new feed bounds
   useEffect(() => {
-    const maxIndex = videos.length > 0 ? videos.length : 0;
-    if (videos.length > 0 && currentIndex > maxIndex) {
+    if (videos.length > 0 && currentIndex >= videos.length) {
       onSelectVideoIndex(Math.max(0, videos.length - 1));
     }
   }, [videos.length, currentIndex, onSelectVideoIndex]);
@@ -171,10 +166,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Robust programmatic scroll function that guarantees instant synchronization
   const scrollToCard = useCallback(
     (targetIndex: number, behavior: ScrollBehavior = "smooth") => {
-      const maxIndex = videos.length > 0 ? videos.length : 0;
-      if (targetIndex < 0 || targetIndex > maxIndex) return;
-
-      triggerCrawlingBar();
+      if (targetIndex < 0 || (videos.length > 0 && targetIndex >= videos.length)) return;
 
       // Update refs and trigger state change immediately to prevent race conditions
       const isJump = Math.abs(targetIndex - currentIndexRef.current) > 1;
@@ -195,7 +187,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }, 500);
       }
     },
-    [videos.length, onSelectVideoIndex, triggerCrawlingBar]
+    [videos.length, onSelectVideoIndex]
   );
 
   // Compute Place Logo Map for fast lookups
@@ -269,7 +261,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         const idxAttr = bestEntry.target.getAttribute("data-video-index");
         if (idxAttr !== null) {
           const idx = parseInt(idxAttr, 10);
-          if (!isNaN(idx) && idx !== currentIndexRef.current) {
+          if (!isNaN(idx) && idx >= 0 && idx < videos.length && idx !== currentIndexRef.current) {
             currentIndexRef.current = idx;
             lastObserverIndexRef.current = idx;
             onSelectVideoIndex(idx);
@@ -306,10 +298,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (!containerHeight || containerHeight <= 0) return;
 
       const settledIndex = Math.round(container.scrollTop / containerHeight);
-      const maxIndex = videos.length > 0 ? videos.length : 0;
       if (
         settledIndex >= 0 &&
-        settledIndex <= maxIndex &&
+        settledIndex < videos.length &&
         settledIndex !== currentIndexRef.current
       ) {
         currentIndexRef.current = settledIndex;
@@ -320,7 +311,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
 
     const handleScroll = () => {
-      triggerCrawlingBar();
       if (isProgrammaticScrollRef.current) return;
       if (rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(syncScrollIndex);
@@ -392,11 +382,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
       if (isSignificantSwipe) {
         let targetIdx = currentIndexRef.current;
-        const maxIdx = videos.length > 0 ? videos.length : 0;
         if (deltaY < 0) {
-          // Swiped UP -> Next video or End Card
-          if (currentIndexRef.current < maxIdx) {
+          // Swiped UP -> Next video
+          if (currentIndexRef.current < videos.length - 1) {
             targetIdx = currentIndexRef.current + 1;
+          } else if (videos.length > 0) {
+            // Reached end of feed on mobile
+            triggerEndOfFeedToast();
           }
         } else {
           // Swiped DOWN -> Prev video (stops at first video, does not loop to end)
@@ -429,7 +421,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       container.removeEventListener("touchstart", handleTouchStart);
       container.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [videos.length, scrollToCard]);
+  }, [videos.length, scrollToCard, triggerEndOfFeedToast]);
 
   // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {
@@ -457,8 +449,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     if (isSessionAudioUnlocked && !isMuted) {
       ensureSharedAudioContextUnlocked();
     }
-    const maxIdx = videos.length > 0 ? videos.length : 0;
-    if (currentIndexRef.current < maxIdx) {
+    if (currentIndexRef.current < videos.length - 1) {
       scrollToCard(currentIndexRef.current + 1, "smooth");
     }
   }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
@@ -502,10 +493,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (Math.abs(e.deltaY) >= 15) {
         isWheeling = true;
 
-        const maxIdx = videos.length > 0 ? videos.length : 0;
         if (e.deltaY > 0) {
-          // Wheel Down -> Next Video or End Card
-          if (currentIndexRef.current < maxIdx) {
+          // Wheel Down -> Next Video
+          if (currentIndexRef.current < videos.length - 1) {
             scrollToCard(currentIndexRef.current + 1, "smooth");
           }
         } else {
@@ -729,112 +719,26 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               />
             );
           })}
-
-          {/* End of Feed Card ("You're All Caught Up") */}
-          {videos.length > 0 && (
-            <div
-              key="end-of-feed-card"
-              data-video-index={videos.length}
-              ref={(el) => {
-                cardRefs.current[videos.length] = el;
-              }}
-              className="w-full h-full md:h-[min(88vh,780px)] md:w-[min(100%,440px)] flex-shrink-0 snap-start snap-always relative overflow-hidden bg-zinc-950 flex flex-col items-center justify-center text-center p-6 select-none border border-white/5 rounded-none md:rounded-3xl"
-            >
-              {/* Ambient backdrop glow */}
-              <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/20 via-zinc-950 to-zinc-950 pointer-events-none" />
-
-              <div className="relative z-10 max-w-xs flex flex-col items-center">
-                {/* Visual Icon Badge */}
-                <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mb-4 text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)]">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 border border-white/10 text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                  <span>Feed Completed</span>
-                </div>
-
-                <h3 className="text-2xl font-bold text-white tracking-tight mb-2">
-                  You're all caught up!
-                </h3>
-                <p className="text-sm text-zinc-400 leading-relaxed mb-6">
-                  You've watched all {videos.length} reviews in this feed.
-                </p>
-
-                {/* Primary Action: Back to Beginning */}
-                <button
-                  id="btn-end-card-back-to-top"
-                  onClick={() => {
-                    scrollToCard(0, "smooth");
-                    if (isSessionAudioUnlocked && !isMuted) {
-                      document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
-                        v.muted = false;
-                        v.volume = 1;
-                      });
-                    }
-                  }}
-                  className="w-full py-3.5 px-5 rounded-xl bg-white hover:bg-zinc-200 active:scale-95 text-black font-semibold text-sm transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer mb-3"
-                >
-                  <RotateCcw className="w-4 h-4 stroke-[2.5]" />
-                  <span>Back to First Review</span>
-                </button>
-
-                {/* Secondary Action: Revisit previous */}
-                <button
-                  id="btn-end-card-previous"
-                  onClick={() => {
-                    scrollToCard(videos.length - 1, "smooth");
-                  }}
-                  className="w-full py-3 px-5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 active:scale-95 text-white font-medium text-sm transition-all border border-white/10 flex items-center justify-center gap-2 cursor-pointer mb-3"
-                >
-                  <ArrowUp className="w-4 h-4" />
-                  <span>Revisit Last Review</span>
-                </button>
-
-                {/* Exploration Actions */}
-                {onOpenCreateModal && (
-                  <button
-                    id="btn-end-card-add-review"
-                    onClick={onOpenCreateModal}
-                    className="text-xs font-medium text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer py-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Record your own review</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Mobile Vertical Feed Position Indicator ("Crawling Bar") */}
-        {videos.length > 1 && (
+        {/* Mobile End of Feed Toast (Shows only when user swipes up at the end of the mobile feed) */}
+        {showEndOfFeedToast && (
           <div
-            id="mobile-crawling-bar-container"
-            className={`fixed right-2 top-1/2 -translate-y-1/2 z-40 flex items-center gap-2 pointer-events-none transition-opacity duration-300 sm:hidden ${
-              showCrawlingBar ? "opacity-100" : "opacity-0"
-            }`}
+            id="mobile-end-of-feed-toast"
+            className="fixed bottom-24 sm:hidden left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-zinc-900/95 backdrop-blur-xl border border-white/20 text-white text-xs font-semibold shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200 pointer-events-auto select-none"
           >
-            {/* Position Pill Tooltip */}
-            <div className="px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md border border-white/20 text-[11px] font-medium text-white shadow-lg whitespace-nowrap">
-              {currentIndex >= videos.length ? (
-                <span className="text-emerald-400 font-semibold">Caught Up</span>
-              ) : (
-                <span>
-                  {currentIndex + 1} <span className="text-zinc-400 font-normal">/ {videos.length}</span>
-                </span>
-              )}
-            </div>
-
-            {/* Vertical Progress Rail */}
-            <div className="w-1 h-24 bg-white/20 backdrop-blur-md rounded-full relative overflow-hidden shadow-inner">
-              <div
-                className="w-full bg-white rounded-full transition-all duration-200 shadow-sm"
-                style={{
-                  height: `${Math.max(16, 100 / (videos.length + 1))}%`,
-                  transform: `translateY(${(currentIndex / videos.length) * (96 - Math.max(16, 96 / (videos.length + 1)))}px)`
-                }}
-              />
-            </div>
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>You're all caught up</span>
+            <button
+              type="button"
+              onClick={() => {
+                scrollToCard(0, "smooth");
+                setShowEndOfFeedToast(false);
+              }}
+              className="px-2.5 py-1 rounded-full bg-white text-black font-bold text-[11px] hover:bg-zinc-200 active:scale-95 transition-transform cursor-pointer ml-1"
+            >
+              Back to first
+            </button>
           </div>
         )}
 
@@ -860,9 +764,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-next-video"
             onClick={handleNext}
-            disabled={currentIndex >= (videos.length > 0 ? videos.length : 0)}
+            disabled={currentIndex >= videos.length - 1}
             className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-              currentIndex >= (videos.length > 0 ? videos.length : 0)
+              currentIndex >= videos.length - 1
                 ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
                 : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
             }`}

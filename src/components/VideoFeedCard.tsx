@@ -714,8 +714,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Tap to Unmute Floating Trigger for Mobile Web & PWA Audio Flow (Shows only until session audio is unlocked) */}
-      {isActive && isPlaying && !isSessionAudioUnlocked && (
+      {/* Tap to Unmute Floating Trigger for Mobile Web & PWA Audio Flow (Shows immediately until session audio is unlocked) */}
+      {isActive && !isSessionAudioUnlocked && !isManuallyPaused && (
         <div className="absolute bottom-28 md:bottom-24 left-1/2 -translate-x-1/2 z-35 pointer-events-auto">
           <button
             type="button"
