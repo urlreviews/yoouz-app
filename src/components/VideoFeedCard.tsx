@@ -224,13 +224,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
   // Sync mute state to video element in real time
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = isMuted;
-      if (!isMuted) {
-        videoRef.current.volume = 1;
-      }
+    const el = videoRef.current;
+    if (!el) return;
+    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
+    el.muted = effectiveMuted;
+    if (!effectiveMuted) {
+      el.volume = 1;
     }
-  }, [isMuted]);
+  }, [isMuted, isSessionAudioUnlocked, isActive]);
 
   // Play / Pause video based on card active state and manual pause flag
   useEffect(() => {
@@ -532,6 +533,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
+              if (isSessionAudioUnlocked && !isMuted && videoRef.current) {
+                videoRef.current.muted = false;
+                videoRef.current.volume = 1;
+              }
               if (isActive && !isManuallyPaused) {
                 safePlay();
               }
@@ -540,6 +545,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               setIsPlaying(true);
               setIsBuffering(false);
               setIsVideoLoaded(true);
+              if (isSessionAudioUnlocked && !isMuted && videoRef.current) {
+                videoRef.current.muted = false;
+                videoRef.current.volume = 1;
+              }
               if (video?.id) {
                 onRecordView?.(video.id);
               }

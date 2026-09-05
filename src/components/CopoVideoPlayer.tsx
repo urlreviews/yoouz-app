@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { useGlobalMute } from "../hooks/useGlobalMute";
+import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { VideoFeedCard } from "./VideoFeedCard";
@@ -328,11 +328,33 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       touchStartX = touch.clientX;
       touchStartTime = Date.now();
       isTouchActive = true;
+
+      // Authorize and sync audio state across all mounted video elements inside active touch gesture
+      if (isSessionAudioUnlocked && !isMuted) {
+        ensureSharedAudioContextUnlocked();
+        document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+          if (v.muted) {
+            v.muted = false;
+            v.volume = 1;
+          }
+        });
+      }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
       if (!isTouchActive || e.changedTouches.length !== 1) return;
       isTouchActive = false;
+
+      // Ensure audio permission is propagated during touch completion
+      if (isSessionAudioUnlocked && !isMuted) {
+        ensureSharedAudioContextUnlocked();
+        document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+          if (v.muted) {
+            v.muted = false;
+            v.volume = 1;
+          }
+        });
+      }
 
       const touch = e.changedTouches[0];
       const deltaY = touch.clientY - touchStartY;
@@ -398,22 +420,40 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [currentIndex]);
 
   const handleNext = useCallback(() => {
+    if (isSessionAudioUnlocked && !isMuted) {
+      ensureSharedAudioContextUnlocked();
+      document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+        if (v.muted) {
+          v.muted = false;
+          v.volume = 1;
+        }
+      });
+    }
     if (currentIndexRef.current < videos.length - 1) {
       scrollToCard(currentIndexRef.current + 1, "smooth");
     } else if (videos.length > 1) {
       // Endless continuous feed: seamless loop to top
       scrollToCard(0, "smooth");
     }
-  }, [videos.length, scrollToCard]);
+  }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
   const handlePrev = useCallback(() => {
+    if (isSessionAudioUnlocked && !isMuted) {
+      ensureSharedAudioContextUnlocked();
+      document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+        if (v.muted) {
+          v.muted = false;
+          v.volume = 1;
+        }
+      });
+    }
     if (currentIndexRef.current > 0) {
       scrollToCard(currentIndexRef.current - 1, "smooth");
     } else if (videos.length > 1) {
       // Endless continuous feed: seamless loop to bottom
       scrollToCard(videos.length - 1, "smooth");
     }
-  }, [videos.length, scrollToCard]);
+  }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
   // Desktop Mouse Wheel & Trackpad Navigation: smoothly step strictly 1 video at a time without multi-skipping
   useEffect(() => {
