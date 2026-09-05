@@ -685,6 +685,25 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
+      {/* Tap to Unmute Floating Trigger for Mobile Web & PWA Audio Flow */}
+      {isActive && isPlaying && isMuted && (
+        <div className="absolute bottom-28 md:bottom-24 left-1/2 -translate-x-1/2 z-35 pointer-events-auto">
+          <button
+            type="button"
+            id={`unmute-overlay-${video.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleMute(e);
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            className="px-5 py-2.5 rounded-full bg-black/80 hover:bg-black active:scale-95 backdrop-blur-xl border border-white/30 text-white text-sm font-bold shadow-2xl flex items-center gap-2 cursor-pointer animate-pulse-subtle"
+          >
+            <Volume2 className="w-4 h-4 text-white" />
+            <span>Tap to Unmute</span>
+          </button>
+        </div>
+      )}
+
 
       {/* Double-tap Heart Animation (Positioned at tap coords or centered with burst animation) */}
       {showHeartAnimation && (
