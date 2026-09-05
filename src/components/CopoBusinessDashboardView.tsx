@@ -3617,14 +3617,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       <span>{previewComments}</span>
                                     </div>
 
-                                    {/* Bookmark */}
-                                    <div className="flex flex-col items-center">
-                                      <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10">
-                                        <Bookmark className="w-4 h-4 text-white" />
-                                      </div>
-                                      <span>{previewBookmarks}</span>
-                                    </div>
-
                                     {/* Share */}
                                     <div className="flex flex-col items-center">
                                       <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10">

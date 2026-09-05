@@ -4,7 +4,6 @@ import {
   Pause,
   Heart,
   MessageCircle,
-  Bookmark,
   Share2,
   Volume2,
   VolumeX,
@@ -708,19 +707,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       )}
 
-      {/* Bottom Area: Metadata & Actions Container - sits right above mobile bottom nav */}
+      {/* Bottom Area: Metadata & Actions Container - sits cleanly near bottom on desktop and comfortably above bottom nav on mobile */}
       <div 
-        className="relative z-30 w-full flex items-end justify-between px-3 md:px-5 pt-4 pointer-events-none md:pb-6"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 58px)" }}
+        className="relative z-30 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none pb-[calc(env(safe-area-inset-bottom,0px)+38px)] md:pb-4"
       >
         
         {/* Bottom Video Metadata & Place Badge */}
         <footer
           id={`copo-video-bottom-info-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-col gap-2 pointer-events-auto pr-2 min-w-0 flex-1"
+          className="flex flex-col gap-1.5 pointer-events-auto pr-2 min-w-0 flex-1"
         >
-          <div className="flex flex-col gap-1 w-full">
+          <div className="flex flex-col gap-0.5 w-full">
             <button
               onClick={() => {
                 if (videoRef.current) {
@@ -801,10 +799,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         <aside
           id={`copo-video-actions-col-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-col items-center gap-3 sm:gap-3.5 text-white pointer-events-auto shrink-0 mb-0 md:mb-1"
+          className="flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-0"
         >
           {/* Creator Avatar */}
-          <div className="relative group/avatar mb-1">
+          <div className="relative group/avatar mb-0.5">
             <button
               onClick={() => {
                 if (videoRef.current) {
@@ -887,30 +885,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </button>
             <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {(video.commentsCount || video.comments?.length || 0) + (video.ownerResponse ? 1 : 0)}
-            </span>
-          </div>
-
-          {/* Bookmark */}
-          <div className="flex flex-col items-center">
-            <button
-              id={`btn-bookmark-${video.id}`}
-              onClick={() => {
-                triggerHaptic("selection");
-                onToggleBookmark(video.id);
-              }}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
-              title="Bookmark Place & Video"
-            >
-              <Bookmark
-                className={`w-6 h-6 transition-colors ${
-                  video.isBookmarked
-                    ? "fill-amber-400 text-amber-400 drop-shadow-sm"
-                    : "text-white stroke-[2.2]"
-                }`}
-              />
-            </button>
-            <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-              {video.bookmarksCount || 0}
             </span>
           </div>
 
