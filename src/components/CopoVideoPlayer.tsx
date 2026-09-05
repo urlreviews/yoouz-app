@@ -233,10 +233,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (isProgrammaticScrollRef.current) return;
-
         const visibleEntries = entries.filter(
-          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.4
+          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.45
         );
         if (visibleEntries.length === 0) return;
 
@@ -256,7 +254,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       },
       {
         root: container,
-        threshold: [0.25, 0.4, 0.75]
+        threshold: [0.3, 0.45, 0.75]
       }
     );
 
@@ -332,6 +330,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       // Authorize audio subsystem inside active user gesture
       if (isSessionAudioUnlocked && !isMuted) {
         ensureSharedAudioContextUnlocked();
+        document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+          v.muted = false;
+          v.volume = 1;
+        });
       }
     };
 
@@ -342,6 +344,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       // Ensure audio permission is propagated during touch completion
       if (isSessionAudioUnlocked && !isMuted) {
         ensureSharedAudioContextUnlocked();
+        document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+          v.muted = false;
+          v.volume = 1;
+        });
       }
 
       const touch = e.changedTouches[0];
@@ -358,20 +364,34 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const isSignificantSwipe = swipeRatio >= 0.15 || (Math.abs(deltaY) >= 35 && elapsed < 300);
 
       if (isSignificantSwipe) {
+        let targetIdx = currentIndexRef.current;
         if (deltaY < 0) {
           // Swiped UP -> Next video
           if (currentIndexRef.current < videos.length - 1) {
-            scrollToCard(currentIndexRef.current + 1, "smooth");
+            targetIdx = currentIndexRef.current + 1;
           } else if (videos.length > 1) {
-            scrollToCard(0, "smooth");
+            targetIdx = 0;
           }
         } else {
           // Swiped DOWN -> Prev video
           if (currentIndexRef.current > 0) {
-            scrollToCard(currentIndexRef.current - 1, "smooth");
+            targetIdx = currentIndexRef.current - 1;
           } else if (videos.length > 1) {
-            scrollToCard(videos.length - 1, "smooth");
+            targetIdx = videos.length - 1;
           }
+        }
+
+        if (targetIdx !== currentIndexRef.current) {
+          // Pre-authorize target video right inside this user gesture so Safari never blocks it
+          const targetCard = cardRefs.current[targetIdx];
+          const targetVid = targetCard?.querySelector<HTMLVideoElement>("video");
+          if (targetVid && isSessionAudioUnlocked && !isMuted) {
+            targetVid.muted = false;
+            targetVid.volume = 1;
+            targetVid.play().catch(() => {});
+          }
+
+          scrollToCard(targetIdx, "smooth");
         }
       }
     };
@@ -649,9 +669,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            // Virtual sliding window: ±2 adjacent on desktop and ±1 on mobile (strict hardware decoder safety)
-            const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-            const bufferRadius = isTouch ? 1 : 2;
+            // Generous sliding window (±4) ensures upcoming videos are mounted in the DOM
+            // and have their audio authorizations pre-cached during user interaction
+            const bufferRadius = 4;
             const isCardNear = Math.abs(idx - currentIndex) <= bufferRadius;
 
             return (

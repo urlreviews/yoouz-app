@@ -136,14 +136,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   }, [video]);
 
 
-  // Helper: Synchronously pause and mute all other video elements on the page (Zero Hardware Lockup)
+  // Helper: Synchronously pause all other video elements on the page (Zero Hardware Lockup)
   const pauseOtherVideos = useCallback(() => {
     const currentEl = videoRef.current;
     document.querySelectorAll<HTMLVideoElement>("video").forEach((other) => {
       if (other !== currentEl) {
         try {
           if (!other.paused) other.pause();
-          other.muted = true;
         } catch (e) {}
       }
     });
@@ -183,6 +182,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 playPromiseRef.current = null;
                 setIsPlaying(true);
                 setIsBuffering(false);
+                // If session was supposed to be unmuted, restore audio on the very next user touch!
+                if (isSessionAudioUnlocked && !isMuted) {
+                  const restoreAudio = () => {
+                    if (videoRef.current) {
+                      videoRef.current.muted = false;
+                      videoRef.current.volume = 1;
+                    }
+                  };
+                  window.addEventListener("touchstart", restoreAudio, { once: true, passive: true });
+                  window.addEventListener("pointerdown", restoreAudio, { once: true, passive: true });
+                }
               })
               .catch(() => {
                 playPromiseRef.current = null;
@@ -524,6 +534,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             className="w-full h-full object-cover absolute inset-0 pointer-events-none"
             onTimeUpdate={(e) => {
               const t = e.currentTarget;
+              if (!isPlaying && !t.paused && t.currentTime > 0) {
+                setIsPlaying(true);
+                setIsBuffering(false);
+              }
               if (t.duration && !isNaN(t.duration) && t.duration > 0) {
                 setProgressPercent((t.currentTime / t.duration) * 100);
               }
@@ -531,10 +545,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onLoadedData={() => {
               setIsVideoLoaded(true);
               setIsBuffering(false);
+              if (isActive && !isManuallyPausedRef.current) {
+                safePlay();
+              }
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              if (isActive && !isManuallyPaused) {
+              if (isActive && !isManuallyPausedRef.current) {
                 if (isSessionAudioUnlocked && !isMuted && videoRef.current) {
                   videoRef.current.muted = false;
                   videoRef.current.volume = 1;
@@ -556,6 +573,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onPause={() => {
               setIsPlaying(false);
+              // Auto-resume if active card was paused unexpectedly by browser pipeline without manual user intent
+              if (isActive && !isManuallyPausedRef.current) {
+                safePlay();
+              }
             }}
             onWaiting={() => {
               if (isActive) setIsBuffering(true);
@@ -564,15 +585,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           />
         )}
 
-        {/* High-Fidelity Poster (visible until video starts playback) */}
+        {/* High-Fidelity Poster (visible until video starts playback or is ready) */}
         <img
           src={posterUrl}
           alt={video.caption || formatBusinessName(video.placeName) || "Video review poster"}
           loading={isActive || isNear ? "eager" : "lazy"}
           decoding="async"
           fetchPriority={isActive ? "high" : "auto"}
-          className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-150 z-10 ${
-            isActive && isPlaying ? "opacity-0" : "opacity-100"
+          className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-200 z-10 ${
+            isActive && (isPlaying || isVideoLoaded) ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
           referrerPolicy="no-referrer"
         />

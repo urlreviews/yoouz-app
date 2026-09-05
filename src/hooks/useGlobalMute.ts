@@ -56,6 +56,12 @@ export function useGlobalMute() {
       globalAudioUnlocked = true;
       ensureSharedAudioContextUnlocked();
       unlockListeners.forEach(listener => listener(true));
+      if (typeof document !== 'undefined') {
+        document.querySelectorAll<HTMLVideoElement>("video").forEach(v => {
+          v.muted = false;
+          v.volume = 1;
+        });
+      }
     }
     muteListeners.forEach(listener => listener(nextVal));
   };
@@ -67,6 +73,12 @@ export function useGlobalMute() {
     try {
       localStorage.setItem("yoouz_sound_muted", "false");
     } catch {}
+    if (typeof document !== 'undefined') {
+      document.querySelectorAll<HTMLVideoElement>("video").forEach(v => {
+        v.muted = false;
+        v.volume = 1;
+      });
+    }
     unlockListeners.forEach(listener => listener(true));
     muteListeners.forEach(listener => listener(false));
   };
@@ -85,6 +97,12 @@ export function triggerAudioUnlock() {
   try {
     localStorage.setItem("yoouz_sound_muted", "false");
   } catch {}
+  if (typeof document !== 'undefined') {
+    document.querySelectorAll<HTMLVideoElement>("video").forEach(v => {
+      v.muted = false;
+      v.volume = 1;
+    });
+  }
   unlockListeners.forEach(listener => listener(true));
   muteListeners.forEach(listener => listener(false));
 }
