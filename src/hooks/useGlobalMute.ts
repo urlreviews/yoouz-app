@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-// Read persisted sound preference: default to unmuted (false) on fresh visit unless user previously muted
+// Read persisted sound preference: default to muted (true) on fresh visit so browser autoplay starts immediately
 const getInitialMuteState = (): boolean => {
   try {
     const saved = localStorage.getItem("yoouz_sound_muted");
@@ -8,7 +8,7 @@ const getInitialMuteState = (): boolean => {
       return saved === "true";
     }
   } catch {}
-  return false; // Unmuted by default
+  return true; // Muted by default (matching app.copo.st standard)
 };
 
 let globalAudioUnlocked = false;

@@ -94,8 +94,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Initial feed state: starts false so first video requires explicit Play to unlock audio & start feed
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
+  // Initial feed state: starts true so the first video starts playing immediately on load in muted mode (app.copo.st standard)
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
 
   // Edit Rating State
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
@@ -233,6 +233,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [currentIndex, videos, onLoadMore]);
 
   // Ultra-smooth IntersectionObserver index detection (TikTok / Instagram Reels style)
+  // Uses 65% visibility threshold so swipe doesn't prematurely trigger mid-drag
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -241,9 +242,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       (entries) => {
         if (isProgrammaticScrollRef.current) return;
 
-        // Early detection: activate next video as soon as swipe crosses 35% threshold
+        // Strict threshold: only switch active card when swipe is committed and card covers >= 65% of screen
         const visibleEntries = entries.filter(
-          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.35
+          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.65
         );
         if (visibleEntries.length === 0) return;
 
@@ -264,7 +265,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       },
       {
         root: container,
-        threshold: [0.2, 0.35, 0.55, 0.75, 0.95]
+        threshold: [0.65, 0.85]
       }
     );
 
@@ -277,42 +278,47 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [videos, onSelectVideoIndex]);
 
-  // Dual Scroll Engine Fallback: Direct mathematical scroll position tracker
-  // Guarantees index accuracy even if IntersectionObserver drops events during ultra-fast finger swipes on mobile
+  // Dual Settle Engine: Native scrollend event + fallback debounced settle listener
+  // Guarantees exact snap alignment without lag or mid-drag re-rendering stutter
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    let rafId: number | null = null;
+    let settleTimer: NodeJS.Timeout | null = null;
+
+    const onScrollSettle = () => {
+      if (isProgrammaticScrollRef.current || !container) return;
+      const containerHeight = container.clientHeight;
+      if (!containerHeight || containerHeight <= 0) return;
+
+      const settledIndex = Math.round(container.scrollTop / containerHeight);
+      if (
+        settledIndex >= 0 &&
+        settledIndex < videos.length &&
+        settledIndex !== currentIndexRef.current
+      ) {
+        currentIndexRef.current = settledIndex;
+        lastObserverIndexRef.current = settledIndex;
+        setHasUserStartedFeed(true);
+        onSelectVideoIndex(settledIndex);
+        prefetchUpcomingVideos(videos, settledIndex);
+      }
+    };
 
     const handleScroll = () => {
       if (isProgrammaticScrollRef.current) return;
-      if (rafId) cancelAnimationFrame(rafId);
-
-      rafId = requestAnimationFrame(() => {
-        if (!container) return;
-        const containerHeight = container.clientHeight;
-        if (!containerHeight || containerHeight <= 0) return;
-
-        const calculatedIndex = Math.round(container.scrollTop / containerHeight);
-        if (
-          calculatedIndex >= 0 &&
-          calculatedIndex < videos.length &&
-          calculatedIndex !== currentIndexRef.current
-        ) {
-          currentIndexRef.current = calculatedIndex;
-          lastObserverIndexRef.current = calculatedIndex;
-          setHasUserStartedFeed(true);
-          onSelectVideoIndex(calculatedIndex);
-          prefetchUpcomingVideos(videos, calculatedIndex);
-        }
-      });
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(onScrollSettle, 80);
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
+    // Modern browser standard event for CSS scroll snap completion
+    container.addEventListener("scrollend", onScrollSettle, { passive: true });
+
     return () => {
       container.removeEventListener("scroll", handleScroll);
-      if (rafId) cancelAnimationFrame(rafId);
+      container.removeEventListener("scrollend", onScrollSettle);
+      if (settleTimer) clearTimeout(settleTimer);
     };
   }, [videos, onSelectVideoIndex]);
 
@@ -341,14 +347,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const handleNext = useCallback(() => {
     if (currentIndexRef.current < videos.length - 1) {
       scrollToCard(currentIndexRef.current + 1, "smooth");
+    } else if (videos.length > 1) {
+      // Endless continuous feed: seamless loop to top
+      scrollToCard(0, "smooth");
     }
   }, [videos.length, scrollToCard]);
 
   const handlePrev = useCallback(() => {
     if (currentIndexRef.current > 0) {
       scrollToCard(currentIndexRef.current - 1, "smooth");
+    } else if (videos.length > 1) {
+      // Endless continuous feed: seamless loop to bottom
+      scrollToCard(videos.length - 1, "smooth");
     }
-  }, [scrollToCard]);
+  }, [videos.length, scrollToCard]);
 
   // Desktop Mouse Wheel & Trackpad Navigation: smoothly step strictly 1 video at a time without multi-skipping
   useEffect(() => {
@@ -381,14 +393,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         isWheeling = true;
 
         if (e.deltaY > 0) {
-          // Wheel Down -> Next Video
+          // Wheel Down -> Next Video (seamless endless cycle)
           if (currentIndexRef.current < videos.length - 1) {
             scrollToCard(currentIndexRef.current + 1, "smooth");
+          } else if (videos.length > 1) {
+            scrollToCard(0, "smooth");
           }
         } else {
-          // Wheel Up -> Previous Video
+          // Wheel Up -> Previous Video (seamless endless cycle)
           if (currentIndexRef.current > 0) {
             scrollToCard(currentIndexRef.current - 1, "smooth");
+          } else if (videos.length > 1) {
+            scrollToCard(videos.length - 1, "smooth");
           }
         }
 
@@ -554,9 +570,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className="w-full h-full md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
+          className="w-full h-full md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
           style={{
             WebkitOverflowScrolling: "touch",
+            scrollSnapType: "y mandatory",
+            overscrollBehaviorY: "contain",
             scrollbarWidth: "none",
             msOverflowStyle: "none"
           }}
@@ -617,9 +635,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-prev-video"
             onClick={handlePrev}
-            disabled={currentIndex <= 0}
+            disabled={videos.length <= 1}
             className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-              currentIndex <= 0
+              videos.length <= 1
                 ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
                 : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
             }`}
@@ -631,9 +649,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-next-video"
             onClick={handleNext}
-            disabled={currentIndex >= videos.length - 1}
+            disabled={videos.length <= 1}
             className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-              currentIndex >= videos.length - 1
+              videos.length <= 1
                 ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
                 : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
             }`}
