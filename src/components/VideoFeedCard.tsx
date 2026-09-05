@@ -155,9 +155,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
     pauseOtherVideos();
 
-    // Set muted to global isMuted state
-    el.muted = isMuted;
-    if (!isMuted) {
+    // Respect browser autoplay policy: if session audio is not yet unlocked by a user gesture, keep muted
+    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
+    el.muted = effectiveMuted;
+    if (!effectiveMuted) {
       el.volume = 1;
     }
 
@@ -171,8 +172,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       }).catch((err) => {
         playPromiseRef.current = null;
         // If unmuted autoplay is blocked by browser policy without gesture, fallback to muted autoplay
-        if (err?.name === "NotAllowedError" || err?.name === "AbortError" || err?.message?.includes("gesture")) {
+        if (err?.name === "NotAllowedError" || err?.name === "AbortError" || err?.message?.includes("gesture") || err?.message?.includes("interact")) {
           el.muted = true;
+          onForceMute();
           const retry = el.play();
           if (retry !== undefined) {
             playPromiseRef.current = retry;
@@ -192,7 +194,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         }
       });
     }
-  }, [isMuted, pauseOtherVideos]);
+  }, [isMuted, isSessionAudioUnlocked, onForceMute, pauseOtherVideos]);
 
   // Safe Pause Execution waiting for pending play promises
   const safePause = useCallback(() => {
@@ -652,10 +654,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
             className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
-            title={isMuted ? "Unmute sound" : "Mute sound"}
-            aria-label={isMuted ? "Unmute sound" : "Mute sound"}
+            title={isMuted || !isSessionAudioUnlocked ? "Unmute sound" : "Mute sound"}
+            aria-label={isMuted || !isSessionAudioUnlocked ? "Unmute sound" : "Mute sound"}
           >
-            {isMuted ? (
+            {isMuted || !isSessionAudioUnlocked ? (
               <VolumeX className="w-5 h-5 text-white stroke-[2.2]" />
             ) : (
               <Volume2 className="w-5 h-5 text-white stroke-[2.2]" />
@@ -664,8 +666,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       </div>
 
-      {/* Center Play Button (Shown when paused or stopped on desktop/mobile) */}
-      {isActive && (isManuallyPaused || !isPlaying) && (
+      {/* Center Play Button (Shown ONLY when the user manually paused the video) */}
+      {isActive && isManuallyPaused && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto">
           <button
             type="button"
@@ -683,7 +685,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       )}
 
       {/* Tap to Unmute Floating Trigger for Mobile Web & PWA Audio Flow */}
-      {isActive && isPlaying && isMuted && (
+      {isActive && isPlaying && (isMuted || !isSessionAudioUnlocked) && (
         <div className="absolute bottom-28 md:bottom-24 left-1/2 -translate-x-1/2 z-35 pointer-events-auto">
           <button
             type="button"
