@@ -322,8 +322,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       setIsPlaying(false);
       setProgressPercent(0);
 
-      const isDrawerContext = Boolean(contextKey?.startsWith("place_") || contextKey?.startsWith("creator_"));
-      const shouldStartPaused = Boolean(isPaused || isDrawerContext);
+      const shouldStartPaused = Boolean(isPaused);
 
       if (shouldStartPaused) {
         isManuallyPausedRef.current = true;
