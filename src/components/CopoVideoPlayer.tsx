@@ -104,6 +104,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const feedVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
+  const [firstFrameRenderedId, setFirstFrameRenderedId] = useState<string | null>(null);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [isActualMuted, setIsActualMuted] = useState<boolean>(true);
   const [isManuallyPaused, setIsManuallyPaused] = useState<boolean>(false);
@@ -129,8 +130,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       vid.className = "w-full h-full object-cover absolute inset-0 z-0 pointer-events-none";
 
       vid.addEventListener("playing", () => {
-        setIsPlaying(true);
         setIsBuffering(false);
+        if (vid.currentTime > 0.05) {
+          setIsPlaying(true);
+          if (lastLoadedVideoIdRef.current) {
+            setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+          }
+        }
       });
       vid.addEventListener("pause", () => {
         setIsPlaying(false);
@@ -141,10 +147,22 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       vid.addEventListener("canplay", () => {
         setIsBuffering(false);
       });
+      vid.addEventListener("loadeddata", () => {
+        setIsBuffering(false);
+        if (vid.currentTime > 0.05 && !vid.paused) {
+          setIsPlaying(true);
+          if (lastLoadedVideoIdRef.current) {
+            setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+          }
+        }
+      });
       vid.addEventListener("timeupdate", () => {
-        if (!vid.paused && vid.currentTime > 0) {
+        if (!vid.paused && vid.currentTime > 0.05) {
           setIsPlaying(true);
           setIsBuffering(false);
+          if (lastLoadedVideoIdRef.current) {
+            setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+          }
         }
         if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
           setProgressPercent((vid.currentTime / vid.duration) * 100);
@@ -216,6 +234,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     // New video detected!
     lastLoadedVideoIdRef.current = activeVideo.id;
+    setFirstFrameRenderedId(null);
+    setIsPlaying(false);
+    setIsBuffering(true);
+
     const nextSrc = resolvePlayableVideoSource(activeVideo);
     if (vid.src !== nextSrc) {
       vid.src = nextSrc;
@@ -233,13 +255,27 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     setIsManuallyPaused(false);
     setProgressPercent(0);
 
+    // Modern hardware presentation hook: fires the exact millisecond the GPU presents the first frame
+    if ("requestVideoFrameCallback" in vid) {
+      (vid as any).requestVideoFrameCallback(() => {
+        if (lastLoadedVideoIdRef.current === activeVideo.id && !vid.paused) {
+          setIsPlaying(true);
+          setIsBuffering(false);
+          setFirstFrameRenderedId(activeVideo.id);
+        }
+      });
+    }
+
     const p = vid.play();
     if (p !== undefined) {
       playPromiseRef.current = p;
       p.then(() => {
         playPromiseRef.current = null;
-        setIsPlaying(true);
-        setIsBuffering(false);
+        if (vid.currentTime > 0.05 && !vid.paused) {
+          setIsPlaying(true);
+          setIsBuffering(false);
+          setFirstFrameRenderedId(activeVideo.id);
+        }
       }).catch((err) => {
         playPromiseRef.current = null;
         if (err?.name === "NotAllowedError") {
@@ -931,6 +967,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 progressPercent={isCardActive ? progressPercent : 0}
                 isActualMuted={isActualMuted}
                 isManuallyPaused={isCardActive ? isManuallyPaused : false}
+                hasRenderedFirstFrame={firstFrameRenderedId === vid.id}
                 onTogglePlayPause={handleTogglePlayPause}
                 onPauseVideo={handlePauseVideo}
                 allUsers={allUsers}

@@ -41,6 +41,7 @@ interface VideoFeedCardProps {
   progressPercent?: number;
   isActualMuted?: boolean;
   isManuallyPaused?: boolean;
+  hasRenderedFirstFrame?: boolean;
   allUsers?: any[];
   currentUser?: any;
   
@@ -82,6 +83,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   progressPercent = 0,
   isActualMuted = true,
   isManuallyPaused = false,
+  hasRenderedFirstFrame = false,
   allUsers,
   currentUser,
   activeSubTab,
@@ -306,8 +308,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           loading={isActive || isNear ? "eager" : "lazy"}
           decoding="async"
           fetchPriority={isActive ? "high" : "auto"}
-          className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-200 z-10 ${
-            isActive && isPlaying ? "opacity-0 pointer-events-none" : "opacity-100"
+          className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
+            isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
           referrerPolicy="no-referrer"
         />

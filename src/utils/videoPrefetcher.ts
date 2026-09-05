@@ -36,11 +36,11 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
     img.src = posterUrl;
   }
 
-  // 2. Ultra-Lightweight HTTP Range Warm-Up (fetches only first 128KB header chunk)
+  // 2. Ultra-Lightweight HTTP Range Warm-Up (fetches first 512KB header chunk & initial video frames)
   try {
     fetch(url, {
       method: "GET",
-      headers: { Range: "bytes=0-131071" },
+      headers: { Range: "bytes=0-524287" },
       mode: "cors",
       cache: "force-cache"
     }).catch(() => {});
