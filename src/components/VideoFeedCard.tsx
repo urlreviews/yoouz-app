@@ -136,13 +136,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   }, [video]);
 
 
-  // Helper: Synchronously pause all other video elements on the page (Zero Hardware Lockup)
+  // Helper: Synchronously pause and mute all other video elements on the page (Zero Hardware Lockup)
   const pauseOtherVideos = useCallback(() => {
     const currentEl = videoRef.current;
     document.querySelectorAll<HTMLVideoElement>("video").forEach((other) => {
-      if (other !== currentEl && !other.paused) {
+      if (other !== currentEl) {
         try {
-          other.pause();
+          if (!other.paused) other.pause();
+          other.muted = true;
         } catch (e) {}
       }
     });
@@ -508,7 +509,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             data-active={isActive ? "true" : "false"}
             src={currentSource}
             poster={resolveVideoPosterUrl(video)}
-            preload="auto"
+            preload={isActive ? "auto" : "metadata"}
             autoPlay={isActive}
             playsInline
             webkit-playsinline="true"
@@ -517,7 +518,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             x5-video-player-fullscreen="true"
             onVolumeChange={() => setIsActualMuted(videoRef.current?.muted ?? true)}
             loop
-            muted={isMuted}
+            muted={isActive ? (isMuted || !isSessionAudioUnlocked) : true}
             disablePictureInPicture
             disableRemotePlayback
             className="w-full h-full object-cover absolute inset-0 pointer-events-none"
@@ -533,11 +534,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             onCanPlay={() => {
               setIsVideoLoaded(true);
-              if (isSessionAudioUnlocked && !isMuted && videoRef.current) {
-                videoRef.current.muted = false;
-                videoRef.current.volume = 1;
-              }
               if (isActive && !isManuallyPaused) {
+                if (isSessionAudioUnlocked && !isMuted && videoRef.current) {
+                  videoRef.current.muted = false;
+                  videoRef.current.volume = 1;
+                }
                 safePlay();
               }
             }}
@@ -545,7 +546,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               setIsPlaying(true);
               setIsBuffering(false);
               setIsVideoLoaded(true);
-              if (isSessionAudioUnlocked && !isMuted && videoRef.current) {
+              if (isActive && isSessionAudioUnlocked && !isMuted && videoRef.current) {
                 videoRef.current.muted = false;
                 videoRef.current.volume = 1;
               }

@@ -329,15 +329,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       touchStartTime = Date.now();
       isTouchActive = true;
 
-      // Authorize and sync audio state across all mounted video elements inside active touch gesture
+      // Authorize audio subsystem inside active user gesture
       if (isSessionAudioUnlocked && !isMuted) {
         ensureSharedAudioContextUnlocked();
-        document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
-          if (v.muted) {
-            v.muted = false;
-            v.volume = 1;
-          }
-        });
       }
     };
 
@@ -348,12 +342,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       // Ensure audio permission is propagated during touch completion
       if (isSessionAudioUnlocked && !isMuted) {
         ensureSharedAudioContextUnlocked();
-        document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
-          if (v.muted) {
-            v.muted = false;
-            v.volume = 1;
-          }
-        });
       }
 
       const touch = e.changedTouches[0];
@@ -422,12 +410,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const handleNext = useCallback(() => {
     if (isSessionAudioUnlocked && !isMuted) {
       ensureSharedAudioContextUnlocked();
-      document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
-        if (v.muted) {
-          v.muted = false;
-          v.volume = 1;
-        }
-      });
     }
     if (currentIndexRef.current < videos.length - 1) {
       scrollToCard(currentIndexRef.current + 1, "smooth");
@@ -440,12 +422,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const handlePrev = useCallback(() => {
     if (isSessionAudioUnlocked && !isMuted) {
       ensureSharedAudioContextUnlocked();
-      document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
-        if (v.muted) {
-          v.muted = false;
-          v.volume = 1;
-        }
-      });
     }
     if (currentIndexRef.current > 0) {
       scrollToCard(currentIndexRef.current - 1, "smooth");
@@ -673,9 +649,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           {videos.map((vid, idx) => {
             const isCardActive = idx === currentIndex && !isPaused;
-            // Virtual sliding window: ±3 adjacent on desktop (abundant RAM/GPU) and ±2 on mobile (strict hardware decoders)
+            // Virtual sliding window: ±2 adjacent on desktop and ±1 on mobile (strict hardware decoder safety)
             const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-            const bufferRadius = isTouch ? 2 : 3;
+            const bufferRadius = isTouch ? 1 : 2;
             const isCardNear = Math.abs(idx - currentIndex) <= bufferRadius;
 
             return (
