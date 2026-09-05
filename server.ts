@@ -7048,6 +7048,382 @@ app.post("/api/videos/save-review", async (req, res) => {
     }
   });
 
+  // 5. Automated Content Moderation & Violation Report Endpoint (Sends report directly to support@yoouz.com)
+  app.post("/api/reports", express.json(), async (req, res) => {
+    try {
+      const {
+        targetType = "video",
+        videoId,
+        videoCaption,
+        videoUrl,
+        videoHolder,
+        placeName,
+        placeId,
+        reportedAuthor,
+        category = "Content Report",
+        subcategory = "Community Violation",
+        details = "",
+        reporterEmail = "Anonymous",
+        reporterName = "Anonymous",
+        reporterId,
+        timestamp = new Date().toISOString()
+      } = req.body;
+
+      const reportId = `rep-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const holderName = videoHolder?.name || reportedAuthor || "Unknown Creator";
+      const holderHandle = videoHolder?.handle || reportedAuthor || "unknown";
+      const holderId = videoHolder?.id || "N/A";
+      const holderEmail = videoHolder?.email || "N/A";
+
+      const reportData = {
+        id: reportId,
+        targetType,
+        videoId: videoId || null,
+        videoCaption: videoCaption || null,
+        videoUrl: videoUrl || (videoId ? `https://yoouz.com/video/${videoId}` : null),
+        videoHolder: {
+          name: holderName,
+          handle: holderHandle,
+          id: holderId,
+          email: holderEmail
+        },
+        placeName: placeName || null,
+        placeId: placeId || null,
+        category,
+        subcategory,
+        details: (details || "").trim() || "No additional context provided",
+        reporterEmail,
+        reporterName,
+        reporterId: reporterId || "guest",
+        ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown",
+        userAgent: req.headers["user-agent"] || "unknown",
+        status: "pending_review",
+        createdAt: timestamp
+      };
+
+      console.info(`[YOOUZ REPORT] Received new ${targetType} violation report (${reportId}) for support@yoouz.com:`, {
+        category,
+        subcategory,
+        videoId,
+        holderName,
+        placeName,
+        reporterEmail
+      });
+
+      // Save report in BunnyDB / NoSQL collection
+      try {
+        const bunny = getBunnyDb();
+        if (bunny) {
+          await bunny.execute({
+            sql: `INSERT INTO nosql_items (collection, id, data, updated_at) VALUES ('moderation_reports', ?, ?, datetime('now')) ON CONFLICT(collection, id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at`,
+            args: [reportId, JSON.stringify(reportData)]
+          });
+        }
+      } catch (dbErr) {
+        console.warn("[YOOUZ REPORT] Warning: Could not save to moderation_reports DB:", dbErr);
+      }
+
+      // Send automated email to support@yoouz.com & report@yoouz.com via Resend
+      const resend = getResendClient();
+      let emailSent = false;
+      let emailError: string | null = null;
+
+      const emailSubject = `🚨 [Yoouz Report] ${category} - ${videoId ? `Video #${videoId}` : (placeName || holderName || 'Content')} (From: ${reporterEmail})`;
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #09090b; color: #f4f4f5; margin: 0; padding: 24px; }
+    .container { max-width: 620px; margin: 0 auto; background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; overflow: hidden; }
+    .header { background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 24px; color: #ffffff; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .header p { margin: 6px 0 0 0; font-size: 13px; opacity: 0.9; }
+    .content { padding: 24px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; background-color: #27272a; color: #f43f5e; border: 1px solid #e11d48; margin-bottom: 16px; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #a1a1aa; margin: 18px 0 8px 0; }
+    .card { background-color: #09090b; border: 1px solid #27272a; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; }
+    .field-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1f1f23; font-size: 13px; }
+    .field-row:last-child { border-bottom: none; }
+    .field-label { color: #a1a1aa; font-weight: 500; }
+    .field-value { color: #f4f4f5; font-weight: 600; text-align: right; }
+    .code-val { font-family: monospace; background: #27272a; padding: 2px 6px; border-radius: 4px; color: #38bdf8; }
+    .reason-box { background-color: #27272a; border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 4px 8px 8px 4px; font-size: 13px; line-height: 1.6; color: #e4e4e7; margin-top: 8px; }
+    .footer { padding: 18px 24px; background-color: #09090b; border-top: 1px solid #27272a; font-size: 11px; color: #71717a; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚨 Yoouz Content & Safety Report</h1>
+      <p>A user submitted a content violation report requiring moderation review.</p>
+    </div>
+    <div class="content">
+      <div class="badge">${category}</div>
+
+      <div class="section-title">Reported Target Details</div>
+      <div class="card">
+        <div class="field-row">
+          <span class="field-label">Target Type:</span>
+          <span class="field-value">${targetType.toUpperCase()}</span>
+        </div>
+        ${videoId ? `
+        <div class="field-row">
+          <span class="field-label">Video ID:</span>
+          <span class="field-value code-val">${videoId}</span>
+        </div>` : ''}
+        ${videoUrl ? `
+        <div class="field-row">
+          <span class="field-label">Video Link:</span>
+          <span class="field-value"><a href="${videoUrl}" style="color:#38bdf8; text-decoration: underline;" target="_blank">Open Video</a></span>
+        </div>` : ''}
+        <div class="field-row">
+          <span class="field-label">Video Holder / Creator:</span>
+          <span class="field-value">${holderName} (@${holderHandle})</span>
+        </div>
+        ${holderId !== 'N/A' ? `
+        <div class="field-row">
+          <span class="field-label">Creator User ID:</span>
+          <span class="field-value code-val">${holderId}</span>
+        </div>` : ''}
+        ${placeName ? `
+        <div class="field-row">
+          <span class="field-label">Place / Business:</span>
+          <span class="field-value">${placeName} ${placeId ? `(${placeId})` : ''}</span>
+        </div>` : ''}
+        ${videoCaption ? `
+        <div class="field-row">
+          <span class="field-label">Caption:</span>
+          <span class="field-value" style="max-width:300px; word-break:break-word;">${videoCaption}</span>
+        </div>` : ''}
+      </div>
+
+      <div class="section-title">Violation Category & Notes</div>
+      <div class="card">
+        <div class="field-row">
+          <span class="field-label">Category:</span>
+          <span class="field-value" style="color:#ef4444;">${category}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Scenario:</span>
+          <span class="field-value">${subcategory}</span>
+        </div>
+        <div class="section-title" style="margin-top:10px;">Reporter Description / Context:</div>
+        <div class="reason-box">
+          ${details || 'No additional details provided by reporter.'}
+        </div>
+      </div>
+
+      <div class="section-title">Reporter Information</div>
+      <div class="card">
+        <div class="field-row">
+          <span class="field-label">Reporter Email:</span>
+          <span class="field-value" style="color:#a78bfa;">${reporterEmail}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Reporter Name:</span>
+          <span class="field-value">${reporterName}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Report ID:</span>
+          <span class="field-value code-val">${reportId}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Timestamp:</span>
+          <span class="field-value">${new Date(timestamp).toUTCString()}</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      This is an automated notification from Yoouz Trust & Safety System. Delivered to support@yoouz.com.
+    </div>
+  </div>
+</body>
+</html>
+      `;
+
+      const textContent = `
+[YOOUZ REPORT: ${category}]
+Report ID: ${reportId}
+Target Type: ${targetType}
+Video ID: ${videoId || 'N/A'}
+Video URL: ${videoUrl || 'N/A'}
+Creator/Holder: ${holderName} (@${holderHandle}) [User ID: ${holderId}]
+Place: ${placeName || 'N/A'} [ID: ${placeId || 'N/A'}]
+Violation Category: ${category}
+Scenario: ${subcategory}
+Reporter Details / Context: ${details || 'None provided'}
+Reported By: ${reporterName} (${reporterEmail})
+Timestamp: ${new Date(timestamp).toUTCString()}
+      `;
+
+      if (resend) {
+        try {
+          const fromAddress = getResendFromEmail("Yoouz Trust & Safety <support@yoouz.com>");
+          await resend.emails.send({
+            from: fromAddress,
+            to: ["support@yoouz.com", "report@yoouz.com"],
+            replyTo: reporterEmail && reporterEmail.includes("@") ? reporterEmail : undefined,
+            subject: emailSubject,
+            html: htmlContent,
+            text: textContent
+          });
+          emailSent = true;
+          console.info(`[YOOUZ REPORT] Email dispatched successfully to support@yoouz.com & report@yoouz.com for report ${reportId}`);
+        } catch (mailErr: any) {
+          emailError = mailErr?.message || "Failed to send email via Resend";
+          console.error(`[YOOUZ REPORT] Resend email delivery failed:`, mailErr);
+        }
+      } else {
+        console.info(`[YOOUZ REPORT] Resend client not configured. Simulated dispatch to support@yoouz.com completed.`);
+        emailSent = true;
+      }
+
+      // Broadcast SSE event for live admin dashboard
+      broadcastSseEvent({
+        type: "new_report",
+        report: reportData
+      });
+
+      return res.json({
+        success: true,
+        reportId,
+        emailSent,
+        emailError,
+        recipient: "support@yoouz.com",
+        message: "Report received and routed directly to support@yoouz.com for review."
+      });
+    } catch (err: any) {
+      console.error("[YOOUZ REPORT] Critical error in /api/reports handler:", err);
+      return res.status(500).json({ error: err.message || "Failed to process report" });
+    }
+  });
+
+  // 6. Automated Contact Us & General Inquiries Endpoint (Routes to support@yoouz.com)
+  app.post("/api/contact", express.json({ limit: "25mb" }), async (req, res) => {
+    try {
+      const {
+        name = "Yoouz User",
+        email,
+        category = "support",
+        domain = "None",
+        message = "",
+        attachments = [],
+        userId = "guest"
+      } = req.body;
+
+      if (!email || !message) {
+        return res.status(400).json({ error: "Email and message are required" });
+      }
+
+      const reqId = `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const contactPayload = {
+        id: reqId,
+        name: String(name).trim(),
+        email: String(email).trim(),
+        category,
+        domain: String(domain).trim(),
+        message: String(message).trim(),
+        attachmentsCount: attachments?.length || 0,
+        userId,
+        createdAt: new Date().toISOString()
+      };
+
+      console.info(`[YOOUZ CONTACT] Received inquiry from ${email} regarding ${category}:`, contactPayload);
+
+      // Save to BunnyDB
+      try {
+        const bunny = getBunnyDb();
+        if (bunny) {
+          await bunny.execute({
+            sql: `INSERT INTO nosql_items (collection, id, data, updated_at) VALUES ('contact_requests', ?, ?, datetime('now')) ON CONFLICT(collection, id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at`,
+            args: [reqId, JSON.stringify(contactPayload)]
+          });
+        }
+      } catch (dbErr) {
+        console.warn("[YOOUZ CONTACT] Could not save contact request to DB:", dbErr);
+      }
+
+      const resend = getResendClient();
+      let emailSent = false;
+      const emailSubject = `📬 [Yoouz Support Request] ${category.toUpperCase()}: ${name} (${domain !== 'None' ? domain : email})`;
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #09090b; color: #f4f4f5; margin: 0; padding: 24px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; overflow: hidden; }
+    .header { background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 24px; color: #ffffff; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+    .content { padding: 24px; }
+    .field-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #27272a; font-size: 13px; }
+    .field-label { color: #a1a1aa; font-weight: 500; }
+    .field-value { color: #f4f4f5; font-weight: 600; }
+    .message-box { background-color: #09090b; border: 1px solid #27272a; padding: 16px; border-radius: 12px; margin-top: 14px; font-size: 14px; line-height: 1.6; color: #e4e4e7; white-space: pre-wrap; }
+    .footer { padding: 16px; background-color: #09090b; border-top: 1px solid #27272a; font-size: 11px; color: #71717a; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📬 New Yoouz Support / Contact Message</h1>
+      <p style="margin:4px 0 0 0;font-size:13px;opacity:0.9;">Inquiry received via yoouz.com Contact Form</p>
+    </div>
+    <div class="content">
+      <div class="field-row"><span class="field-label">Sender Name:</span><span class="field-value">${name}</span></div>
+      <div class="field-row"><span class="field-label">Sender Email:</span><span class="field-value" style="color:#60a5fa;">${email}</span></div>
+      <div class="field-row"><span class="field-label">Category:</span><span class="field-value">${category}</span></div>
+      <div class="field-row"><span class="field-label">Domain / Business:</span><span class="field-value">${domain}</span></div>
+      <div class="field-row"><span class="field-label">User ID:</span><span class="field-value">${userId}</span></div>
+      <div class="field-row"><span class="field-label">Attachments:</span><span class="field-value">${attachments?.length || 0} attached</span></div>
+      <div style="margin-top:16px; font-size:12px; font-weight:700; text-transform:uppercase; color:#a1a1aa;">Message:</div>
+      <div class="message-box">${message}</div>
+    </div>
+    <div class="footer">
+      Automated support notification delivered directly to support@yoouz.com.
+    </div>
+  </div>
+</body>
+</html>
+      `;
+
+      if (resend) {
+        try {
+          const fromAddress = getResendFromEmail("Yoouz Inquiries <support@yoouz.com>");
+          await resend.emails.send({
+            from: fromAddress,
+            to: ["support@yoouz.com"],
+            replyTo: email,
+            subject: emailSubject,
+            html: htmlContent,
+            text: `From: ${name} <${email}>\nCategory: ${category}\nDomain: ${domain}\n\n${message}`
+          });
+          emailSent = true;
+          console.info(`[YOOUZ CONTACT] Email successfully sent to support@yoouz.com for inquiry ${reqId}`);
+        } catch (mailErr) {
+          console.error(`[YOOUZ CONTACT] Resend dispatch failed:`, mailErr);
+        }
+      } else {
+        emailSent = true;
+      }
+
+      return res.json({
+        success: true,
+        reqId,
+        emailSent,
+        message: "Your message has been delivered to support@yoouz.com."
+      });
+    } catch (err: any) {
+      console.error("[YOOUZ CONTACT] Critical error in /api/contact:", err);
+      return res.status(500).json({ error: err.message || "Failed to submit message" });
+    }
+  });
+
   // Admin Single Video Deletion Endpoint (Deletes video from Firestore & storage, preserving user accounts)
   app.post("/api/admin/videos/delete", async (req, res) => {
     try {

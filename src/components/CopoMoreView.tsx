@@ -209,15 +209,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         createdAt: new Date().toISOString()
       };
 
-      const reqId = `req-${Date.now()}`;
-      // Sync to BunnyDB
-      fetch(`/api/nosql/contact_requests/${reqId}`, {
+      // Automatically deliver to support@yoouz.com inbox
+      await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: contactPayload })
-      }).catch(() => {});
-
-      // db removed
+        body: JSON.stringify(contactPayload)
+      }).catch((err) => {
+        console.warn("API contact delivery attempt finished:", err);
+      });
 
       setSubmitSuccess(true);
       setContactDomain("");

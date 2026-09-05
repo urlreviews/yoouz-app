@@ -534,9 +534,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           </div>
 
           <button
+            id="btn-close-share-desktop"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-zinc-400 hover:text-white bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 transition-colors cursor-pointer"
-            title="Close"
+            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 hover:border-zinc-500 transition-all cursor-pointer shadow-sm shrink-0 active:scale-95"
+            title="Close share dialog (Esc)"
+            aria-label="Close"
           >
             <X className="w-4 h-4" />
           </button>
@@ -591,7 +593,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
         {/* Main Tab Body (Smoothly scrollable, isolated from background events) */}
         <div 
-          className="overflow-y-auto flex-1 overscroll-contain min-h-0 px-5 py-2 space-y-3.5 scroll-smooth [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"
+          className="overflow-y-auto flex-1 overscroll-contain min-h-0 px-5 py-2.5 sm:py-3 space-y-3.5 sm:space-y-4 pb-4 sm:pb-6 scroll-smooth [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"
           onWheel={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
@@ -687,7 +689,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   Share to Platform
                 </label>
                 <div 
-                  className="grid grid-cols-3 gap-2.5 max-h-[290px] overflow-y-auto pr-1 no-scrollbar overscroll-contain"
+                  className="grid grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto pr-1 no-scrollbar overscroll-contain"
                   onWheel={(e) => e.stopPropagation()}
                 >
                   {allSharePlatforms.map((platform) => (
@@ -780,7 +782,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               </div>
 
               {/* Auxiliary Actions (Open in Browser, Report) */}
-              <div className="pt-2 pb-1 flex items-center justify-between border-t border-zinc-800/60">
+              <div className="pt-3 pb-2 mt-1 flex items-center justify-between border-t border-zinc-800/80">
                 <a
                   href={shareUrl}
                   target="_blank"

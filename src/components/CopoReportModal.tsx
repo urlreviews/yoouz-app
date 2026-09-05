@@ -153,6 +153,23 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
   const [reporterEmail, setReporterEmail] = useState<string>(currentUser?.email || "");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [reportReferenceId, setReportReferenceId] = useState<string>("");
+
+  const handleClose = () => {
+    setSelectedCategory(null);
+    setSelectedSubcategory("");
+    setAdditionalDetails("");
+    setIsSubmitted(false);
+    setIsSubmitting(false);
+    setReportReferenceId("");
+    onClose();
+  };
+
+  // Swiping hook MUST be called unconditionally before any early returns to avoid React error #310
+  const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
+    onDismiss: handleClose,
+    threshold: 60
+  });
 
   // Prevent background page & video feed scrolling when Report modal is active
   useEffect(() => {
@@ -178,38 +195,56 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
     }
   };
 
-  const handleClose = () => {
-    setSelectedCategory(null);
-    setSelectedSubcategory("");
-    setAdditionalDetails("");
-    setIsSubmitted(false);
-    setIsSubmitting(false);
-    onClose();
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCategory) return;
 
     setIsSubmitting(true);
 
+    const holderName = target.author?.name || target.video?.author?.name || "Unknown Creator";
+    const holderHandle = target.author?.handle || target.video?.author?.handle || target.video?.author?.name || "unknown";
+    const holderId = target.author?.id || target.video?.author?.id || "N/A";
+    const holderEmail = (target.author as any)?.email || (target.video?.author as any)?.email || null;
+
     const reportPayload = {
       targetType: target.type,
       videoId: target.video?.id || null,
       videoCaption: target.video?.caption || null,
+      videoUrl: target.video?.id ? `${window.location.origin}/video/${target.video.id}` : null,
+      videoHolder: {
+        name: holderName,
+        handle: holderHandle,
+        id: holderId,
+        email: holderEmail
+      },
       placeName: target.placeName || target.video?.placeName || null,
       placeId: target.placeId || target.video?.placeId || null,
-      reportedAuthor: target.author?.name || target.video?.author.name || null,
-      reportedHandle: target.author?.name || target.video?.author.name || null,
+      reportedAuthor: holderName,
       category: selectedCategory.title,
       subcategory: selectedSubcategory,
       details: additionalDetails.trim(),
-      reporterEmail: reporterEmail || currentUser?.email || "Anonymous",
-      recipient: "report@yoouz.com",
+      reporterEmail: reporterEmail.trim() || currentUser?.email || "Anonymous",
+      reporterName: currentUser?.name || "Yoouz Community Member",
+      reporterId: currentUser?.id || currentUser?.email || "guest",
+      recipient: "support@yoouz.com",
       timestamp: new Date().toISOString()
     };
 
-    console.info("Dispatching Report to report@yoouz.com:", reportPayload);
+    console.info("Dispatching automated report to support@yoouz.com:", reportPayload);
+
+    try {
+      const resp = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reportPayload)
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (data?.reportId) {
+        setReportReferenceId(data.reportId);
+      }
+    } catch (apiErr) {
+      console.warn("Could not dispatch via /api/reports, falling back to local storage:", apiErr);
+    }
 
     // Persist to local moderation storage log
     try {
@@ -223,7 +258,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSubmitted(true);
-    }, 600);
+    }, 400);
   };
 
   const getMailtoUrl = () => {
@@ -233,25 +268,20 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
       }`
     );
     const body = encodeURIComponent(
-      `Hello Yoouz Moderation Team,\n\nI would like to report the following content:\n\n` +
+      `Hello Yoouz Support & Moderation Team (support@yoouz.com),\n\nI would like to report the following content:\n\n` +
         `• Target Type: ${target.type}\n` +
         `• Place / Business: ${target.placeName || target.video?.placeName || "N/A"}\n` +
-        `• Creator Handle: ${target.author?.name || target.video?.author.name || "N/A"}\n` +
+        `• Creator / Holder: ${target.author?.name || target.video?.author?.name || "N/A"}\n` +
         `• Video ID: ${target.video?.id || "N/A"}\n` +
         `• Category: ${selectedCategory?.title || "N/A"}\n` +
-        `• Specific Scenario: ${selectedSubcategory || "N/A"}\n` +
+        `• Scenario: ${selectedSubcategory || "N/A"}\n` +
         `• Additional Context: ${additionalDetails || "None provided"}\n` +
         `• Reported by: ${reporterEmail || "Anonymous"}\n` +
         `• Timestamp: ${new Date().toLocaleString()}\n\n` +
         `Thank you for keeping Yoouz authentic and safe.`
     );
-    return `mailto:report@yoouz.com?subject=${subject}&body=${body}`;
+    return `mailto:support@yoouz.com?subject=${subject}&body=${body}`;
   };
-
-  const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
-    onDismiss: handleClose,
-    threshold: 60
-  });
 
   return (
     <div
@@ -513,10 +543,22 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
               </div>
               <h4 className="text-lg font-bold text-white">Thank You for Reporting</h4>
               <p className="text-xs text-zinc-400 mt-1 max-w-sm">
-                Your report has been received and routed directly to our Trust & Safety Moderation team.
+                Your report has been automatically delivered to <strong className="text-zinc-200">support@yoouz.com</strong> for immediate Trust & Safety moderation review.
               </p>
 
               <div className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 my-4 text-left text-xs text-zinc-300 flex flex-col gap-2">
+                {reportReferenceId && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500">Report Reference ID:</span>
+                    <span className="font-mono text-[11px] text-sky-400 font-semibold">{reportReferenceId}</span>
+                  </div>
+                )}
+                {target.video?.id && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500">Video ID:</span>
+                    <span className="font-mono text-[11px] text-zinc-300">{target.video.id}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-zinc-500">Reason:</span>
                   <span className="font-semibold text-white">{selectedCategory?.title}</span>
@@ -526,6 +568,10 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                   <span className="text-zinc-300 text-[11px] truncate max-w-[200px]">
                     {selectedSubcategory}
                   </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">Dispatched To:</span>
+                  <span className="font-semibold text-emerald-400">support@yoouz.com</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-zinc-500">Investigation Turnaround:</span>

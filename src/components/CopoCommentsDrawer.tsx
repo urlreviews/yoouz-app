@@ -282,6 +282,17 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     threshold: 60
   });
 
+  // Listen for Escape key on desktop to close comments drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   if (!video) return null;
 
   const placeLogoUrl = video.placeLogoUrl 
@@ -323,28 +334,31 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
           {...swipeProps}
           className="px-5 pt-7 pb-4 md:pt-4 border-b border-zinc-800 md:border-zinc-800 bg-zinc-950 md:bg-zinc-900 shrink-0 rounded-t-none md:rounded-none touch-pan-y"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center justify-center font-bold shrink-0">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 text-zinc-200 flex items-center justify-center font-bold shrink-0 shadow-sm">
                 <MessageSquare className="w-4 h-4" />
               </div>
-              <div className="flex-1 min-w-0 pr-3">
+              <div className="min-w-0 flex-1">
                 <h2 className="text-white font-bold text-lg leading-tight tracking-tight">
                   {totalCommentsCount} {totalCommentsCount === 1 ? "Comment" : "Comments"}
                 </h2>
-                <p className="text-[13px] text-zinc-400 font-medium mt-0.5 truncate">
+                <p className="text-[13px] text-zinc-400 font-medium mt-0.5 truncate" title={video.placeName}>
                   {video.placeName}
                 </p>
               </div>
             </div>
 
+            {/* Desktop-optimized close button with clean spacing and high contrast */}
             <button
+              id="btn-close-comments-desktop"
               onClick={() => {
                 triggerHaptic("light");
                 onClose();
               }}
-              className="w-8 h-8 rounded-full bg-zinc-850 hidden md:flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
-              title="Close comments"
+              className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 hidden md:flex items-center justify-center text-zinc-300 hover:text-white transition-all cursor-pointer border border-zinc-700/80 hover:border-zinc-500 shadow-sm shrink-0 active:scale-95"
+              title="Close comments (Esc)"
+              aria-label="Close comments"
             >
               <X className="w-4 h-4" />
             </button>
