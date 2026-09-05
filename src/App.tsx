@@ -36,7 +36,7 @@ import { prefetchVideo } from "./utils/videoPrefetcher";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleFirestoreError, OperationType } from "./lib/firebase";
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/firebase";
 import { cleanUndefinedFields, cleanForFirestore } from "./utils/cleanData";
-import { getRawVideoBlobFromIndexedDB } from "./lib/videoStorage";
+import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { resolveVideoPosterUrl } from "./utils/videoUtils";
@@ -455,10 +455,13 @@ export function App() {
       localStorage.removeItem("yoouz_cached_videos_v16");
     } catch (e) {}
 
-    // 5. Broadcast window event for instant local component reactivity
+    // 5. Clear IndexedDB cache
+    deleteVideoBlobFromIndexedDB(targetId).catch(() => {});
+
+    // 6. Broadcast window event for instant local component reactivity
     window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: targetId } }));
     
-    // 6. Call backend deletion APIs (purges BunnyDB, files, Bunny CDN, memory cache & broadcasts SSE)
+    // 7. Call backend deletion APIs (purges BunnyDB, files, Bunny CDN, memory cache & broadcasts SSE)
     try {
       fetch("/api/videos/delete", {
         method: "POST",
@@ -477,7 +480,7 @@ export function App() {
       }).catch(() => {});
     } catch (e) {}
 
-    // 7. Delete directly from Firestore
+    // 8. Delete directly from Firestore
     try {
       if (db) {
         deleteDoc(doc(db, "videoReviews", targetId)).catch(() => {});
@@ -518,12 +521,15 @@ export function App() {
       localStorage.removeItem("yoouz_cached_videos_v16");
     } catch (e) {}
 
-    // 5. Broadcast window events
+    // 5. Clear IndexedDB cache for bulk deleted videos
+    targetIds.forEach(id => deleteVideoBlobFromIndexedDB(id).catch(() => {}));
+
+    // 6. Broadcast window events
     targetIds.forEach(id => {
       window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: id } }));
     });
     
-    // 6. Call backend admin API & video delete endpoints
+    // 7. Call backend admin API & video delete endpoints
     try {
       fetch("/api/admin/videos/bulk-delete", {
         method: "POST",
@@ -541,7 +547,7 @@ export function App() {
       });
     } catch (e) {}
 
-    // 7. Delete directly from Firestore
+    // 8. Delete directly from Firestore
     try {
       if (db) {
         await Promise.all(targetIds.map(id => {
@@ -565,6 +571,8 @@ export function App() {
       localStorage.removeItem("yoouz_cached_videos_v20");
       localStorage.removeItem("yoouz_cached_videos_v16");
     } catch (e) {}
+
+    clearAllVideoBlobsFromIndexedDB().catch(() => {});
 
     window.dispatchEvent(new CustomEvent("copo-videos-purged"));
 

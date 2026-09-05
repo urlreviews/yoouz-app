@@ -51,6 +51,38 @@ export async function saveVideoBlobToIndexedDB(videoId: string, blob: Blob): Pro
   }
 }
 
+export async function deleteVideoBlobFromIndexedDB(videoId: string): Promise<boolean> {
+  try {
+    const db = await getIDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.delete(videoId);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    });
+  } catch (err) {
+    console.warn("IndexedDB delete error:", err);
+    return false;
+  }
+}
+
+export async function clearAllVideoBlobsFromIndexedDB(): Promise<boolean> {
+  try {
+    const db = await getIDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.clear();
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    });
+  } catch (err) {
+    console.warn("IndexedDB clear error:", err);
+    return false;
+  }
+}
+
 export async function getVideoBlobFromIndexedDB(videoId: string): Promise<string | null> {
   try {
     const db = await getIDB();

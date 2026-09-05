@@ -174,6 +174,19 @@ function writeReviewsIndex(list: any[]): void {
     const deletedSet = new Set(readDeletedReviewsIndex());
     const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
     fs.writeFileSync(reviewsIndexPath, JSON.stringify(sanitized, null, 2), "utf8");
+
+    const seedCandidates = [
+      path.join(process.cwd(), "public", "seeds", "reviews_index.json"),
+      path.join(process.cwd(), "public", "reviews_index.json"),
+      path.join(process.cwd(), "dist", "reviews_index.json")
+    ];
+    for (const seedPath of seedCandidates) {
+      try {
+        if (fs.existsSync(seedPath)) {
+          fs.writeFileSync(seedPath, JSON.stringify(sanitized, null, 2), "utf8");
+        }
+      } catch (seedErr) {}
+    }
   } catch (e) {
     console.warn("Failed to write reviews index:", e);
   }
@@ -9686,13 +9699,13 @@ const isPlaceCard = type === 'place';
               <div class="text-amber-400 font-bold mb-0.5">🎬 avt ertuop (★ 5.0)</div>
               <div class="text-[11px] text-zinc-300 font-normal truncate">londontrustedtherapy.com</div>
             </button>
-            <button onclick="switchPreset('ibm')" id="tab-ibm" class="tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">
+            <button onclick="switchPreset('l500')" id="tab-l500" class="tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">
               <div class="text-white font-bold mb-0.5">🎬 aouisesmee (★ 5.0)</div>
-              <div class="text-[11px] text-zinc-500 font-normal truncate">IBM Review</div>
+              <div class="text-[11px] text-zinc-500 font-normal truncate">Legal 500 Review</div>
             </button>
-            <button onclick="switchPreset('taj')" id="tab-taj" class="tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">
-              <div class="text-white font-bold mb-0.5">🎬 avt ertuop (★ 5.0)</div>
-              <div class="text-[11px] text-zinc-500 font-normal truncate">Taj Hotels Review</div>
+            <button onclick="switchPreset('dubaidigital')" id="tab-dubaidigital" class="tab-btn p-3 rounded-xl text-left text-xs font-bold bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">
+              <div class="text-white font-bold mb-0.5">🎬 aouisesmee (★ 5.0)</div>
+              <div class="text-[11px] text-zinc-500 font-normal truncate">Dubai Digital Park</div>
             </button>
           </div>
 
@@ -9890,19 +9903,19 @@ const isPlaceCard = type === 'place';
               description: 'Watch the authentic 60-second video review by avt ertuop for londontrustedtherapy.com on Yoouz. Real People. Real Reviews.',
               shareUrl: 'https://yoouz.com/@avr6566gd/video/rev-1787774080951-vuu2k'
             };
-          } else if (preset === 'ibm') {
-            url += '?type=video&id=rev-1787990803895-2ftsu&v=4';
+          } else if (preset === 'l500') {
+            url += '?type=video&id=rev-1788290824170-vg5vg&v=4';
             details = {
-              title: "aouisesmee's 60s Video Review of IBM | Yoouz",
-              description: 'Watch the authentic 60-second video review by aouisesmee for IBM on Yoouz. Real People. Real Reviews.',
-              shareUrl: 'https://yoouz.com/@aouisesmee/video/rev-1787990803895-2ftsu'
+              title: "aouisesmee's 60s Video Review of Legal 500 | Yoouz",
+              description: 'Watch the authentic 60-second video review by aouisesmee for Legal 500 on Yoouz. Real People. Real Reviews.',
+              shareUrl: 'https://yoouz.com/@aouisesmee/video/rev-1788290824170-vg5vg'
             };
-          } else if (preset === 'taj') {
-            url += '?type=video&id=rev-1787767013276-ee969&v=4';
+          } else if (preset === 'dubaidigital') {
+            url += '?type=video&id=rev-1788279180166-rh08t&v=4';
             details = {
-              title: "avt ertuop's 60s Video Review of Taj Hotels | Yoouz",
-              description: 'Watch the authentic 60-second video review by avt ertuop for Taj Hotels on Yoouz. Real People. Real Reviews.',
-              shareUrl: 'https://yoouz.com/@avt/video/rev-1787767013276-ee969'
+              title: "aouisesmee's 60s Video Review of Dubai Digital Park | Yoouz",
+              description: 'Watch the authentic 60-second video review by aouisesmee for Dubai Digital Park on Yoouz. Real People. Real Reviews.',
+              shareUrl: 'https://yoouz.com/@aouisesmee/video/rev-1788279180166-rh08t'
             };
           }
 
