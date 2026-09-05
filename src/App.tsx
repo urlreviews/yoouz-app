@@ -3806,7 +3806,7 @@ export function App() {
         {/* If in Feed View (Home, Clubs) or Place / Creator drawer views: Display center video player */}
         {(isPlaceView || isCreatorView || activeSection === "home" || activeSection === "clubs") && (
             <CopoVideoPlayer
-              isPaused={Boolean(isCreateModalOpen || isAuthModalOpen || (activeSection !== "home" && activeSection !== "clubs"))}
+              isPaused={Boolean(isCreateModalOpen || isAuthModalOpen || (activeSection !== "home" && activeSection !== "clubs" && !isPlaceView && !isCreatorView))}
               contextKey={currentFeedContextKey}
               onOpenCreateModal={() => {
                 if (!currentUser) {
