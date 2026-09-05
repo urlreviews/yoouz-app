@@ -34,6 +34,7 @@ import { formatRecordedDate } from "../utils/dateUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoMessagesViewProps {
   messages: CopoMessage[];

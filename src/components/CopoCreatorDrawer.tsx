@@ -34,6 +34,9 @@ import { Country, State, City } from "country-state-city";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { triggerHaptic } from "../utils/haptics";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
+import { useLanguage } from "../i18n/LanguageContext";
+import { LanguageSelectorModal } from "./LanguageSelectorModal";
+import { Globe } from "lucide-react";
 
 interface CopoCreatorDrawerProps {
   author: VideoAuthor | null;
@@ -72,6 +75,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const { currentLanguageMeta } = useLanguage();
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const [videoToDeleteInDrawer, setVideoToDeleteInDrawer] = useState<VideoReview | null>(null);
@@ -1308,6 +1313,29 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 })()}
               </div>
 
+              {/* App Language & Localization Option */}
+              <div className="pt-2 border-t border-zinc-800 space-y-1.5">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                  Language & Region
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsLangModalOpen(true)}
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 hover:bg-zinc-800/80 border border-zinc-800 text-left transition-colors cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Globe className="w-4 h-4 text-zinc-400 group-hover:text-white" />
+                    <div>
+                      <p className="text-xs font-bold text-zinc-200 group-hover:text-white">App Language</p>
+                      <p className="text-[11px] text-zinc-400">{currentLanguageMeta.flag} {currentLanguageMeta.nativeName} ({currentLanguageMeta.name})</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-300 font-mono uppercase border border-zinc-700">
+                    {currentLanguageMeta.code}
+                  </span>
+                </button>
+              </div>
+
               {/* Actions & Buttons */}
               <div className="flex gap-3 pt-3 border-t border-zinc-800">
                 <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 py-3 rounded-2xl border border-zinc-800 text-sm font-bold text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">Cancel</button>
@@ -1393,6 +1421,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
         </div>
       )}
+
+      {/* Language Selector Modal */}
+      <LanguageSelectorModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+      />
     </>
   );
 };

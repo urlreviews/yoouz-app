@@ -61,10 +61,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // Update HTML root attributes for accessibility, native layout & SEO
+  // Update HTML root attributes for accessibility & SEO
+  // Maintain 'ltr' document direction to preserve consistent video player, navigation, and hamburger layout across all languages (including RTL)
   useEffect(() => {
     document.documentElement.lang = language;
-    document.documentElement.dir = isRTL ? "rtl" : "ltr";
+    document.documentElement.dir = "ltr";
     
     // Update or create hreflang & og:locale meta tags for SEO
     let metaLocale = document.querySelector('meta[property="og:locale"]');

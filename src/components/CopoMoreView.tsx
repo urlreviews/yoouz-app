@@ -1401,8 +1401,24 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           )}
         </section>
 
-        {/* 4. Google-Standard Footer */}
-        <footer className="pt-8 pb-14 border-t border-zinc-800 text-center space-y-3.5 text-xs text-zinc-400">
+        {/* 4. Google-Standard Footer with Language Selector */}
+        <footer className="pt-8 pb-14 border-t border-zinc-800 text-center space-y-4 text-xs text-zinc-400">
+          {/* Centered Clean Language Selector */}
+          <div className="flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => setIsLangModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition-all cursor-pointer text-xs font-semibold shadow-xs group"
+            >
+              <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
+              <span>{currentLanguageMeta.flag}</span>
+              <span>{currentLanguageMeta.nativeName}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 group-hover:bg-zinc-700 group-hover:text-zinc-200 uppercase font-mono">
+                {currentLanguageMeta.code}
+              </span>
+            </button>
+          </div>
+
           <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-400 flex-wrap">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : null}

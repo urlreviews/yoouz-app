@@ -47,7 +47,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
         id="language-selector-modal-card"
         className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[88vh] text-white"
         onClick={(e) => e.stopPropagation()}
-        dir={isRTL ? "rtl" : "ltr"}
+        dir="ltr"
       >
         {/* Header */}
         <div className="px-6 py-5 border-b border-zinc-800/80 flex items-center justify-between">
@@ -76,23 +76,19 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
         {/* Search Bar & Region Tabs */}
         <div className="p-4 border-b border-zinc-800/80 bg-zinc-950/50 space-y-3">
           <div className="relative">
-            <Search className={`w-4 h-4 text-zinc-400 absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-3.5" : "left-3.5"}`} />
+            <Search className="w-4 h-4 text-zinc-400 absolute top-1/2 -translate-y-1/2 left-3.5" />
             <input
               id="language-search-input"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by language, country, or code (e.g., German, 日本語, Arabic)..."
-              className={`w-full py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-white transition-colors ${
-                isRTL ? "pr-10 pl-4" : "pl-10 pr-4"
-              }`}
+              className="w-full py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-white transition-colors pl-10 pr-4"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className={`absolute top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white ${
-                  isRTL ? "left-3.5" : "right-3.5"
-                }`}
+                className="absolute top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white right-3.5"
               >
                 <X className="w-4 h-4" />
               </button>

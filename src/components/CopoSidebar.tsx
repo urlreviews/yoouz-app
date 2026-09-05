@@ -151,23 +151,8 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           </nav>
         </div>
 
-        {/* Footer & Language Selector / Legal Links */}
-        <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2.5">
-          {/* Quick Language Switcher Button */}
-          <button
-            id="sidebar-language-selector-btn"
-            onClick={() => setIsLangModalOpen(true)}
-            className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition-all cursor-pointer text-xs font-medium group"
-          >
-            <div className="flex items-center gap-2">
-              <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
-              <span>{currentLanguageMeta.nativeName}</span>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 group-hover:bg-zinc-700 group-hover:text-zinc-200 uppercase font-mono">
-              {currentLanguageMeta.code}
-            </span>
-          </button>
-
+        {/* Footer & Legal Links */}
+        <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2">
           <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}

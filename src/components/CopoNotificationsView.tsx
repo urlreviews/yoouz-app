@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { CopoNotification, UserProfile, VideoReview } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoNotificationsViewProps {
   notifications: CopoNotification[];
@@ -56,6 +57,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   onClearAll,
   onSuccessAuth
 }) => {
+  const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
   // Unauthenticated Gating View
@@ -309,12 +311,12 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">
-                Notifications
+                {t("nav.notifications", "Notifications")}
               </h2>
               <p className="text-[12px] text-zinc-400 font-medium mt-1">
                 {unreadCount > 0
-                  ? `${unreadCount} new update${unreadCount > 1 ? "s" : ""}`
-                  : "You're all caught up"}
+                  ? `${unreadCount} ${t("common.just_now", "updates")}`
+                  : t("common.success", "All caught up")}
               </p>
             </div>
           </div>

@@ -15,6 +15,7 @@ import { VideoReview, UserProfile } from "../types";
 import { getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoBookmarksViewProps {
   bookmarkedVideos: VideoReview[];
@@ -41,6 +42,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
   onNavigateHome,
   onSuccessAuth
 }) => {
+  const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   // Unauthenticated Gating View
@@ -101,11 +103,11 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               <Bookmark className="w-5 h-5 fill-current" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Saved Bucket List</h2>
+              <h2 className="text-xl font-bold text-white tracking-tight">{t("nav.bookmarks", "Bookmarks")}</h2>
               <p className="text-xs text-zinc-400 font-medium">
                 {bookmarkedVideos.length > 0
-                  ? `You have curated ${bookmarkedVideos.length} visual recommendation${bookmarkedVideos.length > 1 ? "s" : ""}`
-                  : "Curate your private visual guide"}
+                  ? `${bookmarkedVideos.length} ${t("place.reviews", "Video Reviews")}`
+                  : t("video.no_reviews", "No video reviews yet")}
               </p>
             </div>
           </div>
@@ -269,10 +271,10 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               <Bookmark className="w-7 h-7 fill-current" />
             </div>
             <h3 className="font-extrabold text-white text-base mb-1">
-              Curate your private bucket list
+              {t("nav.bookmarks", "Bookmarks")}
             </h3>
             <p className="text-xs text-zinc-400 max-w-sm leading-relaxed font-semibold mb-6">
-              Tap the bookmark icon on any video review in the discover feed to save locations or dining guides to your personal map!
+              {t("video.no_reviews", "No video reviews yet")}
             </p>
 
             {onNavigateHome && (
@@ -281,7 +283,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                 className="px-5 py-2.5 rounded-full text-xs font-bold bg-white hover:bg-zinc-200 text-zinc-950 shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Compass className="w-4 h-4" />
-                <span>Discover amazing places</span>
+                <span>{t("nav.discover", "Discover")}</span>
               </button>
             )}
           </div>
