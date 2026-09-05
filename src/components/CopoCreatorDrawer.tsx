@@ -202,8 +202,43 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  // State to hold live fetched user profile for this creator
-  const [liveUserProfile, setLiveUserProfile] = useState<{ avatar?: string; banner?: string; bio?: string; name?: string; location?: string } | null>(null);
+  // State to hold live fetched user profile for this creator (initialized synchronously to prevent location blinking)
+  const [liveUserProfile, setLiveUserProfile] = useState<{ avatar?: string; banner?: string; bio?: string; name?: string; location?: string } | null>(() => {
+    if (currentUser) return currentUser;
+    if (!author) return null;
+    const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
+    if (allUsers && allUsers.length > 0) {
+      const matched = allUsers.find((u: any) => {
+        const uName = (u.name || "").trim().toLowerCase();
+        const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
+        const uEmail = (u.email || "").split("@")[0].toLowerCase();
+        return uName === authorIdentifier || uHandle === authorIdentifier || uEmail === authorIdentifier;
+      });
+      if (matched) return matched;
+    }
+    try {
+      const savedUsers = localStorage.getItem("yoouz_all_users");
+      if (savedUsers) {
+        const parsed = JSON.parse(savedUsers);
+        if (Array.isArray(parsed)) {
+          const matched = parsed.find((u: any) => {
+            const uName = (u.name || "").trim().toLowerCase();
+            const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
+            const uEmail = (u.email || "").split("@")[0].toLowerCase();
+            return uName === authorIdentifier || uHandle === authorIdentifier || uEmail === authorIdentifier;
+          });
+          if (matched) return matched;
+        }
+      }
+      const savedProfile = localStorage.getItem("copo_user_profile");
+      if (savedProfile) {
+        const parsed = JSON.parse(savedProfile);
+        const pName = (parsed.name || "").trim().toLowerCase();
+        if (pName === authorIdentifier) return parsed;
+      }
+    } catch (e) {}
+    return author;
+  });
 
   useEffect(() => {
     if (!author) return;
