@@ -383,12 +383,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black tracking-wide uppercase">
-                    Yoouz Hub
+                    {t("trustCenter.hub", "Yoouz Hub")}
                   </span>
-                  <span className="text-xs text-zinc-400 font-semibold">• Trust, Verification & Support</span>
+                  <span className="text-xs text-zinc-400 font-semibold">• {t("trustCenter.subtitle", "Trust, Verification & Support")}</span>
                 </div>
                 <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight mt-0.5">
-                  Knowledge & Trust Center
+                  {t("trustCenter.title", "Knowledge & Trust Center")}
                 </h1>
               </div>
             </div>
@@ -400,14 +400,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Search className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Search</span>
+                <span>{t("nav.search", "Search")}</span>
               </button>
               <button
                 onClick={() => onNavigate("discover")}
                 className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Compass className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Discover</span>
+                <span>{t("nav.discover", "Discover")}</span>
               </button>
               {currentUser && (
                 <button
@@ -415,7 +415,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <User className="w-3.5 h-3.5" />
-                  <span>My Profile</span>
+                  <span>{t("nav.profile", "My Profile")}</span>
                 </button>
               )}
             </div>
@@ -491,7 +491,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               }`}
             >
               <Info className="w-4 h-4" />
-              <span>Trust Protocol</span>
+              <span>{t("trustCenter.trustProtocol", "Trust Protocol")}</span>
             </button>
 
             <button
@@ -503,7 +503,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               }`}
             >
               <HelpCircle className="w-4 h-4" />
-              <span>Help & FAQs</span>
+              <span>{t("trustCenter.helpFaqs", "Help & FAQs")}</span>
             </button>
 
             <button
@@ -515,7 +515,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               }`}
             >
               <Building2 className="w-4 h-4" />
-              <span>For Businesses</span>
+              <span>{t("trustCenter.forBusinesses", "For Businesses")}</span>
             </button>
 
             <button
@@ -527,7 +527,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               }`}
             >
               <Shield className="w-4 h-4" />
-              <span>Privacy & Security</span>
+              <span>{t("trustCenter.privacySecurity", "Privacy & Security")}</span>
             </button>
 
             <button
@@ -555,7 +555,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               }`}
             >
               <Mail className="w-4 h-4" />
-              <span>Contact Support</span>
+              <span>{t("trustCenter.contactSupport", "Contact Support")}</span>
             </button>
           </div>
         </section>

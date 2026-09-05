@@ -333,8 +333,8 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             >
               <Video className="w-[24px] h-[24px] stroke-[2.2] text-zinc-950" />
             </button>
-            <span className="text-[9px] tracking-tight mt-1 font-bold text-white">
-              {t("nav.record_review", "Record")}
+            <span className="text-[9px] tracking-tight mt-1 font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[64px]">
+              {t("nav.record_review", "Review")}
             </span>
           </div>
 

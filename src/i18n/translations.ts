@@ -126,6 +126,27 @@ export interface TranslationSchema {
     analytics: string;
     upgrade: string;
   };
+  trustCenter: {
+    hub: string;
+    subtitle: string;
+    title: string;
+    pillarsTitle: string;
+    pillarsDesc: string;
+    strictRule: string;
+    rule1Title: string;
+    rule1Desc: string;
+    pillar2: string;
+    rule2Title: string;
+    rule2Desc: string;
+    pillar3: string;
+    rule3Title: string;
+    rule3Desc: string;
+    trustProtocol: string;
+    helpFaqs: string;
+    forBusinesses: string;
+    privacySecurity: string;
+    contactSupport: string;
+  };
 }
 
 export type SupportedLanguage =
@@ -316,7 +337,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       business: "For Businesses",
       profile: "Profile",
       more: "More",
-      record_review: "Record Review",
+      record_review: "Review",
       language: "Language"
     },
     common: {
@@ -431,6 +452,27 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       dashboard: "Owner Dashboard",
       analytics: "Video Insights",
       upgrade: "Upgrade Plan"
+    },
+    trustCenter: {
+      hub: "Yoouz Hub",
+      subtitle: "Trust, Verification & Support",
+      title: "Knowledge & Trust Center",
+      pillarsTitle: "Proof of Presence. Real People. Verified Places.",
+      pillarsDesc: "Traditional text reviews are vulnerable to bot networks, fake accounts, and AI-generated reviews. Yoouz creates authentic trust by capturing short 60-second video reviews recorded exclusively through live device cameras.",
+      strictRule: "STRICT RULE",
+      rule1Title: "Live Front-Camera Only",
+      rule1Desc: "No pre-recorded MP4 uploads or stock footage. Real customers capturing authentic experiences.",
+      pillar2: "PILLAR 2",
+      rule2Title: "60-Second Focus",
+      rule2Desc: "Concise, high-impact video reviews that deliver immediate value in under one minute.",
+      pillar3: "PILLAR 3",
+      rule3Title: "3-Way Dialogue",
+      rule3Desc: "Living comment threads connecting Reviewers, curious Viewers, and Verified Place Owners.",
+      trustProtocol: "Trust Protocol",
+      helpFaqs: "Help & FAQs",
+      forBusinesses: "For Businesses",
+      privacySecurity: "Privacy & Security",
+      contactSupport: "Contact Support"
     }
   },
   ar: {
@@ -574,7 +616,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       business: "Para Empresas",
       profile: "Perfil",
       more: "Más",
-      record_review: "Grabar Reseña",
+      record_review: "Reseña",
       language: "Idioma"
     },
     common: {
@@ -703,7 +745,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       business: "Pour les Pros",
       profile: "Profil",
       more: "Plus",
-      record_review: "Enregistrer un avis",
+      record_review: "Avis",
       language: "Langue"
     },
     common: {
@@ -832,7 +874,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       business: "Für Unternehmen",
       profile: "Profil",
       more: "Mehr",
-      record_review: "Bewertung aufnehmen",
+      record_review: "Bewertung",
       language: "Sprache"
     },
     common: {
@@ -947,6 +989,27 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       dashboard: "Inhaber-Dashboard",
       analytics: "Video-Analysen",
       upgrade: "Plan upgraden"
+    },
+    trustCenter: {
+      hub: "Yoouz Zentrum",
+      subtitle: "Vertrauen, Verifikation & Support",
+      title: "Wissens- & Vertrauenszentrum",
+      pillarsTitle: "Präsenz-Nachweis. Echte Menschen. Verifizierte Orte.",
+      pillarsDesc: "Traditionelle Textbewertungen sind anfällig für Bot-Netzwerke, gefälschte Konten und KI-generierte Bewertungen. Yoouz schafft echtes Vertrauen durch kurze 60-Sekunden-Video-Bewertungen, die ausschließlich über Live-Gerätekameras aufgenommen werden.",
+      strictRule: "STRIKTE REGEL",
+      rule1Title: "Nur Live-Frontkamera",
+      rule1Desc: "Keine vorab aufgezeichneten MP4-Uploads oder Stock-Footage. Echte Kunden erfassen authentische Erlebnisse.",
+      pillar2: "SÄULE 2",
+      rule2Title: "60-Sekunden-Fokus",
+      rule2Desc: "Prägnante, wirkungsvolle Video-Bewertungen, die in unter einer Minute direkten Mehrwert bieten.",
+      pillar3: "SÄULE 3",
+      rule3Title: "3-Wege-Dialog",
+      rule3Desc: "Lebendige Kommentar-Threads, die Reviewer, neugierige Zuschauer und verifizierte Inhaber verbinden.",
+      trustProtocol: "Vertrauensprotokoll",
+      helpFaqs: "Hilfe & FAQs",
+      forBusinesses: "Für Unternehmen",
+      privacySecurity: "Datenschutz & Sicherheit",
+      contactSupport: "Support kontaktieren"
     }
   },
   it: {
@@ -961,7 +1024,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       business: "Per le Aziende",
       profile: "Profilo",
       more: "Altro",
-      record_review: "Registra Recensione",
+      record_review: "Recensione",
       language: "Lingua"
     },
     common: {
@@ -1090,7 +1153,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       business: "Para Empresas",
       profile: "Perfil",
       more: "Mais",
-      record_review: "Gravar Avaliação",
+      record_review: "Avaliação",
       language: "Idioma"
     },
     common: {
@@ -2122,7 +2185,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       business: "Voor Bedrijven",
       profile: "Profiel",
       more: "Meer",
-      record_review: "Review opnemen",
+      record_review: "Review",
       language: "Taal"
     },
     common: {
