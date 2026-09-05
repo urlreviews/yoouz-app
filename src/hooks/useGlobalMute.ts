@@ -1,26 +1,32 @@
 import { useState, useEffect } from 'react';
 
-// Retrieve persistent audio preference from localStorage (safely defaulting to false/true on first cold visit)
-const getInitialMuted = (): boolean => {
-  if (typeof window === 'undefined') return true;
-  try {
-    const saved = localStorage.getItem("yoouz_sound_muted");
-    if (saved === "false") return false;
-  } catch {}
-  return true;
-};
+// Browser autoplay policies strictly require user interaction on the CURRENT document before unmuting media.
+// Attempting unmuted playback on fresh document load causes Chrome/Safari to pause the video and log:
+// "Unmuting failed and the element was paused instead because the user didn't interact with the document before."
+// Therefore, on cold page load / fresh document session, audio MUST always start muted (isMuted = true, isUnlocked = false).
+// This guarantees that the first video plays instantly at 60fps without browser interference,
+// and the prominent "Tap to Unmute" button is GUARANTEED to appear immediately on the first video.
+let globalAudioUnlocked = false;
+let globalIsMuted = true;
 
-const getInitialUnlocked = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  try {
-    const saved = localStorage.getItem("yoouz_sound_muted");
-    if (saved === "false") return true;
-  } catch {}
-  return false;
-};
-
-let globalAudioUnlocked = getInitialUnlocked();
-let globalIsMuted = getInitialMuted();
+// If the user previously chose unmuted audio in a past session, as soon as they tap or click ANYWHERE
+// on the page (an authentic user gesture), immediately unlock the audio session safely!
+if (typeof window !== 'undefined') {
+  const onFirstInteraction = () => {
+    window.removeEventListener('click', onFirstInteraction, true);
+    window.removeEventListener('touchstart', onFirstInteraction, true);
+    window.removeEventListener('keydown', onFirstInteraction, true);
+    try {
+      const saved = localStorage.getItem("yoouz_sound_muted");
+      if (saved === "false" && !globalAudioUnlocked) {
+        triggerAudioUnlock();
+      }
+    } catch {}
+  };
+  window.addEventListener('click', onFirstInteraction, { capture: true, once: true });
+  window.addEventListener('touchstart', onFirstInteraction, { capture: true, once: true });
+  window.addEventListener('keydown', onFirstInteraction, { capture: true, once: true });
+}
 
 let sharedAudioContext: AudioContext | null = null;
 let hasCreatedUnlockBuffer = false;

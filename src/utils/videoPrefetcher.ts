@@ -36,19 +36,7 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
     img.src = posterUrl;
   }
 
-  // 2. Browser Native Video Resource Hint Preload
-  try {
-    if (typeof document !== "undefined" && url.startsWith("http")) {
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "video";
-      link.href = url;
-      link.crossOrigin = "anonymous";
-      document.head.appendChild(link);
-    }
-  } catch (e) {}
-
-  // 3. Ultra-Lightweight HTTP Range Warm-Up (fetches first 512KB header chunk & initial video frames)
+  // 2. Ultra-Lightweight HTTP Range Warm-Up (fetches first 512KB header chunk & initial video frames into disk/memory cache)
   try {
     fetch(url, {
       method: "GET",
