@@ -96,7 +96,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   businessBannerUrl,
   cardRef,
   
-  hasUserStartedFeed = true,
+  hasUserStartedFeed = false,
   onStartFeed,
   isSessionAudioUnlocked = false,
   onUnlockAudio,
@@ -667,8 +667,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       </div>
 
-      {/* Center Play Button (Shown ONLY when feed is not yet started or video is manually paused) */}
-      {isActive && (!hasUserStartedFeed || isManuallyPaused) && (
+      {/* Center Play Button (Shown when feed is not yet started, paused, or stopped) */}
+      {isActive && (!hasUserStartedFeed || isManuallyPaused || !isPlaying) && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto">
           <button
             type="button"

@@ -94,8 +94,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Initial feed state: starts true so the first video starts playing immediately on load in muted mode (app.copo.st standard)
-  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(true);
+  // Initial feed state: starts false so first video requires explicit Play button click / tap to start (matches screenshot & app.copo.st standard)
+  const [hasUserStartedFeed, setHasUserStartedFeed] = useState<boolean>(false);
 
   // Edit Rating State
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
@@ -232,8 +232,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [currentIndex, videos, onLoadMore]);
 
-  // Ultra-smooth IntersectionObserver index detection (TikTok / Instagram Reels style)
-  // Uses 65% visibility threshold so swipe doesn't prematurely trigger mid-drag
+  // Ultra-responsive IntersectionObserver index detection
+  // Uses 50% midpoint threshold so the active card switches seamlessly during the swipe
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -242,9 +242,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       (entries) => {
         if (isProgrammaticScrollRef.current) return;
 
-        // Strict threshold: only switch active card when swipe is committed and card covers >= 65% of screen
         const visibleEntries = entries.filter(
-          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.65
+          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5
         );
         if (visibleEntries.length === 0) return;
 
@@ -257,7 +256,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (!isNaN(idx) && idx !== currentIndexRef.current) {
             currentIndexRef.current = idx;
             lastObserverIndexRef.current = idx;
-            setHasUserStartedFeed(true);
             onSelectVideoIndex(idx);
             prefetchUpcomingVideos(videos, idx);
           }
@@ -265,7 +263,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       },
       {
         root: container,
-        threshold: [0.65, 0.85]
+        threshold: [0.5, 0.75]
       }
     );
 
@@ -278,15 +276,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [videos, onSelectVideoIndex]);
 
-  // Dual Settle Engine: Native scrollend event + fallback debounced settle listener
-  // Guarantees exact snap alignment without lag or mid-drag re-rendering stutter
+  // Zero-Latency Frame-Synchronized Settle Engine
+  // Real-time scroll frame updates via requestAnimationFrame ensuring zero delay on mobile swipes
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    let settleTimer: NodeJS.Timeout | null = null;
+    let rafId: number | null = null;
 
-    const onScrollSettle = () => {
+    const syncScrollIndex = () => {
       if (isProgrammaticScrollRef.current || !container) return;
       const containerHeight = container.clientHeight;
       if (!containerHeight || containerHeight <= 0) return;
@@ -299,7 +297,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       ) {
         currentIndexRef.current = settledIndex;
         lastObserverIndexRef.current = settledIndex;
-        setHasUserStartedFeed(true);
         onSelectVideoIndex(settledIndex);
         prefetchUpcomingVideos(videos, settledIndex);
       }
@@ -307,18 +304,17 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     const handleScroll = () => {
       if (isProgrammaticScrollRef.current) return;
-      if (settleTimer) clearTimeout(settleTimer);
-      settleTimer = setTimeout(onScrollSettle, 80);
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(syncScrollIndex);
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-    // Modern browser standard event for CSS scroll snap completion
-    container.addEventListener("scrollend", onScrollSettle, { passive: true });
+    container.addEventListener("scrollend", syncScrollIndex, { passive: true });
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
-      container.removeEventListener("scrollend", onScrollSettle);
-      if (settleTimer) clearTimeout(settleTimer);
+      container.removeEventListener("scrollend", syncScrollIndex);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [videos, onSelectVideoIndex]);
 
