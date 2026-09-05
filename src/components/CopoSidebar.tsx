@@ -265,19 +265,19 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "home"
                 ? "text-white"
-                : "text-zinc-200 hover:text-white"
+                : "text-zinc-100 hover:text-white"
             }`}
           >
             <Home
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "home"
                   ? "scale-110 fill-white/20 stroke-[2.5] text-white"
-                  : "stroke-[2] text-zinc-200"
+                  : "stroke-[2.2] text-zinc-100"
               }`}
             />
             <span
               className={`text-[10px] tracking-tight mt-1 ${
-                activeSection === "home" ? "font-bold text-white" : "font-medium text-zinc-200"
+                activeSection === "home" ? "font-bold text-white" : "font-medium text-zinc-100"
               }`}
             >
               {t("nav.home", "Home")}
@@ -294,7 +294,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "search" || activeSection === "discover"
                 ? "text-white"
-                : "text-zinc-200 hover:text-white"
+                : "text-zinc-100 hover:text-white"
             }`}
           >
             <div className="relative">
@@ -302,7 +302,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 className={`w-[22px] h-[22px] transition-transform duration-200 ${
                   activeSection === "search" || activeSection === "discover"
                     ? "scale-110 stroke-[2.5] text-white"
-                    : "stroke-[2] text-zinc-200"
+                    : "stroke-[2.2] text-zinc-100"
                 }`}
               />
             </div>
@@ -310,7 +310,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               className={`text-[10px] tracking-tight mt-1 ${
                 activeSection === "search" || activeSection === "discover"
                   ? "font-bold text-white"
-                  : "font-medium text-zinc-200"
+                  : "font-medium text-zinc-100"
               }`}
             >
               {t("nav.search", "Search")}
@@ -345,7 +345,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             className={`relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "messages" || activeSection === "notifications"
                 ? "text-white"
-                : "text-zinc-200 hover:text-white"
+                : "text-zinc-100 hover:text-white"
             }`}
           >
             <div className="relative">
@@ -353,7 +353,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 className={`w-[22px] h-[22px] transition-transform duration-200 ${
                   activeSection === "messages" || activeSection === "notifications"
                     ? "scale-110 stroke-[2.5] text-white"
-                    : "stroke-[2] text-zinc-200"
+                    : "stroke-[2.2] text-zinc-100"
                 }`}
               />
               {(unreadMessagesCount + unreadNotifsCount) > 0 && (
@@ -366,7 +366,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               className={`text-[10px] tracking-tight mt-1 ${
                 activeSection === "messages" || activeSection === "notifications"
                   ? "font-bold text-white"
-                  : "font-medium text-zinc-200"
+                  : "font-medium text-zinc-100"
               }`}
             >
               {t("nav.messages", "Inbox")}
@@ -380,7 +380,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "profile" || activeSection === "more"
                 ? "text-white"
-                : "text-zinc-200 hover:text-white"
+                : "text-zinc-100 hover:text-white"
             }`}
           >
             {currentUser?.avatar ? (
@@ -399,13 +399,13 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 className={`w-[22px] h-[22px] transition-transform duration-200 ${
                   activeSection === "profile" || activeSection === "more"
                     ? "scale-110 stroke-[2.5] text-white"
-                    : "stroke-[2] text-zinc-200"
+                    : "stroke-[2.2] text-zinc-100"
                 }`}
               />
             )}
             <span
               className={`text-[10px] tracking-tight mt-1 ${
-                activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-200"
+                activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-100"
               }`}
             >
               {currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}
