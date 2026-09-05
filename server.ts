@@ -100,22 +100,23 @@ async function sendResendEmail(params: {
 }): Promise<{ success: boolean; error?: string; simulated?: boolean; fromUsed?: string }> {
   const resend = getResendClient();
   if (!resend) {
-    console.info(`[Email Service] RESEND_API_KEY is not configured. Email to ${JSON.stringify(params.to)} simulated.`);
-    return { success: true, simulated: true };
+    console.info(`[Email Service] RESEND_API_KEY is not configured. Email to ${JSON.stringify(params.to)} cannot be sent.`);
+    return { success: false, error: "RESEND_API_KEY is not configured on the server." };
   }
 
   const defaultSenderName = params.fromName || "Yoouz";
   const configuredFrom = (process.env.RESEND_FROM_EMAIL || "").replace(/^["']|["']$/g, '').trim();
   
   // Potential senders in order of priority:
-  // 1. Explicitly configured RESEND_FROM_EMAIL in .env (if set)
-  // 2. Custom domain sender: "Yoouz <no-reply@yoouz.com>"
-  // 3. Official Resend Sandbox sender: "Yoouz <onboarding@resend.dev>"
+  // 1. Explicitly configured RESEND_FROM_EMAIL in .env (e.g. no-reply@yoouz.com or onboarding@resend.dev)
+  // 2. Verified domain addresses
+  // 3. Official Resend Sandbox address
   const sendersToTry: string[] = [];
   if (configuredFrom) {
     sendersToTry.push(configuredFrom.includes('<') ? configuredFrom : `${defaultSenderName} <${configuredFrom}>`);
   }
   sendersToTry.push(`${defaultSenderName} <no-reply@yoouz.com>`);
+  sendersToTry.push(`${defaultSenderName} <auth@yoouz.com>`);
   sendersToTry.push(`${defaultSenderName} <onboarding@resend.dev>`);
 
   const uniqueSenders = Array.from(new Set(sendersToTry));
@@ -136,13 +137,13 @@ async function sendResendEmail(params: {
       const sendResult = await resend.emails.send(payload);
 
       if (sendResult?.data && !sendResult?.error) {
-        console.info(`[Email Service] Successfully dispatched email from "${fromAddress}" to ${JSON.stringify(toList)}`);
+        console.info(`[Email Service] Successfully dispatched email via Resend from "${fromAddress}" to ${JSON.stringify(toList)}`);
         return { success: true, fromUsed: fromAddress };
       }
 
       if (sendResult?.error) {
         lastError = sendResult.error.message || JSON.stringify(sendResult.error);
-        console.warn(`[Email Service] Attempt with "${fromAddress}" failed:`, lastError);
+        console.warn(`[Email Service] Attempt with "${fromAddress}" returned error:`, lastError);
       }
     } catch (e: any) {
       lastError = e?.message || "Unknown delivery failure";
@@ -150,7 +151,7 @@ async function sendResendEmail(params: {
     }
   }
 
-  console.error(`[Email Service] All sender attempts failed for ${JSON.stringify(toList)}. Last error:`, lastError);
+  console.error(`[Email Service] All Resend delivery attempts failed for ${JSON.stringify(toList)}. Last error:`, lastError);
   return { success: false, error: lastError };
 }
 
@@ -6428,19 +6429,19 @@ app.post("/api/videos/save-review", async (req, res) => {
         fromName: "Yoouz"
       });
 
-      console.info(`[Auth] Verification code generated for ${cleanEmail}: ${otpCode}. Delivery result:`, sendResult);
+      console.info(`[Auth] Email dispatch to ${cleanEmail} result:`, sendResult);
+
+      if (!sendResult.success) {
+        return res.status(500).json({
+          success: false,
+          error: sendResult.error || "Unable to send verification email. Please check your email address."
+        });
+      }
 
       return res.json({
         success: true,
         email: cleanEmail,
-        magicLinkUrl,
-        devCode: otpCode,
-        otpCode: otpCode,
-        delivered: sendResult.success,
-        simulated: Boolean(sendResult.simulated),
-        message: sendResult.success 
-          ? `Sign-in verification code sent to ${cleanEmail}.` 
-          : `Verification code generated (${otpCode}). Please enter it to sign in.`
+        message: `We've sent a 6-digit confirmation code to ${cleanEmail}.`
       });
     } catch (err: any) {
       console.error("send user magic-link error:", err);
@@ -6803,20 +6804,20 @@ app.post("/api/videos/save-review", async (req, res) => {
         fromName: "Yoouz Business"
       });
 
-      console.info(`[Business Auth] Verification code generated for ${cleanEmail} (${cleanPlaceName}): ${otpCode}. Delivery result:`, sendResult);
+      console.info(`[Business Auth] Email dispatch to ${cleanEmail} (${cleanPlaceName}) result:`, sendResult);
+
+      if (!sendResult.success) {
+        return res.status(500).json({
+          success: false,
+          error: sendResult.error || "Unable to send verification email. Please check your official business email address."
+        });
+      }
 
       return res.json({
         success: true,
         email: cleanEmail,
         placeId: cleanPlaceId,
-        magicLinkUrl,
-        devCode: otpCode,
-        otpCode: otpCode,
-        delivered: sendResult.success,
-        simulated: Boolean(sendResult.simulated),
-        message: sendResult.success 
-          ? `Official verification code dispatched via Resend to ${cleanEmail}.` 
-          : `Verification code generated (${otpCode}). Please enter it to verify.`
+        message: `Official verification code dispatched via email to ${cleanEmail}.`
       });
     } catch (err: any) {
       console.error("send-magic-link error:", err);

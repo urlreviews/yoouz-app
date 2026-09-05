@@ -115,7 +115,6 @@ export const CopoAuthPrompt: React.FC<{
   const [country, setCountry] = useState<string>("");
   const [stateRegion, setStateRegion] = useState<string>("");
   const [otpCode, setOtpCode] = useState<string>("");
-  const [devHintCode, setDevHintCode] = useState<string>("");
   const [tempUser, setTempUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -145,16 +144,12 @@ export const CopoAuthPrompt: React.FC<{
 
       const data = await res.json();
       if (!res.ok || data.error) {
-        throw new Error(data.error || "Failed to send magic link");
-      }
-
-      if (data.devCode || data.otpCode) {
-        setDevHintCode(data.devCode || data.otpCode);
+        throw new Error(data.error || "Failed to send verification email");
       }
 
       setStep('code');
     } catch (err: any) {
-      setErrorMessage(err.message || "Could not dispatch sign-in email. Please try again.");
+      setErrorMessage(err.message || "Could not dispatch sign-in email. Please check your address and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -454,25 +449,6 @@ export const CopoAuthPrompt: React.FC<{
                 </div>
               </div>
             </div>
-
-            {devHintCode && (
-              <div className="flex items-center justify-between p-2.5 bg-zinc-900 border border-zinc-700/60 rounded-xl text-xs">
-                <div className="flex items-center gap-1.5 overflow-hidden">
-                  <span className="text-zinc-400 text-[11px]">Verification Code:</span>
-                  <span className="font-mono font-bold text-white tracking-widest">{devHintCode}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOtpCode(devHintCode);
-                    handleVerifyCode(undefined, devHintCode);
-                  }}
-                  className="px-2.5 py-1 bg-white hover:bg-zinc-200 text-black font-semibold rounded-lg text-[11px] cursor-pointer transition-colors shadow-sm"
-                >
-                  Autofill Code
-                </button>
-              </div>
-            )}
 
             {errorMessage && (
               <div className="p-3 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">

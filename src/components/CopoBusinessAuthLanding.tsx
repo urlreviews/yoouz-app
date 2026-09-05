@@ -61,7 +61,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [devHintCode, setDevHintCode] = useState<string | null>(null);
   
   // 6-Digit Code State
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
@@ -194,9 +193,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
       const data = await response.json();
       if (response.ok && data.success) {
         setStep('code');
-        if (data.devCode || data.otpCode) {
-          setDevHintCode(data.devCode || data.otpCode);
-        }
         setOtpDigits(['', '', '', '', '', '']);
         setTimeout(() => {
           inputRefs.current[0]?.focus();
@@ -560,26 +556,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     />
                   ))}
                 </div>
-
-                {devHintCode && (
-                  <div className="flex items-center justify-between p-2.5 bg-zinc-900 border border-zinc-700/60 rounded-xl text-xs">
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <span className="text-zinc-400 text-[11px]">Verification Code:</span>
-                      <span className="font-mono font-bold text-white tracking-widest">{devHintCode}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const digits = devHintCode.split('').slice(0, 6);
-                        setOtpDigits(digits);
-                        verifyCode(devHintCode);
-                      }}
-                      className="px-2.5 py-1 bg-white hover:bg-zinc-200 text-black font-semibold rounded-lg text-[11px] cursor-pointer transition-colors shadow-sm"
-                    >
-                      Autofill Code
-                    </button>
-                  </div>
-                )}
 
                 {errorMessage && (
                   <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
