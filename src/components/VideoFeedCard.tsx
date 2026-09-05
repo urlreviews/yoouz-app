@@ -483,12 +483,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               )}
             </button>
 
-            {safeAuthor.location && (
-              <div className="flex items-center gap-1 text-[11.5px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] leading-none shrink-0 w-fit">
-                <MapPin className="w-3 h-3 text-white shrink-0" />
-                <span>{safeAuthor.location}</span>
-              </div>
-            )}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (

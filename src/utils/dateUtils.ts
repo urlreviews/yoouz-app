@@ -11,6 +11,7 @@ export function formatRecordedDate(recordedAt?: string, createdAtMs?: number): s
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
     const diffWeeks = Math.floor(diffDays / 7);
+    if (diffWeeks === 1) return "1 week ago";
     if (diffWeeks < 4) return `${diffWeeks} weeks ago`;
     const date = new Date(createdAtMs);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -41,6 +42,7 @@ export function formatRecordedDate(recordedAt?: string, createdAtMs?: number): s
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
     const diffWeeks = Math.floor(diffDays / 7);
+    if (diffWeeks === 1) return "1 week ago";
     if (diffWeeks < 4) return `${diffWeeks} weeks ago`;
     const date = new Date(parsedTime);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });

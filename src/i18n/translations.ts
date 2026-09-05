@@ -126,7 +126,7 @@ export interface TranslationSchema {
     analytics: string;
     upgrade: string;
   };
-  trustCenter: {
+  trustCenter?: {
     hub: string;
     subtitle: string;
     title: string;
