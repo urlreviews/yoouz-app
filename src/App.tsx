@@ -2166,43 +2166,46 @@ export function App() {
     const targetVid = videos.find((v) => v.id === videoId);
     if (!targetVid) return;
 
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+
     previousVideoIndexRef.current = currentVideoIndex; // Save background feed index before going fullscreen
     if (source === "creator" || isCreatorView) {
       const author = targetVid.author || selectedAuthorForDrawer;
       if (!author) return;
-      setFullscreenFeedContext({
-        type: "creator",
-        id: author.name || author.name,
-        title: "", // Do not show creator person name at top of video
-        authorData: author
-      });
-      setSelectedPlaceIdForDrawer(null);
-      setSelectedAuthorForDrawer(null);
-      setActiveSection("home");
 
-      // Calculate index immediately for zero-lag playback
       const authorVids = videos.filter((v) => !hiddenVideoIds.includes(v.id) && isAuthorMatch(v, author));
       const idx = authorVids.findIndex((v) => v.id === videoId);
-      if (idx !== -1) {
-        setCurrentVideoIndex(idx);
+
+      if (isDesktop) {
+        // Desktop: keep drawer open, update current video index within author vids
+        if (idx !== -1) {
+          setCurrentVideoIndex(idx);
+        } else {
+          setPendingVideoId(videoId);
+        }
       } else {
-        setPendingVideoId(videoId);
+        // Mobile: go fullscreen feed context
+        setFullscreenFeedContext({
+          type: "creator",
+          id: author.name || author.name,
+          title: "", // Do not show creator person name at top of video
+          authorData: author
+        });
+        setSelectedPlaceIdForDrawer(null);
+        setSelectedAuthorForDrawer(null);
+        setActiveSection("home");
+
+        if (idx !== -1) {
+          setCurrentVideoIndex(idx);
+        } else {
+          setPendingVideoId(videoId);
+        }
       }
     } else if (source === "place" || isPlaceView) {
       const p = drawerPlace || places.find(pl => pl.id === targetVid.placeId || pl.name === targetVid.placeName);
       const placeId = p?.id || targetVid.placeId;
       const placeName = p?.name || targetVid.placeName;
-      setFullscreenFeedContext({
-        type: "place",
-        id: placeId,
-        title: placeName || "Business Reviews",
-        placeData: p || null
-      });
-      setSelectedPlaceIdForDrawer(null);
-      setSelectedAuthorForDrawer(null);
-      setActiveSection("home");
 
-      // Calculate index immediately for zero-lag playback
       const placeVids = videos.filter((v) => 
         !hiddenVideoIds.includes(v.id) && (
           (placeId && (v.placeId === placeId || isPlaceReviewMatch(v, placeId))) ||
@@ -2210,10 +2213,31 @@ export function App() {
         )
       );
       const idx = placeVids.findIndex((v) => v.id === videoId);
-      if (idx !== -1) {
-        setCurrentVideoIndex(idx);
+
+      if (isDesktop) {
+        // Desktop: keep drawer open, update current video index within place vids
+        if (idx !== -1) {
+          setCurrentVideoIndex(idx);
+        } else {
+          setPendingVideoId(videoId);
+        }
       } else {
-        setPendingVideoId(videoId);
+        // Mobile: go fullscreen feed context
+        setFullscreenFeedContext({
+          type: "place",
+          id: placeId,
+          title: placeName || "Business Reviews",
+          placeData: p || null
+        });
+        setSelectedPlaceIdForDrawer(null);
+        setSelectedAuthorForDrawer(null);
+        setActiveSection("home");
+
+        if (idx !== -1) {
+          setCurrentVideoIndex(idx);
+        } else {
+          setPendingVideoId(videoId);
+        }
       }
     } else if (source === "profile") {
       setFullscreenFeedContext({
