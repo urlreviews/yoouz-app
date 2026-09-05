@@ -343,7 +343,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 triggerHaptic("light");
                 onClose();
               }}
-              className="w-8 h-8 rounded-full bg-zinc-850 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
+              className="w-8 h-8 rounded-full bg-zinc-850 hidden md:flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
               title="Close comments"
             >
               <X className="w-4 h-4" />
@@ -602,10 +602,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           {/* Creator Hearted Indicator / Bestow Creator Heart */}
                           {comment.likedByCreator ? (
                             <div
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-950/60 text-red-400 text-[10px] font-bold border border-red-900/60"
-                              title="Hearted by the video creator"
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-semibold border border-zinc-700/80 shadow-xs"
+                              title="Liked by the video creator"
                             >
-                              <Heart className="w-2.5 h-2.5 fill-red-500 text-red-500" />
+                              <Heart className="w-2.5 h-2.5 fill-zinc-400 text-zinc-400" />
                               <span>Liked by creator</span>
                             </div>
                           ) : (
@@ -613,7 +613,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                             onToggleCreatorHeart && (
                               <button
                                 onClick={() => onToggleCreatorHeart(video.id, comment.id)}
-                                className="text-zinc-400 hover:text-red-500 transition-colors text-[11px] flex items-center gap-0.5"
+                                className="text-zinc-400 hover:text-zinc-200 transition-colors text-[11px] flex items-center gap-0.5 font-medium"
                                 title="Give Creator Heart"
                               >
                                 <Heart className="w-3 h-3" />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, ShieldCheck, FileText, Scale, ExternalLink, Mail, CheckCircle2, Lock, Camera, Globe } from "lucide-react";
+import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 
 export type LegalDocType = "privacy" | "terms";
 
@@ -32,21 +33,41 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
+    onDismiss: onClose,
+    threshold: 60
+  });
+
   if (!isOpen) return null;
 
   return (
     <div
       id="copo-legal-modal-backdrop"
-      className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
         id="copo-legal-modal-container"
-        className="bg-zinc-900 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-zinc-800 overflow-hidden animate-in zoom-in-95 duration-150 text-white"
+        style={{
+          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
+        }}
+        className="bg-zinc-900 rounded-none sm:rounded-3xl max-w-3xl w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] flex flex-col shadow-2xl border-0 sm:border border-zinc-800 overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-150 text-white"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
+        <div 
+          className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
+          {...swipeProps}
+        >
+          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
+        </div>
+
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950 shrink-0">
+        <div 
+          className="px-6 pt-2 sm:pt-4 pb-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950 shrink-0 touch-pan-y"
+          {...swipeProps}
+        >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white shrink-0">
               <Scale className="w-5 h-5" />
@@ -64,7 +85,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
           <button
             id="copo-legal-modal-close-btn"
             onClick={onClose}
-            className="w-9 h-9 rounded-full hover:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-full hover:bg-zinc-800 hidden sm:flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
             aria-label="Close legal modal"
           >
             <X className="w-5 h-5" />

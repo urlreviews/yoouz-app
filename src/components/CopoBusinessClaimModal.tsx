@@ -17,6 +17,7 @@ import {
   Lock
 } from "lucide-react";
 import { Place } from "../types";
+import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 
 export interface BusinessSession {
   businessEmail: string;
@@ -252,17 +253,37 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
     p.address.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
+    onDismiss: onClose,
+    threshold: 60
+  });
+
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in copo-business-claim-modal"
+      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in copo-business-claim-modal select-none sm:select-auto"
       onClick={onClose}
     >
       <div 
-        className="bg-zinc-900 rounded-3xl max-w-xl w-full shadow-2xl border border-zinc-800 overflow-hidden flex flex-col my-auto relative animate-in zoom-in-95"
+        style={{
+          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
+        }}
+        className="bg-zinc-900 rounded-none sm:rounded-3xl max-w-xl w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] shadow-2xl border-0 sm:border border-zinc-800 overflow-hidden flex flex-col my-0 sm:my-auto relative animate-in slide-in-from-bottom sm:zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
+        <div 
+          className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
+          {...swipeProps}
+        >
+          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
+        </div>
+
         {/* Top Header */}
-        <div className="px-6 py-5 border-b border-zinc-800 flex items-start justify-between">
+        <div 
+          className="px-6 pt-2 sm:pt-5 pb-5 border-b border-zinc-800 flex items-start justify-between shrink-0 touch-pan-y"
+          {...swipeProps}
+        >
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-zinc-800 text-white flex items-center justify-center shadow-sm shrink-0 border border-zinc-700">
               <Building2 className="w-5 h-5" />
@@ -283,7 +304,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hidden sm:flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>

@@ -6,6 +6,7 @@ import { SearchableComboSelector } from "./SearchableComboSelector";
 import { locationData } from "../utils/locationData";
 import { KNOWN_COMMUNITY_USERS } from "../utils/placeUtils";
 import { Country, State, City } from "country-state-city";
+import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 
 export type AuthIntent = 
   | 'general' 
@@ -666,14 +667,39 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
   onOpenHelp,
   onOpenLegal
 }) => {
+  const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
+    onDismiss: onClose,
+    threshold: 60
+  });
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="w-full max-w-[440px] bg-[#09090b] rounded-[28px] shadow-2xl border border-white/[0.08] text-white flex flex-col relative animate-in zoom-in-95 duration-200 overflow-hidden">
-        
-        {/* Header with Close and Help */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-1">
+    <div 
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-6 animate-in fade-in duration-200 select-none sm:select-auto"
+      onClick={onClose}
+    >
+      <div 
+        className="w-full sm:max-w-[440px] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-none bg-[#09090b] rounded-none sm:rounded-[28px] shadow-2xl border-0 sm:border border-white/[0.08] text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto sm:overflow-hidden"
+        style={{
+          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
+        <div 
+          className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
+          {...swipeProps}
+        >
+          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
+        </div>
+
+        {/* Header with Help and (Desktop-only) Close */}
+        <div 
+          className="flex items-center justify-between px-5 pt-1 sm:pt-4 pb-1 shrink-0 touch-pan-y"
+          {...swipeProps}
+        >
           <div className="flex items-center">
             {onOpenHelp ? (
               <button
@@ -692,14 +718,14 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer"
+            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer hidden sm:flex"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-2 sm:p-4">
+        <div className="p-2 sm:p-4 flex-1 flex flex-col justify-center">
           <CopoAuthPrompt
             intent={intent}
             customTitle={customTitle}

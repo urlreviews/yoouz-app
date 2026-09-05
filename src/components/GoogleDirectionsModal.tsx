@@ -1,6 +1,7 @@
 import React from "react";
 import { X, Navigation, Car, Train, Footprints, Bike, ArrowRight } from "lucide-react";
 import { Place } from "../types";
+import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 
 interface GoogleDirectionsModalProps {
   destination: Place;
@@ -11,14 +12,38 @@ export const GoogleDirectionsModal: React.FC<GoogleDirectionsModalProps> = ({
   destination,
   onClose
 }) => {
+  const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
+    onDismiss: onClose,
+    threshold: 60
+  });
+
   return (
     <div
       id="google-directions-modal"
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 select-none"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 select-none"
+      onClick={onClose}
     >
-      <div className="w-full max-w-md bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden">
+      <div 
+        style={{
+          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full sm:max-w-md h-[100dvh] sm:h-auto bg-zinc-900 rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-zinc-800 overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
+      >
+        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
+        <div 
+          className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
+          {...swipeProps}
+        >
+          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
+        </div>
+
         {/* Top Header */}
-        <div className="bg-zinc-950 p-4 text-white flex items-center justify-between border-b border-zinc-800">
+        <div 
+          className="bg-zinc-950 px-4 pt-2 sm:pt-4 pb-4 text-white flex items-center justify-between border-b border-zinc-800 touch-pan-y shrink-0"
+          {...swipeProps}
+        >
           <div className="flex items-center gap-2">
             <Navigation className="w-5 h-5 fill-white" />
             <h3 className="font-extrabold text-base">
@@ -27,7 +52,7 @@ export const GoogleDirectionsModal: React.FC<GoogleDirectionsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>

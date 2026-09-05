@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shield, Zap, Star, Check, X } from 'lucide-react';
+import { useSwipeDownToDismiss } from '../hooks/useSwipeDownToDismiss';
 
 interface CopoBusinessPricingModalProps {
   onClose: () => void;
@@ -12,8 +13,13 @@ export const CopoBusinessPricingModal: React.FC<CopoBusinessPricingModalProps> =
   onSelectPlan,
   currentPlan = 'none'
 }) => {
+  const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
+    onDismiss: onClose,
+    threshold: 60
+  });
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200 copo-business-pricing-modal">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200 copo-business-pricing-modal select-none sm:select-auto">
       {/* Blurred Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-md"
@@ -21,14 +27,27 @@ export const CopoBusinessPricingModal: React.FC<CopoBusinessPricingModalProps> =
       />
       
       {/* Modal Container */}
-      <div className="w-full max-w-5xl rounded-[32px] shadow-2xl relative z-10 flex flex-col bg-[#141416] ring-1 ring-white/[0.05] animate-in slide-in-from-bottom-8 duration-300 max-h-[95vh]">
-        
+      <div 
+        style={{
+          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
+        }}
+        className="w-full sm:max-w-5xl rounded-none sm:rounded-[32px] shadow-2xl relative z-10 flex flex-col bg-[#141416] ring-0 sm:ring-1 sm:ring-white/[0.05] animate-in slide-in-from-bottom duration-300 h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[95vh] overflow-hidden"
+      >
+        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
+        <div 
+          className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
+          {...swipeProps}
+        >
+          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
+        </div>
+
         {/* Scrollable Area */}
         <div className="overflow-y-auto custom-scrollbar flex-1 p-6 md:p-10">
           
           <button 
             onClick={onClose}
-            className="absolute right-6 top-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-400 transition-colors cursor-pointer z-20"
+            className="absolute right-6 top-6 w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-400 transition-colors cursor-pointer z-20"
           >
             <X className="w-5 h-5" />
           </button>

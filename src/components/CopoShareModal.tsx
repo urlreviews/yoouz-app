@@ -493,10 +493,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       {/* Background click to dismiss */}
       <div className="absolute inset-0 cursor-pointer" />
 
-      {/* Main Dialog Card: Mobile Bottom Sheet + Desktop Floating Dialog */}
+      {/* Main Dialog Card: Mobile Full Screen Sheet + Desktop Floating Dialog */}
       <div 
         id="yoouz-share-modal-dialog"
-        className="relative z-10 w-full sm:max-w-[490px] bg-zinc-950/98 backdrop-blur-2xl rounded-t-[28px] sm:rounded-3xl shadow-2xl border-t sm:border border-zinc-800 flex flex-col max-h-[88vh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 text-white pb-safe select-text overscroll-contain"
+        className="relative z-10 w-full sm:max-w-[490px] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[85vh] bg-zinc-950 sm:bg-zinc-950/98 backdrop-blur-2xl rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-zinc-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 text-white pb-safe select-text overscroll-contain"
         style={{
           transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
@@ -506,17 +506,17 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        {/* Top Drag Indicator Pill for Mobile (with swipe down trigger) */}
+        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
         <div 
-          className="pt-2.5 pb-1 flex justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-pan-y"
+          className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
           {...swipeProps}
         >
-          <div className="w-10 h-1.5 rounded-full bg-zinc-700/80" />
+          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
         </div>
 
         {/* Modal Header */}
         <div 
-          className="px-5 pt-3 pb-3 flex items-center justify-between border-b border-zinc-800/80 shrink-0"
+          className="px-5 pt-2 sm:pt-3 pb-3 flex items-center justify-between border-b border-zinc-800/80 shrink-0 touch-pan-y"
           {...swipeProps}
         >
           <div className="flex items-center gap-3">
@@ -535,7 +535,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-zinc-400 hover:text-white bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 transition-colors cursor-pointer"
             title="Close"
           >
             <X className="w-4 h-4" />

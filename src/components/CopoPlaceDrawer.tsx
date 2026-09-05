@@ -568,7 +568,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("light");
               onClose();
             }}
-            className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
+            className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg hidden md:flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
             title="Close business page"
           >
             <X className="w-5 h-5" />

@@ -16,6 +16,7 @@ import {
   EyeOff
 } from "lucide-react";
 import { VideoReview, UserProfile, VideoAuthor } from "../types";
+import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 
 export interface ReportTarget {
   type: "video" | "user" | "place";
@@ -247,12 +248,17 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
     return `mailto:report@yoouz.com?subject=${subject}&body=${body}`;
   };
 
+  const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
+    onDismiss: handleClose,
+    threshold: 60
+  });
+
   return (
     <div
       id="yoouz-report-modal-overlay"
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain select-none"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain select-none"
       onClick={handleClose}
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
@@ -264,10 +270,25 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl bg-zinc-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden flex flex-col max-h-[90vh] my-auto animate-in zoom-in-95 duration-200 overscroll-contain select-text text-white"
+        style={{
+          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
+        }}
+        className="w-full sm:max-w-lg md:max-w-3xl lg:max-w-4xl h-[100dvh] sm:h-auto bg-zinc-900 rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-zinc-800 overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90vh] my-0 sm:my-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overscroll-contain select-text text-white"
       >
+        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
+        <div 
+          className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
+          {...swipeProps}
+        >
+          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-950 shrink-0">
+        <div 
+          className="flex items-center justify-between px-6 pt-2 sm:pt-4 pb-4 border-b border-zinc-800 bg-zinc-950 shrink-0 touch-pan-y"
+          {...swipeProps}
+        >
           <div className="flex items-center gap-3">
             {selectedCategory && !isSubmitted && (
               <button
@@ -292,7 +313,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
           </div>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
