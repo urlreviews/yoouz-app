@@ -226,18 +226,6 @@ export function App() {
   const [comparisonCompetitor, setComparisonCompetitor] = useState<string>('yelp');
   const [deleteSuccessToast, setDeleteSuccessToast] = useState<boolean>(false);
 
-  // Background prefetch first few videos for instant playback when entering feed
-  useEffect(() => {
-    if (videos && videos.length > 0) {
-      videos.slice(0, 3).forEach(v => {
-        const bestSrc = resolvePlayableVideoSource(v);
-        if (bestSrc) {
-          prefetchVideo(bestSrc, resolveVideoPosterUrl(v));
-        }
-      });
-    }
-  }, [videos]);
-
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem("copo_user_profile");
