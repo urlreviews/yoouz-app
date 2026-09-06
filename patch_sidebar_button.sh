@@ -1,1 +1,0 @@
-sed -i 's/className="flex items-center gap-3 w-full py-2\.5 px-3 rounded-xl transition-all duration-200 text-zinc-100 hover:text-white hover:bg-zinc-900\/40 group relative"/className="flex items-center gap-3 w-full py-2.5 px-3 rounded-xl transition-all duration-200 text-white bg-zinc-900 border border-zinc-800 shadow-sm group relative"/g' src/components/CopoSidebar.tsx

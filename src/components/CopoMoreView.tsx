@@ -1263,7 +1263,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     type="text"
                     value={langSearchFilter}
                     onChange={(e) => setLangSearchFilter(e.target.value)}
-                    placeholder={t("settings.search_languages_placeholder", "Search from 64 languages")}
+                    placeholder={t("settings.search_languages_placeholder", "Search from 64 languages...")}
                     className="w-full pl-11 pr-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-white transition-colors"
                   />
                   {langSearchFilter && (

@@ -1,1 +1,0 @@
-sed -i 's/{ id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search, hasDot: true }/{ id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search }/g' src/components/CopoSidebar.tsx
