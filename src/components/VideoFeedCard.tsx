@@ -200,6 +200,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   };
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Ignore clicks if they originate from an interactive element (button or link)
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('.pointer-events-auto')) {
+      return;
+    }
+
     const now = Date.now();
     const diff = now - lastTapTimeRef.current;
     
@@ -372,19 +378,21 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
 
         {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
-        <div className="pointer-events-auto">
+        <div 
+          className="pointer-events-auto"
+          onClickCapture={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleToggleMute(e);
+          }}
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          onPointerUpCapture={(e) => e.stopPropagation()}
+          onTouchStartCapture={(e) => e.stopPropagation()}
+          onTouchEndCapture={(e) => e.stopPropagation()}
+        >
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleToggleMute(e);
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onPointerUp={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
             className={`h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
               isMuted || !isSessionAudioUnlocked || isActualMuted
                 ? "px-3.5 gap-2 border-white/50 animate-pulse-subtle bg-black/90"
