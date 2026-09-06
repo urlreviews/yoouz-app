@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Loader2, X, AlertCircle, HelpCircle, Mail, ArrowRight, CheckCircle2, User, Sparkles, MapPin } from "lucide-react";
+import { Loader2, X, AlertCircle, HelpCircle, Mail, ArrowRight, ArrowLeft, CheckCircle2, User, Sparkles, MapPin } from "lucide-react";
 import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from "../lib/avatar";
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
@@ -697,12 +697,19 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
           <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
         </div>
 
-        {/* Header with Help and (Desktop-only) Close */}
+        {/* Header with Mobile Back Button & Help */}
         <div 
           className="flex items-center justify-between px-5 pt-1 sm:pt-4 pb-1 shrink-0 touch-pan-y"
           {...swipeProps}
         >
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 sm:hidden flex items-center justify-center text-zinc-300 hover:text-white shrink-0 active:scale-95 cursor-pointer shadow-sm"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
             {onOpenHelp ? (
               <button
                 onClick={() => {
@@ -714,7 +721,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
                 <HelpCircle className="w-3.5 h-3.5 text-zinc-400" />
                 <span>Help</span>
               </button>
-            ) : <div />}
+            ) : null}
           </div>
 
           <button
