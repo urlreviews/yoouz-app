@@ -41,7 +41,6 @@ import { cleanUndefinedFields, cleanForFirestore } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
-import { resolveVideoPosterUrl } from "./utils/videoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import {
   sendSocialNotification,

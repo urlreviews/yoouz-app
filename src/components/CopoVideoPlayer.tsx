@@ -147,6 +147,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             }
           }
         });
+        vid.addEventListener("play", () => {
+          if (feedVideoRef.current === vid) {
+            setIsBuffering(false);
+            setIsPlaying(true);
+            if (lastLoadedVideoIdRef.current) {
+              setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+            }
+          }
+        });
         vid.addEventListener("pause", () => {
           if (feedVideoRef.current === vid) {
             setIsPlaying(false);
@@ -181,7 +190,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         });
         vid.addEventListener("timeupdate", () => {
           if (feedVideoRef.current === vid) {
-            if (!vid.paused && vid.currentTime > 0.02) {
+            if (!vid.paused && vid.currentTime >= 0.005) {
               setIsPlaying(true);
               setIsBuffering(false);
               if (lastLoadedVideoIdRef.current) {
@@ -306,7 +315,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     activeVid.preload = "auto";
     if (!isSameSrc(activeVid.src, activeSrc)) {
       activeVid.src = activeSrc;
-      activeVid.load();
     }
 
     // Configure audio & mute on active element
@@ -324,7 +332,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     // If still on the same video, handle pause state
     if (!isNewVideo) {
       if (isPaused) {
-        activeVid.pause();
+        try { activeVid.pause(); } catch (e) {}
         setIsPlaying(false);
       }
     } else {
@@ -357,89 +365,99 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           });
         }
 
-        const p = activeVid.play();
-        if (p !== undefined) {
-          playPromiseRef.current = p;
-          p.then(() => {
-            playPromiseRef.current = null;
-            setIsPlaying(true);
-            setIsBuffering(false);
-            setFirstFrameRenderedId(activeVideo.id);
-          }).catch((err) => {
-            playPromiseRef.current = null;
-            if (err?.name === "NotAllowedError") {
-              activeVid.muted = true;
-              setIsActualMuted(true);
-              activeVid.play().catch(() => {});
-            } else if (err?.name !== "AbortError") {
-              setIsPlaying(false);
+        const startPlayback = () => {
+          const p = activeVid.play();
+          if (p !== undefined) {
+            playPromiseRef.current = p;
+            p.then(() => {
+              playPromiseRef.current = null;
+              setIsPlaying(true);
+              setIsBuffering(false);
+              setFirstFrameRenderedId(activeVideo.id);
+            }).catch((err) => {
+              playPromiseRef.current = null;
+              if (err?.name === "NotAllowedError") {
+                // Desktop autoplay policy: unmuted playback blocked without prior gesture
+                // Instantly fall back to muted playback which all browsers permit 100%
+                activeVid.muted = true;
+                setIsActualMuted(true);
+                const retryP = activeVid.play();
+                if (retryP !== undefined) {
+                  retryP.then(() => {
+                    setIsPlaying(true);
+                    setIsBuffering(false);
+                    setFirstFrameRenderedId(activeVideo.id);
+                  }).catch(() => {});
+                }
+              } else if (err?.name !== "AbortError") {
+                setIsPlaying(false);
+              }
+            });
+          }
+        };
+        startPlayback();
+      }
+    }
+
+    // 2 & 3. PRE-WARM NEXT & PREVIOUS VIDEOS IN POOL AFTER SHORT GRACE PERIOD
+    // Giving the active video 100% of bandwidth and network connections on desktop startup
+    const prewarmTimer = setTimeout(() => {
+      // Pre-warm next upcoming video
+      if (nextVideo) {
+        let nextVid = slotBindingRef.current.get(nextVideo.id);
+        if (!nextVid || nextVid === activeVid || !pool.includes(nextVid)) {
+          nextVid = pool.find((v) => v !== activeVid && (!slotBindingRef.current.get(prevVideo?.id || "") || v !== slotBindingRef.current.get(prevVideo?.id || ""))) || pool.find((v) => v !== activeVid) || null;
+          if (nextVid) {
+            for (const [vId, el] of slotBindingRef.current.entries()) {
+              if (el === nextVid) slotBindingRef.current.delete(vId);
             }
-          });
+            slotBindingRef.current.set(nextVideo.id, nextVid);
+          }
         }
-      }
-    }
 
-    // 2. PRE-WARM NEXT UPCOMING VIDEO IN POOL (Instant switching & immediate audio on swipe!)
-    if (nextVideo) {
-      let nextVid = slotBindingRef.current.get(nextVideo.id);
-      if (!nextVid || nextVid === activeVid || !pool.includes(nextVid)) {
-        nextVid = pool.find((v) => v !== activeVid && (!slotBindingRef.current.get(prevVideo?.id || "") || v !== slotBindingRef.current.get(prevVideo?.id || ""))) || pool.find((v) => v !== activeVid) || null;
         if (nextVid) {
-          for (const [vId, el] of slotBindingRef.current.entries()) {
-            if (el === nextVid) slotBindingRef.current.delete(vId);
+          const nextSlot = document.getElementById(`video-slot-${nextVideo.id}`);
+          if (nextSlot && nextVid.parentElement !== nextSlot) {
+            nextSlot.appendChild(nextVid);
           }
-          slotBindingRef.current.set(nextVideo.id, nextVid);
+          const nextSrc = resolvePlayableVideoSource(nextVideo);
+          if (!isSameSrc(nextVid.src, nextSrc)) {
+            nextVid.src = nextSrc;
+            nextVid.preload = "metadata";
+            nextVid.muted = true;
+          }
+          try { nextVid.pause(); } catch (e) {}
         }
       }
 
-      if (nextVid) {
-        const nextSlot = document.getElementById(`video-slot-${nextVideo.id}`);
-        if (nextSlot && nextVid.parentElement !== nextSlot) {
-          nextSlot.appendChild(nextVid);
+      // Preserve / Pre-warm previous video
+      if (prevVideo) {
+        let prevVid = slotBindingRef.current.get(prevVideo.id);
+        if (!prevVid || prevVid === activeVid || !pool.includes(prevVid)) {
+          prevVid = pool.find((v) => v !== activeVid && (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id))) || null;
+          if (prevVid) {
+            for (const [vId, el] of slotBindingRef.current.entries()) {
+              if (el === prevVid) slotBindingRef.current.delete(vId);
+            }
+            slotBindingRef.current.set(prevVideo.id, prevVid);
+          }
         }
-        const nextSrc = resolvePlayableVideoSource(nextVideo);
-        if (!isSameSrc(nextVid.src, nextSrc)) {
-          nextVid.src = nextSrc;
-          nextVid.preload = "metadata";
-          nextVid.muted = true;
-          // IMPORTANT: Do NOT call nextVid.load() here! 
-          // Calling load() forces desktop browsers (Chrome/Safari) to immediately prioritize this stream,
-          // instantly choking the active video stream and causing a 3+ second freeze.
-        }
-        try { nextVid.pause(); } catch (e) {}
-      }
-    }
 
-    // 3. PRESERVE / PRE-WARM PREVIOUS VIDEO IN POOL (Instant resumption if user swipes up!)
-    if (prevVideo) {
-      let prevVid = slotBindingRef.current.get(prevVideo.id);
-      if (!prevVid || prevVid === activeVid || !pool.includes(prevVid)) {
-        prevVid = pool.find((v) => v !== activeVid && (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id))) || null;
         if (prevVid) {
-          for (const [vId, el] of slotBindingRef.current.entries()) {
-            if (el === prevVid) slotBindingRef.current.delete(vId);
+          const prevSlot = document.getElementById(`video-slot-${prevVideo.id}`);
+          if (prevSlot && prevVid.parentElement !== prevSlot) {
+            prevSlot.appendChild(prevVid);
           }
-          slotBindingRef.current.set(prevVideo.id, prevVid);
+          const prevSrc = resolvePlayableVideoSource(prevVideo);
+          if (!isSameSrc(prevVid.src, prevSrc)) {
+            prevVid.src = prevSrc;
+            prevVid.preload = "metadata";
+            prevVid.muted = true;
+          }
+          try { prevVid.pause(); } catch (e) {}
         }
       }
-
-      if (prevVid) {
-        const prevSlot = document.getElementById(`video-slot-${prevVideo.id}`);
-        if (prevSlot && prevVid.parentElement !== prevSlot) {
-          prevSlot.appendChild(prevVid);
-        }
-        const prevSrc = resolvePlayableVideoSource(prevVideo);
-        if (!isSameSrc(prevVid.src, prevSrc)) {
-          prevVid.src = prevSrc;
-          prevVid.preload = "metadata";
-          prevVid.muted = true;
-          // IMPORTANT: Do NOT call prevVid.load() here!
-          // Calling load() forces desktop browsers (Chrome/Safari) to immediately prioritize this stream,
-          // instantly choking the active video stream and causing a 3+ second freeze.
-        }
-        try { prevVid.pause(); } catch (e) {}
-      }
-    }
+    }, 350);
 
     // 4. Pause and unmount any idle element outside active, next, and prev
     pool.forEach((v) => {
@@ -461,6 +479,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(prewarmTimer);
       clearTimeout(viewTimer);
     };
   }, [currentIndex, videos, onRecordView, isPaused, contextKey]);
@@ -889,12 +908,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Toggle Play / Pause (Stop / Resume) for the active video
   const handleTogglePlayPause = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (isPaused) return; // Cannot play while paused by modal or inactive section
     const vid = feedVideoRef.current;
     if (!vid) return;
 
     if (vid.paused || isManuallyPausedRef.current) {
-      // Resume / Play
+      // Resume / Play (only blocked if a modal is actively open)
+      if (isPaused) return;
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       if (isSessionAudioUnlocked && !isMuted) {
@@ -905,10 +924,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       vid.play().catch(() => {});
       setIsPlaying(true);
     } else {
-      // STOP / PAUSE immediately
+      // STOP / PAUSE immediately (always permitted!)
       isManuallyPausedRef.current = true;
       setIsManuallyPaused(true);
-      vid.pause();
+      try {
+        vid.pause();
+      } catch (e) {}
       setIsPlaying(false);
     }
   }, [isSessionAudioUnlocked, isMuted, isPaused]);

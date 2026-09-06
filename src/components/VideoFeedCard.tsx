@@ -200,9 +200,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   };
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Ignore clicks if they originate from an interactive element (button or link)
+    // Ignore clicks if they originate from interactive controls
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('a') || target.closest('.pointer-events-auto')) {
+    if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('textarea') || target.closest('[role="button"]')) {
       return;
     }
 
@@ -322,7 +322,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       {/* DEDICATED PLAY/PAUSE INTERACTION LAYER (z-20) */}
       {/* This sits strictly behind all UI buttons (z-40, z-50) so button taps NEVER accidentally pause the video */}
       <div 
-        className="absolute inset-0 z-20 cursor-pointer pointer-events-auto"
+        id={`copo-card-tap-overlay-${video.id}`}
+        className="absolute inset-0 z-20 cursor-pointer"
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTapLike}
         aria-label="Toggle Play/Pause"
@@ -384,41 +385,65 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
-        <div 
-          className="pointer-events-auto"
-          onClickCapture={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleToggleMute(e);
-          }}
-          onPointerDownCapture={(e) => e.stopPropagation()}
-          onPointerUpCapture={(e) => e.stopPropagation()}
-          onTouchStartCapture={(e) => e.stopPropagation()}
-          onTouchEndCapture={(e) => e.stopPropagation()}
-        >
+        {/* Right side: Top Control Bar (Dedicated Stop/Play button + Sound Mute/Unmute toggle) */}
+        <div className="pointer-events-auto flex items-center gap-2">
+          {/* Explicit Stop / Play (Pause / Resume) button */}
           <button
             type="button"
-            id={`btn-toggle-sound-${video.id}`}
-            className={`h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
-              isMuted || !isSessionAudioUnlocked || isActualMuted
-                ? "px-3.5 gap-2 border-white/50 animate-pulse-subtle bg-black/90"
-                : "w-11 md:w-12 md:h-12 border-white/35"
-            }`}
-            title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
-            aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+            id={`btn-toggle-play-${video.id}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              togglePlayPause(e);
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            className="h-11 w-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
+            title={isManuallyPaused ? "Play video (Resume)" : "Stop video (Pause)"}
+            aria-label={isManuallyPaused ? "Play video (Resume)" : "Stop video (Pause)"}
           >
-            {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
-              <>
-                <VolumeX className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
-                <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
-                  Tap to Unmute
-                </span>
-              </>
+            {isManuallyPaused ? (
+              <Play className="w-5 h-5 text-white fill-white translate-x-0.5" />
             ) : (
-              <Volume2 className="w-5 h-5 text-white stroke-[2.2]" />
+              <Pause className="w-5 h-5 text-white fill-white" />
             )}
           </button>
+
+          {/* Sound Mute / Unmute Toggle Button */}
+          <div 
+            onClickCapture={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleToggleMute(e);
+            }}
+            onPointerDownCapture={(e) => e.stopPropagation()}
+            onPointerUpCapture={(e) => e.stopPropagation()}
+            onTouchStartCapture={(e) => e.stopPropagation()}
+            onTouchEndCapture={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              id={`btn-toggle-sound-${video.id}`}
+              className={`h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
+                isMuted || !isSessionAudioUnlocked || isActualMuted
+                  ? "px-3.5 gap-2 border-white/50 animate-pulse-subtle bg-black/90"
+                  : "w-11 md:w-12 md:h-12 border-white/35"
+              }`}
+              title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+              aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+            >
+              {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
+                <>
+                  <VolumeX className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
+                  <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
+                    Tap to Unmute
+                  </span>
+                </>
+              ) : (
+                <Volume2 className="w-5 h-5 text-white stroke-[2.2]" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
