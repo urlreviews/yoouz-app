@@ -1268,7 +1268,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       {t("settings.language_preference", "Language & Regional Settings")}
                     </h2>
                     <p className="text-xs sm:text-sm text-zinc-400 font-normal">
-                      Switch instantly between 16 natively supported languages with zero reload, RTL bidirectional rendering, and SEO meta tags.
+                      {t("settings.language_subtitle", "Switch instantly between 64 supported languages with full translation, RTL bidirectional rendering, and localized formatting.")}
                     </p>
                   </div>
 
@@ -1296,7 +1296,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     type="text"
                     value={langSearchFilter}
                     onChange={(e) => setLangSearchFilter(e.target.value)}
-                    placeholder="Search from 16 languages (e.g., Arabic, Spanish, Hindi, French, Japanese)..."
+                    placeholder={t("settings.search_languages_placeholder", "Search from 64 languages...")}
                     className="w-full pl-11 pr-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-white transition-colors"
                   />
                   {langSearchFilter && (
@@ -1369,34 +1369,6 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     })}
                 </div>
               </div>
-
-              {/* Internationalization & SEO Architecture Details */}
-              <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 text-white font-bold text-base">
-                  <Sparkles className="w-4 h-4 text-zinc-300" />
-                  <h3>100% Free, Zero-Cost High-Speed Architecture & SEO</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 space-y-1.5">
-                    <span className="font-bold text-white block">Client-Side Zero Latency</span>
-                    <p className="text-zinc-400 leading-relaxed">
-                      All translation schemas are compiled into the client bundle, meaning switching languages happens in 0 milliseconds without requesting third-party paid translation APIs.
-                    </p>
-                  </div>
-                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 space-y-1.5">
-                    <span className="font-bold text-white block">Native Bidirectional RTL</span>
-                    <p className="text-zinc-400 leading-relaxed">
-                      Languages like Arabic and Hebrew seamlessly adjust document alignment, flex orders, and directional text flows natively.
-                    </p>
-                  </div>
-                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 space-y-1.5">
-                    <span className="font-bold text-white block">Global Search Engine Crawling</span>
-                    <p className="text-zinc-400 leading-relaxed">
-                      Automatic document `lang`, `dir`, and `og:locale` synchronization empowers Google Bot and international search engines to index localized domain profiles.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </section>
@@ -1424,14 +1396,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               onClick={() => onOpenLegal ? onOpenLegal("terms") : null}
               className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
             >
-              Terms & Conditions
+              {t("legal.termsConditions", "Terms & Conditions")}
             </button>
             <span>•</span>
             <button
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : null}
               className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
             >
-              Privacy Policy
+              {t("legal.privacyPolicy", "Privacy Policy")}
             </button>
             <span>•</span>
             <button
@@ -1441,16 +1413,16 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               }}
               className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
             >
-              Support Desk
+              {t("legal.supportDesk", "Support Desk")}
             </button>
           </div>
 
           <div className="space-y-1 text-center font-medium">
             <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-              Yoouz Trust Network • San Francisco, CA
+              {t("legal.networkLocation", "Yoouz Trust Network • San Francisco, CA")}
             </p>
             <p className="text-[11px] text-zinc-500">
-              © 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews.
+              {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews.")}
             </p>
           </div>
         </footer>

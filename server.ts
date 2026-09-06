@@ -7592,6 +7592,88 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     }
   });
 
+  // High-performance batch translation endpoint using Gemini 3.8 Flash with in-memory caching
+  const serverTranslationCache = new Map<string, string>();
+
+  app.post("/api/translate", express.json({ limit: "5mb" }), async (req, res) => {
+    try {
+      const { texts, targetLang, targetLangName } = req.body;
+      if (!Array.isArray(texts) || texts.length === 0 || !targetLang || targetLang === "en") {
+        return res.json({ translations: {} });
+      }
+
+      const results: Record<string, string> = {};
+      const missingTexts: string[] = [];
+
+      for (const rawText of texts) {
+        if (typeof rawText !== "string") continue;
+        const text = rawText.trim();
+        if (!text) continue;
+        const cacheKey = `${targetLang}:::${text}`;
+        if (serverTranslationCache.has(cacheKey)) {
+          results[text] = serverTranslationCache.get(cacheKey)!;
+        } else {
+          missingTexts.push(text);
+        }
+      }
+
+      if (missingTexts.length === 0) {
+        return res.json({ translations: results });
+      }
+
+      // Deduplicate missing texts
+      const uniqueMissing = Array.from(new Set(missingTexts));
+      const gemini = getGeminiClient();
+
+      if (gemini) {
+        // Chunk requests to batches of up to 40 strings for optimal latency
+        const chunkSize = 40;
+        for (let i = 0; i < uniqueMissing.length; i += chunkSize) {
+          const chunk = uniqueMissing.slice(i, i + chunkSize);
+          const prompt = `You are a professional localization and translation service for "Yoouz", an authentic 60-second video review app.
+Translate the following English strings into ${targetLangName || targetLang} (language code: "${targetLang}").
+Requirements:
+1. Provide natural, idiomatic, and culturally appropriate translations for a modern mobile/web app interface.
+2. Keep short UI labels, buttons, headers, and descriptions concise and accurate.
+3. Return ONLY a valid JSON object mapping each exact original English string to its translated string. Do not wrap in markdown or commentary.
+Strings to translate:
+${JSON.stringify(chunk)}`;
+
+          try {
+            const response = await gemini.models.generateContent({
+              model: "gemini-3.8-flash",
+              contents: prompt,
+              config: {
+                responseMimeType: "application/json",
+              },
+            });
+
+            const textOutput = (response.text || "").trim();
+            if (textOutput) {
+              const cleanJson = textOutput.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+              const parsed = JSON.parse(cleanJson);
+              if (typeof parsed === "object" && parsed !== null) {
+                for (const [orig, translated] of Object.entries(parsed)) {
+                  if (typeof translated === "string" && translated.trim()) {
+                    results[orig] = translated.trim();
+                    serverTranslationCache.set(`${targetLang}:::${orig}`, translated.trim());
+                  }
+                }
+              }
+            }
+          } catch (e: any) {
+            console.warn(`[Translate API] Gemini translation notice for ${targetLang}:`, e?.message || e);
+          }
+        }
+      }
+
+      return res.json({ translations: results });
+    } catch (err: any) {
+      console.error("[Translate API] Error:", err);
+      return res.status(200).json({ translations: {} });
+    }
+  });
+
   // AI Video Speech-to-Text Transcription Endpoint using Gemini
   app.post("/api/videos/transcribe", async (req, res) => {
     try {

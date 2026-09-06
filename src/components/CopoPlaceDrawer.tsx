@@ -55,6 +55,7 @@ import { CopoBusinessClaimModal } from "./CopoBusinessClaimModal";
 import { SEOTags } from "./SEOTags";
 import { triggerHaptic } from "../utils/haptics";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoPlaceDrawerProps {
   place: Place | null;
@@ -95,6 +96,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   onStartChat,
   onClaimBusiness,
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
   const [showHoursDropdown, setShowHoursDropdown] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState("");
@@ -653,24 +655,24 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     : "bg-zinc-800 text-zinc-100 border-zinc-700 hover:bg-zinc-700"
                   : "bg-white text-zinc-950 hover:bg-zinc-200 border-white"
               }`}
-              title={place.isFollowed ? (isHoveredUnfollow ? "Unfollow this business" : "You are following this business") : "Follow this business"}
+              title={place.isFollowed ? (isHoveredUnfollow ? t("business.unfollowTitle", "Unfollow this business") : t("business.followingTitle", "You are following this business")) : t("business.followTitle", "Follow this business")}
             >
               {place.isFollowed ? (
                 isHoveredUnfollow ? (
                   <>
                     <UserMinus className="w-3.5 h-3.5" />
-                    <span>Unfollow</span>
+                    <span>{t("business.unfollow", "Unfollow")}</span>
                   </>
                 ) : (
                   <>
                     <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>Following</span>
+                    <span>{t("business.following", "Following")}</span>
                   </>
                 )
               ) : (
                 <>
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>Follow</span>
+                  <span>{t("business.follow", "Follow")}</span>
                 </>
               )}
             </button>
@@ -696,7 +698,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
           )}
           <span className="text-zinc-400 font-medium">
-            ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? "review" : "reviews"})
+            ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? t("place.review", "review") : t("place.reviews", "reviews")})
           </span>
           <span className="text-zinc-700">·</span>
           {effectiveWebsite ? (
@@ -709,7 +711,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               {displayWebsiteClean}
             </a>
           ) : (
-            <span className="text-zinc-400 font-medium">{place.category || "Establishment"}</span>
+            <span className="text-zinc-400 font-medium">{place.category || t("place.establishment", "Establishment")}</span>
           )}
           
           {((place.city && place.city !== "Online") || place.country) && (
@@ -733,7 +735,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               : "border-transparent hover:text-zinc-200"
           }`}
         >
-          Overview
+          {t("place.overview", "Overview")}
         </button>
         <button
           onClick={() => handleTabClick("reviews")}
@@ -743,7 +745,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               : "border-transparent hover:text-zinc-200"
           }`}
         >
-          <span>Reviews</span>
+          <span>{t("place.reviews", "Reviews")}</span>
           <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-bold border border-zinc-700">
             {rawPlaceVideos.length}
           </span>
@@ -756,7 +758,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               : "border-transparent hover:text-zinc-200"
           }`}
         >
-          About
+          {t("place.about", "About")}
         </button>
       </div>
 
@@ -771,7 +773,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md">
                 <Navigation className="w-5 h-5 fill-zinc-950" />
               </div>
-              <span className="font-bold text-[11px] text-white">Directions</span>
+              <span className="font-bold text-[11px] text-white">{t("place.directions", "Directions")}</span>
             </button>
 
             <button
@@ -792,7 +794,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 )}
               </div>
               <span className="font-bold text-[11px] text-white">
-                {isSaved ? "Saved" : "Save"}
+                {isSaved ? t("place.saved", "Saved") : t("place.save", "Save")}
               </span>
             </button>
 
@@ -803,7 +805,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
                 <Video className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-[11px] text-white">Video Reviews</span>
+              <span className="font-bold text-[11px] text-white">{t("place.videoReviews", "Video Reviews")}</span>
             </button>
 
             {onStartChat && (
@@ -817,7 +819,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   }
 
                   if (isUserOwner) {
-                    setCopiedNotification("This is your business listing. Customer messages appear in your Messages inbox.");
+                    setCopiedNotification(t("place.ownerChatNotice", "This is your business listing. Customer messages appear in your Messages inbox."));
                     setTimeout(() => setCopiedNotification(""), 4000);
                     return;
                   }
@@ -825,12 +827,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   onStartChat(place.claimedByEmail || place.id, place.name, getPlaceLogoUrl(place));
                 }}
                 className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-                title={`Chat with ${formatBusinessName(place.name)}`}
+                title={`${t("place.chatWith", "Chat with")} ${formatBusinessName(place.name)}`}
               >
                 <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
                   <MessageSquare className="w-5 h-5 text-white" />
                 </div>
-                <span className="font-bold text-[11px] text-white">Chat</span>
+                <span className="font-bold text-[11px] text-white">{t("place.chat", "Chat")}</span>
               </button>
             )}
           </div>
@@ -887,9 +889,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               >
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">About this business</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{t("place.aboutThisBusiness", "About this business")}</p>
                     <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed">
-                      {place.description || "Verified Yoouz business listing with authentic video reviews from real users."}
+                      {place.description || t("place.defaultDescription", "Verified Yoouz business listing with authentic video reviews from real users.")}
                     </p>
                   </div>
                   <ChevronDown className="w-4 h-4 text-zinc-500 -rotate-90 mt-4 group-hover:text-white transition-colors" />
@@ -902,7 +904,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="flex items-center gap-1.5">
                     <Video className="w-4 h-4 text-zinc-300" />
                     <h3 className="text-xs font-black uppercase tracking-wider text-white">
-                      Video Reviews ({rawPlaceVideos.length})
+                      {t("place.videoReviews", "Video Reviews")} ({rawPlaceVideos.length})
                     </h3>
                   </div>
                   {rawPlaceVideos.length > 0 && (
@@ -910,7 +912,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onClick={() => handleTabClick("reviews")}
                       className="text-[11px] font-bold text-zinc-300 hover:text-white hover:underline cursor-pointer"
                     >
-                      See all ({rawPlaceVideos.length})
+                      {t("place.seeAll", "See all")} ({rawPlaceVideos.length})
                     </button>
                   )}
                 </div>
@@ -921,15 +923,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <Video className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs font-bold text-white">No video reviews yet</p>
-                      <p className="text-[11px] text-zinc-400">Be the first creator to post a video review for {formatBusinessName(place.name)}!</p>
+                      <p className="text-xs font-bold text-white">{t("place.noReviewsYet", "No video reviews yet")}</p>
+                      <p className="text-[11px] text-zinc-400">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {formatBusinessName(place.name)}!</p>
                     </div>
                     <button
                       onClick={() => onRecordForPlace(place)}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 font-bold text-xs shadow-sm active:scale-95 transition-all cursor-pointer"
                     >
                       <Camera className="w-3.5 h-3.5" />
-                      <span>Post Video Review</span>
+                      <span>{t("place.postVideoReview", "Post Video Review")}</span>
                     </button>
                   </div>
                 ) : (
@@ -979,7 +981,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:bg-zinc-850 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs active:scale-98 transition-all cursor-pointer"
                     >
                       <Camera className="w-4 h-4 text-zinc-300" />
-                      <span>Record Video Review</span>
+                      <span>{t("place.recordVideoReview", "Record Video Review")}</span>
                     </button>
                   </div>
                 )}
@@ -993,7 +995,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 >
                   <div className="flex items-center gap-3">
                     <Info className="w-5 h-5 text-zinc-300" />
-                    <span className="text-sm font-bold text-white">Business Details</span>
+                    <span className="text-sm font-bold text-white">{t("place.businessDetails", "Business Details")}</span>
                   </div>
                   <ChevronDown className="w-4 h-4 text-zinc-500" />
                 </div>
@@ -1005,7 +1007,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   >
                     <div className="flex items-center gap-3">
                       <Info className="w-5 h-5 text-zinc-300" />
-                      <span className="text-sm font-bold text-white">Hide Details</span>
+                      <span className="text-sm font-bold text-white">{t("place.hideDetails", "Hide Details")}</span>
                     </div>
                     <ChevronUp className="w-4 h-4 text-zinc-500" />
                   </div>
@@ -1016,10 +1018,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <MapPin className="w-5 h-5 text-zinc-300 shrink-0 mt-0.5" />
                       <div className="text-xs space-y-0.5">
                         <p className="text-zinc-200 font-medium leading-relaxed">
-                          {displayAddress || "Address not provided"}
+                          {displayAddress || t("place.addressNotProvided", "Address not provided")}
                         </p>
                         {place.locatedIn && !isAddressUrl && (
-                          <p className="text-zinc-400 text-[11px]">Located in: {place.locatedIn}</p>
+                          <p className="text-zinc-400 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
                         )}
                       </div>
                     </div>
@@ -1033,11 +1035,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         <div className="text-xs">
                           {hasGenuineHours ? (
                             <div className="flex items-center gap-1.5">
-                              <span className="text-white font-bold">Open</span>
+                              <span className="text-white font-bold">{t("place.open", "Open")}</span>
                               <span className="text-zinc-300 ml-1">⋅ {place.openingHours}</span>
                             </div>
                           ) : (
-                            <span className="text-zinc-500">Hours not provided</span>
+                            <span className="text-zinc-500">{t("place.hoursNotProvided", "Hours not provided")}</span>
                           )}
                         </div>
                       </div>
@@ -1060,7 +1062,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           <ExternalLink className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                         </a>
                       ) : (
-                        <span className="text-xs text-zinc-500">Website not provided</span>
+                        <span className="text-xs text-zinc-500">{t("place.websiteNotProvided", "Website not provided")}</span>
                       )}
                     </div>
                   </div>
@@ -1077,7 +1079,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           {place.phone}
                         </a>
                       ) : (
-                        <span className="text-xs text-zinc-500">Phone not provided</span>
+                        <span className="text-xs text-zinc-500">{t("place.phoneNotProvided", "Phone not provided")}</span>
                       )}
                     </div>
                   </div>
@@ -1094,7 +1096,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           {place.email}
                         </a>
                       ) : (
-                        <span className="text-xs text-zinc-500">Email not provided</span>
+                        <span className="text-xs text-zinc-500">{t("place.emailNotProvided", "Email not provided")}</span>
                       )}
                     </div>
                   </div>
@@ -1125,17 +1127,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 >
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="w-5 h-5 text-zinc-300 shrink-0" />
-                    <span className="text-xs text-zinc-200 font-bold">Claim this business</span>
+                    <span className="text-xs text-zinc-200 font-bold">{t("place.claimThisBusiness", "Claim this business")}</span>
                   </div>
                   <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-bold">
-                    Claim
+                    {t("place.claim", "Claim")}
                   </span>
                 </div>
               ) : (
                 <div className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors border-t border-zinc-800">
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="w-5 h-5 text-zinc-300 shrink-0" />
-                    <span className="text-xs text-zinc-400 font-medium">Business claimed</span>
+                    <span className="text-xs text-zinc-400 font-medium">{t("place.businessClaimed", "Business claimed")}</span>
                   </div>
                   {isUserOwner ? (
                     <div className="flex gap-2">
@@ -1143,18 +1145,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         onClick={() => setIsPricingModalOpen(true)}
                         className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors flex items-center gap-1"
                       >
-                        <Zap className="w-3 h-3" /> Plan: {subscriptionPlan.toUpperCase()}
+                        <Zap className="w-3 h-3" /> {t("place.plan", "Plan")}: {subscriptionPlan.toUpperCase()}
                       </button>
                       <button
                         onClick={openEditModal}
                         className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors"
                       >
-                        Edit Details
+                        {t("place.editDetails", "Edit Details")}
                       </button>
                     </div>
                   ) : (
                     <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-850 text-zinc-400 font-bold">
-                      Verified
+                      {t("place.verified", "Verified")}
                     </span>
                   )}
                 </div>
@@ -1169,7 +1171,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between px-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 md:text-zinc-400">
-                    Sort & Filter Reviews ({placeVideos.length})
+                    {t("place.sortFilterReviews", "Sort & Filter Reviews")} ({placeVideos.length})
                   </p>
                 </div>
                 
@@ -1178,19 +1180,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     onClick={() => setReviewSort("latest")}
                     className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "latest" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"}`}
                   >
-                    Latest
+                    {t("place.latest", "Latest")}
                   </button>
                   <button 
                     onClick={() => setReviewSort("popular")}
                     className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "popular" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"}`}
                   >
-                    Most Liked
+                    {t("place.mostLiked", "Most Liked")}
                   </button>
                   <button 
                     onClick={() => setReviewSort("highest")}
                     className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "highest" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"}`}
                   >
-                    Highest Rated
+                    {t("place.highestRated", "Highest Rated")}
                   </button>
                 </div>
 
@@ -1199,7 +1201,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     onClick={() => setStarFilter("all")}
                     className={`px-2.5 py-1 rounded-md text-[10px] font-bold whitespace-nowrap transition-all border shrink-0 ${starFilter === "all" ? "bg-white border-white text-zinc-950" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"}`}
                   >
-                    All
+                    {t("place.all", "All")}
                   </button>
                   {[5, 4, 3, 2, 1].map(stars => (
                     <button 
@@ -1216,7 +1218,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               {/* 3-Column Video Reviews Grid */}
               {placeVideos.length === 0 ? (
                 <div className="bg-zinc-900 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-400 text-xs">
-                  No video reviews match this filter.
+                  {t("place.noReviewsMatchFilter", "No video reviews match this filter.")}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-1.5 pt-1">
@@ -1272,7 +1274,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Record Video Review</span>
+                  <span>{t("place.recordVideoReview", "Record Video Review")}</span>
                 </button>
               </div>
             </div>
@@ -1284,7 +1286,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <Info className="w-4 h-4 text-zinc-300" />
-                  <span>About {formatBusinessName(place.name)}</span>
+                  <span>{t("place.about", "About")} {formatBusinessName(place.name)}</span>
                 </h3>
                 {isUserOwner && (
                   <button
@@ -1292,7 +1294,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     className="text-xs text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
-                    <span>Edit</span>
+                    <span>{t("common.edit", "Edit")}</span>
                   </button>
                 )}
               </div>
@@ -1300,26 +1302,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               {/* Full Description & URL Metadata */}
               <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
-                  Business Description
+                  {t("place.businessDescription", "Business Description")}
                 </span>
                 <p className="text-xs text-zinc-300 leading-relaxed font-medium">
                   {place.description ||
-                    "Verified Yoouz business listing with authentic video reviews from real users."}
+                    t("place.defaultDescription", "Verified Yoouz business listing with authentic video reviews from real users.")}
                 </p>
               </div>
 
               {/* Maps Integration */}
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-bold text-zinc-200">Location Map</h4>
+                  <h4 className="text-xs font-bold text-zinc-200">{t("place.locationMap", "Location Map")}</h4>
                   <button onClick={handleOpenDirections} className="text-[10px] text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1">
                     <Navigation className="w-3 h-3" />
-                    Get Directions
+                    {t("place.getDirections", "Get Directions")}
                   </button>
                 </div>
                 <div className="w-full h-[200px] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer relative group" onClick={handleOpenDirections}>
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
-                     <div className="bg-zinc-900 px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">Open in Maps</div>
+                     <div className="bg-zinc-900 px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">{t("place.openInMaps", "Open in Maps")}</div>
                   </div>
                   <iframe 
                     width="100%" 
@@ -1340,7 +1342,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
 
               <div className="pt-2 space-y-2">
-                <h4 className="text-xs font-bold text-zinc-200">Accessibility & Services</h4>
+                <h4 className="text-xs font-bold text-zinc-200">{t("place.accessibilityServices", "Accessibility & Services")}</h4>
                 <div className="flex flex-wrap gap-1.5">
                   {(place.amenities || ["Wheelchair accessible entrance", "Public Reception", "Verified Listing"]).map(
                     (amenity, idx) => (
@@ -1359,7 +1361,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="pt-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-zinc-300" />
-                  <h4 className="text-xs font-bold text-zinc-200">Management & Staff</h4>
+                  <h4 className="text-xs font-bold text-zinc-200">{t("place.managementStaff", "Management & Staff")}</h4>
                 </div>
                 
                 <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3">
@@ -1369,15 +1371,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         <UserCheck className="w-4 h-4 text-zinc-300" />
                       </div>
                       <div className="space-y-0.5">
-                        <p className="text-[11px] font-bold text-white">Verified Management</p>
-                        <p className="text-[10px] text-zinc-400">Authorized to manage this profile</p>
+                        <p className="text-[11px] font-bold text-white">{t("place.verifiedManagement", "Verified Management")}</p>
+                        <p className="text-[10px] text-zinc-400">{t("place.authorizedManage", "Authorized to manage this profile")}</p>
                       </div>
                     </div>
                   </div>
 
                   {place.staffEmails && place.staffEmails.length > 0 && (
                     <div className="pt-2 space-y-2 border-t border-zinc-800">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Recognized Staff</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{t("place.recognizedStaff", "Recognized Staff")}</p>
                       <div className="flex flex-wrap gap-2">
                         {place.staffEmails.map((email, idx) => (
                           <div key={idx} className="flex items-center gap-1.5 bg-zinc-850 border border-zinc-800 px-2.5 py-1 rounded-full">
@@ -1395,7 +1397,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       className="w-full py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[11px] font-bold text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                     >
                       <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
-                      Claim & Verify Business Listing
+                      {t("place.claimVerifyListing", "Claim & Verify Business Listing")}
                     </button>
                   )}
                 </div>
@@ -1412,7 +1414,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="flex items-center justify-between pb-3 border-b border-zinc-800 shrink-0">
               <div>
                 <h3 className="text-lg font-bold text-white">
-                  {modalStep === 1 ? "Suggest Edits" : "Claim & Verify Business"}
+                  {modalStep === 1 ? t("place.suggestEdits", "Suggest Edits") : t("place.claimVerifyBusiness", "Claim & Verify Business")}
                 </h3>
                 <p className="text-xs text-zinc-400 truncate max-w-[280px]">{formatBusinessName(place.name)}</p>
               </div>
@@ -1433,7 +1435,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 >
                   <div className={`h-1.5 rounded-full transition-colors ${modalStep === 1 ? 'bg-white' : 'bg-zinc-800'}`} />
                   <span className={`text-[9px] font-bold uppercase tracking-wider ${modalStep === 1 ? 'text-white' : 'text-zinc-400'}`}>
-                    1. Suggest Edits
+                    {t("place.stepSuggestEdits", "1. Suggest Edits")}
                   </span>
                 </div>
                 <div 
@@ -1442,7 +1444,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 >
                   <div className={`h-1.5 rounded-full transition-colors ${modalStep === 2 ? 'bg-white' : 'bg-zinc-800'}`} />
                   <span className={`text-[9px] font-bold uppercase tracking-wider ${modalStep === 2 ? 'text-white' : 'text-zinc-400'}`}>
-                    2. Claim Business
+                    {t("place.stepClaimBusiness", "2. Claim Business")}
                   </span>
                 </div>
               </div>
@@ -1463,14 +1465,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-bold text-zinc-300">Address</label>
+                      <label className="font-bold text-zinc-300">{t("place.address", "Address")}</label>
                       {editAddress && (
                         <button
                           type="button"
                           onClick={() => setEditAddress("")}
                           className="text-[10px] text-zinc-400 hover:text-white hover:underline font-semibold cursor-pointer"
                         >
-                          Clear
+                          {t("common.clear", "Clear")}
                         </button>
                       )}
                     </div>
@@ -1485,7 +1487,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="font-bold text-zinc-300 block mb-1">Phone Number</label>
+                      <label className="font-bold text-zinc-300 block mb-1">{t("place.phoneNumber", "Phone Number")}</label>
                       <input
                         type="text"
                         value={editPhone}
@@ -1495,7 +1497,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-zinc-300 block mb-1">Website</label>
+                      <label className="font-bold text-zinc-300 block mb-1">{t("place.website", "Website")}</label>
                       <input
                         type="url"
                         value={editWebsite}
@@ -1507,7 +1509,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
 
                   <div>
-                    <label className="font-bold text-zinc-300 block mb-1">Email Address (Optional)</label>
+                    <label className="font-bold text-zinc-300 block mb-1">{t("place.emailAddressOptional", "Email Address (Optional)")}</label>
                     <input
                       type="email"
                       value={editEmail}
@@ -1519,13 +1521,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-bold text-zinc-300">Opening Hours</label>
+                      <label className="font-bold text-zinc-300">{t("place.openingHours", "Opening Hours")}</label>
                       <button
                         type="button"
                         onClick={() => setShowHoursHelper(!showHoursHelper)}
                         className="text-[10px] text-zinc-300 hover:text-white hover:underline font-bold flex items-center gap-1 cursor-pointer"
                       >
-                        🕒 {showHoursHelper ? "Hide Picker Helper" : "Open Picker Helper"}
+                        🕒 {showHoursHelper ? t("place.hidePickerHelper", "Hide Picker Helper") : t("place.openPickerHelper", "Open Picker Helper")}
                       </button>
                     </div>
                     <input
@@ -1540,33 +1542,33 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     {showHoursHelper && (
                       <div className="mt-2 p-2.5 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2 animate-in slide-in-from-top-1 duration-150">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] text-zinc-400 font-medium">Quick Presets:</span>
+                          <span className="text-[10px] text-zinc-400 font-medium">{t("place.quickPresets", "Quick Presets:")}</span>
                           <button
                             type="button"
                             onClick={() => setEditHours("Available 24/7")}
                             className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-[10px] text-zinc-200 font-bold border border-zinc-700 rounded-lg transition-colors cursor-pointer"
                           >
-                            Available 24/7
+                            {t("place.available247", "Available 24/7")}
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditHours("Mon-Fri: 9:00 AM - 6:00 PM")}
                             className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-[10px] text-zinc-200 font-bold border border-zinc-700 rounded-lg transition-colors cursor-pointer"
                           >
-                            Mon-Fri 9AM-6PM
+                            {t("place.monFriHours", "Mon-Fri 9AM-6PM")}
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditHours("Mon-Sat: 10:00 AM - 8:00 PM")}
                             className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-[10px] text-zinc-200 font-bold border border-zinc-700 rounded-lg transition-colors cursor-pointer"
                           >
-                            Mon-Sat 10AM-8PM
+                            {t("place.monSatHours", "Mon-Sat 10AM-8PM")}
                           </button>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-zinc-800">
                           <div>
-                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">Days</span>
+                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">{t("place.days", "Days")}</span>
                             <select
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -1574,7 +1576,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                               }}
                               className="w-full p-1 bg-zinc-900 border border-zinc-700 rounded-lg text-[10px] text-white focus:outline-none cursor-pointer"
                             >
-                              <option value="">Select...</option>
+                              <option value="">{t("place.select", "Select...")}</option>
                               <option value="Mon-Fri">Mon-Fri</option>
                               <option value="Mon-Sat">Mon-Sat</option>
                               <option value="Mon-Sun">Mon-Sun</option>
@@ -1582,7 +1584,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                             </select>
                           </div>
                           <div>
-                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">Open From</span>
+                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">{t("place.openFrom", "Open From")}</span>
                             <select
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -1604,7 +1606,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                             </select>
                           </div>
                           <div>
-                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">Close At</span>
+                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">{t("place.closeAt", "Close At")}</span>
                             <select
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -1632,14 +1634,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-bold text-zinc-300">Description</label>
+                      <label className="font-bold text-zinc-300">{t("place.description", "Description")}</label>
                       {editDescription && (
                         <button
                           type="button"
                           onClick={() => setEditDescription("")}
                           className="text-[10px] text-zinc-400 hover:text-white hover:underline font-semibold cursor-pointer"
                         >
-                          Clear
+                          {t("common.clear", "Clear")}
                         </button>
                       )}
                     </div>
@@ -1659,14 +1661,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onClick={() => setIsEditModalOpen(false)}
                       className="px-3.5 py-2 rounded-xl text-zinc-400 font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
-                      Cancel
+                      {t("common.cancel", "Cancel")}
                     </button>
                     <div className="flex items-center gap-2">
                       <button
                         type="submit"
                         className="px-3.5 py-2 rounded-xl bg-zinc-800 text-zinc-200 hover:bg-zinc-700 font-bold transition-colors cursor-pointer border border-zinc-700"
                       >
-                        Save Edits
+                        {t("place.saveEdits", "Save Edits")}
                       </button>
                       {!place.isClaimed && (
                         <button
@@ -1674,7 +1676,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           onClick={() => setModalStep(2)}
                           className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md transition-all cursor-pointer flex items-center gap-1"
                         >
-                          Next: Claim ➔
+                          {t("place.nextClaim", "Next: Claim ➔")}
                         </button>
                       )}
                     </div>
@@ -1693,9 +1695,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-start gap-3">
                     <ShieldCheck className="w-6 h-6 text-zinc-300 shrink-0 mt-0.5" />
                     <div className="space-y-1">
-                      <h4 className="font-bold text-white text-sm">Verify Ownership</h4>
+                      <h4 className="font-bold text-white text-sm">{t("place.verifyOwnership", "Verify Ownership")}</h4>
                       <p className="text-zinc-300 leading-relaxed text-[11px]">
-                        To verify that you own <strong className="text-white">{formatBusinessName(place.name)}</strong>, please insert this verification tag into the HTML head section of your home page:
+                        {t("place.verifyOwnershipPrompt", "To verify that you own")} <strong className="text-white">{formatBusinessName(place.name)}</strong>, {t("place.insertTagPrompt", "please insert this verification tag into the HTML head section of your home page:")}
                       </p>
                       
                       <div className="mt-3 p-3 bg-zinc-900 rounded-xl text-[10px] font-mono text-zinc-200 break-all border border-zinc-800 relative group">
@@ -1709,29 +1711,29 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           }}
                           className="absolute right-2 top-2 p-1.5 bg-zinc-800 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 text-[10px] font-bold cursor-pointer transition-all"
                         >
-                          {copiedTag ? "Copied!" : "Copy"}
+                          {copiedTag ? t("common.copied", "Copied!") : t("common.copy", "Copy")}
                         </button>
                       </div>
                       <p className="text-[10px] text-zinc-400 italic">
-                        Tip: Our crawler will look for this meta tag on {place.website || "your website"} to automatically activate your official badge.
+                        {t("place.crawlerTip", "Tip: Our crawler will look for this meta tag on your website to automatically activate your official badge.")}
                       </p>
                     </div>
                   </div>
 
                   <div className="p-3.5 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2">
-                    <h5 className="font-bold text-white text-[10px] uppercase tracking-wider">Owner Advantages:</h5>
+                    <h5 className="font-bold text-white text-[10px] uppercase tracking-wider">{t("place.ownerAdvantages", "Owner Advantages:")}</h5>
                     <ul className="space-y-1.5 text-[11px] text-zinc-300">
                       <li className="flex items-start gap-1.5">
                         <span className="text-white font-bold">✓</span>
-                        <span><strong className="text-white">Verification Badge</strong>: Show clients your listing is official.</span>
+                        <span><strong className="text-white">{t("place.advBadgeTitle", "Verification Badge")}</strong>: {t("place.advBadgeDesc", "Show clients your listing is official.")}</span>
                       </li>
                       <li className="flex items-start gap-1.5">
                         <span className="text-white font-bold">✓</span>
-                        <span><strong className="text-white">Respond to Reviews</strong>: Engage directly with customers with your "Owner" badge next to answers.</span>
+                        <span><strong className="text-white">{t("place.advRespondTitle", "Respond to Reviews")}</strong>: {t("place.advRespondDesc", "Engage directly with customers with your 'Owner' badge next to answers.")}</span>
                       </li>
                       <li className="flex items-start gap-1.5">
                         <span className="text-white font-bold">✓</span>
-                        <span><strong className="text-white">Lock Information</strong>: Prevent standard viewers from overwriting key business coordinates.</span>
+                        <span><strong className="text-white">{t("place.advLockTitle", "Lock Information")}</strong>: {t("place.advLockDesc", "Prevent standard viewers from overwriting key business coordinates.")}</span>
                       </li>
                     </ul>
                   </div>
@@ -1745,16 +1747,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         className="mt-0.5 rounded border-zinc-700 text-white focus:ring-zinc-400 cursor-pointer bg-zinc-900"
                       />
                       <div>
-                        <span className="font-bold text-white block">I am the authorized owner / manager</span>
+                        <span className="font-bold text-white block">{t("place.authorizedOwnerCheck", "I am the authorized owner / manager")}</span>
                         <span className="text-[10px] text-zinc-400 block leading-tight">
-                          I confirm I represent this business and have authorization to claim it.
+                          {t("place.authorizedOwnerDesc", "I confirm I represent this business and have authorization to claim it.")}
                         </span>
                       </div>
                     </label>
 
                     {claimAsOwner && !currentUser && (
                       <div className="p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-300 text-[10px] font-semibold leading-normal animate-in fade-in duration-150">
-                        ⚠ You must sign in to claim this business. Please close this modal and sign in using the button at the top right first.
+                        {t("place.mustSignInClaim", "⚠ You must sign in to claim this business. Please close this modal and sign in using the button at the top right first.")}
                       </div>
                     )}
                   </div>
@@ -1766,14 +1768,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onClick={() => setModalStep(1)}
                       className="px-3.5 py-2 rounded-xl text-zinc-400 font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
-                      ← Back to Edits
+                      {t("place.backToEdits", "← Back to Edits")}
                     </button>
                     <button
                       type="submit"
                       disabled={!claimAsOwner || (claimAsOwner && !currentUser)}
                       className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
-                      Verify & Claim Business
+                      {t("place.verifyClaimBusiness", "Verify & Claim Business")}
                     </button>
                   </div>
                 </form>
@@ -1792,7 +1794,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={`${window.location.origin}/place/${getPlaceSlug(place)}`}
         title={formatBusinessName(place.name || drawerDomain || place.id)}
-        subtitle="Business Location"
+        subtitle={t("place.businessLocation", "Business Location")}
         logoUrl={place.logoUrl || primaryLogoUrl || undefined}
         domain={drawerDomain || extractCleanDomain(place.website || place.id) || undefined}
         website={place.website || undefined}
@@ -1840,23 +1842,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-bold uppercase tracking-wider border border-zinc-700">
                   <ShieldAlert className="w-3 h-3" />
-                  <span>Unclaimed Business</span>
+                  <span>{t("place.unclaimedBusiness", "Unclaimed Business")}</span>
                 </div>
                 <h3 className="text-xl font-black text-white tracking-tight">
-                  Direct Messaging Unavailable
+                  {t("place.directMessagingUnavailable", "Direct Messaging Unavailable")}
                 </h3>
                 <p className="text-xs text-zinc-300 leading-relaxed font-medium">
-                  <span className="font-bold text-white">{formatBusinessName(place.name)}</span> has not claimed their official page on Yoouz yet, so they cannot receive or reply to customer messages.
+                  <span className="font-bold text-white">{formatBusinessName(place.name)}</span> {t("place.unclaimedChatNotice", "has not claimed their official page on Yoouz yet, so they cannot receive or reply to customer messages.")}
                 </p>
               </div>
 
               <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-left space-y-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-white">
                   <Building2 className="w-4 h-4" />
-                  <span>Are you the owner or manager?</span>
+                  <span>{t("place.areYouOwner", "Are you the owner or manager?")}</span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed font-medium">
-                  Claim this listing with your official business email to activate 1-on-1 customer messaging, reply to video reviews, and showcase your profile.
+                  {t("place.claimListingPrompt", "Claim this listing with your official business email to activate 1-on-1 customer messaging, reply to video reviews, and showcase your profile.")}
                 </p>
               </div>
 
@@ -1873,7 +1875,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Claim & Verify Business</span>
+                  <span>{t("place.claimVerifyBusiness", "Claim & Verify Business")}</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-1" />
                 </button>
 
@@ -1881,7 +1883,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   onClick={() => setShowUnclaimedChatModal(false)}
                   className="w-full py-2.5 px-4 rounded-xl text-zinc-400 hover:text-white text-xs font-bold transition-colors cursor-pointer"
                 >
-                  Dismiss
+                  {t("common.dismiss", "Dismiss")}
                 </button>
               </div>
             </div>

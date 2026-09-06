@@ -87,7 +87,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 </span>
               </div>
               <span className="text-[11.5px] text-zinc-300 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
-                Real People. Real Reviews.
+                {t("legal.tagline", "Real People. Real Reviews.")}
               </span>
             </div>
           </div>
@@ -158,24 +158,24 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
               className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
             >
-              Privacy
+              {t("legal.privacy", "Privacy")}
             </button>
             <span className="text-zinc-600">•</span>
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : onSelectSection("more")}
               className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
             >
-              Terms
+              {t("legal.terms", "Terms")}
             </button>
             <span className="text-zinc-600">•</span>
             <button
               onClick={() => onSelectSection("more")}
               className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
             >
-              About
+              {t("legal.about", "About")}
             </button>
           </div>
-          <p className="text-[11px] text-zinc-400 font-normal">© 2026 Yoouz. All rights reserved.</p>
+          <p className="text-[11px] text-zinc-400 font-normal">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</p>
         </div>
       </aside>
 

@@ -5,6 +5,7 @@ import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoSearchViewProps {
   places: Place[];
@@ -25,6 +26,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   onRecordForPlace,
   onAddPlace
 }) => {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -205,11 +207,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           </div>
 
           <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
-            Review Any Business or Website
+            {t("search.title", "Review Any Business or Website")}
           </h1>
           
           <p className="text-zinc-400 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
-            Paste a business URL below to see short video reviews or record your own.
+            {t("search.subtitle", "Paste a business URL below to see short video reviews or record your own.")}
           </p>
 
           <form onSubmit={(e) => handleSearch(e)} className="w-full max-w-lg flex flex-col items-center">
@@ -220,7 +222,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               <input
                 type="text"
                 className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-500 text-white"
-                placeholder="example.com"
+                placeholder={t("search.placeholder", "example.com")}
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -249,7 +251,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   {isSearching ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    "Search"
+                    t("common.search", "Search")
                   )}
                 </button>
               </div>
@@ -269,7 +271,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             onClick={() => { setSearchedPlace(null); setQuery(""); }}
             className="mb-8 text-zinc-400 hover:text-white flex items-center gap-2 font-medium transition-colors self-start cursor-pointer"
           >
-            ← Search another business or website
+            {t("search.backSearch", "← Search another business or website")}
           </button>
 
           <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 shadow-xl overflow-hidden mb-8">
@@ -299,7 +301,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/30" />
                     <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest z-10">
                       <Globe className="w-4 h-4" />
-                      <span>Verified Web Listing</span>
+                      <span>{t("search.verifiedListing", "Verified Web Listing")}</span>
                     </div>
                   </div>
                 </>
@@ -309,7 +311,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/30" />
                   <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest z-10">
                     <Globe className="w-4 h-4" />
-                    <span>Verified Web Listing</span>
+                    <span>{t("search.verifiedListing", "Verified Web Listing")}</span>
                   </div>
                 </div>
               )}
@@ -363,7 +365,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         ))}
                       </div>
                       <span className="text-white font-bold text-lg">{averageRating.toFixed(1)}</span>
-                      <span className="text-zinc-400 font-medium text-sm">({totalReviewsCount} {totalReviewsCount === 1 ? 'review' : 'reviews'})</span>
+                      <span className="text-zinc-400 font-medium text-sm">
+                        ({totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})
+                      </span>
                     </div>
                   )}
                   {searchedPlace.description && (
@@ -377,7 +381,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   className="shrink-0 bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-3 rounded-full font-bold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Video className="w-5 h-5 text-zinc-950" />
-                  Record Review
+                  {t("record.record_review", "Record Review")}
                 </button>
               </div>
             </div>
@@ -386,7 +390,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           <div className="w-full">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <Play className="w-5 h-5 text-white fill-current" />
-              <span>Video Reviews ({placeVideos.length})</span>
+              <span>{t("search.videoReviews", "Video Reviews")} ({placeVideos.length})</span>
             </h3>
             
             {placeVideos.length > 0 ? (
@@ -420,13 +424,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     <Star key={i} className="w-8 h-8 text-zinc-700" strokeWidth={1.5} />
                   ))}
                 </div>
-                <h4 className="text-lg font-bold text-white">No reviews yet</h4>
-                <p className="text-zinc-400 text-sm mt-1 mb-6">Be the first to share your experience with this website!</p>
+                <h4 className="text-lg font-bold text-white">{t("search.noReviewsYet", "No reviews yet")}</h4>
+                <p className="text-zinc-400 text-sm mt-1 mb-6">
+                  {t("search.beTheFirst", "Be the first to share your experience with this website!")}
+                </p>
                 <button
                   onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
                   className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2.5 rounded-full font-bold shadow-sm transition-colors cursor-pointer"
                 >
-                  Record the first review
+                  {t("search.recordFirst", "Record the first review")}
                 </button>
               </div>
             )}

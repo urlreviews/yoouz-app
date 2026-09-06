@@ -83,7 +83,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
         {/* Top Header: Sleek Close Button & Top Spacing */}
         <div className="flex items-center justify-between px-5 pt-[max(16px,calc(env(safe-area-inset-top,0px)+12px))] pb-3 border-b border-zinc-800/80 bg-zinc-950/95 sticky top-0 z-20">
           <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-            Menu
+            {t("common.menu", "Menu")}
           </span>
           <button
             onClick={onClose}
@@ -132,7 +132,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                     <div className="mt-1 flex items-center gap-2">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700">
                         <Sparkles className="w-2.5 h-2.5 text-zinc-400" />
-                        Community Reviewer
+                        {t("profile.communityReviewer", "Community Reviewer")}
                       </span>
                     </div>
                   </div>
@@ -143,10 +143,10 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 <div className="mt-3 pt-2.5 border-t border-zinc-800 flex items-center justify-between text-xs">
                   <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-zinc-400" />
-                    View & Manage Profile
+                    {t("profile.viewManage", "View & Manage Profile")}
                   </span>
                   <span className="text-[11px] font-semibold text-white group-hover:text-zinc-200">
-                    Open &rarr;
+                    {t("common.open", "Open")} &rarr;
                   </span>
                 </div>
               </div>
@@ -154,10 +154,10 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-md text-left">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Sparkles className="w-4 h-4 text-zinc-300" />
-                  <h4 className="text-sm font-bold text-white">Join the Community</h4>
+                  <h4 className="text-sm font-bold text-white">{t("auth.joinCommunity", "Join the Community")}</h4>
                 </div>
                 <p className="text-xs text-zinc-400 mb-3">
-                  Sign in to record video reviews, follow creators, and save your favorite places.
+                  {t("auth.joinCommunitySubtitle", "Sign in to record video reviews, follow creators, and save your favorite places.")}
                 </p>
                 <button
                   onClick={() => {
@@ -167,7 +167,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold shadow-md shadow-white/10 transition-all cursor-pointer active:scale-95"
                 >
                   <LogIn className="w-4 h-4 text-zinc-950" />
-                  <span>Sign In / Register</span>
+                  <span>{t("auth.signInRegister", "Sign In / Register")}</span>
                 </button>
               </div>
             )}
@@ -176,7 +176,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
           {/* Core App Navigation */}
           <div className="pt-4 space-y-1">
             <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400 px-3 mb-2">
-              Menu & Features
+              {t("drawer.menuFeatures", "Menu & Features")}
             </p>
 
             {/* Home Feed */}
@@ -359,7 +359,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
           {/* Trust & Knowledge Section */}
           <div className="pt-4 space-y-1">
             <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400 px-3 mb-2">
-              Trust & Support
+              {t("drawer.trustSupport", "Trust & Support")}
             </p>
 
             {/* Knowledge & Trust Center */}
@@ -373,7 +373,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Shield className="w-4 h-4 text-white" />
-                <span>Trust Protocol & Guidelines</span>
+                <span>{t("more.trustGuidelines", "Trust Protocol & Guidelines")}</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-400" />
             </button>
@@ -385,7 +385,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <HelpCircle className="w-4 h-4 text-white" />
-                <span>Help & FAQs</span>
+                <span>{t("more.helpFaq", "Help & FAQs")}</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-400" />
             </button>
@@ -397,7 +397,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <MessageSquare className="w-4 h-4 text-white" />
-                <span>Contact Support</span>
+                <span>{t("more.contactSupport", "Contact Support")}</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-400" />
             </button>
@@ -407,7 +407,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
           {currentUser && (
             <div className="pt-4 space-y-1">
               <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400 px-3 mb-2">
-                Account & Settings
+                {t("profile.accountSettings", "Account & Settings")}
               </p>
 
               {/* Edit Profile Action */}
@@ -420,7 +420,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <User className="w-4 h-4 text-white" />
-                  <span>Edit Profile</span>
+                  <span>{t("profile.editProfile", "Edit Profile")}</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-zinc-400" />
               </button>
@@ -435,7 +435,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <LogOut className="w-4 h-4 text-zinc-300" />
-                  <span>Sign Out</span>
+                  <span>{t("nav.logout", "Sign Out")}</span>
                 </div>
               </button>
             </div>
@@ -451,7 +451,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 }}
                 className="hover:text-zinc-200 transition-colors cursor-pointer"
               >
-                Terms of Service
+                {t("legal.termsConditions", "Terms of Service")}
               </button>
               <span className="text-zinc-600">•</span>
               <button
@@ -461,7 +461,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 }}
                 className="hover:text-zinc-200 transition-colors cursor-pointer"
               >
-                Privacy Policy
+                {t("legal.privacyPolicy", "Privacy Policy")}
               </button>
             </div>
 

@@ -11,6 +11,7 @@ import {
   MapPin
 } from "lucide-react";
 import { isAuthorMatch } from "../utils/placeUtils";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoDiscoverViewProps {
   videos: VideoReview[];
@@ -39,6 +40,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
   onOpenCreator,
   onNavigateHome
 }) => {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [fetchedDbUsers, setFetchedDbUsers] = useState<any[]>([]);
   const [profileSyncTick, setProfileSyncTick] = useState<number>(0);
@@ -491,7 +493,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
             title="Back to Feed"
           >
             <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
-            <span>Feed</span>
+            <span>{t("nav.home", "Feed")}</span>
           </button>
         </div>
       )}
@@ -504,7 +506,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         </div>
         
         <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-6">
-          Discover Reviewers
+          {t("discover.title", "Discover Reviewers")}
         </h1>
 
         {/* Search Bar - styled exactly like the Search page */}
@@ -517,7 +519,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search reviewer by name..."
+              placeholder={t("discover.searchPlaceholder", "Search reviewer by name...")}
               className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-500 text-white"
               autoFocus
             />
@@ -536,7 +538,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                 type="button"
                 className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
               >
-                Search
+                {t("common.search", "Search")}
               </button>
             </div>
           </div>
@@ -548,9 +550,9 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
             <div className="flex items-center justify-between text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 px-2">
               <span className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-                Search Results ({displayedReviewers.length})
+                {t("discover.searchResults", "Search Results")} ({displayedReviewers.length})
               </span>
-            <span className="text-zinc-400 hidden sm:block font-medium">Tap card to view profile</span>
+            <span className="text-zinc-400 hidden sm:block font-medium">{t("discover.tapToView", "Tap card to view profile")}</span>
           </div>
 
           {displayedReviewers.length > 0 ? (
@@ -593,12 +595,12 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                         ) : (
                           <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
                             <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                            <span>Local Contributor</span>
+                            <span>{t("discover.localContributor", "Local Contributor")}</span>
                           </p>
                         )}
                         
                         <p className="text-[11px] font-semibold text-zinc-500">
-                          {reviewer.count} {reviewer.count === 1 ? "video review" : "video reviews"}
+                          {reviewer.count} {reviewer.count === 1 ? t("common.videoReview", "video review") : t("common.videoReviews", "video reviews")}
                         </p>
                       </div>
                     </div>
@@ -614,10 +616,10 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
           ) : (
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8 text-center shadow-sm">
               <p className="text-sm font-bold text-white mb-1">
-                No reviewers found matching "{query}"
+                {t("discover.noReviewersFound", `No reviewers found matching "${query}"`)}
               </p>
               <p className="text-xs text-zinc-400">
-                Try searching by their name.
+                {t("discover.trySearchingName", "Try searching by their name.")}
               </p>
             </div>
           )}

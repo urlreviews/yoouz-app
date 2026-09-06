@@ -1,4 +1,5 @@
 export interface TranslationSchema {
+  [key: string]: any;
   nav: {
     home: string;
     search: string;
@@ -127,25 +128,39 @@ export interface TranslationSchema {
     upgrade: string;
   };
   trustCenter?: {
-    hub: string;
-    subtitle: string;
-    title: string;
-    pillarsTitle: string;
-    pillarsDesc: string;
-    strictRule: string;
-    rule1Title: string;
-    rule1Desc: string;
-    pillar2: string;
-    rule2Title: string;
-    rule2Desc: string;
-    pillar3: string;
-    rule3Title: string;
-    rule3Desc: string;
-    trustProtocol: string;
-    helpFaqs: string;
-    forBusinesses: string;
-    privacySecurity: string;
-    contactSupport: string;
+    hub?: string;
+    subtitle?: string;
+    title?: string;
+    pillarsTitle?: string;
+    pillarsDesc?: string;
+    strictRule?: string;
+    rule1Title?: string;
+    rule1Desc?: string;
+    pillar2?: string;
+    rule2Title?: string;
+    rule2Desc?: string;
+    pillar3?: string;
+    rule3Title?: string;
+    rule3Desc?: string;
+    trustProtocol?: string;
+    helpFaqs?: string;
+    forBusinesses?: string;
+    privacySecurity?: string;
+    contactSupport?: string;
+    theYoouzStandard?: string;
+    bento1Title?: string;
+    bento1Desc?: string;
+    bento1Sub?: string;
+    bento2Title?: string;
+    bento2Desc?: string;
+    bento2Sub?: string;
+    bento3Title?: string;
+    bento3Desc?: string;
+    bento3Sub?: string;
+    bento4Title?: string;
+    bento4Desc?: string;
+    bento4Sub?: string;
+    [key: string]: any;
   };
 }
 
@@ -472,7 +487,20 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       helpFaqs: "Help & FAQs",
       forBusinesses: "For Businesses",
       privacySecurity: "Privacy & Security",
-      contactSupport: "Contact Support"
+      contactSupport: "Contact Support",
+      theYoouzStandard: "The Yoouz Standard",
+      bento1Title: "Immutable Face & Voice Identity",
+      bento1Desc: "Every reviewer builds an open visual portfolio. Real face, verified voice, and transparent history give viewers instant confidence.",
+      bento1Sub: "Inspect any profile immediately",
+      bento2Title: "Interactive Community Dialogue",
+      bento2Desc: "Reviews are not static one-way monologues. Viewers ask live questions and the community validates together.",
+      bento2Sub: "Crowdsourced community validation",
+      bento3Title: "Official Domain Verification",
+      bento3Desc: "Place owners claim their domain, reply with verified badges, and pin official solutions.",
+      bento3Sub: "Pinned owner responses",
+      bento4Title: "No Pay-To-Remove Guarantee",
+      bento4Desc: "Unlike legacy review portals, Yoouz guarantees all verified reviews stay transparent and tamper-proof.",
+      bento4Sub: "100% equal rules for all"
     }
   },
   ar: {
@@ -1009,7 +1037,20 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       helpFaqs: "Hilfe & FAQs",
       forBusinesses: "Für Unternehmen",
       privacySecurity: "Datenschutz & Sicherheit",
-      contactSupport: "Support kontaktieren"
+      contactSupport: "Support kontaktieren",
+      theYoouzStandard: "Der Yoouz Standard",
+      bento1Title: "Unveränderliche Gesichts- und Sprachidentität",
+      bento1Desc: "Jeder Reviewer baut ein offenes visuelles Portfolio auf. Echtes Gesicht, verifizierte Stimme und ein transparenter Verlauf geben Zuschauern sofortige Gewissheit.",
+      bento1Sub: "Prüfen Sie jedes Profil sofort",
+      bento2Title: "Interaktiver Community-Dialog",
+      bento2Desc: "Bewertungen sind keine toten Einweg-Monologe. Zuschauer können live Fragen stellen und die Community antwortet gemeinsam.",
+      bento2Sub: "Crowdsourced Community-Validierung",
+      bento3Title: "Offizielle Domain-Verifizierung",
+      bento3Desc: "Geschäftsinhaber können ihre Domain beanspruchen, mit Inhaber-Abzeichen antworten und offizielle Lösungen anpinnen.",
+      bento3Sub: "Angepinnte Inhaber-Antworten",
+      bento4Title: "Keine Löschung gegen Bezahlung",
+      bento4Desc: "Im Gegensatz zu alten Bewertungsportalen garantiert Yoouz, dass alle verifizierten Bewertungen transparent und manipulationssicher bleiben.",
+      bento4Sub: "100% gleiche Regeln für alle"
     }
   },
   it: {

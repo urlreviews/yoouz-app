@@ -23,6 +23,7 @@ import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { triggerHaptic } from "../utils/haptics";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoCommentsDrawerProps {
   video: VideoReview | null;
@@ -84,6 +85,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   placeName,
   onSelectAuthor,
 }) => {
+  const { t } = useLanguage();
   const [commentText, setCommentText] = useState("");
   const [postAsOwner, setPostAsOwner] = useState(false);
   const [sortBy, setSortBy] = useState<"top" | "newest">("top");
@@ -341,7 +343,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
               </div>
               <div className="min-w-0 flex-1">
                 <h2 className="text-white font-bold text-lg leading-tight tracking-tight">
-                  {totalCommentsCount} {totalCommentsCount === 1 ? "Comment" : "Comments"}
+                  {totalCommentsCount} {totalCommentsCount === 1 ? t("comments.comment", "Comment") : t("comments.comments", "Comments")}
                 </h2>
                 <p className="text-[13px] text-zinc-400 font-medium mt-0.5 truncate" title={video.placeName}>
                   {video.placeName}
@@ -375,7 +377,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     : "text-zinc-400 hover:text-white font-medium"
                 }`}
               >
-                Top
+                {t("comments.top", "Top")}
               </button>
               <button
                 onClick={() => setSortBy("newest")}
@@ -385,7 +387,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     : "text-zinc-400 hover:text-white font-medium"
                 }`}
               >
-                Newest
+                {t("comments.newest", "Newest")}
               </button>
             </div>
           </div>
@@ -417,11 +419,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-extrabold text-white text-xs truncate">
-                        Response from the owner
+                        {t("comments.responseOwner", "Response from the owner")}
                       </span>
                       <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/80 text-[9px] font-bold tracking-tight">
                         <ShieldCheck className="w-2.5 h-2.5 text-amber-400" />
-                        Verified Business
+                        {t("business.verified", "Verified Business")}
                       </span>
                     </div>
                     <span className="text-[10px] text-zinc-400 font-medium truncate block">
@@ -452,7 +454,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     className="flex items-center gap-1 text-zinc-300 hover:text-white font-bold hover:underline"
                   >
                     <Edit2 className="w-3 h-3" />
-                    <span>Edit response</span>
+                    <span>{t("comments.editResponse", "Edit response")}</span>
                   </button>
                   {onDeleteOwnerResponse && (
                     <button
@@ -460,7 +462,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       className="flex items-center gap-1 text-red-400 hover:text-red-300 font-semibold hover:underline"
                     >
                       <Trash2 className="w-3 h-3" />
-                      <span>Remove</span>
+                      <span>{t("common.remove", "Remove")}</span>
                     </button>
                   )}
                 </div>
@@ -475,9 +477,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 <MessageSquare className="w-8 h-8 stroke-[1.5]" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-white font-bold text-sm">No comments yet</h3>
+                <h3 className="text-white font-bold text-sm">{t("comments.noCommentsYet", "No comments yet")}</h3>
                 <p className="text-zinc-400 text-xs max-w-xs leading-relaxed">
-                  Be the first to share your thoughts or ask a question about {video.placeName}!
+                  {t("comments.beFirst", "Be the first to share your thoughts or ask a question about")} {video.placeName}!
                 </p>
               </div>
 
@@ -559,7 +561,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           {isCommentAuthorCreator && (
                             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-bold">
                               <Camera className="w-2.5 h-2.5 text-white" />
-                              Reviewer
+                              {t("profile.reviewer", "Reviewer")}
                             </span>
                           )}
 
@@ -567,7 +569,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           {comment.isOwner && (
                             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/80 text-[10px] font-bold">
                               <ShieldCheck className="w-2.5 h-2.5 text-amber-400" />
-                              Business Owner
+                              {t("business.owner", "Business Owner")}
                             </span>
                           )}
 
@@ -610,7 +612,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                             className="text-zinc-400 hover:text-white transition-colors text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                           >
                             <CornerDownRight className="w-3 h-3" />
-                            <span>Reply</span>
+                            <span>{t("comments.reply", "Reply")}</span>
                           </button>
 
                           {/* Creator Hearted Indicator / Bestow Creator Heart */}
@@ -620,7 +622,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                               title="Liked by the video creator"
                             >
                               <Heart className="w-2.5 h-2.5 fill-zinc-400 text-zinc-400" />
-                              <span>Liked by creator</span>
+                              <span>{t("comments.likedByCreator", "Liked by creator")}</span>
                             </div>
                           ) : (
                             isUserCreator &&
@@ -631,7 +633,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                 title="Give Creator Heart"
                               >
                                 <Heart className="w-3 h-3" />
-                                <span>Heart</span>
+                                <span>{t("comments.heart", "Heart")}</span>
                               </button>
                             )
                           )}
@@ -662,8 +664,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           <div className="w-4 h-0.5 bg-zinc-500 rounded" />
                           <span>
                             {isExpanded
-                              ? `Hide ${comment.replies?.length} ${comment.replies?.length === 1 ? "reply" : "replies"}`
-                              : `View ${comment.replies?.length} ${comment.replies?.length === 1 ? "reply" : "replies"}`}
+                              ? `${t("common.hide", "Hide")} ${comment.replies?.length} ${comment.replies?.length === 1 ? t("comments.reply", "reply") : t("comments.replies", "replies")}`
+                              : `${t("common.view", "View")} ${comment.replies?.length} ${comment.replies?.length === 1 ? t("comments.reply", "reply") : t("comments.replies", "replies")}`}
                           </span>
                           {isExpanded ? (
                             <ChevronUp className="w-3.5 h-3.5" />
@@ -722,13 +724,13 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
                                       {isReplyAuthorCreator && (
                                         <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[9px] font-bold">
-                                          Reviewer
+                                          {t("profile.reviewer", "Reviewer")}
                                         </span>
                                       )}
 
                                       {reply.isOwner && (
                                         <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/80 text-[9px] font-bold">
-                                          Owner
+                                          {t("business.owner", "Owner")}
                                         </span>
                                       )}
 
@@ -808,8 +810,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   <MessageSquare className="w-4 h-4 text-zinc-300" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">Sign in to join the conversation</p>
-                  <p className="text-[11px] text-zinc-400 truncate">Leave comments, like reviews, and reply to reviewers</p>
+                  <p className="text-xs font-bold text-white truncate">{t("comments.signInJoin", "Sign in to join the conversation")}</p>
+                  <p className="text-[11px] text-zinc-400 truncate">{t("comments.signInSubtitle", "Leave comments, like reviews, and reply to reviewers")}</p>
                 </div>
               </div>
               <button
@@ -817,7 +819,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 onClick={() => onRequireAuth?.()}
                 className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-white text-xs font-bold rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1.5"
               >
-                <span>Sign in</span>
+                <span>{t("nav.login", "Sign In")}</span>
               </button>
             </div>
           ) : (
@@ -827,13 +829,13 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800/80 border border-zinc-700 rounded-xl text-xs text-zinc-200 animate-in slide-in-from-bottom-1 duration-150">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <CornerDownRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    <span className="font-medium text-zinc-400">Replying to</span>
+                    <span className="font-medium text-zinc-400">{t("comments.replyingTo", "Replying to")}</span>
                     <span className="font-bold text-white truncate">{replyingTo.name}</span>
                   </div>
                   <button
                     onClick={handleCancelReply}
                     className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
-                    title="Cancel reply"
+                    title={t("comments.cancelReply", "Cancel reply")}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -861,7 +863,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
                     <div className="min-w-0">
                       <p className="text-[11px] font-bold text-amber-200 truncate">
-                        Verified Business Owner
+                        {t("business.verifiedOwner", "Verified Business Owner")}
                       </p>
                       <p className="text-[10px] text-amber-300/80 truncate">
                         {placeName || video.placeName}
@@ -875,7 +877,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       onChange={(e) => setPostAsOwner(e.target.checked)}
                       className="rounded text-amber-600 focus:ring-amber-500 border-amber-700 w-3.5 h-3.5 cursor-pointer"
                     />
-                    <span className="text-[11px] font-extrabold text-amber-300">Reply as Owner</span>
+                    <span className="text-[11px] font-extrabold text-amber-300">{t("comments.replyAsOwner", "Reply as Owner")}</span>
                   </label>
                 </div>
               )}
@@ -884,7 +886,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
               {isUserCreator && !isUserOwner && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-800/80 border border-zinc-700 rounded-lg text-[11px] text-zinc-300 font-semibold">
                   <Camera className="w-3.5 h-3.5 text-white" />
-                  <span>You are posting as the verified video reviewer</span>
+                  <span>{t("comments.postingAsReviewer", "You are posting as the verified video reviewer")}</span>
                 </div>
               )}
 
@@ -910,12 +912,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     maxLength={300}
                     placeholder={
                       replyingTo
-                        ? `Reply to ${replyingTo.name}...`
+                        ? `${t("comments.replyTo", "Reply to")} ${replyingTo.name}...`
                         : postAsOwner
-                        ? "Add official response from business owner..."
+                        ? t("comments.addOwnerResponsePlaceholder", "Add official response from business owner...")
                         : isUserCreator
-                        ? "Add comment as the video reviewer..."
-                        : "Add a friendly comment..."
+                        ? t("comments.addReviewerCommentPlaceholder", "Add comment as the video reviewer...")
+                        : t("comments.addCommentPlaceholder", "Add a friendly comment...")
                     }
                     className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-xs sm:text-sm px-4 py-2.5 rounded-full border transition-all ${
                       postAsOwner
@@ -948,7 +950,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         ? "bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40"
                         : "bg-zinc-800 hover:bg-zinc-700 text-white disabled:opacity-40"
                     }`}
-                    title="Send comment"
+                    title={t("comments.sendComment", "Send comment")}
                   >
                     <Send className="w-4 h-4" />
                   </button>

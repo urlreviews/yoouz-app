@@ -18,7 +18,14 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
 
   if (!isOpen) return null;
 
-  const regions = ["All", "Americas", "Europe", "Asia & Pacific", "Middle East", "Africa"];
+  const regions = [
+    { id: "All", label: t("region.all", "All") },
+    { id: "Americas", label: t("region.americas", "Americas") },
+    { id: "Europe", label: t("region.europe", "Europe") },
+    { id: "Asia & Pacific", label: t("region.asiaPacific", "Asia & Pacific") },
+    { id: "Middle East", label: t("region.middleEast", "Middle East") },
+    { id: "Africa", label: t("region.africa", "Africa") },
+  ];
 
   const filteredLanguages = languages.filter((lang) => {
     const q = searchQuery.toLowerCase().trim();
@@ -60,7 +67,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
                 {t("common.select_language", "Select Language & Country")}
               </h2>
               <p className="text-xs text-zinc-400">
-                {languages.length} Global Languages Supported &bull; Instant Switch
+                {t("settings.languages_supported", `${languages.length} Global Languages Supported • Instant Switch`)}
               </p>
             </div>
           </div>
@@ -82,7 +89,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by language, country, or code (e.g., German, 日本語, Arabic)..."
+              placeholder={t("settings.search_languages_input", "Search by language, country, or code (e.g., German, 日本語, Arabic)...")}
               className="w-full py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-white transition-colors pl-10 pr-4"
             />
             {searchQuery && (
@@ -99,15 +106,15 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
             {regions.map((reg) => (
               <button
-                key={reg}
-                onClick={() => setSelectedRegion(reg)}
+                key={reg.id}
+                onClick={() => setSelectedRegion(reg.id)}
                 className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${
-                  selectedRegion === reg
+                  selectedRegion === reg.id
                     ? "bg-white text-zinc-950 shadow-sm"
                     : "bg-zinc-800/60 text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >
-                {reg}
+                {reg.label}
               </button>
             ))}
           </div>
@@ -183,8 +190,8 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
         {/* Footer */}
         <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between text-xs text-zinc-400">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-            <span>100% Free &bull; Zero Server Latency</span>
+            <Globe className="w-3.5 h-3.5 text-zinc-400" />
+            <span>{languages.length} {t("common.languagesAvailable", "Languages Available")}</span>
           </div>
           <button
             onClick={onClose}

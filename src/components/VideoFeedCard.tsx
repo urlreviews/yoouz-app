@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
+import { useLanguage } from "../i18n/LanguageContext";
 import {
   Play,
   Pause,
@@ -111,6 +112,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onUnlockAudio,
   onRecordView
 }) => {
+  const { t } = useLanguage();
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
   const lastTapTimeRef = useRef<number>(0);
@@ -360,7 +362,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               onTouchStart={(e) => e.stopPropagation()}
               onTouchEnd={(e) => e.stopPropagation()}
               className="w-11 h-11 rounded-full bg-black/85 hover:bg-black backdrop-blur-xl border border-white/35 flex items-center justify-center text-white active:scale-90 transition-all shadow-2xl cursor-pointer"
-              title="Go back"
+              title={t("common.goBack", "Go back")}
             >
               <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
             </button>
@@ -376,8 +378,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onTouchStart={(e) => e.stopPropagation()}
                 onTouchEnd={(e) => e.stopPropagation()}
                 className="flex md:hidden w-11 h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 items-center justify-center text-white shadow-2xl transition-all cursor-pointer select-none"
-                aria-label="Open menu"
-                title="Open menu"
+                aria-label={t("nav.openMenu", "Open menu")}
+                title={t("nav.openMenu", "Open menu")}
               >
                 <Menu className="w-5 h-5 text-white stroke-[2.2]" />
               </button>
@@ -402,8 +404,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             type="button"
             id={`btn-toggle-sound-${video.id}`}
             className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
-            title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
-            aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+            title={isMuted || !isSessionAudioUnlocked || isActualMuted ? t("video.unmuteSound", "Unmute sound") : t("video.muteSound", "Mute sound")}
+            aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? t("video.unmuteSound", "Unmute sound") : t("video.muteSound", "Mute sound")}
           >
             {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
               <VolumeX className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
@@ -425,8 +427,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               togglePlayPause(e);
             }}
             className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-[0_8px_32px_rgba(0,0,0,0.7)] bg-black/60 hover:bg-black/80 backdrop-blur-md border-2 border-white/40 ring-1 ring-white/20"
-            aria-label="Play video"
-            title="Resume Video"
+            aria-label={t("video.playVideo", "Play video")}
+            title={t("video.resumeVideo", "Resume Video")}
           >
             <Play className="w-10 h-10 sm:w-12 sm:h-12 fill-white text-white translate-x-1 drop-shadow-md relative z-10" />
           </button>
@@ -474,9 +476,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onOpenCreator(safeAuthor);
               }}
               className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] flex items-center gap-1.5 hover:underline cursor-pointer bg-transparent border-0 p-0 text-left w-fit"
-              title={`View ${safeAuthor.name} Profile`}
+              title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
             >
-              <span className="whitespace-nowrap truncate leading-tight">By {safeAuthor.name}</span>
+              <span className="whitespace-nowrap truncate leading-tight">{t("video.by", "By")} {safeAuthor.name}</span>
               {safeAuthor.isVerified && (
                 <CheckCircle className="w-4 h-4 fill-white text-black inline shrink-0" />
               )}
@@ -515,7 +517,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           >
             <CopoBrandLogo
               domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
-              name={formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || "Business Place"}
+              name={formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
               website={video.placeWebsite}
               logoUrl={businessLogoUrl || video?.placeLogoUrl}
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
@@ -527,7 +529,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             />
             <div className="min-w-0 flex-1 py-0.5">
               <span className="line-clamp-2 [overflow-wrap:anywhere] leading-snug font-extrabold text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:text-white transition-colors">
-                {formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || "Business Place"}
+                {formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
                 <CheckCircle className="inline-block w-3.5 h-3.5 ml-1 align-text-bottom fill-white text-black shrink-0 relative -top-[1px] drop-shadow-sm" />
               </span>
             </div>
@@ -550,7 +552,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onOpenCreator(safeAuthor);
               }}
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border-2 border-white/70 hover:border-white overflow-hidden bg-black transition-colors cursor-pointer shadow-xl"
-              title={`View ${safeAuthor.name} Profile`}
+              title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
             >
               <img
                 src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle)}
@@ -577,7 +579,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   onToggleFollow(safeAuthor.name);
                 }}
                 className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md hover:scale-110 active:scale-90 transition-transform cursor-pointer border-2 border-zinc-950"
-                title="Follow"
+                title={t("video.follow", "Follow")}
               >
                 <Plus className="w-3.5 h-3.5 stroke-[3] text-zinc-950" />
               </button>
@@ -593,7 +595,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onToggleLike(video.id);
               }}
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
-              title="Like"
+              title={t("video.like", "Like")}
             >
               <Heart
                 className={`w-6 h-6 transition-colors ${
@@ -617,7 +619,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onOpenComments(video);
               }}
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
-              title="Comments"
+              title={t("video.comments", "Comments")}
             >
               <MessageCircle className="w-6 h-6 text-white stroke-[2.2]" />
             </button>
@@ -635,7 +637,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onOpenShare(video);
               }}
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
-              title="Share Video Review"
+              title={t("video.shareVideoReview", "Share Video Review")}
             >
               <Share2 className="w-6 h-6 text-white stroke-[2.2]" />
             </button>
@@ -653,7 +655,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onOpenMoreMenu(video);
               }}
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center hover:scale-105 transition-all active:scale-90 text-white cursor-pointer shadow-xl"
-              title="More options"
+              title={t("video.moreOptions", "More options")}
             >
               <MoreHorizontal className="w-6 h-6 stroke-[2.5] text-white" />
             </button>
