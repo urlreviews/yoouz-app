@@ -3578,19 +3578,8 @@ export function App() {
   }, [videos]);
 
   const savedPlaces = useMemo(() => {
-    const userVideoPlaceIds = new Set(userVideos.map((v) => v.placeId));
-    const userVideoPlaceNames = new Set(
-      userVideos.map((v) => (v.placeName || "").toLowerCase().trim()).filter(Boolean)
-    );
-
-    return places.filter(
-      (p) =>
-        savedPlaceIds.includes(p.id) ||
-        p.isSavedToProfile ||
-        userVideoPlaceIds.has(p.id) ||
-        userVideoPlaceNames.has((p.name || "").toLowerCase().trim())
-    );
-  }, [places, savedPlaceIds, userVideos]);
+    return places.filter((p) => savedPlaceIds.includes(p.id));
+  }, [places, savedPlaceIds]);
 
   const savedCreatorsList = useMemo(() => {
     const authorMap = new Map<string, VideoAuthor>();
