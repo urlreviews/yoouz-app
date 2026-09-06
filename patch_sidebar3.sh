@@ -1,0 +1,1 @@
+sed -i 's/<span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" \/>/<\/div>\n                    {item.badge \&\& item.badge > 0 ? (/g' src/components/CopoSidebar.tsx

@@ -19,7 +19,6 @@ export function getBunnyDb(): Client | null {
     if (url && !authToken) {
       // Only log once to avoid console noise
       if (!isInitialized) {
-        console.log("ℹ️ [BunnyDB] Database URL is set. Ready to connect once BUNNY_DATABASE_AUTH_TOKEN is provided in Settings.");
       }
     }
     return null;
@@ -165,12 +164,10 @@ export async function initBunnyDbSchema() {
   ];
 
   try {
-    console.log("🐰 [BunnyDB] Syncing database schema on Bunny Cloud...");
     for (const sql of tableSchemas) {
       await client.execute(sql);
     }
     isInitialized = true;
-    console.log("✅ [BunnyDB] Cloud Database tables ready!");
   } catch (err: any) {
     console.error("⚠️ [BunnyDB] Schema migration warning:", err?.message || err);
   }

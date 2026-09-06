@@ -1,7 +1,8 @@
-import React from "react";
+import fs from 'fs';
+fs.writeFileSync('src/components/CopoSidebar.tsx', `import React from "react";
 import { Search, Home, Map, Plus, Bookmark, Compass, LayoutDashboard, Globe, Bell, Mail, Settings, UserCircle, Star, LogOut, Flame, Info, CheckCircle, Verified, LayoutGrid } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
-import { useLanguage } from "../i18n/LanguageContext";
+import { t } from "../i18n/translations";
 
 interface NavItem {
   id: NavSection;
@@ -13,8 +14,6 @@ interface NavItem {
 }
 
 interface CopoSidebarProps {
-  onOpenLegal?: () => void;
-  onOpenCreateModal?: () => void;
   activeSection: NavSection;
   onSelectSection: (section: NavSection) => void;
   onOpenSearch?: () => void;
@@ -25,8 +24,6 @@ interface CopoSidebarProps {
 }
 
 export const CopoSidebar: React.FC<CopoSidebarProps> = ({
-  onOpenLegal,
-  onOpenCreateModal,
   activeSection,
   onSelectSection,
   onOpenSearch,
@@ -35,8 +32,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
   unreadMessagesCount,
   unreadNotifsCount,
 }) => {
-  const { t } = useLanguage();
-    const navItems: NavItem[] = [
+  const navItems: NavItem[] = [
     { id: "home" as NavSection, label: t("nav.home", "Home"), icon: Home },
     { id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search },
     { id: "create" as NavSection, label: t("nav.create", "Record Review"), icon: Plus, isDarkBlue: true },
@@ -158,7 +154,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               <span>More Settings</span>
             </button>
             <button
-              onClick={onOpenLegal}
+              onClick={() => {}}
               className="text-left px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
             >
               {t("legal.about", "About")}
@@ -317,7 +313,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           {/* 3. Create (Center Floating Action Button) */}
           <button
             id="mobile-nav-create-btn"
-            onClick={() => onOpenCreateModal ? onOpenCreateModal() : onSelectSection("create")}
+            onClick={() => onSelectSection("create")}
             className="flex flex-col items-center justify-center flex-1 cursor-pointer"
           >
             <div className="relative -mt-6 mb-1">
@@ -407,3 +403,4 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
     </>
   );
 };
+`);

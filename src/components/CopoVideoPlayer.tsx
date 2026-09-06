@@ -578,7 +578,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 ...prev,
                 [vid.id]: url
               }));
-              console.log(`⚡ [CopoVideoPlayer] Pre-bound blob URL for ${vid.id}`);
             }
           });
         }

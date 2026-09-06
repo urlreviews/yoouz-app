@@ -63,7 +63,6 @@ export function App() {
       const savedVersion = localStorage.getItem("yoouz_app_version");
       if (savedVersion && savedVersion !== APP_VERSION) {
         localStorage.setItem("yoouz_app_version", APP_VERSION);
-        console.log("🚀 [Yoouz] Force Update detected. Refreshing...");
         window.location.reload();
         return;
       } else {
@@ -2029,17 +2028,6 @@ export function App() {
   const activeFeedVideos = useMemo(() => {
     // Filter out hidden/blocked videos
     const visibleVideos = videos.filter((v) => !hiddenVideoIds.includes(v.id));
-    console.log("[DEBUG App.tsx] Feed State:", {
-      totalVideos: videos.length,
-      visibleVideos: visibleVideos.length,
-      activeSection,
-      activeSubTab,
-      isPlaceView,
-      isCreatorView,
-      hasFullscreenContext: !!fullscreenFeedContext
-    });
-
-    // Priority 0: Fullscreen Feed Context (when user clicked a video from a Creator or Business or Profile to watch fullscreen with TikTok scroll)
     if (fullscreenFeedContext) {
       if (fullscreenFeedContext.type === "creator" && fullscreenFeedContext.authorData) {
         return visibleVideos.filter(v => isAuthorMatch(v, fullscreenFeedContext.authorData!));

@@ -211,7 +211,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
         triggerHaptic("success");
       } catch (err: any) {
         if (err?.name !== "AbortError") {
-          console.log("Share dismissed or failed:", err);
           handleCopy();
         }
       }

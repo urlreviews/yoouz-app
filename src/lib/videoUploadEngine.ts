@@ -5,7 +5,6 @@ export async function uploadVideoReview(
   meta: any,
   onProgress: (pct: number) => void
 ): Promise<string> {
-  console.log("🔥 [videoUploadEngine] Starting backend video upload of size:", blob.size);
   onProgress(5); // Start with a small progress indicator immediately
 
   const formData = new FormData();
@@ -28,7 +27,6 @@ export async function uploadVideoReview(
       if (event.lengthComputable) {
         // Map progress from 5% to 95% during actual file transfer
         const percent = Math.min(95, Math.round((event.loaded / event.total) * 90) + 5);
-        console.log(`🔥 [videoUploadEngine] Upload progress: ${percent}%`);
         onProgress(percent);
       }
     };
@@ -39,7 +37,6 @@ export async function uploadVideoReview(
           const res = JSON.parse(xhr.responseText);
           if (res.success && res.url) {
             onProgress(98);
-            console.log("🔥 [videoUploadEngine] Upload successful, url:", res.url);
             resolve(res.url);
           } else {
             reject(new Error(res.error || "Failed to parse upload response URL"));

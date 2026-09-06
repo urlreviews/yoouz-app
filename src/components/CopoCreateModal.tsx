@@ -563,7 +563,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     // Feature disabled by policy - keeping stub for ref if needed but it's hidden in UI
-    console.log("File upload is disabled");
   };
 
   const stopCamera = () => {

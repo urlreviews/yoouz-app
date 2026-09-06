@@ -607,7 +607,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       delete: "Delete",
       edit: "Edit",
       share: "Share",
-      search: "Search...",
+      search: "Search",
       loading: "Loading...",
       verified: "Verified",
       follow: "Follow",
@@ -745,7 +745,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       bento4Desc: "Unlike legacy review portals, Yoouz guarantees all verified reviews stay transparent and tamper-proof.",
       bento4Sub: "100% equal rules for all",
       verifiedMember: "Verified Member • Active Contributor",
-      searchFaqsPlaceholder: "Search answers by keyword or topic...",
+      searchFaqsPlaceholder: "Search answers by keyword or topic",
       categoryAll: "All Topics",
       categoryReviewers: "For Reviewers",
       categoryBusiness: "For Businesses",
@@ -816,7 +816,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
     },
     discover: {
       title: "Discover Reviewers",
-      searchPlaceholder: "Search reviewer by name...",
+      searchPlaceholder: "Search reviewer by name",
       searchResults: "Search Results",
       tapToView: "Tap card to view profile",
       noReviewersFound: "No reviewers found",
@@ -888,7 +888,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       resendCode: "Resend Code",
       htmlVerificationTitle: "HTML Meta Tag Verification",
       searchPlaceLabel: "Search & Select Business to Claim",
-      searchPlacePlaceholder: "Search your place name or address...",
+      searchPlacePlaceholder: "Search your place name or address",
       pasteTagInstruction: "Copy verification code and paste it inside the <head> tag of your website:",
       copyTag: "Copy Meta Tag",
       copied: "Copied!",
@@ -905,7 +905,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
     settings: {
       language_preference: "Language & Regional Settings",
       language_subtitle: "Switch instantly between 64 supported languages with full translation, RTL bidirectional rendering, and localized formatting.",
-      search_languages_placeholder: "Search from 64 languages..."
+      search_languages_placeholder: "Search from 64 languages"
     }
   },
   ar,
