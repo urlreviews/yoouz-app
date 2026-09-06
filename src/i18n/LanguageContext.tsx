@@ -160,10 +160,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const scheduleTranslation = useCallback((text: string) => {
     if (!text || typeof text !== "string" || text.trim().length === 0) return;
     const trimmed = text.trim();
-    if (trimmed.length > 500) return; // skip overly long paragraphs
+    if (trimmed.length > 2500) return; // Allow complete paragraphs and articles
     pendingBatchRef.current.add(trimmed);
     if (batchTimerRef.current) clearTimeout(batchTimerRef.current);
-    batchTimerRef.current = setTimeout(flushBatch, 80);
+    batchTimerRef.current = setTimeout(flushBatch, 30);
   }, [flushBatch]);
 
   // Warm up core strings when language changes

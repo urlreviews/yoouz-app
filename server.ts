@@ -7641,7 +7641,7 @@ ${JSON.stringify(chunk)}`;
 
           try {
             const response = await gemini.models.generateContent({
-              model: "gemini-3.8-flash",
+              model: "gemini-2.5-flash",
               contents: prompt,
               config: {
                 responseMimeType: "application/json",
@@ -7758,7 +7758,7 @@ Respond ONLY with a JSON object:
 }`;
 
       const response = await gemini.models.generateContent({
-        model: "gemini-3.8-flash",
+        model: "gemini-2.5-flash",
         contents: [
           {
             role: "user",
