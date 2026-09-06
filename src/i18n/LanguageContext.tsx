@@ -6,6 +6,7 @@ import {
   translations,
   TranslationSchema
 } from "./translations";
+import { UNIVERSAL_PAGE_TRANSLATIONS } from "./locales/universal";
 
 interface LanguageContextType {
   language: SupportedLanguage;
@@ -273,6 +274,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           val = langCache[keyPath];
         } else if (langCache[englishText]) {
           val = langCache[englishText];
+        } else if (UNIVERSAL_PAGE_TRANSLATIONS[language]?.[englishText]) {
+          val = UNIVERSAL_PAGE_TRANSLATIONS[language][englishText];
+        } else if (UNIVERSAL_PAGE_TRANSLATIONS[language]?.[keyPath]) {
+          val = UNIVERSAL_PAGE_TRANSLATIONS[language][keyPath];
         }
       }
 
