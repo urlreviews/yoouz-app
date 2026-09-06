@@ -54,6 +54,8 @@ interface CopoCreatorDrawerProps {
   onDeleteVideo?: (videoId: string) => void;
   onSignOut?: () => void;
   onDeleteProfile?: () => Promise<void>;
+  isSaved?: boolean;
+  onToggleSaveCreator?: (author: VideoAuthor) => void;
 }
 
 export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
@@ -71,7 +73,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   onRecordReview,
   onDeleteVideo,
   onSignOut,
-  onDeleteProfile
+  onDeleteProfile,
+  isSaved: propIsSaved,
+  onToggleSaveCreator
 }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -84,7 +88,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const [isSaved, setIsSaved] = useState<boolean>(() => {
+  const [localIsSaved, setLocalIsSaved] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem("yoouz_saved_creators");
       if (saved && author?.name) {
@@ -95,9 +99,24 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     return false;
   });
 
+  const isSaved = propIsSaved !== undefined ? propIsSaved : localIsSaved;
+
   const handleToggleSaveCreator = () => {
     triggerHaptic("light");
     if (!author?.name) return;
+
+    if (onToggleSaveCreator) {
+      onToggleSaveCreator(author);
+      const willBeSaved = !isSaved;
+      setCopiedNotification(
+        willBeSaved
+          ? t("profile.savedReviewer", "Saved reviewer to bookmarks")
+          : t("profile.removedSaved", "Removed reviewer from Saved")
+      );
+      setTimeout(() => setCopiedNotification(""), 3000);
+      return;
+    }
+
     try {
       const saved = localStorage.getItem("yoouz_saved_creators");
       let list: string[] = saved ? JSON.parse(saved) : [];
@@ -113,7 +132,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         setCopiedNotification(t("profile.savedReviewer", "Saved reviewer to bookmarks"));
       }
       localStorage.setItem("yoouz_saved_creators", JSON.stringify(list));
-      setIsSaved(nextState);
+      setLocalIsSaved(nextState);
       setTimeout(() => setCopiedNotification(""), 3000);
     } catch (e) {}
   };

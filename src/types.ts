@@ -79,6 +79,9 @@ export interface UserProfile {
   followers?: string[];
   followedAuthors?: string[];
   followedPlaces?: string[];
+  savedVideoIds?: string[];
+  savedPlaceIds?: string[];
+  savedCreators?: string[];
 }
 
 export interface VideoReview {

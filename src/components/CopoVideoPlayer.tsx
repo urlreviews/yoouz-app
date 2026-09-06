@@ -13,6 +13,8 @@ import {
   MoreHorizontal,
   EyeOff,
   Share2,
+  Bookmark,
+  BookmarkCheck,
   MapPin,
   User,
   X,
@@ -1406,6 +1408,27 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   </button>
 
                   <button
+                    id="btn-more-option-bookmark-owner"
+                    onClick={() => {
+                      const vidId = moreMenuVideo.id;
+                      setMoreMenuVideo(null);
+                      if (vidId) onToggleBookmark(vidId);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                  >
+                    {moreMenuVideo.isBookmarked ? (
+                      <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    ) : (
+                      <Bookmark className="w-4 h-4 text-zinc-200" />
+                    )}
+                    <span>
+                      {moreMenuVideo.isBookmarked
+                        ? t("video.removeBookmark", "Remove from Bookmarks")
+                        : t("video.saveBookmark", "Save to Bookmarks")}
+                    </span>
+                  </button>
+
+                  <button
                     id="btn-more-option-share-owner"
                     onClick={() => {
                       const v = moreMenuVideo;
@@ -1449,8 +1472,29 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   </button>
                 </>
               ) : (
-                /* VIEWER ACTIONS: Share, View Place, View Creator, Report, Not Interested */
+                /* VIEWER ACTIONS: Save/Bookmark, Share, View Place, View Creator, Report, Not Interested */
                 <>
+                  <button
+                    id="btn-more-option-bookmark-viewer"
+                    onClick={() => {
+                      const vidId = moreMenuVideo.id;
+                      setMoreMenuVideo(null);
+                      if (vidId) onToggleBookmark(vidId);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                  >
+                    {moreMenuVideo.isBookmarked ? (
+                      <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    ) : (
+                      <Bookmark className="w-4 h-4 text-zinc-200" />
+                    )}
+                    <span>
+                      {moreMenuVideo.isBookmarked
+                        ? t("video.removeBookmark", "Remove from Bookmarks")
+                        : t("video.saveBookmark", "Save to Bookmarks")}
+                    </span>
+                  </button>
+
                   <button
                     id="btn-more-option-share"
                     onClick={() => {

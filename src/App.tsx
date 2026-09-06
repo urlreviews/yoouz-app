@@ -112,7 +112,22 @@ export function App() {
   const { videos, setVideos, isLoading: isLoadingVideos, loadMore: loadMoreVideos, hasMore } = useFeedPagination();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [notifications, setNotifications] = useState<CopoNotification[]>([]);
-  const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>([]);
+  const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("copo_saved_place_ids");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [savedCreators, setSavedCreators] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("yoouz_saved_creators");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [messages, setMessages] = useState<CopoMessage[]>([]);
   const [allRegisteredUsers, setAllRegisteredUsers] = useState<any[]>([]);
 
@@ -3419,6 +3434,25 @@ export function App() {
     });
   };
 
+  // Handle Save / Bookmark Creator
+  const handleToggleSaveCreator = (author: VideoAuthor) => {
+    if (!author?.name) return;
+    const cleanName = author.name.toLowerCase();
+    setSavedCreators((prev) => {
+      const exists = prev.includes(cleanName);
+      let next;
+      if (exists) {
+        next = prev.filter((n) => n !== cleanName);
+      } else {
+        next = [...prev, cleanName];
+      }
+      try {
+        localStorage.setItem("yoouz_saved_creators", JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
   // Handle Updating Business Information (Claim, Edit, Add Phone/Website/Hours)
   const handleUpdatePlace = (updatedPlace: Place) => {
     setPlaces((prev) => {
@@ -3558,6 +3592,40 @@ export function App() {
     );
   }, [places, savedPlaceIds, userVideos]);
 
+  const savedCreatorsList = useMemo(() => {
+    const authorMap = new Map<string, VideoAuthor>();
+    videos.forEach((v) => {
+      if (v.author && v.author.name) {
+        authorMap.set(v.author.name.toLowerCase(), v.author);
+      }
+    });
+    allRegisteredUsers.forEach((u) => {
+      if (u.name) {
+        authorMap.set(u.name.toLowerCase(), {
+          name: u.name,
+          handle: u.handle || `@${u.name.toLowerCase().replace(/\s+/g, '')}`,
+          avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(u.name)}&background=27272a&color=fff`,
+          bio: u.bio,
+          followersCount: u.followersCount || 0,
+          isFollowed: currentUser?.followedAuthors?.includes(u.name) || false
+        });
+      }
+    });
+
+    return savedCreators.map((name) => {
+      const lower = name.toLowerCase();
+      if (authorMap.has(lower)) {
+        return authorMap.get(lower)!;
+      }
+      return {
+        name: name,
+        handle: `@${name.toLowerCase().replace(/\s+/g, '')}`,
+        avatar: `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
+        isFollowed: currentUser?.followedAuthors?.includes(name) || false
+      };
+    });
+  }, [videos, allRegisteredUsers, savedCreators, currentUser]);
+
   const handleOpenReport = (target: ReportTarget | VideoReview | { type: "user"; author: VideoAuthor } | { type: "place"; placeName: string; placeId: string }) => {
     if ("videoUrl" in target) {
       setActiveReportTarget({ type: "video", video: target as VideoReview });
@@ -3691,6 +3759,8 @@ export function App() {
           onOpenReport={(author) => handleOpenReport({ type: "user", author })}
           onRecordReview={handleOpenCreateReview}
           onDeleteVideo={handleDeleteUserVideo}
+          isSaved={selectedAuthorForDrawer ? savedCreators.includes(selectedAuthorForDrawer.name.toLowerCase()) : false}
+          onToggleSaveCreator={handleToggleSaveCreator}
           onSignOut={async () => {
             await logOutUser();
             setCurrentUser(null);
@@ -4133,6 +4203,8 @@ export function App() {
             {activeSection === "bookmarks" && (
               <CopoBookmarksView
                 bookmarkedVideos={bookmarkedVideos}
+                savedPlaces={savedPlaces}
+                savedCreators={savedCreatorsList}
                 currentUser={currentUser}
                 onOpenAuth={() => {
                   setAuthIntent('bookmarks');
@@ -4144,6 +4216,10 @@ export function App() {
                 onSelectVideo={handleSelectVideoById}
                 onRemoveBookmark={handleToggleBookmark}
                 onNavigateHome={handleGoHome}
+                onSelectPlace={handleOpenPlaceDrawer}
+                onSelectCreator={handleOpenCreatorDrawer}
+                onRemovePlace={handleToggleGrabPlace}
+                onRemoveCreator={handleToggleSaveCreator}
               />
             )}
 
