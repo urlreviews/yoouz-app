@@ -38,6 +38,7 @@ import {
   ShieldAlert,
   Building2,
   ArrowRight,
+  ArrowLeft,
   ExternalLink,
   Flag,
   Heart
@@ -533,6 +534,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {...swipeProps}
           className="relative h-48 w-full shrink-0 flex items-center justify-center bg-zinc-950 touch-pan-y"
         >
+        {/* Mobile Top-Left Back Button */}
+        <button
+          onClick={() => {
+            triggerHaptic("light");
+            onClose();
+          }}
+          className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-xl shadow-xl md:hidden flex items-center justify-center text-white hover:bg-black/80 active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
+          title="Back to previous page"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
         {/* Close / Exit Button Group */}
         <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
           {/* Report Place Button */}

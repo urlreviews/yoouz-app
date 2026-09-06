@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   X,
+  ArrowLeft,
   Send,
   Heart,
   MessageSquare,
@@ -338,7 +339,17 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         >
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 text-zinc-200 flex items-center justify-center font-bold shrink-0 shadow-sm">
+              <button
+                onClick={() => {
+                  triggerHaptic("light");
+                  onClose();
+                }}
+                className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 md:hidden flex items-center justify-center text-zinc-300 hover:text-white shrink-0 active:scale-95 cursor-pointer shadow-sm"
+                aria-label="Back"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 text-zinc-200 hidden md:flex items-center justify-center font-bold shrink-0 shadow-sm">
                 <MessageSquare className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">

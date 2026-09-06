@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
   X,
+  ArrowLeft,
   Facebook,
   Mail,
   Copy,
@@ -522,7 +523,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           {...swipeProps}
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300">
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 sm:hidden flex items-center justify-center text-zinc-300 hover:text-white shrink-0 active:scale-95 cursor-pointer"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 hidden sm:flex items-center justify-center text-zinc-300">
               <Share2 className="w-4 h-4" />
             </div>
             <div>
