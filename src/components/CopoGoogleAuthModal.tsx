@@ -684,7 +684,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
       <div 
         className="w-full sm:max-w-[440px] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-none bg-[#09090b] rounded-none sm:rounded-[28px] shadow-2xl border-0 sm:border border-white/[0.08] text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto sm:overflow-hidden"
         style={{
-          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          paddingTop: "env(safe-area-inset-top, 0px)", transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
         }}
         onClick={(e) => e.stopPropagation()}

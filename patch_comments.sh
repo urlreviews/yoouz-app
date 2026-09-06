@@ -1,0 +1,1 @@
+sed -i "s/style={dragOffsetY > 0 ? { transform: \\\`translateY(\${dragOffsetY}px)\\\`, transition: 'none' } : undefined}/style={{ paddingTop: 'env(safe-area-inset-top, 0px)', transform: dragOffsetY > 0 ? \\\`translateY(\${dragOffsetY}px)\\\` : undefined, transition: dragOffsetY > 0 ? 'none' : undefined }}/g" src/components/CopoCommentsDrawer.tsx

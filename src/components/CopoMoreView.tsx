@@ -678,7 +678,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t("trustCenter.searchFaqsPlaceholder", "Search FAQs, guidelines, or topics...")}
-                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-sm font-semibold outline-none transition-all text-white placeholder:text-zinc-200"
+                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-sm font-semibold outline-none transition-all text-white placeholder:text-zinc-400"
                   />
                   {searchQuery && (
                     <button
@@ -1051,7 +1051,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactName}
                         onChange={(e) => setContactName(e.target.value)}
                         placeholder="e.g. Sarah Jenkins"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-200"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-400"
                       />
                     </div>
 
@@ -1065,7 +1065,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactEmail}
                         onChange={(e) => setContactEmail(e.target.value)}
                         placeholder="e.g. sarah@example.com"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-200"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-400"
                       />
                     </div>
                   </div>
@@ -1096,7 +1096,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactDomain}
                         onChange={(e) => setContactDomain(e.target.value)}
                         placeholder="e.g. yourcompany.com"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-200"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-400"
                       />
                     </div>
                   </div>
@@ -1111,7 +1111,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       value={contactMessage}
                       onChange={(e) => setContactMessage(e.target.value)}
                       placeholder={t("trustCenter.messagePlaceholder", "Describe your inquiry or request in detail...")}
-                      className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all resize-none leading-relaxed text-white placeholder:text-zinc-200"
+                      className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all resize-none leading-relaxed text-white placeholder:text-zinc-400"
                     />
                   </div>
 

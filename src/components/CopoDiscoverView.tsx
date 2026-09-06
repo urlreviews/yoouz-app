@@ -520,7 +520,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("discover.searchPlaceholder", "Search reviewer by name...")}
-              className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-200 text-white"
+              className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
               autoFocus
             />
             {query && (

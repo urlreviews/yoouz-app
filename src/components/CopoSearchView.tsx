@@ -221,7 +221,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               </div>
               <input
                 type="text"
-                className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-200 text-white"
+                className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
                 placeholder={t("search.placeholder", "example.com")}
                 value={query}
                 onChange={(e) => {

@@ -567,7 +567,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               triggerHaptic("light");
               onClose();
             }}
-            className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-xl shadow-xl md:hidden flex items-center justify-center text-white hover:bg-black/80 active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
+            className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-xl shadow-xl md:hidden flex items-center justify-center text-white hover:bg-black/80 active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
             title="Back to previous page"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -602,7 +602,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           )}
 
           {/* Top Right Action Group */}
-          <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
+          <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
             {/* Non-owner: Report Creator */}
             {!isOwner && onOpenReport && (
               <button
@@ -1265,7 +1265,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   value={editName}
                   onChange={(e) => setEditName(e.target.value.slice(0, 50))}
                   placeholder="Your Name"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-200"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-400"
                 />
               </div>
 
@@ -1280,7 +1280,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   onChange={(e) => setEditBio(e.target.value.slice(0, 160))} 
                   rows={3} 
                   placeholder={t("profile.bioPlaceholder", "Introduce yourself to other reviewers! What are your favorite places, foods, or hobbies?")}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-200" 
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-400" 
                 />
               </div>
 

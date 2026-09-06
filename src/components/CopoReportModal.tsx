@@ -303,7 +303,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         style={{
-          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          paddingTop: "env(safe-area-inset-top, 0px)", transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
         }}
         className="w-full sm:max-w-lg md:max-w-3xl lg:max-w-4xl h-[100dvh] sm:h-auto bg-zinc-900 rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-zinc-800 overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90vh] my-0 sm:my-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overscroll-contain select-text text-white"
@@ -486,7 +486,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                         value={additionalDetails}
                         onChange={(e) => setAdditionalDetails(e.target.value)}
                         placeholder={t("reportModal.additionalPlaceholder", "E.g., At 0:14 the video shows false pricing, or this business closed in 2024...")}
-                        className="w-full px-3.5 py-2.5 text-xs text-white bg-zinc-950/80 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-zinc-700 transition-all placeholder:text-zinc-200"
+                        className="w-full px-3.5 py-2.5 text-xs text-white bg-zinc-950/80 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-zinc-700 transition-all placeholder:text-zinc-400"
                       />
                     </div>
 
@@ -501,7 +501,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                           value={reporterEmail}
                           onChange={(e) => setReporterEmail(e.target.value)}
                           placeholder="your.email@example.com"
-                          className="w-full pl-9 pr-3 py-2.5 text-xs text-white bg-zinc-950/80 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-zinc-700 transition-all placeholder:text-zinc-200"
+                          className="w-full pl-9 pr-3 py-2.5 text-xs text-white bg-zinc-950/80 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-zinc-700 transition-all placeholder:text-zinc-400"
                         />
                         <Mail className="w-4 h-4 text-zinc-200 absolute left-3 top-3" />
                       </div>

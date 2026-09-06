@@ -540,14 +540,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             triggerHaptic("light");
             onClose();
           }}
-          className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-xl shadow-xl md:hidden flex items-center justify-center text-white hover:bg-black/80 active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
+          className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-xl shadow-xl md:hidden flex items-center justify-center text-white hover:bg-black/80 active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
           title="Back to previous page"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         {/* Close / Exit Button Group */}
-        <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
+        <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
           {/* Report Place Button */}
           {onOpenReport && place && (
             <button
@@ -1494,7 +1494,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       value={editAddress}
                       onChange={(e) => setEditAddress(e.target.value)}
                       placeholder="e.g. 100 Main St, San Francisco, CA"
-                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
+                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                     />
                   </div>
 
@@ -1506,7 +1506,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
                         placeholder="+1 415-555-0100"
-                        className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
+                        className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                       />
                     </div>
                     <div>
@@ -1516,7 +1516,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         value={editWebsite}
                         onChange={(e) => setEditWebsite(e.target.value)}
                         placeholder="https://example.com"
-                        className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
+                        className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                       />
                     </div>
                   </div>
@@ -1528,7 +1528,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
                       placeholder="e.g. contact@business.com"
-                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
+                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                     />
                   </div>
 
@@ -1548,7 +1548,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       value={editHours}
                       onChange={(e) => setEditHours(e.target.value)}
                       placeholder="e.g. Mon-Fri: 9:00 AM - 6:00 PM"
-                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
+                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                     />
                     
                     {/* Visual helper is now collapsible */}
@@ -1663,7 +1663,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
                       placeholder="Brief description of the business..."
-                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
+                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                     />
                   </div>
 

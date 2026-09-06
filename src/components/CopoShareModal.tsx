@@ -501,7 +501,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
         id="yoouz-share-modal-dialog"
         className="relative z-10 w-full sm:max-w-[490px] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[85vh] bg-zinc-950 sm:bg-zinc-950/98 backdrop-blur-2xl rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-zinc-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 text-white pb-safe select-text overscroll-contain"
         style={{
-          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          paddingTop: "env(safe-area-inset-top, 0px)", transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
         }}
         onClick={(e) => e.stopPropagation()}

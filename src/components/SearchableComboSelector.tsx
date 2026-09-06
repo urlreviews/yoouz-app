@@ -69,7 +69,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
               autoComplete="new-password"
               autoCorrect="off"
               spellCheck={false}
-              className="w-full bg-transparent border-0 p-0 text-xs text-zinc-200 placeholder:text-zinc-200 focus:outline-none focus:ring-0 focus:border-transparent"
+              className="w-full bg-transparent border-0 p-0 text-xs text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-0 focus:border-transparent"
               autoFocus
             />
           </div>
