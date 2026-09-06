@@ -303,7 +303,7 @@ export const CopoAuthPrompt: React.FC<{
   return (
     <div className={`w-full ${isFullPage ? "min-h-full flex flex-col justify-between" : "flex flex-col items-center"} p-4 sm:p-7 select-none bg-[#09090b] text-white`}>
       {isFullPage && onOpenHelp && (
-        <div className="w-full flex items-center justify-end py-2 mb-4">
+        <div className="w-full flex items-center justify-end py-2 mb-2">
           <button
             onClick={onOpenHelp}
             className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-200 hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-full hover:bg-white/[0.04]"
@@ -314,26 +314,26 @@ export const CopoAuthPrompt: React.FC<{
         </div>
       )}
 
-      <div className="w-full max-w-sm mx-auto my-auto flex flex-col items-center text-center space-y-5 py-2">
+      <div className="w-full max-w-sm mx-auto flex flex-col items-center text-center space-y-4 py-2 sm:py-6 sm:my-auto pb-6">
         
         {/* Step-Aware Brand / Profile Icon */}
         {step === 'profile' ? (
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-xl">
+          <div className="w-13 h-13 rounded-2xl flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-xl shrink-0">
             <User className="w-6 h-6 text-zinc-200" />
           </div>
         ) : (
-          <div className="relative flex items-center justify-center w-13 h-13 rounded-2xl bg-white shadow-[0_4px_24px_rgba(255,255,255,0.18)] border border-white/20">
+          <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-white shadow-[0_4px_24px_rgba(255,255,255,0.18)] border border-white/20 shrink-0">
             <svg viewBox="0 0 24 24" className="w-6 h-6 fill-zinc-950">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>
         )}
 
-        <div className="space-y-1.5 max-w-xs">
-          <h1 className="text-[22px] sm:text-2xl font-bold text-white tracking-tight font-['Google_Sans',sans-serif] leading-tight">
+        <div className="space-y-1 max-w-xs">
+          <h1 className="text-[21px] sm:text-2xl font-bold text-white tracking-tight font-['Google_Sans',sans-serif] leading-tight">
             {step === 'code' ? t("auth.checkEmailTitle", "Check your email") : step === 'profile' ? t("auth.completeProfileTitle", "Complete your profile") : copy.title}
           </h1>
-          <p className="text-[13px] text-zinc-200 font-normal leading-relaxed">
+          <p className="text-[12.5px] text-zinc-300 font-normal leading-relaxed">
             {step === 'code' 
               ? `${t("auth.sentCodeTo", "We sent a 6-digit confirmation code to")} ${email}`
               : step === 'profile'
@@ -344,27 +344,29 @@ export const CopoAuthPrompt: React.FC<{
 
         {/* STEP 1: Email Only Form */}
         {step === 'email' && (
-          <form onSubmit={handleSendMagicLink} className="w-full space-y-3.5 pt-1 text-left">
+          <form onSubmit={handleSendMagicLink} className="w-full space-y-3 pt-1 text-left">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-200 mb-1.5 tracking-wider uppercase">
+              <label className="block text-[11px] font-semibold text-zinc-300 mb-1 tracking-wider uppercase">
                 {t("auth.emailAddress", "Email Address")}
               </label>
               <div className="relative">
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   required
                   autoFocus
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full h-12 pl-10 pr-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
+                  className="w-full h-11 sm:h-12 pl-10 pr-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
                 />
-                <Mail className="w-4 h-4 text-zinc-200 absolute left-3.5 top-4" />
+                <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5 sm:top-4" />
               </div>
             </div>
 
             {errorMessage && (
-              <div className="p-3 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">
+              <div className="p-2.5 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
                 <span>{errorMessage}</span>
               </div>
@@ -373,7 +375,7 @@ export const CopoAuthPrompt: React.FC<{
             <button
               type="submit"
               disabled={isLoading || !email.includes('@')}
-              className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 active:bg-zinc-300 text-black font-bold text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full h-11 sm:h-12 rounded-xl bg-white hover:bg-zinc-200 active:scale-[0.98] text-black font-bold text-[14px] sm:text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin text-black" />
@@ -682,9 +684,9 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="w-full sm:max-w-[440px] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-none bg-[#09090b] rounded-none sm:rounded-[28px] shadow-2xl border-0 sm:border border-white/[0.08] text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto sm:overflow-hidden"
+        className="w-full sm:max-w-[440px] h-auto max-h-[92dvh] sm:max-h-[90dvh] bg-[#09090b] rounded-t-[28px] sm:rounded-[28px] shadow-2xl border-t sm:border border-white/10 text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto pb-[max(16px,env(safe-area-inset-bottom,16px))]"
         style={{
-          paddingTop: "env(safe-area-inset-top, 0px)", transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
         }}
         onClick={(e) => e.stopPropagation()}
