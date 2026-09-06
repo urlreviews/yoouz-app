@@ -427,14 +427,14 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 </button>
               </div>
 
-              {/* Close Button (X on both Mobile & Desktop) */}
+              {/* Close Button (Desktop Only; mobile uses pull handle, swipe gesture, or tap backdrop) */}
               <button
                 id="btn-close-comments"
                 onClick={() => {
                   triggerHaptic("light");
                   onClose();
                 }}
-                className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-95 shrink-0"
+                className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white hidden md:flex items-center justify-center transition-colors cursor-pointer active:scale-95 shrink-0"
                 title="Close comments"
                 aria-label="Close comments"
               >
