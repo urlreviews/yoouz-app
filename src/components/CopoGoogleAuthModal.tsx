@@ -98,6 +98,9 @@ export const CopoAuthPrompt: React.FC<{
   onOpenHelp?: () => void;
   onOpenLegal?: (tab: 'terms' | 'privacy') => void;
   isFullPage?: boolean;
+  onStepChange?: (step: 'email' | 'code' | 'profile') => void;
+  currentStep?: 'email' | 'code' | 'profile';
+  onRequestBack?: () => void;
 }> = ({
   intent = "general",
   customTitle,
@@ -105,11 +108,18 @@ export const CopoAuthPrompt: React.FC<{
   onSuccess,
   onOpenHelp,
   onOpenLegal,
-  isFullPage = false
+  isFullPage = false,
+  onStepChange,
+  onRequestBack
 }) => {
   const { t } = useLanguage();
   // Steps: 'email' -> 'code' -> 'profile' (if new user)
-  const [step, setStep] = useState<'email' | 'code' | 'profile'>('email');
+  const [step, setStepState] = useState<'email' | 'code' | 'profile'>('email');
+
+  const setStep = (newStep: 'email' | 'code' | 'profile') => {
+    setStepState(newStep);
+    if (onStepChange) onStepChange(newStep);
+  };
   const [email, setEmail] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
@@ -671,12 +681,24 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
   onOpenHelp,
   onOpenLegal
 }) => {
+  const [currentStep, setCurrentStep] = useState<'email' | 'code' | 'profile'>('email');
+  const authPromptRef = useRef<{ goBack?: () => void } | null>(null);
+
   const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
     onDismiss: onClose,
     threshold: 60
   });
 
   if (!isOpen) return null;
+
+  const handleBackClick = () => {
+    if (currentStep !== 'email') {
+      // Handled internally if step is code or profile
+      setCurrentStep('email');
+    } else {
+      onClose();
+    }
+  };
 
   return (
     <div 
@@ -691,48 +713,50 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
+        {/* Sticky Header with Drag Indicator, High-Contrast Back Button & Help */}
         <div 
-          className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
+          className="sticky top-0 z-30 bg-[#09090b]/95 backdrop-blur-md border-b border-white/[0.06] pt-2 pb-2.5 px-4 sm:px-5 flex flex-col gap-1 shrink-0 touch-pan-y"
           {...swipeProps}
         >
-          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
-        </div>
-
-        {/* Header with Mobile Back Button & Help */}
-        <div 
-          className="flex items-center justify-between px-5 pt-1 sm:pt-4 pb-1 shrink-0 touch-pan-y"
-          {...swipeProps}
-        >
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 sm:hidden flex items-center justify-center text-zinc-200 hover:text-white shrink-0 active:scale-95 cursor-pointer shadow-sm"
-              aria-label="Back"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            {onOpenHelp ? (
-              <button
-                onClick={() => {
-                  onClose();
-                  onOpenHelp();
-                }}
-                className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-200 hover:text-white transition-colors px-2.5 py-1 rounded-full hover:bg-white/[0.06] cursor-pointer"
-              >
-                <HelpCircle className="w-3.5 h-3.5 text-zinc-200" />
-                <span>Help</span>
-              </button>
-            ) : null}
+          {/* Top Drag Handle Indicator */}
+          <div className="w-full flex justify-center py-0.5 sm:hidden cursor-grab active:cursor-grabbing touch-none">
+            <div className="w-12 h-1.5 rounded-full bg-zinc-700/80" />
           </div>
 
-          <button
-            onClick={onClose}
-            aria-label="Close modal"
-            className="p-1.5 text-zinc-200 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer hidden sm:flex"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-2.5">
+              {/* High-Contrast Prominent Back Button */}
+              <button
+                onClick={handleBackClick}
+                className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 hover:bg-zinc-700/90 text-white flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer shadow-md group"
+                aria-label="Back"
+                title="Go Back"
+              >
+                <ArrowLeft className="w-5 h-5 text-white stroke-[2.25] group-hover:-translate-x-0.5 transition-transform" />
+              </button>
+
+              {onOpenHelp ? (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenHelp();
+                  }}
+                  className="flex items-center gap-1.5 text-[12px] font-semibold text-zinc-200 hover:text-white transition-all px-3 py-1.5 rounded-full bg-zinc-800/80 border border-zinc-700/80 hover:bg-zinc-700/80 cursor-pointer active:scale-95 shadow-sm"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-zinc-200" />
+                  <span>Help</span>
+                </button>
+              ) : null}
+            </div>
+
+            <button
+              onClick={onClose}
+              aria-label="Close modal"
+              className="w-9 h-9 rounded-full bg-zinc-800/80 border border-zinc-700/80 text-zinc-300 hover:text-white hover:bg-zinc-700 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-90"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}
@@ -741,6 +765,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
             intent={intent}
             customTitle={customTitle}
             customSubtitle={customSubtitle}
+            onStepChange={setCurrentStep}
             onSuccess={(user) => {
               onSuccess(user);
               onClose();
