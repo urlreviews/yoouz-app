@@ -572,13 +572,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 <div className="space-y-3 max-w-3xl">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>The Yoouz Standard</span>
+                    <span>{t("trustCenter.theYoouzStandard", "The Yoouz Standard")}</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
-                    Proof of Presence. Real People. Verified Places.
+                    {t("trustCenter.pillarsTitle", "Proof of Presence. Real People. Verified Places.")}
                   </h2>
                   <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
-                    Traditional text reviews are vulnerable to bot networks, fake accounts, and AI-generated reviews. Yoouz creates authentic trust by capturing short 60-second video reviews recorded exclusively through live device cameras.
+                    {t("trustCenter.pillarsDesc", "Traditional text reviews are vulnerable to bot networks, fake accounts, and AI-generated reviews. Yoouz creates authentic trust by capturing short 60-second video reviews recorded exclusively through live device cameras.")}
                   </p>
                 </div>
 
@@ -587,10 +587,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Video className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Strict Rule</span>
-                    <h4 className="text-sm font-black text-white">Live Front-Camera Only</h4>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">{t("trustCenter.strictRule", "Strict Rule")}</span>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule1Title", "Live Front-Camera Only")}</h4>
                     <p className="text-xs text-zinc-400 leading-relaxed">
-                      No pre-recorded MP4 uploads or stock footage. Real customers capturing authentic experiences.
+                      {t("trustCenter.rule1Desc", "No pre-recorded MP4 uploads or stock footage. Real customers capturing authentic experiences.")}
                     </p>
                   </div>
 
@@ -598,10 +598,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Lock className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Pillar 2</span>
-                    <h4 className="text-sm font-black text-white">60-Second Focus</h4>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">{t("trustCenter.pillar2", "Pillar 2")}</span>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule2Title", "60-Second Focus")}</h4>
                     <p className="text-xs text-zinc-400 leading-relaxed">
-                      Concise, high-impact video reviews that deliver immediate value in under one minute.
+                      {t("trustCenter.rule2Desc", "Concise, high-impact video reviews that deliver immediate value in under one minute.")}
                     </p>
                   </div>
 
@@ -609,10 +609,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Users className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Pillar 3</span>
-                    <h4 className="text-sm font-black text-white">3-Way Dialogue</h4>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">{t("trustCenter.pillar3", "Pillar 3")}</span>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule3Title", "3-Way Dialogue")}</h4>
                     <p className="text-xs text-zinc-400 leading-relaxed">
-                      Living comment threads connecting Reviewers, curious Viewers, and Verified Place Owners.
+                      {t("trustCenter.rule3Desc", "Living comment threads connecting Reviewers, curious Viewers, and Verified Place Owners.")}
                     </p>
                   </div>
                 </div>
@@ -632,14 +632,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <Video className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">Immutable Face & Voice Identity</h3>
+                    <h3 className="text-base font-black text-white">{t("trustCenter.bento1Title", "Immutable Face & Voice Identity")}</h3>
                     <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                      Every reviewer builds an open visual review portfolio. Consistent face, verified voice, and historical timeline give viewers immediate confidence that reviews are authored by genuine people.
+                      {t("trustCenter.bento1Desc", "Every reviewer builds an open visual review portfolio. Consistent face, verified voice, and historical timeline give viewers immediate confidence that reviews are authored by genuine people.")}
                     </p>
                   </div>
                   <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
                     <ShieldCheck className="w-4 h-4 text-zinc-300" />
-                    <span>Audit Any Reviewer Profile Instantly</span>
+                    <span>{t("trustCenter.bento1Sub", "Audit Any Reviewer Profile Instantly")}</span>
                   </div>
                 </div>
 
@@ -649,14 +649,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <MessageSquare className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">Interactive Community Dialogue</h3>
+                    <h3 className="text-base font-black text-white">{t("trustCenter.bento2Title", "Interactive Community Dialogue")}</h3>
                     <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                      Reviews shouldn't be dead one-way monologues. Viewers can ask real-time questions ('Is there outdoor seating?', 'How was the service?'), and the community answers collaboratively.
+                      {t("trustCenter.bento2Desc", "Reviews shouldn't be dead one-way monologues. Viewers can ask real-time questions ('Is there outdoor seating?', 'How was the service?'), and the community answers collaboratively.")}
                     </p>
                   </div>
                   <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
                     <Users className="w-4 h-4 text-zinc-300" />
-                    <span>Crowdsourced Community Validation</span>
+                    <span>{t("trustCenter.bento2Sub", "Crowdsourced Community Validation")}</span>
                   </div>
                 </div>
 
@@ -666,14 +666,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <Building2 className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">Official Domain Verification</h3>
+                    <h3 className="text-base font-black text-white">{t("trustCenter.bento3Title", "Official Domain Verification")}</h3>
                     <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                      Business owners can claim their base domain page, respond with verified owner badges, and pin helpful solutions or updates at the top of customer review threads.
+                      {t("trustCenter.bento3Desc", "Business owners can claim their base domain page, respond with verified owner badges, and pin helpful solutions or updates at the top of customer review threads.")}
                     </p>
                   </div>
                   <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
                     <BadgeCheck className="w-4 h-4 text-zinc-300" />
-                    <span>Verified Owner Pinned Responses</span>
+                    <span>{t("trustCenter.bento3Sub", "Verified Owner Pinned Responses")}</span>
                   </div>
                 </div>
 
@@ -683,14 +683,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <Lock className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">No Pay-to-Remove Extortion</h3>
+                    <h3 className="text-base font-black text-white">{t("trustCenter.bento4Title", "No Pay-to-Remove Extortion")}</h3>
                     <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                      Unlike legacy review sites that pressure businesses into costly subscriptions to suppress negative feedback, Yoouz guarantees all verified reviews stay transparent and tamper-free.
+                      {t("trustCenter.bento4Desc", "Unlike legacy review sites that pressure businesses into costly subscriptions to suppress negative feedback, Yoouz guarantees all verified reviews stay transparent and tamper-free.")}
                     </p>
                   </div>
                   <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
                     <CheckCircle2 className="w-4 h-4 text-zinc-300" />
-                    <span>100% Equal Rules for All</span>
+                    <span>{t("trustCenter.bento4Sub", "100% Equal Rules for All")}</span>
                   </div>
                 </div>
               </div>
@@ -710,7 +710,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search FAQs, guidelines, or topics..."
+                    placeholder={t("trustCenter.searchFaqsPlaceholder", "Search FAQs, guidelines, or topics...")}
                     className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-sm font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
                   />
                   {searchQuery && (
@@ -726,14 +726,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 {/* Filter Pills */}
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1">
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider shrink-0 mr-1">
-                    Category:
+                    {t("trustCenter.categoryLabel", "Category")}:
                   </span>
                   {[
-                    { id: "all", label: "All Questions" },
-                    { id: "reviewers", label: "For Reviewers" },
-                    { id: "business", label: "For Businesses" },
-                    { id: "trust", label: "Trust & Authenticity" },
-                    { id: "technical", label: "Technical & Privacy" }
+                    { id: "all", label: t("trustCenter.categoryAll", "All Questions") },
+                    { id: "reviewers", label: t("trustCenter.categoryReviewers", "For Reviewers") },
+                    { id: "business", label: t("trustCenter.categoryBusiness", "For Businesses") },
+                    { id: "trust", label: t("trustCenter.categoryTrust", "Trust & Authenticity") },
+                    { id: "technical", label: t("trustCenter.categoryTechnical", "Technical & Privacy") }
                   ].map((cat) => (
                     <button
                       key={cat.id}
@@ -755,9 +755,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 {filteredFaqs.length === 0 ? (
                   <div className="py-12 text-center space-y-3">
                     <HelpCircle className="w-10 h-10 text-zinc-500 mx-auto" />
-                    <h3 className="text-base font-bold text-zinc-300">No matching questions found</h3>
+                    <h3 className="text-base font-bold text-zinc-300">{t("trustCenter.noMatchingFaqs", "No matching questions found")}</h3>
                     <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                      Try searching with different keywords, or reach out directly to our support desk.
+                      {t("trustCenter.tryDifferentKeywords", "Try searching with different keywords, or reach out directly to our support desk.")}
                     </p>
                     <button
                       onClick={() => {
@@ -766,7 +766,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       }}
                       className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition-all cursor-pointer inline-flex"
                     >
-                      Clear Search Filter
+                      {t("trustCenter.clearFilter", "Clear Search Filter")}
                     </button>
                   </div>
                 ) : (
@@ -781,15 +781,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                           <div className="space-y-1">
                             <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
                               {faq.category === "reviewers"
-                                ? "Reviewers"
+                                ? t("trustCenter.categoryReviewers", "Reviewers")
                                 : faq.category === "business"
-                                ? "Businesses"
+                                ? t("trustCenter.categoryBusiness", "Businesses")
                                 : faq.category === "trust"
-                                ? "Trust Model"
-                                : "Technical"}
+                                ? t("trustCenter.categoryTrust", "Trust Model")
+                                : t("trustCenter.categoryTechnical", "Technical")}
                             </span>
                             <h3 className="font-extrabold text-sm sm:text-base text-white group-hover:text-zinc-300 transition-colors leading-snug">
-                              {faq.question}
+                              {t(`faq.${faq.id}.q`, faq.question)}
                             </h3>
                           </div>
                           <div
@@ -805,7 +805,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                         {isOpen && (
                           <div className="mt-3 pt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
-                            <p className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800">{faq.answer}</p>
+                            <p className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800">{t(`faq.${faq.id}.a`, faq.answer)}</p>
                           </div>
                         )}
                       </div>
@@ -826,45 +826,45 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 <div className="space-y-2 max-w-2xl">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
                     <Building2 className="w-3.5 h-3.5" />
-                    <span>Business Verification Portal</span>
+                    <span>{t("trustCenter.forBusinesses", "Business Verification Portal")}</span>
                   </div>
                   <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
-                    Claim Your Business Domain & Engage Directly
+                    {t("trustCenter.businessHeroTitle", "Claim Your Business Domain & Engage Directly")}
                   </h2>
                   <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                    Verify ownership of your base website domain (e.g., yourcompany.com) or local place profile to access creator tools, official owner badges, and community response features.
+                    {t("trustCenter.businessHeroDesc", "Verify ownership of your base website domain (e.g., yourcompany.com) or local place profile to access creator tools, official owner badges, and community response features.")}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                     <BadgeCheck className="w-6 h-6 text-white" />
-                    <h4 className="font-bold text-sm text-white">Verified Owner Badge</h4>
+                    <h4 className="font-bold text-sm text-white">{t("trustCenter.verifiedOwnerBadgeTitle", "Verified Owner Badge")}</h4>
                     <p className="text-xs text-zinc-400 leading-relaxed">
-                      Stand out with a distinguished badge and official business owner designation on all comment threads.
+                      {t("trustCenter.verifiedOwnerBadgeDesc", "Stand out with a distinguished badge and official business owner designation on all comment threads.")}
                     </p>
                   </div>
 
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                     <MessageSquare className="w-6 h-6 text-white" />
-                    <h4 className="font-bold text-sm text-white">Pinned Solutions</h4>
+                    <h4 className="font-bold text-sm text-white">{t("trustCenter.pinnedSolutionsTitle", "Pinned Solutions")}</h4>
                     <p className="text-xs text-zinc-400 leading-relaxed">
-                      Pin an official response at the top of any review discussion to clarify updates or resolve questions.
+                      {t("trustCenter.pinnedSolutionsDesc", "Pin an official response at the top of any review discussion to clarify updates or resolve questions.")}
                     </p>
                   </div>
 
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                     <ExternalLink className="w-6 h-6 text-white" />
-                    <h4 className="font-bold text-sm text-white">Embed Trust Feeds</h4>
+                    <h4 className="font-bold text-sm text-white">{t("trustCenter.embedTrustFeedsTitle", "Embed Trust Feeds")}</h4>
                     <p className="text-xs text-zinc-400 leading-relaxed">
-                      Easily embed genuine customer video review carousels onto your landing page to increase conversions.
+                      {t("trustCenter.embedTrustFeedsDesc", "Easily embed genuine customer video review carousels onto your landing page to increase conversions.")}
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <p className="text-xs text-zinc-400 font-medium">
-                    Ready to verify your domain? Contact our verification team with your domain details.
+                    {t("trustCenter.readyToVerify", "Ready to verify your domain? Contact our verification team with your domain details.")}
                   </p>
                   <button
                     onClick={() => {
@@ -874,7 +874,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     <BadgeCheck className="w-4 h-4 text-black" />
-                    <span>Request Domain Verification</span>
+                    <span>{t("trustCenter.requestVerification", "Request Domain Verification")}</span>
                   </button>
                 </div>
               </div>
@@ -894,13 +894,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black text-white">Privacy, Security & Legal Compliance</h3>
+                      <h3 className="text-lg font-black text-white">{t("trustCenter.privacySecurityTitle", "Privacy, Security & Legal Compliance")}</h3>
                       <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-black uppercase tracking-wider">
-                        Google Verified
+                        {t("trustCenter.googleVerified", "Google Verified")}
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                      Yoouz is built with privacy-first standards. We use Google OAuth for secure passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce San Francisco, California USA governing jurisdiction.
+                      {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. We use Google OAuth for secure passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce San Francisco, California USA governing jurisdiction.")}
                     </p>
                   </div>
                 </div>
@@ -911,13 +911,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
-                          Updated Aug 24, 2026
+                          {t("trustCenter.updatedDate", "Updated Aug 24, 2026")}
                         </span>
                         <ShieldCheck className="w-4 h-4 text-white" />
                       </div>
-                      <h4 className="text-sm font-black text-white pt-1">Privacy Policy</h4>
+                      <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.privacyPolicyTitle", "Privacy Policy")}</h4>
                       <p className="text-xs text-zinc-400 leading-normal">
-                        Covers Google profile data handling, real-time camera/mic usage, zero password storage, zero data selling, and your right to data deletion.
+                        {t("trustCenter.privacyPolicyDesc", "Covers Google profile data handling, real-time camera/mic usage, zero password storage, zero data selling, and your right to data deletion.")}
                       </p>
                     </div>
                     <button
@@ -925,7 +925,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
                       <FileText className="w-3.5 h-3.5 text-white" />
-                      <span>Read Privacy Policy</span>
+                      <span>{t("trustCenter.readPrivacyPolicy", "Read Privacy Policy")}</span>
                     </button>
                   </div>
 
@@ -933,13 +933,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
-                          Updated Aug 24, 2026
+                          {t("trustCenter.updatedDate", "Updated Aug 24, 2026")}
                         </span>
                         <Scale className="w-4 h-4 text-white" />
                       </div>
-                      <h4 className="text-sm font-black text-white pt-1">Terms & Conditions</h4>
+                      <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.termsConditionsTitle", "Terms & Conditions")}</h4>
                       <p className="text-xs text-zinc-400 leading-normal">
-                        Covers live recording standards, anti-scraping rules, business streaming licenses, limitation of liability, and San Francisco, CA jurisdiction.
+                        {t("trustCenter.termsConditionsDesc", "Covers live recording standards, anti-scraping rules, business streaming licenses, limitation of liability, and San Francisco, CA jurisdiction.")}
                       </p>
                     </div>
                     <button
@@ -947,7 +947,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
                       <FileText className="w-3.5 h-3.5 text-white" />
-                      <span>Read Terms & Conditions</span>
+                      <span>{t("trustCenter.readTermsConditions", "Read Terms & Conditions")}</span>
                     </button>
                   </div>
                 </div>
@@ -955,34 +955,34 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 {/* 4 Pillars Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Authentication</span>
-                    <h4 className="text-xs font-black text-white">Passwordless Email Security</h4>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{t("auth.title", "Authentication")}</span>
+                    <h4 className="text-xs font-black text-white">{t("trustCenter.authPillarTitle", "Passwordless Email Security")}</h4>
                     <p className="text-[11px] text-zinc-400 leading-normal">
-                      We never store passwords. All logins use secure verification codes sent to your verified email with encrypted HTTPS transport.
+                      {t("trustCenter.authPillarDesc", "We never store passwords. All logins use secure verification codes sent to your verified email with encrypted HTTPS transport.")}
                     </p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Recording Privacy</span>
-                    <h4 className="text-xs font-black text-white">Real-Time Camera Only</h4>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{t("record.title", "Recording Privacy")}</span>
+                    <h4 className="text-xs font-black text-white">{t("trustCenter.recordingPillarTitle", "Real-Time Camera Only")}</h4>
                     <p className="text-[11px] text-zinc-400 leading-normal">
-                      Camera and microphone data are accessed strictly during active recording. We never access photo libraries or pre-recorded storage.
+                      {t("trustCenter.recordingPillarDesc", "Camera and microphone data are accessed strictly during active recording. We never access photo libraries or pre-recorded storage.")}
                     </p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Zero Data Selling</span>
-                    <h4 className="text-xs font-black text-white">No Selling or Renting</h4>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{t("trustCenter.privacySecurity", "Zero Data Selling")}</span>
+                    <h4 className="text-xs font-black text-white">{t("trustCenter.zeroSellingPillarTitle", "No Selling or Renting")}</h4>
                     <p className="text-[11px] text-zinc-400 leading-normal">
-                      We never sell, rent, or trade your personal data to third parties. Data is shared solely with trusted cloud infrastructure providers.
+                      {t("trustCenter.zeroSellingPillarDesc", "We never sell, rent, or trade your personal data to third parties. Data is shared solely with trusted cloud infrastructure providers.")}
                     </p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Legal Jurisdiction</span>
-                    <h4 className="text-xs font-black text-white">San Francisco, California, USA</h4>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{t("legal.termsConditions", "Legal Jurisdiction")}</span>
+                    <h4 className="text-xs font-black text-white">{t("trustCenter.jurisdictionPillarTitle", "San Francisco, California, USA")}</h4>
                     <p className="text-[11px] text-zinc-400 leading-normal">
-                      Platform terms and privacy policies are governed by the laws of the State of California, USA with jurisdiction in San Francisco, CA.
+                      {t("trustCenter.jurisdictionPillarDesc", "Platform terms and privacy policies are governed by the laws of the State of California, USA with jurisdiction in San Francisco, CA.")}
                     </p>
                   </div>
                 </div>
@@ -993,7 +993,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   </div>
                   <div className="px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-bold flex items-center gap-1.5 w-fit">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>All Systems Operational</span>
+                    <span>{t("trustCenter.allSystemsOperational", "All Systems Operational")}</span>
                   </div>
                 </div>
               </div>
@@ -1006,16 +1006,16 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       <Trash2 className="w-6 h-6" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-base font-black text-white">Danger Zone: Delete Account Profile</h3>
+                      <h3 className="text-base font-black text-white">{t("trustCenter.dangerZoneTitle", "Danger Zone: Delete Account Profile")}</h3>
                       <p className="text-xs text-zinc-400 leading-relaxed">
-                        Permanently erase your user profile details, bio, avatar, and cached session information. This action cannot be reversed.
+                        {t("trustCenter.dangerZoneDesc", "Permanently erase your user profile details, bio, avatar, and cached session information. This action cannot be reversed.")}
                       </p>
                     </div>
                   </div>
 
                   <div className="border-t border-rose-900/40 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <p className="text-xs text-zinc-400 font-medium">
-                      Confirming will sign you out immediately and purge your profile record.
+                      {t("trustCenter.deleteAccountWarning", "Confirming will sign you out immediately and purge your profile record.")}
                     </p>
                     <button
                       onClick={() => {
@@ -1024,7 +1024,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       }}
                       className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/15 transition-all cursor-pointer shrink-0"
                     >
-                      Delete Account
+                      {t("trustCenter.deleteAccountBtn", "Delete Account")}
                     </button>
                   </div>
                 </div>
@@ -1044,25 +1044,25 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <Check className="w-8 h-8 stroke-[3]" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-xl font-black text-white">Inquiry Received Successfully</h3>
+                    <h3 className="text-xl font-black text-white">{t("trustCenter.inquiryReceivedTitle", "Inquiry Received Successfully")}</h3>
                     <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
-                      Thank you for contacting Yoouz. Your message has been logged securely in our support queue. Our team reviews all requests within 24 hours.
+                      {t("trustCenter.inquiryReceivedDesc", "Thank you for contacting Yoouz. Your message has been logged securely in our support queue. Our team reviews all requests within 24 hours.")}
                     </p>
                   </div>
                   <button
                     onClick={() => setSubmitSuccess(false)}
                     className="py-3 px-6 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs transition-all cursor-pointer inline-flex items-center gap-2"
                   >
-                    <span>Send Another Inquiry</span>
+                    <span>{t("trustCenter.sendAnotherInquiry", "Send Another Inquiry")}</span>
                   </button>
                 </div>
               ) : (
                 /* Contact Form */
                 <form onSubmit={handleContactSubmit} className="space-y-5">
                   <div className="space-y-1 border-b border-zinc-800 pb-4">
-                    <h3 className="text-lg font-black text-white">Official Yoouz Support Desk</h3>
+                    <h3 className="text-lg font-black text-white">{t("trustCenter.supportDeskTitle", "Official Yoouz Support Desk")}</h3>
                     <p className="text-xs text-zinc-400 font-medium">
-                      Submit support inquiries, business domain claim requests, or report community guideline infractions.
+                      {t("trustCenter.supportDeskDesc", "Submit support inquiries, business domain claim requests, or report community guideline infractions.")}
                     </p>
                   </div>
 
@@ -1076,7 +1076,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
-                        Your Full Name *
+                        {t("trustCenter.fullNameLabel", "Your Full Name *")}
                       </label>
                       <input
                         type="text"
@@ -1090,7 +1090,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                     <div className="space-y-1.5">
                       <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
-                        Email Address *
+                        {t("trustCenter.emailLabel", "Email Address *")}
                       </label>
                       <input
                         type="email"
@@ -1106,23 +1106,23 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
-                        Category *
+                        {t("trustCenter.categoryLabel", "Category *")}
                       </label>
                       <select
                         value={contactCategory}
                         onChange={(e) => setContactCategory(e.target.value)}
                         className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-bold outline-none transition-all text-white"
                       >
-                        <option value="support">General Account / Technical Support</option>
-                        <option value="verification">Business / Domain Ownership Verification</option>
-                        <option value="guidelines">Report Policy Violation / Fake Content</option>
-                        <option value="partnership">API & Partnership Inquiries</option>
+                        <option value="support">{t("trustCenter.categorySupport", "General Account / Technical Support")}</option>
+                        <option value="verification">{t("trustCenter.categoryVerification", "Business / Domain Ownership Verification")}</option>
+                        <option value="guidelines">{t("trustCenter.categoryGuidelines", "Report Policy Violation / Fake Content")}</option>
+                        <option value="partnership">{t("trustCenter.categoryPartnership", "API & Partnership Inquiries")}</option>
                       </select>
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
-                        Website Domain (Optional)
+                        {t("trustCenter.websiteDomainLabel", "Website Domain (Optional)")}
                       </label>
                       <input
                         type="text"
@@ -1136,14 +1136,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                   <div className="space-y-1.5">
                     <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
-                      Message Details *
+                      {t("trustCenter.messageLabel", "Message Details *")}
                     </label>
                     <textarea
                       required
                       rows={4}
                       value={contactMessage}
                       onChange={(e) => setContactMessage(e.target.value)}
-                      placeholder="Describe your inquiry or request in detail..."
+                      placeholder={t("trustCenter.messagePlaceholder", "Describe your inquiry or request in detail...")}
                       className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all resize-none leading-relaxed text-white placeholder:text-zinc-500"
                     />
                   </div>
@@ -1151,7 +1151,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   {/* Drag-and-Drop Attachments */}
                   <div className="space-y-2">
                     <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
-                      Attach Screenshots or Verification Proof (Optional)
+                      {t("trustCenter.attachFilesLabel", "Attach Screenshots or Verification Proof (Optional)")}
                     </label>
 
                     <div
@@ -1178,10 +1178,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       </div>
                       <div>
                         <p className="text-xs font-bold text-zinc-200">
-                          Drag & drop files here, or <span className="text-white underline">browse files</span>
+                          {t("trustCenter.dragDropPrompt", "Drag & drop files here, or")} <span className="text-white underline">{t("trustCenter.browseFiles", "browse files")}</span>
                         </p>
                         <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
-                          PNG, JPG, WEBP, PDF or DOC (Max 3 files, up to 2MB each)
+                          {t("trustCenter.fileLimitHint", "PNG, JPG, WEBP, PDF or DOC (Max 3 files, up to 2MB each)")}
                         </p>
                       </div>
                     </div>
@@ -1239,10 +1239,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       {isSubmitting ? (
                         <>
                           <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                          <span>Submitting...</span>
+                          <span>{t("trustCenter.submitting", "Submitting...")}</span>
                         </>
                       ) : (
-                        <span>Submit Secure Request</span>
+                        <span>{t("trustCenter.submitRequest", "Submit Secure Request")}</span>
                       )}
                     </button>
                   </div>
@@ -1437,9 +1437,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-lg font-black text-white">Confirm Profile Deletion</h3>
+              <h3 className="text-lg font-black text-white">{t("trustCenter.confirmDeleteTitle", "Confirm Profile Deletion")}</h3>
               <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-                This is a permanent operation. To delete profile <strong className="text-white">{currentUser?.email}</strong>, please type <strong className="text-white select-all">DELETE</strong> below.
+                {t("trustCenter.confirmDeleteDesc", "This is a permanent operation. To delete profile")} <strong className="text-white">{currentUser?.email}</strong>, {t("trustCenter.typeDeletePrompt", "please type DELETE below.")}
               </p>
             </div>
 
@@ -1447,7 +1447,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               type="text"
               value={deleteInputText}
               onChange={(e) => setDeleteInputText(e.target.value)}
-              placeholder="Type DELETE to confirm"
+              placeholder={t("trustCenter.typeDeletePlaceholder", "Type DELETE to confirm")}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-center font-bold tracking-widest text-white focus:outline-none focus:border-rose-500"
             />
 
@@ -1457,7 +1457,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 onClick={() => setIsDeleteConfirmOpen(false)}
                 className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                Cancel
+                {t("common.cancel", "Cancel")}
               </button>
               <button
                 type="button"
@@ -1475,7 +1475,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs font-bold shadow-md shadow-rose-600/15 transition-all cursor-pointer"
               >
-                {isDeleting ? "Deleting..." : "Permanently Delete"}
+                {isDeleting ? t("trustCenter.deleting", "Deleting...") : t("trustCenter.permanentlyDelete", "Permanently Delete")}
               </button>
             </div>
           </div>

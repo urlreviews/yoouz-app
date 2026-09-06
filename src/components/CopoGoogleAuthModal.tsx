@@ -7,6 +7,7 @@ import { locationData } from "../utils/locationData";
 import { KNOWN_COMMUNITY_USERS } from "../utils/placeUtils";
 import { Country, State, City } from "country-state-city";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export type AuthIntent = 
   | 'general' 
@@ -106,6 +107,7 @@ export const CopoAuthPrompt: React.FC<{
   onOpenLegal,
   isFullPage = false
 }) => {
+  const { t } = useLanguage();
   // Steps: 'email' -> 'code' -> 'profile' (if new user)
   const [step, setStep] = useState<'email' | 'code' | 'profile'>('email');
   const [email, setEmail] = useState<string>("");
@@ -125,7 +127,7 @@ export const CopoAuthPrompt: React.FC<{
   const handleSendMagicLink = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!email || !email.includes('@')) {
-      setErrorMessage("Please enter a valid email address.");
+      setErrorMessage(t("auth.invalidEmail", "Please enter a valid email address."));
       return;
     }
 
@@ -307,7 +309,7 @@ export const CopoAuthPrompt: React.FC<{
             className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-full hover:bg-white/[0.04]"
           >
             <HelpCircle className="w-4 h-4 text-zinc-400" />
-            <span>Help</span>
+            <span>{t("common.help", "Help")}</span>
           </button>
         </div>
       )}
@@ -329,13 +331,13 @@ export const CopoAuthPrompt: React.FC<{
 
         <div className="space-y-1.5 max-w-xs">
           <h1 className="text-[22px] sm:text-2xl font-bold text-white tracking-tight font-['Google_Sans',sans-serif] leading-tight">
-            {step === 'code' ? 'Check your email' : step === 'profile' ? 'Complete your profile' : copy.title}
+            {step === 'code' ? t("auth.checkEmailTitle", "Check your email") : step === 'profile' ? t("auth.completeProfileTitle", "Complete your profile") : copy.title}
           </h1>
           <p className="text-[13px] text-zinc-400 font-normal leading-relaxed">
             {step === 'code' 
-              ? `We sent a 6-digit confirmation code to ${email}`
+              ? `${t("auth.sentCodeTo", "We sent a 6-digit confirmation code to")} ${email}`
               : step === 'profile'
-                ? "Enter your name and location for verified reviews."
+                ? t("auth.enterNameLocationDesc", "Enter your name and location for verified reviews.")
                 : copy.subtitle}
           </p>
         </div>
@@ -345,7 +347,7 @@ export const CopoAuthPrompt: React.FC<{
           <form onSubmit={handleSendMagicLink} className="w-full space-y-3.5 pt-1 text-left">
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1.5 tracking-wider uppercase">
-                Email Address
+                {t("auth.emailAddress", "Email Address")}
               </label>
               <div className="relative">
                 <input
@@ -377,7 +379,7 @@ export const CopoAuthPrompt: React.FC<{
                 <Loader2 className="w-5 h-5 animate-spin text-black" />
               ) : (
                 <>
-                  <span>Continue with Email</span>
+                  <span>{t("auth.continueWithEmail", "Continue with Email")}</span>
                   <ArrowRight className="w-4 h-4 text-black" />
                 </>
               )}
@@ -391,10 +393,10 @@ export const CopoAuthPrompt: React.FC<{
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-[11px] font-semibold text-zinc-400 tracking-wider uppercase">
-                  6-Digit Verification Code
+                  {t("auth.sixDigitCode", "6-Digit Verification Code")}
                 </label>
                 <span className="text-[11px] text-zinc-500 font-mono">
-                  {otpCode.length}/6 digits
+                  {otpCode.length}/6 {t("auth.digits", "digits")}
                 </span>
               </div>
               
@@ -467,7 +469,7 @@ export const CopoAuthPrompt: React.FC<{
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-black" />
-                  <span>Verify Code</span>
+                  <span>{t("auth.verifyCode", "Verify Code")}</span>
                 </>
               )}
             </button>
@@ -478,7 +480,7 @@ export const CopoAuthPrompt: React.FC<{
                 onClick={() => { setStep('email'); setErrorMessage(''); }}
                 className="text-zinc-400 hover:text-white underline cursor-pointer"
               >
-                ← Change Email
+                ← {t("auth.changeEmail", "Change Email")}
               </button>
               <button
                 type="button"
@@ -486,7 +488,7 @@ export const CopoAuthPrompt: React.FC<{
                 disabled={isLoading}
                 className="text-zinc-300 hover:text-white underline cursor-pointer"
               >
-                Resend Code
+                {t("auth.resendCode", "Resend Code")}
               </button>
             </div>
           </form>
@@ -498,7 +500,7 @@ export const CopoAuthPrompt: React.FC<{
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
-                  First Name <span className="text-red-400">*</span>
+                  {t("auth.firstName", "First Name")} <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -512,7 +514,7 @@ export const CopoAuthPrompt: React.FC<{
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
-                  Last Name <span className="text-red-400">*</span>
+                  {t("auth.lastName", "Last Name")} <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -527,7 +529,7 @@ export const CopoAuthPrompt: React.FC<{
 
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
-                Country <span className="text-red-400">*</span>
+                {t("auth.country", "Country")} <span className="text-red-400">*</span>
               </label>
               <CountrySelector
                 value={country}
@@ -546,7 +548,7 @@ export const CopoAuthPrompt: React.FC<{
               const statesObj = State.getStatesOfCountry(isoCode);
               const hasStates = statesObj.length > 0;
               const stateOptions = statesObj.map(s => s.name);
-              const stateLabel = "Region / Province";
+              const stateLabel = t("auth.regionProvince", "Region / Province");
               
               let cityOptions: string[] = [];
               if (stateRegion) {
@@ -579,23 +581,23 @@ export const CopoAuthPrompt: React.FC<{
                         />
                       </div>
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">City</span>
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">{t("auth.city", "City")}</span>
                         <SearchableComboSelector
                           value={city}
                           onChange={setCity}
                           options={uniqueCityOptions}
-                          placeholder="Select City"
+                          placeholder={t("auth.selectCity", "Select City")}
                         />
                       </div>
                     </>
                   ) : (
                     <div className="col-span-2 space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">City</span>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">{t("auth.city", "City")}</span>
                       <SearchableComboSelector
                         value={city}
                         onChange={setCity}
                         options={uniqueCityOptions}
-                        placeholder="Select City"
+                        placeholder={t("auth.selectCity", "Select City")}
                       />
                     </div>
                   )}
@@ -620,7 +622,7 @@ export const CopoAuthPrompt: React.FC<{
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-black" />
-                  <span>Complete Profile & Enter</span>
+                  <span>{t("auth.completeAndEnter", "Complete Profile & Enter")}</span>
                 </>
               )}
             </button>
@@ -628,21 +630,21 @@ export const CopoAuthPrompt: React.FC<{
         )}
 
         <p className="text-[11.5px] text-zinc-500 font-normal leading-relaxed max-w-xs mx-auto">
-          By continuing, you agree to Yoouz's{" "}
+          {t("auth.agreePrompt", "By continuing, you agree to Yoouz's")}{" "}
           <button
             type="button"
             onClick={() => onOpenLegal ? onOpenLegal('terms') : null}
             className="font-semibold text-zinc-400 hover:text-white underline decoration-zinc-600 underline-offset-2 cursor-pointer inline bg-transparent p-0 border-none"
           >
-            Terms of Service
+            {t("legal.termsTab", "Terms of Service")}
           </button>{" "}
-          and{" "}
+          {t("common.and", "and")}{" "}
           <button
             type="button"
             onClick={() => onOpenLegal ? onOpenLegal('privacy') : null}
             className="font-semibold text-zinc-400 hover:text-white underline decoration-zinc-600 underline-offset-2 cursor-pointer inline bg-transparent p-0 border-none"
           >
-            Privacy Policy
+            {t("legal.privacyTab", "Privacy Policy")}
           </button>
           .
         </p>

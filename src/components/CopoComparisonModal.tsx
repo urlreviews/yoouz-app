@@ -3,6 +3,7 @@ import {
   X, Check, ShieldCheck, Video, Zap, MapPin, 
   Sparkles, Award, ArrowRight
 } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface CopoComparisonModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export function CopoComparisonModal({
   initialCompetitor = 'yelp',
   onStartReview 
 }: CopoComparisonModalProps) {
+  const { t } = useLanguage();
   const [selectedTab, setSelectedTab] = useState<'yelp' | 'google' | 'trustpilot' | 'tripadvisor'>(() => {
     if (['yelp', 'google', 'trustpilot', 'tripadvisor'].includes(initialCompetitor.toLowerCase())) {
       return initialCompetitor.toLowerCase() as any;
@@ -29,54 +31,54 @@ export function CopoComparisonModal({
   const comparisons = {
     yelp: {
       name: "Yelp",
-      tagline: "Anonymous Text & Aggressive Ad Sales",
+      tagline: t("comparison.yelpTagline", "Anonymous Text & Aggressive Ad Sales"),
       prosVsCons: [
-        { feature: "Review Format", yoouz: "100% Verified 60s Live Video", competitor: "Anonymous text & photos", yoouzWins: true },
-        { feature: "Fake Review Vulnerability", yoouz: "Zero (Live Front Camera Proof)", competitor: "High (Bots, AI text & paid smear campaigns)", yoouzWins: true },
-        { feature: "Facial & Vocal Authenticity", yoouz: "Real person, voice tone & expressions", competitor: "Anonymous usernames with no identity", yoouzWins: true },
-        { feature: "Time Needed to Understand", yoouz: "Under 60 seconds instant video", competitor: "3-5 minutes reading biased essays", yoouzWins: true },
-        { feature: "Review Manipulation / Pay-to-Remove", yoouz: "Strictly Prohibited & Impossible", competitor: "Aggressive sales & filtered review algorithm", yoouzWins: true },
-        { feature: "Interactive Video Feed UX", yoouz: "High-speed vertical feed + Map search", competitor: "Cluttered directories & sponsored ads", yoouzWins: true }
+        { feature: t("comparison.featureReviewFormat", "Review Format"), yoouz: t("comparison.yoouzReviewFormat", "100% Verified 60s Live Video"), competitor: t("comparison.yelpReviewFormat", "Anonymous text & photos"), yoouzWins: true },
+        { feature: t("comparison.featureFakeVulnerability", "Fake Review Vulnerability"), yoouz: t("comparison.yoouzFakeVulnerability", "Zero (Live Front Camera Proof)"), competitor: t("comparison.yelpFakeVulnerability", "High (Bots, AI text & paid smear campaigns)"), yoouzWins: true },
+        { feature: t("comparison.featureFacialAuthenticity", "Facial & Vocal Authenticity"), yoouz: t("comparison.yoouzFacialAuthenticity", "Real person, voice tone & expressions"), competitor: t("comparison.yelpFacialAuthenticity", "Anonymous usernames with no identity"), yoouzWins: true },
+        { feature: t("comparison.featureTimeNeeded", "Time Needed to Understand"), yoouz: t("comparison.yoouzTimeNeeded", "Under 60 seconds instant video"), competitor: t("comparison.yelpTimeNeeded", "3-5 minutes reading biased essays"), yoouzWins: true },
+        { feature: t("comparison.featureReviewManipulation", "Review Manipulation / Pay-to-Remove"), yoouz: t("comparison.yoouzReviewManipulation", "Strictly Prohibited & Impossible"), competitor: t("comparison.yelpReviewManipulation", "Aggressive sales & filtered review algorithm"), yoouzWins: true },
+        { feature: t("comparison.featureInteractiveUX", "Interactive Video Feed UX"), yoouz: t("comparison.yoouzInteractiveUX", "High-speed vertical feed + Map search"), competitor: t("comparison.yelpInteractiveUX", "Cluttered directories & sponsored ads"), yoouzWins: true }
       ],
-      verdict: "Yoouz provides authentic, un-faked video evidence in 60 seconds, eliminating the extortion, bot spam, and anonymous 1-star vendettas that plague Yelp."
+      verdict: t("comparison.yelpVerdict", "Yoouz provides authentic, un-faked video evidence in 60 seconds, eliminating the extortion, bot spam, and anonymous 1-star vendettas that plague Yelp.")
     },
     google: {
       name: "Google Reviews",
-      tagline: "Unverified Star Ratings & AI Text Floods",
+      tagline: t("comparison.googleTagline", "Unverified Star Ratings & AI Text Floods"),
       prosVsCons: [
-        { feature: "Review Verification", yoouz: "Live video capture on the spot", competitor: "Anyone can rate without visiting", yoouzWins: true },
-        { feature: "AI & Bot Spam Resistance", yoouz: "100% Immune (Human Video Proof)", competitor: "Heavily targeted by automated review bots", yoouzWins: true },
-        { feature: "Emotional Nuance & Atmosphere", yoouz: "Live footage, ambiance & honest voice", competitor: "Flat 1-5 star clicks with 2-word blurbs", yoouzWins: true },
-        { feature: "Conciseness", yoouz: "Strict 60-second limit", competitor: "Unpredictable length, often zero details", yoouzWins: true },
-        { feature: "Business Social Proof Value", yoouz: "High-converting video testimonials", competitor: "Easily overlooked text snippets", yoouzWins: true },
-        { feature: "Place Discovery", yoouz: "Reels-style feed + Google Maps integration", competitor: "Map list with sponsored ad pins", yoouzWins: true }
+        { feature: t("comparison.featureVerification", "Review Verification"), yoouz: t("comparison.yoouzVerification", "Live video capture on the spot"), competitor: t("comparison.googleVerification", "Anyone can rate without visiting"), yoouzWins: true },
+        { feature: t("comparison.featureBotResistance", "AI & Bot Spam Resistance"), yoouz: t("comparison.yoouzBotResistance", "100% Immune (Human Video Proof)"), competitor: t("comparison.googleBotResistance", "Heavily targeted by automated review bots"), yoouzWins: true },
+        { feature: t("comparison.featureEmotionalNuance", "Emotional Nuance & Atmosphere"), yoouz: t("comparison.yoouzEmotionalNuance", "Live footage, ambiance & honest voice"), competitor: t("comparison.googleEmotionalNuance", "Flat 1-5 star clicks with 2-word blurbs"), yoouzWins: true },
+        { feature: t("comparison.featureConciseness", "Conciseness"), yoouz: t("comparison.yoouzConciseness", "Strict 60-second limit"), competitor: t("comparison.googleConciseness", "Unpredictable length, often zero details"), yoouzWins: true },
+        { feature: t("comparison.featureSocialProof", "Business Social Proof Value"), yoouz: t("comparison.yoouzSocialProof", "High-converting video testimonials"), competitor: t("comparison.googleSocialProof", "Easily overlooked text snippets"), yoouzWins: true },
+        { feature: t("comparison.featureDiscovery", "Place Discovery"), yoouz: t("comparison.yoouzDiscovery", "Reels-style feed + Google Maps integration"), competitor: t("comparison.googleDiscovery", "Map list with sponsored ad pins"), yoouzWins: true }
       ],
-      verdict: "While Google Maps is great for navigation, Google Reviews has become flooded with unverified bot ratings. Yoouz provides undeniable video proof recorded by real humans."
+      verdict: t("comparison.googleVerdict", "While Google Maps is great for navigation, Google Reviews has become flooded with unverified bot ratings. Yoouz provides undeniable video proof recorded by real humans.")
     },
     trustpilot: {
       name: "Trustpilot",
-      tagline: "Paid Review Packages & Anonymous Text Farms",
+      tagline: t("comparison.trustpilotTagline", "Paid Review Packages & Anonymous Text Farms"),
       prosVsCons: [
-        { feature: "Authenticity Standard", yoouz: "Real customer face & voice on video", competitor: "Anonymous text easily purchased in bulk", yoouzWins: true },
-        { feature: "Review Length", yoouz: "Punchy 60-second video insights", competitor: "Long complaints or fake 5-star filler", yoouzWins: true },
-        { feature: "Direct Live Recording", yoouz: "Must record live via app camera", competitor: "Copy-pasted text submissions", yoouzWins: true },
-        { feature: "Mobile-First UX", yoouz: "Fast swipeable vertical video feed", competitor: "Static desktop-style review lists", yoouzWins: true },
-        { feature: "Embeddable Video Widgets", yoouz: "Dynamic video carousels (3x conversion)", competitor: "Static star badges & text quotes", yoouzWins: true },
-        { feature: "Consumer Trust Score", yoouz: "99.4% Verified Human Authenticity", competitor: "Severely degraded by paid review services", yoouzWins: true }
+        { feature: t("comparison.featureStandard", "Authenticity Standard"), yoouz: t("comparison.yoouzStandard", "Real customer face & voice on video"), competitor: t("comparison.trustpilotStandard", "Anonymous text easily purchased in bulk"), yoouzWins: true },
+        { feature: t("comparison.featureLength", "Review Length"), yoouz: t("comparison.yoouzLength", "Punchy 60-second video insights"), competitor: t("comparison.trustpilotLength", "Long complaints or fake 5-star filler"), yoouzWins: true },
+        { feature: t("comparison.featureDirectRecording", "Direct Live Recording"), yoouz: t("comparison.yoouzDirectRecording", "Must record live via app camera"), competitor: t("comparison.trustpilotDirectRecording", "Copy-pasted text submissions"), yoouzWins: true },
+        { feature: t("comparison.featureMobileFirst", "Mobile-First UX"), yoouz: t("comparison.yoouzMobileFirst", "Fast swipeable vertical video feed"), competitor: t("comparison.trustpilotMobileFirst", "Static desktop-style review lists"), yoouzWins: true },
+        { feature: t("comparison.featureWidgets", "Embeddable Video Widgets"), yoouz: t("comparison.yoouzWidgets", "Dynamic video carousels (3x conversion)"), competitor: t("comparison.trustpilotWidgets", "Static star badges & text quotes"), yoouzWins: true },
+        { feature: t("comparison.featureTrustScore", "Consumer Trust Score"), yoouz: t("comparison.yoouzTrustScore", "99.4% Verified Human Authenticity"), competitor: t("comparison.trustpilotTrustScore", "Severely degraded by paid review services"), yoouzWins: true }
       ],
-      verdict: "Trustpilot reviews are easily manipulated by paid review brokers. Yoouz gives businesses and consumers 100% verifiable video testimonials that build genuine trust."
+      verdict: t("comparison.trustpilotVerdict", "Trustpilot reviews are easily manipulated by paid review brokers. Yoouz gives businesses and consumers 100% verifiable video testimonials that build genuine trust.")
     },
     tripadvisor: {
       name: "TripAdvisor",
-      tagline: "Outdated Travel Blogs & Static Photos",
+      tagline: t("comparison.tripadvisorTagline", "Outdated Travel Blogs & Static Photos"),
       prosVsCons: [
-        { feature: "Live Atmosphere & Food Proof", yoouz: "Fresh 60s video of food, rooms & vibes", competitor: "Outdated years-old static photos", yoouzWins: true },
-        { feature: "Review Speed", yoouz: "Watch 5 reviews in 3 minutes", competitor: "15 minutes reading multi-page travelogues", yoouzWins: true },
-        { feature: "Fake Hotel Reviews", yoouz: "Live video capture inside the venue", competitor: "Anyone can post fake hotel reviews", yoouzWins: true },
-        { feature: "Modern Mobile UX", yoouz: "Fast vertical feed + Interactive map", competitor: "Cluttered legacy desktop interface", yoouzWins: true },
-        { feature: "Real-time Recommendations", yoouz: "Local creators & travelers sharing live", competitor: "Slow editorial lists & promoted hotels", yoouzWins: true }
+        { feature: t("comparison.featureAtmosphere", "Live Atmosphere & Food Proof"), yoouz: t("comparison.yoouzAtmosphere", "Fresh 60s video of food, rooms & vibes"), competitor: t("comparison.tripadvisorAtmosphere", "Outdated years-old static photos"), yoouzWins: true },
+        { feature: t("comparison.featureSpeed", "Review Speed"), yoouz: t("comparison.yoouzSpeed", "Watch 5 reviews in 3 minutes"), competitor: t("comparison.tripadvisorSpeed", "15 minutes reading multi-page travelogues"), yoouzWins: true },
+        { feature: t("comparison.featureHotelReviews", "Fake Hotel Reviews"), yoouz: t("comparison.yoouzHotelReviews", "Live video capture inside the venue"), competitor: t("comparison.tripadvisorHotelReviews", "Anyone can post fake hotel reviews"), yoouzWins: true },
+        { feature: t("comparison.featureModernUX", "Modern Mobile UX"), yoouz: t("comparison.yoouzModernUX", "Fast vertical feed + Interactive map"), competitor: t("comparison.tripadvisorModernUX", "Cluttered legacy desktop interface"), yoouzWins: true },
+        { feature: t("comparison.featureRealtimeRecs", "Real-time Recommendations"), yoouz: t("comparison.yoouzRealtimeRecs", "Local creators & travelers sharing live"), competitor: t("comparison.tripadvisorRealtimeRecs", "Slow editorial lists & promoted hotels"), yoouzWins: true }
       ],
-      verdict: "TripAdvisor's static text essays feel obsolete in the video era. Yoouz lets you experience hotels, restaurants, and attractions in raw 60-second video before you arrive."
+      verdict: t("comparison.tripadvisorVerdict", "TripAdvisor's static text essays feel obsolete in the video era. Yoouz lets you experience hotels, restaurants, and attractions in raw 60-second video before you arrive.")
     }
   };
 
@@ -98,15 +100,15 @@ export function CopoComparisonModal({
           <div className="flex items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-white tracking-wide">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              THE ANTI-FAKE REVIEW PLATFORM
+              {t("comparison.antiFakeBadge", "THE ANTI-FAKE REVIEW PLATFORM")}
             </span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Why Yoouz Outperforms Legacy Review Sites
+            {t("comparison.headline", "Why Yoouz Outperforms Legacy Review Sites")}
           </h2>
           <p className="text-zinc-400 text-sm sm:text-base mt-1.5 max-w-xl">
-            See why millions of consumers and businesses are replacing outdated text reviews with authentic 60-second video testimonials.
+            {t("comparison.subheadline", "See why millions of consumers and businesses are replacing outdated text reviews with authentic 60-second video testimonials.")}
           </p>
 
           {/* Competitor Selector Tabs */}
@@ -131,10 +133,10 @@ export function CopoComparisonModal({
         <div className="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1">
           {/* Comparison Matrix Header */}
           <div className="grid grid-cols-12 gap-3 pb-3 border-b border-white/10 text-xs font-bold text-zinc-500 uppercase tracking-wider">
-            <div className="col-span-5 sm:col-span-4">Evaluation Criteria</div>
+            <div className="col-span-5 sm:col-span-4">{t("comparison.evaluationCriteria", "Evaluation Criteria")}</div>
             <div className="col-span-7 sm:col-span-4 text-white flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-              Yoouz (Video First)
+              Yoouz ({t("comparison.videoFirst", "Video First")})
             </div>
             <div className="hidden sm:block sm:col-span-4 text-zinc-400">
               {current.name}
@@ -171,7 +173,7 @@ export function CopoComparisonModal({
           <div className="p-5 rounded-2xl bg-gradient-to-r from-zinc-900 to-zinc-950 border border-white/10">
             <div className="flex items-center gap-2 text-white font-bold text-sm mb-2">
               <Award className="w-4 h-4 text-amber-400" />
-              The Official Verdict: Yoouz vs. {current.name}
+              {t("comparison.officialVerdict", "The Official Verdict: Yoouz vs.")} {current.name}
             </div>
             <p className="text-zinc-300 text-xs sm:text-sm leading-relaxed">
               {current.verdict}
@@ -184,24 +186,24 @@ export function CopoComparisonModal({
               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white">
                 <Video className="w-4 h-4" />
               </div>
-              <div className="text-white font-bold text-sm">100% Live Video</div>
-              <div className="text-zinc-400 text-xs">Real human face, emotion & tone. Zero AI bots.</div>
+              <div className="text-white font-bold text-sm">{t("comparison.liveVideoPillar", "100% Live Video")}</div>
+              <div className="text-zinc-400 text-xs">{t("comparison.liveVideoDesc", "Real human face, emotion & tone. Zero AI bots.")}</div>
             </div>
 
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/5 flex flex-col gap-1.5">
               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-emerald-400">
                 <Zap className="w-4 h-4" />
               </div>
-              <div className="text-white font-bold text-sm">60-Second Cap</div>
-              <div className="text-zinc-400 text-xs">Concise, fast, and 100% respectful of your time.</div>
+              <div className="text-white font-bold text-sm">{t("comparison.secondCapPillar", "60-Second Cap")}</div>
+              <div className="text-zinc-400 text-xs">{t("comparison.secondCapDesc", "Concise, fast, and 100% respectful of your time.")}</div>
             </div>
 
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/5 flex flex-col gap-1.5">
               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-blue-400">
                 <MapPin className="w-4 h-4" />
               </div>
-              <div className="text-white font-bold text-sm">Global Places</div>
-              <div className="text-zinc-400 text-xs">Google Maps integration for restaurants & local spots.</div>
+              <div className="text-white font-bold text-sm">{t("comparison.globalPlacesPillar", "Global Places")}</div>
+              <div className="text-zinc-400 text-xs">{t("comparison.globalPlacesDesc", "Google Maps integration for restaurants & local spots.")}</div>
             </div>
           </div>
         </div>
@@ -209,14 +211,14 @@ export function CopoComparisonModal({
         {/* Footer CTA */}
         <div className="p-6 border-t border-white/10 bg-zinc-950 flex flex-col sm:flex-row items-center justify-between gap-4 flex-shrink-0">
           <div className="text-xs text-zinc-500 text-center sm:text-left">
-            Ready to experience authentic, un-faked feedback?
+            {t("comparison.readyPrompt", "Ready to experience authentic, un-faked feedback?")}
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               onClick={onClose}
               className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-sm transition-colors cursor-pointer"
             >
-              Explore Feed
+              {t("comparison.exploreFeed", "Explore Feed")}
             </button>
             {onStartReview && (
               <button
@@ -226,7 +228,7 @@ export function CopoComparisonModal({
                 }}
                 className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-white text-black font-bold text-sm hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg"
               >
-                <span>Record a Review</span>
+                <span>{t("comparison.recordReview", "Record a Review")}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             )}

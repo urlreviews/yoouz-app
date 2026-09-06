@@ -160,6 +160,173 @@ export interface TranslationSchema {
     bento4Title?: string;
     bento4Desc?: string;
     bento4Sub?: string;
+    verifiedMember?: string;
+    searchFaqsPlaceholder?: string;
+    categoryAll?: string;
+    categoryReviewers?: string;
+    categoryBusiness?: string;
+    categoryTrust?: string;
+    categoryTechnical?: string;
+    noMatchingFaqs?: string;
+    tryDifferentKeywords?: string;
+    clearFilter?: string;
+    businessHeroTitle?: string;
+    businessHeroDesc?: string;
+    verifiedOwnerBadgeTitle?: string;
+    verifiedOwnerBadgeDesc?: string;
+    pinnedSolutionsTitle?: string;
+    pinnedSolutionsDesc?: string;
+    embedTrustFeedsTitle?: string;
+    embedTrustFeedsDesc?: string;
+    requestVerification?: string;
+    readyToVerify?: string;
+    privacySecurityTitle?: string;
+    googleVerified?: string;
+    privacySummary?: string;
+    updatedDate?: string;
+    privacyPolicyTitle?: string;
+    privacyPolicyDesc?: string;
+    readPrivacyPolicy?: string;
+    termsConditionsTitle?: string;
+    termsConditionsDesc?: string;
+    readTermsConditions?: string;
+    authPillarTitle?: string;
+    authPillarDesc?: string;
+    recordingPillarTitle?: string;
+    recordingPillarDesc?: string;
+    zeroSellingPillarTitle?: string;
+    zeroSellingPillarDesc?: string;
+    jurisdictionPillarTitle?: string;
+    jurisdictionPillarDesc?: string;
+    allSystemsOperational?: string;
+    dangerZoneTitle?: string;
+    dangerZoneDesc?: string;
+    deleteAccountBtn?: string;
+    deleteAccountWarning?: string;
+    supportDeskTitle?: string;
+    supportDeskDesc?: string;
+    fullNameLabel?: string;
+    emailLabel?: string;
+    categoryLabel?: string;
+    categorySupport?: string;
+    categoryVerification?: string;
+    categoryGuidelines?: string;
+    categoryPartnership?: string;
+    websiteDomainLabel?: string;
+    messageLabel?: string;
+    messagePlaceholder?: string;
+    attachFilesLabel?: string;
+    dragDropPrompt?: string;
+    browseFiles?: string;
+    fileLimitHint?: string;
+    submitRequest?: string;
+    submitting?: string;
+    inquiryReceivedTitle?: string;
+    inquiryReceivedDesc?: string;
+    sendAnotherInquiry?: string;
+    deleteConfirmTitle?: string;
+    deleteConfirmDesc?: string;
+    typeDeletePlaceholder?: string;
+    permanentlyDelete?: string;
+    deleting?: string;
+    [key: string]: any;
+  };
+  discover?: {
+    title?: string;
+    searchPlaceholder?: string;
+    searchResults?: string;
+    tapToView?: string;
+    noReviewersFound?: string;
+    tryDifferentSearch?: string;
+    reviews?: string;
+    followers?: string;
+    [key: string]: any;
+  };
+  auth?: {
+    help?: string;
+    signInTitle?: string;
+    signInSubtitle?: string;
+    recordTitle?: string;
+    recordSubtitle?: string;
+    followingTitle?: string;
+    followingSubtitle?: string;
+    messagesTitle?: string;
+    messagesSubtitle?: string;
+    notificationsTitle?: string;
+    notificationsSubtitle?: string;
+    bookmarksTitle?: string;
+    bookmarksSubtitle?: string;
+    profileTitle?: string;
+    profileSubtitle?: string;
+    commentTitle?: string;
+    commentSubtitle?: string;
+    claimTitle?: string;
+    claimSubtitle?: string;
+    checkEmail?: string;
+    sentCodeTo?: string;
+    completeProfileTitle?: string;
+    completeProfileSubtitle?: string;
+    emailAddress?: string;
+    emailPlaceholder?: string;
+    continueEmail?: string;
+    invalidEmailError?: string;
+    verificationCode?: string;
+    digitsCount?: string;
+    verifyCode?: string;
+    changeEmail?: string;
+    resendCode?: string;
+    firstName?: string;
+    lastName?: string;
+    country?: string;
+    city?: string;
+    regionProvince?: string;
+    selectCity?: string;
+    completeProfileEnter?: string;
+    termsAgreementPrefix?: string;
+    termsOfService?: string;
+    and?: string;
+    privacyPolicy?: string;
+    copyright?: string;
+    [key: string]: any;
+  };
+  businessAuth?: {
+    title?: string;
+    subtitle?: string;
+    workEmail?: string;
+    htmlCodeTag?: string;
+    instant?: string;
+    emailPlaceholder?: string;
+    continueMagicLink?: string;
+    exit?: string;
+    change?: string;
+    switchToHtmlTag?: string;
+    checkInbox?: string;
+    codeSentTo?: string;
+    verificationCode?: string;
+    verifyCode?: string;
+    resendCode?: string;
+    htmlVerificationTitle?: string;
+    searchPlaceLabel?: string;
+    searchPlacePlaceholder?: string;
+    pasteTagInstruction?: string;
+    copyTag?: string;
+    copied?: string;
+    verifyDomain?: string;
+    verifying?: string;
+    [key: string]: any;
+  };
+  legal?: {
+    termsConditions?: string;
+    privacyPolicy?: string;
+    supportDesk?: string;
+    networkLocation?: string;
+    copyright?: string;
+    [key: string]: any;
+  };
+  settings?: {
+    language_preference?: string;
+    language_subtitle?: string;
+    search_languages_placeholder?: string;
     [key: string]: any;
   };
 }
@@ -500,7 +667,169 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       bento3Sub: "Pinned owner responses",
       bento4Title: "No Pay-To-Remove Guarantee",
       bento4Desc: "Unlike legacy review portals, Yoouz guarantees all verified reviews stay transparent and tamper-proof.",
-      bento4Sub: "100% equal rules for all"
+      bento4Sub: "100% equal rules for all",
+      verifiedMember: "Verified Member • Active Contributor",
+      searchFaqsPlaceholder: "Search answers by keyword or topic...",
+      categoryAll: "All Topics",
+      categoryReviewers: "For Reviewers",
+      categoryBusiness: "For Businesses",
+      categoryTrust: "Trust & Safety",
+      categoryTechnical: "Technical",
+      noMatchingFaqs: "No matching questions found",
+      tryDifferentKeywords: "Try searching with different keywords or switch categories.",
+      clearFilter: "Clear search query",
+      businessHeroTitle: "Turn Authentic Customer Reviews into Your Growth Engine",
+      businessHeroDesc: "Yoouz provides verified business owners with direct tools to manage place pages, engage in video comment threads, and display tamper-proof trust signals.",
+      verifiedOwnerBadgeTitle: "Verified Owner Badge",
+      verifiedOwnerBadgeDesc: "Verify your domain via DNS or HTML meta-tag to unlock exclusive official badges on all replies.",
+      pinnedSolutionsTitle: "Pinned Solutions & Feedback",
+      pinnedSolutionsDesc: "Pin resolution videos to address customer feedback transparently and build long-term reputation.",
+      embedTrustFeedsTitle: "Embed Live Video Feeds",
+      embedTrustFeedsDesc: "Showcase genuine 60-second video reviews directly on your website with zero-latency streaming widgets.",
+      requestVerification: "Request Domain Verification",
+      readyToVerify: "Ready to claim and verify your business?",
+      privacySecurityTitle: "Google-Grade Privacy & Security Architecture",
+      googleVerified: "Google OAuth • Zero Passwords Stored",
+      privacySummary: "Yoouz is built with privacy-first standards. We use Google OAuth for secure passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce San Francisco, California USA governing jurisdiction.",
+      updatedDate: "Updated Aug 24, 2026",
+      privacyPolicyTitle: "Privacy Policy",
+      privacyPolicyDesc: "Covers Google profile data handling, real-time camera/mic usage, zero password storage, zero data selling, and your right to data deletion.",
+      readPrivacyPolicy: "Read Privacy Policy",
+      termsConditionsTitle: "Terms & Conditions",
+      termsConditionsDesc: "Covers live recording standards, anti-scraping rules, business streaming licenses, limitation of liability, and San Francisco, CA jurisdiction.",
+      readTermsConditions: "Read Terms & Conditions",
+      authPillarTitle: "Passwordless Email Security",
+      authPillarDesc: "We never store passwords. All logins use secure verification codes sent to your verified email with encrypted HTTPS transport.",
+      recordingPillarTitle: "Real-Time Camera Only",
+      recordingPillarDesc: "Camera and microphone data are accessed strictly during active recording. We never access photo libraries or pre-recorded storage.",
+      zeroSellingPillarTitle: "No Selling or Renting",
+      zeroSellingPillarDesc: "We never sell, rent, or trade your personal data to third parties. Data is shared solely with trusted cloud infrastructure providers.",
+      jurisdictionPillarTitle: "San Francisco, California, USA",
+      jurispillarDesc: "Platform terms and privacy policies are governed by the laws of the State of California, USA with jurisdiction in San Francisco, CA.",
+      allSystemsOperational: "All Systems Operational",
+      dangerZoneTitle: "Danger Zone: Delete Account Profile",
+      dangerZoneDesc: "Permanently erase your user profile details, bio, avatar, and cached session information. This action cannot be reversed.",
+      deleteAccountBtn: "Delete Account",
+      deleteAccountWarning: "Confirming will sign you out immediately and purge your profile record.",
+      supportDeskTitle: "Official Yoouz Support Desk",
+      supportDeskDesc: "Submit support inquiries, business domain claim requests, or report community guideline infractions.",
+      fullNameLabel: "Your Full Name *",
+      emailLabel: "Email Address *",
+      categoryLabel: "Category *",
+      categorySupport: "General Account / Technical Support",
+      categoryVerification: "Business / Domain Ownership Verification",
+      categoryGuidelines: "Report Policy Violation / Fake Content",
+      categoryPartnership: "API & Partnership Inquiries",
+      websiteDomainLabel: "Website Domain (Optional)",
+      messageLabel: "Message Details *",
+      messagePlaceholder: "Describe your inquiry or request in detail...",
+      attachFilesLabel: "Attach Screenshots or Verification Proof (Optional)",
+      dragDropPrompt: "Drag & drop files here, or browse files",
+      browseFiles: "browse files",
+      fileLimitHint: "PNG, JPG, WEBP, PDF or DOC (Max 3 files, up to 2MB each)",
+      submitRequest: "Submit Secure Request",
+      submitting: "Submitting...",
+      inquiryReceivedTitle: "Inquiry Received Successfully",
+      inquiryReceivedDesc: "Thank you for contacting Yoouz. Your message has been logged securely in our support queue. Our team reviews all requests within 24 hours.",
+      sendAnotherInquiry: "Send Another Inquiry",
+      deleteConfirmTitle: "Confirm Profile Deletion",
+      deleteConfirmDesc: "This is a permanent operation. To delete profile, please type DELETE below.",
+      typeDeletePlaceholder: "Type DELETE to confirm",
+      permanentlyDelete: "Permanently Delete",
+      deleting: "Deleting..."
+    },
+    discover: {
+      title: "Discover Reviewers",
+      searchPlaceholder: "Search reviewer by name...",
+      searchResults: "Search Results",
+      tapToView: "Tap card to view profile",
+      noReviewersFound: "No reviewers found",
+      tryDifferentSearch: "Try searching with a different name.",
+      reviews: "Reviews",
+      followers: "Followers"
+    },
+    auth: {
+      help: "Help",
+      signInTitle: "Sign in to Yoouz",
+      signInSubtitle: "Enter your email to receive a secure 6-digit confirmation code. Passwordless, instant, and private.",
+      recordTitle: "Sign in to Record a Review",
+      recordSubtitle: "Join verified creators sharing real 60-second video reviews across authentic local places.",
+      followingTitle: "Sign in to Follow Reviewers",
+      followingSubtitle: "Keep track of your favorite creators and discover new spots as they post reviews.",
+      messagesTitle: "Sign in to Access Messages",
+      messagesSubtitle: "Directly chat with reviewers and verified business owners across your community.",
+      notificationsTitle: "Sign in for Live Notifications",
+      notificationsSubtitle: "Stay updated when people like, comment, or interact with your video reviews.",
+      bookmarksTitle: "Sign in to Save Places",
+      bookmarksSubtitle: "Bookmark your favorite restaurants, cafés, and places to visit later.",
+      profileTitle: "Sign in to Your Profile",
+      profileSubtitle: "Access your published reviews, follower stats, and customize your creator profile.",
+      commentTitle: "Sign in to Join the Discussion",
+      commentSubtitle: "Share your thoughts, ask questions, and engage directly with the community.",
+      claimTitle: "Sign in to Claim Business",
+      claimSubtitle: "Verify ownership of your place, respond to video reviews, and engage customers.",
+      checkEmail: "Check your email",
+      sentCodeTo: "We sent a 6-digit confirmation code to",
+      completeProfileTitle: "Complete your profile",
+      completeProfileSubtitle: "Enter your name and location for verified reviews.",
+      emailAddress: "Email Address",
+      emailPlaceholder: "you@example.com",
+      continueEmail: "Continue with Email",
+      invalidEmailError: "Please enter a valid email address.",
+      verificationCode: "6-Digit Verification Code",
+      digitsCount: "digits",
+      verifyCode: "Verify Code",
+      changeEmail: "Change Email",
+      resendCode: "Resend Code",
+      firstName: "First Name",
+      lastName: "Last Name",
+      country: "Country",
+      city: "City",
+      regionProvince: "Region / Province",
+      selectCity: "Select City",
+      completeProfileEnter: "Complete Profile & Enter",
+      termsAgreementPrefix: "By continuing, you agree to Yoouz's",
+      termsOfService: "Terms of Service",
+      and: "and",
+      privacyPolicy: "Privacy Policy",
+      copyright: "© 2026 Yoouz. Real People. Real Reviews."
+    },
+    businessAuth: {
+      title: "Sign in to Yoouz Business",
+      subtitle: "Claim your business, respond to video reviews, and engage customers as the verified owner.",
+      workEmail: "Work Email",
+      htmlCodeTag: "HTML Code Tag",
+      instant: "Instant",
+      emailPlaceholder: "you@yourcompany.com",
+      continueMagicLink: "Continue with Magic Link",
+      exit: "Exit",
+      change: "Change",
+      switchToHtmlTag: "Switch to HTML Code Tag verification",
+      checkInbox: "Check Your Inbox",
+      codeSentTo: "Enter the 6-digit verification code sent to",
+      verificationCode: "Verification Code",
+      verifyCode: "Verify Code",
+      resendCode: "Resend Code",
+      htmlVerificationTitle: "HTML Meta Tag Verification",
+      searchPlaceLabel: "Search & Select Business to Claim",
+      searchPlacePlaceholder: "Search your place name or address...",
+      pasteTagInstruction: "Copy verification code and paste it inside the <head> tag of your website:",
+      copyTag: "Copy Meta Tag",
+      copied: "Copied!",
+      verifyDomain: "Verify Domain Tag",
+      verifying: "Verifying..."
+    },
+    legal: {
+      termsConditions: "Terms & Conditions",
+      privacyPolicy: "Privacy Policy",
+      supportDesk: "Support Desk",
+      networkLocation: "Yoouz Trust Network • San Francisco, CA",
+      copyright: "© 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews."
+    },
+    settings: {
+      language_preference: "Language & Regional Settings",
+      language_subtitle: "Switch instantly between 64 supported languages with full translation, RTL bidirectional rendering, and localized formatting.",
+      search_languages_placeholder: "Search from 64 languages..."
     }
   },
   ar: {
@@ -1050,7 +1379,169 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       bento3Sub: "Angepinnte Inhaber-Antworten",
       bento4Title: "Keine Löschung gegen Bezahlung",
       bento4Desc: "Im Gegensatz zu alten Bewertungsportalen garantiert Yoouz, dass alle verifizierten Bewertungen transparent und manipulationssicher bleiben.",
-      bento4Sub: "100% gleiche Regeln für alle"
+      bento4Sub: "100% gleiche Regeln für alle",
+      verifiedMember: "Verifiziertes Mitglied • Aktiver Beitragsleistender",
+      searchFaqsPlaceholder: "Antworten nach Stichwort oder Thema durchsuchen...",
+      categoryAll: "Alle Themen",
+      categoryReviewers: "Für Reviewer",
+      categoryBusiness: "Für Unternehmen",
+      categoryTrust: "Vertrauen & Sicherheit",
+      categoryTechnical: "Technisch",
+      noMatchingFaqs: "Keine passenden Fragen gefunden",
+      tryDifferentKeywords: "Versuchen Sie es mit anderen Suchbegriffen oder wechseln Sie die Kategorie.",
+      clearFilter: "Suchanfrage löschen",
+      businessHeroTitle: "Verwandeln Sie echte Kundenbewertungen in Ihren Wachstumsmotor",
+      businessHeroDesc: "Yoouz bietet verifizierten Geschäftsinhabern direkte Werkzeuge zur Verwaltung von Standortseiten, zur Teilnahme an Video-Kommentaren und zur Anzeige manipulationssicherer Vertrauenssignale.",
+      verifiedOwnerBadgeTitle: "Verifiziertes Inhaber-Abzeichen",
+      verifiedOwnerBadgeDesc: "Verifizieren Sie Ihre Domain via DNS oder HTML-Tag, um offizielle Abzeichen bei allen Antworten freizuschalten.",
+      pinnedSolutionsTitle: "Angepinnte Lösungen & Feedback",
+      pinnedSolutionsDesc: "Pinnen Sie Lösungsvideos an, um transparent auf Kundenfeedback einzugehen und langfristiges Vertrauen aufzubauen.",
+      embedTrustFeedsTitle: "Live-Video-Feeds einbetten",
+      embedTrustFeedsDesc: "Präsentieren Sie authentische 60-Sekunden-Video-Bewertungen direkt auf Ihrer Website mit verzögerungsfreien Streaming-Widgets.",
+      requestVerification: "Domain-Verifikation anfordern",
+      readyToVerify: "Bereit, Ihr Unternehmen zu beanspruchen und zu verifizieren?",
+      privacySecurityTitle: "Datenschutz- & Sicherheitsarchitektur nach Google-Standard",
+      googleVerified: "Google OAuth • Keine Passwörter gespeichert",
+      privacySummary: "Yoouz wurde nach strengsten Datenschutzstandards entwickelt. Wir nutzen Google OAuth für sichere, passwortlose Authentifizierung, verarbeiten Kamera-Streams in Echtzeit ohne Zugriff auf Fotomediatheken und unterliegen der Gerichtsbarkeit von San Francisco, Kalifornien, USA.",
+      updatedDate: "Aktualisiert am 24. Aug. 2026",
+      privacyPolicyTitle: "Datenschutzerklärung",
+      privacyPolicyDesc: "Umfasst den Umgang mit Google-Profildaten, Echtzeit-Kamera-/Mikrofonnutzung, keine Speicherung von Passwörtern, keinen Datenverkauf und Ihr Recht auf Datenlöschung.",
+      readPrivacyPolicy: "Datenschutzerklärung lesen",
+      termsConditionsTitle: "Allgemeine Geschäftsbedingungen",
+      termsConditionsDesc: "Regelt Live-Aufnahmestandards, Anti-Scraping-Regeln, geschäftliche Streaming-Lizenzen, Haftungsbeschränkungen und den Gerichtsstand San Francisco, CA.",
+      readTermsConditions: "AGB lesen",
+      authPillarTitle: "Passwortlose E-Mail-Sicherheit",
+      authPillarDesc: "Wir speichern niemals Passwörter. Alle Anmeldungen erfolgen über sichere Bestätigungscodes an Ihre verifizierte E-Mail-Adresse mit verschlüsselter HTTPS-Übertragung.",
+      recordingPillarTitle: "Ausschließlich Echtzeit-Kamera",
+      recordingPillarDesc: "Auf Kamera- und Mikrofondaten wird ausschließlich während der aktiven Aufnahme zugegriffen. Wir greifen niemals auf Fotogalerien zu.",
+      zeroSellingPillarTitle: "Kein Verkauf oder Vermietung von Daten",
+      zeroSellingPillarDesc: "Wir verkaufen, vermieten oder handeln niemals mit Ihren persönlichen Daten. Daten werden ausschließlich mit vertrauenswürdigen Cloud-Infrastrukturanbietern geteilt.",
+      jurisdictionPillarTitle: "San Francisco, Kalifornien, USA",
+      jurisdictionPillarDesc: "Plattformbedingungen und Datenschutzrichtlinien unterliegen den Gesetzen des US-Bundesstaates Kalifornien mit Gerichtsstand in San Francisco, CA.",
+      allSystemsOperational: "Alle Systeme betriebsbereit",
+      dangerZoneTitle: "Gefahrenzone: Benutzerprofil löschen",
+      dangerZoneDesc: "Löschen Sie unwiderruflich Ihre Profildaten, Biografie, Avatar und zwischengespeicherte Sitzungsdaten. Dieser Vorgang kann nicht rückgängig gemacht werden.",
+      deleteAccountBtn: "Konto löschen",
+      deleteAccountWarning: "Die Bestätigung meldet Sie sofort ab und löscht Ihren Profil-Datensatz endgültig.",
+      supportDeskTitle: "Offizieller Yoouz Support-Desk",
+      supportDeskDesc: "Senden Sie Support-Anfragen, Anfragen zur Domain-Inhaberschaft oder melden Sie Verstöße gegen die Community-Richtlinien.",
+      fullNameLabel: "Ihr vollständiger Name *",
+      emailLabel: "E-Mail-Adresse *",
+      categoryLabel: "Kategorie *",
+      categorySupport: "Allgemeines Konto / Technischer Support",
+      categoryVerification: "Unternehmens- / Domain-Inhaberschaftsverifizierung",
+      categoryGuidelines: "Richtlinienverstoß / Gefälschte Inhalte melden",
+      categoryPartnership: "API- & Partnerschaftsanfragen",
+      websiteDomainLabel: "Website-Domain (Optional)",
+      messageLabel: "Nachrichtendetails *",
+      messagePlaceholder: "Beschreiben Sie Ihre Anfrage oder Ihr Anliegen ausführlich...",
+      attachFilesLabel: "Screenshots oder Nachweise anhängen (Optional)",
+      dragDropPrompt: "Dateien hierher ziehen oder durchsuchen",
+      browseFiles: "Dateien durchsuchen",
+      fileLimitHint: "PNG, JPG, WEBP, PDF oder DOC (Max. 3 Dateien, jeweils bis zu 2MB)",
+      submitRequest: "Sichere Anfrage absenden",
+      submitting: "Wird gesendet...",
+      inquiryReceivedTitle: "Anfrage erfolgreich empfangen",
+      inquiryReceivedDesc: "Vielen Dank für Ihre Kontaktaufnahme mit Yoouz. Ihre Nachricht wurde sicher in unserer Support-Warteschlange erfasst. Unser Team prüft alle Anfragen innerhalb von 24 Stunden.",
+      sendAnotherInquiry: "Weitere Anfrage senden",
+      deleteConfirmTitle: "Profil-Löschung bestätigen",
+      deleteConfirmDesc: "Dies ist ein dauerhafter Vorgang. Um das Profil zu löschen, geben Sie bitte unten DELETE ein.",
+      typeDeletePlaceholder: "Geben Sie DELETE zur Bestätigung ein",
+      permanentlyDelete: "Dauerhaft löschen",
+      deleting: "Wird gelöscht..."
+    },
+    discover: {
+      title: "Reviewer entdecken",
+      searchPlaceholder: "Reviewer nach Namen suchen...",
+      searchResults: "Suchergebnisse",
+      tapToView: "Karte antippen, um Profil anzuzeigen",
+      noReviewersFound: "Keine Reviewer gefunden",
+      tryDifferentSearch: "Versuchen Sie die Suche mit einem anderen Namen.",
+      reviews: "Bewertungen",
+      followers: "Follower"
+    },
+    auth: {
+      help: "Hilfe",
+      signInTitle: "Bei Yoouz anmelden",
+      signInSubtitle: "Geben Sie Ihre E-Mail ein, um einen sicheren 6-stelligen Bestätigungscode zu erhalten. Passwortlos, sofort und privat.",
+      recordTitle: "Anmelden, um Bewertung aufzunehmen",
+      recordSubtitle: "Schließen Sie sich verifizierten Reviewern an, die echte 60-Sekunden-Videobewertungen an authentischen Orten teilen.",
+      followingTitle: "Anmelden, um Reviewern zu folgen",
+      followingSubtitle: "Behalten Sie Ihre Lieblings-Reviewer im Blick und entdecken Sie neue Orte, sobald sie bewertet werden.",
+      messagesTitle: "Anmelden für Direktnachrichten",
+      messagesSubtitle: "Chatten Sie direkt mit Reviewern und verifizierten Inhabern in Ihrer Community.",
+      notificationsTitle: "Anmelden für Live-Mitteilungen",
+      notificationsSubtitle: "Bleiben Sie informiert, wenn jemand Ihre Bewertungen liket, kommentiert oder darauf reagiert.",
+      bookmarksTitle: "Anmelden, um Orte zu speichern",
+      bookmarksSubtitle: "Speichern Sie Ihre Lieblingsrestaurants, Cafés und Orte für spätere Besuche.",
+      profileTitle: "Bei Ihrem Profil anmelden",
+      profileSubtitle: "Greifen Sie auf Ihre veröffentlichten Bewertungen und Follower-Statistiken zu und passen Sie Ihr Profil an.",
+      commentTitle: "Anmelden, um mitzudiskutieren",
+      commentSubtitle: "Teilen Sie Ihre Gedanken, stellen Sie Fragen und treten Sie direkt mit der Community in Kontakt.",
+      claimTitle: "Anmelden, um Unternehmen zu beanspruchen",
+      claimSubtitle: "Verifizieren Sie die Inhaberschaft Ihres Standorts, antworten Sie auf Videobewertungen und gewinnen Sie Kunden.",
+      checkEmail: "Überprüfen Sie Ihre E-Mails",
+      sentCodeTo: "Wir haben einen 6-stelligen Bestätigungscode gesendet an",
+      completeProfileTitle: "Vervollständigen Sie Ihr Profil",
+      completeProfileSubtitle: "Geben Sie Ihren Namen und Standort für verifizierte Bewertungen ein.",
+      emailAddress: "E-Mail-Adresse",
+      emailPlaceholder: "du@beispiel.de",
+      continueEmail: "Mit E-Mail fortfahren",
+      invalidEmailError: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      verificationCode: "6-stelliger Bestätigungscode",
+      digitsCount: "Ziffern",
+      verifyCode: "Code bestätigen",
+      changeEmail: "E-Mail ändern",
+      resendCode: "Code erneut senden",
+      firstName: "Vorname",
+      lastName: "Nachname",
+      country: "Land",
+      city: "Stadt",
+      regionProvince: "Region / Bundesland",
+      selectCity: "Stadt auswählen",
+      completeProfileEnter: "Profil abschließen & Starten",
+      termsAgreementPrefix: "Mit dem Fortfahren akzeptieren Sie die",
+      termsOfService: "Nutzungsbedingungen",
+      and: "und",
+      privacyPolicy: "Datenschutzerklärung",
+      copyright: "© 2026 Yoouz. Echte Menschen. Echte Bewertungen."
+    },
+    businessAuth: {
+      title: "Bei Yoouz Business anmelden",
+      subtitle: "Beanspruchen Sie Ihr Unternehmen, antworten Sie auf Videobewertungen und interagieren Sie als verifizierter Inhaber.",
+      workEmail: "Geschäftliche E-Mail",
+      htmlCodeTag: "HTML Meta-Tag",
+      instant: "Sofort",
+      emailPlaceholder: "name@ihrunternehmen.de",
+      continueMagicLink: "Mit Magic Link fortfahren",
+      exit: "Beenden",
+      change: "Ändern",
+      switchToHtmlTag: "Zur HTML-Tag-Verifizierung wechseln",
+      checkInbox: "Posteingang prüfen",
+      codeSentTo: "Geben Sie den 6-stelligen Code ein, der gesendet wurde an",
+      verificationCode: "Bestätigungscode",
+      verifyCode: "Code verifizieren",
+      resendCode: "Code erneut senden",
+      htmlVerificationTitle: "HTML Meta-Tag Verifizierung",
+      searchPlaceLabel: "Unternehmen suchen & auswählen",
+      searchPlacePlaceholder: "Name oder Adresse des Betriebs eingeben...",
+      pasteTagInstruction: "Kopieren Sie den Verifizierungscode und fügen Sie ihn in den <head>-Bereich Ihrer Website ein:",
+      copyTag: "Meta-Tag kopieren",
+      copied: "Kopiert!",
+      verifyDomain: "Domain-Tag verifizieren",
+      verifying: "Wird verifiziert..."
+    },
+    legal: {
+      termsConditions: "Allgemeine Geschäftsbedingungen",
+      privacyPolicy: "Datenschutzerklärung",
+      supportDesk: "Support-Desk",
+      networkLocation: "Yoouz Trust Netzwerk • San Francisco, CA",
+      copyright: "© 2026 Yoouz Inc. Alle Rechte vorbehalten. Echte Menschen. Echte Bewertungen."
+    },
+    settings: {
+      language_preference: "Sprach- & Regionaleinstellungen",
+      language_subtitle: "Wechseln Sie sofort zwischen 64 unterstützten Sprachen mit vollständiger Übersetzung, RTL-Unterstützung und lokalisierter Formatierung.",
+      search_languages_placeholder: "Aus 64 Sprachen suchen..."
     }
   },
   it: {

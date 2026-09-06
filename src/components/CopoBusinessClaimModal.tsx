@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Place } from "../types";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export interface BusinessSession {
   businessEmail: string;
@@ -44,6 +45,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
   selectedPlace = null,
   onSuccess
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'email' | 'meta_tag'>('email');
   
   // Selected place for claim
@@ -291,14 +293,14 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-extrabold text-lg text-white font-['Google_Sans',sans-serif]">
-                  Verify Business Listing
+                  {t("businessClaim.verifyListingTitle", "Verify Business Listing")}
                 </h3>
                 <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-[10px] font-bold text-zinc-300 uppercase tracking-wider border border-zinc-700">
-                  Merchant Access
+                  {t("businessClaim.merchantAccess", "Merchant Access")}
                 </span>
               </div>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Verify ownership to reply to video reviews & manage widgets
+                {t("businessClaim.verifyListingDesc", "Verify ownership to reply to video reviews & manage widgets")}
               </p>
             </div>
           </div>
@@ -325,7 +327,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                   <ShieldCheck className="w-4 h-4 text-zinc-400 shrink-0" />
                 </div>
                 <div className="text-[11px] text-zinc-500 truncate">
-                  {targetPlace.address || 'Verified Business Venue'}
+                  {targetPlace.address || t("businessClaim.verifiedVenue", "Verified Business Venue")}
                 </div>
               </div>
             </div>
@@ -334,7 +336,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               onClick={() => setShowPlaceSearch(!showPlaceSearch)}
               className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 transition-colors shrink-0 cursor-pointer shadow-2xs"
             >
-              {showPlaceSearch ? 'Cancel' : 'Switch Venue'}
+              {showPlaceSearch ? t("common.cancel", "Cancel") : t("businessClaim.switchVenue", "Switch Venue")}
             </button>
           </div>
 
@@ -345,7 +347,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search venue name or address..."
+                placeholder={t("businessClaim.searchPlaceholder", "Search venue name or address...")}
                 className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600"
               />
               <div className="max-h-40 overflow-y-auto space-y-1">
@@ -381,7 +383,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               }`}
             >
               <Mail className="w-4 h-4 text-zinc-300" />
-              <span>Email Verification</span>
+              <span>{t("businessClaim.emailVerification", "Email Verification")}</span>
             </button>
             <button
               onClick={() => setActiveTab('meta_tag')}
@@ -392,7 +394,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               }`}
             >
               <Code className="w-4 h-4 text-zinc-300" />
-              <span>Website Meta Tag</span>
+              <span>{t("businessClaim.websiteMetaTag", "Website Meta Tag")}</span>
             </button>
           </div>
 
@@ -403,7 +405,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                 <form onSubmit={handleSendMagicLink} className="space-y-3.5">
                   <div>
                     <label className="block text-xs font-bold text-zinc-300 mb-1.5">
-                      Business Email Address
+                      {t("businessClaim.businessEmailLabel", "Business Email Address")}
                     </label>
                     <div className="relative">
                       <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -417,7 +419,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                       />
                     </div>
                     <p className="text-[11px] text-zinc-500 mt-1">
-                      We'll send a 6-digit verification code to confirm ownership.
+                      {t("businessClaim.sendCodeHint", "We'll send a 6-digit verification code to confirm ownership.")}
                     </p>
                   </div>
 
@@ -436,12 +438,12 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                     {isSendingEmail ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Sending verification code...</span>
+                        <span>{t("businessClaim.sendingCode", "Sending verification code...")}</span>
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4" />
-                        <span>Send Verification Code</span>
+                        <span>{t("businessClaim.sendVerificationCode", "Send Verification Code")}</span>
                       </>
                     )}
                   </button>
@@ -452,10 +454,10 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                   <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-white">
                       <Check className="w-4 h-4 text-zinc-300" />
-                      <span>Verification Code Sent</span>
+                      <span>{t("businessClaim.codeSentSuccess", "Verification Code Sent")}</span>
                     </div>
                     <p className="text-[11.5px] text-zinc-400 leading-relaxed">
-                      We sent a verification code to <strong className="text-white">{businessEmail}</strong>. Enter the 6-digit code below:
+                      {t("auth.sentCodeTo", "We sent a 6-digit code to")} <strong className="text-white">{businessEmail}</strong>. {t("businessClaim.enterCodeBelow", "Enter the 6-digit code below:")}
                     </p>
                   </div>
 
@@ -463,7 +465,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="block text-xs font-bold text-zinc-300">
-                          6-Digit Verification Code
+                          {t("auth.sixDigitCode", "6-Digit Verification Code")}
                         </label>
                         <span className="text-[11px] text-zinc-500 font-mono">
                           {otpCode.length}/6
@@ -529,7 +531,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                         onClick={() => setEmailSentSuccess(false)}
                         className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-zinc-700"
                       >
-                        Back
+                        {t("common.back", "Back")}
                       </button>
                       <button
                         type="submit"
@@ -539,12 +541,12 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                         {isVerifyingCode ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Verifying...</span>
+                            <span>{t("auth.verifying", "Verifying...")}</span>
                           </>
                         ) : (
                           <>
                             <ShieldCheck className="w-4 h-4" />
-                            <span>Verify & Enter Business Portal</span>
+                            <span>{t("businessClaim.verifyAndEnterPortal", "Verify & Enter Business Portal")}</span>
                           </>
                         )}
                       </button>
@@ -559,7 +561,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
           {activeTab === 'meta_tag' && (
             <div className="space-y-4">
               <div className="text-xs text-zinc-400 leading-relaxed">
-                Add this verification meta tag to the <code className="text-zinc-200 font-mono bg-zinc-800 px-1 py-0.5 rounded border border-zinc-700">&lt;head&gt;</code> section of your website homepage:
+                {t("businessClaim.metaInstruction", "Add this verification meta tag to the <head> section of your website homepage:")}
               </div>
 
               {/* Tag Box with 1-click Copy */}
@@ -577,14 +579,14 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                   className="absolute right-2 top-2 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all border border-zinc-700"
                 >
                   {copiedTag ? <Check className="w-3.5 h-3.5 text-zinc-300" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedTag ? 'Copied' : 'Copy'}</span>
+                  <span>{copiedTag ? t("common.copied", "Copied") : t("common.copy", "Copy")}</span>
                 </button>
               </div>
 
               {/* Website URL input */}
               <div>
                 <label className="block text-xs font-bold text-zinc-300 mb-1.5">
-                  Official Website Homepage URL
+                  {t("businessClaim.officialHomepageUrl", "Official Website Homepage URL")}
                 </label>
                 <div className="relative">
                   <Globe className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -608,7 +610,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               {tagSuccess && (
                 <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-white font-bold">
                   <Check className="w-4 h-4 shrink-0" />
-                  <span>Website HTML meta tag verified! Unlocking portal...</span>
+                  <span>{t("businessClaim.metaTagSuccess", "Website HTML meta tag verified! Unlocking portal...")}</span>
                 </div>
               )}
 
@@ -621,12 +623,12 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                 {isCheckingTag ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Crawling & Checking Website Head Tag...</span>
+                    <span>{t("businessClaim.crawlingTag", "Crawling & Checking Website Head Tag...")}</span>
                   </>
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4" />
-                    <span>Verify Live Website Tag</span>
+                    <span>{t("businessClaim.verifyLiveTag", "Verify Live Website Tag")}</span>
                   </>
                 )}
               </button>

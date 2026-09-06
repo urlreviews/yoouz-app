@@ -21,6 +21,7 @@ import { CopoBrandLogo } from "./CopoBrandLogo";
 import { extractCleanDomain, formatBusinessName } from "../utils/placeUtils";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { triggerHaptic } from "../utils/haptics";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoShareModalProps {
   // Mode A: General Share
@@ -56,6 +57,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   onClose,
   onOpenReport
 }) => {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"share" | "embed" | "preview">("share");
@@ -525,7 +527,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             </div>
             <div>
               <h3 id="yoouz-share-modal-title" className="font-bold text-white text-base leading-tight">
-                {isVideoMode ? "Share Review" : "Share"}
+                {isVideoMode ? t("shareModal.shareReview", "Share Review") : t("shareModal.share", "Share")}
               </h3>
               <p className="text-[11px] text-zinc-400 font-medium truncate max-w-[240px] sm:max-w-[300px]">
                 {title}
@@ -556,7 +558,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               }`}
             >
               <Share2 className="w-3.5 h-3.5" />
-              <span>Share Link</span>
+              <span>{t("shareModal.shareLink", "Share Link")}</span>
             </button>
             <button
               onClick={() => setActiveTab("embed")}
@@ -567,7 +569,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               }`}
             >
               <Code className="w-3.5 h-3.5" />
-              <span>Embed</span>
+              <span>{t("shareModal.embed", "Embed")}</span>
             </button>
             <button
               onClick={() => setActiveTab("preview")}
@@ -578,7 +580,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Preview</span>
+              <span>{t("shareModal.preview", "Preview")}</span>
             </button>
           </div>
         </div>
@@ -637,7 +639,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               {/* Direct Link Copy Input Bar */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                  Direct Link
+                  {t("shareModal.directLink", "Direct Link")}
                 </label>
                 <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-1.5 shadow-inner">
                   <input
@@ -653,7 +655,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         onClick={handleNativeShare}
                         type="button"
                         className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer border border-zinc-700/60"
-                        title="Native Device Share"
+                        title={t("shareModal.nativeDeviceShare", "Native Device Share")}
                       >
                         <Smartphone className="w-3.5 h-3.5" />
                       </button>
@@ -670,12 +672,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       {copied ? (
                         <>
                           <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-                          <span>Copied</span>
+                          <span>{t("shareModal.copied", "Copied")}</span>
                         </>
                       ) : (
                         <>
                           <Copy className="w-3.5 h-3.5" />
-                          <span>Copy</span>
+                          <span>{t("shareModal.copy", "Copy")}</span>
                         </>
                       )}
                     </button>
@@ -683,10 +685,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Desktop 3-Column Dark Mode Grid Layout (Vertical scroll up/down with sleek dark mode cards) */}
+              {/* Desktop 3-Column Dark Mode Grid Layout */}
               <div className="hidden sm:block space-y-2 pt-1">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                  Share to Platform
+                  {t("shareModal.shareToPlatform", "Share to Platform")}
                 </label>
                 <div 
                   className="grid grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto pr-1 no-scrollbar overscroll-contain"
@@ -710,11 +712,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Mobile Shelf 1: Circular Quick Actions & Messaging Apps (100% Dark Mode) */}
+              {/* Mobile Shelf 1: Circular Quick Actions & Messaging Apps */}
               <div className="sm:hidden space-y-2 pt-1">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                    Send to
+                    {t("shareModal.sendTo", "Send to")}
                   </label>
                   {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
                     <button
@@ -722,7 +724,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       className="text-[11px] font-semibold text-zinc-300 hover:text-white transition cursor-pointer flex items-center gap-1"
                     >
                       <Smartphone className="w-3 h-3 text-zinc-400" />
-                      <span>System apps</span>
+                      <span>{t("shareModal.systemApps", "System apps")}</span>
                     </button>
                   )}
                 </div>
@@ -751,10 +753,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Mobile Shelf 2: Circular Social Platforms & Share Channels (100% Dark Mode) */}
+              {/* Mobile Shelf 2: Circular Social Platforms */}
               <div className="sm:hidden space-y-2 pt-0.5">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                  Share to
+                  {t("shareModal.shareTo", "Share to")}
                 </label>
 
                 <div 
@@ -790,7 +792,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition font-medium"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open in new tab</span>
+                  <span>{t("shareModal.openNewTab", "Open in new tab")}</span>
                 </a>
 
                 {onOpenReport && (
@@ -802,7 +804,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     className="inline-flex items-center gap-1.5 text-xs text-red-400/90 hover:text-red-300 transition font-medium cursor-pointer"
                   >
                     <Flag className="w-3.5 h-3.5" />
-                    <span>Report</span>
+                    <span>{t("shareModal.report", "Report")}</span>
                   </button>
                 )}
               </div>
@@ -813,13 +815,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40 flex items-start gap-2.5">
                 <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  <span className="font-bold text-white">Embed Anywhere:</span> Paste this responsive HTML snippet into your WordPress, Shopify, Webflow, or custom website.
+                  <span className="font-bold text-white">{t("shareModal.embedAnywhere", "Embed Anywhere:")}</span> {t("shareModal.embedDesc", "Paste this responsive HTML snippet into your WordPress, Shopify, Webflow, or custom website.")}
                 </p>
               </div>
 
               {/* Format Selector */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Embed Layout</span>
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t("shareModal.embedLayout", "Embed Layout")}</span>
                 <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-900 border border-zinc-800 rounded-xl">
                   <button
                     type="button"
@@ -830,7 +832,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         : "text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <span>📱 9:16 Reel</span>
+                    <span>📱 9:16 {t("shareModal.reel", "Reel")}</span>
                   </button>
                   <button
                     type="button"
@@ -841,7 +843,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         : "text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <span>🎴 Card</span>
+                    <span>🎴 {t("shareModal.card", "Card")}</span>
                   </button>
                   <button
                     type="button"
@@ -852,17 +854,17 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         : "text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <span>🌐 Full Width</span>
+                    <span>🌐 {t("shareModal.fullWidth", "Full Width")}</span>
                   </button>
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">HTML iFrame Code</span>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t("shareModal.htmlCode", "HTML iFrame Code")}</span>
                   {embedCopied && (
                     <span className="text-[11px] font-bold text-zinc-300 animate-in fade-in flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5 text-white" /> Copied!
+                      <Check className="w-3.5 h-3.5 text-white" /> {t("shareModal.copied", "Copied!")}
                     </span>
                   )}
                 </div>
@@ -878,7 +880,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 transition truncate"
                   >
-                    <span>Test player</span>
+                    <span>{t("shareModal.testPlayer", "Test player")}</span>
                     <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                   </a>
                   <button
@@ -893,12 +895,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     {embedCopied ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-                        <span>Copied HTML!</span>
+                        <span>{t("shareModal.copiedHtml", "Copied HTML!")}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Code</span>
+                        <span>{t("shareModal.copyCode", "Copy Code")}</span>
                       </>
                     )}
                   </button>
@@ -908,8 +910,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               {/* Embed Live Preview in Realistic Smartphone Frame */}
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Live Player Preview</span>
-                  <span className="text-[10px] font-medium text-zinc-500">Interactive 9:16 Mobile Player</span>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t("shareModal.livePlayerPreview", "Live Player Preview")}</span>
+                  <span className="text-[10px] font-medium text-zinc-500">{t("shareModal.interactiveMobilePlayer", "Interactive 9:16 Mobile Player")}</span>
                 </div>
                 <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 overflow-hidden shadow-2xl flex justify-center p-4">
                   <div className="relative w-full max-w-[280px] sm:max-w-[310px] aspect-[9/16] h-[490px] sm:h-[550px] rounded-[24px] border-4 border-zinc-800 bg-black overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]">
@@ -928,14 +930,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             /* Social Card Preview View */
             <div className="space-y-4 animate-in fade-in duration-150 py-1">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Social Preview Card</span>
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t("shareModal.socialPreviewCard", "Social Preview Card")}</span>
                 <a
                   href={previewImageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs font-bold text-blue-400 hover:text-blue-300 transition flex items-center gap-1"
                 >
-                  <span>Open Full Image</span>
+                  <span>{t("shareModal.openFullImage", "Open Full Image")}</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -1004,7 +1006,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             onClick={onClose}
             className="px-5 py-1.5 text-xs font-bold text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer border border-zinc-700/80"
           >
-            Done
+            {t("common.done", "Done")}
           </button>
         </div>
       </div>

@@ -76,7 +76,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
-  const { currentLanguageMeta } = useLanguage();
+  const { t, currentLanguageMeta } = useLanguage();
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const [videoToDeleteInDrawer, setVideoToDeleteInDrawer] = useState<VideoReview | null>(null);
@@ -106,11 +106,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       if (list.includes(cleanName)) {
         list = list.filter((n) => n !== cleanName);
         nextState = false;
-        setCopiedNotification("Removed reviewer from Saved");
+        setCopiedNotification(t("profile.removedSaved", "Removed reviewer from Saved"));
       } else {
         list.push(cleanName);
         nextState = true;
-        setCopiedNotification("Saved reviewer to bookmarks");
+        setCopiedNotification(t("profile.savedReviewer", "Saved reviewer to bookmarks"));
       }
       localStorage.setItem("yoouz_saved_creators", JSON.stringify(list));
       setIsSaved(nextState);
@@ -582,7 +582,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.15),transparent_70%)]" />
               <div className="px-3.5 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm z-10 shadow-sm">
                 <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase select-none">
-                  {author.isLocalGuide ? "Verified Top Reviewer" : "Verified Reviewer"}
+                  {author.isLocalGuide ? t("profile.verifiedTopReviewer", "Verified Top Reviewer") : t("profile.verifiedReviewer", "Verified Reviewer")}
                 </span>
               </div>
             </div>
@@ -599,7 +599,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   onOpenReport(author);
                 }}
                 className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-300 md:text-zinc-400 hover:text-white hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-                title="Report creator"
+                title={t("profile.reportCreator", "Report creator")}
               >
                 <Flag className="w-4 h-4" />
               </button>
@@ -612,7 +612,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   id="btn-creator-profile-settings"
                   onClick={() => setIsSettingsMenuOpen((prev) => !prev)}
                   className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-                  title="Account & Settings"
+                  title={t("profile.accountSettings", "Account & Settings")}
                 >
                   <MoreVertical className="w-4 h-4" />
                 </button>
@@ -627,7 +627,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-4 h-4 text-zinc-400" />
-                      <span>Edit Profile</span>
+                      <span>{t("profile.editProfile", "Edit Profile")}</span>
                     </button>
 
                     <button
@@ -638,7 +638,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                     >
                       <Share2 className="w-4 h-4 text-zinc-400" />
-                      <span>Share Profile Link</span>
+                      <span>{t("profile.shareProfileLink", "Share Profile Link")}</span>
                     </button>
 
                     {onSignOut && (
@@ -650,7 +650,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
                         <LogOut className="w-4 h-4 text-zinc-400" />
-                        <span>Sign Out</span>
+                        <span>{t("profile.signOut", "Sign Out")}</span>
                       </button>
                     )}
                   </div>
@@ -666,7 +666,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 handleShare();
               }}
               className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-              title="Share Profile"
+              title={t("profile.shareProfile", "Share Profile")}
             >
               <Share2 className="w-4 h-4" />
             </button>
@@ -679,7 +679,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 onClose();
               }}
               className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg hidden md:flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-              title="Close creator profile"
+              title={t("profile.closeProfile", "Close creator profile")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -709,7 +709,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-[16px] sm:rounded-[18px]"
-                title="Change Photo"
+                title={t("profile.changePhoto", "Change Photo")}
               >
                 <Camera className="w-5 h-5" />
               </button>
@@ -731,7 +731,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       {words.length > 0 && <span>{words.join(" ")} </span>}
                       <span className="whitespace-nowrap inline-flex items-center gap-1.5 align-bottom">
                         <span className="break-words max-w-full" style={{ wordBreak: 'break-word' }}>{lastWord}</span>
-                        <span title="Verified Reviewer" className="inline-flex">
+                        <span title={t("profile.verifiedReviewer", "Verified Reviewer")} className="inline-flex">
                           <CheckCircle className="w-5 h-5 fill-white text-black shrink-0" />
                         </span>
                       </span>
@@ -749,7 +749,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 className="px-4 py-2 rounded-full font-bold text-xs bg-white text-zinc-950 hover:bg-zinc-200 flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border border-white"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit Profile</span>
+                <span>{t("profile.editProfile", "Edit Profile")}</span>
               </button>
             ) : (
               <button
@@ -763,12 +763,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 {author.isFollowed ? (
                   <>
                     <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>Following</span>
+                    <span>{t("profile.following", "Following")}</span>
                   </>
                 ) : (
                   <>
                     <UserPlus className="w-3.5 h-3.5" />
-                    <span>Follow</span>
+                    <span>{t("profile.follow", "Follow")}</span>
                   </>
                 )}
               </button>
@@ -777,11 +777,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
           <div className="flex items-center gap-2 flex-wrap text-sm">
             <span className="text-zinc-400 font-medium">
-              {authorVideos.length} {authorVideos.length === 1 ? "review" : "reviews"}
+              {authorVideos.length} {authorVideos.length === 1 ? t("place.review", "review") : t("place.reviews", "reviews")}
             </span>
             <span className="text-zinc-700">·</span>
             <span className="text-zinc-400 font-medium">
-              {(author.followersCount || 0) + (author.isFollowed ? 1 : 0)} followers
+              {(author.followersCount || 0) + (author.isFollowed ? 1 : 0)} {t("profile.followers", "followers")}
             </span>
             {displayLocation && (
               <div className="flex items-center gap-1.5">
@@ -805,7 +805,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 : "border-transparent hover:text-zinc-200"
             }`}
           >
-            Overview
+            {t("profile.overviewTab", "Overview")}
           </button>
           <button
             onClick={() => handleTabClick("reviews")}
@@ -815,7 +815,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 : "border-transparent hover:text-zinc-200"
             }`}
           >
-            <span>Reviews</span>
+            <span>{t("place.reviews", "Reviews")}</span>
             <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-bold border border-zinc-700">
               {authorVideos.length}
             </span>
@@ -828,7 +828,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 : "border-transparent hover:text-zinc-200"
             }`}
           >
-            About
+            {t("profile.aboutTab", "About")}
           </button>
         </div>
 
@@ -844,12 +844,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   onStartChat(author.name, author.name, effectiveAvatar);
                 }}
                 className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-                title={`Chat with ${author.name}`}
+                title={`${t("profile.chatWith", "Chat with")} ${author.name}`}
               >
                 <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
                   <MessageSquare className="w-5 h-5 text-zinc-200" />
                 </div>
-                <span className="font-semibold text-[11px] text-zinc-300">Chat</span>
+                <span className="font-semibold text-[11px] text-zinc-300">{t("profile.chat", "Chat")}</span>
               </button>
             ) : null}
 
@@ -857,7 +857,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               id="btn-save-creator"
               onClick={handleToggleSaveCreator}
               className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-              title={isSaved ? "Saved Reviewer" : "Save Reviewer"}
+              title={isSaved ? t("profile.savedReviewer", "Saved Reviewer") : t("profile.saveReviewer", "Save Reviewer")}
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors ${
@@ -873,7 +873,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 )}
               </div>
               <span className="font-semibold text-[11px] text-zinc-300">
-                {isSaved ? "Saved" : "Save"}
+                {isSaved ? t("profile.saved", "Saved") : t("profile.save", "Save")}
               </span>
             </button>
 
@@ -884,12 +884,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 handleTabClick("reviews");
               }}
               className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-              title="View Video Reviews"
+              title={t("profile.viewVideoReviews", "View Video Reviews")}
             >
               <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
                 <Video className="w-5 h-5 text-zinc-200" />
               </div>
-              <span className="font-semibold text-[11px] text-zinc-300">Video Reviews</span>
+              <span className="font-semibold text-[11px] text-zinc-300">{t("place.reviews", "Video Reviews")}</span>
             </button>
 
             <button
@@ -899,12 +899,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 handleShare();
               }}
               className="flex flex-col items-center gap-1.5 text-xs text-zinc-300 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-              title="Share Profile"
+              title={t("profile.shareProfile", "Share Profile")}
             >
               <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
                 <Share2 className="w-5 h-5 text-zinc-200" />
               </div>
-              <span className="font-semibold text-[11px] text-zinc-300">Share</span>
+              <span className="font-semibold text-[11px] text-zinc-300">{t("common.share", "Share")}</span>
             </button>
           </div>
 
@@ -915,14 +915,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider">
-                    About This Reviewer
+                    {t("profile.aboutThisReviewer", "About This Reviewer")}
                   </h3>
                   {isOwner && (
                     <button 
                       onClick={() => setIsEditModalOpen(true)}
                       className="text-zinc-300 hover:text-white hover:underline text-xs font-bold cursor-pointer"
                     >
-                      Edit
+                      {t("common.edit", "Edit")}
                     </button>
                   )}
                 </div>
@@ -933,7 +933,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 {/* Badges / Status Card */}
                 <div className="grid grid-cols-2 gap-2.5 pt-2">
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Average Rating Given</span>
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">{t("profile.avgRatingGiven", "Average Rating Given")}</span>
                     <span className="text-sm font-black text-white flex items-center gap-1">
                       <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                       <span>{avgRating}</span>
@@ -941,10 +941,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     </span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Total Reviews</span>
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">{t("profile.totalReviews", "Total Reviews")}</span>
                     <span className="text-sm font-black text-white flex items-center gap-1">
                       <Video className="w-4 h-4 text-zinc-300" />
-                      <span>{authorVideos.length} {authorVideos.length === 1 ? "Video" : "Videos"}</span>
+                      <span>{authorVideos.length} {authorVideos.length === 1 ? t("feed.video", "Video") : t("feed.videos", "Videos")}</span>
                     </span>
                   </div>
                 </div>
@@ -953,7 +953,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700">
                     <ShieldCheck className="w-3.5 h-3.5 text-zinc-200" />
                   </div>
-                  <span className="text-xs font-bold text-zinc-200">Yoouz Verified Top Contributor</span>
+                  <span className="text-xs font-bold text-zinc-200">{t("profile.verifiedTopContributor", "Yoouz Verified Top Contributor")}</span>
                 </div>
               </div>
 
@@ -962,21 +962,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Video className="w-4 h-4 text-zinc-400" />
-                    <span>Video Reviews ({authorVideos.length})</span>
+                    <span>{t("place.reviews", "Video Reviews")} ({authorVideos.length})</span>
                   </h3>
                   {authorVideos.length > 0 && (
                     <button
                       onClick={() => handleTabClick("reviews")}
                       className="text-xs font-bold text-zinc-300 hover:text-white hover:underline cursor-pointer"
                     >
-                      See all ({authorVideos.length})
+                      {t("common.seeAll", "See all")} ({authorVideos.length})
                     </button>
                   )}
                 </div>
 
                 {authorVideos.length === 0 ? (
                   <div className="bg-zinc-900/60 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-400 text-xs">
-                    No video reviews published yet.
+                    {t("profile.noVideosYet", "No video reviews published yet.")}
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
@@ -1028,13 +1028,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <div className="p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider">
-                  All Video Reviews ({authorVideos.length})
+                  {t("profile.allVideoReviews", "All Video Reviews")} ({authorVideos.length})
                 </h3>
               </div>
 
               {authorVideos.length === 0 ? (
                 <div className="bg-zinc-900/60 rounded-2xl p-8 text-center border border-zinc-800 text-zinc-400 text-xs">
-                  No video reviews published yet.
+                  {t("profile.noVideosYet", "No video reviews published yet.")}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
@@ -1071,7 +1071,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                               setVideoToDeleteInDrawer(v);
                             }}
                             className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-red-600/90 text-zinc-300 hover:text-white backdrop-blur-xs transition-colors z-10 cursor-pointer shadow-xs"
-                            title="Delete video review"
+                            title={t("feed.deleteVideo", "Delete video review")}
                           >
                             <Trash2 className="w-2.5 h-2.5" />
                           </button>
@@ -1098,7 +1098,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <div className="p-5 space-y-5">
               <div>
                 <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-2">
-                  Reviewer Biography
+                  {t("profile.reviewerBio", "Reviewer Biography")}
                 </h3>
                 <p className="text-zinc-300 text-sm leading-relaxed">
                   {displayBio}
@@ -1107,23 +1107,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
               <div className="pt-4 border-t border-zinc-800 space-y-3">
                 <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider">
-                  Community Stats
+                  {t("profile.communityStats", "Community Stats")}
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Followers</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.followers", "Followers")}</span>
                     <span className="text-base font-black text-white">{(author.followersCount || 0) + (author.isFollowed ? 1 : 0)}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Total Likes</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
                     <span className="text-base font-black text-white">{totalLikes}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Total Videos</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalVideos", "Total Videos")}</span>
                     <span className="text-base font-black text-white">{authorVideos.length}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Avg Rating Given</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
                     <span className="text-base font-black text-white">{avgRating} ⭐</span>
                   </div>
                 </div>
@@ -1132,7 +1132,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               {displayLocation && (
                 <div className="pt-4 border-t border-zinc-800 space-y-1">
                   <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-1">
-                    Location
+                    {t("common.location", "Location")}
                   </h3>
                   <p className="text-sm font-semibold text-zinc-200 flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-zinc-400" />
@@ -1160,9 +1160,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="text-base font-black text-white">Delete Profile & Account?</h3>
+              <h3 className="text-base font-black text-white">{t("profile.deleteAccountTitle", "Delete Profile & Account?")}</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                This will permanently delete your Yoouz profile, saved places, and reviewer account. This action cannot be undone.
+                {t("profile.deleteAccountDesc", "This will permanently delete your Yoouz profile, saved places, and reviewer account. This action cannot be undone.")}
               </p>
             </div>
 
@@ -1172,7 +1172,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 onClick={() => setIsDeleteAccountModalOpen(false)}
                 className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-xs font-bold text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                Cancel
+                {t("common.cancel", "Cancel")}
               </button>
               <button
                 type="button"
@@ -1184,7 +1184,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer border border-zinc-700"
               >
-                Delete Account
+                {t("profile.deleteAccount", "Delete Account")}
               </button>
             </div>
           </div>
@@ -1197,8 +1197,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           <div className="bg-zinc-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-zinc-800 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto no-scrollbar" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div>
-                <h3 className="text-lg font-black text-white">Edit Profile</h3>
-                <p className="text-[11px] text-zinc-400 font-medium">Update your public profile details</p>
+                <h3 className="text-lg font-black text-white">{t("profile.editProfile", "Edit Profile")}</h3>
+                <p className="text-[11px] text-zinc-400 font-medium">{t("profile.updateProfileDesc", "Update your public profile details")}</p>
               </div>
               <button onClick={() => setIsEditModalOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-800 p-1.5 rounded-full transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
@@ -1216,8 +1216,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
                 <div className="text-center">
-                  <span className="text-xs font-bold text-zinc-200">Profile Picture</span>
-                  <p className="text-[10px] text-zinc-400">Click to upload a custom JPG or PNG</p>
+                  <span className="text-xs font-bold text-zinc-200">{t("profile.profilePicture", "Profile Picture")}</span>
+                  <p className="text-[10px] text-zinc-400">{t("profile.uploadCustomPhoto", "Click to upload a custom JPG or PNG")}</p>
                 </div>
                 {avatarError && <p className="text-xs text-zinc-300 font-semibold">{avatarError}</p>}
               </div>
@@ -1239,14 +1239,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={handleBannerChange} />
                 </div>
                 <div className="text-center">
-                  <span className="text-xs font-bold text-zinc-200">Cover Banner</span>
-                  <p className="text-[10px] text-zinc-400">Click to upload a custom JPG or PNG</p>
+                  <span className="text-xs font-bold text-zinc-200">{t("profile.coverBanner", "Cover Banner")}</span>
+                  <p className="text-[10px] text-zinc-400">{t("profile.uploadCustomBanner", "Click to upload a custom JPG or PNG")}</p>
                 </div>
                 {bannerError && <p className="text-xs text-zinc-300 font-semibold">{bannerError}</p>}
               </div>
               {/* Name Field */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">Display Name</label>
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">{t("profile.displayName", "Display Name")}</label>
                 <input
                   type="text"
                   value={editName}
@@ -1259,21 +1259,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               {/* Bio Field */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">Bio</label>
+                  <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">{t("profile.bio", "Bio")}</label>
                   <span className="text-[10px] font-bold text-zinc-400">{editBio.length} / 160</span>
                 </div>
                 <textarea 
                   value={editBio} 
                   onChange={(e) => setEditBio(e.target.value.slice(0, 160))} 
                   rows={3} 
-                  placeholder="Introduce yourself to other reviewers! What are your favorite places, foods, or hobbies?"
+                  placeholder={t("profile.bioPlaceholder", "Introduce yourself to other reviewers! What are your favorite places, foods, or hobbies?")}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500" 
                 />
               </div>
 
               {/* Structured Location Fields */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">Location</label>
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">{t("common.location", "Location")}</label>
                 
                 <CountrySelector 
                   value={editCountry} 
@@ -1290,7 +1290,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   const statesObj = State.getStatesOfCountry(isoCode);
                   const hasStates = statesObj.length > 0;
                   const stateOptions = statesObj.map(s => s.name);
-                  const stateLabel = "Region / Province";
+                  const stateLabel = t("profile.regionProvince", "Region / Province");
                   
                   let cityOptions: string[] = [];
                   if (editState) {
@@ -1323,23 +1323,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             />
                           </div>
                           <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">City</span>
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">{t("profile.city", "City")}</span>
                             <SearchableComboSelector
                               value={editCity}
                               onChange={setEditCity}
                               options={uniqueCityOptions}
-                              placeholder="Select City"
+                              placeholder={t("profile.selectCity", "Select City")}
                             />
                           </div>
                         </>
                       ) : (
                         <div className="col-span-2 space-y-1">
-                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">City</span>
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">{t("profile.city", "City")}</span>
                           <SearchableComboSelector
                             value={editCity}
                             onChange={setEditCity}
                             options={uniqueCityOptions}
-                            placeholder="Select City"
+                            placeholder={t("profile.selectCity", "Select City")}
                           />
                         </div>
                       )}
@@ -1351,7 +1351,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               {/* App Language & Localization Option */}
               <div className="pt-2 border-t border-zinc-800 space-y-1.5">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
-                  Language & Region
+                  {t("profile.languageRegion", "Language & Region")}
                 </span>
                 <button
                   type="button"
@@ -1361,7 +1361,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <div className="flex items-center gap-2.5">
                     <Globe className="w-4 h-4 text-zinc-400 group-hover:text-white" />
                     <div>
-                      <p className="text-xs font-bold text-zinc-200 group-hover:text-white">App Language</p>
+                      <p className="text-xs font-bold text-zinc-200 group-hover:text-white">{t("profile.appLanguage", "App Language")}</p>
                       <p className="text-[11px] text-zinc-400">{currentLanguageMeta.flag} {currentLanguageMeta.nativeName} ({currentLanguageMeta.name})</p>
                     </div>
                   </div>
@@ -1373,21 +1373,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
               {/* Actions & Buttons */}
               <div className="flex gap-3 pt-3 border-t border-zinc-800">
-                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 py-3 rounded-2xl border border-zinc-800 text-sm font-bold text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 py-3 rounded-2xl bg-white text-zinc-950 text-sm font-bold hover:bg-zinc-200 transition-colors cursor-pointer">Save Changes</button>
+                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 py-3 rounded-2xl border border-zinc-800 text-sm font-bold text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">{t("common.cancel", "Cancel")}</button>
+                <button type="submit" className="flex-1 py-3 rounded-2xl bg-white text-zinc-950 text-sm font-bold hover:bg-zinc-200 transition-colors cursor-pointer">{t("common.save", "Save Changes")}</button>
               </div>
 
               {/* Account Management & Danger Zone */}
               {onDeleteProfile && (
                 <div className="pt-3 border-t border-zinc-800 space-y-2">
                   <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500 block">
-                    Account Management
+                    {t("profile.accountManagement", "Account Management")}
                   </span>
                   <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800">
                     <div className="space-y-0.5 pr-2">
-                      <p className="text-xs font-bold text-zinc-200">Delete Profile & Account</p>
+                      <p className="text-xs font-bold text-zinc-200">{t("profile.deleteAccountTitle", "Delete Profile & Account")}</p>
                       <p className="text-[11px] text-zinc-400 leading-snug">
-                        Permanently remove your profile, videos, and review data.
+                        {t("profile.deleteAccountDesc", "Permanently remove your profile, videos, and review data.")}
                       </p>
                     </div>
                     <button
@@ -1398,7 +1398,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       }}
                       className="px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
                     >
-                      Delete
+                      {t("common.delete", "Delete")}
                     </button>
                   </div>
                 </div>
@@ -1413,7 +1413,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={`${window.location.origin}/@${((safeCreator as any).handle || author.handle || author.name || "user").replace(/^@+/, "").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "").replace(/-+/g, "-") || "user"}`}
         title={displayName}
-        subtitle="Reviewer Profile"
+        subtitle={t("profile.reviewerProfile", "Reviewer Profile")}
         avatarUrl={effectiveAvatar}
         bannerUrl={effectiveBanner}
       />
@@ -1426,9 +1426,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <Trash2 className="w-6 h-6" />
             </div>
             <div className="text-center space-y-1.5">
-              <h3 className="text-lg font-bold text-white tracking-tight">Delete Video Review?</h3>
+              <h3 className="text-lg font-bold text-white tracking-tight">{t("feed.deleteVideoTitle", "Delete Video Review?")}</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                This will permanently delete your review for <span className="text-zinc-200 font-semibold">{videoToDeleteInDrawer.placeName || "this place"}</span> globally from all feeds, databases, and storage.
+                {t("feed.deleteVideoConfirm", "This will permanently delete your review for")} <span className="text-zinc-200 font-semibold">{videoToDeleteInDrawer.placeName || "this place"}</span> {t("feed.deleteVideoGlobal", "globally from all feeds, databases, and storage.")}
               </p>
             </div>
             <div className="flex items-center gap-3 pt-2">
@@ -1437,7 +1437,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 onClick={() => setVideoToDeleteInDrawer(null)}
                 className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-sm transition-colors cursor-pointer"
               >
-                Cancel
+                {t("common.cancel", "Cancel")}
               </button>
               <button
                 type="button"
@@ -1450,7 +1450,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 }}
                 className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-600/30 cursor-pointer"
               >
-                Delete
+                {t("common.delete", "Delete")}
               </button>
             </div>
           </div>

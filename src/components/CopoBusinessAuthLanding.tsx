@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Place, NavSection } from '../types';
 import { BusinessSession } from './CopoBusinessClaimModal';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface CopoBusinessAuthLandingProps {
   onNavigate: (section: NavSection) => void;
@@ -37,6 +38,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
   initialMode = 'signin',
   onCancelSelectedPlace,
 }) => {
+  const { t } = useLanguage();
   // Verification method: Email magic link vs HTML Code Tag
   const [authMethod, setAuthMethod] = useState<'email' | 'html_tag'>('email');
 
@@ -379,7 +381,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 text-xs font-medium transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Exit</span>
+            <span>{t("common.exit", "Exit")}</span>
           </button>
         </div>
       </header>
@@ -390,10 +392,10 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
         {/* Header */}
         <div className="text-center w-full mb-6">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Sign in to Yoouz Business
+            {t("businessAuth.title", "Sign in to Yoouz Business")}
           </h1>
           <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
-            Claim your business, respond to video reviews, and engage customers as the verified owner.
+            {t("businessAuth.subtitle", "Claim your business, respond to video reviews, and engage customers as the verified owner.")}
           </p>
         </div>
 
@@ -417,7 +419,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 }`}
               >
                 <Mail className="w-4 h-4 text-zinc-300" />
-                <span>Work Email</span>
+                <span>{t("businessAuth.workEmail", "Work Email")}</span>
               </button>
 
               <button
@@ -434,9 +436,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 }`}
               >
                 <Code className="w-4 h-4 text-blue-400" />
-                <span>HTML Code Tag</span>
+                <span>{t("businessAuth.htmlTag", "HTML Code Tag")}</span>
                 <span className="px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 text-[10px] font-bold border border-blue-500/30">
-                  Instant
+                  {t("businessAuth.instant", "Instant")}
                 </span>
               </button>
             </div>
@@ -447,7 +449,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-zinc-300 mb-1.5">
-                  Work Email
+                  {t("businessAuth.workEmail", "Work Email")}
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -489,7 +491,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     }}
                     className="text-zinc-400 text-xs font-semibold shrink-0 hover:text-white hover:underline cursor-pointer"
                   >
-                    Change
+                    {t("common.change", "Change")}
                   </button>
                 </div>
               )}
@@ -504,7 +506,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       onClick={() => setAuthMethod('html_tag')}
                       className="mt-1.5 text-blue-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <span>Switch to HTML Code Tag verification</span>
+                      <span>{t("businessAuth.switchToHtml", "Switch to HTML Code Tag verification")}</span>
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -519,11 +521,11 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Continuing...</span>
+                    <span>{t("common.loading", "Continuing...")}</span>
                   </>
                 ) : (
                   <>
-                    <span>Continue with Magic Link</span>
+                    <span>{t("businessAuth.continueWithMagicLink", "Continue with Magic Link")}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -535,9 +537,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
           {authMethod === 'email' && step === 'code' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="text-center space-y-1">
-                <h2 className="text-base font-bold text-white">Check your inbox</h2>
+                <h2 className="text-base font-bold text-white">{t("auth.checkEmailTitle", "Check your inbox")}</h2>
                 <p className="text-xs text-zinc-400">
-                  We sent a 6-digit code to <strong className="text-zinc-200">{email}</strong>
+                  {t("auth.sentCodeTo", "We sent a 6-digit code to")} <strong className="text-zinc-200">{email}</strong>
                 </p>
               </div>
 
@@ -570,7 +572,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     onClick={() => { setStep('email'); setErrorMessage(null); }}
                     className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-zinc-700"
                   >
-                    Back
+                    {t("common.back", "Back")}
                   </button>
                   <button
                     type="submit"
@@ -580,12 +582,12 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Verifying...</span>
+                        <span>{t("auth.verifying", "Verifying...")}</span>
                       </>
                     ) : (
                       <>
                         <Check className="w-4 h-4" />
-                        <span>Verify & Continue</span>
+                        <span>{t("auth.verifyAndContinue", "Verify & Continue")}</span>
                       </>
                     )}
                   </button>
@@ -601,7 +603,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               {!selectedPlace ? (
                 <div className="space-y-3">
                   <label className="block text-xs font-bold text-zinc-300">
-                    Select Your Business
+                    {t("businessAuth.selectBusiness", "Select Your Business")}
                   </label>
                   <div className="relative">
                     <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -609,7 +611,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       type="text"
                       value={placeSearchTerm}
                       onChange={(e) => setPlaceSearchTerm(e.target.value)}
-                      placeholder="Search business name or address..."
+                      placeholder={t("businessAuth.searchPlaceholder", "Search business name or address...")}
                       className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-750 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600"
                     />
                   </div>
@@ -634,7 +636,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       </button>
                     ))}
                     {filteredPlaces.length === 0 && (
-                      <p className="text-xs text-zinc-500 text-center py-4">No matching business found</p>
+                      <p className="text-xs text-zinc-500 text-center py-4">{t("businessAuth.noMatching", "No matching business found")}</p>
                     )}
                   </div>
                 </div>
@@ -659,15 +661,15 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       }}
                       className="text-zinc-400 text-xs font-semibold hover:text-white cursor-pointer px-2 py-1 rounded-md hover:bg-zinc-800"
                     >
-                      Change
+                      {t("common.change", "Change")}
                     </button>
                   </div>
 
                   {/* Target Website URL */}
                   <div>
                     <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center justify-between">
-                      <span>Official Website URL</span>
-                      <span className="text-[10px] text-zinc-500 font-normal">Homepage where tag is placed</span>
+                      <span>{t("businessAuth.officialWebsiteUrl", "Official Website URL")}</span>
+                      <span className="text-[10px] text-zinc-500 font-normal">{t("businessAuth.homepagePlacement", "Homepage where tag is placed")}</span>
                     </label>
                     <div className="relative">
                       <Globe className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -686,7 +688,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-zinc-300 flex items-center gap-1.5">
                         <Code className="w-3.5 h-3.5 text-blue-400" />
-                        <span>Add this 1-line tag to your HTML</span>
+                        <span>{t("businessAuth.addTagInstruction", "Add this 1-line tag to your HTML")}</span>
                       </span>
                       <button
                         type="button"
@@ -696,12 +698,12 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         {copiedTag ? (
                           <>
                             <Check className="w-3 h-3 text-emerald-400" />
-                            <span className="text-emerald-400">Copied!</span>
+                            <span className="text-emerald-400">{t("common.copied", "Copied!")}</span>
                           </>
                         ) : (
                           <>
                             <Copy className="w-3 h-3" />
-                            <span>Copy Tag</span>
+                            <span>{t("businessAuth.copyTag", "Copy Tag")}</span>
                           </>
                         )}
                       </button>
@@ -712,7 +714,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     </div>
 
                     <p className="text-[11px] text-zinc-400 leading-relaxed pt-1">
-                      Paste this tag into the <code className="bg-zinc-800 px-1 py-0.5 rounded-sm text-zinc-200">&lt;head&gt;</code> section of your website homepage (WordPress, Shopify, Wix, Squarespace, or custom code).
+                      {t("businessAuth.pasteInstruction", "Paste this tag into the <head> section of your website homepage (WordPress, Shopify, Wix, Squarespace, or custom code).")}
                     </p>
                   </div>
 
@@ -722,9 +724,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         <Check className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="font-bold">Official Ownership Verified!</p>
+                        <p className="font-bold">{t("businessAuth.ownershipVerified", "Official Ownership Verified!")}</p>
                         <p className="text-[11px] text-emerald-300/80 mt-0.5">
-                          You can now manage your venue and reply to comments as the verified owner.
+                          {t("businessAuth.ownershipVerifiedDesc", "You can now manage your venue and reply to comments as the verified owner.")}
                         </p>
                       </div>
                     </div>
@@ -749,12 +751,12 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Checking Website Live...</span>
+                        <span>{t("businessAuth.checkingWebsite", "Checking Website Live...")}</span>
                       </>
                     ) : (
                       <>
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Check Website & Verify Instantly</span>
+                        <span>{t("businessAuth.checkAndVerify", "Check Website & Verify Instantly")}</span>
                       </>
                     )}
                   </button>

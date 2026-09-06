@@ -770,7 +770,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                         onClick={() => handleStartReply(comment)}
                                         className="hover:text-white font-bold transition-colors cursor-pointer"
                                       >
-                                        Reply
+                                        {t("comments.reply", "Reply")}
                                       </button>
 
                                       {(isCurrentReplyUser || isUserOwner || isUserCreator) &&

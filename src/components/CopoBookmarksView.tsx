@@ -244,7 +244,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                           className="w-4.5 h-4.5 rounded-full border border-zinc-800 md:border-zinc-800"
                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
  <span className="text-[10px] text-zinc-500 md:text-zinc-400 font-bold">
-                          Recommended by <span className="text-zinc-300 md:text-zinc-400 hover:underline">{video.author.name}</span>
+                          {t("video.recommendedBy", "Recommended by")} <span className="text-zinc-300 md:text-zinc-400 hover:underline">{video.author.name}</span>
                         </span>
                       </div>
                     </div>

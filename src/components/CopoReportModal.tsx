@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { VideoReview, UserProfile, VideoAuthor } from "../types";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export interface ReportTarget {
   type: "video" | "user" | "place";
@@ -147,6 +148,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
   onClose,
   onBlockOrHide
 }) => {
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<ReportCategory | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
   const [additionalDetails, setAdditionalDetails] = useState<string>("");
@@ -334,10 +336,10 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold text-white leading-tight">
-                {isSubmitted ? "Report Submitted" : "Report Content"}
+                {isSubmitted ? t("reportModal.submittedTitle", "Report Submitted") : t("reportModal.title", "Report Content")}
               </h3>
               <p className="text-[11px] text-zinc-400">
-                Community Standards • Human moderation & safety review
+                {t("reportModal.standardsSubtitle", "Community Standards • Human moderation & safety review")}
               </p>
             </div>
           </div>
@@ -378,10 +380,10 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                 )}
                 <div className="truncate">
                   <p className="font-bold text-white truncate">
-                    {target.placeName || target.video?.placeName || target.author?.name || "Video Review"}
+                    {target.placeName || target.video?.placeName || target.author?.name || t("reportModal.videoReview", "Video Review")}
                   </p>
                   <p className="text-zinc-400 text-[11px] truncate">
-                    {target.author?.name || target.video?.author.name || "By Verified Reviewer"}
+                    {target.author?.name || target.video?.author.name || t("reportModal.byVerifiedReviewer", "By Verified Reviewer")}
                   </p>
                 </div>
               </div>
@@ -395,9 +397,9 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
           {!selectedCategory && !isSubmitted && (
             <div className="flex flex-col gap-2">
               <div>
-                <h4 className="text-sm font-bold text-white">What's the issue?</h4>
+                <h4 className="text-sm font-bold text-white">{t("reportModal.whatsIssue", "What's the issue?")}</h4>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Select a category that best describes why this content violates Yoouz community standards.
+                  {t("reportModal.selectCategoryDesc", "Select a category that best describes why this content violates Yoouz community standards.")}
                 </p>
               </div>
 
@@ -444,7 +446,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
 
                   <div>
                     <label className="block text-xs font-bold text-zinc-300 mb-2">
-                      Please select a specific reason:
+                      {t("reportModal.selectSpecificReason", "Please select a specific reason:")}
                     </label>
                     <div className="flex flex-col gap-2">
                       {selectedCategory.subcategories.map((sub, idx) => (
@@ -477,13 +479,13 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     {/* Additional Context TextArea */}
                     <div>
                       <label className="block text-xs font-bold text-zinc-300 mb-1.5">
-                        Additional Details & Timestamps (Optional)
+                        {t("reportModal.additionalDetailsLabel", "Additional Details & Timestamps (Optional)")}
                       </label>
                       <textarea
                         rows={4}
                         value={additionalDetails}
                         onChange={(e) => setAdditionalDetails(e.target.value)}
-                        placeholder="E.g., At 0:14 the video shows false pricing, or this business closed in 2024..."
+                        placeholder={t("reportModal.additionalPlaceholder", "E.g., At 0:14 the video shows false pricing, or this business closed in 2024...")}
                         className="w-full px-3.5 py-2.5 text-xs text-white bg-zinc-950/80 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-zinc-700 transition-all placeholder:text-zinc-500"
                       />
                     </div>
@@ -491,7 +493,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     {/* Reporter Contact */}
                     <div>
                       <label className="block text-xs font-bold text-zinc-300 mb-1.5">
-                        Your Email (for updates regarding this report)
+                        {t("reportModal.yourEmailLabel", "Your Email (for updates regarding this report)")}
                       </label>
                       <div className="relative">
                         <input
@@ -513,7 +515,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                       onClick={handleBack}
                       className="px-4 py-2.5 text-xs font-semibold text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800/80 transition-colors cursor-pointer"
                     >
-                      Back
+                      {t("common.back", "Back")}
                     </button>
                     <button
                       type="submit"
@@ -521,11 +523,11 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                       className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-40 disabled:hover:bg-white text-zinc-950 text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                     >
                       {isSubmitting ? (
-                        <span>Submitting...</span>
+                        <span>{t("common.loading", "Submitting...")}</span>
                       ) : (
                         <>
                           <Send className="w-3.5 h-3.5" />
-                          <span>Submit Report</span>
+                          <span>{t("reportModal.submitReport", "Submit Report")}</span>
                         </>
                       )}
                     </button>
@@ -541,41 +543,41 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
               <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400 mb-3 animate-in zoom-in-50 duration-300 shadow-md">
                 <CheckCircle2 className="w-7 h-7" />
               </div>
-              <h4 className="text-lg font-bold text-white">Thank You for Reporting</h4>
+              <h4 className="text-lg font-bold text-white">{t("reportModal.thankYouTitle", "Thank You for Reporting")}</h4>
               <p className="text-xs text-zinc-400 mt-1 max-w-sm">
-                Your report has been automatically delivered to <strong className="text-zinc-200">support@yoouz.com</strong> for immediate Trust & Safety moderation review.
+                {t("reportModal.reportDelivered", "Your report has been automatically delivered to")} <strong className="text-zinc-200">support@yoouz.com</strong> {t("reportModal.forReview", "for immediate Trust & Safety moderation review.")}
               </p>
 
               <div className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 my-4 text-left text-xs text-zinc-300 flex flex-col gap-2">
                 {reportReferenceId && (
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">Report Reference ID:</span>
+                    <span className="text-zinc-500">{t("reportModal.referenceId", "Report Reference ID:")}</span>
                     <span className="font-mono text-[11px] text-sky-400 font-semibold">{reportReferenceId}</span>
                   </div>
                 )}
                 {target.video?.id && (
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">Video ID:</span>
+                    <span className="text-zinc-500">{t("reportModal.videoId", "Video ID:")}</span>
                     <span className="font-mono text-[11px] text-zinc-300">{target.video.id}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-500">Reason:</span>
+                  <span className="text-zinc-500">{t("reportModal.reasonLabel", "Reason:")}</span>
                   <span className="font-semibold text-white">{selectedCategory?.title}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-500">Category:</span>
+                  <span className="text-zinc-500">{t("reportModal.categoryLabel", "Category:")}</span>
                   <span className="text-zinc-300 text-[11px] truncate max-w-[200px]">
                     {selectedSubcategory}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-500">Dispatched To:</span>
+                  <span className="text-zinc-500">{t("reportModal.dispatchedTo", "Dispatched To:")}</span>
                   <span className="font-semibold text-emerald-400">support@yoouz.com</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-500">Investigation Turnaround:</span>
-                  <span className="font-bold text-white">Within 24 Hours</span>
+                  <span className="text-zinc-500">{t("reportModal.investigationTurnaround", "Investigation Turnaround:")}</span>
+                  <span className="font-bold text-white">{t("reportModal.within24Hours", "Within 24 Hours")}</span>
                 </div>
               </div>
 
@@ -589,7 +591,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-zinc-800 hover:bg-zinc-800 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
                   >
                     <EyeOff className="w-4 h-4 text-zinc-400" />
-                    <span>Hide this video from my feed</span>
+                    <span>{t("reportModal.hideVideoFeed", "Hide this video from my feed")}</span>
                   </button>
                 )}
 
@@ -598,14 +600,14 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                   className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-zinc-300 hover:text-white hover:bg-zinc-800 text-xs font-semibold transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  <span>Send additional evidence or notes</span>
+                  <span>{t("reportModal.sendAdditionalEvidence", "Send additional evidence or notes")}</span>
                 </a>
 
                 <button
                   onClick={handleClose}
                   className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all mt-1 cursor-pointer shadow-md"
                 >
-                  Done
+                  {t("common.done", "Done")}
                 </button>
               </div>
             </div>
