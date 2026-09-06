@@ -318,7 +318,7 @@ export const CopoAuthPrompt: React.FC<{
   const previewColor = hasName ? getAvatarColor(seedName) : { bg: '#27272a', text: '#ffffff' };
 
   return (
-    <div className={`w-full ${isFullPage ? "min-h-full flex flex-col justify-between" : "flex flex-col items-center"} p-4 sm:p-7 select-none bg-[#09090b] text-white`}>
+    <div className={`w-full ${isFullPage ? "min-h-full flex flex-col justify-between pt-[max(12px,env(safe-area-inset-top,12px))]" : "flex flex-col items-center"} p-4 sm:p-7 select-none bg-[#09090b] text-white`}>
       {isFullPage && (
         <div className="w-full flex items-center justify-between py-2 mb-2">
           {(step !== 'email' || onRequestBack) ? (
@@ -726,11 +726,11 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-6 animate-in fade-in duration-200 select-none sm:select-auto"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm pt-[max(12px,env(safe-area-inset-top,12px))] pb-0 sm:p-6 animate-in fade-in duration-200 select-none sm:select-auto"
       onClick={onClose}
     >
       <div 
-        className="w-full sm:max-w-[440px] h-auto max-h-[92dvh] sm:max-h-[90dvh] bg-[#09090b] rounded-t-[28px] sm:rounded-[28px] shadow-2xl border-t sm:border border-white/10 text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto pb-[max(16px,env(safe-area-inset-bottom,16px))]"
+        className="w-full sm:max-w-[440px] h-auto max-h-[85dvh] sm:max-h-[90dvh] bg-[#09090b] rounded-t-[28px] sm:rounded-[28px] shadow-2xl border-t sm:border border-white/10 text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto pb-[max(16px,env(safe-area-inset-bottom,16px))] mt-auto"
         style={{
           transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
