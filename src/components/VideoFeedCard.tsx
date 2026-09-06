@@ -371,17 +371,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Center: Context Title if viewing a specific place or category */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 px-4 [padding-top:max(8px,calc(env(safe-area-inset-top,0px)+2px))] md:[padding-top:16px] w-full max-w-[45%] flex justify-center pointer-events-none">
-          {feedContextTitle && 
-             !feedContextTitle.startsWith("@") && 
-             feedContextTitle.trim().toLowerCase() !== (safeAuthor.name || "").trim().toLowerCase() && (
-            <div className="px-3.5 py-1.5 rounded-full bg-zinc-900/90 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold shadow-2xl truncate text-center pointer-events-auto">
-              {feedContextTitle}
-            </div>
-          )}
-        </div>
-
         {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
         <div className="pointer-events-auto">
           <button
