@@ -34,6 +34,7 @@ import { CopoComparisonModal } from "./components/CopoComparisonModal";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { prefetchVideo } from "./utils/videoPrefetcher";
+import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "./utils/videoUtils";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleFirestoreError, OperationType } from "./lib/firebase";
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/firebase";
 import { cleanUndefinedFields, cleanForFirestore } from "./utils/cleanData";
@@ -229,7 +230,10 @@ export function App() {
   useEffect(() => {
     if (videos && videos.length > 0) {
       videos.slice(0, 3).forEach(v => {
-        if (v.videoUrl) prefetchVideo(v.videoUrl);
+        const bestSrc = resolvePlayableVideoSource(v);
+        if (bestSrc) {
+          prefetchVideo(bestSrc, resolveVideoPosterUrl(v));
+        }
       });
     }
   }, [videos]);

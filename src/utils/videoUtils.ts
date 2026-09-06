@@ -120,31 +120,7 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(video.videoData);
   }
 
-  // 3. Normalized Primary videoUrl
-  const normalizedPrimary = normalizeVideoUrl(video.videoUrl);
-  if (normalizedPrimary && !sources.includes(normalizedPrimary)) {
-    sources.push(normalizedPrimary);
-  }
-
-  // 4. Local Server streaming endpoint
-  if (video.id) {
-    const serverStream = `/api/videos/stream/${video.id}.mp4`;
-    if (!sources.includes(serverStream)) {
-      sources.push(serverStream);
-    }
-  }
-
-  // 5. Fallback video URLs from document
-  if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
-    for (const fb of video.fallbackVideoUrls) {
-      const norm = normalizeVideoUrl(fb);
-      if (norm && !sources.includes(norm)) {
-        sources.push(norm);
-      }
-    }
-  }
-
-  // 6. Direct Bunny CDN Pull Zone Edge URLs (as secondary mirror / fallback)
+  // 3. Direct Bunny CDN Pull Zone Edge URLs (PRIMARY HIGH-SPEED EDGE STREAMING)
   if (activeBunnyPullZone) {
     const cleanZone = activeBunnyPullZone.replace(/\/+$/, "");
     
@@ -163,6 +139,30 @@ export function resolvePlayableVideoSourcesCascade(
       const cdnUrlWebm = `${cleanZone}/videos/${video.id}.webm`;
       if (!sources.includes(cdnUrlMp4)) sources.push(cdnUrlMp4);
       if (!sources.includes(cdnUrlWebm)) sources.push(cdnUrlWebm);
+    }
+  }
+
+  // 4. Normalized Primary videoUrl (fallback)
+  const normalizedPrimary = normalizeVideoUrl(video.videoUrl);
+  if (normalizedPrimary && !sources.includes(normalizedPrimary)) {
+    sources.push(normalizedPrimary);
+  }
+
+  // 5. Local Server streaming endpoint (fallback)
+  if (video.id) {
+    const serverStream = `/api/videos/stream/${video.id}.mp4`;
+    if (!sources.includes(serverStream)) {
+      sources.push(serverStream);
+    }
+  }
+
+  // 6. Fallback video URLs from document
+  if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
+    for (const fb of video.fallbackVideoUrls) {
+      const norm = normalizeVideoUrl(fb);
+      if (norm && !sources.includes(norm)) {
+        sources.push(norm);
+      }
     }
   }
 
