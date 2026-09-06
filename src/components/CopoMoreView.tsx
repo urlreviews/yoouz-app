@@ -381,43 +381,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
               </button>
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] font-black tracking-wide uppercase">
-                    {t("trustCenter.hub", "Yoouz Hub")}
-                  </span>
-                  <span className="text-xs text-zinc-200 font-semibold">• {t("trustCenter.subtitle", "Trust, Verification & Support")}</span>
-                </div>
                 <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight mt-0.5">
                   {t("trustCenter.title", "Knowledge & Trust Center")}
                 </h1>
               </div>
-            </div>
-
-            {/* Quick Navigation Action Chips */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-              <button
-                onClick={() => onNavigate("search")}
-                className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <Search className="w-3.5 h-3.5 text-zinc-200" />
-                <span>{t("nav.search", "Search")}</span>
-              </button>
-              <button
-                onClick={() => onNavigate("discover")}
-                className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <Compass className="w-3.5 h-3.5 text-zinc-200" />
-                <span>{t("nav.discover", "Discover")}</span>
-              </button>
-              {currentUser && (
-                <button
-                  onClick={() => onNavigate("profile")}
-                  className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>{t("nav.profile", "My Profile")}</span>
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -527,7 +494,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               }`}
             >
               <Shield className="w-4 h-4" />
-              <span>{t("trustCenter.privacySecurity", "Privacy & Security")}</span>
+              <span>{t("trustCenter.privacySecurity", "Privacy")}</span>
             </button>
 
             <button
@@ -555,7 +522,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               }`}
             >
               <Mail className="w-4 h-4" />
-              <span>{t("trustCenter.contactSupport", "Contact Support")}</span>
+              <span>{t("trustCenter.contactSupport", "Support")}</span>
             </button>
           </div>
         </section>
