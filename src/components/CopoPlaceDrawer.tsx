@@ -40,8 +40,8 @@ import {
   ArrowRight,
   ArrowLeft,
   ExternalLink,
-  Flag,
-  Heart
+  Heart,
+  Copy
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
@@ -534,61 +534,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {...swipeProps}
           className="relative h-48 w-full shrink-0 flex items-center justify-center bg-zinc-950 touch-pan-y"
         >
-        {/* Mobile Top-Left Back Button */}
+        {/* Top-Left Back / Close Button (Both Desktop & Mobile) */}
         <button
+          id="btn-close-place-drawer"
           onClick={() => {
             triggerHaptic("light");
             onClose();
           }}
-          className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-xl shadow-xl md:hidden flex items-center justify-center text-white hover:bg-black/80 active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
-          title="Back to previous page"
+          className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
+          title={t("common.back", "Back to previous page")}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-
-        {/* Close / Exit Button Group */}
-        <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
-          {/* Report Place Button */}
-          {onOpenReport && place && (
-            <button
-              id="btn-report-place"
-              onClick={() => {
-                triggerHaptic("light");
-                onOpenReport({ type: "place", placeName: place.name, placeId: place.id });
-              }}
-              className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:text-red-500 md:hover:text-red-600 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-              title="Report inaccurate info"
-            >
-              <Flag className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Share Button */}
-          <button
-            id="btn-share-place"
-            onClick={() => {
-              triggerHaptic("light");
-              handleShare();
-            }}
-            className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-            title="Share Business"
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
-
-          {/* Close Button */}
-          <button
-            id="btn-close-place-drawer"
-            onClick={() => {
-              triggerHaptic("light");
-              onClose();
-            }}
-            className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg hidden md:flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-            title="Close business page"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
 
         {copiedNotification && (
           <div className="absolute top-14 right-3 bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg z-40 animate-in fade-in">
@@ -778,10 +735,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Main Content Area */}
         <div ref={contentRef} className="flex-1 overflow-y-auto divide-y divide-zinc-800 bg-zinc-950" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
           {/* Action Buttons Row */}
-          <div className="px-5 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-2">
+          <div className="px-4 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-1 sm:gap-2">
             <button
               onClick={handleOpenDirections}
-              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
             >
               <div className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md">
                 <Navigation className="w-5 h-5 fill-zinc-950" />
@@ -791,7 +748,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
             <button
               onClick={() => onToggleGrabPlace && onToggleGrabPlace(place)}
-              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
@@ -812,8 +769,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </button>
 
             <button
+              id="btn-share-place"
+              onClick={() => {
+                triggerHaptic("light");
+                handleShare();
+              }}
+              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+              title={t("place.shareBusiness", "Share Business")}
+            >
+              <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
+                <Share2 className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-bold text-[11px] text-white">{t("common.share", "Share")}</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("reviews")}
-              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
             >
               <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
                 <Video className="w-5 h-5 text-white" />
@@ -839,7 +811,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   onStartChat(place.claimedByEmail || place.id, place.name, getPlaceLogoUrl(place));
                 }}
-                className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
                 title={`${t("place.chatWith", "Chat with")} ${formatBusinessName(place.name)}`}
               >
                 <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
@@ -1125,6 +1097,38 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <span className="text-xs text-zinc-200 font-mono">{place.plusCode}</span>
                 </div>
               )}
+
+              {/* Share & Copy Business Link Line */}
+              <div
+                onClick={() => {
+                  triggerHaptic("light");
+                  handleShare();
+                }}
+                className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <Share2 className="w-5 h-5 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
+                  <div className="truncate text-left">
+                    <p className="text-xs text-white font-medium group-hover:text-white transition-colors">{t("place.shareOrCopyLink", "Share or copy business link")}</p>
+                    <p className="text-[11px] text-zinc-400 truncate font-mono">yoouz.com/place/{getPlaceSlug(place)}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerHaptic("medium");
+                    const shareUrl = `${window.location.origin}/place/${getPlaceSlug(place)}`;
+                    navigator.clipboard?.writeText(shareUrl);
+                    setCopiedNotification(t("common.linkCopied", "Link copied to clipboard!"));
+                    setTimeout(() => setCopiedNotification(""), 3000);
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-semibold border border-zinc-700 shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>{t("common.copy", "Copy")}</span>
+                </button>
+              </div>
 
               {/* Claim / Edit Business CTA Inline Row */}
               {!place.isClaimed ? (

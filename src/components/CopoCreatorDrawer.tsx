@@ -9,7 +9,6 @@ import {
   UserCheck,
   ShieldCheck,
   MessageSquare,
-  Flag,
   Camera,
   Edit3,
   Trash2,
@@ -561,14 +560,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {...swipeProps}
           className="relative h-48 w-full shrink-0 flex items-center justify-center bg-zinc-950 touch-pan-y"
         >
-          {/* Mobile Top-Left Back Button */}
+          {/* Top-Left Back Button (Both Desktop & Mobile) */}
           <button
+            id="btn-close-creator-panel"
             onClick={() => {
               triggerHaptic("light");
               onClose();
             }}
-            className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-xl shadow-xl md:hidden flex items-center justify-center text-white hover:bg-black/80 active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
-            title="Back to previous page"
+            className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
+            title={t("common.back", "Back to previous page")}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -601,30 +601,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
           )}
 
-          {/* Top Right Action Group */}
-          <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
-            {/* Non-owner: Report Creator */}
-            {!isOwner && onOpenReport && (
-              <button
-                id="btn-report-creator-profile"
-                onClick={() => {
-                  triggerHaptic("light");
-                  onOpenReport(author);
-                }}
-                className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:text-white hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-                title={t("profile.reportCreator", "Report creator")}
-              >
-                <Flag className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Owner: Settings & Account Menu */}
-            {isOwner && (
+          {/* Top Right Action Group - Only for Profile Owner Settings */}
+          {isOwner && (
+            <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
               <div className="relative" ref={settingsMenuRef}>
                 <button
                   id="btn-creator-profile-settings"
                   onClick={() => setIsSettingsMenuOpen((prev) => !prev)}
-                  className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
+                  className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
                   title={t("profile.accountSettings", "Account & Settings")}
                 >
                   <MoreVertical className="w-4 h-4" />
@@ -669,34 +653,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Share button */}
-            <button
-              id="btn-share-creator-profile"
-              onClick={() => {
-                triggerHaptic("light");
-                handleShare();
-              }}
-              className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-              title={t("profile.shareProfile", "Share Profile")}
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-
-            {/* Close button */}
-            <button
-              id="btn-close-creator-panel"
-              onClick={() => {
-                triggerHaptic("light");
-                onClose();
-              }}
-              className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg hidden md:flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
-              title={t("profile.closeProfile", "Close creator profile")}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+            </div>
+          )}
 
           {copiedNotification && (
             <div className="absolute top-14 right-3 bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg z-40 animate-in fade-in border border-zinc-800">
