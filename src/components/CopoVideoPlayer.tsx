@@ -292,9 +292,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     feedVideoRef.current = activeVid;
     const isNewVideo = lastLoadedVideoIdRef.current !== activeVideo.id;
 
+    const isSameSrc = (elSrc: string, targetSrc: string) => {
+      if (!elSrc) return false;
+      try {
+        return new URL(elSrc, window.location.href).href === new URL(targetSrc, window.location.href).href;
+      } catch (e) {
+        return elSrc === targetSrc;
+      }
+    };
+
     // Load active source if not matching
     const activeSrc = resolvePlayableVideoSource(activeVideo);
-    if (activeVid.src !== activeSrc) {
+    if (!isSameSrc(activeVid.src, activeSrc)) {
       activeVid.src = activeSrc;
       activeVid.load();
     }
@@ -388,7 +397,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           nextSlot.appendChild(nextVid);
         }
         const nextSrc = resolvePlayableVideoSource(nextVideo);
-        if (nextVid.src !== nextSrc) {
+        if (!isSameSrc(nextVid.src, nextSrc)) {
           nextVid.src = nextSrc;
           nextVid.preload = "auto";
           nextVid.muted = true;
@@ -417,7 +426,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           prevSlot.appendChild(prevVid);
         }
         const prevSrc = resolvePlayableVideoSource(prevVideo);
-        if (prevVid.src !== prevSrc) {
+        if (!isSameSrc(prevVid.src, prevSrc)) {
           prevVid.src = prevSrc;
           prevVid.preload = "auto";
           prevVid.muted = true;

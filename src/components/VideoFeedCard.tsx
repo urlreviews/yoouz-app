@@ -388,17 +388,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             type="button"
             id={`btn-toggle-sound-${video.id}`}
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
-              e.nativeEvent.stopImmediatePropagation();
               handleToggleMute(e);
             }}
-            onClickCapture={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
-            onPointerDownCapture={(e) => e.stopPropagation()}
-            onPointerUpCapture={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onMouseUp={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
             className={`h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
