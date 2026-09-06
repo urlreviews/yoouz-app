@@ -399,9 +399,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         const nextSrc = resolvePlayableVideoSource(nextVideo);
         if (!isSameSrc(nextVid.src, nextSrc)) {
           nextVid.src = nextSrc;
-          nextVid.preload = "auto";
+          nextVid.preload = "metadata";
           nextVid.muted = true;
-          nextVid.load();
+          // IMPORTANT: Do NOT call nextVid.load() here! 
+          // Calling load() forces desktop browsers (Chrome/Safari) to immediately prioritize this stream,
+          // instantly choking the active video stream and causing a 3+ second freeze.
         }
         try { nextVid.pause(); } catch (e) {}
       }
@@ -428,9 +430,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         const prevSrc = resolvePlayableVideoSource(prevVideo);
         if (!isSameSrc(prevVid.src, prevSrc)) {
           prevVid.src = prevSrc;
-          prevVid.preload = "auto";
+          prevVid.preload = "metadata";
           prevVid.muted = true;
-          prevVid.load();
+          // IMPORTANT: Do NOT call prevVid.load() here!
+          // Calling load() forces desktop browsers (Chrome/Safari) to immediately prioritize this stream,
+          // instantly choking the active video stream and causing a 3+ second freeze.
         }
         try { prevVid.pause(); } catch (e) {}
       }

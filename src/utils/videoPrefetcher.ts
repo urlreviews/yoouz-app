@@ -19,14 +19,8 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
   if (!rawUrl || typeof rawUrl !== "string") return;
   const url = normalizeVideoUrl(rawUrl);
   if (!url || url.startsWith("blob:") || url.startsWith("data:") || preloadedUrls.has(url)) return;
-
+  
   preloadedUrls.add(url);
-
-  // Extract video ID from stream URL to index in local storage
-  let videoId = "";
-  if (url.includes("/api/videos/stream/")) {
-    videoId = url.split("/api/videos/stream/")[1]?.replace(/\.[^.]+$/, "") || "";
-  }
 
   // 1. High-Performance Poster Preload (primes GPU texture cache without touching decoders or socket queues)
   if (posterUrl && !preloadedPosters.has(posterUrl)) {
@@ -35,16 +29,10 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
     img.referrerPolicy = "no-referrer";
     img.src = posterUrl;
   }
-
-  // 2. Ultra-Lightweight HTTP Range Warm-Up (fetches first 512KB header chunk & initial video frames into disk/memory cache)
-  try {
-    fetch(url, {
-      method: "GET",
-      headers: { Range: "bytes=0-524287" },
-      mode: "cors",
-      cache: "force-cache"
-    }).catch(() => {});
-  } catch (e) {}
+  
+  // NOTE: We intentionally removed the HTTP fetch Range requests here because desktop browsers (Chrome/Safari)
+  // strictly limit concurrent connections. Making background fetch requests for videos while the `<video>` player
+  // is simultaneously trying to load the active stream causes severe network queue starvation, resulting in a 3+ second delay.
 };
 
 /**
