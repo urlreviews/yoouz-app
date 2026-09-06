@@ -296,16 +296,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       ref={cardRef}
       data-video-index={index}
       id={`copo-video-card-${video.id}`}
-      onClick={handleCardClick}
-      onDoubleClick={handleDoubleTapLike}
-      className="snap-start snap-always shrink-0 relative w-full h-full md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-end cursor-pointer group"
+      className="snap-start snap-always shrink-0 relative w-full h-full md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-end group"
     >
       {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
       <div
         id={`video-slot-${video.id}`}
         ref={slotRef}
         data-video-slot="true"
-        className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black"
+        className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black pointer-events-none"
       >
         {/* High-Fidelity Poster (visible during loading or until active video starts playback) */}
         <img
@@ -320,6 +318,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           referrerPolicy="no-referrer"
         />
       </div>
+
+      {/* DEDICATED PLAY/PAUSE INTERACTION LAYER (z-20) */}
+      {/* This sits strictly behind all UI buttons (z-40, z-50) so button taps NEVER accidentally pause the video */}
+      <div 
+        className="absolute inset-0 z-20 cursor-pointer pointer-events-auto"
+        onClick={handleCardClick}
+        onDoubleClick={handleDoubleTapLike}
+        aria-label="Toggle Play/Pause"
+      />
 
       {/* Progress Bar (Scrubber Indicator at top edge) */}
       {isActive && (

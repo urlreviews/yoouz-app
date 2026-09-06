@@ -303,6 +303,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     // Load active source if not matching
     const activeSrc = resolvePlayableVideoSource(activeVideo);
+    activeVid.preload = "auto";
     if (!isSameSrc(activeVid.src, activeSrc)) {
       activeVid.src = activeSrc;
       activeVid.load();
@@ -462,7 +463,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       cancelAnimationFrame(raf);
       clearTimeout(viewTimer);
     };
-  }, [currentIndex, videos, isMuted, isSessionAudioUnlocked, onRecordView, isPaused, contextKey]);
+  }, [currentIndex, videos, onRecordView, isPaused, contextKey]);
 
   // Context switch watcher: Immediately pause any active playback and sound when switching contexts
   const previousContextKeyRef = useRef<string | undefined>(contextKey);
