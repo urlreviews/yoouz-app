@@ -1,5 +1,17 @@
 import React from "react";
-import { Search, Home, Map, Plus, Bookmark, Compass, LayoutDashboard, Globe, Bell, Mail, Settings, UserCircle, Star, LogOut, Flame, Info, CheckCircle, Verified, LayoutGrid } from "lucide-react";
+import {
+  Search,
+  Home,
+  Map,
+  Plus,
+  Bookmark,
+  Compass,
+  LayoutDashboard,
+  Star,
+  Mail,
+  UserCircle,
+  LayoutGrid
+} from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -7,36 +19,46 @@ interface NavItem {
   id: NavSection;
   label: string;
   icon: any;
-  hasDot?: boolean;
   badge?: number;
   isDarkBlue?: boolean;
 }
 
 interface CopoSidebarProps {
-  onOpenLegal?: () => void;
-  onOpenCreateModal?: () => void;
   activeSection: NavSection;
   onSelectSection: (section: NavSection) => void;
   onOpenSearch?: () => void;
   onOpenCreateReview?: () => void;
+  onOpenCreateModal?: () => void;
+  onOpenLegal?: () => void;
   currentUser: UserProfile | null;
   unreadMessagesCount: number;
   unreadNotifsCount: number;
 }
 
 export const CopoSidebar: React.FC<CopoSidebarProps> = ({
-  onOpenLegal,
-  onOpenCreateModal,
   activeSection,
   onSelectSection,
   onOpenSearch,
   onOpenCreateReview,
+  onOpenCreateModal,
+  onOpenLegal,
   currentUser,
   unreadMessagesCount,
   unreadNotifsCount,
 }) => {
   const { t } = useLanguage();
-    const navItems: NavItem[] = [
+
+  const handleCreateClick = () => {
+    if (onOpenCreateModal) {
+      onOpenCreateModal();
+    } else if (onOpenCreateReview) {
+      onOpenCreateReview();
+    } else {
+      onSelectSection("create");
+    }
+  };
+
+  const navItems: NavItem[] = [
     { id: "home" as NavSection, label: t("nav.home", "Home"), icon: Home },
     { id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search },
     { id: "create" as NavSection, label: t("nav.create", "Record Review"), icon: Plus, isDarkBlue: true },
@@ -47,10 +69,18 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
 
   if (currentUser) {
     if (currentUser.role === "business" || currentUser.role === "admin") {
-      navItems.splice(2, 0, { id: "business" as NavSection, label: t("nav.business", "Business Hub"), icon: LayoutDashboard });
+      navItems.splice(2, 0, {
+        id: "business" as NavSection,
+        label: t("nav.business", "Business Hub"),
+        icon: LayoutDashboard,
+      });
     }
     if (currentUser.role === "admin") {
-      navItems.push({ id: "admin" as NavSection, label: "Admin Panel", icon: Star });
+      navItems.push({
+        id: "admin" as NavSection,
+        label: "Admin Panel",
+        icon: Star,
+      });
     }
   }
 
@@ -59,7 +89,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
       {/* 1. Desktop Sidebar (lg and up) */}
       <aside
         id="copo-desktop-sidebar"
-        className="hidden lg:flex flex-col w-64 h-[100dvh] shrink-0 bg-zinc-950 border-r border-zinc-800/80 px-4 py-6 justify-between select-none z-30 shadow-none text-white"
+        className="hidden lg:flex flex-col w-64 h-[100dvh] shrink-0 bg-zinc-950 border-r border-zinc-800/80 px-4 py-6 justify-between select-none z-30 shadow-none text-white overflow-y-auto"
       >
         <div className="flex flex-col gap-6">
           {/* Logo & Tagline */}
@@ -86,6 +116,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               </span>
             </div>
           </div>
+
           {/* Navigation items list */}
           <nav className="flex flex-col gap-1.5 mt-2">
             {navItems.map((item) => {
@@ -94,61 +125,68 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               const isProfileItem = item.id === "profile" && currentUser?.avatar;
 
               return (
-                <React.Fragment key={item.id}>
-                  <button
-                    key={item.id}
-                    id={"nav-btn-"+item.id}
-                    onClick={() => {
-                      if (item.id === "search" && onOpenSearch) {
-                        onOpenSearch();
-                      } else {
-                        onSelectSection(item.id);
-                      }
-                    }}
-                    className={"relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group " + (
-                      item.isDarkBlue
-                        ? "bg-white text-zinc-950 hover:bg-zinc-200 shadow-md shadow-white/10 font-bold my-1 mt-4 active:scale-95"
-                        : isActive
-                        ? "bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                        : item.id === "search"
-                        ? "text-white bg-zinc-900 border border-zinc-800 shadow-sm"
-                        : "text-white hover:bg-zinc-900/90 font-medium"
+                <button
+                  key={item.id}
+                  id={`nav-btn-${item.id}`}
+                  onClick={() => {
+                    if (item.id === "create") {
+                      handleCreateClick();
+                    } else if (item.id === "search" && onOpenSearch) {
+                      onOpenSearch();
+                    } else {
+                      onSelectSection(item.id);
+                    }
+                  }}
+                  className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                    item.isDarkBlue
+                      ? "bg-white text-zinc-950 hover:bg-zinc-200 shadow-md shadow-white/10 font-bold my-1 mt-2 active:scale-95"
+                      : isActive
+                      ? "bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
+                      : "text-white hover:bg-zinc-900/90 font-medium"
+                  }`}
+                >
+                  <div className="relative flex items-center justify-center">
+                    {isProfileItem ? (
+                      <img
+                        src={currentUser!.avatar}
+                        alt={currentUser!.name || "Profile"}
+                        className={`w-7 h-7 rounded-full object-cover shrink-0 ring-2 ${
+                          isActive ? "ring-white" : "ring-white/40"
+                        }`}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          if (!target.src.includes("/api/avatar")) {
+                            target.src = "/api/avatar?name=User&background=27272a&color=fff";
+                          }
+                        }}
+                      />
+                    ) : (
+                      <Icon
+                        className={`w-5 h-5 shrink-0 transition-colors ${
+                          item.isDarkBlue ? "text-zinc-950" : "text-white"
+                        }`}
+                      />
                     )}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      {isProfileItem ? (
-                        <img
-                          src={currentUser!.avatar}
-                          alt={currentUser!.name || "Profile"}
-                          className={"w-7 h-7 rounded-full object-cover shrink-0 ring-2 " + (
-                            isActive ? "ring-white" : "ring-white/40"
-                          )}
-                          referrerPolicy="no-referrer"
-                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
-                      ) : (
-                        <Icon
-                          className={"w-5 h-5 shrink-0 transition-colors " + (
-                            item.isDarkBlue ? "text-zinc-950" : "text-white"
-                          )}
-                        />
-                      )}
-                    </div>
-                    <span className="truncate flex-1">
-                      {item.id === "profile" && currentUser?.name ? currentUser.name.split(" ")[0] : item.label}
+                  </div>
+                  <span className="truncate flex-1">
+                    {item.id === "profile" && currentUser?.name
+                      ? currentUser.name.split(" ")[0]
+                      : item.label}
+                  </span>
+                  {item.badge && item.badge > 0 ? (
+                    <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
+                      {item.badge}
                     </span>
-                    {item.badge && item.badge > 0 ? (
-                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
-                        {item.badge}
-                      </span>
-                    ) : null}
-                  </button>
-                </React.Fragment>
+                  ) : null}
+                </button>
               );
             })}
           </nav>
         </div>
 
-        <div className="flex flex-col gap-3">
+        {/* Bottom Section */}
+        <div className="flex flex-col gap-3 pt-4">
           <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2">
             <button
               onClick={() => onSelectSection("more")}
@@ -158,13 +196,18 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               <span>More Settings</span>
             </button>
             <button
-              onClick={onOpenLegal}
-              className="text-left px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+              onClick={() => {
+                if (onOpenLegal) onOpenLegal();
+                else onSelectSection("more");
+              }}
+              className="text-left px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
             >
               {t("legal.about", "About")}
             </button>
           </div>
-          <p className="text-[11px] text-zinc-200 font-normal">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</p>
+          <p className="text-[11px] text-zinc-400 font-normal px-3">
+            {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
+          </p>
         </div>
       </aside>
 
@@ -183,6 +226,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>
+
           {/* Navigation items list (Icons Only) */}
           <nav className="flex flex-col gap-3 w-full px-3">
             {navItems.map((item) => {
@@ -191,50 +235,56 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               const isProfileItem = item.id === "profile" && currentUser?.avatar;
 
               return (
-                <React.Fragment key={item.id}>
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      if (item.id === "search" && onOpenSearch) {
-                        onOpenSearch();
-                      } else {
-                        onSelectSection(item.id);
-                      }
-                    }}
-                    className={"relative flex items-center justify-center w-12 h-12 mx-auto rounded-full transition-all duration-150 cursor-pointer " + (
-                      item.isDarkBlue
-                        ? "bg-white hover:bg-zinc-200 text-zinc-950 shadow-md shadow-white/10 my-1 mt-4"
-                        : isActive
-                        ? "bg-zinc-900 border border-zinc-700/80 text-white"
-                        : "text-zinc-100 hover:text-white hover:bg-zinc-900/60"
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === "create") {
+                      handleCreateClick();
+                    } else if (item.id === "search" && onOpenSearch) {
+                      onOpenSearch();
+                    } else {
+                      onSelectSection(item.id);
+                    }
+                  }}
+                  className={`relative flex items-center justify-center w-12 h-12 mx-auto rounded-full transition-all duration-150 cursor-pointer ${
+                    item.isDarkBlue
+                      ? "bg-white hover:bg-zinc-200 text-zinc-950 shadow-md shadow-white/10 my-1 mt-4"
+                      : isActive
+                      ? "bg-zinc-900 border border-zinc-700/80 text-white"
+                      : "text-zinc-100 hover:text-white hover:bg-zinc-900/60"
+                  }`}
+                  title={item.label}
+                >
+                  <div className="relative flex items-center justify-center">
+                    {isProfileItem ? (
+                      <img
+                        src={currentUser!.avatar}
+                        alt={currentUser!.name || "Profile"}
+                        className={`w-7 h-7 rounded-full object-cover shrink-0 ring-2 ${
+                          isActive ? "ring-white" : "ring-white/40"
+                        }`}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          if (!target.src.includes("/api/avatar")) {
+                            target.src = "/api/avatar?name=User&background=27272a&color=fff";
+                          }
+                        }}
+                      />
+                    ) : (
+                      <Icon
+                        className={`w-[22px] h-[22px] shrink-0 ${
+                          item.isDarkBlue ? "text-zinc-950" : "text-white"
+                        }`}
+                      />
                     )}
-                    title={item.label}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      {isProfileItem ? (
-                        <img
-                          src={currentUser!.avatar}
-                          alt={currentUser!.name || "Profile"}
-                          className={"w-7 h-7 rounded-full object-cover shrink-0 ring-2 " + (
-                            isActive ? "ring-white" : "ring-white/40"
-                          )}
-                          referrerPolicy="no-referrer"
-                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
-                      ) : (
-                        <Icon
-                          className={"w-[22px] h-[22px] shrink-0 " + (
-                            item.isDarkBlue ? "text-zinc-950" : "text-white"
-                          )}
-                        />
-                      )}
-                    </div>
-                    {item.badge && item.badge > 0 ? (
-                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[9px] font-bold rounded-full bg-zinc-800 text-white border border-zinc-700 ring-2 ring-zinc-950">
-                        {item.badge > 9 ? "9+" : item.badge}
-                      </span>
-                    ) : null}
-                  </button>
-                </React.Fragment>
+                  </div>
+                  {item.badge && item.badge > 0 ? (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[9px] font-bold rounded-full bg-zinc-800 text-white border border-zinc-700 ring-2 ring-zinc-950">
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  ) : null}
+                </button>
               );
             })}
           </nav>
@@ -247,7 +297,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800/90 text-white shadow-[0_-8px_30px_rgba(0,0,0,0.8)]"
         style={{
           paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 8px)",
-          paddingTop: "8px"
+          paddingTop: "8px",
         }}
       >
         <div className="flex items-center justify-around px-2 max-w-md mx-auto relative">
@@ -255,27 +305,25 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           <button
             id="mobile-nav-home-btn"
             onClick={() => onSelectSection("home")}
-            className={"flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer " + (
+            className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "home" || activeSection === "map"
                 ? "text-white"
-                : "text-zinc-100 hover:text-white"
-            )}
+                : "text-zinc-400 hover:text-white"
+            }`}
           >
-            <div className="relative">
-              <Home
-                className={"w-[22px] h-[22px] transition-transform duration-200 " + (
-                  activeSection === "home" || activeSection === "map"
-                    ? "scale-110 stroke-[2.5] text-white"
-                    : "stroke-[2.2] text-zinc-100"
-                )}
-              />
-            </div>
+            <Home
+              className={`w-[22px] h-[22px] transition-transform duration-200 ${
+                activeSection === "home" || activeSection === "map"
+                  ? "scale-110 stroke-[2.5] text-white"
+                  : "stroke-[2.2] text-zinc-400"
+              }`}
+            />
             <span
-              className={"text-[10px] tracking-tight mt-1 " + (
+              className={`text-[10px] tracking-tight mt-1 ${
                 activeSection === "home" || activeSection === "map"
                   ? "font-bold text-white"
-                  : "font-medium text-zinc-100"
-              )}
+                  : "font-medium text-zinc-400"
+              }`}
             >
               {t("nav.home", "Home")}
             </span>
@@ -288,27 +336,25 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               if (onOpenSearch) onOpenSearch();
               else onSelectSection("search");
             }}
-            className={"flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer " + (
+            className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "search" || activeSection === "discover"
                 ? "text-white"
-                : "text-zinc-100 hover:text-white"
-            )}
+                : "text-zinc-400 hover:text-white"
+            }`}
           >
-            <div className="relative">
-              <Search
-                className={"w-[22px] h-[22px] transition-transform duration-200 " + (
-                  activeSection === "search" || activeSection === "discover"
-                    ? "scale-110 stroke-[2.5] text-white"
-                    : "stroke-[2.2] text-zinc-100"
-                )}
-              />
-            </div>
+            <Search
+              className={`w-[22px] h-[22px] transition-transform duration-200 ${
+                activeSection === "search" || activeSection === "discover"
+                  ? "scale-110 stroke-[2.5] text-white"
+                  : "stroke-[2.2] text-zinc-400"
+              }`}
+            />
             <span
-              className={"text-[10px] tracking-tight mt-1 " + (
+              className={`text-[10px] tracking-tight mt-1 ${
                 activeSection === "search" || activeSection === "discover"
                   ? "font-bold text-white"
-                  : "font-medium text-zinc-100"
-              )}
+                  : "font-medium text-zinc-400"
+              }`}
             >
               {t("nav.search", "Search")}
             </span>
@@ -317,7 +363,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           {/* 3. Create (Center Floating Action Button) */}
           <button
             id="mobile-nav-create-btn"
-            onClick={() => onOpenCreateModal ? onOpenCreateModal() : onSelectSection("create")}
+            onClick={handleCreateClick}
             className="flex flex-col items-center justify-center flex-1 cursor-pointer"
           >
             <div className="relative -mt-6 mb-1">
@@ -327,36 +373,38 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             </div>
           </button>
 
-          {/* 4. Inbox & Activity */}
+          {/* 4. Inbox */}
           <button
             id="mobile-nav-inbox-btn"
             onClick={() => onSelectSection("messages")}
-            className={"relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer " + (
+            className={`relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "messages" || activeSection === "notifications"
                 ? "text-white"
-                : "text-zinc-100 hover:text-white"
-            )}
+                : "text-zinc-400 hover:text-white"
+            }`}
           >
             <div className="relative">
               <Mail
-                className={"w-[22px] h-[22px] transition-transform duration-200 " + (
+                className={`w-[22px] h-[22px] transition-transform duration-200 ${
                   activeSection === "messages" || activeSection === "notifications"
                     ? "scale-110 stroke-[2.5] text-white"
-                    : "stroke-[2.2] text-zinc-100"
-                )}
+                    : "stroke-[2.2] text-zinc-400"
+                }`}
               />
-              {(unreadMessagesCount + unreadNotifsCount) > 0 && (
+              {unreadMessagesCount + unreadNotifsCount > 0 && (
                 <span className="absolute -top-1 -right-2 min-w-[17px] h-[17px] flex items-center justify-center px-1 text-[9px] font-extrabold rounded-full bg-white text-zinc-950 border-2 border-zinc-950 shadow-sm animate-in zoom-in-75">
-                  {(unreadMessagesCount + unreadNotifsCount) > 9 ? "9+" : (unreadMessagesCount + unreadNotifsCount)}
+                  {unreadMessagesCount + unreadNotifsCount > 9
+                    ? "9+"
+                    : unreadMessagesCount + unreadNotifsCount}
                 </span>
               )}
             </div>
             <span
-              className={"text-[10px] tracking-tight mt-1 " + (
+              className={`text-[10px] tracking-tight mt-1 ${
                 activeSection === "messages" || activeSection === "notifications"
                   ? "font-bold text-white"
-                  : "font-medium text-zinc-100"
-              )}
+                  : "font-medium text-zinc-400"
+              }`}
             >
               {t("nav.messages", "Inbox")}
             </span>
@@ -366,38 +414,44 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           <button
             id="mobile-nav-profile-btn"
             onClick={() => onSelectSection("more")}
-            className={"flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer " + (
+            className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
               activeSection === "profile" || activeSection === "more"
                 ? "text-white"
-                : "text-zinc-100 hover:text-white"
-            )}
+                : "text-zinc-400 hover:text-white"
+            }`}
           >
             {currentUser?.avatar ? (
               <img
                 src={currentUser.avatar}
                 alt={currentUser.name || "Profile"}
-                className={"w-[26px] h-[26px] rounded-full object-cover shrink-0 ring-2 transition-transform duration-200 mb-0.5 " + (
+                className={`w-[26px] h-[26px] rounded-full object-cover shrink-0 ring-2 transition-transform duration-200 mb-0.5 ${
                   activeSection === "profile" || activeSection === "more"
                     ? "ring-white scale-110"
                     : "ring-white/40"
-                )}
+                }`}
                 referrerPolicy="no-referrer"
-               onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  if (!target.src.includes("/api/avatar")) {
+                    target.src = "/api/avatar?name=User&background=27272a&color=fff";
+                  }
+                }}
+              />
             ) : (
               <UserCircle
-                className={"w-[22px] h-[22px] transition-transform duration-200 " + (
+                className={`w-[22px] h-[22px] transition-transform duration-200 ${
                   activeSection === "profile" || activeSection === "more"
                     ? "scale-110 stroke-[2.5] text-white"
-                    : "stroke-[2.2] text-zinc-100"
-                )}
+                    : "stroke-[2.2] text-zinc-400"
+                }`}
               />
             )}
             <span
-              className={"text-[10px] tracking-tight mt-1 " + (
+              className={`text-[10px] tracking-tight mt-1 ${
                 activeSection === "profile" || activeSection === "more"
                   ? "font-bold text-white"
-                  : "font-medium text-zinc-100"
-              )}
+                  : "font-medium text-zinc-400"
+              }`}
             >
               {t("nav.profile", "Profile")}
             </span>
