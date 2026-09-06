@@ -80,31 +80,36 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
       {/* Drawer Container (85% max-w-[340px]) */}
       <div className="relative w-[85%] max-w-[340px] h-[100dvh] bg-zinc-950 text-white border-r border-zinc-800 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-300 ease-out select-none">
         
-        {/* Top Header: Brand Logo & Close Button */}
+        {/* Top Header: Brand Logo, Tagline & Close Button */}
         <div className="flex items-center justify-between px-4 pt-[max(16px,calc(env(safe-area-inset-top,0px)+12px))] pb-3 border-b border-zinc-800/80 bg-zinc-950/95 sticky top-0 z-20">
           <div
             onClick={() => {
               handleNavClick("home");
             }}
-            className="flex items-center gap-2.5 cursor-pointer active:scale-95 transition-transform group"
+            className="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform group min-w-0"
           >
-            <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-white shadow-sm border border-white/20 shrink-0 group-hover:-translate-y-0.5 transition-transform">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-zinc-950">
+            <div className="relative flex items-center justify-center w-[38px] h-[38px] rounded-[13px] bg-white shadow-[0_4px_16px_rgba(255,255,255,0.15)] shrink-0 border border-white/20 group-hover:-translate-y-0.5 transition-transform">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-white text-lg font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
-                Yoouz
-              </span>
-              <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[8.5px] text-zinc-300 font-bold uppercase tracking-wider scale-90 origin-left">
-                Beta
+            <div className="flex flex-col justify-center min-w-0 pt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-white text-[20px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+                  Yoouz
+                </span>
+                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[8.5px] text-zinc-300 font-bold uppercase tracking-wider scale-90 origin-left">
+                  Beta
+                </span>
+              </div>
+              <span className="text-[10.5px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap">
+                {t("legal.tagline", "Real People. Real Reviews.")}
               </span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90"
+            className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90 shrink-0 ml-2"
             title="Close menu"
             aria-label="Close menu"
           >
@@ -168,31 +173,16 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 </div>
               </div>
             ) : (
-              <div
+              <button
                 onClick={() => {
                   if (onOpenAuth) onOpenAuth("drawer");
                   onClose();
                 }}
-                className="p-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-md flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all group"
+                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-sm shadow-md transition-all cursor-pointer active:scale-95"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center text-zinc-300 group-hover:text-white shrink-0">
-                    <User className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0 text-left">
-                    <h4 className="text-sm font-bold text-white group-hover:text-zinc-200 truncate">
-                      {t("auth.signInRegister", "Sign In / Register")}
-                    </h4>
-                    <p className="text-[11.5px] text-zinc-400 truncate">
-                      {t("auth.guestNotice", "Save places & record reviews")}
-                    </p>
-                  </div>
-                </div>
-                <div className="px-3 py-1.5 rounded-full bg-white text-zinc-950 font-bold text-xs group-hover:bg-zinc-200 transition-colors shadow-sm shrink-0 ml-2 flex items-center gap-1.5">
-                  <LogIn className="w-3.5 h-3.5 text-zinc-950" />
-                  <span>{t("auth.login", "Sign In")}</span>
-                </div>
-              </div>
+                <LogIn className="w-4 h-4 text-zinc-950 stroke-[2.25]" />
+                <span>{t("auth.signIn", "Sign In")}</span>
+              </button>
             )}
           </div>
 
