@@ -420,7 +420,7 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
                   {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
                 </button>
                 
-                <span className="font-mono text-[11px] text-zinc-300">
+                <span className="font-mono text-[11px] text-zinc-200">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
               </div>
@@ -472,15 +472,15 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
                   referrerPolicy="no-referrer"
                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-300 font-bold flex items-center justify-center text-xs group-hover:bg-zinc-700 group-hover:text-white transition-colors shrink-0">
+                <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-200 font-bold flex items-center justify-center text-xs group-hover:bg-zinc-700 group-hover:text-white transition-colors shrink-0">
                   {(video.author?.name || 'C').charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="truncate min-w-0">
-                <span className="font-bold text-xs text-white group-hover:text-zinc-300 transition-colors block truncate">
+                <span className="font-bold text-xs text-white group-hover:text-zinc-200 transition-colors block truncate">
                   {video.author?.name || 'Customer Review'}
                 </span>
-                <span className="text-[10px] text-zinc-400 block truncate">
+                <span className="text-[10px] text-zinc-200 block truncate">
                   {formatRecordedDate(video.recordedAt, video.createdAtMs)}
                 </span>
               </div>
@@ -492,14 +492,14 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
           </div>
 
           {video.dishOrItem && (
-            <div className="text-[11px] text-zinc-400 font-semibold flex items-center gap-1">
+            <div className="text-[11px] text-zinc-200 font-semibold flex items-center gap-1">
               <span>Reviewed Item:</span>
               <span className="text-zinc-200">{video.dishOrItem}</span>
             </div>
           )}
 
           {video.caption && (
-            <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed italic bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+            <p className="text-xs text-zinc-200 line-clamp-2 leading-relaxed italic bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
               "{video.caption}"
             </p>
           )}
@@ -511,7 +511,7 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
                 <BadgeCheck className="w-3.5 h-3.5 text-white" />
                 <span>{t("businessDashboard.verifiedResponseFrom", "Verified Response from")} {placeName} ({t("businessDashboard.owner", "Owner")})</span>
               </div>
-              <p className="text-xs text-zinc-300 font-medium italic">
+              <p className="text-xs text-zinc-200 font-medium italic">
                 "{video.ownerResponse.text}"
               </p>
             </div>
@@ -538,9 +538,9 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
                   rel="noopener noreferrer"
                   className="flex-1 py-2 px-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-[11px] font-bold transition-colors flex items-center justify-center gap-1 border border-zinc-700"
                 >
-                  <Globe className="w-3.5 h-3.5 text-zinc-400" />
+                  <Globe className="w-3.5 h-3.5 text-zinc-200" />
                   <span className="truncate">{t("businessDashboard.visitWebsite", "Visit Website")}</span>
-                  <ExternalLink className="w-3 h-3 text-zinc-400 shrink-0" />
+                  <ExternalLink className="w-3 h-3 text-zinc-200 shrink-0" />
                 </a>
               )}
               {onReply && (
@@ -1280,11 +1280,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <span className="text-white text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
                     Yoouz
                   </span>
-                  <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-300 font-black uppercase tracking-wider scale-90 origin-left">
+                  <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-200 font-black uppercase tracking-wider scale-90 origin-left">
                     {t("business.badge", "BUSINESS")}
                   </span>
                 </div>
-                <span className="text-[11px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap">
+                <span className="text-[11px] text-zinc-200 font-medium tracking-tight mt-1 whitespace-nowrap">
                   {t("business.tagline", "Real People. Real Reviews.")}
                 </span>
               </div>
@@ -1292,7 +1292,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           </div>
 
           <div className="p-3 space-y-1 mt-2">
-            <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">
+            <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-200 mb-2">
               {t("business.managementSuite", "Management Suite")}
             </div>
 
@@ -1306,10 +1306,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-full font-medium text-[15px] transition-all text-left cursor-pointer group ${
                     isActive 
                       ? 'bg-zinc-800 text-white font-semibold' 
-                      : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'
+                      : 'text-zinc-200 hover:bg-zinc-900 hover:text-white'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-white' : 'text-zinc-400'}`} />
+                  <Icon className={`w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-white' : 'text-zinc-200'}`} />
                   <span className="truncate flex-1">{item.label}</span>
                   {item.badge !== undefined && (
                     <span className="px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 bg-white text-zinc-950">
@@ -1317,7 +1317,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </span>
                   )}
                   {item.isProBadge && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-300 border border-zinc-700">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-200 border border-zinc-700">
                       {t("business.active", "Active")}
                     </span>
                   )}
@@ -1334,14 +1334,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
               <span>{t("business.proMerchantSupport", "Pro Merchant Support")}</span>
             </div>
-            <p className="text-[11px] text-zinc-400 mb-3 leading-relaxed">
+            <p className="text-[11px] text-zinc-200 mb-3 leading-relaxed">
               {t("business.proSupportDesc", "Need assistance setting up website widgets or table QR tents?")}
             </p>
             <button
               onClick={() => setShowHelpModal(true)}
               className="w-full py-2.5 px-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 rounded-xl text-xs font-bold shadow-2xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
-              <FileText className="w-3.5 h-3.5 text-zinc-400" />
+              <FileText className="w-3.5 h-3.5 text-zinc-200" />
               <span>{t("business.openGuideDocs", "Open Guide & Docs")}</span>
             </button>
           </div>
@@ -1359,7 +1359,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               {/* Mobile Exit Back Button */}
               <button
                 onClick={onClose}
-                className="md:hidden p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs font-bold transition-all shrink-0 cursor-pointer"
+                className="md:hidden p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 text-xs font-bold transition-all shrink-0 cursor-pointer"
                 title="Back to Yoouz Feed"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -1374,7 +1374,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
               <div className="flex items-center gap-2 min-w-0">
                 <span className="font-extrabold text-white text-sm tracking-tight truncate max-w-[130px] sm:max-w-xs">{currentPlace.name}</span>
-                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10.5px] font-bold border border-zinc-700 shrink-0">
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10.5px] font-bold border border-zinc-700 shrink-0">
                   <ShieldCheck className="w-3 h-3 text-white" />
                   <span>{t("business.verifiedLocation", "Verified Location")}</span>
                 </span>
@@ -1388,21 +1388,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               <button
                 id="biz-header-language-btn"
                 onClick={() => setIsLangModalOpen(true)}
-                className="h-9 px-2.5 flex items-center gap-1.5 text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all text-xs font-bold shrink-0 cursor-pointer"
+                className="h-9 px-2.5 flex items-center gap-1.5 text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all text-xs font-bold shrink-0 cursor-pointer"
                 title={t("business.changePlatformLanguage", "Change Platform Language")}
               >
                 <span className="text-sm select-none">{currentLanguageMeta.flag}</span>
                 <span className="hidden sm:inline text-xs font-mono uppercase font-bold text-zinc-200">
                   {currentLanguageMeta.code}
                 </span>
-                <Globe className="w-3.5 h-3.5 text-zinc-400" />
+                <Globe className="w-3.5 h-3.5 text-zinc-200" />
               </button>
 
               {/* Notification Bell */}
               <div className="relative">
                 <button 
                   onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
-                  className="w-9 h-9 flex items-center justify-center text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all relative shrink-0 cursor-pointer"
+                  className="w-9 h-9 flex items-center justify-center text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all relative shrink-0 cursor-pointer"
                   title={t("nav.notifications", "Notifications")}
                 >
                   <Bell className="w-4 h-4" />
@@ -1433,17 +1433,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                           <div>
                             <div className="text-sm font-bold text-white">{t("business.newVideoReviews", "New Video Reviews")}</div>
-                            <div className="text-xs text-zinc-400 mt-0.5 leading-relaxed">{t("business.unrepliedNotice", `You have ${unrepliedReviewsCount} unreplied review${unrepliedReviewsCount !== 1 ? 's' : ''}. Reply now to boost engagement.`)}</div>
+                            <div className="text-xs text-zinc-200 mt-0.5 leading-relaxed">{t("business.unrepliedNotice", `You have ${unrepliedReviewsCount} unreplied review${unrepliedReviewsCount !== 1 ? 's' : ''}. Reply now to boost engagement.`)}</div>
                             <div className="text-[10px] font-bold text-white mt-2 uppercase tracking-wider">{t("business.openReviewDashboard", "Open Review Dashboard")}</div>
                           </div>
                         </div>
                       ) : (
                         <div className="p-8 text-center">
                           <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Bell className="w-5 h-5 text-zinc-400" />
+                            <Bell className="w-5 h-5 text-zinc-200" />
                           </div>
                           <div className="text-sm font-bold text-white">{t("business.allCaughtUp", "You're all caught up!")}</div>
-                          <div className="text-xs text-zinc-400 mt-1">{t("business.noNewNotifications", "No new notifications right now.")}</div>
+                          <div className="text-xs text-zinc-200 mt-1">{t("business.noNewNotifications", "No new notifications right now.")}</div>
                         </div>
                       )}
                     </div>
@@ -1464,7 +1464,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       (currentPlace.name?.charAt(0).toUpperCase() || 'B')
                     )}
                   </div>
-                  <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${showAccountDropdown ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 text-zinc-200 shrink-0 transition-transform ${showAccountDropdown ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Business Account Dropdown */}
@@ -1475,10 +1475,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <span className="font-extrabold text-white text-sm truncate">{currentPlace.name}</span>
                         <ShieldCheck className="w-4 h-4 text-white shrink-0" />
                       </div>
-                      <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium">
+                      <div className="text-xs text-zinc-200 truncate mt-0.5 font-medium">
                         {verifiedBusinessSession?.businessEmail || 'owner@therusticspoon.com'}
                       </div>
-                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[10px] font-bold">
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold">
                         <span className="w-1.5 h-1.5 rounded-full bg-white" />
                         {t("business.proTierActive", "Pro Tier Active")}
                       </div>
@@ -1489,9 +1489,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         setActiveTab('profile');
                         setShowAccountDropdown(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
-                      <Settings className="w-4 h-4 text-zinc-400" />
+                      <Settings className="w-4 h-4 text-zinc-200" />
                       <span>{t("business.venueProfileSettings", "Venue Profile & Settings")}</span>
                     </button>
                     <button 
@@ -1499,9 +1499,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         setActiveTab('billing');
                         setShowAccountDropdown(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
-                      <CreditCard className="w-4 h-4 text-zinc-400" />
+                      <CreditCard className="w-4 h-4 text-zinc-200" />
                       <span>{t("business.subscriptionBilling", "Subscription & Billing")}</span>
                     </button>
                     <button 
@@ -1509,9 +1509,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         setShowAccountDropdown(false);
                         setShowHelpModal(true);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
-                      <HelpCircle className="w-4 h-4 text-zinc-400" />
+                      <HelpCircle className="w-4 h-4 text-zinc-200" />
                       <span>{t("business.guideSupport", "Guide & Support")}</span>
                     </button>
                     <button 
@@ -1519,9 +1519,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         setShowAccountDropdown(false);
                         setIsClaiming(true);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
-                      <Building2 className="w-4 h-4 text-zinc-400" />
+                      <Building2 className="w-4 h-4 text-zinc-200" />
                       <span>{t("business.switchClaimVenue", "Switch or Claim Venue")}</span>
                     </button>
                     
@@ -1531,13 +1531,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         setShowAccountDropdown(false);
                         setIsLangModalOpen(true);
                       }}
-                      className="w-full flex items-center justify-between px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center justify-between px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
-                        <Globe className="w-4 h-4 text-zinc-400" />
+                        <Globe className="w-4 h-4 text-zinc-200" />
                         <span>{t("business.languageLocalization", "Language / Localization")}</span>
                       </div>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 font-mono text-zinc-300">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 font-mono text-zinc-200">
                         {currentLanguageMeta.flag} {currentLanguageMeta.code.toUpperCase()}
                       </span>
                     </button>
@@ -1547,9 +1547,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         setShowAccountDropdown(false);
                         onNavigate('home');
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
-                      <ExternalLink className="w-4 h-4 text-zinc-400" />
+                      <ExternalLink className="w-4 h-4 text-zinc-200" />
                       <span>{t("business.viewPublicListing", "View Public Listing")}</span>
                     </button>
                     
@@ -1594,10 +1594,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 ${
                           isActive 
                             ? 'bg-white text-zinc-950 shadow-md font-bold' 
-                            : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800/80'
+                            : 'bg-zinc-900 text-zinc-200 hover:text-white border border-zinc-800/80'
                         }`}
                       >
-                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-zinc-950' : 'text-zinc-400'}`} />
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-zinc-950' : 'text-zinc-200'}`} />
                         <span>{item.label}</span>
                         {item.badge !== undefined && (
                           <span className="w-4 h-4 rounded-full bg-zinc-800 text-white text-[10px] flex items-center justify-center font-bold">
@@ -1624,7 +1624,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         {t("business.claimedVerified", "CLAIMED & VERIFIED")}
                       </div>
                     </div>
-                    <p className="text-sm text-zinc-400 font-medium">
+                    <p className="text-sm text-zinc-200 font-medium">
                       {t("business.overviewSubtitle", "Real-time performance metrics driven by customer video reviews across the Yoouz network.")}
                     </p>
                   </div>
@@ -1637,7 +1637,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                           analyticsDateRange === range 
                             ? 'bg-white text-zinc-950 shadow-md font-bold' 
-                            : 'text-zinc-400 hover:text-white'
+                            : 'text-zinc-200 hover:text-white'
                         }`}
                       >
                         {range === '7d' ? t("business.range7d", "7 Days") : range === '30d' ? t("business.range30d", "30 Days") : range === '90d' ? t("business.range90d", "90 Days") : t("business.rangeAllTime", "All Time")}
@@ -1649,7 +1649,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                   {[
                     { key: 'views' as const, label: t('business.kpiImpressions', 'Video Profile Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-zinc-800' },
-                    { key: 'clicks' as const, label: t('business.kpiClicks', 'CTA / Booking Clicks'), value: totalClicks.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: MousePointerClick, color: 'text-zinc-300', bg: 'bg-zinc-800' },
+                    { key: 'clicks' as const, label: t('business.kpiClicks', 'CTA / Booking Clicks'), value: totalClicks.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: MousePointerClick, color: 'text-zinc-200', bg: 'bg-zinc-800' },
                     { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Video Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Video, color: 'text-white', bg: 'bg-zinc-800' },
                     { key: 'inquiries' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-zinc-200', bg: 'bg-zinc-800' },
                   ].map((stat, i) => {
@@ -1669,7 +1669,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <div className={`w-9 h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center border border-zinc-700`}>
                             <stat.icon className="w-4 h-4" />
                           </div>
-                          <span className={`flex items-center gap-1 text-[10px] font-extrabold text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700 shrink-0 whitespace-nowrap`}>
+                          <span className={`flex items-center gap-1 text-[10px] font-extrabold text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700 shrink-0 whitespace-nowrap`}>
                             <TrendingUp className="w-2.5 h-2.5" /> {stat.change}
                           </span>
                         </div>
@@ -1693,7 +1693,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               />
                             </svg>
                           </div>
-                          <div className="text-[11px] font-medium text-zinc-400 mt-1">{stat.label}</div>
+                          <div className="text-[11px] font-medium text-zinc-200 mt-1">{stat.label}</div>
                         </div>
                       </div>
                     );
@@ -1719,7 +1719,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <TrendingUp className="w-3 h-3" /> {chartData.change === 'New' ? 'Live Analytics' : `${chartData.change} vs prev ${analyticsDateRange}`}
                             </span>
                           </div>
-                          <p className="text-xs text-zinc-400 md:text-zinc-400 mt-0.5">
+                          <p className="text-xs text-zinc-200 md:text-zinc-200 mt-0.5">
                             Total {chartData.total} {chartData.unit} recorded during this period
                           </p>
                         </div>
@@ -1731,7 +1731,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               key={m}
                               onClick={() => setSelectedChartMetric(m)}
                               className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
-                                selectedChartMetric === m ? 'bg-zinc-800 md:bg-zinc-900 text-white md:text-white shadow-md  font-bold' : 'text-zinc-400 md:text-zinc-400 hover:text-white md:hover:text-zinc-900'
+                                selectedChartMetric === m ? 'bg-zinc-800 md:bg-zinc-900 text-white md:text-white shadow-md  font-bold' : 'text-zinc-200 md:text-zinc-200 hover:text-white md:hover:text-zinc-900'
                               }`}
                             >
                               {m === 'views' ? 'Impressions' : m === 'clicks' ? 'Bookings' : m === 'reviews' ? 'Reviews' : 'Inquiries'}
@@ -1752,7 +1752,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
  <span className="font-extrabold text-sm text-white md:text-white">
                               {chartData.points[hoveredChartPoint].toLocaleString()} {chartData.unit}
                             </span>
-                            <span className="text-[10px] text-zinc-400 md:text-zinc-400 font-medium">
+                            <span className="text-[10px] text-zinc-200 md:text-zinc-200 font-medium">
                               {chartData.labels[hoveredChartPoint]}
                             </span>
                           </div>
@@ -1774,7 +1774,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <line x1="0" y1="40" x2="700" y2="40" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
                           <line x1="0" y1="90" x2="700" y2="90" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
                           <line x1="0" y1="140" x2="700" y2="140" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
-                          <line x1="0" y1="190" x2="700" y2="190" stroke="currentColor" className="text-zinc-700 md:text-zinc-300" strokeWidth="1.5" />
+                          <line x1="0" y1="190" x2="700" y2="190" stroke="currentColor" className="text-zinc-700 md:text-zinc-200" strokeWidth="1.5" />
 
                           {/* Generate Smooth Path */}
                           {(() => {
@@ -1849,7 +1849,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </div>
 
                       {/* X-Axis Labels */}
-                      <div className="flex justify-between text-[11px] font-medium text-zinc-400 md:text-zinc-400 mt-2 px-2 border-t border-zinc-800 md:border-zinc-800 pt-2">
+                      <div className="flex justify-between text-[11px] font-medium text-zinc-200 md:text-zinc-200 mt-2 px-2 border-t border-zinc-800 md:border-zinc-800 pt-2">
                         <span>Day 1</span>
                         <span>Day 7</span>
                         <span>Day 15</span>
@@ -1866,7 +1866,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <div className="relative z-10">
                         <Sparkles className="w-6 h-6 text-white mb-3" />
                         <h4 className="font-extrabold text-lg mb-1 text-white">Increase Video Reviews</h4>
-                        <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
+                        <p className="text-xs text-zinc-200 mb-5 leading-relaxed">
                           Venues with QR standees on tables collect 4.2x more customer video reviews every week.
                         </p>
                         <button
@@ -1886,7 +1886,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <Code className="w-4 h-4 text-white" />
                           <span>Embed On Your Site</span>
                         </div>
-                        <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
+                        <p className="text-xs text-zinc-200 mb-5 leading-relaxed">
                           Add the official Yoouz video carousel to your homepage in under 60 seconds.
                         </p>
                         <button
@@ -1905,11 +1905,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5">
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-white leading-tight">Recent Customer Video Reviews</h3>
-                      <p className="text-xs text-zinc-400 mt-1">Verified diners who filmed 60-second reviews at your venue</p>
+                      <p className="text-xs text-zinc-200 mt-1">Verified diners who filmed 60-second reviews at your venue</p>
                     </div>
                     <button
                       onClick={() => setActiveTab('reviews')}
-                      className="text-xs font-bold text-zinc-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors shrink-0 whitespace-nowrap"
+                      className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1 cursor-pointer transition-colors shrink-0 whitespace-nowrap"
                     >
                       Manage All ({placeVideos.length}) <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -1935,7 +1935,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
  <div data-video-overlay="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/40 flex flex-col justify-between p-3 text-white">
                               <div className="flex items-center justify-between">
                                 <span className="px-2 py-1 rounded-full bg-black/60 backdrop-blur-md text-[9px] font-black text-white flex items-center gap-1 border border-white/20">
-                                  <Video className="w-2.5 h-2.5 text-zinc-300" /> VIDEO REVIEW
+                                  <Video className="w-2.5 h-2.5 text-zinc-200" /> VIDEO REVIEW
                                 </span>
                                 <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-mono font-medium text-white border border-white/10">
                                   0:{vid.durationSeconds || 15}
@@ -1973,10 +1973,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 referrerPolicy="no-referrer"
                                onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
  <div className="truncate flex-1 min-w-0">
-                                <div className="text-sm font-bold text-white group-hover:text-zinc-300 transition-colors truncate">
+                                <div className="text-sm font-bold text-white group-hover:text-zinc-200 transition-colors truncate">
                                   {vid.author?.name || 'Customer Review'}
                                 </div>
-                                <div className="text-[10px] text-zinc-400 truncate">
+                                <div className="text-[10px] text-zinc-200 truncate">
                                   {formatRecordedDate(vid.recordedAt, vid.createdAtMs)}
                                 </div>
                               </div>
@@ -1985,21 +1985,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           
                           {/* AI Transcript */}
                           <div className="bg-zinc-900 p-3 rounded-2xl border border-dashed border-zinc-800 mb-1 mx-1">
-                            <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-zinc-300 uppercase tracking-wider mb-1.5">
-                              <Sparkles className="w-3 h-3 text-zinc-400" />
+                            <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-zinc-200 uppercase tracking-wider mb-1.5">
+                              <Sparkles className="w-3 h-3 text-zinc-200" />
                               <span>AI Video Transcript</span>
                             </div>
-                            <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed italic font-serif">
+                            <p className="text-xs text-zinc-200 line-clamp-2 leading-relaxed italic font-serif">
                               "{vid.caption}"
                             </p>
                           </div>
                         </div>
                         
                         <div className="flex items-center justify-between pt-4 pb-3 px-3 border-t border-zinc-800 mt-3">
-                          <span className="font-semibold text-[11px] text-zinc-400">{currentPlace.website ? new URL(currentPlace.website).hostname : 'View Link'}</span>
+                          <span className="font-semibold text-[11px] text-zinc-200">{currentPlace.website ? new URL(currentPlace.website).hostname : 'View Link'}</span>
                           <button
                             onClick={() => setActiveVideoModal(vid)}
-                            className="text-zinc-300 text-xs font-bold hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                            className="text-zinc-200 text-xs font-bold hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
                           >
                             <Play className="w-3.5 h-3.5 fill-current" /> Watch Video
                           </button>
@@ -2032,9 +2032,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <div className="bg-zinc-950 md:bg-zinc-900 rounded-3xl border border-zinc-800 md:border-zinc-800 text-white md:text-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-bold text-white md:text-white">Customer Video Reviews</h2>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-zinc-400 md:text-zinc-400">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-zinc-200 md:text-zinc-200">
                       <span>Curate customer videos and pin your favorites to your website widget.</span>
-                      <span className="text-zinc-600 md:text-zinc-400">•</span>
+                      <span className="text-zinc-600 md:text-zinc-200">•</span>
                       <span className="font-semibold text-amber-400 md:text-amber-800 bg-amber-900/30 md:bg-amber-50 px-2 py-0.5 rounded-full border border-amber-800/40 md:border-amber-200 text-[11px] flex items-center gap-1">
                         <Pin className="w-2.5 h-2.5 fill-current text-amber-400 md:text-amber-600" /> {pinnedVideoIds.length}/3 Pinned
                       </span>
@@ -2045,7 +2045,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                     {/* Search Reviews Input */}
                     <div className="relative flex-1 min-w-[180px]">
-                      <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <Search className="w-3.5 h-3.5 text-zinc-200 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
                         value={reviewsSearchQuery}
@@ -2056,7 +2056,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       {reviewsSearchQuery && (
                         <button
                           onClick={() => setReviewsSearchQuery('')}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs font-bold"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white text-xs font-bold"
                         >
                           ✕
                         </button>
@@ -2070,7 +2070,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           key={f}
                           onClick={() => setReviewsFilter(f)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            reviewsFilter === f ? 'bg-white text-zinc-950 shadow-xs font-extrabold' : 'text-zinc-400 hover:text-white'
+                            reviewsFilter === f ? 'bg-white text-zinc-950 shadow-xs font-extrabold' : 'text-zinc-200 hover:text-white'
                           }`}
                         >
                           {f === 'all' ? 'All' : `${f} Stars`}
@@ -2108,7 +2108,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             isPinned 
                               ? 'border-zinc-700 bg-zinc-900 text-white' 
                               : isHidden 
-                              ? 'border-zinc-800 opacity-60 bg-zinc-900/60 text-zinc-400' 
+                              ? 'border-zinc-800 opacity-60 bg-zinc-900/60 text-zinc-200' 
                               : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-white'
                           }`}
                         >
@@ -2129,7 +2129,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-3 text-white">
                                 <div className="flex items-center justify-between gap-1">
                                   <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 border border-white/20">
-                                    <Video className="w-2.5 h-2.5 text-zinc-300" /> 0:{video.durationSeconds || 15}
+                                    <Video className="w-2.5 h-2.5 text-zinc-200" /> 0:{video.durationSeconds || 15}
                                   </span>
                                 </div>
 
@@ -2166,7 +2166,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                    onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
  <div className="min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="font-bold text-sm text-white group-hover:text-zinc-300 transition-colors truncate">
+                                      <span className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
                                         {video.author?.name || 'Customer Review'}
                                       </span>
                                       {isPinned && (
@@ -2175,12 +2175,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                         </span>
                                       )}
                                       {isHidden && (
-                                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] font-bold flex items-center gap-1 border border-zinc-700">
+                                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-bold flex items-center gap-1 border border-zinc-700">
                                           <EyeOff className="w-2.5 h-2.5" /> Hidden
                                         </span>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-400 flex-wrap">
+                                    <div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-200 flex-wrap">
                                       <div className="flex text-white">
                                         {Array.from({ length: video.rating || 5 }).map((_, i) => (
                                           <Star key={i} className="w-3.5 h-3.5 fill-current" />
@@ -2208,21 +2208,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
                                       isPinned
                                         ? 'bg-white text-zinc-950 border-white shadow-2xs font-bold'
-                                        : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+                                        : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800'
                                     }`}
                                     title={isPinned ? 'Unpin from website widget' : 'Pin to top of website widget (Max 3)'}
                                   >
-                                    <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current text-zinc-950' : 'text-zinc-400'}`} />
+                                    <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current text-zinc-950' : 'text-zinc-200'}`} />
                                     <span>{isPinned ? 'Pinned' : 'Pin to Widget'}</span>
                                   </button>
 
                                   <button
                                     type="button"
                                     onClick={() => toggleHideVideo(video.id)}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800"
+                                    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800"
                                     title={isHidden ? 'Restore to website widget' : 'Hide from website widget'}
                                   >
-                                    {isHidden ? <Eye className="w-3.5 h-3.5 text-zinc-400" /> : <EyeOff className="w-3.5 h-3.5 text-zinc-400" />}
+                                    {isHidden ? <Eye className="w-3.5 h-3.5 text-zinc-200" /> : <EyeOff className="w-3.5 h-3.5 text-zinc-200" />}
                                     <span>{isHidden ? 'Unhide' : 'Hide'}</span>
                                   </button>
 
@@ -2243,8 +2243,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                               {/* AI Transcribed Audio Caption Block */}
                               <div className="bg-zinc-900 rounded-2xl p-3.5 border border-zinc-800 space-y-1">
-                                <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-zinc-400 uppercase tracking-wider">
-                                  <Sparkles className="w-3 h-3 text-zinc-400" />
+                                <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-zinc-200 uppercase tracking-wider">
+                                  <Sparkles className="w-3 h-3 text-zinc-200" />
                                   <span>Transcript</span>
                                 </div>
                                 <p className="text-xs text-zinc-200 leading-relaxed font-medium">
@@ -2266,20 +2266,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                           setReplyText(ownerReplies[video.id]);
                                           setActiveReplyId(video.id);
                                         }}
-                                        className="text-[11px] font-semibold text-zinc-400 hover:text-white cursor-pointer"
+                                        className="text-[11px] font-semibold text-zinc-200 hover:text-white cursor-pointer"
                                       >
                                         Edit
                                       </button>
                                       <span className="text-zinc-600">•</span>
                                       <button
                                         onClick={() => handleDeleteReply(video.id)}
-                                        className="text-[11px] font-semibold text-zinc-400 hover:text-red-400 cursor-pointer"
+                                        className="text-[11px] font-semibold text-zinc-200 hover:text-red-400 cursor-pointer"
                                       >
                                         Delete
                                       </button>
                                     </div>
                                   </div>
-                                  <p className="text-xs text-zinc-300 leading-relaxed">
+                                  <p className="text-xs text-zinc-200 leading-relaxed">
                                     {ownerReplies[video.id]}
                                   </p>
                                 </div>
@@ -2294,14 +2294,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       <button
                                         type="button"
                                         onClick={() => setReplyText("Thank you so much for the wonderful review! We're glad you enjoyed your experience.")}
-                                        className="px-2 py-0.5 rounded-md bg-zinc-800 border border-zinc-700 text-[10.5px] text-zinc-300 hover:text-white hover:border-zinc-500 cursor-pointer"
+                                        className="px-2 py-0.5 rounded-md bg-zinc-800 border border-zinc-700 text-[10.5px] text-zinc-200 hover:text-white hover:border-zinc-500 cursor-pointer"
                                       >
                                         + Thank diner
                                       </button>
                                       <button
                                         type="button"
                                         onClick={() => setReplyText("Thanks for visiting! Hope to welcome you back again very soon.")}
-                                        className="px-2 py-0.5 rounded-md bg-zinc-800 border border-zinc-700 text-[10.5px] text-zinc-300 hover:text-white hover:border-zinc-500 cursor-pointer"
+                                        className="px-2 py-0.5 rounded-md bg-zinc-800 border border-zinc-700 text-[10.5px] text-zinc-200 hover:text-white hover:border-zinc-500 cursor-pointer"
                                       >
                                         + Invite back
                                       </button>
@@ -2320,14 +2320,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                         setActiveReplyId(null);
                                         setReplyText('');
                                       }}
-                                      className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                      className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
                                     >
                                       Cancel
                                     </button>
                                     <button
                                       onClick={() => handleSaveReply(video.id)}
                                       disabled={!replyText.trim()}
-                                      className="px-4 py-1.5 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                                      className="px-4 py-1.5 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-200 text-zinc-950 text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                                     >
                                       <Send className="w-3.5 h-3.5" /> Publish Response
                                     </button>
@@ -2344,9 +2344,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       [video.id]: !prev[video.id]
                                     }));
                                   }}
-                                  className="text-xs font-semibold text-zinc-400 hover:text-white flex items-center gap-1.5 cursor-pointer transition-colors"
+                                  className="text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1.5 cursor-pointer transition-colors"
                                 >
-                                  <MessageCircle className="w-3.5 h-3.5 text-zinc-500" />
+                                  <MessageCircle className="w-3.5 h-3.5 text-zinc-200" />
                                   <span>
                                     {expandedCommentsMap[video.id] ? 'Hide' : 'View'} Customer Comments ({video.commentsCount || video.comments?.length || 0})
                                   </span>
@@ -2355,7 +2355,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 {expandedCommentsMap[video.id] && (
                                   <div className="mt-3 space-y-3 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
                                     {(!video.comments || video.comments.length === 0) ? (
-                                      <p className="text-xs text-zinc-400 italic">No customer comments yet on this review.</p>
+                                      <p className="text-xs text-zinc-200 italic">No customer comments yet on this review.</p>
                                     ) : (
                                       video.comments.map((comment) => (
                                         <div key={comment.id} className="flex items-start gap-3 bg-zinc-950 p-3 rounded-xl border border-zinc-800 shadow-2xs">
@@ -2370,12 +2370,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                               <div className="flex items-center gap-1.5">
                                                 <span className="text-xs font-bold text-zinc-200">{comment.authorName}</span>
                                                 {comment.isOwner && (
-                                                  <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-zinc-700">Owner</span>
+                                                  <span className="bg-zinc-800 text-zinc-200 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-zinc-700">Owner</span>
                                                 )}
                                               </div>
-                                              <span className="text-[10px] text-zinc-500">{comment.createdAt || 'Recently'}</span>
+                                              <span className="text-[10px] text-zinc-200">{comment.createdAt || 'Recently'}</span>
                                             </div>
-                                            <p className="text-xs text-zinc-300 leading-relaxed">{comment.text}</p>
+                                            <p className="text-xs text-zinc-200 leading-relaxed">{comment.text}</p>
                                           </div>
                                         </div>
                                       ))
@@ -2399,20 +2399,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <div className="px-6 py-5 border-b border-zinc-800 md:border-zinc-800 flex items-center justify-between shrink-0">
                   <div>
                     <h2 className="text-xl font-black text-white md:text-white">Direct Messages</h2>
-                    <p className="text-sm text-zinc-400 md:text-zinc-400 mt-0.5">Respond to inquiries from customers</p>
+                    <p className="text-sm text-zinc-200 md:text-zinc-200 mt-0.5">Respond to inquiries from customers</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 text-zinc-400 md:text-zinc-400 text-xs font-bold">
+                    <span className="px-2.5 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 text-zinc-200 md:text-zinc-200 text-xs font-bold">
                       0 Unread
                     </span>
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center py-20 px-6 text-center">
                   <div className="w-16 h-16 rounded-full bg-zinc-900 md:bg-zinc-950 flex items-center justify-center mb-4 border border-zinc-800 md:border-zinc-800">
-                    <MessageSquare className="w-8 h-8 text-zinc-300 md:text-zinc-400" />
+                    <MessageSquare className="w-8 h-8 text-zinc-200 md:text-zinc-200" />
                   </div>
                   <h3 className="text-lg font-bold text-white md:text-white mb-1">Your inbox is empty</h3>
-                  <p className="text-sm text-zinc-400 md:text-zinc-400 max-w-sm">
+                  <p className="text-sm text-zinc-200 md:text-zinc-200 max-w-sm">
                     When customers send you direct messages from your Yoouz listing, they will appear here.
                   </p>
                 </div>
@@ -2425,10 +2425,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <div className="px-6 py-5 border-b border-zinc-800 md:border-zinc-800 flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-black text-white md:text-white">Followers Directory</h2>
-                    <p className="text-sm text-zinc-400 md:text-zinc-400 mt-0.5">Users who saved your business to their favorites</p>
+                    <p className="text-sm text-zinc-200 md:text-zinc-200 mt-0.5">Users who saved your business to their favorites</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1.5 rounded-xl bg-zinc-900 md:bg-zinc-900 text-zinc-200 md:text-zinc-400 text-sm font-bold">
+                    <span className="px-3 py-1.5 rounded-xl bg-zinc-900 md:bg-zinc-900 text-zinc-200 md:text-zinc-200 text-sm font-bold">
                       0 Total
                     </span>
                   </div>
@@ -2436,10 +2436,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 
                 <div className="p-12 flex flex-col items-center justify-center text-center">
                   <div className="w-16 h-16 rounded-full bg-zinc-900 md:bg-zinc-950 flex items-center justify-center mb-4 border border-zinc-800 md:border-zinc-800">
-                    <Users className="w-8 h-8 text-zinc-300 md:text-zinc-400" />
+                    <Users className="w-8 h-8 text-zinc-200 md:text-zinc-200" />
                   </div>
                   <h3 className="text-lg font-bold text-white md:text-white mb-1">No followers yet</h3>
-                  <p className="text-sm text-zinc-400 md:text-zinc-400 max-w-sm mb-6">
+                  <p className="text-sm text-zinc-200 md:text-zinc-200 max-w-sm mb-6">
                     As your business grows on Yoouz, users who save your business will appear here. Keep your profile active to attract more followers!
                   </p>
                   <button onClick={() => setActiveTab('profile')} className="px-5 py-2.5 rounded-xl bg-zinc-900 md:bg-zinc-900 text-white text-sm font-bold hover:bg-black md:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer">
@@ -2457,11 +2457,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <div>
                       <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
                         <span>Official Yoouz Video Reviews Website Embed</span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-xs font-extrabold uppercase tracking-wide">
+                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-xs font-extrabold uppercase tracking-wide">
                           Pro Feature
                         </span>
                       </h2>
-                      <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                      <p className="text-xs text-zinc-200 mt-1 leading-relaxed">
                         Embed authentic, high-converting video reviews directly on your website or reservation page with automatic real-time sync.
                       </p>
                     </div>
@@ -2470,7 +2470,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <Pin className="w-3.5 h-3.5 fill-current text-white" /> {pinnedVideoIds.length}/3 Pinned
                       </span>
                       {hiddenVideoIds.length > 0 && (
-                        <span className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-xs font-bold flex items-center gap-1.5">
+                        <span className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-bold flex items-center gap-1.5">
                           <EyeOff className="w-3.5 h-3.5" /> {hiddenVideoIds.length} Hidden
                         </span>
                       )}
@@ -2483,7 +2483,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <div className="bg-zinc-950 rounded-2xl p-4 border border-zinc-800 space-y-4">
                         {/* Widget Layout Style */}
                         <div>
-                          <label className="text-xs font-bold text-zinc-300 block mb-2">Widget Layout</label>
+                          <label className="text-xs font-bold text-zinc-200 block mb-2">Widget Layout</label>
                           <div className="grid grid-cols-3 gap-2">
                             {[
                               { id: 'grid', label: '3-Col Grid' },
@@ -2496,7 +2496,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 className={`py-2 px-1 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer ${
                                   embedLayout === l.id 
                                     ? 'bg-white text-zinc-950 border-white shadow-xs font-extrabold' 
-                                    : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-white'
+                                    : 'bg-zinc-900 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:text-white'
                                 }`}
                               >
                                 {l.label}
@@ -2507,7 +2507,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                         {/* Widget Theme Selector */}
                         <div>
-                          <label className="text-xs font-bold text-zinc-300 block mb-2">Widget Theme</label>
+                          <label className="text-xs font-bold text-zinc-200 block mb-2">Widget Theme</label>
                           <div className="grid grid-cols-3 gap-2">
                             {[
                               { id: 'minimal_dark', label: 'Dark Mode' },
@@ -2520,7 +2520,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 className={`py-2 px-1 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer ${
                                   embedTheme === t.id 
                                     ? 'bg-white text-zinc-950 border-white shadow-xs font-extrabold' 
-                                    : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-white'
+                                    : 'bg-zinc-900 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:text-white'
                                 }`}
                               >
                                 {t.label}
@@ -2531,9 +2531,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                         {/* Brand Accent Color */}
                         <div>
-                          <label className="text-xs font-bold text-zinc-300 block mb-2 flex items-center justify-between">
+                          <label className="text-xs font-bold text-zinc-200 block mb-2 flex items-center justify-between">
                             <span>Widget Button Style</span>
-                            <span className="text-[10px] text-zinc-400 font-normal uppercase tracking-wider">Monochrome</span>
+                            <span className="text-[10px] text-zinc-200 font-normal uppercase tracking-wider">Monochrome</span>
                           </label>
                           <div className="flex items-center gap-2 flex-wrap">
                             {[
@@ -2558,9 +2558,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                         {/* Minimum Star Rating Filter */}
                         <div className="pt-2 border-t border-zinc-800">
-                          <label className="text-xs font-bold text-zinc-300 block mb-2 flex items-center justify-between">
+                          <label className="text-xs font-bold text-zinc-200 block mb-2 flex items-center justify-between">
                             <span>Show Reviews By Star Rating</span>
-                            <span className="text-[10px] text-zinc-400 font-normal">Auto-filter</span>
+                            <span className="text-[10px] text-zinc-200 font-normal">Auto-filter</span>
                           </label>
                           <select
                             value={embedStarFilter}
@@ -2577,7 +2577,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                         {/* Brand & Badge Options */}
                         <div className="space-y-2 pt-2 border-t border-zinc-800">
-                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-300 cursor-pointer">
+                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-200 cursor-pointer">
                             <span className="flex items-center gap-1.5">
                               <Star className="w-3.5 h-3.5 text-white fill-white" />
                               Display Yoouz Brand Trust Header
@@ -2590,7 +2590,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             />
                           </label>
 
-                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-300 cursor-pointer">
+                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-200 cursor-pointer">
                             <span>Display Star Score Summary</span>
                             <input
                               type="checkbox"
@@ -2600,7 +2600,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             />
                           </label>
 
-                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-300 cursor-pointer">
+                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-200 cursor-pointer">
                             <span className="flex items-center gap-1.5">
                               <BadgeCheck className="w-3.5 h-3.5 text-white" />
                               Display Verified Business Badge
@@ -2621,7 +2621,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <Pin className="w-3.5 h-3.5 text-white" />
                               Curate Pinned Reviews
                             </span>
-                            <span className="text-[10px] text-zinc-300 font-bold bg-zinc-800 px-1.5 py-0.5 rounded-md border border-zinc-700">
+                            <span className="text-[10px] text-zinc-200 font-bold bg-zinc-800 px-1.5 py-0.5 rounded-md border border-zinc-700">
                               {pinnedVideoIds.length}/3 Pinned
                             </span>
                           </div>
@@ -2641,8 +2641,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     isPinned 
                                       ? 'bg-zinc-800 border-zinc-600 text-white font-bold' 
                                       : isHidden 
-                                      ? 'bg-zinc-900 border-zinc-800 text-zinc-400 opacity-60' 
-                                      : 'bg-zinc-950 border-zinc-800 text-zinc-300'
+                                      ? 'bg-zinc-900 border-zinc-800 text-zinc-200 opacity-60' 
+                                      : 'bg-zinc-950 border-zinc-800 text-zinc-200'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0">
@@ -2661,7 +2661,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       className={`p-1 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
                                         isPinned
                                           ? 'bg-white text-zinc-950'
-                                          : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400'
+                                          : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200'
                                       }`}
                                       title={isPinned ? 'Unpin video' : 'Pin video (Max 3)'}
                                     >
@@ -2673,7 +2673,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       className={`p-1 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
                                         isHidden
                                           ? 'bg-zinc-800 text-zinc-200 border border-zinc-700'
-                                          : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400'
+                                          : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200'
                                       }`}
                                       title={isHidden ? 'Unhide video' : 'Hide from widget'}
                                     >
@@ -2689,13 +2689,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                       {/* Code Snippet Box */}
                       <div className="bg-zinc-900 rounded-2xl p-4 text-white font-mono text-xs space-y-3 shadow-md border border-zinc-800">
-                        <div className="flex items-center justify-between text-zinc-400 text-[11px]">
+                        <div className="flex items-center justify-between text-zinc-200 text-[11px]">
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
                               onClick={() => setEmbedFormat('script')}
                               className={`px-2 py-0.5 rounded-md text-[10px] font-sans font-bold cursor-pointer ${
-                                embedFormat === 'script' ? 'bg-white text-zinc-950' : 'bg-zinc-800 text-zinc-400'
+                                embedFormat === 'script' ? 'bg-white text-zinc-950' : 'bg-zinc-800 text-zinc-200'
                               }`}
                             >
                               JS Script Tag
@@ -2704,7 +2704,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               type="button"
                               onClick={() => setEmbedFormat('iframe')}
                               className={`px-2 py-0.5 rounded-md text-[10px] font-sans font-bold cursor-pointer ${
-                                embedFormat === 'iframe' ? 'bg-white text-zinc-950' : 'bg-zinc-800 text-zinc-400'
+                                embedFormat === 'iframe' ? 'bg-white text-zinc-950' : 'bg-zinc-800 text-zinc-200'
                               }`}
                             >
                               iFrame Tag
@@ -2712,14 +2712,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                           <button
                             onClick={copyEmbedCode}
-                            className="flex items-center gap-1 text-white hover:text-zinc-300 transition-colors cursor-pointer font-sans font-bold"
+                            className="flex items-center gap-1 text-white hover:text-zinc-200 transition-colors cursor-pointer font-sans font-bold"
                           >
                             {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-200" /> : <Copy className="w-3.5 h-3.5" />}
                             <span>{isCodeCopied ? 'Copied!' : 'Copy Code'}</span>
                           </button>
                         </div>
 
-                        <div className="overflow-x-auto text-[11px] text-zinc-300 py-1 leading-relaxed">
+                        <div className="overflow-x-auto text-[11px] text-zinc-200 py-1 leading-relaxed">
                           {embedFormat === 'script' ? (
                             <code>{`<div id="yoouz-widget"\n  data-place-id="${selectedPlaceId}"\n  data-theme="${embedTheme}"\n  data-layout="${embedLayout}"\n  data-accent="${embedAccentColor}"\n  data-star-filter="${embedStarFilter}"\n  data-show-stars="${embedShowStars}"\n  data-show-verified="${embedShowVerifiedBadge}"\n  data-show-trust-header="${embedShowTrustHeader}"${pinnedVideoIds.length > 0 ? `\n  data-pinned-ids="${pinnedVideoIds.join(',')}"` : ''}${hiddenVideoIds.length > 0 ? `\n  data-hidden-ids="${hiddenVideoIds.join(',')}"` : ''}>\n</div>\n<script src="https://cdn.yoouz.com/embed/v2.js" async defer></script>`}</code>
                           ) : (
@@ -2733,13 +2733,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <div className="lg:col-span-2 bg-zinc-950 rounded-3xl p-6 border border-zinc-800 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <Globe className="w-3.5 h-3.5 text-zinc-300" />
+                          <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+                            <Globe className="w-3.5 h-3.5 text-zinc-200" />
                             Live External Website Preview ({embedLayout.toUpperCase()} MODE)
                           </span>
                           <div className="flex items-center gap-2">
                             {pinnedVideoIds.length > 0 && (
-                              <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-bold border border-zinc-700">
+                              <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-bold border border-zinc-700">
                                 📌 {pinnedVideoIds.length} Pinned First
                               </span>
                             )}
@@ -2785,8 +2785,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                         </div>
                                       </div>
                                     )}
-                                    <span className="text-zinc-500">•</span>
-                                    <span className="text-zinc-400 font-medium">
+                                    <span className="text-zinc-200">•</span>
+                                    <span className="text-zinc-200 font-medium">
                                       Based on <strong className="text-white">{placeVideos.length} Video Reviews</strong> on <strong className="text-white">Yoouz</strong>
                                     </span>
                                   </div>
@@ -2821,27 +2821,27 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     {embedShowVerifiedBadge && <BadgeCheck className="w-3.5 h-3.5 text-white" />}
                                   </div>
                                   {embedShowStars && (
-                                    <div className="text-[11px] text-zinc-300 flex items-center gap-1 font-bold">
+                                    <div className="text-[11px] text-zinc-200 flex items-center gap-1 font-bold">
                                       ★★★★★ <span>4.9 ({placeVideos.length} Video Reviews)</span>
                                     </div>
                                   )}
                                 </div>
                               </div>
-                              <span className="text-[10px] text-zinc-500 font-mono">powered by yoouz</span>
+                              <span className="text-[10px] text-zinc-200 font-mono">powered by yoouz</span>
                             </div>
                           )}
 
                           {/* Video Simulation Display according to embedLayout */}
                           {displayableWidgetVideos.length === 0 ? (
-                            <div className="py-12 text-center text-zinc-500 space-y-2">
-                              <AlertCircle className="w-8 h-8 mx-auto text-zinc-400" />
-                              <p className="text-xs font-semibold text-zinc-400">No video reviews match the selected star filter.</p>
-                              <p className="text-[11px] text-zinc-500">Try switching the rating filter back to "All Star Ratings".</p>
+                            <div className="py-12 text-center text-zinc-200 space-y-2">
+                              <AlertCircle className="w-8 h-8 mx-auto text-zinc-200" />
+                              <p className="text-xs font-semibold text-zinc-200">No video reviews match the selected star filter.</p>
+                              <p className="text-[11px] text-zinc-200">Try switching the rating filter back to "All Star Ratings".</p>
                             </div>
                           ) : embedLayout === 'badge' ? (
                             /* CORNER FLOATING BADGE PREVIEW */
                             <div className="relative bg-zinc-900 rounded-2xl p-8 border border-dashed border-zinc-700 flex flex-col items-center justify-center min-h-[220px]">
-                              <span className="text-xs text-zinc-400 font-semibold mb-2">[ Simulated Merchant Website Page ]</span>
+                              <span className="text-xs text-zinc-200 font-semibold mb-2">[ Simulated Merchant Website Page ]</span>
                               <div className="absolute bottom-4 right-4 bg-zinc-950 rounded-2xl border border-zinc-800 text-white p-3 shadow-xl flex items-center gap-3 animate-bounce cursor-pointer hover:scale-105 transition-transform" onClick={() => setActiveVideoModal(displayableWidgetVideos[0])}>
                                 <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0">
                                   <img src={displayableWidgetVideos[0].thumbnailUrl} alt="Review" className="w-full h-full object-cover" />
@@ -2851,7 +2851,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 </div>
                                 <div className="min-w-0 pr-2">
                                   <div className="text-xs font-bold text-white truncate">★ 4.9 Video Reviews</div>
-                                  <div className="text-[10px] text-zinc-400 truncate">Tap to watch {displayableWidgetVideos.length} reviews</div>
+                                  <div className="text-[10px] text-zinc-200 truncate">Tap to watch {displayableWidgetVideos.length} reviews</div>
                                 </div>
                               </div>
                             </div>
@@ -2888,7 +2888,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       <span className="text-[10px] font-bold leading-tight line-clamp-1">
                                         {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
                                       </span>
-                                      <span className="text-[9px] text-zinc-300">
+                                      <span className="text-[9px] text-zinc-200">
                                         by {v.author?.name || 'Verified Customer'}
                                       </span>
                                     </div>
@@ -2935,7 +2935,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       <span className="text-[10px] font-bold leading-tight line-clamp-1">
                                         {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
                                       </span>
-                                      <span className="text-[9px] text-zinc-300">
+                                      <span className="text-[9px] text-zinc-200">
                                         by {v.author?.name || 'Verified Customer'}
                                       </span>
                                     </div>
@@ -2953,8 +2953,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
                       </div>
 
-                      <div className="text-[11px] text-zinc-400 mt-6 text-center flex items-center justify-center gap-1.5">
-                        <Sparkles className="w-3 h-3 text-zinc-300" />
+                      <div className="text-[11px] text-zinc-200 mt-6 text-center flex items-center justify-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-zinc-200" />
                         <span>Click any video thumbnail in the live preview to watch the full HD video review player.</span>
                       </div>
                     </div>
@@ -2972,13 +2972,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-extrabold uppercase tracking-wider">
+                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-extrabold uppercase tracking-wider">
                           Google Business Partner Tools
                         </span>
-                        <span className="text-zinc-400 text-xs">• Real-Time Sync Active</span>
+                        <span className="text-zinc-200 text-xs">• Real-Time Sync Active</span>
                       </div>
                       <h2 className="text-2xl font-black text-white tracking-tight">Merchant QR & Customer Review Campaign Studio</h2>
-                      <p className="text-xs text-zinc-300 mt-1 max-w-2xl leading-relaxed">
+                      <p className="text-xs text-zinc-200 mt-1 max-w-2xl leading-relaxed">
                         Design print-ready acrylic table tents, window stickers, and automated review invitations that lead guests straight to your 1-tap video review recorder.
                       </p>
                     </div>
@@ -2993,7 +2993,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       }}
                       className="px-4 py-2.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shrink-0"
                     >
-                      {qrLinkCopied ? <Check className="w-4 h-4 text-zinc-200" /> : <Copy className="w-4 h-4 text-zinc-300" />}
+                      {qrLinkCopied ? <Check className="w-4 h-4 text-zinc-200" /> : <Copy className="w-4 h-4 text-zinc-200" />}
                       <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Review Link'}</span>
                     </button>
                   </div>
@@ -3011,10 +3011,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                           <div>
                             <h2>Table QR Standee Studio</h2>
-                            <p className="text-[11px] text-zinc-400 font-normal">Physical in-venue print collateral</p>
+                            <p className="text-[11px] text-zinc-200 font-normal">Physical in-venue print collateral</p>
                           </div>
                         </div>
-                        <span className="text-[10px] font-bold text-zinc-400 bg-zinc-800 px-2 py-1 rounded-md border border-zinc-700">
+                        <span className="text-[10px] font-bold text-zinc-200 bg-zinc-800 px-2 py-1 rounded-md border border-zinc-700">
                           Format: {qrStandeeStyle.replace('_', ' ').toUpperCase()}
                         </span>
                       </div>
@@ -3023,7 +3023,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <div className="space-y-3">
                         {/* Style Format Switcher */}
                         <div>
-                          <label className="block text-xs font-bold text-zinc-300 mb-1.5">Standee Format</label>
+                          <label className="block text-xs font-bold text-zinc-200 mb-1.5">Standee Format</label>
                           <div className="grid grid-cols-3 gap-2">
                             {[
                               { id: 'acrylic_standee', label: 'Table Tent (A6)', icon: '📐' },
@@ -3037,7 +3037,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
                                   qrStandeeStyle === s.id
                                     ? 'bg-white text-zinc-950 border-white shadow-xs font-extrabold'
-                                    : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-white'
+                                    : 'bg-zinc-950 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:text-white'
                                 }`}
                               >
                                 <span>{s.icon}</span>
@@ -3050,7 +3050,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         {/* Heading & Table Label Text */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-bold text-zinc-300 mb-1">Printed Callout Heading</label>
+                            <label className="block text-xs font-bold text-zinc-200 mb-1">Printed Callout Heading</label>
                             <input
                               type="text"
                               value={qrCustomHeading}
@@ -3059,7 +3059,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-bold text-zinc-300 mb-1">Table / Zone Label (Optional)</label>
+                            <label className="block text-xs font-bold text-zinc-200 mb-1">Table / Zone Label (Optional)</label>
                             <input
                               type="text"
                               value={qrTableLabel}
@@ -3073,7 +3073,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                       {/* Live Visual Standee Mockup Preview */}
                       <div className="relative pt-2">
-                        <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center mb-2">
+                        <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider text-center mb-2">
                           Print Preview ({qrStandeeStyle.replace('_', ' ')})
                         </div>
 
@@ -3083,7 +3083,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <div className="w-20 h-1.5 bg-zinc-700 rounded-full mb-4 shadow-inner" />
 
                             {qrTableLabel && (
-                              <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[9px] font-extrabold uppercase border border-zinc-700">
+                              <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[9px] font-extrabold uppercase border border-zinc-700">
                                 {qrTableLabel}
                               </div>
                             )}
@@ -3100,10 +3100,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   <span key={idx}>{s}</span>
                                 ))}
                               </div>
-                              <span className="text-zinc-400 text-[10px] font-normal">({placeVideos.length} Video Reviews)</span>
+                              <span className="text-zinc-200 text-[10px] font-normal">({placeVideos.length} Video Reviews)</span>
                             </div>
 
-                            <p className="text-[11px] text-zinc-400 max-w-[200px] mb-3 leading-snug">
+                            <p className="text-[11px] text-zinc-200 max-w-[200px] mb-3 leading-snug">
                               Scan with your camera app to record your 1-tap video review
                             </p>
 
@@ -3122,7 +3122,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               </div>
                             </div>
 
-                            <span className="text-[10px] font-extrabold text-zinc-300 mt-4 uppercase tracking-wider bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+                            <span className="text-[10px] font-extrabold text-zinc-200 mt-4 uppercase tracking-wider bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
                               {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
                             </span>
                           </div>
@@ -3131,7 +3131,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         {qrStandeeStyle === 'decal_badge' && (
                           <div className="w-64 h-64 mx-auto rounded-full bg-zinc-900 border border-zinc-700 p-1 shadow-2xl flex flex-col items-center justify-center text-center text-white relative">
                             <div className="w-full h-full rounded-full border-2 border-dashed border-zinc-700 p-4 flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-xs">
-                              <span className="text-[10px] font-black tracking-widest uppercase text-zinc-300 mb-1">{currentPlace.name}</span>
+                              <span className="text-[10px] font-black tracking-widest uppercase text-zinc-200 mb-1">{currentPlace.name}</span>
                               
                               <div className="bg-white p-2.5 rounded-2xl shadow-xl">
                                 <QRCodeCanvas
@@ -3143,7 +3143,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 />
                               </div>
 
-                              <span className="text-[9px] font-bold text-zinc-300 mt-2 max-w-[150px] leading-tight">
+                              <span className="text-[9px] font-bold text-zinc-200 mt-2 max-w-[150px] leading-tight">
                                 {qrCustomHeading}
                               </span>
                             </div>
@@ -3152,7 +3152,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                         {qrStandeeStyle === 'receipt_card' && (
                           <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 max-w-sm mx-auto shadow-xs font-mono text-zinc-200 text-center space-y-2">
-                            <div className="text-xs font-bold tracking-widest uppercase border-b border-dashed border-zinc-800 pb-2 text-zinc-300">
+                            <div className="text-xs font-bold tracking-widest uppercase border-b border-dashed border-zinc-800 pb-2 text-zinc-200">
                               *** THANK YOU FOR VISITING {currentPlace.name.toUpperCase()} ***
                             </div>
                             <div className="flex items-center justify-center gap-4 py-1">
@@ -3169,7 +3169,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 <div className="text-[11px] font-bold text-white leading-tight">
                                   {qrCustomHeading}
                                 </div>
-                                <div className="text-[9px] text-zinc-400 mt-1">
+                                <div className="text-[9px] text-zinc-200 mt-1">
                                   Scan QR on receipt to publish your video review.
                                 </div>
                               </div>
@@ -3195,7 +3195,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         onClick={() => setShowPrintModal(true)}
                         className="py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-700"
                       >
-                        <Printer className="w-4 h-4 text-zinc-300" />
+                        <Printer className="w-4 h-4 text-zinc-200" />
                         Print Standee Sheet (PDF)
                       </button>
                     </div>
@@ -3211,45 +3211,45 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                           <div>
                             <h2>Physical Review Kit</h2>
-                            <p className="text-[11px] text-zinc-400 font-normal">All-in-one offline marketing bundle</p>
+                            <p className="text-[11px] text-zinc-200 font-normal">All-in-one offline marketing bundle</p>
                           </div>
                         </div>
 
                         {/* Status badge */}
-                        <span className="text-[10px] font-extrabold text-zinc-300 bg-zinc-800 border border-zinc-700 px-2.5 py-1 rounded-full flex items-center gap-1">
-                          <Truck className="w-3.5 h-3.5 text-zinc-300" /> Free Shipping
+                        <span className="text-[10px] font-extrabold text-zinc-200 bg-zinc-800 border border-zinc-700 px-2.5 py-1 rounded-full flex items-center gap-1">
+                          <Truck className="w-3.5 h-3.5 text-zinc-200" /> Free Shipping
                         </span>
                       </div>
 
-                      <p className="text-xs text-zinc-400 leading-relaxed">
+                      <p className="text-xs text-zinc-200 leading-relaxed">
                         Top venues capture over 85% of their reviews directly in-person. Instead of risky spam emails, display high-contrast physical prompts so customers scan and record before they leave.
                       </p>
 
                       {/* Unified Bundle Overview Card */}
                       <div className="p-5 rounded-2xl border border-zinc-800 bg-zinc-950 relative overflow-hidden">
                         <div className="flex items-center justify-between mb-3.5">
-                          <span className="text-[10px] bg-zinc-800 text-zinc-300 font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider border border-zinc-700">
+                          <span className="text-[10px] bg-zinc-800 text-zinc-200 font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider border border-zinc-700">
                             Complete In-Venue Suite
                           </span>
-                          <span className="text-[10px] text-zinc-400 font-medium">Included for Pro & Premium</span>
+                          <span className="text-[10px] text-zinc-200 font-medium">Included for Pro & Premium</span>
                         </div>
 
                         <h3 className="font-extrabold text-white text-sm mb-3">What's in your box:</h3>
                         
                         <ul className="space-y-2.5">
-                          <li className="flex items-start gap-2.5 text-xs text-zinc-300">
+                          <li className="flex items-start gap-2.5 text-xs text-zinc-200">
                             <span className="text-sm shrink-0 leading-none">📐</span>
                             <div>
                               <strong className="font-bold text-white">2x Acrylic Table Stands:</strong> Heavy-duty, double-sided displays for host stands, counters, or dining tables.
                             </div>
                           </li>
-                          <li className="flex items-start gap-2.5 text-xs text-zinc-300">
+                          <li className="flex items-start gap-2.5 text-xs text-zinc-200">
                             <span className="text-sm shrink-0 leading-none">🏷️</span>
                             <div>
                               <strong className="font-bold text-white">4x Window & Door Stickers:</strong> Weatherproof, adhesive vinyl decals with high-visibility QR prompts.
                             </div>
                           </li>
-                          <li className="flex items-start gap-2.5 text-xs text-zinc-300">
+                          <li className="flex items-start gap-2.5 text-xs text-zinc-200">
                             <span className="text-sm shrink-0 leading-none">⚡</span>
                             <div>
                               <strong className="font-bold text-white">1x Smart NFC Fast Tap Plate:</strong> High-tech embedded microchip plate. Guests just tap their phone to instantly open the recorder.
@@ -3262,11 +3262,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3.5">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="sm:col-span-2">
-                            <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                            <label className="block text-[10px] font-extrabold text-zinc-200 uppercase tracking-wider mb-1">
                               Shipping Business Address
                             </label>
                             <div className="relative">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                              <MapPin className="w-3.5 h-3.5 text-zinc-200 absolute left-3 top-1/2 -translate-y-1/2" />
                               <input
                                 type="text"
                                 value={shippingAddress}
@@ -3277,7 +3277,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             </div>
                           </div>
                           <div>
-                            <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                            <label className="block text-[10px] font-extrabold text-zinc-200 uppercase tracking-wider mb-1">
                               Quantity
                             </label>
                             <select
@@ -3298,7 +3298,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <CheckCircle2 className="w-4.5 h-4.5 text-zinc-200 shrink-0" />
                             <div>
                               <p className="leading-tight">Physical Kit Ordered Successfully!</p>
-                              <p className="text-[10px] font-normal text-zinc-400 mt-0.5">
+                              <p className="text-[10px] font-normal text-zinc-200 mt-0.5">
                                 Your custom branded QR & NFC kit will ship to <span className="underline">{shippingAddress}</span> in 3-5 business days. Tracking email sent!
                               </p>
                             </div>
@@ -3323,7 +3323,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           type="button"
                           onClick={() => handleOrderPhysicalKit('Full Complete Physical Kit')}
                           disabled={orderingKitType !== null || orderSubmitted}
-                          className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:bg-zinc-800 disabled:text-zinc-400"
+                          className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:bg-zinc-800 disabled:text-zinc-200"
                         >
                           {orderingKitType !== null ? (
                             <>
@@ -3351,11 +3351,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h2 className="text-xl font-extrabold text-white">Custom Video Call-To-Action (CTA) Studio</h2>
-                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-extrabold uppercase tracking-wider">
+                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-extrabold uppercase tracking-wider">
                           Universal Business Suite
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-400 max-w-2xl">
+                      <p className="text-xs text-zinc-200 max-w-2xl">
                         Overlay a high-converting, clickable action button on every video review filmed at your venue, hotel, service route, clinic, or online shop.
                       </p>
                     </div>
@@ -3394,7 +3394,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                                 ctaCategoryFilter === cat.id
                                   ? 'bg-white text-zinc-950 border-white shadow-2xs font-extrabold'
-                                  : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-white'
+                                  : 'bg-zinc-950 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:text-white'
                               }`}
                             >
                               {cat.label}
@@ -3457,11 +3457,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 className={`p-2.5 rounded-xl text-xs font-bold border text-left transition-all cursor-pointer flex flex-col justify-between ${
                                   ctaType === opt.id || ctaLabelCustom === opt.label
                                     ? 'bg-white text-zinc-950 border-white shadow-xs font-extrabold'
-                                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+                                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border-zinc-800'
                                 }`}
                               >
                                 <span className="line-clamp-1">{opt.label}</span>
-                                <span className={`text-[9px] font-normal capitalize mt-1 ${ctaType === opt.id || ctaLabelCustom === opt.label ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                                <span className={`text-[9px] font-normal capitalize mt-1 ${ctaType === opt.id || ctaLabelCustom === opt.label ? 'text-zinc-600' : 'text-zinc-200'}`}>
                                   {opt.category} preset
                                 </span>
                               </button>
@@ -3474,9 +3474,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
                             <span>2. Manual Button Label (Type Anything)</span>
-                            <span className="text-zinc-300 font-bold text-[10px] bg-zinc-800 px-2 py-0.5 rounded-md border border-zinc-700">Live Sync</span>
+                            <span className="text-zinc-200 font-bold text-[10px] bg-zinc-800 px-2 py-0.5 rounded-md border border-zinc-700">Live Sync</span>
                           </label>
-                          <span className="text-[10px] text-zinc-400 font-mono">
+                          <span className="text-[10px] text-zinc-200 font-mono">
                             {ctaLabelCustom.length}/35 chars
                           </span>
                         </div>
@@ -3491,7 +3491,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           placeholder="e.g. Call Emergency Plumber, Book Suite 20% Off, Get Estimate..."
                           className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-bold focus:outline-hidden focus:ring-1 focus:ring-zinc-700"
                         />
-                        <p className="text-[10px] text-zinc-400">
+                        <p className="text-[10px] text-zinc-200">
                           Type any custom wording for plumbers, hotels, consultants, or online stores. Updates smartphone preview live on the right.
                         </p>
                       </div>
@@ -3516,7 +3516,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
                                 ctaAccentColor.toLowerCase() === c.hex
                                   ? 'border-white ring-2 ring-zinc-600 bg-white text-zinc-950 font-extrabold shadow-2xs'
-                                  : 'border-zinc-800 hover:bg-zinc-800 text-zinc-400'
+                                  : 'border-zinc-800 hover:bg-zinc-800 text-zinc-200'
                               }`}
                             >
                               <span className="w-3.5 h-3.5 rounded-full border border-zinc-700 shadow-2xs" style={{ backgroundColor: c.hex }} />
@@ -3537,7 +3537,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               href={ctaUrl.startsWith('tel:') ? ctaUrl : (ctaUrl.startsWith('http') ? ctaUrl : `https://${ctaUrl}`)}
                               target={ctaUrl.startsWith('tel:') ? '_self' : '_blank'}
                               rel="noreferrer"
-                              className="text-[10px] font-bold text-zinc-300 hover:underline flex items-center gap-1"
+                              className="text-[10px] font-bold text-zinc-200 hover:underline flex items-center gap-1"
                             >
                               <span>Test Link</span>
                               <ExternalLink className="w-3 h-3" />
@@ -3556,7 +3556,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                           {/* Quick Append Route Helper Chips */}
                           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                            <span className="text-[10px] font-bold text-zinc-400">Quick URL Paths:</span>
+                            <span className="text-[10px] font-bold text-zinc-200">Quick URL Paths:</span>
                             {['/booking', '/quote', '/services', '/contact', '/rates', '/reserve', '/order', '/menu', '/shop'].map(path => (
                               <button
                                 key={path}
@@ -3569,7 +3569,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     setCtaUrl('https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com' + path);
                                   }
                                 }}
-                                className="px-2 py-0.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold cursor-pointer transition-colors border border-zinc-800"
+                                className="px-2 py-0.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold cursor-pointer transition-colors border border-zinc-800"
                               >
                                 + {path}
                               </button>
@@ -3606,8 +3606,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       {/* Preview Mode Switcher */}
                       <div className="flex items-center justify-between w-full mb-3">
                         <div className="flex items-center gap-2">
-                          <Smartphone className="w-4 h-4 text-zinc-300" />
-                          <span className="text-xs font-extrabold text-zinc-300 uppercase tracking-wider">
+                          <Smartphone className="w-4 h-4 text-zinc-200" />
+                          <span className="text-xs font-extrabold text-zinc-200 uppercase tracking-wider">
                             Interactive Feed Preview
                           </span>
                         </div>
@@ -3616,7 +3616,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             type="button"
                             onClick={() => setCtaPreviewMode('feed')}
                             className={`px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                              ctaPreviewMode === 'feed' ? 'bg-white text-zinc-950 font-extrabold' : 'text-zinc-400 hover:text-white'
+                              ctaPreviewMode === 'feed' ? 'bg-white text-zinc-950 font-extrabold' : 'text-zinc-200 hover:text-white'
                             }`}
                           >
                             Feed Video
@@ -3625,7 +3625,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             type="button"
                             onClick={() => setCtaPreviewMode('profile')}
                             className={`px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                              ctaPreviewMode === 'profile' ? 'bg-white text-zinc-950 font-extrabold' : 'text-zinc-400 hover:text-white'
+                              ctaPreviewMode === 'profile' ? 'bg-white text-zinc-950 font-extrabold' : 'text-zinc-200 hover:text-white'
                             }`}
                           >
                             Place Drawer
@@ -3694,7 +3694,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                               className={`w-2.5 h-2.5 ${
                                                 i < Math.round(previewRating)
                                                   ? "fill-white text-white drop-shadow-xs"
-                                                  : "fill-zinc-600/70 text-zinc-400/80"
+                                                  : "fill-zinc-600/70 text-zinc-200/80"
                                               }`}
                                             />
                                           ))}
@@ -3804,11 +3804,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       <span className="truncate">{currentPlace.name}</span>
                                       <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
                                     </h4>
-                                    <p className="text-[10px] text-zinc-400 truncate">{currentPlace.address}</p>
+                                    <p className="text-[10px] text-zinc-200 truncate">{currentPlace.address}</p>
                                     <div className="flex items-center gap-1 mt-1">
                                       <Star className="w-3 h-3 fill-white text-white" />
                                       <span className="text-[10px] font-bold text-zinc-200">4.9</span>
-                                      <span className="text-[9px] text-zinc-400">(24 verified videos)</span>
+                                      <span className="text-[9px] text-zinc-200">(24 verified videos)</span>
                                     </div>
                                   </div>
                                 </div>
@@ -3828,7 +3828,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     <span>{ctaLabelCustom || 'Book Service / Appointment'}</span>
                                     <ExternalLink className="w-3 h-3 opacity-80" />
                                   </button>
-                                  <span className="block text-[9px] text-zinc-400 text-center font-medium">
+                                  <span className="block text-[9px] text-zinc-200 text-center font-medium">
                                     Target: {ctaUrl.split('/')[2] || ctaUrl || 'your website'}
                                   </span>
                                 </div>
@@ -3842,7 +3842,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   <CheckCircle className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                                   <span className="truncate">Opening destination...</span>
                                 </div>
-                                <span className="text-[9px] font-mono text-zinc-400 shrink-0">200 OK</span>
+                                <span className="text-[9px] font-mono text-zinc-200 shrink-0">200 OK</span>
                               </div>
                             )}
 
@@ -3851,15 +3851,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       })()}
 
                       {/* Informational Guidance Box */}
-                      <div className="mt-4 p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 space-y-2.5 max-w-xs text-left shadow-lg">
+                      <div className="mt-4 p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-200 space-y-2.5 max-w-xs text-left shadow-lg">
                         <div className="font-bold text-white flex items-center gap-2 text-xs">
-                          <div className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center border border-zinc-700">
+                          <div className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-200 flex items-center justify-center border border-zinc-700">
                             <Sparkles className="w-3 h-3" />
                           </div>
                           <span className="tracking-wide">How Viewers Experience Videos</span>
                         </div>
 
-                        <div className="space-y-2 text-[11px] text-zinc-300">
+                        <div className="space-y-2 text-[11px] text-zinc-200">
                           <div className="flex items-start gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0 mt-1.5" />
                             <div>
@@ -3876,7 +3876,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <div>
                               <strong className="text-white font-semibold">Community Discussion:</strong> Viewers tap{' '}
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800 text-white border border-zinc-700 font-medium text-[10px]">
-                                <MessageCircle className="w-2.5 h-2.5 text-zinc-300 inline" /> Comments
+                                <MessageCircle className="w-2.5 h-2.5 text-zinc-200 inline" /> Comments
                               </span>{' '}
                               to ask questions or leave feedback.
                             </div>
@@ -3886,8 +3886,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0 mt-1.5" />
                             <div>
                               <strong className="text-white font-semibold">Direct Action:</strong> Tapping your action button opens destination{' '}
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-300 border border-zinc-800 font-mono text-[10px] truncate max-w-[130px] align-middle">
-                                <ExternalLink className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-200 border border-zinc-800 font-mono text-[10px] truncate max-w-[130px] align-middle">
+                                <ExternalLink className="w-2.5 h-2.5 text-zinc-200 shrink-0" />
                                 <span className="truncate">{ctaUrl || 'https://ups.com'}</span>
                               </span>
                             </div>
@@ -3908,7 +3908,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                   <div>
                     <h2 className="text-2xl font-black text-white tracking-tight">Venue Profile Settings</h2>
-                    <p className="text-sm text-zinc-400 mt-1">Configure your official public listing details and appearance.</p>
+                    <p className="text-sm text-zinc-200 mt-1">Configure your official public listing details and appearance.</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {isProfileSaved && (
@@ -3931,13 +3931,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     
                     {/* SECTION 1: Business Identity */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
                         <Building2 className="w-3.5 h-3.5" /> Business Identity
                       </h3>
                       <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm">
                         
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group focus-within:bg-white/[0.02]">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Venue Name</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Venue Name</div>
                           <input
                             type="text"
                             value={profileName}
@@ -3948,7 +3948,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Category</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Category</div>
                           <div className="flex-1 w-full relative">
                             <select
                               value={businessCategory}
@@ -3970,7 +3970,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group focus-within:bg-white/[0.02]">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Website URL</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Website URL</div>
                           <input
                             type="url"
                             value={profileWebsite}
@@ -3985,13 +3985,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* SECTION 2: Physical Address */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
                         <MapPin className="w-3.5 h-3.5" /> Physical Address
                       </h3>
                       <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm">
                         
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Country / Region</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Country / Region</div>
                           <div className="flex-1 w-full relative">
                             <CountrySelector
                               value={selectedCountry}
@@ -4001,7 +4001,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group focus-within:bg-white/[0.02]">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Street Address</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Street Address</div>
                           <input
                             type="text"
                             value={streetAddress}
@@ -4013,7 +4013,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                         {hasStates && (
                           <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors relative">
-                            <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">{stateLabel}</div>
+                            <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">{stateLabel}</div>
                             <div className="flex-1 w-full relative">
                               <SearchableComboSelector
                                 value={stateRegion}
@@ -4029,7 +4029,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         )}
 
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">City</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">City</div>
                           <div className="flex-1 w-full relative">
                             <SearchableComboSelector
                               value={city}
@@ -4047,7 +4047,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group focus-within:bg-white/[0.02]">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">{activeCountryDialInfo.postalLabel || "ZIP Code"}</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">{activeCountryDialInfo.postalLabel || "ZIP Code"}</div>
                           <input
                             type="text"
                             value={zipCode}
@@ -4062,13 +4062,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* SECTION 3: Phone Contact */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
                         <Phone className="w-3.5 h-3.5" /> Contact Information
                       </h3>
                       <div className="bg-zinc-950 md:bg-zinc-900 rounded-[24px] border border-zinc-800 md:border-zinc-800 overflow-hidden divide-y divide-zinc-800 md:divide-zinc-800 shadow-sm">
                         
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-900 md:hover:bg-zinc-800 transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-400 md:text-zinc-400 mb-2 sm:mb-0 shrink-0">Dialing Code</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 md:text-zinc-200 mb-2 sm:mb-0 shrink-0">Dialing Code</div>
                           <div className="flex-1 w-full relative">
                             <select
                               value={phoneDialCode}
@@ -4086,7 +4086,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-900 md:hover:bg-zinc-800 transition-colors group focus-within:bg-zinc-900 md:focus-within:bg-zinc-50">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-400 md:text-zinc-400 mb-2 sm:mb-0 shrink-0">Direct Number</div>
+                          <div className="w-48 text-[13px] font-semibold text-zinc-200 md:text-zinc-200 mb-2 sm:mb-0 shrink-0">Direct Number</div>
                           <input
                             type="tel"
                             value={localPhone}
@@ -4102,25 +4102,25 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     {/* SECTION 4: Operating Hours */}
                     <div>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 px-1 gap-2">
-                         <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                         <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest flex items-center gap-2">
                            <Clock className="w-3.5 h-3.5" /> Operating Hours
                          </h3>
                          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
                             <button
                               onClick={() => setWeeklySchedule(prev => prev.map((d, i) => i < 5 ? { ...d, status: 'open', openTime: '08:00 AM', closeTime: '06:00 PM' } : { ...d, status: 'closed' }))}
-                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-300 md:text-zinc-300 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
                             >
                               Mon-Fri
                             </button>
                             <button
                               onClick={() => setWeeklySchedule(prev => prev.map(d => ({ ...d, status: 'open', openTime: '11:00 AM', closeTime: '11:00 PM' })))}
-                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-300 md:text-zinc-300 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
                             >
                               Everyday
                             </button>
                             <button
                               onClick={() => setWeeklySchedule(prev => prev.map(d => ({ ...d, status: '24h' })))}
-                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-300 md:text-zinc-300 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
                             >
                               24/7
                             </button>
@@ -4148,7 +4148,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                      className={`px-3 py-1.5 rounded-md text-[11px] font-bold capitalize transition-all cursor-pointer ${
                                        item.status === status 
                                          ? 'bg-white text-black shadow-sm'
-                                         : 'text-zinc-400 hover:text-white'
+                                         : 'text-zinc-200 hover:text-white'
                                      }`}
                                    >
                                      {status === '24h' ? '24 Hrs' : status}
@@ -4170,9 +4170,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                      >
                                        {['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM'].map(t => <option key={t} value={t}>{t}</option>)}
                                      </select>
-                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-200 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                                    </div>
-                                   <span className="text-zinc-500 text-[11px] font-bold">to</span>
+                                   <span className="text-zinc-200 text-[11px] font-bold">to</span>
                                    <div className="relative">
                                      <select
                                        value={item.closeTime}
@@ -4185,7 +4185,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                      >
                                        {['05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM', '11:59 PM'].map(t => <option key={t} value={t}>{t}</option>)}
                                      </select>
-                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-200 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                                    </div>
                                  </div>
                                )}
@@ -4197,15 +4197,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* SECTION 5: About & Amenities */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
                         <Info className="w-3.5 h-3.5" /> About & Amenities
                       </h3>
                       <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm">
                         
                         <div className="p-4 sm:p-5 hover:bg-white/[0.02] transition-colors focus-within:bg-white/[0.02]">
                           <div className="flex items-center justify-between mb-3">
-                             <div className="text-[13px] font-semibold text-zinc-300">Public Story & Description</div>
-                             <span className="text-[10px] text-zinc-500 font-mono">{profileDesc.length} / 500</span>
+                             <div className="text-[13px] font-semibold text-zinc-200">Public Story & Description</div>
+                             <span className="text-[10px] text-zinc-200 font-mono">{profileDesc.length} / 500</span>
                           </div>
                           <textarea
                             value={profileDesc}
@@ -4217,7 +4217,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
 
                         <div className="p-4 sm:p-5">
-                          <div className="text-[13px] font-semibold text-zinc-300 mb-4">Venue Amenities</div>
+                          <div className="text-[13px] font-semibold text-zinc-200 mb-4">Venue Amenities</div>
                           <div className="flex flex-wrap gap-2">
                             {['Free Wi-Fi', 'Outdoor Seating', 'Onsite Parking', 'Wheelchair Accessible', 'Pet Friendly', 'Live Music', 'Full Bar', 'Accepts Credit Cards'].map(amenity => {
                               const isSelected = selectedAmenities.includes(amenity);
@@ -4234,7 +4234,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer border ${
                                     isSelected
                                       ? 'bg-white text-black border-white shadow-sm'
-                                      : 'bg-[#18181b] md:bg-zinc-900 border-white/[0.06] md:border-zinc-800 text-zinc-400 md:text-zinc-400 hover:bg-white/[0.04] md:hover:bg-zinc-800'
+                                      : 'bg-[#18181b] md:bg-zinc-900 border-white/[0.06] md:border-zinc-800 text-zinc-200 md:text-zinc-200 hover:bg-white/[0.04] md:hover:bg-zinc-800'
                                   }`}
                                 >
                                   {isSelected && <Check className="w-3 h-3 inline-block mr-1 -mt-0.5" />}
@@ -4250,14 +4250,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* SECTION 6: Language & Localization Settings */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
                         <Globe className="w-3.5 h-3.5" /> Language & Regional Settings (16 Languages)
                       </h3>
                       <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm p-4 sm:p-5 space-y-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div>
                             <div className="text-[13px] font-semibold text-white">Merchant Dashboard Language</div>
-                            <p className="text-xs text-zinc-400 mt-0.5">
+                            <p className="text-xs text-zinc-200 mt-0.5">
                               Currently active: <strong className="text-white">{currentLanguageMeta.flag} {currentLanguageMeta.name} ({currentLanguageMeta.nativeName})</strong>
                             </p>
                           </div>
@@ -4266,14 +4266,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             onClick={() => setIsLangModalOpen(true)}
                             className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer shrink-0"
                           >
-                            <Globe className="w-3.5 h-3.5 text-zinc-400" />
+                            <Globe className="w-3.5 h-3.5 text-zinc-200" />
                             <span>Switch Language</span>
                           </button>
                         </div>
 
                         {/* Quick 1-tap language chips */}
                         <div className="pt-2">
-                          <label className="text-[11px] font-bold text-zinc-400 block mb-2">Quick Switch (Popular Languages):</label>
+                          <label className="text-[11px] font-bold text-zinc-200 block mb-2">Quick Switch (Popular Languages):</label>
                           <div className="flex flex-wrap gap-1.5">
                             {languages.slice(0, 8).map((lang) => (
                               <button
@@ -4283,7 +4283,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
                                   language === lang.code
                                     ? "bg-white text-zinc-950 border-white font-black"
-                                    : "bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
+                                    : "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800"
                                 }`}
                               >
                                 <span>{lang.flag}</span>
@@ -4308,8 +4308,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                          {/* Header */}
                          <div className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between relative z-10 bg-[#111113]/80 backdrop-blur-xl">
                            <div className="flex items-center gap-2">
-                             <Eye className="w-4 h-4 text-zinc-400" />
-                             <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-300">Live Preview</span>
+                             <Eye className="w-4 h-4 text-zinc-200" />
+                             <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-200">Live Preview</span>
                            </div>
                            <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white text-[10px] font-bold border border-white/20">Yoouz App</span>
                          </div>
@@ -4332,7 +4332,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     <h4 className="font-bold text-white text-lg truncate tracking-tight">{profileName || 'Venue Name'}</h4>
                                     <BadgeCheck className="w-4.5 h-4.5 text-white shrink-0" />
                                   </div>
-                                  <div className="text-[11px] text-zinc-400 font-semibold mt-0.5 uppercase tracking-widest">{businessCategory || 'Category'}</div>
+                                  <div className="text-[11px] text-zinc-200 font-semibold mt-0.5 uppercase tracking-widest">{businessCategory || 'Category'}</div>
                                 </div>
                               </div>
 
@@ -4341,10 +4341,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm">
                                   <div className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                                      <MapPin className="w-3.5 h-3.5 text-zinc-300" />
+                                      <MapPin className="w-3.5 h-3.5 text-zinc-200" />
                                     </div>
                                     <div>
-                                      <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Physical Location</div>
+                                      <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-1">Physical Location</div>
                                       <div className="text-[13px] font-semibold text-zinc-200 leading-snug">{profileAddress || 'Address will appear here'}</div>
                                     </div>
                                   </div>
@@ -4353,28 +4353,28 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 {/* Status & Phone Grid */}
                                 <div className="grid grid-cols-2 gap-3">
                                   <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm">
-                                    <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Status</div>
+                                    <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-1.5">Status</div>
                                     <div className="text-[12px] font-bold text-white flex items-center gap-1.5">
                                       <span className="w-2 h-2 rounded-full bg-white" /> Open Now
                                     </div>
                                   </div>
                                   <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm overflow-hidden">
-                                    <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Direct Line</div>
+                                    <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-1.5">Direct Line</div>
                                     <div className="text-[12px] font-bold text-white truncate">{profilePhone || 'Not set'}</div>
                                   </div>
                                 </div>
 
                                 {/* Hours */}
                                 <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm">
-                                  <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Schedule</div>
-                                  <div className="text-[12px] text-zinc-300 leading-relaxed font-mono font-medium">{profileHours || 'Schedule not configured'}</div>
+                                  <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-2">Schedule</div>
+                                  <div className="text-[12px] text-zinc-200 leading-relaxed font-mono font-medium">{profileHours || 'Schedule not configured'}</div>
                                 </div>
 
                                 {/* About */}
                                 {profileDesc && (
                                   <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm">
-                                    <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Story</div>
-                                    <div className="text-[12.5px] text-zinc-300 leading-relaxed font-medium line-clamp-4">{profileDesc}</div>
+                                    <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-1.5">Story</div>
+                                    <div className="text-[12.5px] text-zinc-200 leading-relaxed font-medium line-clamp-4">{profileDesc}</div>
                                   </div>
                                 )}
                               </div>
@@ -4395,7 +4395,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                   <div>
                     <h2 className="text-2xl font-black text-white tracking-tight">Subscription & Billing</h2>
-                    <p className="text-sm text-zinc-400 mt-1">Manage your active plans, payment methods, and Creem.io invoices.</p>
+                    <p className="text-sm text-zinc-200 mt-1">Manage your active plans, payment methods, and Creem.io invoices.</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <button
@@ -4413,7 +4413,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     
                     {/* SECTION 1: Active Subscription */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
                         <CreditCard className="w-3.5 h-3.5" /> Current Plan
                       </h3>
                       
@@ -4432,8 +4432,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                    <span className="w-1.5 h-1.5 rounded-full bg-white" /> Live
                                  </span>
                                </div>
-                               <h4 className="text-3xl font-black text-white tracking-tight">Yoouz Pro <span className="text-zinc-400">Business</span></h4>
-                               <div className="text-zinc-400 text-[13px] font-semibold mt-2">
+                               <h4 className="text-3xl font-black text-white tracking-tight">Yoouz Pro <span className="text-zinc-200">Business</span></h4>
+                               <div className="text-zinc-200 text-[13px] font-semibold mt-2">
                                  $49.00 USD / month
                                 </div>
                              </div>
@@ -4445,11 +4445,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                            
                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-[#000000]/40 rounded-[20px] border border-white/[0.04]">
                              <div>
-                               <div className="text-[11px] text-zinc-500 font-bold uppercase tracking-wider mb-1">Next Billing Date</div>
+                               <div className="text-[11px] text-zinc-200 font-bold uppercase tracking-wider mb-1">Next Billing Date</div>
                                <div className="text-[13px] font-semibold text-white">
                                  Renews on <span className="text-white font-bold">{renewalDate}</span>
                                </div>
-                               <div className="text-[12px] text-zinc-400 font-medium mt-0.5">
+                               <div className="text-[12px] text-zinc-200 font-medium mt-0.5">
                                  via {paymentMethodDisplay}
                                </div>
                              </div>
@@ -4471,7 +4471,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* SECTION 2: Billing History */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
                         <Receipt className="w-3.5 h-3.5" /> Billing History
                       </h3>
                       <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] shadow-sm overflow-hidden flex flex-col">
@@ -4479,11 +4479,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <table className="w-full text-left min-w-[600px]">
                             <thead className="bg-[#18181b] border-b border-white/[0.06]">
                               <tr>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap">Invoice</th>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap">Date</th>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap">Amount</th>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap">Status</th>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-right whitespace-nowrap">Action</th>
+                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest whitespace-nowrap">Invoice</th>
+                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest whitespace-nowrap">Date</th>
+                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest whitespace-nowrap">Amount</th>
+                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest whitespace-nowrap">Status</th>
+                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest text-right whitespace-nowrap">Action</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-white/[0.06]">
@@ -4493,9 +4493,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               ].map((invoice) => (
                                 <tr key={invoice.id} className="hover:bg-white/[0.02] transition-colors group">
                                   <td className="py-4 px-5">
-                                    <span className="font-mono text-[11px] text-zinc-300 bg-[#18181b] px-2.5 py-1.5 rounded-md border border-white/[0.06] whitespace-nowrap">{invoice.id}</span>
+                                    <span className="font-mono text-[11px] text-zinc-200 bg-[#18181b] px-2.5 py-1.5 rounded-md border border-white/[0.06] whitespace-nowrap">{invoice.id}</span>
                                   </td>
-                                  <td className="py-4 px-5 text-[13px] font-semibold text-zinc-300 whitespace-nowrap">{invoice.date}</td>
+                                  <td className="py-4 px-5 text-[13px] font-semibold text-zinc-200 whitespace-nowrap">{invoice.date}</td>
                                   <td className="py-4 px-5 text-[13px] font-bold text-white whitespace-nowrap">{invoice.amount}</td>
                                   <td className="py-4 px-5 whitespace-nowrap">
                                     <span className="px-2.5 py-1 rounded-md bg-white/10 text-white text-[10px] font-bold border border-white/20 uppercase tracking-wider">
@@ -4505,7 +4505,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   <td className="py-4 px-5 text-right whitespace-nowrap">
                                     <button 
                                       onClick={() => setShowReceiptModal(true)}
-                                      className="text-[12px] font-bold text-zinc-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-end gap-1.5 ml-auto md:opacity-100"
+                                      className="text-[12px] font-bold text-zinc-200 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-end gap-1.5 ml-auto md:opacity-100"
                                     >
                                       <Download className="w-3.5 h-3.5" /> Receipt
                                     </button>
@@ -4533,7 +4533,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                           
                           <h4 className="text-xl font-bold text-white mb-2 tracking-tight">Secure Merchant Billing</h4>
-                          <p className="text-[13px] text-zinc-400 leading-relaxed font-medium mb-8">
+                          <p className="text-[13px] text-zinc-200 leading-relaxed font-medium mb-8">
                             Your subscription and payment methods are securely managed through Creem.io's encrypted merchant infrastructure.
                           </p>
 
@@ -4548,7 +4548,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
                                   <Check className="w-3.5 h-3.5 text-white" />
                                 </div>
-                                <span className="text-[13px] font-semibold text-zinc-300">{feature}</span>
+                                <span className="text-[13px] font-semibold text-zinc-200">{feature}</span>
                               </div>
                             ))}
                           </div>
@@ -4559,14 +4559,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] p-5 flex items-center justify-between group cursor-pointer hover:bg-white/[0.02] transition-colors shadow-sm">
                          <div className="flex items-center gap-4">
                            <div className="w-14 h-10 bg-[#18181b] border border-white/[0.06] rounded-lg flex items-center justify-center shadow-inner">
-                             <CreditCard className="w-5 h-5 text-zinc-400" />
+                             <CreditCard className="w-5 h-5 text-zinc-200" />
                            </div>
                            <div>
                              <div className="text-[13px] font-bold text-white mb-0.5">{paymentMethodDisplay}</div>
-                             <div className="text-[11px] text-zinc-500 font-bold uppercase tracking-wider">Default Payment Method</div>
+                             <div className="text-[11px] text-zinc-200 font-bold uppercase tracking-wider">Default Payment Method</div>
                            </div>
                          </div>
-                         <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+                         <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-200 transition-colors" />
                       </div>
 
                     </div>
@@ -4608,7 +4608,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-6 max-w-md w-full shadow-2xl relative space-y-4">
             <button
               onClick={() => setShowReceiptModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-zinc-300 transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-800 text-zinc-200 hover:text-zinc-200 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -4618,7 +4618,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               <h3 className="font-bold text-white text-base">Creem.io Tax Invoice</h3>
             </div>
 
-            <div className="bg-zinc-950 p-4 rounded-2xl space-y-2 text-xs font-mono border border-zinc-800 text-zinc-300">
+            <div className="bg-zinc-950 p-4 rounded-2xl space-y-2 text-xs font-mono border border-zinc-800 text-zinc-200">
               <div className="flex justify-between"><span>Invoice:</span><strong className="text-white">CREEM-INV-9021</strong></div>
               <div className="flex justify-between"><span>Billed To:</span><span>{billingEmail}</span></div>
               <div className="flex justify-between"><span>Merchant:</span><span>{currentPlace.name}</span></div>
@@ -4676,7 +4676,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           <div className="bg-[#1a1a1c] rounded-3xl border border-white/[0.04] text-white p-6 max-w-[420px] w-full shadow-2xl relative flex flex-col gap-5 animate-in zoom-in-95 duration-300">
             <button
               onClick={() => setShowHelpModal(false)}
-              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/[0.08] text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/[0.08] text-zinc-200 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -4742,7 +4742,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           <div className="relative w-full max-w-xl bg-zinc-950 rounded-2xl border border-zinc-800 text-white shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-150">
             {/* Search Header Input */}
             <div className="flex items-center gap-3 px-4 py-3.5 border-b border-zinc-800 bg-zinc-950">
-              <Search className="w-4 h-4 text-zinc-400 shrink-0" />
+              <Search className="w-4 h-4 text-zinc-200 shrink-0" />
               <input
                 type="text"
                 value={commandQuery}
@@ -4754,7 +4754,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               <button
                 type="button"
                 onClick={() => setIsCommandPaletteOpen(false)}
-                className="px-1.5 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-400 hover:bg-zinc-800 transition-colors"
+                className="px-1.5 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-200 hover:bg-zinc-800 transition-colors"
               >
                 ESC
               </button>
@@ -4764,7 +4764,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             <div className="max-h-96 overflow-y-auto p-2 space-y-3">
               {/* Navigation Sections */}
               <div>
-                <div className="px-3 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                <div className="px-3 py-1 text-[10px] font-bold text-zinc-200 uppercase tracking-wider">
                   Portal Navigation
                 </div>
                 <div className="space-y-0.5 mt-1">
@@ -4793,12 +4793,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           activeTab === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-200'
                         }`}
                       >
-                        <item.icon className={`w-4 h-4 shrink-0 ${activeTab === item.id ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
+                        <item.icon className={`w-4 h-4 shrink-0 ${activeTab === item.id ? 'text-white' : 'text-zinc-200 group-hover:text-zinc-200'}`} />
                         <div className="min-w-0 flex-1">
                           <div className="text-xs font-bold truncate">{item.label}</div>
-                          <div className="text-[10px] text-zinc-400 truncate">{item.desc}</div>
+                          <div className="text-[10px] text-zinc-200 truncate">{item.desc}</div>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-zinc-300 group-hover:text-zinc-400 shrink-0" />
+                        <ChevronRight className="w-3.5 h-3.5 text-zinc-200 group-hover:text-zinc-200 shrink-0" />
                       </button>
                     ))}
                 </div>
@@ -4807,7 +4807,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               {/* Customer Video Reviews Matching Query */}
               {commandQuery && (
                 <div>
-                  <div className="px-3 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  <div className="px-3 py-1 text-[10px] font-bold text-zinc-200 uppercase tracking-wider">
                     Matching Customer Reviews
                   </div>
                   <div className="space-y-0.5 mt-1">
@@ -4832,7 +4832,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <img src={v.author?.avatar} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-zinc-200"  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
  <div className="min-w-0 flex-1">
                             <div className="text-xs font-bold text-white truncate">{v.author?.name}</div>
-                            <div className="text-[10px] text-zinc-400 truncate">{v.caption}</div>
+                            <div className="text-[10px] text-zinc-200 truncate">{v.caption}</div>
                           </div>
                           <div className="flex text-amber-400 text-[10px] shrink-0 font-bold items-center gap-0.5">
                             <Star className="w-3 h-3 fill-current" /> {v.rating || 5}
@@ -4845,7 +4845,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
               {/* Quick Merchant Actions */}
               <div>
-                <div className="px-3 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                <div className="px-3 py-1 text-[10px] font-bold text-zinc-200 uppercase tracking-wider">
                   Quick Actions
                 </div>
                 <div className="space-y-0.5 mt-1">
@@ -4886,9 +4886,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           setIsCommandPaletteOpen(false);
                           setCommandQuery('');
                         }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-zinc-800 text-xs font-medium text-zinc-200 hover:text-white transition-colors cursor-pointer"
                       >
-                        <a.icon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                        <a.icon className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                         <span className="truncate">{a.label}</span>
                       </button>
                     ))}
@@ -4897,8 +4897,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             </div>
             
             {/* Footer hint */}
-            <div className="px-4 py-2 border-t border-zinc-800 bg-zinc-950/50 flex items-center justify-between text-[10px] text-zinc-400 font-medium">
-              <span>Press <kbd className="px-1 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-white text-zinc-400 font-bold">ESC</kbd> to exit</span>
+            <div className="px-4 py-2 border-t border-zinc-800 bg-zinc-950/50 flex items-center justify-between text-[10px] text-zinc-200 font-medium">
+              <span>Press <kbd className="px-1 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-white text-zinc-200 font-bold">ESC</kbd> to exit</span>
               <span>Yoouz Business Portal</span>
             </div>
           </div>
@@ -4912,7 +4912,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             <button
               type="button"
               onClick={() => setShowPrintModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-zinc-300 transition-colors cursor-pointer print:hidden"
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-800 text-zinc-200 hover:text-zinc-200 transition-colors cursor-pointer print:hidden"
             >
               <X className="w-4 h-4" />
             </button>
@@ -4925,7 +4925,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             {/* Printable Area */}
             <div className="bg-zinc-950 border-2 border-zinc-800 rounded-2xl p-8 text-center space-y-4 shadow-inner relative overflow-hidden text-white">
               {/* Fold Line Guide */}
-              <div className="absolute top-2 left-0 right-0 border-t border-dashed border-zinc-700 text-[8px] font-mono text-zinc-400">
+              <div className="absolute top-2 left-0 right-0 border-t border-dashed border-zinc-700 text-[8px] font-mono text-zinc-200">
                 FOLD LINE (TOP TENT)
               </div>
 
@@ -4940,7 +4940,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 </h2>
                 <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1 mt-0.5">
                   <span>★ 4.9</span>
-                  <span className="text-zinc-400 font-normal">({placeVideos.length} Video Reviews on Yoouz)</span>
+                  <span className="text-zinc-200 font-normal">({placeVideos.length} Video Reviews on Yoouz)</span>
                 </div>
               </div>
 
@@ -4957,13 +4957,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-white font-black text-xs uppercase tracking-wider border border-white/20">
                   {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
                 </span>
-                <p className="text-[10px] text-zinc-400 mt-2">
+                <p className="text-[10px] text-zinc-200 mt-2">
                   Scan with your phone camera app to share your video review!
                 </p>
               </div>
 
               {qrTableLabel && (
-                <div className="text-[11px] font-bold text-zinc-300 bg-zinc-900 py-1 px-3 rounded-md inline-block border border-zinc-800">
+                <div className="text-[11px] font-bold text-zinc-200 bg-zinc-900 py-1 px-3 rounded-md inline-block border border-zinc-800">
                   {qrTableLabel}
                 </div>
               )}

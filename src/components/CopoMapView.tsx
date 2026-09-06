@@ -288,12 +288,12 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                 />
               </>
             ) : (
-              <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold uppercase">
+              <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-200 text-xs font-bold uppercase">
                 {selectedPlace.name}
               </div>
             )}
             <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-semibold text-white flex items-center gap-1.5 border border-white/10 z-30">
-              <Camera className="w-3.5 h-3.5 text-zinc-400" />
+              <Camera className="w-3.5 h-3.5 text-zinc-200" />
               <span>Photos ({selectedPlace.photos?.length || 2})</span>
             </div>
           </div>
@@ -315,14 +315,14 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                   />
                 ))}
               </div>
-              <span className="text-zinc-400 font-medium">
+              <span className="text-zinc-200 font-medium">
                 ({(selectedPlace.totalReviews || 144).toLocaleString()})
               </span>
               <span className="text-zinc-600">·</span>
-              <span className="text-zinc-400 font-medium">
+              <span className="text-zinc-200 font-medium">
                 {selectedPlace.category}
               </span>
-              <span className="text-zinc-300 font-bold">♿</span>
+              <span className="text-zinc-200 font-bold">♿</span>
             </div>
           </div>
 
@@ -333,7 +333,7 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
               className={`py-2.5 px-3 border-b-2 transition-colors ${
                 activeTab === "overview"
                   ? "border-white text-white"
-                  : "border-transparent text-zinc-400 hover:text-zinc-200"
+                  : "border-transparent text-zinc-200 hover:text-zinc-200"
               }`}
             >
               Overview
@@ -343,10 +343,10 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
               className={`py-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors ${
                 activeTab === "reviews"
                   ? "border-white text-white"
-                  : "border-transparent text-zinc-400 hover:text-zinc-200"
+                  : "border-transparent text-zinc-200 hover:text-zinc-200"
               }`}
             >
-              <Video className="w-3.5 h-3.5 text-zinc-300" />
+              <Video className="w-3.5 h-3.5 text-zinc-200" />
               <span>Video Reviews ({placeVideos.length})</span>
             </button>
           </div>
@@ -363,47 +363,47 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                       )}`;
                       window.open(url, "_blank");
                     }}
-                    className="flex flex-col items-center gap-1 text-[11px] text-zinc-300 hover:text-white hover:scale-105 transition-all cursor-pointer"
+                    className="flex flex-col items-center gap-1 text-[11px] text-zinc-200 hover:text-white hover:scale-105 transition-all cursor-pointer"
                   >
                     <div className="w-9 h-9 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md">
                       <Navigation className="w-4 h-4 fill-zinc-950" />
                     </div>
-                    <span className="font-semibold text-zinc-300">Directions</span>
+                    <span className="font-semibold text-zinc-200">Directions</span>
                   </button>
 
                   <button
                     onClick={() => onOpenPlace(selectedPlace.id)}
-                    className="flex flex-col items-center gap-1 text-[11px] text-zinc-300 hover:text-white hover:scale-105 transition-all cursor-pointer"
+                    className="flex flex-col items-center gap-1 text-[11px] text-zinc-200 hover:text-white hover:scale-105 transition-all cursor-pointer"
                   >
                     <div className="w-9 h-9 rounded-full border border-zinc-700 bg-zinc-800 text-white flex items-center justify-center shadow-sm">
                       <Bookmark className="w-4 h-4" />
                     </div>
-                    <span className="font-semibold text-zinc-300">Save</span>
+                    <span className="font-semibold text-zinc-200">Save</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab("reviews")}
-                    className="flex flex-col items-center gap-1 text-[11px] text-zinc-300 hover:text-white hover:scale-105 transition-all cursor-pointer"
+                    className="flex flex-col items-center gap-1 text-[11px] text-zinc-200 hover:text-white hover:scale-105 transition-all cursor-pointer"
                   >
                     <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center shadow-md">
                       <Video className="w-4 h-4" />
                     </div>
-                    <span className="font-semibold text-zinc-300">Videos</span>
+                    <span className="font-semibold text-zinc-200">Videos</span>
                   </button>
                 </div>
 
                 <div className="px-4 py-3 flex items-start gap-3.5 hover:bg-zinc-900/50 transition-colors">
-                  <MapPin className="w-5 h-5 text-zinc-400 shrink-0 mt-0.5" />
-                  <span className="font-medium text-zinc-300">{selectedPlace.address}</span>
+                  <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
+                  <span className="font-medium text-zinc-200">{selectedPlace.address}</span>
                 </div>
 
                 <div className="px-4 py-3 flex items-start gap-3.5 hover:bg-zinc-900/50 transition-colors">
-                  <Clock className="w-5 h-5 text-zinc-400 shrink-0 mt-0.5" />
+                  <Clock className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-white">
                       {selectedPlace.openingHours || "Open 24 hours"}
                     </span>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                    <p className="text-[11px] text-zinc-200 mt-0.5">
                       Verified business hours
                     </p>
                   </div>
@@ -411,12 +411,12 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
 
                 {selectedPlace.website && (
                   <div className="px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-900/50 transition-colors">
-                    <Globe className="w-5 h-5 text-zinc-400 shrink-0" />
+                    <Globe className="w-5 h-5 text-zinc-200 shrink-0" />
                     <a
                       href={selectedPlace.website}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-zinc-300 hover:text-white hover:underline font-medium truncate"
+                      className="text-zinc-200 hover:text-white hover:underline font-medium truncate"
                     >
                       {selectedPlace.website.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}
                     </a>
@@ -425,10 +425,10 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
 
                 {selectedPlace.phone && (
                   <div className="px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-900/50 transition-colors">
-                    <Phone className="w-5 h-5 text-zinc-400 shrink-0" />
+                    <Phone className="w-5 h-5 text-zinc-200 shrink-0" />
                     <a
                       href={`tel:${selectedPlace.phone}`}
-                      className="text-zinc-300 hover:text-white font-bold"
+                      className="text-zinc-200 hover:text-white font-bold"
                     >
                       {selectedPlace.phone}
                     </a>
@@ -468,16 +468,16 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                         </div>
                         <div className="absolute bottom-2 left-2 right-2 text-white">
                           <p className="text-[11px] font-bold truncate">{vid.author.name}</p>
-                          <p className="text-[9px] text-zinc-400 truncate">{vid.caption}</p>
+                          <p className="text-[9px] text-zinc-200 truncate">{vid.caption}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="p-6 text-center rounded-2xl bg-zinc-900/60 border border-dashed border-zinc-800">
-                    <Video className="w-8 h-8 text-zinc-400 mx-auto mb-2 opacity-60" />
+                    <Video className="w-8 h-8 text-zinc-200 mx-auto mb-2 opacity-60" />
                     <p className="font-bold text-xs text-zinc-200">No video reviews yet</p>
-                    <p className="text-[11px] text-zinc-500 mt-1">
+                    <p className="text-[11px] text-zinc-200 mt-1">
                       Be the first creator to share a review for this place!
                     </p>
                   </div>
@@ -501,7 +501,7 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
         <button
           onClick={handleLocateMe}
           className={`w-10 h-10 rounded-xl bg-zinc-900 shadow-lg border border-zinc-800 flex items-center justify-center hover:scale-105 hover:bg-zinc-800 hover:text-white transition-all cursor-pointer ${
-            isLocating ? "text-white animate-pulse" : "text-zinc-300"
+            isLocating ? "text-white animate-pulse" : "text-zinc-200"
           }`}
           title="Show where I am located now"
         >

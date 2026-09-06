@@ -52,27 +52,27 @@ export const GoogleDirectionsModal: React.FC<GoogleDirectionsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center hover:bg-zinc-800 text-zinc-200 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Travel Mode Pills */}
-        <div className="flex items-center justify-around border-b border-zinc-800 py-2.5 bg-zinc-950/60 text-zinc-400">
+        <div className="flex items-center justify-around border-b border-zinc-800 py-2.5 bg-zinc-950/60 text-zinc-200">
           <button className="flex flex-col items-center gap-1 text-white font-bold text-xs cursor-pointer">
             <Car className="w-5 h-5" />
             <span>12 min</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-zinc-400 hover:text-white text-xs cursor-pointer">
+          <button className="flex flex-col items-center gap-1 text-zinc-200 hover:text-white text-xs cursor-pointer">
             <Train className="w-5 h-5" />
             <span>18 min</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-zinc-400 hover:text-white text-xs cursor-pointer">
+          <button className="flex flex-col items-center gap-1 text-zinc-200 hover:text-white text-xs cursor-pointer">
             <Footprints className="w-5 h-5" />
             <span>34 min</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-zinc-400 hover:text-white text-xs cursor-pointer">
+          <button className="flex flex-col items-center gap-1 text-zinc-200 hover:text-white text-xs cursor-pointer">
             <Bike className="w-5 h-5" />
             <span>14 min</span>
           </button>
@@ -102,7 +102,7 @@ export const GoogleDirectionsModal: React.FC<GoogleDirectionsModalProps> = ({
               <span>via Main Express Route</span>
               <span>12 min (4.2 mi)</span>
             </div>
-            <p className="text-xs text-zinc-400">Fastest route now, usual traffic</p>
+            <p className="text-xs text-zinc-200">Fastest route now, usual traffic</p>
           </div>
 
           <button

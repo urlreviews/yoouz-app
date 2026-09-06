@@ -382,10 +382,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               </button>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black tracking-wide uppercase">
+                  <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] font-black tracking-wide uppercase">
                     {t("trustCenter.hub", "Yoouz Hub")}
                   </span>
-                  <span className="text-xs text-zinc-400 font-semibold">• {t("trustCenter.subtitle", "Trust, Verification & Support")}</span>
+                  <span className="text-xs text-zinc-200 font-semibold">• {t("trustCenter.subtitle", "Trust, Verification & Support")}</span>
                 </div>
                 <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight mt-0.5">
                   {t("trustCenter.title", "Knowledge & Trust Center")}
@@ -399,14 +399,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 onClick={() => onNavigate("search")}
                 className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Search className="w-3.5 h-3.5 text-zinc-400" />
+                <Search className="w-3.5 h-3.5 text-zinc-200" />
                 <span>{t("nav.search", "Search")}</span>
               </button>
               <button
                 onClick={() => onNavigate("discover")}
                 className="px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Compass className="w-3.5 h-3.5 text-zinc-400" />
+                <Compass className="w-3.5 h-3.5 text-zinc-200" />
                 <span>{t("nav.discover", "Discover")}</span>
               </button>
               {currentUser && (
@@ -447,13 +447,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-lg font-black text-white truncate">{currentUser.name || "Reviewer"}</h2>
-                    <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[10px] font-black tracking-wide uppercase flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-zinc-300" />
+                    <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-black tracking-wide uppercase flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-zinc-200" />
                       Verified
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-400 font-medium truncate">{currentUser.email}</p>
-                  <p className="text-[11px] text-zinc-400 font-medium">
+                  <p className="text-xs text-zinc-200 font-medium truncate">{currentUser.email}</p>
+                  <p className="text-[11px] text-zinc-200 font-medium">
                     Verified Member • Active Contributor
                   </p>
                 </div>
@@ -464,7 +464,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   onClick={() => onNavigate("profile")}
                   className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <User className="w-3.5 h-3.5 text-zinc-400" />
+                  <User className="w-3.5 h-3.5 text-zinc-200" />
                   <span>Edit Profile</span>
                 </button>
                 <button
@@ -487,7 +487,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "about"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Info className="w-4 h-4" />
@@ -499,7 +499,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "faq"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <HelpCircle className="w-4 h-4" />
@@ -511,7 +511,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "business"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Building2 className="w-4 h-4" />
@@ -523,7 +523,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "security"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Shield className="w-4 h-4" />
@@ -535,7 +535,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "language"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Globe className="w-4 h-4" />
@@ -551,7 +551,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "contact"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Mail className="w-4 h-4" />
@@ -570,14 +570,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               {/* Hero Banner: Proof of Presence */}
               <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="space-y-3 max-w-3xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] font-black uppercase tracking-wider">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>{t("trustCenter.theYoouzStandard", "The Yoouz Standard")}</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
                     {t("trustCenter.pillarsTitle", "Proof of Presence. Real People. Verified Places.")}
                   </h2>
-                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-normal">
                     {t("trustCenter.pillarsDesc", "Traditional text reviews are vulnerable to bot networks, fake accounts, and AI-generated reviews. Yoouz creates authentic trust by capturing short 60-second video reviews recorded exclusively through live device cameras.")}
                   </p>
                 </div>
@@ -587,9 +587,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Video className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">{t("trustCenter.strictRule", "Strict Rule")}</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-200 block">{t("trustCenter.strictRule", "Strict Rule")}</span>
                     <h4 className="text-sm font-black text-white">{t("trustCenter.rule1Title", "Live Front-Camera Only")}</h4>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-zinc-200 leading-relaxed">
                       {t("trustCenter.rule1Desc", "No pre-recorded MP4 uploads or stock footage. Real customers capturing authentic experiences.")}
                     </p>
                   </div>
@@ -598,9 +598,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Lock className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">{t("trustCenter.pillar2", "Pillar 2")}</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-200 block">{t("trustCenter.pillar2", "Pillar 2")}</span>
                     <h4 className="text-sm font-black text-white">{t("trustCenter.rule2Title", "60-Second Focus")}</h4>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-zinc-200 leading-relaxed">
                       {t("trustCenter.rule2Desc", "Concise, high-impact video reviews that deliver immediate value in under one minute.")}
                     </p>
                   </div>
@@ -609,9 +609,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
                       <Users className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">{t("trustCenter.pillar3", "Pillar 3")}</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-200 block">{t("trustCenter.pillar3", "Pillar 3")}</span>
                     <h4 className="text-sm font-black text-white">{t("trustCenter.rule3Title", "3-Way Dialogue")}</h4>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-zinc-200 leading-relaxed">
                       {t("trustCenter.rule3Desc", "Living comment threads connecting Reviewers, curious Viewers, and Verified Place Owners.")}
                     </p>
                   </div>
@@ -633,12 +633,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   </div>
                   <div className="space-y-1.5">
                     <h3 className="text-base font-black text-white">{t("trustCenter.bento1Title", "Immutable Face & Voice Identity")}</h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                    <p className="text-xs text-zinc-200 leading-relaxed font-normal">
                       {t("trustCenter.bento1Desc", "Every reviewer builds an open visual review portfolio. Consistent face, verified voice, and historical timeline give viewers immediate confidence that reviews are authored by genuine people.")}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
-                    <ShieldCheck className="w-4 h-4 text-zinc-300" />
+                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-200">
+                    <ShieldCheck className="w-4 h-4 text-zinc-200" />
                     <span>{t("trustCenter.bento1Sub", "Audit Any Reviewer Profile Instantly")}</span>
                   </div>
                 </div>
@@ -650,12 +650,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   </div>
                   <div className="space-y-1.5">
                     <h3 className="text-base font-black text-white">{t("trustCenter.bento2Title", "Interactive Community Dialogue")}</h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                    <p className="text-xs text-zinc-200 leading-relaxed font-normal">
                       {t("trustCenter.bento2Desc", "Reviews shouldn't be dead one-way monologues. Viewers can ask real-time questions ('Is there outdoor seating?', 'How was the service?'), and the community answers collaboratively.")}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
-                    <Users className="w-4 h-4 text-zinc-300" />
+                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-200">
+                    <Users className="w-4 h-4 text-zinc-200" />
                     <span>{t("trustCenter.bento2Sub", "Crowdsourced Community Validation")}</span>
                   </div>
                 </div>
@@ -667,12 +667,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   </div>
                   <div className="space-y-1.5">
                     <h3 className="text-base font-black text-white">{t("trustCenter.bento3Title", "Official Domain Verification")}</h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                    <p className="text-xs text-zinc-200 leading-relaxed font-normal">
                       {t("trustCenter.bento3Desc", "Business owners can claim their base domain page, respond with verified owner badges, and pin helpful solutions or updates at the top of customer review threads.")}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
-                    <BadgeCheck className="w-4 h-4 text-zinc-300" />
+                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-200">
+                    <BadgeCheck className="w-4 h-4 text-zinc-200" />
                     <span>{t("trustCenter.bento3Sub", "Verified Owner Pinned Responses")}</span>
                   </div>
                 </div>
@@ -684,12 +684,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   </div>
                   <div className="space-y-1.5">
                     <h3 className="text-base font-black text-white">{t("trustCenter.bento4Title", "No Pay-to-Remove Extortion")}</h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                    <p className="text-xs text-zinc-200 leading-relaxed font-normal">
                       {t("trustCenter.bento4Desc", "Unlike legacy review sites that pressure businesses into costly subscriptions to suppress negative feedback, Yoouz guarantees all verified reviews stay transparent and tamper-free.")}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-400">
-                    <CheckCircle2 className="w-4 h-4 text-zinc-300" />
+                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-200">
+                    <CheckCircle2 className="w-4 h-4 text-zinc-200" />
                     <span>{t("trustCenter.bento4Sub", "100% Equal Rules for All")}</span>
                   </div>
                 </div>
@@ -705,18 +705,18 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               {/* Search & Category Filter Bar */}
               <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4">
                 <div className="relative">
-                  <Search className="w-5 h-5 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <Search className="w-5 h-5 text-zinc-200 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t("trustCenter.searchFaqsPlaceholder", "Search FAQs, guidelines, or topics...")}
-                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-sm font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
+                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-sm font-semibold outline-none transition-all text-white placeholder:text-zinc-200"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-300 transition-colors cursor-pointer"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 transition-colors cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -725,7 +725,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                 {/* Filter Pills */}
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider shrink-0 mr-1">
+                  <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider shrink-0 mr-1">
                     {t("trustCenter.categoryLabel", "Category")}:
                   </span>
                   {[
@@ -741,7 +741,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
                         faqCategoryFilter === cat.id
                           ? "bg-white text-black shadow-xs font-extrabold"
-                          : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white"
+                          : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white"
                       }`}
                     >
                       {cat.label}
@@ -754,9 +754,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs divide-y divide-zinc-800">
                 {filteredFaqs.length === 0 ? (
                   <div className="py-12 text-center space-y-3">
-                    <HelpCircle className="w-10 h-10 text-zinc-500 mx-auto" />
-                    <h3 className="text-base font-bold text-zinc-300">{t("trustCenter.noMatchingFaqs", "No matching questions found")}</h3>
-                    <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                    <HelpCircle className="w-10 h-10 text-zinc-200 mx-auto" />
+                    <h3 className="text-base font-bold text-zinc-200">{t("trustCenter.noMatchingFaqs", "No matching questions found")}</h3>
+                    <p className="text-xs text-zinc-200 max-w-sm mx-auto">
                       {t("trustCenter.tryDifferentKeywords", "Try searching with different keywords, or reach out directly to our support desk.")}
                     </p>
                     <button
@@ -779,7 +779,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                           className="w-full flex items-center justify-between text-left cursor-pointer group gap-4"
                         >
                           <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-200">
                               {faq.category === "reviewers"
                                 ? t("trustCenter.categoryReviewers", "Reviewers")
                                 : faq.category === "business"
@@ -788,13 +788,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                                 ? t("trustCenter.categoryTrust", "Trust Model")
                                 : t("trustCenter.categoryTechnical", "Technical")}
                             </span>
-                            <h3 className="font-extrabold text-sm sm:text-base text-white group-hover:text-zinc-300 transition-colors leading-snug">
+                            <h3 className="font-extrabold text-sm sm:text-base text-white group-hover:text-zinc-200 transition-colors leading-snug">
                               {t(`faq.${faq.id}.q`, faq.question)}
                             </h3>
                           </div>
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
-                              isOpen ? "bg-white text-black" : "bg-zinc-800 text-zinc-400 group-hover:bg-zinc-700"
+                              isOpen ? "bg-white text-black" : "bg-zinc-800 text-zinc-200 group-hover:bg-zinc-700"
                             }`}
                           >
                             <ChevronDown
@@ -804,7 +804,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         </button>
 
                         {isOpen && (
-                          <div className="mt-3 pt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
+                          <div className="mt-3 pt-2 text-xs sm:text-sm text-zinc-200 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
                             <p className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800">{t(`faq.${faq.id}.a`, faq.answer)}</p>
                           </div>
                         )}
@@ -824,14 +824,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               {/* Business Overview Hero */}
               <div className="bg-zinc-900 rounded-3xl p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="space-y-2 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] font-black uppercase tracking-wider">
                     <Building2 className="w-3.5 h-3.5" />
                     <span>{t("trustCenter.forBusinesses", "Business Verification Portal")}</span>
                   </div>
                   <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
                     {t("trustCenter.businessHeroTitle", "Claim Your Business Domain & Engage Directly")}
                   </h2>
-                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
                     {t("trustCenter.businessHeroDesc", "Verify ownership of your base website domain (e.g., yourcompany.com) or local place profile to access creator tools, official owner badges, and community response features.")}
                   </p>
                 </div>
@@ -840,7 +840,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                     <BadgeCheck className="w-6 h-6 text-white" />
                     <h4 className="font-bold text-sm text-white">{t("trustCenter.verifiedOwnerBadgeTitle", "Verified Owner Badge")}</h4>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-zinc-200 leading-relaxed">
                       {t("trustCenter.verifiedOwnerBadgeDesc", "Stand out with a distinguished badge and official business owner designation on all comment threads.")}
                     </p>
                   </div>
@@ -848,7 +848,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                     <MessageSquare className="w-6 h-6 text-white" />
                     <h4 className="font-bold text-sm text-white">{t("trustCenter.pinnedSolutionsTitle", "Pinned Solutions")}</h4>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-zinc-200 leading-relaxed">
                       {t("trustCenter.pinnedSolutionsDesc", "Pin an official response at the top of any review discussion to clarify updates or resolve questions.")}
                     </p>
                   </div>
@@ -856,14 +856,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                     <ExternalLink className="w-6 h-6 text-white" />
                     <h4 className="font-bold text-sm text-white">{t("trustCenter.embedTrustFeedsTitle", "Embed Trust Feeds")}</h4>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-zinc-200 leading-relaxed">
                       {t("trustCenter.embedTrustFeedsDesc", "Easily embed genuine customer video review carousels onto your landing page to increase conversions.")}
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-zinc-400 font-medium">
+                  <p className="text-xs text-zinc-200 font-medium">
                     {t("trustCenter.readyToVerify", "Ready to verify your domain? Contact our verification team with your domain details.")}
                   </p>
                   <button
@@ -895,11 +895,11 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-black text-white">{t("trustCenter.privacySecurityTitle", "Privacy, Security & Legal Compliance")}</h3>
-                      <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-black uppercase tracking-wider">
+                      <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-black uppercase tracking-wider">
                         {t("trustCenter.googleVerified", "Google Verified")}
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
                       {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. We use Google OAuth for secure passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce San Francisco, California USA governing jurisdiction.")}
                     </p>
                   </div>
@@ -910,13 +910,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 flex flex-col justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
                           {t("trustCenter.updatedDate", "Updated Aug 24, 2026")}
                         </span>
                         <ShieldCheck className="w-4 h-4 text-white" />
                       </div>
                       <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.privacyPolicyTitle", "Privacy Policy")}</h4>
-                      <p className="text-xs text-zinc-400 leading-normal">
+                      <p className="text-xs text-zinc-200 leading-normal">
                         {t("trustCenter.privacyPolicyDesc", "Covers Google profile data handling, real-time camera/mic usage, zero password storage, zero data selling, and your right to data deletion.")}
                       </p>
                     </div>
@@ -932,13 +932,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 flex flex-col justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
                           {t("trustCenter.updatedDate", "Updated Aug 24, 2026")}
                         </span>
                         <Scale className="w-4 h-4 text-white" />
                       </div>
                       <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.termsConditionsTitle", "Terms & Conditions")}</h4>
-                      <p className="text-xs text-zinc-400 leading-normal">
+                      <p className="text-xs text-zinc-200 leading-normal">
                         {t("trustCenter.termsConditionsDesc", "Covers live recording standards, anti-scraping rules, business streaming licenses, limitation of liability, and San Francisco, CA jurisdiction.")}
                       </p>
                     </div>
@@ -955,43 +955,43 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 {/* 4 Pillars Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{t("auth.title", "Authentication")}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("auth.title", "Authentication")}</span>
                     <h4 className="text-xs font-black text-white">{t("trustCenter.authPillarTitle", "Passwordless Email Security")}</h4>
-                    <p className="text-[11px] text-zinc-400 leading-normal">
+                    <p className="text-[11px] text-zinc-200 leading-normal">
                       {t("trustCenter.authPillarDesc", "We never store passwords. All logins use secure verification codes sent to your verified email with encrypted HTTPS transport.")}
                     </p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{t("record.title", "Recording Privacy")}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("record.title", "Recording Privacy")}</span>
                     <h4 className="text-xs font-black text-white">{t("trustCenter.recordingPillarTitle", "Real-Time Camera Only")}</h4>
-                    <p className="text-[11px] text-zinc-400 leading-normal">
+                    <p className="text-[11px] text-zinc-200 leading-normal">
                       {t("trustCenter.recordingPillarDesc", "Camera and microphone data are accessed strictly during active recording. We never access photo libraries or pre-recorded storage.")}
                     </p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{t("trustCenter.privacySecurity", "Zero Data Selling")}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("trustCenter.privacySecurity", "Zero Data Selling")}</span>
                     <h4 className="text-xs font-black text-white">{t("trustCenter.zeroSellingPillarTitle", "No Selling or Renting")}</h4>
-                    <p className="text-[11px] text-zinc-400 leading-normal">
+                    <p className="text-[11px] text-zinc-200 leading-normal">
                       {t("trustCenter.zeroSellingPillarDesc", "We never sell, rent, or trade your personal data to third parties. Data is shared solely with trusted cloud infrastructure providers.")}
                     </p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{t("legal.termsConditions", "Legal Jurisdiction")}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("legal.termsConditions", "Legal Jurisdiction")}</span>
                     <h4 className="text-xs font-black text-white">{t("trustCenter.jurisdictionPillarTitle", "San Francisco, California, USA")}</h4>
-                    <p className="text-[11px] text-zinc-400 leading-normal">
+                    <p className="text-[11px] text-zinc-200 leading-normal">
                       {t("trustCenter.jurisdictionPillarDesc", "Platform terms and privacy policies are governed by the laws of the State of California, USA with jurisdiction in San Francisco, CA.")}
                     </p>
                   </div>
                 </div>
 
                 <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="text-xs text-zinc-400 font-medium">
-                    Software Build: <strong className="text-white">Yoouz Cloud v2.0 (Stable Release)</strong> • Contact: <a href="mailto:support@yoouz.com" className="text-white underline hover:text-zinc-300 font-bold">support@yoouz.com</a>
+                  <div className="text-xs text-zinc-200 font-medium">
+                    Software Build: <strong className="text-white">Yoouz Cloud v2.0 (Stable Release)</strong> • Contact: <a href="mailto:support@yoouz.com" className="text-white underline hover:text-zinc-200 font-bold">support@yoouz.com</a>
                   </div>
-                  <div className="px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-bold flex items-center gap-1.5 w-fit">
+                  <div className="px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[11px] font-bold flex items-center gap-1.5 w-fit">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span>{t("trustCenter.allSystemsOperational", "All Systems Operational")}</span>
                   </div>
@@ -1007,14 +1007,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     </div>
                     <div className="space-y-1">
                       <h3 className="text-base font-black text-white">{t("trustCenter.dangerZoneTitle", "Danger Zone: Delete Account Profile")}</h3>
-                      <p className="text-xs text-zinc-400 leading-relaxed">
+                      <p className="text-xs text-zinc-200 leading-relaxed">
                         {t("trustCenter.dangerZoneDesc", "Permanently erase your user profile details, bio, avatar, and cached session information. This action cannot be reversed.")}
                       </p>
                     </div>
                   </div>
 
                   <div className="border-t border-rose-900/40 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <p className="text-xs text-zinc-400 font-medium">
+                    <p className="text-xs text-zinc-200 font-medium">
                       {t("trustCenter.deleteAccountWarning", "Confirming will sign you out immediately and purge your profile record.")}
                     </p>
                     <button
@@ -1045,7 +1045,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   </div>
                   <div className="space-y-1.5">
                     <h3 className="text-xl font-black text-white">{t("trustCenter.inquiryReceivedTitle", "Inquiry Received Successfully")}</h3>
-                    <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
+                    <p className="text-xs sm:text-sm text-zinc-200 max-w-md mx-auto leading-relaxed">
                       {t("trustCenter.inquiryReceivedDesc", "Thank you for contacting Yoouz. Your message has been logged securely in our support queue. Our team reviews all requests within 24 hours.")}
                     </p>
                   </div>
@@ -1061,7 +1061,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 <form onSubmit={handleContactSubmit} className="space-y-5">
                   <div className="space-y-1 border-b border-zinc-800 pb-4">
                     <h3 className="text-lg font-black text-white">{t("trustCenter.supportDeskTitle", "Official Yoouz Support Desk")}</h3>
-                    <p className="text-xs text-zinc-400 font-medium">
+                    <p className="text-xs text-zinc-200 font-medium">
                       {t("trustCenter.supportDeskDesc", "Submit support inquiries, business domain claim requests, or report community guideline infractions.")}
                     </p>
                   </div>
@@ -1075,7 +1075,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
+                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
                         {t("trustCenter.fullNameLabel", "Your Full Name *")}
                       </label>
                       <input
@@ -1084,12 +1084,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactName}
                         onChange={(e) => setContactName(e.target.value)}
                         placeholder="e.g. Sarah Jenkins"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-200"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
+                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
                         {t("trustCenter.emailLabel", "Email Address *")}
                       </label>
                       <input
@@ -1098,14 +1098,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactEmail}
                         onChange={(e) => setContactEmail(e.target.value)}
                         placeholder="e.g. sarah@example.com"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-200"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
+                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
                         {t("trustCenter.categoryLabel", "Category *")}
                       </label>
                       <select
@@ -1121,7 +1121,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
+                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
                         {t("trustCenter.websiteDomainLabel", "Website Domain (Optional)")}
                       </label>
                       <input
@@ -1129,13 +1129,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactDomain}
                         onChange={(e) => setContactDomain(e.target.value)}
                         placeholder="e.g. yourcompany.com"
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-500"
+                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-200"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
+                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
                       {t("trustCenter.messageLabel", "Message Details *")}
                     </label>
                     <textarea
@@ -1144,13 +1144,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       value={contactMessage}
                       onChange={(e) => setContactMessage(e.target.value)}
                       placeholder={t("trustCenter.messagePlaceholder", "Describe your inquiry or request in detail...")}
-                      className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all resize-none leading-relaxed text-white placeholder:text-zinc-500"
+                      className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all resize-none leading-relaxed text-white placeholder:text-zinc-200"
                     />
                   </div>
 
                   {/* Drag-and-Drop Attachments */}
                   <div className="space-y-2">
-                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-400 block px-1">
+                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
                       {t("trustCenter.attachFilesLabel", "Attach Screenshots or Verification Proof (Optional)")}
                     </label>
 
@@ -1173,14 +1173,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         accept=".png,.jpg,.jpeg,.webp,.pdf,.txt,.doc,.docx"
                         className="hidden"
                       />
-                      <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 shadow-2xs">
+                      <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 shadow-2xs">
                         <UploadCloud className="w-5 h-5 text-white" />
                       </div>
                       <div>
                         <p className="text-xs font-bold text-zinc-200">
                           {t("trustCenter.dragDropPrompt", "Drag & drop files here, or")} <span className="text-white underline">{t("trustCenter.browseFiles", "browse files")}</span>
                         </p>
-                        <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
+                        <p className="text-[10px] text-zinc-200 font-medium mt-0.5">
                           {t("trustCenter.fileLimitHint", "PNG, JPG, WEBP, PDF or DOC (Max 3 files, up to 2MB each)")}
                         </p>
                       </div>
@@ -1203,13 +1203,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                                   referrerPolicy="no-referrer"
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-400 shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-200 shrink-0">
                                   <FileText className="w-4 h-4" />
                                 </div>
                               )}
                               <div className="min-w-0">
                                 <p className="text-[11px] font-bold text-white truncate">{file.name}</p>
-                                <p className="text-[9px] text-zinc-400 font-bold">
+                                <p className="text-[9px] text-zinc-200 font-bold">
                                   {(file.size / 1024).toFixed(0)} KB
                                 </p>
                               </div>
@@ -1220,7 +1220,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                                 e.stopPropagation();
                                 handleRemoveFile(idx);
                               }}
-                              className="w-6 h-6 rounded-full hover:bg-zinc-800 flex items-center justify-center text-zinc-400 transition-colors cursor-pointer shrink-0"
+                              className="w-6 h-6 rounded-full hover:bg-zinc-800 flex items-center justify-center text-zinc-200 transition-colors cursor-pointer shrink-0"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1260,14 +1260,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
-                      <Globe className="w-3.5 h-3.5 text-zinc-300" />
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] font-black uppercase tracking-wider">
+                      <Globe className="w-3.5 h-3.5 text-zinc-200" />
                       <span>{t("common.select_language", "Global Localization & SEO")}</span>
                     </div>
                     <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                       {t("settings.language_preference", "Language & Regional Settings")}
                     </h2>
-                    <p className="text-xs sm:text-sm text-zinc-400 font-normal">
+                    <p className="text-xs sm:text-sm text-zinc-200 font-normal">
                       {t("settings.language_subtitle", "Switch instantly between 64 supported languages with full translation, RTL bidirectional rendering, and localized formatting.")}
                     </p>
                   </div>
@@ -1278,19 +1278,19 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-bold text-white">{currentLanguageMeta.nativeName}</span>
                         {isRTL && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-bold uppercase">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 font-bold uppercase">
                             RTL
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-zinc-400">{currentLanguageMeta.name} ({currentLanguageMeta.code.toUpperCase()})</span>
+                      <span className="text-xs text-zinc-200">{currentLanguageMeta.name} ({currentLanguageMeta.code.toUpperCase()})</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Search / Filter Languages */}
                 <div className="relative">
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-zinc-200 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     id="more-view-lang-search"
                     type="text"
@@ -1302,7 +1302,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   {langSearchFilter && (
                     <button
                       onClick={() => setLangSearchFilter("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1340,18 +1340,18 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                                 {lang.nativeName}
                               </span>
                             </div>
-                            <p className={`text-xs truncate ${isSelected ? "text-zinc-700" : "text-zinc-400"}`}>
+                            <p className={`text-xs truncate ${isSelected ? "text-zinc-700" : "text-zinc-200"}`}>
                               {lang.name}
                             </p>
                             <div className="flex items-center gap-1.5 pt-1">
                               <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
-                                isSelected ? "bg-zinc-950 text-white" : "bg-zinc-700 text-zinc-300"
+                                isSelected ? "bg-zinc-950 text-white" : "bg-zinc-700 text-zinc-200"
                               }`}>
                                 {lang.code}
                               </span>
                               {lang.direction === "rtl" && (
                                 <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${
-                                  isSelected ? "bg-zinc-950/10 text-zinc-900" : "bg-zinc-700/60 text-zinc-400"
+                                  isSelected ? "bg-zinc-950/10 text-zinc-900" : "bg-zinc-700/60 text-zinc-200"
                                 }`}>
                                   RTL
                                 </span>
@@ -1374,24 +1374,24 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         </section>
 
         {/* 4. Google-Standard Footer with Language Selector */}
-        <footer className="pt-8 pb-14 border-t border-zinc-800 text-center space-y-4 text-xs text-zinc-400">
+        <footer className="pt-8 pb-14 border-t border-zinc-800 text-center space-y-4 text-xs text-zinc-200">
           {/* Centered Clean Language Selector */}
           <div className="flex items-center justify-center">
             <button
               type="button"
               onClick={() => setIsLangModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition-all cursor-pointer text-xs font-semibold shadow-xs group"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 transition-all cursor-pointer text-xs font-semibold shadow-xs group"
             >
-              <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
+              <Globe className="w-3.5 h-3.5 text-zinc-200 group-hover:text-white" />
               <span>{currentLanguageMeta.flag}</span>
               <span>{currentLanguageMeta.nativeName}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 group-hover:bg-zinc-700 group-hover:text-zinc-200 uppercase font-mono">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 group-hover:bg-zinc-700 group-hover:text-zinc-200 uppercase font-mono">
                 {currentLanguageMeta.code}
               </span>
             </button>
           </div>
 
-          <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-400 flex-wrap">
+          <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-200 flex-wrap">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : null}
               className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
@@ -1418,10 +1418,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           </div>
 
           <div className="space-y-1 text-center font-medium">
-            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+            <p className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">
               {t("legal.networkLocation", "Yoouz Trust Network • San Francisco, CA")}
             </p>
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-zinc-200">
               {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews.")}
             </p>
           </div>
@@ -1438,7 +1438,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <div className="space-y-2">
               <h3 className="text-lg font-black text-white">{t("trustCenter.confirmDeleteTitle", "Confirm Profile Deletion")}</h3>
-              <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+              <p className="text-xs text-zinc-200 font-medium leading-relaxed">
                 {t("trustCenter.confirmDeleteDesc", "This is a permanent operation. To delete profile")} <strong className="text-white">{currentUser?.email}</strong>, {t("trustCenter.typeDeletePrompt", "please type DELETE below.")}
               </p>
             </div>
@@ -1455,7 +1455,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsDeleteConfirmOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-200 text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 {t("common.cancel", "Cancel")}
               </button>
@@ -1473,7 +1473,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     setIsDeleting(false);
                   }
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs font-bold shadow-md shadow-rose-600/15 transition-all cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-zinc-800 disabled:text-zinc-200 text-white text-xs font-bold shadow-md shadow-rose-600/15 transition-all cursor-pointer"
               >
                 {isDeleting ? t("trustCenter.deleting", "Deleting...") : t("trustCenter.permanentlyDelete", "Permanently Delete")}
               </button>

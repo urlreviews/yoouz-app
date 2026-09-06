@@ -424,7 +424,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                     <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                   )}
                 </h4>
-                <div className="flex items-center gap-1.5 text-[11px] text-zinc-300">
+                <div className="flex items-center gap-1.5 text-[11px] text-zinc-200">
                   <div className="flex items-center text-amber-400">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
@@ -432,13 +432,13 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                         className={`w-3 h-3 ${
                           i < currentReview.rating
                             ? "fill-amber-400 text-amber-400"
-                            : "text-zinc-500 fill-zinc-500"
+                            : "text-zinc-200 fill-zinc-500"
                         }`}
                       />
                     ))}
                   </div>
                   {(currentReview.recordedAt || currentReview.createdAtMs) && (
-                    <span className="text-zinc-300 text-[11px]">
+                    <span className="text-zinc-200 text-[11px]">
                       • {formatRecordedDate(currentReview.recordedAt, currentReview.createdAtMs)}
                     </span>
                   )}

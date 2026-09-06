@@ -24,7 +24,7 @@ export const CopoClubsView: React.FC<CopoClubsViewProps> = ({
             <Users className="w-6 h-6 text-white" />
             {t("clubs.title", "Food & Friends Clubs")}
           </h2>
-          <p className="text-xs text-zinc-400 mt-1 font-medium">
+          <p className="text-xs text-zinc-200 mt-1 font-medium">
             {t("clubs.subtitle", "Join local foodie communities sharing authentic 100% video reviews for top dining spots.")}
           </p>
         </div>
@@ -57,20 +57,20 @@ export const CopoClubsView: React.FC<CopoClubsViewProps> = ({
               <div className="p-5 pt-6 space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="font-extrabold text-base text-white">{club.name}</h3>
-                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700">
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700">
                     {club.city}
                   </span>
                 </div>
 
-                <p className="text-xs text-zinc-400 leading-relaxed font-medium">{club.description}</p>
+                <p className="text-xs text-zinc-200 leading-relaxed font-medium">{club.description}</p>
 
-                <div className="flex items-center gap-4 text-xs text-zinc-300 pt-2 font-bold">
+                <div className="flex items-center gap-4 text-xs text-zinc-200 pt-2 font-bold">
                   <span className="flex items-center gap-1.5 text-zinc-200">
                     <Video className="w-3.5 h-3.5 text-white" />
                     {club.videoCount} {t("place.reviews", "Video Reviews")}
                   </span>
                   <span>•</span>
-                  <span className="text-zinc-400">{club.membersCount} {t("clubs.members", "Members")}</span>
+                  <span className="text-zinc-200">{club.membersCount} {t("clubs.members", "Members")}</span>
                 </div>
               </div>
 
@@ -86,7 +86,7 @@ export const CopoClubsView: React.FC<CopoClubsViewProps> = ({
                   onClick={() => onToggleJoinClub(club.id)}
                   className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                     club.isJoined
-                      ? "bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700"
+                      ? "bg-zinc-800 text-zinc-200 border border-zinc-700 hover:bg-zinc-700"
                       : "bg-white hover:bg-zinc-200 text-black shadow-md"
                   }`}
                 >

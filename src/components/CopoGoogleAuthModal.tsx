@@ -306,9 +306,9 @@ export const CopoAuthPrompt: React.FC<{
         <div className="w-full flex items-center justify-end py-2 mb-4">
           <button
             onClick={onOpenHelp}
-            className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-full hover:bg-white/[0.04]"
+            className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-200 hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-full hover:bg-white/[0.04]"
           >
-            <HelpCircle className="w-4 h-4 text-zinc-400" />
+            <HelpCircle className="w-4 h-4 text-zinc-200" />
             <span>{t("common.help", "Help")}</span>
           </button>
         </div>
@@ -319,7 +319,7 @@ export const CopoAuthPrompt: React.FC<{
         {/* Step-Aware Brand / Profile Icon */}
         {step === 'profile' ? (
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-xl">
-            <User className="w-6 h-6 text-zinc-400" />
+            <User className="w-6 h-6 text-zinc-200" />
           </div>
         ) : (
           <div className="relative flex items-center justify-center w-13 h-13 rounded-2xl bg-white shadow-[0_4px_24px_rgba(255,255,255,0.18)] border border-white/20">
@@ -333,7 +333,7 @@ export const CopoAuthPrompt: React.FC<{
           <h1 className="text-[22px] sm:text-2xl font-bold text-white tracking-tight font-['Google_Sans',sans-serif] leading-tight">
             {step === 'code' ? t("auth.checkEmailTitle", "Check your email") : step === 'profile' ? t("auth.completeProfileTitle", "Complete your profile") : copy.title}
           </h1>
-          <p className="text-[13px] text-zinc-400 font-normal leading-relaxed">
+          <p className="text-[13px] text-zinc-200 font-normal leading-relaxed">
             {step === 'code' 
               ? `${t("auth.sentCodeTo", "We sent a 6-digit confirmation code to")} ${email}`
               : step === 'profile'
@@ -346,7 +346,7 @@ export const CopoAuthPrompt: React.FC<{
         {step === 'email' && (
           <form onSubmit={handleSendMagicLink} className="w-full space-y-3.5 pt-1 text-left">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1.5 tracking-wider uppercase">
+              <label className="block text-[11px] font-semibold text-zinc-200 mb-1.5 tracking-wider uppercase">
                 {t("auth.emailAddress", "Email Address")}
               </label>
               <div className="relative">
@@ -359,7 +359,7 @@ export const CopoAuthPrompt: React.FC<{
                   placeholder="you@example.com"
                   className="w-full h-12 pl-10 pr-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
                 />
-                <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 top-4" />
+                <Mail className="w-4 h-4 text-zinc-200 absolute left-3.5 top-4" />
               </div>
             </div>
 
@@ -392,10 +392,10 @@ export const CopoAuthPrompt: React.FC<{
           <form onSubmit={handleVerifyCode} className="w-full max-w-sm space-y-4 pt-1 text-left">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-[11px] font-semibold text-zinc-400 tracking-wider uppercase">
+                <label className="block text-[11px] font-semibold text-zinc-200 tracking-wider uppercase">
                   {t("auth.sixDigitCode", "6-Digit Verification Code")}
                 </label>
-                <span className="text-[11px] text-zinc-500 font-mono">
+                <span className="text-[11px] text-zinc-200 font-mono">
                   {otpCode.length}/6 {t("auth.digits", "digits")}
                 </span>
               </div>
@@ -434,14 +434,14 @@ export const CopoAuthPrompt: React.FC<{
                           isFilled
                             ? "bg-zinc-800/90 text-white border-2 border-white/80 shadow-md shadow-white/5"
                             : isFocused
-                            ? "bg-zinc-900 text-zinc-300 border-2 border-zinc-400 ring-2 ring-white/10"
+                            ? "bg-zinc-900 text-zinc-200 border-2 border-zinc-400 ring-2 ring-white/10"
                             : "bg-zinc-900/90 text-zinc-600 border border-zinc-800"
                         }`}
                       >
                         {isFilled ? (
                           char
                         ) : isFocused ? (
-                          <span className="animate-pulse text-zinc-400 font-normal">|</span>
+                          <span className="animate-pulse text-zinc-200 font-normal">|</span>
                         ) : (
                           <span className="text-zinc-600 font-light text-base">·</span>
                         )}
@@ -474,11 +474,11 @@ export const CopoAuthPrompt: React.FC<{
               )}
             </button>
 
-            <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
+            <div className="flex items-center justify-between text-xs text-zinc-200 pt-1">
               <button
                 type="button"
                 onClick={() => { setStep('email'); setErrorMessage(''); }}
-                className="text-zinc-400 hover:text-white underline cursor-pointer"
+                className="text-zinc-200 hover:text-white underline cursor-pointer"
               >
                 ← {t("auth.changeEmail", "Change Email")}
               </button>
@@ -486,7 +486,7 @@ export const CopoAuthPrompt: React.FC<{
                 type="button"
                 onClick={() => handleSendMagicLink()}
                 disabled={isLoading}
-                className="text-zinc-300 hover:text-white underline cursor-pointer"
+                className="text-zinc-200 hover:text-white underline cursor-pointer"
               >
                 {t("auth.resendCode", "Resend Code")}
               </button>
@@ -499,7 +499,7 @@ export const CopoAuthPrompt: React.FC<{
           <form onSubmit={(e) => handleSaveProfile(e)} className="w-full max-w-sm space-y-3.5 pt-1 text-left">
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
+                <label className="block text-[11px] font-semibold text-zinc-200 mb-1 tracking-wider uppercase">
                   {t("auth.firstName", "First Name")} <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -513,7 +513,7 @@ export const CopoAuthPrompt: React.FC<{
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
+                <label className="block text-[11px] font-semibold text-zinc-200 mb-1 tracking-wider uppercase">
                   {t("auth.lastName", "Last Name")} <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -528,7 +528,7 @@ export const CopoAuthPrompt: React.FC<{
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1 tracking-wider uppercase">
+              <label className="block text-[11px] font-semibold text-zinc-200 mb-1 tracking-wider uppercase">
                 {t("auth.country", "Country")} <span className="text-red-400">*</span>
               </label>
               <CountrySelector
@@ -569,7 +569,7 @@ export const CopoAuthPrompt: React.FC<{
                   {hasStates ? (
                     <>
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">{stateLabel}</span>
+                        <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">{stateLabel}</span>
                         <SearchableComboSelector
                           value={stateRegion}
                           onChange={(val) => {
@@ -581,7 +581,7 @@ export const CopoAuthPrompt: React.FC<{
                         />
                       </div>
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">{t("auth.city", "City")}</span>
+                        <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">{t("auth.city", "City")}</span>
                         <SearchableComboSelector
                           value={city}
                           onChange={setCity}
@@ -592,7 +592,7 @@ export const CopoAuthPrompt: React.FC<{
                     </>
                   ) : (
                     <div className="col-span-2 space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">{t("auth.city", "City")}</span>
+                      <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">{t("auth.city", "City")}</span>
                       <SearchableComboSelector
                         value={city}
                         onChange={setCity}
@@ -629,12 +629,12 @@ export const CopoAuthPrompt: React.FC<{
           </form>
         )}
 
-        <p className="text-[11.5px] text-zinc-500 font-normal leading-relaxed max-w-xs mx-auto">
+        <p className="text-[11.5px] text-zinc-200 font-normal leading-relaxed max-w-xs mx-auto">
           {t("auth.agreePrompt", "By continuing, you agree to Yoouz's")}{" "}
           <button
             type="button"
             onClick={() => onOpenLegal ? onOpenLegal('terms') : null}
-            className="font-semibold text-zinc-400 hover:text-white underline decoration-zinc-600 underline-offset-2 cursor-pointer inline bg-transparent p-0 border-none"
+            className="font-semibold text-zinc-200 hover:text-white underline decoration-zinc-600 underline-offset-2 cursor-pointer inline bg-transparent p-0 border-none"
           >
             {t("legal.termsTab", "Terms of Service")}
           </button>{" "}
@@ -642,7 +642,7 @@ export const CopoAuthPrompt: React.FC<{
           <button
             type="button"
             onClick={() => onOpenLegal ? onOpenLegal('privacy') : null}
-            className="font-semibold text-zinc-400 hover:text-white underline decoration-zinc-600 underline-offset-2 cursor-pointer inline bg-transparent p-0 border-none"
+            className="font-semibold text-zinc-200 hover:text-white underline decoration-zinc-600 underline-offset-2 cursor-pointer inline bg-transparent p-0 border-none"
           >
             {t("legal.privacyTab", "Privacy Policy")}
           </button>
@@ -651,7 +651,7 @@ export const CopoAuthPrompt: React.FC<{
       </div>
 
       {isFullPage && (
-        <div className="w-full pt-6 pb-2 text-center text-[12px] text-zinc-500 font-medium">
+        <div className="w-full pt-6 pb-2 text-center text-[12px] text-zinc-200 font-medium">
           © 2026 Yoouz. Real People. Real Reviews.
         </div>
       )}
@@ -705,7 +705,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 sm:hidden flex items-center justify-center text-zinc-300 hover:text-white shrink-0 active:scale-95 cursor-pointer shadow-sm"
+              className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 sm:hidden flex items-center justify-center text-zinc-200 hover:text-white shrink-0 active:scale-95 cursor-pointer shadow-sm"
               aria-label="Back"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -716,9 +716,9 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
                   onClose();
                   onOpenHelp();
                 }}
-                className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-400 hover:text-white transition-colors px-2.5 py-1 rounded-full hover:bg-white/[0.06] cursor-pointer"
+                className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-200 hover:text-white transition-colors px-2.5 py-1 rounded-full hover:bg-white/[0.06] cursor-pointer"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-zinc-400" />
+                <HelpCircle className="w-3.5 h-3.5 text-zinc-200" />
                 <span>Help</span>
               </button>
             ) : null}
@@ -727,7 +727,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer hidden sm:flex"
+            className="p-1.5 text-zinc-200 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors cursor-pointer hidden sm:flex"
           >
             <X className="w-5 h-5" />
           </button>

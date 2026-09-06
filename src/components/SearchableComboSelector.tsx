@@ -47,11 +47,11 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
         }}
         className="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm hover:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-zinc-700 transition-all text-left cursor-pointer min-h-[44px]"
       >
-        <span className={value ? "text-zinc-200 font-medium" : "text-zinc-500 font-medium"}>
+        <span className={value ? "text-zinc-200 font-medium" : "text-zinc-200 font-medium"}>
           {value || placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 shrink-0 ${
+          className={`w-4 h-4 text-zinc-200 transition-transform duration-200 shrink-0 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
@@ -60,7 +60,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
       {isOpen && (
         <div className="absolute z-50 left-0 right-0 mt-1.5 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-800 bg-zinc-950/50">
-            <Search className="w-4 h-4 text-zinc-400 shrink-0" />
+            <Search className="w-4 h-4 text-zinc-200 shrink-0" />
             <input
               type="text"
               value={search}
@@ -69,7 +69,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
               autoComplete="new-password"
               autoCorrect="off"
               spellCheck={false}
-              className="w-full bg-transparent border-0 p-0 text-xs text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-0 focus:border-transparent"
+              className="w-full bg-transparent border-0 p-0 text-xs text-zinc-200 placeholder:text-zinc-200 focus:outline-none focus:ring-0 focus:border-transparent"
               autoFocus
             />
           </div>
@@ -82,14 +82,14 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
                   onChange(search.trim());
                   setIsOpen(false);
                 }}
-                className="w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer text-zinc-300 hover:bg-zinc-850"
+                className="w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer text-zinc-200 hover:bg-zinc-850"
               >
                 <span className="font-semibold text-emerald-400">Use "{search.trim()}"</span>
               </button>
             )}
 
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-xs text-zinc-500 text-center font-medium italic">
+              <div className="px-4 py-3 text-xs text-zinc-200 text-center font-medium italic">
                 Press "Use" above to add custom location.
               </div>
             ) : (
@@ -106,7 +106,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
                     className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
                       isSelected
                         ? "bg-zinc-800 text-white font-semibold"
-                        : "text-zinc-300 hover:bg-zinc-850"
+                        : "text-zinc-200 hover:bg-zinc-850"
                     }`}
                   >
                     <span>{option}</span>

@@ -469,7 +469,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
               <button
                 id="following-back-button"
                 onClick={onNavigateHome}
-                className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-700/80"
+                className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-700/80"
                 title="Back to Feed"
               >
                 <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
@@ -477,10 +477,10 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
             )}
             <div className="space-y-0.5">
               <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-300" />
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-200" />
                 <span>Following & Followers</span>
               </h1>
-              <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+              <p className="text-xs text-zinc-200 font-medium leading-relaxed">
                 Manage businesses and reviewers you follow on Yoouz.
               </p>
             </div>
@@ -497,11 +497,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
               className={`py-2 px-3 text-center text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 activeTab === "following"
                   ? "bg-white text-zinc-950 shadow-sm"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
               }`}
             >
               <span>Following</span>
-              <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${activeTab === "following" ? "bg-zinc-200 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-400"}`}>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${activeTab === "following" ? "bg-zinc-200 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-200"}`}>
                 {totalFollowingCount}
               </span>
             </button>
@@ -514,11 +514,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
               className={`py-2 px-3 text-center text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 activeTab === "followers"
                   ? "bg-white text-zinc-950 shadow-sm"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
               }`}
             >
               <span>Followers</span>
-              <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${activeTab === "followers" ? "bg-zinc-200 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-400"}`}>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${activeTab === "followers" ? "bg-zinc-200 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-200"}`}>
                 {myFollowers.length}
               </span>
             </button>
@@ -533,7 +533,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
                 followingFilter === "all"
                   ? "bg-white text-zinc-950 border-white shadow-xs"
-                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border-zinc-800"
+                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border-zinc-800"
               }`}
             >
               All ({totalFollowingCount})
@@ -543,7 +543,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
                 followingFilter === "businesses"
                   ? "bg-white text-zinc-950 border-white shadow-xs"
-                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border-zinc-800"
+                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border-zinc-800"
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
@@ -554,7 +554,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
                 followingFilter === "reviewers"
                   ? "bg-white text-zinc-950 border-white shadow-xs"
-                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border-zinc-800"
+                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border-zinc-800"
               }`}
             >
               <User className="w-3.5 h-3.5" />
@@ -566,7 +566,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         {/* Search / Filter Input */}
         {(totalFollowingCount > 0 || myFollowers.length > 0 || searchQuery) && (
           <div className="relative">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-zinc-200 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
@@ -581,7 +581,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer p-0.5 rounded-full hover:bg-zinc-800 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white cursor-pointer p-0.5 rounded-full hover:bg-zinc-800 transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -593,15 +593,15 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         {activeTab === "following" && (
           <div id="tab-following-content" className="space-y-3 animate-in fade-in duration-150">
             {totalFollowingCount === 0 ? (
-              <div id="following-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/90 border border-zinc-800 text-center text-zinc-400 space-y-3 shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-300 flex items-center justify-center mx-auto">
+              <div id="following-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/90 border border-zinc-800 text-center text-zinc-200 space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-200 flex items-center justify-center mx-auto">
                   <User className="w-6 h-6" />
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
                     {searchQuery ? "No matching results found" : "You aren't following anyone yet"}
                   </p>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-zinc-200 leading-relaxed">
                     {searchQuery
                       ? `No business or reviewer matches "${searchQuery}". Try a different name.`
                       : "When you follow businesses or authentic local reviewers on Yoouz, they will appear here."}
@@ -657,7 +657,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                               style={{ display: resolvedLogo ? "none" : "flex" }}
                               className="w-full h-full items-center justify-center bg-zinc-950 text-white rounded-lg"
                             >
-                              <Building2 className="w-6 h-6 text-zinc-300" />
+                              <Building2 className="w-6 h-6 text-zinc-200" />
                             </div>
                           </div>
 
@@ -669,13 +669,13 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                                 {formattedTitle}
                               </h3>
                               <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
-                              <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded-md border border-zinc-700/60 uppercase tracking-wider shrink-0">
+                              <span className="bg-zinc-800 text-zinc-200 text-[10px] font-bold px-2 py-0.5 rounded-md border border-zinc-700/60 uppercase tracking-wider shrink-0">
                                 Business
                               </span>
                             </div>
 
                             {/* Row 2: Star Rating & Review Count */}
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-300">
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-200">
                               <span className="font-black text-amber-400">
                                 {typeof place.rating === "number" ? place.rating.toFixed(1) : "5.0"}
                               </span>
@@ -691,22 +691,22 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                                   />
                                 ))}
                               </div>
-                              <span className="text-zinc-400 text-[11px] font-medium">
+                              <span className="text-zinc-200 text-[11px] font-medium">
                                 ({place.totalReviews || 1} {place.totalReviews === 1 ? "review" : "reviews"})
                               </span>
                             </div>
 
                             {/* Row 3: Website Domain & Location */}
-                            <div className="flex items-center gap-3 text-xs text-zinc-400 font-medium truncate">
+                            <div className="flex items-center gap-3 text-xs text-zinc-200 font-medium truncate">
                               {cleanDomain && (
-                                <span className="flex items-center gap-1 text-zinc-400 truncate hover:text-white transition-colors">
-                                  <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span className="flex items-center gap-1 text-zinc-200 truncate hover:text-white transition-colors">
+                                  <Globe className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                                   <span className="truncate">{cleanDomain}</span>
                                 </span>
                               )}
                               {(place.city || place.address) && (
-                                <span className="flex items-center gap-1 text-zinc-400 truncate">
-                                  <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span className="flex items-center gap-1 text-zinc-200 truncate">
+                                  <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                                   <span className="truncate">{place.city || place.address}</span>
                                 </span>
                               )}
@@ -741,7 +741,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
                               <span>Following</span>
                             </>
                           )}
@@ -783,18 +783,18 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </div>
 
                             {author.location ? (
-                              <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 truncate">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                              <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 truncate">
+                                <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                                 <span className="truncate">{author.location}</span>
                               </p>
                             ) : (
-                              <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 truncate">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                              <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 truncate">
+                                <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                                 <span>Local Reviewer</span>
                               </p>
                             )}
 
-                            <p className="text-[11px] font-semibold text-zinc-500 truncate">
+                            <p className="text-[11px] font-semibold text-zinc-200 truncate">
                               {author.videoReviewCount
                                 ? `${author.videoReviewCount} video ${author.videoReviewCount === 1 ? "review" : "reviews"}`
                                 : author.bio || "Community reviewer"}
@@ -824,7 +824,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
                               <span>Following</span>
                             </>
                           )}
@@ -841,15 +841,15 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         {activeTab === "followers" && (
           <div id="tab-followers-content" className="space-y-3 animate-in fade-in duration-150">
             {filteredFollowers.length === 0 ? (
-              <div id="followers-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/90 border border-zinc-800 text-center text-zinc-400 space-y-3 shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-300 flex items-center justify-center mx-auto">
+              <div id="followers-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/90 border border-zinc-800 text-center text-zinc-200 space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-200 flex items-center justify-center mx-auto">
                   <Users className="w-6 h-6" />
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
                     {searchQuery ? "No matching followers found" : "No followers yet"}
                   </p>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-zinc-200 leading-relaxed">
                     {searchQuery
                       ? `No follower matches "${searchQuery}". Try a different name.`
                       : "When other local reviewers follow your profile, they will appear here."}
@@ -896,18 +896,18 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           </div>
 
                           {follower.location ? (
-                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                            <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 truncate">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                               <span className="truncate">{follower.location}</span>
                             </p>
                           ) : (
-                            <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                            <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 truncate">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                               <span>Local Reviewer</span>
                             </p>
                           )}
 
-                          <p className="text-[11px] font-semibold text-zinc-500 truncate">
+                          <p className="text-[11px] font-semibold text-zinc-200 truncate">
                             {follower.bio || "Community reviewer"}
                           </p>
                         </div>
@@ -937,7 +937,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
                               <span>Following</span>
                             </>
                           )

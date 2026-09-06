@@ -525,19 +525,19 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 sm:hidden flex items-center justify-center text-zinc-300 hover:text-white shrink-0 active:scale-95 cursor-pointer"
+              className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 sm:hidden flex items-center justify-center text-zinc-200 hover:text-white shrink-0 active:scale-95 cursor-pointer"
               aria-label="Back"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 hidden sm:flex items-center justify-center text-zinc-300">
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 hidden sm:flex items-center justify-center text-zinc-200">
               <Share2 className="w-4 h-4" />
             </div>
             <div>
               <h3 id="yoouz-share-modal-title" className="font-bold text-white text-base leading-tight">
                 {isVideoMode ? t("shareModal.shareReview", "Share Review") : t("shareModal.share", "Share")}
               </h3>
-              <p className="text-[11px] text-zinc-400 font-medium truncate max-w-[240px] sm:max-w-[300px]">
+              <p className="text-[11px] text-zinc-200 font-medium truncate max-w-[240px] sm:max-w-[300px]">
                 {title}
               </p>
             </div>
@@ -546,7 +546,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <button
             id="btn-close-share-desktop"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 hover:border-zinc-500 transition-all cursor-pointer shadow-sm shrink-0 active:scale-95"
+            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 hover:border-zinc-500 transition-all cursor-pointer shadow-sm shrink-0 active:scale-95"
             title="Close share dialog (Esc)"
             aria-label="Close"
           >
@@ -562,7 +562,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === "share"
                   ? "bg-zinc-800 text-white shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-zinc-200 hover:text-zinc-200"
               }`}
             >
               <Share2 className="w-3.5 h-3.5" />
@@ -573,7 +573,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === "embed"
                   ? "bg-zinc-800 text-white shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-zinc-200 hover:text-zinc-200"
               }`}
             >
               <Code className="w-3.5 h-3.5" />
@@ -584,7 +584,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === "preview"
                   ? "bg-zinc-800 text-white shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-zinc-200 hover:text-zinc-200"
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -634,19 +634,19 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     }}
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-200 shrink-0">
                     <Globe className="w-5 h-5" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <h4 className="text-xs font-bold text-white truncate">{title}</h4>
-                  <p className="text-[11px] text-zinc-400 truncate mt-0.5">{subtitle}</p>
+                  <p className="text-[11px] text-zinc-200 truncate mt-0.5">{subtitle}</p>
                 </div>
               </div>
 
               {/* Direct Link Copy Input Bar */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                <label className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider block">
                   {t("shareModal.directLink", "Direct Link")}
                 </label>
                 <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-1.5 shadow-inner">
@@ -655,14 +655,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     readOnly
                     value={shareUrl}
                     onFocus={(e) => e.target.select()}
-                    className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-300 font-mono focus:outline-none select-all truncate min-w-0"
+                    className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-200 font-mono focus:outline-none select-all truncate min-w-0"
                   />
                   <div className="flex items-center gap-1 shrink-0">
                     {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
                       <button
                         onClick={handleNativeShare}
                         type="button"
-                        className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer border border-zinc-700/60"
+                        className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition cursor-pointer border border-zinc-700/60"
                         title={t("shareModal.nativeDeviceShare", "Native Device Share")}
                       >
                         <Smartphone className="w-3.5 h-3.5" />
@@ -695,7 +695,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
               {/* Desktop 3-Column Dark Mode Grid Layout */}
               <div className="hidden sm:block space-y-2 pt-1">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                <label className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider block">
                   {t("shareModal.shareToPlatform", "Share to Platform")}
                 </label>
                 <div 
@@ -709,10 +709,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       type="button"
                       className="group flex flex-col items-center justify-center py-3 px-2 rounded-2xl bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 text-center transition cursor-pointer active:scale-98 shadow-sm"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800/90 flex items-center justify-center text-zinc-300 group-hover:text-white group-hover:border-zinc-600 group-hover:bg-zinc-800 transition mb-1.5 shadow-sm">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800/90 flex items-center justify-center text-zinc-200 group-hover:text-white group-hover:border-zinc-600 group-hover:bg-zinc-800 transition mb-1.5 shadow-sm">
                         {platform.icon}
                       </div>
-                      <span className="text-[11px] font-medium text-zinc-300 group-hover:text-white truncate max-w-full">
+                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white truncate max-w-full">
                         {platform.name}
                       </span>
                     </button>
@@ -723,15 +723,15 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               {/* Mobile Shelf 1: Circular Quick Actions & Messaging Apps */}
               <div className="sm:hidden space-y-2 pt-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  <label className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider block">
                     {t("shareModal.sendTo", "Send to")}
                   </label>
                   {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
                     <button
                       onClick={handleNativeShare}
-                      className="text-[11px] font-semibold text-zinc-300 hover:text-white transition cursor-pointer flex items-center gap-1"
+                      className="text-[11px] font-semibold text-zinc-200 hover:text-white transition cursor-pointer flex items-center gap-1"
                     >
-                      <Smartphone className="w-3 h-3 text-zinc-400" />
+                      <Smartphone className="w-3 h-3 text-zinc-200" />
                       <span>{t("shareModal.systemApps", "System apps")}</span>
                     </button>
                   )}
@@ -753,7 +753,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       <div className={`w-13 h-13 rounded-full ${platform.id === 'copy' && copied ? 'bg-zinc-800 border-zinc-600 text-white shadow-md' : 'bg-zinc-900 border-zinc-800/90 text-zinc-200'} border flex items-center justify-center group-hover:text-white group-hover:border-zinc-700 group-active:bg-zinc-800 transition-all duration-200 shadow-sm`}>
                         {platform.icon}
                       </div>
-                      <span className="text-[11px] font-medium text-zinc-300 group-hover:text-white text-center truncate max-w-[64px] leading-tight select-none">
+                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white text-center truncate max-w-[64px] leading-tight select-none">
                         {platform.name}
                       </span>
                     </button>
@@ -763,7 +763,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
               {/* Mobile Shelf 2: Circular Social Platforms */}
               <div className="sm:hidden space-y-2 pt-0.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                <label className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider block">
                   {t("shareModal.shareTo", "Share to")}
                 </label>
 
@@ -783,7 +783,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       <div className="w-13 h-13 rounded-full bg-zinc-900 border border-zinc-800/90 flex items-center justify-center text-zinc-200 group-hover:text-white group-hover:border-zinc-700 group-active:bg-zinc-800 transition-all duration-200 shadow-sm">
                         {platform.icon}
                       </div>
-                      <span className="text-[11px] font-medium text-zinc-300 group-hover:text-white text-center truncate max-w-[64px] leading-tight select-none">
+                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white text-center truncate max-w-[64px] leading-tight select-none">
                         {platform.name}
                       </span>
                     </button>
@@ -797,7 +797,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   href={shareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition font-medium"
+                  className="inline-flex items-center gap-1.5 text-xs text-zinc-200 hover:text-zinc-200 transition font-medium"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>{t("shareModal.openNewTab", "Open in new tab")}</span>
@@ -822,14 +822,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             <div className="space-y-4 animate-in fade-in duration-150 py-1">
               <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-900/40 flex items-start gap-2.5">
                 <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-zinc-300 leading-relaxed">
+                <p className="text-xs text-zinc-200 leading-relaxed">
                   <span className="font-bold text-white">{t("shareModal.embedAnywhere", "Embed Anywhere:")}</span> {t("shareModal.embedDesc", "Paste this responsive HTML snippet into your WordPress, Shopify, Webflow, or custom website.")}
                 </p>
               </div>
 
               {/* Format Selector */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t("shareModal.embedLayout", "Embed Layout")}</span>
+                <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider">{t("shareModal.embedLayout", "Embed Layout")}</span>
                 <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-900 border border-zinc-800 rounded-xl">
                   <button
                     type="button"
@@ -837,7 +837,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
                       embedLayout === "reel"
                         ? "bg-white text-black shadow"
-                        : "text-zinc-400 hover:text-white"
+                        : "text-zinc-200 hover:text-white"
                     }`}
                   >
                     <span>📱 9:16 {t("shareModal.reel", "Reel")}</span>
@@ -848,7 +848,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
                       embedLayout === "card"
                         ? "bg-white text-black shadow"
-                        : "text-zinc-400 hover:text-white"
+                        : "text-zinc-200 hover:text-white"
                     }`}
                   >
                     <span>🎴 {t("shareModal.card", "Card")}</span>
@@ -859,7 +859,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
                       embedLayout === "widget"
                         ? "bg-white text-black shadow"
-                        : "text-zinc-400 hover:text-white"
+                        : "text-zinc-200 hover:text-white"
                     }`}
                   >
                     <span>🌐 {t("shareModal.fullWidth", "Full Width")}</span>
@@ -869,15 +869,15 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t("shareModal.htmlCode", "HTML iFrame Code")}</span>
+                  <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider">{t("shareModal.htmlCode", "HTML iFrame Code")}</span>
                   {embedCopied && (
-                    <span className="text-[11px] font-bold text-zinc-300 animate-in fade-in flex items-center gap-1">
+                    <span className="text-[11px] font-bold text-zinc-200 animate-in fade-in flex items-center gap-1">
                       <Check className="w-3.5 h-3.5 text-white" /> {t("shareModal.copied", "Copied!")}
                     </span>
                   )}
                 </div>
                 <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl p-3">
-                  <pre className="text-[11px] font-mono text-zinc-300 overflow-x-auto whitespace-pre-wrap break-all pr-2 max-h-24">
+                  <pre className="text-[11px] font-mono text-zinc-200 overflow-x-auto whitespace-pre-wrap break-all pr-2 max-h-24">
                     {iframeEmbedCode}
                   </pre>
                 </div>
@@ -918,8 +918,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               {/* Embed Live Preview in Realistic Smartphone Frame */}
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t("shareModal.livePlayerPreview", "Live Player Preview")}</span>
-                  <span className="text-[10px] font-medium text-zinc-500">{t("shareModal.interactiveMobilePlayer", "Interactive 9:16 Mobile Player")}</span>
+                  <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider">{t("shareModal.livePlayerPreview", "Live Player Preview")}</span>
+                  <span className="text-[10px] font-medium text-zinc-200">{t("shareModal.interactiveMobilePlayer", "Interactive 9:16 Mobile Player")}</span>
                 </div>
                 <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 overflow-hidden shadow-2xl flex justify-center p-4">
                   <div className="relative w-full max-w-[280px] sm:max-w-[310px] aspect-[9/16] h-[490px] sm:h-[550px] rounded-[24px] border-4 border-zinc-800 bg-black overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]">
@@ -938,7 +938,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             /* Social Card Preview View */
             <div className="space-y-4 animate-in fade-in duration-150 py-1">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{t("shareModal.socialPreviewCard", "Social Preview Card")}</span>
+                <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider">{t("shareModal.socialPreviewCard", "Social Preview Card")}</span>
                 <a
                   href={previewImageUrl}
                   target="_blank"
@@ -984,9 +984,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">yoouz.com</span>
+                    <span className="text-[9px] font-bold text-zinc-200 uppercase tracking-wider">yoouz.com</span>
                     <h5 className="font-bold text-white text-xs sm:text-sm truncate mt-0.5">{title}</h5>
-                    <p className="text-[11px] text-zinc-400 line-clamp-2 mt-0.5 font-medium leading-tight">
+                    <p className="text-[11px] text-zinc-200 line-clamp-2 mt-0.5 font-medium leading-tight">
                       {isBusiness 
                         ? `Authentic 60s video reviews & ratings for ${title}. Real People. Real Reviews.` 
                         : `Authentic 60s video reviews & recommendations by ${title}.`}
@@ -1009,7 +1009,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
         {/* Modal Footer */}
         <div className="px-5 py-3 bg-zinc-950 border-t border-zinc-800/80 flex items-center justify-between shrink-0">
-          <p className="text-[10px] text-zinc-500 font-medium">Yoouz • Real People. Real Reviews.</p>
+          <p className="text-[10px] text-zinc-200 font-medium">Yoouz • Real People. Real Reviews.</p>
           <button
             onClick={onClose}
             className="px-5 py-1.5 text-xs font-bold text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer border border-zinc-700/80"

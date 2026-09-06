@@ -82,11 +82,11 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 <span className="text-white text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
                   Yoouz
                 </span>
-                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-300 font-black uppercase tracking-wider scale-90 origin-left">
+                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-200 font-black uppercase tracking-wider scale-90 origin-left">
                   Beta
                 </span>
               </div>
-              <span className="text-[11.5px] text-zinc-300 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
+              <span className="text-[11.5px] text-zinc-200 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
                 {t("legal.tagline", "Real People. Real Reviews.")}
               </span>
             </div>
@@ -153,7 +153,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
 
         {/* Footer & Legal Links */}
         <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400">
+          <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
               className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
@@ -175,7 +175,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               {t("legal.about", "About")}
             </button>
           </div>
-          <p className="text-[11px] text-zinc-400 font-normal">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</p>
+          <p className="text-[11px] text-zinc-200 font-normal">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</p>
         </div>
       </aside>
 

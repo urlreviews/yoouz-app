@@ -91,10 +91,10 @@ export const GlobalUploadToast: React.FC = () => {
                 {up.isError ? "Upload Failed" : up.isComplete ? "Published!" : "Uploading Video"}
               </p>
               {!up.isComplete && !up.isError && (
-                <span className="text-xs font-medium text-zinc-300">{up.percent}%</span>
+                <span className="text-xs font-medium text-zinc-200">{up.percent}%</span>
               )}
             </div>
-            <p className="text-xs text-zinc-400 truncate">{up.statusText}</p>
+            <p className="text-xs text-zinc-200 truncate">{up.statusText}</p>
             
             {!up.isComplete && !up.isError && (
               <div className="w-full h-1.5 bg-zinc-800 rounded-full mt-2 overflow-hidden">

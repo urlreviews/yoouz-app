@@ -93,7 +93,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
+                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
                 title="Back to Feed"
               >
                 <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
@@ -104,7 +104,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold text-white tracking-tight">{t("nav.bookmarks", "Bookmarks")}</h2>
-              <p className="text-xs text-zinc-400 font-medium">
+              <p className="text-xs text-zinc-200 font-medium">
                 {bookmarkedVideos.length > 0
                   ? `${bookmarkedVideos.length} ${t("place.reviews", "Video Reviews")}`
                   : t("video.no_reviews", "No video reviews yet")}
@@ -121,7 +121,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                   className={`p-1.5 rounded-md cursor-pointer transition-colors ${
                     viewMode === "grid"
                       ? "bg-zinc-800 text-white shadow-xs"
-                      : "text-zinc-400 hover:text-white"
+                      : "text-zinc-200 hover:text-white"
                   }`}
                   title="Grid View"
                 >
@@ -132,7 +132,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                   className={`p-1.5 rounded-md cursor-pointer transition-colors ${
                     viewMode === "list"
                       ? "bg-zinc-800 text-white shadow-xs"
-                      : "text-zinc-400 hover:text-white"
+                      : "text-zinc-200 hover:text-white"
                   }`}
                   title="List View"
                 >
@@ -182,7 +182,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                   {/* Metadata labels bottom */}
                   <div className="absolute bottom-3 left-3 right-3 text-white">
                     <p className="font-bold text-xs truncate leading-snug">{getDisplayUrlAsDomain(video)}</p>
-                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-300 mt-1">
+                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-200 mt-1">
                       <span className="truncate">{video.author.name}</span>
                       <span className="w-1 h-1 rounded-full bg-zinc-400 shrink-0" />
                       <span className="shrink-0">{video.placeCategory}</span>
@@ -218,20 +218,20 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                         <h4 className="font-bold text-white md:text-white text-sm truncate leading-snug">
                           {getDisplayUrlAsDomain(video)}
                         </h4>
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 md:bg-zinc-900 text-zinc-300 md:text-zinc-400 text-[10px] font-bold border border-zinc-700 md:border-zinc-800 shrink-0">
+                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 md:bg-zinc-900 text-zinc-200 md:text-zinc-200 text-[10px] font-bold border border-zinc-700 md:border-zinc-800 shrink-0">
                           {video.placeCategory}
                         </span>
                       </div>
 
                       {/* Location or rating */}
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 md:text-zinc-400 mt-1">
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-200 md:text-zinc-200 mt-1">
                         <div className="flex items-center text-amber-400 md:text-amber-500 font-bold shrink-0">
                           <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
                           <span>{typeof video.rating === "number" && !isNaN(video.rating) ? video.rating.toFixed(1) : (Number(video.rating) || 5.0).toFixed(1)}</span>
                         </div>
-                        <span className="text-zinc-600 md:text-zinc-300">|</span>
+                        <span className="text-zinc-600 md:text-zinc-200">|</span>
                         <div className="flex items-center gap-0.5 truncate text-[11px] font-medium">
-                          <MapPin className="w-3 h-3 text-zinc-500 md:text-zinc-400" />
+                          <MapPin className="w-3 h-3 text-zinc-200 md:text-zinc-200" />
                           <span className="truncate">{cleanDisplayAddress(video.placeAddress || video.placeCity)}</span>
                         </div>
                       </div>
@@ -243,8 +243,8 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                           alt={video.author.name}
                           className="w-4.5 h-4.5 rounded-full border border-zinc-800 md:border-zinc-800"
                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- <span className="text-[10px] text-zinc-500 md:text-zinc-400 font-bold">
-                          {t("video.recommendedBy", "Recommended by")} <span className="text-zinc-300 md:text-zinc-400 hover:underline">{video.author.name}</span>
+ <span className="text-[10px] text-zinc-200 md:text-zinc-200 font-bold">
+                          {t("video.recommendedBy", "Recommended by")} <span className="text-zinc-200 md:text-zinc-200 hover:underline">{video.author.name}</span>
                         </span>
                       </div>
                     </div>
@@ -254,7 +254,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={(e) => handleUnsave(video.id, e)}
-                      className="p-2 rounded-full hover:bg-red-950/50 md:hover:bg-red-50 text-zinc-400 hover:text-red-400 md:hover:text-red-600 border border-zinc-800 md:border-zinc-800 hover:border-red-900/50 md:hover:border-red-100 transition-all cursor-pointer"
+                      className="p-2 rounded-full hover:bg-red-950/50 md:hover:bg-red-50 text-zinc-200 hover:text-red-400 md:hover:text-red-600 border border-zinc-800 md:border-zinc-800 hover:border-red-900/50 md:hover:border-red-100 transition-all cursor-pointer"
                       title="Unsave"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -273,7 +273,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
             <h3 className="font-extrabold text-white text-base mb-1">
               {t("nav.bookmarks", "Bookmarks")}
             </h3>
-            <p className="text-xs text-zinc-400 max-w-sm leading-relaxed font-semibold mb-6">
+            <p className="text-xs text-zinc-200 max-w-sm leading-relaxed font-semibold mb-6">
               {t("video.no_reviews", "No video reviews yet")}
             </p>
 

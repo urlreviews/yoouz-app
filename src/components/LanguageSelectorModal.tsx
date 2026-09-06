@@ -66,7 +66,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
               <h2 className="text-lg font-bold text-white tracking-tight">
                 {t("common.select_language", "Select Language & Country")}
               </h2>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-200">
                 {t("settings.languages_supported", `${languages.length} Global Languages Supported • Instant Switch`)}
               </p>
             </div>
@@ -74,7 +74,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
           <button
             id="close-language-modal-btn"
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-zinc-800/80 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-full bg-zinc-800/80 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -83,7 +83,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
         {/* Search Bar & Region Tabs */}
         <div className="p-4 border-b border-zinc-800/80 bg-zinc-950/50 space-y-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-zinc-400 absolute top-1/2 -translate-y-1/2 left-3.5" />
+            <Search className="w-4 h-4 text-zinc-200 absolute top-1/2 -translate-y-1/2 left-3.5" />
             <input
               id="language-search-input"
               type="text"
@@ -95,7 +95,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white right-3.5"
+                className="absolute top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white right-3.5"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -111,7 +111,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
                 className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${
                   selectedRegion === reg.id
                     ? "bg-white text-zinc-950 shadow-sm"
-                    : "bg-zinc-800/60 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                    : "bg-zinc-800/60 text-zinc-200 hover:text-white hover:bg-zinc-800"
                 }`}
               >
                 {reg.label}
@@ -145,7 +145,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
                         {lang.nativeName}
                       </span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
-                        isSelected ? "bg-zinc-950 text-white" : "bg-zinc-800 text-zinc-400"
+                        isSelected ? "bg-zinc-950 text-white" : "bg-zinc-800 text-zinc-200"
                       }`}>
                         {lang.code}
                       </span>
@@ -154,7 +154,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
                           className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase ${
                             isSelected
                               ? "bg-zinc-950/10 text-zinc-900"
-                              : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                              : "bg-zinc-800 text-zinc-200 border border-zinc-700"
                           }`}
                         >
                           RTL
@@ -163,7 +163,7 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
                     </div>
                     <span
                       className={`text-xs block truncate ${
-                        isSelected ? "text-zinc-700" : "text-zinc-400"
+                        isSelected ? "text-zinc-700" : "text-zinc-200"
                       }`}
                     >
                       {lang.name} &bull; {lang.region}
@@ -181,16 +181,16 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
           })}
 
           {filteredLanguages.length === 0 && (
-            <div className="py-12 text-center text-zinc-500 text-sm">
+            <div className="py-12 text-center text-zinc-200 text-sm">
               No language matching &quot;{searchQuery}&quot;
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between text-xs text-zinc-400">
+        <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between text-xs text-zinc-200">
           <div className="flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5 text-zinc-400" />
+            <Globe className="w-3.5 h-3.5 text-zinc-200" />
             <span>{languages.length} {t("common.languagesAvailable", "Languages Available")}</span>
           </div>
           <button

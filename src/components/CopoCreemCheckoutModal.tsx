@@ -83,10 +83,10 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
               <CheckCircle2 className="w-10 h-10 stroke-[2]" />
             </div>
             <h3 className="text-2xl font-black text-white mb-3">Payment Confirmed</h3>
-            <p className="text-[13px] text-zinc-400 font-medium max-w-[260px] leading-relaxed">
+            <p className="text-[13px] text-zinc-200 font-medium max-w-[260px] leading-relaxed">
               Your {planName} subscription is now active. A receipt has been sent to your email.
             </p>
-            <div className="mt-8 flex items-center gap-2 text-zinc-500 text-xs font-bold bg-white/[0.02] px-4 py-2.5 rounded-full border border-white/[0.04]">
+            <div className="mt-8 flex items-center gap-2 text-zinc-200 text-xs font-bold bg-white/[0.02] px-4 py-2.5 rounded-full border border-white/[0.04]">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Redirecting to dashboard...
             </div>
           </div>
@@ -96,7 +96,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
             <div className="bg-[#18181b] px-8 pt-8 pb-7 text-center relative border-b border-white/[0.04]">
               <button 
                 onClick={onClose}
-                className="absolute right-5 top-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-400 transition-colors cursor-pointer"
+                className="absolute right-5 top-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -106,10 +106,10 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
               </div>
               
               <h2 className="text-[40px] font-black text-white tracking-tight leading-none mb-2 flex items-center justify-center gap-2">
-                {price} <span className="text-lg font-bold text-zinc-500 mt-2">/ month</span>
+                {price} <span className="text-lg font-bold text-zinc-200 mt-2">/ month</span>
               </h2>
               
-              <p className="text-[13px] text-zinc-400 font-medium">
+              <p className="text-[13px] text-zinc-200 font-medium">
                 Yoouz {planName} • <span className="text-emerald-400 font-bold">Cancel anytime</span>
               </p>
             </div>
@@ -119,7 +119,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
               
               {/* Express Checkout */}
               <div className="space-y-3">
-                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-center">Express Checkout</div>
+                <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest text-center">Express Checkout</div>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -145,7 +145,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
               {/* Divider */}
               <div className="flex items-center gap-4">
                 <div className="h-px bg-white/[0.06] flex-1"></div>
-                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Or pay with card</div>
+                <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest">Or pay with card</div>
                 <div className="h-px bg-white/[0.06] flex-1"></div>
               </div>
 
@@ -153,7 +153,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                 
                 {/* Email */}
                 <div>
-                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
+                  <label className="block text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-2">
                     Business Billing Email
                   </label>
                   <input 
@@ -168,10 +168,10 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                 {/* Card */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                    <label className="block text-[10px] font-bold text-zinc-200 uppercase tracking-widest">
                       Card Information
                     </label>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-200">
                       <span>VISA</span>
                       <span>MC</span>
                       <span>AMEX</span>
@@ -181,7 +181,7 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                   
                   <div className="bg-[#000000] border border-white/[0.08] rounded-xl overflow-hidden focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 transition-all">
                     <div className="relative border-b border-white/[0.08]">
-                      <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
+                      <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-200" />
                       <input 
                         type="text"
                         value={cardNumber}
@@ -222,10 +222,10 @@ export const CopoCreemCheckoutModal: React.FC<CopoCreemCheckoutModalProps> = ({ 
                 {/* Terms Box */}
                 <div className="bg-[#000000] border border-white/[0.04] rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <ShieldCheck className="w-4 h-4 text-zinc-400" />
+                    <ShieldCheck className="w-4 h-4 text-zinc-200" />
                     <span className="text-[12px] font-bold text-white">30-Day Money Back & Auto-Renewal</span>
                   </div>
-                  <p className="text-[11px] text-zinc-500 leading-relaxed font-medium">
+                  <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                     You will be billed {price} monthly starting today. You can pause, change plans, or cancel anytime directly from your Business Dashboard.
                   </p>
                 </div>

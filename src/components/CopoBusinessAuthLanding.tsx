@@ -366,7 +366,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
           </div>
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-lg text-white font-['Google_Sans',sans-serif] tracking-tight">Yoouz</span>
-            <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10.5px] font-bold uppercase tracking-wider border border-zinc-700">
+            <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10.5px] font-bold uppercase tracking-wider border border-zinc-700">
               Business
             </span>
           </div>
@@ -378,7 +378,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               if (onCancelSelectedPlace) onCancelSelectedPlace();
               onNavigate('home');
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-zinc-200 hover:text-white hover:bg-zinc-800 text-xs font-medium transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>{t("common.exit", "Exit")}</span>
@@ -394,7 +394,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             {t("businessAuth.title", "Sign in to Yoouz Business")}
           </h1>
-          <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
+          <p className="text-zinc-200 text-sm mt-2 leading-relaxed">
             {t("businessAuth.subtitle", "Claim your business, respond to video reviews, and engage customers as the verified owner.")}
           </p>
         </div>
@@ -415,10 +415,10 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   authMethod === 'email'
                     ? 'bg-zinc-800 text-white shadow-xs'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-zinc-200 hover:text-white'
                 }`}
               >
-                <Mail className="w-4 h-4 text-zinc-300" />
+                <Mail className="w-4 h-4 text-zinc-200" />
                 <span>{t("businessAuth.workEmail", "Work Email")}</span>
               </button>
 
@@ -432,7 +432,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   authMethod === 'html_tag'
                     ? 'bg-zinc-800 text-white shadow-xs'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-zinc-200 hover:text-white'
                 }`}
               >
                 <Code className="w-4 h-4 text-blue-400" />
@@ -448,11 +448,11 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
           {authMethod === 'email' && step === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">
+                <label className="block text-xs font-bold text-zinc-200 mb-1.5">
                   {t("businessAuth.workEmail", "Work Email")}
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-zinc-200 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     required
@@ -470,7 +470,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-between text-xs">
                   <div className="truncate pr-2">
                     <span className="font-semibold text-zinc-200 block truncate">{selectedPlace.name}</span>
-                    <span className="text-[11px] text-zinc-400 block truncate">{selectedPlace.address}</span>
+                    <span className="text-[11px] text-zinc-200 block truncate">{selectedPlace.address}</span>
                   </div>
                   <button
                     type="button"
@@ -489,7 +489,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         onCancelSelectedPlace();
                       }
                     }}
-                    className="text-zinc-400 text-xs font-semibold shrink-0 hover:text-white hover:underline cursor-pointer"
+                    className="text-zinc-200 text-xs font-semibold shrink-0 hover:text-white hover:underline cursor-pointer"
                   >
                     {t("common.change", "Change")}
                   </button>
@@ -497,7 +497,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               )}
 
               {errorMessage && (
-                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-start gap-2.5 text-xs text-zinc-300">
+                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-start gap-2.5 text-xs text-zinc-200">
                   <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <div className="flex-1 leading-relaxed">
                     <p>{errorMessage}</p>
@@ -538,7 +538,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
             <div className="space-y-5 animate-in fade-in">
               <div className="text-center space-y-1">
                 <h2 className="text-base font-bold text-white">{t("auth.checkEmailTitle", "Check your inbox")}</h2>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-200">
                   {t("auth.sentCodeTo", "We sent a 6-digit code to")} <strong className="text-zinc-200">{email}</strong>
                 </p>
               </div>
@@ -560,8 +560,8 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 </div>
 
                 {errorMessage && (
-                  <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
-                    <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
+                  <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-200">
+                    <AlertCircle className="w-4 h-4 text-zinc-200 shrink-0" />
                     <span>{errorMessage}</span>
                   </div>
                 )}
@@ -570,7 +570,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   <button
                     type="button"
                     onClick={() => { setStep('email'); setErrorMessage(null); }}
-                    className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-zinc-700"
+                    className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-zinc-700"
                   >
                     {t("common.back", "Back")}
                   </button>
@@ -602,11 +602,11 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               {/* Place Selection / Confirmation */}
               {!selectedPlace ? (
                 <div className="space-y-3">
-                  <label className="block text-xs font-bold text-zinc-300">
+                  <label className="block text-xs font-bold text-zinc-200">
                     {t("businessAuth.selectBusiness", "Select Your Business")}
                   </label>
                   <div className="relative">
-                    <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-zinc-200 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={placeSearchTerm}
@@ -630,13 +630,13 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       >
                         <div className="truncate pr-2">
                           <p className="text-xs font-bold text-zinc-200 group-hover:text-white truncate">{p.name}</p>
-                          <p className="text-[10px] text-zinc-400 truncate">{p.address}</p>
+                          <p className="text-[10px] text-zinc-200 truncate">{p.address}</p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-zinc-200 shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-zinc-200 group-hover:text-zinc-200 shrink-0" />
                       </button>
                     ))}
                     {filteredPlaces.length === 0 && (
-                      <p className="text-xs text-zinc-500 text-center py-4">{t("businessAuth.noMatching", "No matching business found")}</p>
+                      <p className="text-xs text-zinc-200 text-center py-4">{t("businessAuth.noMatching", "No matching business found")}</p>
                     )}
                   </div>
                 </div>
@@ -645,12 +645,12 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   {/* Selected Place Banner */}
                   <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800 flex items-center justify-between">
                     <div className="flex items-center gap-3 truncate pr-2">
-                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-750 flex items-center justify-center shrink-0 text-zinc-300">
+                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-750 flex items-center justify-center shrink-0 text-zinc-200">
                         <Building2 className="w-4 h-4 text-blue-400" />
                       </div>
                       <div className="truncate">
                         <h3 className="text-xs font-bold text-white truncate">{selectedPlace.name}</h3>
-                        <p className="text-[11px] text-zinc-400 truncate">{selectedPlace.address}</p>
+                        <p className="text-[11px] text-zinc-200 truncate">{selectedPlace.address}</p>
                       </div>
                     </div>
                     <button
@@ -659,7 +659,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         setSelectedPlace(null);
                         setErrorMessage(null);
                       }}
-                      className="text-zinc-400 text-xs font-semibold hover:text-white cursor-pointer px-2 py-1 rounded-md hover:bg-zinc-800"
+                      className="text-zinc-200 text-xs font-semibold hover:text-white cursor-pointer px-2 py-1 rounded-md hover:bg-zinc-800"
                     >
                       {t("common.change", "Change")}
                     </button>
@@ -667,12 +667,12 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
 
                   {/* Target Website URL */}
                   <div>
-                    <label className="block text-xs font-bold text-zinc-300 mb-1.5 flex items-center justify-between">
+                    <label className="block text-xs font-bold text-zinc-200 mb-1.5 flex items-center justify-between">
                       <span>{t("businessAuth.officialWebsiteUrl", "Official Website URL")}</span>
-                      <span className="text-[10px] text-zinc-500 font-normal">{t("businessAuth.homepagePlacement", "Homepage where tag is placed")}</span>
+                      <span className="text-[10px] text-zinc-200 font-normal">{t("businessAuth.homepagePlacement", "Homepage where tag is placed")}</span>
                     </label>
                     <div className="relative">
-                      <Globe className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <Globe className="w-4 h-4 text-zinc-200 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="url"
                         value={websiteUrl}
@@ -686,7 +686,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   {/* HTML Tag Snippet */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-zinc-300 flex items-center gap-1.5">
+                      <span className="font-bold text-zinc-200 flex items-center gap-1.5">
                         <Code className="w-3.5 h-3.5 text-blue-400" />
                         <span>{t("businessAuth.addTagInstruction", "Add this 1-line tag to your HTML")}</span>
                       </span>
@@ -713,7 +713,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       {currentExpectedTag}
                     </div>
 
-                    <p className="text-[11px] text-zinc-400 leading-relaxed pt-1">
+                    <p className="text-[11px] text-zinc-200 leading-relaxed pt-1">
                       {t("businessAuth.pasteInstruction", "Paste this tag into the <head> section of your website homepage (WordPress, Shopify, Wix, Squarespace, or custom code).")}
                     </p>
                   </div>
@@ -733,7 +733,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   )}
 
                   {errorMessage && (
-                    <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-start gap-2.5 text-xs text-zinc-300">
+                    <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-start gap-2.5 text-xs text-zinc-200">
                       <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                       <div className="leading-relaxed">
                         <p>{errorMessage}</p>

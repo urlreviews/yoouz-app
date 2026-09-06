@@ -556,7 +556,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 triggerHaptic("light");
                 onOpenReport({ type: "place", placeName: place.name, placeId: place.id });
               }}
-              className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-300 md:text-zinc-400 hover:text-red-500 md:hover:text-red-600 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
+              className="w-9 h-9 rounded-full bg-zinc-900/90 md:bg-zinc-900/90 shadow-lg flex items-center justify-center text-zinc-200 md:text-zinc-200 hover:text-red-500 md:hover:text-red-600 hover:bg-zinc-800 md:hover:bg-zinc-850 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-zinc-750 md:border-zinc-800"
               title="Report inaccurate info"
             >
               <Flag className="w-4 h-4" />
@@ -678,7 +678,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </>
                 ) : (
                   <>
-                    <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                    <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
                     <span>{t("business.following", "Following")}</span>
                   </>
                 )
@@ -696,7 +696,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {dynamicReviewCount > 0 && (
             <div className="flex items-center gap-1">
               <span className="font-bold text-white md:text-white">{dynamicAvgRating.toFixed(1)}</span>
-              <div className="flex items-center text-zinc-300 gap-0.5">
+              <div className="flex items-center text-zinc-200 gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
@@ -710,7 +710,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
             </div>
           )}
-          <span className="text-zinc-400 font-medium">
+          <span className="text-zinc-200 font-medium">
             ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? t("place.review", "review") : t("place.reviews", "reviews")})
           </span>
           <span className="text-zinc-700">·</span>
@@ -719,18 +719,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               href={effectiveWebsite} 
               target="_blank" 
               rel="noreferrer" 
-              className="text-zinc-300 hover:text-white hover:underline font-medium truncate max-w-[180px]"
+              className="text-zinc-200 hover:text-white hover:underline font-medium truncate max-w-[180px]"
             >
               {displayWebsiteClean}
             </a>
           ) : (
-            <span className="text-zinc-400 font-medium">{place.category || t("place.establishment", "Establishment")}</span>
+            <span className="text-zinc-200 font-medium">{place.category || t("place.establishment", "Establishment")}</span>
           )}
           
           {((place.city && place.city !== "Online") || place.country) && (
             <div className="flex items-center gap-1.5">
               <span className="text-zinc-700">·</span>
-              <span className="text-zinc-400 text-xs font-medium">
+              <span className="text-zinc-200 text-xs font-medium">
                 {place.city !== "Online" ? place.city : ""}{place.city && place.city !== "Online" && place.country ? ", " : ""}{place.country}
               </span>
             </div>
@@ -739,7 +739,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       </div>
 
         {/* Google Maps Tabs: Overview | Reviews | About */}
-      <div className="flex items-center border-b border-zinc-800 bg-zinc-950 px-5 text-sm font-semibold text-zinc-400">
+      <div className="flex items-center border-b border-zinc-800 bg-zinc-950 px-5 text-sm font-semibold text-zinc-200">
         <button
           onClick={() => handleTabClick("overview")}
           className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
@@ -759,7 +759,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           }`}
         >
           <span>{t("place.reviews", "Reviews")}</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-bold border border-zinc-700">
+          <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-700">
             {rawPlaceVideos.length}
           </span>
         </button>
@@ -880,7 +880,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   onClick={() => setIsPricingModalOpen(true)}
                   className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-sm rounded-xl border border-zinc-800 flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
-                  <Lock className="w-4 h-4 text-zinc-400" />
+                  <Lock className="w-4 h-4 text-zinc-200" />
                   <span>Unlock Call-To-Action (CTA) Button</span>
                 </button>
               ) : null}
@@ -902,12 +902,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               >
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{t("place.aboutThisBusiness", "About this business")}</p>
-                    <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-200">{t("place.aboutThisBusiness", "About this business")}</p>
+                    <p className="text-xs text-zinc-200 line-clamp-2 leading-relaxed">
                       {place.description || t("place.defaultDescription", "Verified Yoouz business listing with authentic video reviews from real users.")}
                     </p>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-zinc-500 -rotate-90 mt-4 group-hover:text-white transition-colors" />
+                  <ChevronDown className="w-4 h-4 text-zinc-200 -rotate-90 mt-4 group-hover:text-white transition-colors" />
                 </div>
               </div>
 
@@ -915,7 +915,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="p-5 space-y-3 bg-zinc-900/40">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Video className="w-4 h-4 text-zinc-300" />
+                    <Video className="w-4 h-4 text-zinc-200" />
                     <h3 className="text-xs font-black uppercase tracking-wider text-white">
                       {t("place.videoReviews", "Video Reviews")} ({rawPlaceVideos.length})
                     </h3>
@@ -923,7 +923,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {rawPlaceVideos.length > 0 && (
                     <button
                       onClick={() => handleTabClick("reviews")}
-                      className="text-[11px] font-bold text-zinc-300 hover:text-white hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-zinc-200 hover:text-white hover:underline cursor-pointer"
                     >
                       {t("place.seeAll", "See all")} ({rawPlaceVideos.length})
                     </button>
@@ -932,12 +932,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                 {rawPlaceVideos.length === 0 ? (
                   <div className="bg-zinc-900 rounded-2xl p-6 text-center border border-zinc-800 space-y-3">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center mx-auto">
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 text-zinc-200 flex items-center justify-center mx-auto">
                       <Video className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-white">{t("place.noReviewsYet", "No video reviews yet")}</p>
-                      <p className="text-[11px] text-zinc-400">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {formatBusinessName(place.name)}!</p>
+                      <p className="text-[11px] text-zinc-200">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {formatBusinessName(place.name)}!</p>
                     </div>
                     <button
                       onClick={() => onRecordForPlace(place)}
@@ -993,7 +993,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onClick={() => onRecordForPlace(place)}
                       className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:bg-zinc-850 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs active:scale-98 transition-all cursor-pointer"
                     >
-                      <Camera className="w-4 h-4 text-zinc-300" />
+                      <Camera className="w-4 h-4 text-zinc-200" />
                       <span>{t("place.recordVideoReview", "Record Video Review")}</span>
                     </button>
                   </div>
@@ -1007,10 +1007,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   className="px-5 py-4 flex items-center justify-between hover:bg-zinc-900 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <Info className="w-5 h-5 text-zinc-300" />
+                    <Info className="w-5 h-5 text-zinc-200" />
                     <span className="text-sm font-bold text-white">{t("place.businessDetails", "Business Details")}</span>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-zinc-500" />
+                  <ChevronDown className="w-4 h-4 text-zinc-200" />
                 </div>
               ) : (
                 <>
@@ -1019,22 +1019,22 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     className="px-5 py-4 flex items-center justify-between hover:bg-zinc-900 transition-colors cursor-pointer bg-zinc-900/50"
                   >
                     <div className="flex items-center gap-3">
-                      <Info className="w-5 h-5 text-zinc-300" />
+                      <Info className="w-5 h-5 text-zinc-200" />
                       <span className="text-sm font-bold text-white">{t("place.hideDetails", "Hide Details")}</span>
                     </div>
-                    <ChevronUp className="w-4 h-4 text-zinc-500" />
+                    <ChevronUp className="w-4 h-4 text-zinc-200" />
                   </div>
                   
                   {/* Address Line */}
                   <div className="px-5 py-3.5 flex items-start justify-between gap-3 hover:bg-zinc-900 transition-colors animate-in slide-in-from-top-1 duration-200">
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-zinc-300 shrink-0 mt-0.5" />
+                      <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
                       <div className="text-xs space-y-0.5">
                         <p className="text-zinc-200 font-medium leading-relaxed">
                           {displayAddress || t("place.addressNotProvided", "Address not provided")}
                         </p>
                         {place.locatedIn && !isAddressUrl && (
-                          <p className="text-zinc-400 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
+                          <p className="text-zinc-200 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
                         )}
                       </div>
                     </div>
@@ -1044,15 +1044,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="px-5 py-3.5 hover:bg-zinc-900 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-zinc-300 shrink-0" />
+                        <Clock className="w-5 h-5 text-zinc-200 shrink-0" />
                         <div className="text-xs">
                           {hasGenuineHours ? (
                             <div className="flex items-center gap-1.5">
                               <span className="text-white font-bold">{t("place.open", "Open")}</span>
-                              <span className="text-zinc-300 ml-1">⋅ {place.openingHours}</span>
+                              <span className="text-zinc-200 ml-1">⋅ {place.openingHours}</span>
                             </div>
                           ) : (
-                            <span className="text-zinc-500">{t("place.hoursNotProvided", "Hours not provided")}</span>
+                            <span className="text-zinc-200">{t("place.hoursNotProvided", "Hours not provided")}</span>
                           )}
                         </div>
                       </div>
@@ -1063,7 +1063,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {/* Website Line */}
                   <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
                     <div className="flex items-center gap-3 truncate w-full">
-                      <Globe className="w-5 h-5 text-zinc-300 shrink-0" />
+                      <Globe className="w-5 h-5 text-zinc-200 shrink-0" />
                       {effectiveWebsite ? (
                         <a
                           href={effectiveWebsite}
@@ -1072,10 +1072,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium truncate flex items-center gap-1.5"
                         >
                           <span className="truncate">{displayWebsiteClean}</span>
-                          <ExternalLink className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                          <ExternalLink className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                         </a>
                       ) : (
-                        <span className="text-xs text-zinc-500">{t("place.websiteNotProvided", "Website not provided")}</span>
+                        <span className="text-xs text-zinc-200">{t("place.websiteNotProvided", "Website not provided")}</span>
                       )}
                     </div>
                   </div>
@@ -1083,16 +1083,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {/* Phone Line */}
                   <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
                     <div className="flex items-center gap-3">
-                      <Phone className="w-5 h-5 text-zinc-300 shrink-0" />
+                      <Phone className="w-5 h-5 text-zinc-200 shrink-0" />
                       {hasGenuinePhone ? (
                         <a
                           href={`tel:${place.phone}`}
-                          className="text-xs text-white hover:text-zinc-300 font-bold"
+                          className="text-xs text-white hover:text-zinc-200 font-bold"
                         >
                           {place.phone}
                         </a>
                       ) : (
-                        <span className="text-xs text-zinc-500">{t("place.phoneNotProvided", "Phone not provided")}</span>
+                        <span className="text-xs text-zinc-200">{t("place.phoneNotProvided", "Phone not provided")}</span>
                       )}
                     </div>
                   </div>
@@ -1100,16 +1100,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {/* Email Line */}
                   <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
                     <div className="flex items-center gap-3 truncate">
-                      <Mail className="w-5 h-5 text-zinc-300 shrink-0" />
+                      <Mail className="w-5 h-5 text-zinc-200 shrink-0" />
                       {place.email && place.email.trim() !== "" ? (
                         <a
                           href={`mailto:${place.email}`}
-                          className="text-xs text-zinc-300 hover:text-white hover:underline font-medium truncate"
+                          className="text-xs text-zinc-200 hover:text-white hover:underline font-medium truncate"
                         >
                           {place.email}
                         </a>
                       ) : (
-                        <span className="text-xs text-zinc-500">{t("place.emailNotProvided", "Email not provided")}</span>
+                        <span className="text-xs text-zinc-200">{t("place.emailNotProvided", "Email not provided")}</span>
                       )}
                     </div>
                   </div>
@@ -1119,10 +1119,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               {/* Plus Code Line if valid */}
               {hasGenuinePlusCode && (
                 <div className="px-5 py-3.5 flex items-center gap-3 hover:bg-zinc-900 transition-colors">
-                  <div className="w-5 h-5 flex items-center justify-center text-zinc-300 font-black text-sm shrink-0">
+                  <div className="w-5 h-5 flex items-center justify-center text-zinc-200 font-black text-sm shrink-0">
                     ⁘
                   </div>
-                  <span className="text-xs text-zinc-400 font-mono">{place.plusCode}</span>
+                  <span className="text-xs text-zinc-200 font-mono">{place.plusCode}</span>
                 </div>
               )}
 
@@ -1139,36 +1139,36 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors cursor-pointer border-t border-zinc-800"
                 >
                   <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-zinc-300 shrink-0" />
+                    <ShieldCheck className="w-5 h-5 text-zinc-200 shrink-0" />
                     <span className="text-xs text-zinc-200 font-bold">{t("place.claimThisBusiness", "Claim this business")}</span>
                   </div>
-                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-bold">
+                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold">
                     {t("place.claim", "Claim")}
                   </span>
                 </div>
               ) : (
                 <div className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors border-t border-zinc-800">
                   <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-zinc-300 shrink-0" />
-                    <span className="text-xs text-zinc-400 font-medium">{t("place.businessClaimed", "Business claimed")}</span>
+                    <ShieldCheck className="w-5 h-5 text-zinc-200 shrink-0" />
+                    <span className="text-xs text-zinc-200 font-medium">{t("place.businessClaimed", "Business claimed")}</span>
                   </div>
                   {isUserOwner ? (
                     <div className="flex gap-2">
                       <button
                         onClick={() => setIsPricingModalOpen(true)}
-                        className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors flex items-center gap-1"
+                        className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors flex items-center gap-1"
                       >
                         <Zap className="w-3 h-3" /> {t("place.plan", "Plan")}: {subscriptionPlan.toUpperCase()}
                       </button>
                       <button
                         onClick={openEditModal}
-                        className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors"
+                        className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors"
                       >
                         {t("place.editDetails", "Edit Details")}
                       </button>
                     </div>
                   ) : (
-                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-850 text-zinc-400 font-bold">
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-850 text-zinc-200 font-bold">
                       {t("place.verified", "Verified")}
                     </span>
                   )}
@@ -1183,7 +1183,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               {/* Premium Sort & Filter Options */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between px-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 md:text-zinc-400">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-200 md:text-zinc-200">
                     {t("place.sortFilterReviews", "Sort & Filter Reviews")} ({placeVideos.length})
                   </p>
                 </div>
@@ -1191,19 +1191,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 <div className="flex flex-wrap gap-1.5">
                   <button 
                     onClick={() => setReviewSort("latest")}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "latest" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"}`}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "latest" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-200"}`}
                   >
                     {t("place.latest", "Latest")}
                   </button>
                   <button 
                     onClick={() => setReviewSort("popular")}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "popular" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"}`}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "popular" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-200"}`}
                   >
                     {t("place.mostLiked", "Most Liked")}
                   </button>
                   <button 
                     onClick={() => setReviewSort("highest")}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "highest" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"}`}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${reviewSort === "highest" ? "bg-white text-zinc-950 border-white shadow-xs" : "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-200"}`}
                   >
                     {t("place.highestRated", "Highest Rated")}
                   </button>
@@ -1212,7 +1212,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
                   <button 
                     onClick={() => setStarFilter("all")}
-                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold whitespace-nowrap transition-all border shrink-0 ${starFilter === "all" ? "bg-white border-white text-zinc-950" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"}`}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold whitespace-nowrap transition-all border shrink-0 ${starFilter === "all" ? "bg-white border-white text-zinc-950" : "bg-zinc-900 border-zinc-800 text-zinc-200 hover:text-zinc-200"}`}
                   >
                     {t("place.all", "All")}
                   </button>
@@ -1220,9 +1220,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <button 
                       key={stars}
                       onClick={() => setStarFilter(stars)}
-                      className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap transition-all border flex items-center gap-1 shrink-0 ${starFilter === stars ? "bg-white border-white text-zinc-950" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"}`}
+                      className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap transition-all border flex items-center gap-1 shrink-0 ${starFilter === stars ? "bg-white border-white text-zinc-950" : "bg-zinc-900 border-zinc-800 text-zinc-200 hover:text-zinc-200"}`}
                     >
-                      {stars} <Star className={`w-2.5 h-2.5 ${starFilter === stars ? "fill-zinc-950" : "fill-zinc-400 text-zinc-400"}`} />
+                      {stars} <Star className={`w-2.5 h-2.5 ${starFilter === stars ? "fill-zinc-950" : "fill-zinc-400 text-zinc-200"}`} />
                     </button>
                   ))}
                 </div>
@@ -1230,7 +1230,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
               {/* 3-Column Video Reviews Grid */}
               {placeVideos.length === 0 ? (
-                <div className="bg-zinc-900 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-400 text-xs">
+                <div className="bg-zinc-900 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-200 text-xs">
                   {t("place.noReviewsMatchFilter", "No video reviews match this filter.")}
                 </div>
               ) : (
@@ -1298,13 +1298,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Info className="w-4 h-4 text-zinc-300" />
+                  <Info className="w-4 h-4 text-zinc-200" />
                   <span>{t("place.about", "About")} {formatBusinessName(place.name)}</span>
                 </h3>
                 {isUserOwner && (
                   <button
                     onClick={openEditModal}
-                    className="text-xs text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1"
+                    className="text-xs text-zinc-200 hover:text-white font-bold hover:underline flex items-center gap-1"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>{t("common.edit", "Edit")}</span>
@@ -1314,10 +1314,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
               {/* Full Description & URL Metadata */}
               <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-200 block">
                   {t("place.businessDescription", "Business Description")}
                 </span>
-                <p className="text-xs text-zinc-300 leading-relaxed font-medium">
+                <p className="text-xs text-zinc-200 leading-relaxed font-medium">
                   {place.description ||
                     t("place.defaultDescription", "Verified Yoouz business listing with authentic video reviews from real users.")}
                 </p>
@@ -1327,7 +1327,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-xs font-bold text-zinc-200">{t("place.locationMap", "Location Map")}</h4>
-                  <button onClick={handleOpenDirections} className="text-[10px] text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1">
+                  <button onClick={handleOpenDirections} className="text-[10px] text-zinc-200 hover:text-white font-bold hover:underline flex items-center gap-1">
                     <Navigation className="w-3 h-3" />
                     {t("place.getDirections", "Get Directions")}
                   </button>
@@ -1348,8 +1348,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
                 {place.address && (
                    <div className="flex items-start gap-2 mt-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800">
-                     <MapPin className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
-                     <p className="text-xs text-zinc-300 font-medium">{place.address}</p>
+                     <MapPin className="w-4 h-4 text-zinc-200 shrink-0 mt-0.5" />
+                     <p className="text-xs text-zinc-200 font-medium">{place.address}</p>
                    </div>
                 )}
               </div>
@@ -1361,7 +1361,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     (amenity, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1 rounded-lg bg-zinc-900 text-xs text-zinc-300 font-medium border border-zinc-800"
+                        className="px-3 py-1 rounded-lg bg-zinc-900 text-xs text-zinc-200 font-medium border border-zinc-800"
                       >
                         ✓ {amenity}
                       </span>
@@ -1373,7 +1373,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               {/* Staff & Ownership - Premium Section */}
               <div className="pt-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-zinc-300" />
+                  <ShieldCheck className="w-4 h-4 text-zinc-200" />
                   <h4 className="text-xs font-bold text-zinc-200">{t("place.managementStaff", "Management & Staff")}</h4>
                 </div>
                 
@@ -1381,23 +1381,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                        <UserCheck className="w-4 h-4 text-zinc-300" />
+                        <UserCheck className="w-4 h-4 text-zinc-200" />
                       </div>
                       <div className="space-y-0.5">
                         <p className="text-[11px] font-bold text-white">{t("place.verifiedManagement", "Verified Management")}</p>
-                        <p className="text-[10px] text-zinc-400">{t("place.authorizedManage", "Authorized to manage this profile")}</p>
+                        <p className="text-[10px] text-zinc-200">{t("place.authorizedManage", "Authorized to manage this profile")}</p>
                       </div>
                     </div>
                   </div>
 
                   {place.staffEmails && place.staffEmails.length > 0 && (
                     <div className="pt-2 space-y-2 border-t border-zinc-800">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{t("place.recognizedStaff", "Recognized Staff")}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-zinc-200">{t("place.recognizedStaff", "Recognized Staff")}</p>
                       <div className="flex flex-wrap gap-2">
                         {place.staffEmails.map((email, idx) => (
                           <div key={idx} className="flex items-center gap-1.5 bg-zinc-850 border border-zinc-800 px-2.5 py-1 rounded-full">
                             <div className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                            <span className="text-[10px] font-medium text-zinc-300">{email.split('@')[0]}</span>
+                            <span className="text-[10px] font-medium text-zinc-200">{email.split('@')[0]}</span>
                           </div>
                         ))}
                       </div>
@@ -1409,7 +1409,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onClick={() => setIsClaimModalOpen(true)}
                       className="w-full py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[11px] font-bold text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                     >
-                      <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-zinc-200" />
                       {t("place.claimVerifyListing", "Claim & Verify Business Listing")}
                     </button>
                   )}
@@ -1429,11 +1429,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 <h3 className="text-lg font-bold text-white">
                   {modalStep === 1 ? t("place.suggestEdits", "Suggest Edits") : t("place.claimVerifyBusiness", "Claim & Verify Business")}
                 </h3>
-                <p className="text-xs text-zinc-400 truncate max-w-[280px]">{formatBusinessName(place.name)}</p>
+                <p className="text-xs text-zinc-200 truncate max-w-[280px]">{formatBusinessName(place.name)}</p>
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-300 cursor-pointer transition-colors"
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 cursor-pointer transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1447,7 +1447,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   className="flex-1 flex flex-col gap-1 cursor-pointer"
                 >
                   <div className={`h-1.5 rounded-full transition-colors ${modalStep === 1 ? 'bg-white' : 'bg-zinc-800'}`} />
-                  <span className={`text-[9px] font-bold uppercase tracking-wider ${modalStep === 1 ? 'text-white' : 'text-zinc-400'}`}>
+                  <span className={`text-[9px] font-bold uppercase tracking-wider ${modalStep === 1 ? 'text-white' : 'text-zinc-200'}`}>
                     {t("place.stepSuggestEdits", "1. Suggest Edits")}
                   </span>
                 </div>
@@ -1456,7 +1456,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   className="flex-1 flex flex-col gap-1 cursor-pointer"
                 >
                   <div className={`h-1.5 rounded-full transition-colors ${modalStep === 2 ? 'bg-white' : 'bg-zinc-800'}`} />
-                  <span className={`text-[9px] font-bold uppercase tracking-wider ${modalStep === 2 ? 'text-white' : 'text-zinc-400'}`}>
+                  <span className={`text-[9px] font-bold uppercase tracking-wider ${modalStep === 2 ? 'text-white' : 'text-zinc-200'}`}>
                     {t("place.stepClaimBusiness", "2. Claim Business")}
                   </span>
                 </div>
@@ -1478,12 +1478,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-bold text-zinc-300">{t("place.address", "Address")}</label>
+                      <label className="font-bold text-zinc-200">{t("place.address", "Address")}</label>
                       {editAddress && (
                         <button
                           type="button"
                           onClick={() => setEditAddress("")}
-                          className="text-[10px] text-zinc-400 hover:text-white hover:underline font-semibold cursor-pointer"
+                          className="text-[10px] text-zinc-200 hover:text-white hover:underline font-semibold cursor-pointer"
                         >
                           {t("common.clear", "Clear")}
                         </button>
@@ -1494,51 +1494,51 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       value={editAddress}
                       onChange={(e) => setEditAddress(e.target.value)}
                       placeholder="e.g. 100 Main St, San Francisco, CA"
-                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-500 transition-all"
+                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="font-bold text-zinc-300 block mb-1">{t("place.phoneNumber", "Phone Number")}</label>
+                      <label className="font-bold text-zinc-200 block mb-1">{t("place.phoneNumber", "Phone Number")}</label>
                       <input
                         type="text"
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
                         placeholder="+1 415-555-0100"
-                        className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-500 transition-all"
+                        className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-zinc-300 block mb-1">{t("place.website", "Website")}</label>
+                      <label className="font-bold text-zinc-200 block mb-1">{t("place.website", "Website")}</label>
                       <input
                         type="url"
                         value={editWebsite}
                         onChange={(e) => setEditWebsite(e.target.value)}
                         placeholder="https://example.com"
-                        className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-500 transition-all"
+                        className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="font-bold text-zinc-300 block mb-1">{t("place.emailAddressOptional", "Email Address (Optional)")}</label>
+                    <label className="font-bold text-zinc-200 block mb-1">{t("place.emailAddressOptional", "Email Address (Optional)")}</label>
                     <input
                       type="email"
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
                       placeholder="e.g. contact@business.com"
-                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-500 transition-all"
+                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
                     />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-bold text-zinc-300">{t("place.openingHours", "Opening Hours")}</label>
+                      <label className="font-bold text-zinc-200">{t("place.openingHours", "Opening Hours")}</label>
                       <button
                         type="button"
                         onClick={() => setShowHoursHelper(!showHoursHelper)}
-                        className="text-[10px] text-zinc-300 hover:text-white hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                        className="text-[10px] text-zinc-200 hover:text-white hover:underline font-bold flex items-center gap-1 cursor-pointer"
                       >
                         🕒 {showHoursHelper ? t("place.hidePickerHelper", "Hide Picker Helper") : t("place.openPickerHelper", "Open Picker Helper")}
                       </button>
@@ -1548,14 +1548,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       value={editHours}
                       onChange={(e) => setEditHours(e.target.value)}
                       placeholder="e.g. Mon-Fri: 9:00 AM - 6:00 PM"
-                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-500 transition-all"
+                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
                     />
                     
                     {/* Visual helper is now collapsible */}
                     {showHoursHelper && (
                       <div className="mt-2 p-2.5 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2 animate-in slide-in-from-top-1 duration-150">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] text-zinc-400 font-medium">{t("place.quickPresets", "Quick Presets:")}</span>
+                          <span className="text-[10px] text-zinc-200 font-medium">{t("place.quickPresets", "Quick Presets:")}</span>
                           <button
                             type="button"
                             onClick={() => setEditHours("Available 24/7")}
@@ -1581,7 +1581,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         
                         <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-zinc-800">
                           <div>
-                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">{t("place.days", "Days")}</span>
+                            <span className="text-[9px] text-zinc-200 block mb-0.5 font-bold">{t("place.days", "Days")}</span>
                             <select
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -1597,7 +1597,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                             </select>
                           </div>
                           <div>
-                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">{t("place.openFrom", "Open From")}</span>
+                            <span className="text-[9px] text-zinc-200 block mb-0.5 font-bold">{t("place.openFrom", "Open From")}</span>
                             <select
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -1619,7 +1619,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                             </select>
                           </div>
                           <div>
-                            <span className="text-[9px] text-zinc-400 block mb-0.5 font-bold">{t("place.closeAt", "Close At")}</span>
+                            <span className="text-[9px] text-zinc-200 block mb-0.5 font-bold">{t("place.closeAt", "Close At")}</span>
                             <select
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -1647,12 +1647,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-bold text-zinc-300">{t("place.description", "Description")}</label>
+                      <label className="font-bold text-zinc-200">{t("place.description", "Description")}</label>
                       {editDescription && (
                         <button
                           type="button"
                           onClick={() => setEditDescription("")}
-                          className="text-[10px] text-zinc-400 hover:text-white hover:underline font-semibold cursor-pointer"
+                          className="text-[10px] text-zinc-200 hover:text-white hover:underline font-semibold cursor-pointer"
                         >
                           {t("common.clear", "Clear")}
                         </button>
@@ -1663,7 +1663,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
                       placeholder="Brief description of the business..."
-                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-500 transition-all"
+                      className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-200 transition-all"
                     />
                   </div>
 
@@ -1672,7 +1672,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <button
                       type="button"
                       onClick={() => setIsEditModalOpen(false)}
-                      className="px-3.5 py-2 rounded-xl text-zinc-400 font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="px-3.5 py-2 rounded-xl text-zinc-200 font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
                       {t("common.cancel", "Cancel")}
                     </button>
@@ -1706,10 +1706,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   className="space-y-4 text-xs"
                 >
                   <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-start gap-3">
-                    <ShieldCheck className="w-6 h-6 text-zinc-300 shrink-0 mt-0.5" />
+                    <ShieldCheck className="w-6 h-6 text-zinc-200 shrink-0 mt-0.5" />
                     <div className="space-y-1">
                       <h4 className="font-bold text-white text-sm">{t("place.verifyOwnership", "Verify Ownership")}</h4>
-                      <p className="text-zinc-300 leading-relaxed text-[11px]">
+                      <p className="text-zinc-200 leading-relaxed text-[11px]">
                         {t("place.verifyOwnershipPrompt", "To verify that you own")} <strong className="text-white">{formatBusinessName(place.name)}</strong>, {t("place.insertTagPrompt", "please insert this verification tag into the HTML head section of your home page:")}
                       </p>
                       
@@ -1722,12 +1722,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                             setCopiedTag(true);
                             setTimeout(() => setCopiedTag(false), 2000);
                           }}
-                          className="absolute right-2 top-2 p-1.5 bg-zinc-800 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 text-[10px] font-bold cursor-pointer transition-all"
+                          className="absolute right-2 top-2 p-1.5 bg-zinc-800 text-zinc-200 hover:text-white rounded-lg border border-zinc-700 text-[10px] font-bold cursor-pointer transition-all"
                         >
                           {copiedTag ? t("common.copied", "Copied!") : t("common.copy", "Copy")}
                         </button>
                       </div>
-                      <p className="text-[10px] text-zinc-400 italic">
+                      <p className="text-[10px] text-zinc-200 italic">
                         {t("place.crawlerTip", "Tip: Our crawler will look for this meta tag on your website to automatically activate your official badge.")}
                       </p>
                     </div>
@@ -1735,7 +1735,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   <div className="p-3.5 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2">
                     <h5 className="font-bold text-white text-[10px] uppercase tracking-wider">{t("place.ownerAdvantages", "Owner Advantages:")}</h5>
-                    <ul className="space-y-1.5 text-[11px] text-zinc-300">
+                    <ul className="space-y-1.5 text-[11px] text-zinc-200">
                       <li className="flex items-start gap-1.5">
                         <span className="text-white font-bold">✓</span>
                         <span><strong className="text-white">{t("place.advBadgeTitle", "Verification Badge")}</strong>: {t("place.advBadgeDesc", "Show clients your listing is official.")}</span>
@@ -1761,14 +1761,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       />
                       <div>
                         <span className="font-bold text-white block">{t("place.authorizedOwnerCheck", "I am the authorized owner / manager")}</span>
-                        <span className="text-[10px] text-zinc-400 block leading-tight">
+                        <span className="text-[10px] text-zinc-200 block leading-tight">
                           {t("place.authorizedOwnerDesc", "I confirm I represent this business and have authorization to claim it.")}
                         </span>
                       </div>
                     </label>
 
                     {claimAsOwner && !currentUser && (
-                      <div className="p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-300 text-[10px] font-semibold leading-normal animate-in fade-in duration-150">
+                      <div className="p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-200 text-[10px] font-semibold leading-normal animate-in fade-in duration-150">
                         {t("place.mustSignInClaim", "⚠ You must sign in to claim this business. Please close this modal and sign in using the button at the top right first.")}
                       </div>
                     )}
@@ -1779,7 +1779,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <button
                       type="button"
                       onClick={() => setModalStep(1)}
-                      className="px-3.5 py-2 rounded-xl text-zinc-400 font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="px-3.5 py-2 rounded-xl text-zinc-200 font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
                       {t("place.backToEdits", "← Back to Edits")}
                     </button>
@@ -1848,19 +1848,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-zinc-900 rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 mx-auto flex items-center justify-center shadow-inner">
+              <div className="w-16 h-16 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 mx-auto flex items-center justify-center shadow-inner">
                 <MessageSquareOff className="w-8 h-8" />
               </div>
 
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-bold uppercase tracking-wider border border-zinc-700">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-bold uppercase tracking-wider border border-zinc-700">
                   <ShieldAlert className="w-3 h-3" />
                   <span>{t("place.unclaimedBusiness", "Unclaimed Business")}</span>
                 </div>
                 <h3 className="text-xl font-black text-white tracking-tight">
                   {t("place.directMessagingUnavailable", "Direct Messaging Unavailable")}
                 </h3>
-                <p className="text-xs text-zinc-300 leading-relaxed font-medium">
+                <p className="text-xs text-zinc-200 leading-relaxed font-medium">
                   <span className="font-bold text-white">{formatBusinessName(place.name)}</span> {t("place.unclaimedChatNotice", "has not claimed their official page on Yoouz yet, so they cannot receive or reply to customer messages.")}
                 </p>
               </div>
@@ -1870,7 +1870,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <Building2 className="w-4 h-4" />
                   <span>{t("place.areYouOwner", "Are you the owner or manager?")}</span>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed font-medium">
+                <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                   {t("place.claimListingPrompt", "Claim this listing with your official business email to activate 1-on-1 customer messaging, reply to video reviews, and showcase your profile.")}
                 </p>
               </div>
@@ -1894,7 +1894,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                 <button
                   onClick={() => setShowUnclaimedChatModal(false)}
-                  className="w-full py-2.5 px-4 rounded-xl text-zinc-400 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl text-zinc-200 hover:text-white text-xs font-bold transition-colors cursor-pointer"
                 >
                   {t("common.dismiss", "Dismiss")}
                 </button>

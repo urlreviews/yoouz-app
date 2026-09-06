@@ -78,7 +78,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
               <h2 className="text-base sm:text-lg font-black text-white font-['Google_Sans',sans-serif]">
                 {t("legal.title", "Yoouz Legal & Compliance")}
               </h2>
-              <p className="text-[11px] text-zinc-400 font-medium">
+              <p className="text-[11px] text-zinc-200 font-medium">
                 {t("legal.jurisdiction", "Governing Jurisdiction: San Francisco, California, USA")}
               </p>
             </div>
@@ -87,7 +87,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
           <button
             id="copo-legal-modal-close-btn"
             onClick={onClose}
-            className="w-9 h-9 rounded-full hover:bg-zinc-800 hidden sm:flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-full hover:bg-zinc-800 hidden sm:flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
             aria-label={t("common.close", "Close")}
             title={t("common.close", "Close")}
           >
@@ -103,7 +103,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === "terms"
                 ? "bg-zinc-800 text-white shadow-xs border border-zinc-700"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                : "text-zinc-200 hover:text-white hover:bg-zinc-900"
             }`}
           >
             <FileText className="w-4 h-4 text-white" />
@@ -116,7 +116,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === "privacy"
                 ? "bg-zinc-800 text-white shadow-xs border border-zinc-700"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                : "text-zinc-200 hover:text-white hover:bg-zinc-900"
             }`}
           >
             <ShieldCheck className="w-4 h-4 text-white" />
@@ -125,7 +125,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 text-zinc-300 text-xs sm:text-sm leading-relaxed text-left select-text">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 text-zinc-200 text-xs sm:text-sm leading-relaxed text-left select-text">
           {activeTab === "terms" ? (
             /* ========================================================================= */
             /* TERMS & CONDITIONS DOCUMENT */
@@ -138,12 +138,12 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                   {t("legal.termsHeading", "Terms & Conditions for Yoouz")}
                 </h1>
-                <p className="text-xs text-zinc-400 font-semibold">
+                <p className="text-xs text-zinc-200 font-semibold">
                   {t("legal.lastUpdated", "Last Updated: August 24, 2026")}
                 </p>
               </header>
 
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs sm:text-sm leading-relaxed">
+              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-200 text-xs sm:text-sm leading-relaxed">
                 {t("legal.welcomeTerms", "Welcome to Yoouz. By accessing or using our platform, you agree to be bound by these Terms & Conditions. If you do not agree to these terms, please do not use Yoouz.")}
               </div>
 
@@ -153,7 +153,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">1</span>
                   {t("legal.sec1Title", "Description of Service")}
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-zinc-200">
                   {t("legal.sec1Body", "Yoouz is a video review and discovery platform. Users can record authentic reviews directly via their device camera, and businesses can display or stream these reviews within their profiles or via platform-provided tools.")}
                 </p>
               </section>
@@ -164,7 +164,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">2</span>
                   {t("legal.sec2Title", "Account Registration")}
                 </h3>
-                <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+                <ul className="list-disc pl-5 space-y-1 text-zinc-200">
                   <li>{t("legal.sec2Item1", "You must authenticate using your verified email address to create an account.")}</li>
                   <li>{t("legal.sec2Item2", "You are responsible for maintaining the security of your account and restricting unauthorized access to your device.")}</li>
                 </ul>
@@ -179,19 +179,19 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 <div className="space-y-2.5 pl-1">
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800">
                     <p className="font-bold text-white mb-0.5">{t("legal.noUploadsTitle", "No File Uploads")}</p>
-                    <p className="text-zinc-400">
+                    <p className="text-zinc-200">
                       {t("legal.noUploadsBody", "All reviews must be recorded live through the Yoouz web application camera interface. Uploading pre-recorded video files from device storage or external libraries is strictly prohibited.")}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800">
                     <p className="font-bold text-white mb-0.5">{t("legal.standardsTitle", "User Content Standards")}</p>
-                    <p className="text-zinc-400">
+                    <p className="text-zinc-200">
                       {t("legal.standardsBody", "You retain personal accountability for the reviews you record. You agree not to record or publish content that is unlawful, defamatory, abusive, harassing, misleading, or infringing on third-party intellectual property rights.")}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800">
                     <p className="font-bold text-white mb-0.5">{t("legal.licenseTitle", "Content License")}</p>
-                    <p className="text-zinc-400">
+                    <p className="text-zinc-200">
                       {t("legal.licenseBody", "By recording a review on Yoouz, you grant Yoouz a worldwide, non-exclusive, royalty-free license to host, display, and stream your video content on the platform.")}
                     </p>
                   </div>
@@ -204,7 +204,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">4</span>
                   {t("legal.sec4Title", "Business Accounts & Intellectual Property Protection")}
                 </h3>
-                <div className="space-y-2 text-zinc-400">
+                <div className="space-y-2 text-zinc-200">
                   <p>
                     <strong className="text-white">{t("legal.noOwnership", "No Ownership Transfer:")}</strong> {t("legal.noOwnershipBody", "Businesses utilizing Yoouz do not own the video files recorded by users.")}
                   </p>
@@ -226,7 +226,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">5</span>
                   {t("legal.sec5Title", "Limitation of Liability")}
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-zinc-200">
                   {t("legal.sec5Body", "Yoouz is provided on an 'as is' and 'as available' basis. We do not guarantee uninterrupted platform availability and are not liable for user-generated content or damages arising from the use of our services.")}
                 </p>
               </section>
@@ -237,7 +237,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">6</span>
                   {t("legal.sec6Title", "Changes to Terms")}
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-zinc-200">
                   {t("legal.sec6Body", "We reserve the right to modify these Terms & Conditions at any time. Continued use of Yoouz after changes constitutes your acceptance of the updated terms.")}
                 </p>
               </section>
@@ -248,7 +248,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <Globe className="w-4 h-4 text-white" />
                   {t("legal.sec7Title", "Governing Law & Jurisdiction")}
                 </h3>
-                <p className="text-xs text-zinc-300 leading-relaxed">
+                <p className="text-xs text-zinc-200 leading-relaxed">
                   {t("legal.sec7Body", "These terms are governed by the laws of the State of California, USA, without regard to its conflict of law provisions. Any legal action or proceeding arising from these terms shall be brought exclusively in the courts located in San Francisco, California, USA.")}
                 </p>
               </section>
@@ -265,12 +265,12 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                   {t("legal.privacyHeading", "Privacy Policy for Yoouz")}
                 </h1>
-                <p className="text-xs text-zinc-400 font-semibold">
+                <p className="text-xs text-zinc-200 font-semibold">
                   {t("legal.lastUpdated", "Last Updated: August 24, 2026")}
                 </p>
               </header>
 
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs sm:text-sm leading-relaxed">
+              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-200 text-xs sm:text-sm leading-relaxed">
                 {t("legal.welcomePrivacy", "Welcome to Yoouz ('we,' 'our,' or 'us'). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our website and web application.")}
               </div>
 
@@ -280,22 +280,22 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <Lock className="w-4 h-4 text-white" />
                   {t("legal.privSec1Title", "Information We Collect")}
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-zinc-200">
                   {t("legal.privSec1Subtitle", "When you interact with Yoouz, we collect limited personal data to provide and secure your account:")}
                 </p>
                 <div className="space-y-2.5">
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <p className="font-bold text-white">{t("legal.accountInfoTitle", "Account Information & Verified Email")}</p>
-                    <p className="text-zinc-400">
+                    <p className="text-zinc-200">
                       {t("legal.accountInfoBody", "When you log in using your verified email address, we receive your account profile data, which includes your name, email address, and profile picture. We do not collect or store passwords.")}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <p className="font-bold text-white flex items-center gap-1.5">
-                      <Camera className="w-3.5 h-3.5 text-zinc-300" />
+                      <Camera className="w-3.5 h-3.5 text-zinc-200" />
                       {t("legal.cameraMicTitle", "Camera and Microphone Data")}
                     </p>
-                    <p className="text-zinc-400">
+                    <p className="text-zinc-200">
                       {t("legal.cameraMicBody", "Yoouz allows you to record video reviews directly through your device's camera interface. We do not access or accept pre-recorded files or photo library uploads. Camera and microphone data are accessed strictly in real-time during your active recording session to capture and generate your live video review.")}
                     </p>
                   </div>
@@ -308,8 +308,8 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <CheckCircle2 className="w-4 h-4 text-white" />
                   {t("legal.privSec2Title", "How We Use Your Information")}
                 </h3>
-                <p className="text-zinc-400">{t("legal.privSec2Subtitle", "We use the information we collect to:")}</p>
-                <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+                <p className="text-zinc-200">{t("legal.privSec2Subtitle", "We use the information we collect to:")}</p>
+                <ul className="list-disc pl-5 space-y-1 text-zinc-200">
                   <li>{t("legal.privSec2Item1", "Create and manage your Yoouz user account.")}</li>
                   <li>{t("legal.privSec2Item2", "Authenticate your identity securely via Google.")}</li>
                   <li>{t("legal.privSec2Item3", "Process, host, and display your live-recorded video reviews on the platform.")}</li>
@@ -323,10 +323,10 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <ShieldCheck className="w-4 h-4 text-white" />
                   {t("legal.privSec3Title", "Data Sharing and Disclosure")}
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-zinc-200">
                   {t("legal.privSec3Subtitle", "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:")}
                 </p>
-                <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+                <ul className="list-disc pl-5 space-y-1 text-zinc-200">
                   <li>
                     <strong className="text-white">{t("legal.serviceProviders", "Service Providers:")}</strong> {t("legal.serviceProvidersBody", "With trusted backend and hosting infrastructure providers (such as Google Cloud and Supabase/Firebase) required to run our web application.")}
                   </li>
@@ -342,7 +342,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <Lock className="w-4 h-4 text-white" />
                   {t("legal.privSec4Title", "Data Security")}
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-zinc-200">
                   {t("legal.privSec4Body", "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.")}
                 </p>
               </section>
@@ -353,8 +353,8 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <Scale className="w-4 h-4 text-white" />
                   {t("legal.privSec5Title", "Your Rights and Choices")}
                 </h3>
-                <p className="text-zinc-400">{t("legal.privSec5Subtitle", "You have the right to:")}</p>
-                <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+                <p className="text-zinc-200">{t("legal.privSec5Subtitle", "You have the right to:")}</p>
+                <ul className="list-disc pl-5 space-y-1 text-zinc-200">
                   <li>{t("legal.privSec5Item1", "Access the personal data we hold about you.")}</li>
                   <li>{t("legal.privSec5Item2", "Request the correction or deletion of your account and associated review data.")}</li>
                   <li>{t("legal.privSec5Item3", "Withdraw your consent to data processing at any time by deleting your account.")}</li>
@@ -367,7 +367,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <Mail className="w-4 h-4 text-white" />
                   {t("legal.privSec6Title", "Contact Us")}
                 </h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">
+                <p className="text-xs text-zinc-200 leading-relaxed">
                   {t("legal.privSec6Body", "If you have any questions about this Privacy Policy, you can contact our privacy officer at")}{" "}
                   <a
                     href="mailto:support@yoouz.com"
@@ -383,8 +383,8 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3.5 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between text-xs text-zinc-400 shrink-0">
-          <span className="font-semibold text-[11px] text-zinc-400">
+        <div className="px-6 py-3.5 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between text-xs text-zinc-200 shrink-0">
+          <span className="font-semibold text-[11px] text-zinc-200">
             {t("legal.copyright", "© 2026 Yoouz Inc. • San Francisco, CA")}
           </span>
           <button

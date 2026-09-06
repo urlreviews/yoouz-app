@@ -492,7 +492,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                     className={`w-3.5 h-3.5 ${
                       i < Math.round(video.rating)
                         ? "fill-amber-400 text-amber-400 drop-shadow-sm"
-                        : "fill-zinc-600/70 text-zinc-500/80"
+                        : "fill-zinc-600/70 text-zinc-200/80"
                     }`}
                   />
                 ))}

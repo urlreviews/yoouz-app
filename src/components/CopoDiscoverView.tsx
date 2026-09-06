@@ -489,7 +489,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         <div className="w-full max-w-3xl flex justify-start mb-2">
           <button
             onClick={onNavigateHome}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-bold transition-colors cursor-pointer border border-zinc-800 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-bold transition-colors cursor-pointer border border-zinc-800 active:scale-95"
             title="Back to Feed"
           >
             <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
@@ -513,21 +513,21 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         <div className="w-full max-w-xl mb-12">
           <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-500/20 transition-all">
             <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-zinc-500 group-focus-within:text-white transition-colors" />
+              <Search className="h-5 w-5 text-zinc-200 group-focus-within:text-white transition-colors" />
             </div>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("discover.searchPlaceholder", "Search reviewer by name...")}
-              className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-500 text-white"
+              className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-200 text-white"
               autoFocus
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="absolute inset-y-0 right-24 flex items-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className="absolute inset-y-0 right-24 flex items-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
                 title="Clear search query"
               >
                 <span className="text-xl font-medium leading-none">×</span>
@@ -547,12 +547,12 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         {/* Reviewers List */}
         {query.trim().length > 0 && (
           <div className="w-full text-left animate-in fade-in slide-in-from-bottom-3 duration-300">
-            <div className="flex items-center justify-between text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4 px-2">
+            <div className="flex items-center justify-between text-xs font-bold text-zinc-200 uppercase tracking-wider mb-4 px-2">
               <span className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                <Sparkles className="w-3.5 h-3.5 text-zinc-200" />
                 {t("discover.searchResults", "Search Results")} ({displayedReviewers.length})
               </span>
-            <span className="text-zinc-400 hidden sm:block font-medium">{t("discover.tapToView", "Tap card to view profile")}</span>
+            <span className="text-zinc-200 hidden sm:block font-medium">{t("discover.tapToView", "Tap card to view profile")}</span>
           </div>
 
           {displayedReviewers.length > 0 ? (
@@ -588,25 +588,25 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                         </div>
                         
                         {reviewer.author.location ? (
-                          <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
-                            <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                          <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 mb-1 truncate">
+                            <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                             <span className="truncate">{reviewer.author.location}</span>
                           </p>
                         ) : (
-                          <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5 mb-1 truncate">
-                            <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                          <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 mb-1 truncate">
+                            <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                             <span>{t("discover.localContributor", "Local Contributor")}</span>
                           </p>
                         )}
                         
-                        <p className="text-[11px] font-semibold text-zinc-500">
+                        <p className="text-[11px] font-semibold text-zinc-200">
                           {reviewer.count} {reviewer.count === 1 ? t("common.videoReview", "video review") : t("common.videoReviews", "video reviews")}
                         </p>
                       </div>
                     </div>
 
                     {/* Right: Navigation Indicator */}
-                    <div className="shrink-0 flex items-center pl-2 text-zinc-400 group-hover:text-white transition-colors">
+                    <div className="shrink-0 flex items-center pl-2 text-zinc-200 group-hover:text-white transition-colors">
                       <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </div>
@@ -618,7 +618,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
               <p className="text-sm font-bold text-white mb-1">
                 {t("discover.noReviewersFound", `No reviewers found matching "${query}"`)}
               </p>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-200">
                 {t("discover.trySearchingName", "Try searching by their name.")}
               </p>
             </div>

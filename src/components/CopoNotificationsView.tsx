@@ -272,9 +272,9 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <button
                 id="tab-notifs-messages"
                 onClick={onNavigateToMessages}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-800/60 cursor-pointer transition-all active:scale-95"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-200 hover:text-white hover:bg-zinc-800/60 cursor-pointer transition-all active:scale-95"
               >
-                <Mail className="w-4 h-4 text-zinc-400" />
+                <Mail className="w-4 h-4 text-zinc-200" />
                 <span>Messages</span>
               </button>
 
@@ -300,7 +300,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
+                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
                 title="Back to Feed"
               >
                 <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
@@ -313,7 +313,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">
                 {t("nav.notifications", "Notifications")}
               </h2>
-              <p className="text-[12px] text-zinc-400 font-medium mt-1">
+              <p className="text-[12px] text-zinc-200 font-medium mt-1">
                 {unreadCount > 0
                   ? `${unreadCount} ${t("common.just_now", "updates")}`
                   : t("common.success", "All caught up")}
@@ -334,7 +334,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               )}
               <button
                 onClick={handleClearAll}
-                className="px-3 py-1.5 rounded-full text-[11px] font-bold text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
+                className="px-3 py-1.5 rounded-full text-[11px] font-bold text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
               >
                 Clear all
               </button>
@@ -353,14 +353,14 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                 className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 ${
                   isActive
                     ? "bg-white text-zinc-950 shadow-md border border-transparent font-black"
-                    : "bg-zinc-900 text-zinc-300 border border-zinc-800 shadow-2xs hover:bg-zinc-800 hover:text-white"
+                    : "bg-zinc-900 text-zinc-200 border border-zinc-800 shadow-2xs hover:bg-zinc-800 hover:text-white"
                 }`}
               >
                 <span>{pill.label}</span>
                 {pill.count !== undefined && (
                   <span
                     className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-extrabold ${
-                      isActive ? "bg-zinc-900 text-white" : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                      isActive ? "bg-zinc-900 text-white" : "bg-zinc-800 text-zinc-200 border border-zinc-700"
                     }`}
                   >
                     {pill.count}
@@ -444,19 +444,19 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
                     {/* Notification Text Content */}
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs sm:text-[13px] text-zinc-300 leading-snug break-words line-clamp-2 sm:line-clamp-none">
+                      <div className="text-xs sm:text-[13px] text-zinc-200 leading-snug break-words line-clamp-2 sm:line-clamp-none">
                         <span className="font-extrabold text-white hover:underline">
                           {notif.user.name}
                         </span>{" "}
                         {details.type === "recommendation" ? (
                           <>
-                            <span className="text-zinc-400 font-medium">recommended</span>{" "}
+                            <span className="text-zinc-200 font-medium">recommended</span>{" "}
                             <span className="font-bold text-white underline-offset-2 hover:underline">
                               <span className="sm:hidden">a website</span>
                               <span className="hidden sm:inline">{details.target}</span>
                             </span>
                             {details.rating && (
-                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-300 font-black text-[11px] sm:text-xs">
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px] sm:text-xs">
                                 <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-400 inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
@@ -464,13 +464,13 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           </>
                         ) : details.type === "video_share" ? (
                           <>
-                            <span className="text-zinc-400 font-medium">shared a review for</span>{" "}
+                            <span className="text-zinc-200 font-medium">shared a review for</span>{" "}
                             <span className="font-bold text-white underline-offset-2 hover:underline">
                               <span className="sm:hidden">a place</span>
                               <span className="hidden sm:inline">{details.target}</span>
                             </span>
                             {details.rating && (
-                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-300 font-black text-[11px] sm:text-xs">
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px] sm:text-xs">
                                 <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-400 inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
@@ -478,24 +478,24 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           </>
                         ) : details.type === "direct_message" ? (
                           <>
-                            <span className="text-zinc-400 font-medium">sent a message:</span>{" "}
+                            <span className="text-zinc-200 font-medium">sent a message:</span>{" "}
                             <span className="text-zinc-200 font-medium italic">
                               {details.messageBody}
                             </span>
                           </>
                         ) : details.type === "review_activity" ? (
                           <>
-                            <span className="text-zinc-400 font-medium">{details.action}</span>{" "}
+                            <span className="text-zinc-200 font-medium">{details.action}</span>{" "}
                             <span className="font-bold text-white">
                               <span className="sm:hidden">a place</span>
                               <span className="hidden sm:inline">{details.target}</span>
                             </span>
                           </>
                         ) : (
-                          <span className="text-zinc-400 font-medium">{details.rawText}</span>
+                          <span className="text-zinc-200 font-medium">{details.rawText}</span>
                         )}
                       </div>
-                      <span className="text-[10px] sm:text-[11px] text-zinc-500 font-semibold block mt-0.5">
+                      <span className="text-[10px] sm:text-[11px] text-zinc-200 font-semibold block mt-0.5">
                         {formatRecordedDate(notif.timestamp, notif.createdAtMs)}
                       </span>
                     </div>
@@ -535,7 +535,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     {/* Quick Dismiss Button */}
                     <button
                       onClick={(e) => handleDismiss(notif.id, e)}
-                      className="p-1 sm:p-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 hover:text-white text-zinc-400 border border-zinc-700 transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-90"
+                      className="p-1 sm:p-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 hover:text-white text-zinc-200 border border-zinc-700 transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-90"
                       title="Delete notification"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -552,7 +552,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <BellOff className="w-7 h-7 stroke-[2]" />
             </div>
             <h3 className="font-black text-white text-base mb-1">No notifications</h3>
-            <p className="text-xs text-zinc-400 max-w-xs leading-relaxed font-medium">
+            <p className="text-xs text-zinc-200 max-w-xs leading-relaxed font-medium">
               {activeFilter === "all"
                 ? "You're all caught up! Community updates and video review activity will appear here."
                 : `No notifications found under "${activeFilter}".`}

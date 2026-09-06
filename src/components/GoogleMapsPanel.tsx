@@ -133,7 +133,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
           {formatBusinessName(place.name)}
         </h1>
 
-        <div className="flex items-center gap-1.5 mt-1 text-[13px] text-zinc-500">
+        <div className="flex items-center gap-1.5 mt-1 text-[13px] text-zinc-200">
           <span className="font-bold text-zinc-100 text-[14px]">{place.rating}</span>
           <div className="flex items-center text-[#e37400]">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -158,10 +158,10 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             onClick={onOpenDirections}
             className="flex flex-col items-center gap-1.5 text-center group cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-zinc-300 group-hover:bg-zinc-800 group-hover:border-zinc-600 transition-colors">
+            <div className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-zinc-200 group-hover:bg-zinc-800 group-hover:border-zinc-600 transition-colors">
               <Navigation className="w-5 h-5 fill-zinc-300" />
             </div>
-            <span className="text-[11px] font-medium text-zinc-300">Directions</span>
+            <span className="text-[11px] font-medium text-zinc-200">Directions</span>
           </button>
 
           <button
@@ -171,13 +171,13 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             <div
               className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors ${
                 isBookmarked
-                  ? "border-zinc-600 bg-zinc-800 text-zinc-300"
-                  : "border-zinc-800 text-zinc-300 group-hover:bg-zinc-800"
+                  ? "border-zinc-600 bg-zinc-800 text-zinc-200"
+                  : "border-zinc-800 text-zinc-200 group-hover:bg-zinc-800"
               }`}
             >
               <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-zinc-300" : ""}`} />
             </div>
-            <span className="text-[11px] font-medium text-zinc-300">
+            <span className="text-[11px] font-medium text-zinc-200">
               {isBookmarked ? "Saved" : "Save"}
             </span>
           </button>
@@ -189,7 +189,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             <div className="w-10 h-10 rounded-full bg-zinc-800 text-white flex items-center justify-center hover:bg-zinc-700 shadow-sm transition-colors">
               <Video className="w-5 h-5" />
             </div>
-            <span className="text-[11px] font-medium text-zinc-300">Add Review</span>
+            <span className="text-[11px] font-medium text-zinc-200">Add Review</span>
           </button>
 
           <button
@@ -200,10 +200,10 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             }}
             className="flex flex-col items-center gap-1.5 text-center group cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-zinc-300 group-hover:bg-zinc-800 group-hover:border-zinc-600 transition-colors">
+            <div className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-zinc-200 group-hover:bg-zinc-800 group-hover:border-zinc-600 transition-colors">
               <Share2 className="w-5 h-5" />
             </div>
-            <span className="text-[11px] font-medium text-zinc-300">Share</span>
+            <span className="text-[11px] font-medium text-zinc-200">Share</span>
           </button>
         </div>
       </div>
@@ -214,7 +214,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
           id="tab-overview"
           onClick={() => onSelectTab("overview")}
           className={`py-3.5 px-3 text-[14px] font-medium cursor-pointer relative transition-colors ${
-            activeTab === "overview" ? "text-zinc-300 font-bold" : "text-zinc-400 hover:text-zinc-100"
+            activeTab === "overview" ? "text-zinc-200 font-bold" : "text-zinc-200 hover:text-zinc-100"
           }`}
         >
           Overview
@@ -227,7 +227,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
           id="tab-reviews"
           onClick={() => onSelectTab("reviews")}
           className={`py-3.5 px-3 text-[14px] font-medium cursor-pointer relative transition-colors ${
-            activeTab === "reviews" ? "text-zinc-300 font-bold" : "text-zinc-400 hover:text-zinc-100"
+            activeTab === "reviews" ? "text-zinc-200 font-bold" : "text-zinc-200 hover:text-zinc-100"
           }`}
         >
           Reviews
@@ -240,7 +240,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
           id="tab-about"
           onClick={() => onSelectTab("about")}
           className={`py-3.5 px-3 text-[14px] font-medium cursor-pointer relative transition-colors ${
-            activeTab === "about" ? "text-zinc-300 font-bold" : "text-zinc-400 hover:text-zinc-100"
+            activeTab === "about" ? "text-zinc-200 font-bold" : "text-zinc-200 hover:text-zinc-100"
           }`}
         >
           About
@@ -258,7 +258,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             {/* Overall Rating & Breakdown Bars matching Screenshot */}
             <div className="grid grid-cols-[1fr_1.5fr] gap-4 items-center">
               {/* Left: 5-Star Distribution Bars */}
-              <div className="space-y-1.5 text-[12px] font-medium text-zinc-500">
+              <div className="space-y-1.5 text-[12px] font-medium text-zinc-200">
                 {[5, 4, 3, 2, 1].map((starNum) => {
                   const key = `stars${starNum}` as keyof typeof dist;
                   const count = dist[key];
@@ -294,32 +294,32 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                     />
                   ))}
                 </div>
-                <span className="text-[12px] text-zinc-500">
+                <span className="text-[12px] text-zinc-200">
                   {(place.totalReviews || 0).toLocaleString()} reviews
                 </span>
               </div>
             </div>
 
             {/* Notice: Reviews aren't verified */}
-            <div className="flex items-center gap-1.5 text-[12px] text-zinc-500 pt-1">
+            <div className="flex items-center gap-1.5 text-[12px] text-zinc-200 pt-1">
               <span>Video reviews aren't verified</span>
-              <Info className="w-3.5 h-3.5 text-zinc-500" />
+              <Info className="w-3.5 h-3.5 text-zinc-200" />
             </div>
 
             {/* Prominent Google Blue Button: Record a video review */}
             <button
               id="btn-write-review-pill"
               onClick={onOpenRecord}
-              className="w-full h-10 px-4 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-[14px] flex items-center justify-center gap-2 transition-colors border border-zinc-700"
+              className="w-full h-10 px-4 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-[14px] flex items-center justify-center gap-2 transition-colors border border-zinc-700"
             >
-              <Video className="w-4 h-4 text-zinc-300" />
+              <Video className="w-4 h-4 text-zinc-200" />
               <span>Record a video review</span>
             </button>
 
             {/* Reviews Search Bar & Sort Button */}
             <div className="flex items-center gap-2 pt-2">
               <div className="flex-1 h-9 bg-zinc-950 rounded-full border border-zinc-800 flex items-center px-3 text-[13px] focus-within:border-zinc-600">
-                <Search className="w-4 h-4 text-zinc-500 shrink-0 mr-2" />
+                <Search className="w-4 h-4 text-zinc-200 shrink-0 mr-2" />
                 <input
                   type="text"
                   value={reviewSearchQuery}
@@ -333,7 +333,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                 <button
                   id="btn-sort-reviews"
                   onClick={() => setShowSortDropdown(!showSortDropdown)}
-                  className="h-9 px-3 rounded-full border border-zinc-800 hover:bg-zinc-900 flex items-center gap-1.5 text-[13px] font-medium text-zinc-300 transition-colors"
+                  className="h-9 px-3 rounded-full border border-zinc-800 hover:bg-zinc-900 flex items-center gap-1.5 text-[13px] font-medium text-zinc-200 transition-colors"
                 >
                   <ArrowUpDown className="w-3.5 h-3.5" />
                   <span>Sort</span>
@@ -349,7 +349,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                       className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-zinc-800 flex items-center justify-between"
                     >
                       <span>Most helpful</span>
-                      {sortOption === "helpful" && <Check className="w-3.5 h-3.5 text-zinc-300" />}
+                      {sortOption === "helpful" && <Check className="w-3.5 h-3.5 text-zinc-200" />}
                     </button>
                     <button
                       onClick={() => {
@@ -359,7 +359,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                       className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-zinc-800 flex items-center justify-between"
                     >
                       <span>Newest</span>
-                      {sortOption === "newest" && <Check className="w-3.5 h-3.5 text-zinc-300" />}
+                      {sortOption === "newest" && <Check className="w-3.5 h-3.5 text-zinc-200" />}
                     </button>
                     <button
                       onClick={() => {
@@ -369,7 +369,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                       className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-zinc-800 flex items-center justify-between"
                     >
                       <span>Highest rating</span>
-                      {sortOption === "highest" && <Check className="w-3.5 h-3.5 text-zinc-300" />}
+                      {sortOption === "highest" && <Check className="w-3.5 h-3.5 text-zinc-200" />}
                     </button>
                   </div>
                 )}
@@ -386,13 +386,13 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                     onClick={() => setSelectedTag(item.tag)}
                     className={`h-8 px-3 rounded-full text-[13px] font-normal transition-all border ${
                       isSelected
-                        ? "bg-zinc-800 text-zinc-300 border-zinc-600 font-medium"
-                        : "bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-900"
+                        ? "bg-zinc-800 text-zinc-200 border-zinc-600 font-medium"
+                        : "bg-zinc-950 text-zinc-200 border-zinc-800 hover:bg-zinc-900"
                     }`}
                   >
                     <span>{item.tag}</span>
                     {item.tag !== "All" && (
-                      <span className="text-[11px] text-zinc-500 ml-1.5">{item.count}</span>
+                      <span className="text-[11px] text-zinc-200 ml-1.5">{item.count}</span>
                     )}
                   </button>
                 );
@@ -420,25 +420,25 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
         {activeTab === "overview" && (
           <div className="space-y-4 text-[14px] text-zinc-100">
             {place.description && (
-              <p className="text-zinc-300 leading-relaxed text-[13px] bg-zinc-900 p-3 rounded-xl border border-zinc-800">
+              <p className="text-zinc-200 leading-relaxed text-[13px] bg-zinc-900 p-3 rounded-xl border border-zinc-800">
                 {place.description}
               </p>
             )}
 
             <div className="space-y-3 pt-2">
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-zinc-300 shrink-0 mt-0.5" />
+                <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-zinc-100">{place.address}</p>
                   {place.plusCode && (
-                    <p className="text-[12px] text-zinc-500">{place.plusCode}</p>
+                    <p className="text-[12px] text-zinc-200">{place.plusCode}</p>
                   )}
                 </div>
               </div>
 
               {place.openingHours && (
                 <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-zinc-300 shrink-0" />
+                  <Clock className="w-5 h-5 text-zinc-200 shrink-0" />
                   <div>
                     <span className={`font-medium ${place.isOpen !== false ? "text-emerald-700" : "text-amber-700"}`}>
                       {place.openingHours}
@@ -449,8 +449,8 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
 
               {place.phone && (
                 <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-zinc-300 shrink-0" />
-                  <a href={`tel:${place.phone}`} className="text-zinc-300 hover:underline">
+                  <Phone className="w-5 h-5 text-zinc-200 shrink-0" />
+                  <a href={`tel:${place.phone}`} className="text-zinc-200 hover:underline">
                     {place.phone}
                   </a>
                 </div>
@@ -458,12 +458,12 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
 
               {place.website && (
                 <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-zinc-300 shrink-0" />
+                  <Globe className="w-5 h-5 text-zinc-200 shrink-0" />
                   <a
                     href={place.website}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-zinc-300 hover:underline truncate max-w-[280px]"
+                    className="text-zinc-200 hover:underline truncate max-w-[280px]"
                   >
                     {place.website.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}
                   </a>
@@ -481,7 +481,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                   {(place.topDishes || []).map((dish) => (
                     <span
                       key={dish}
-                      className="px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-medium border border-zinc-700 flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-200 text-xs font-medium border border-zinc-700 flex items-center gap-1"
                     >
                       <Tag className="w-3 h-3" />
                       {dish}
@@ -499,10 +499,10 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             {/* Full Business Description & URL Metadata */}
             <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 space-y-1.5">
               <h4 className="font-bold text-[13px] text-zinc-100 flex items-center gap-1.5">
-                <Info className="w-4 h-4 text-zinc-300" />
+                <Info className="w-4 h-4 text-zinc-200" />
                 <span>About {formatBusinessName(place.name)}</span>
               </h4>
-              <p className="text-[13px] text-zinc-300 leading-relaxed font-normal">
+              <p className="text-[13px] text-zinc-200 leading-relaxed font-normal">
                 {place.description || "Verified Yoouz business listing with authentic video reviews from real users."}
               </p>
             </div>
@@ -512,7 +512,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             </h3>
             <div className="grid grid-cols-1 gap-2">
               {(place.amenities || ["Wheelchair accessible entrance", "Public Reception", "Verified Listing"]).map((amenity) => (
-                <div key={amenity} className="flex items-center gap-2.5 text-zinc-300">
+                <div key={amenity} className="flex items-center gap-2.5 text-zinc-200">
                   <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>{amenity}</span>
                 </div>

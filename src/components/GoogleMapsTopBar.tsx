@@ -61,7 +61,7 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
           <button
             id="btn-google-menu"
             onClick={onToggleSidebar}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
             title={isSidebarOpen ? "Collapse panel" : "Menu"}
           >
             {isSidebarOpen ? (
@@ -87,7 +87,7 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
           {searchQuery && (
             <button
               onClick={() => onSearchChange("")}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-zinc-800 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -129,10 +129,10 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
               className={`h-9 px-3.5 rounded-full text-[13px] font-bold flex items-center gap-1.5 shadow-sm transition-all whitespace-nowrap border ${
                 isSelected
                   ? "bg-white text-black border-white"
-                  : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 hover:text-white"
+                  : "bg-zinc-900 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 hover:text-white"
               }`}
             >
-              <span className={isSelected ? "text-black" : "text-zinc-400"}>{pill.icon}</span>
+              <span className={isSelected ? "text-black" : "text-zinc-200"}>{pill.icon}</span>
               <span>{pill.label}</span>
             </button>
           );
@@ -149,7 +149,7 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
           <span>Record Video Review</span>
         </button>
 
-        <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 shadow-sm cursor-pointer">
+        <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 hover:text-white hover:bg-zinc-800 shadow-sm cursor-pointer">
           <Grid className="w-5 h-5" />
         </div>
 

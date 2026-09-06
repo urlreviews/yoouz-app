@@ -107,7 +107,7 @@ export function CopoComparisonModal({
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             {t("comparison.headline", "Why Yoouz Outperforms Legacy Review Sites")}
           </h2>
-          <p className="text-zinc-400 text-sm sm:text-base mt-1.5 max-w-xl">
+          <p className="text-zinc-200 text-sm sm:text-base mt-1.5 max-w-xl">
             {t("comparison.subheadline", "See why millions of consumers and businesses are replacing outdated text reviews with authentic 60-second video testimonials.")}
           </p>
 
@@ -120,7 +120,7 @@ export function CopoComparisonModal({
                 className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
                   selectedTab === tab
                     ? 'bg-white text-black shadow-lg scale-100'
-                    : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
+                    : 'bg-white/5 text-zinc-200 hover:text-white hover:bg-white/10 border border-white/5'
                 }`}
               >
                 vs. {comparisons[tab].name}
@@ -132,13 +132,13 @@ export function CopoComparisonModal({
         {/* Comparison Body */}
         <div className="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1">
           {/* Comparison Matrix Header */}
-          <div className="grid grid-cols-12 gap-3 pb-3 border-b border-white/10 text-xs font-bold text-zinc-500 uppercase tracking-wider">
+          <div className="grid grid-cols-12 gap-3 pb-3 border-b border-white/10 text-xs font-bold text-zinc-200 uppercase tracking-wider">
             <div className="col-span-5 sm:col-span-4">{t("comparison.evaluationCriteria", "Evaluation Criteria")}</div>
             <div className="col-span-7 sm:col-span-4 text-white flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
               Yoouz ({t("comparison.videoFirst", "Video First")})
             </div>
-            <div className="hidden sm:block sm:col-span-4 text-zinc-400">
+            <div className="hidden sm:block sm:col-span-4 text-zinc-200">
               {current.name}
             </div>
           </div>
@@ -161,7 +161,7 @@ export function CopoComparisonModal({
                 </div>
 
                 {/* Competitor Side */}
-                <div className="col-span-12 sm:col-span-4 p-2.5 rounded-xl bg-zinc-900/60 border border-white/5 text-zinc-400 flex items-center gap-2">
+                <div className="col-span-12 sm:col-span-4 p-2.5 rounded-xl bg-zinc-900/60 border border-white/5 text-zinc-200 flex items-center gap-2">
                   <X className="w-4 h-4 text-rose-400 flex-shrink-0" />
                   <span className="text-xs sm:text-sm">{row.competitor}</span>
                 </div>
@@ -175,7 +175,7 @@ export function CopoComparisonModal({
               <Award className="w-4 h-4 text-amber-400" />
               {t("comparison.officialVerdict", "The Official Verdict: Yoouz vs.")} {current.name}
             </div>
-            <p className="text-zinc-300 text-xs sm:text-sm leading-relaxed">
+            <p className="text-zinc-200 text-xs sm:text-sm leading-relaxed">
               {current.verdict}
             </p>
           </div>
@@ -187,7 +187,7 @@ export function CopoComparisonModal({
                 <Video className="w-4 h-4" />
               </div>
               <div className="text-white font-bold text-sm">{t("comparison.liveVideoPillar", "100% Live Video")}</div>
-              <div className="text-zinc-400 text-xs">{t("comparison.liveVideoDesc", "Real human face, emotion & tone. Zero AI bots.")}</div>
+              <div className="text-zinc-200 text-xs">{t("comparison.liveVideoDesc", "Real human face, emotion & tone. Zero AI bots.")}</div>
             </div>
 
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/5 flex flex-col gap-1.5">
@@ -195,7 +195,7 @@ export function CopoComparisonModal({
                 <Zap className="w-4 h-4" />
               </div>
               <div className="text-white font-bold text-sm">{t("comparison.secondCapPillar", "60-Second Cap")}</div>
-              <div className="text-zinc-400 text-xs">{t("comparison.secondCapDesc", "Concise, fast, and 100% respectful of your time.")}</div>
+              <div className="text-zinc-200 text-xs">{t("comparison.secondCapDesc", "Concise, fast, and 100% respectful of your time.")}</div>
             </div>
 
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/5 flex flex-col gap-1.5">
@@ -203,14 +203,14 @@ export function CopoComparisonModal({
                 <MapPin className="w-4 h-4" />
               </div>
               <div className="text-white font-bold text-sm">{t("comparison.globalPlacesPillar", "Global Places")}</div>
-              <div className="text-zinc-400 text-xs">{t("comparison.globalPlacesDesc", "Google Maps integration for restaurants & local spots.")}</div>
+              <div className="text-zinc-200 text-xs">{t("comparison.globalPlacesDesc", "Google Maps integration for restaurants & local spots.")}</div>
             </div>
           </div>
         </div>
 
         {/* Footer CTA */}
         <div className="p-6 border-t border-white/10 bg-zinc-950 flex flex-col sm:flex-row items-center justify-between gap-4 flex-shrink-0">
-          <div className="text-xs text-zinc-500 text-center sm:text-left">
+          <div className="text-xs text-zinc-200 text-center sm:text-left">
             {t("comparison.readyPrompt", "Ready to experience authentic, un-faked feedback?")}
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">

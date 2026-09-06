@@ -4510,7 +4510,7 @@ export function App() {
           </div>
           <div className="space-y-0.5">
             <p className="text-xs font-black">Profile Successfully Deleted</p>
-            <p className="text-[10px] text-zinc-400 font-semibold">Your profile data has been cleared permanently.</p>
+            <p className="text-[10px] text-zinc-200 font-semibold">Your profile data has been cleared permanently.</p>
           </div>
         </div>
       )}

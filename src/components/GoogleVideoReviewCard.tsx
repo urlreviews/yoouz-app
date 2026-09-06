@@ -147,13 +147,13 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
                 <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
               )}
             </h4>
-            <p className="text-[12px] text-zinc-400 leading-tight flex items-center gap-1.5 mt-0.5">
+            <p className="text-[12px] text-zinc-200 leading-tight flex items-center gap-1.5 mt-0.5">
               <span>{`${review.author.videoReviewCount || 4} video reviews`}</span>
               {review.author.location && (
                 <>
                   <span className="text-zinc-600">•</span>
-                  <span className="flex items-center gap-0.5 text-zinc-300 font-semibold">
-                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                  <span className="flex items-center gap-0.5 text-zinc-200 font-semibold">
+                    <MapPin className="w-3 h-3 text-zinc-200 shrink-0" />
                     {review.author.location}
                   </span>
                 </>
@@ -163,7 +163,7 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
         </div>
 
         <button
-          className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:bg-zinc-800 transition-colors"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-200 hover:bg-zinc-800 transition-colors"
           title="More options"
         >
           <MoreVertical className="w-4 h-4" />
@@ -171,7 +171,7 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
       </div>
 
       {/* 2. Rating Stars & Timestamp */}
-      <div className="flex items-center gap-2 text-[13px] text-zinc-400">
+      <div className="flex items-center gap-2 text-[13px] text-zinc-200">
         <div className="flex items-center gap-0.5 text-zinc-200">
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
@@ -185,7 +185,7 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
           ))}
         </div>
         {(review.recordedAt || review.createdAtMs) && (
-          <span className="text-[12px] text-zinc-500 font-normal">
+          <span className="text-[12px] text-zinc-200 font-normal">
             • {formatRecordedDate(review.recordedAt, review.createdAtMs)}
           </span>
         )}
@@ -308,13 +308,13 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
       </div>
 
       {/* 4. Google Review Action Row: Thumbs Up / Share / Helpful */}
-      <div className="flex items-center gap-5 pt-1 text-[13px] text-zinc-400">
+      <div className="flex items-center gap-5 pt-1 text-[13px] text-zinc-200">
         <button
           onClick={() => onToggleLike(review.id)}
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-colors ${
             review.isLiked
               ? "border-zinc-500 text-white bg-zinc-800"
-              : "border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+              : "border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-white"
           }`}
         >
           <ThumbsUp className={`w-3.5 h-3.5 ${review.isLiked ? "fill-white" : ""}`} />
@@ -327,7 +327,7 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
 
         <button
           onClick={() => onShareReview(review)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
         >
           <Share2 className="w-3.5 h-3.5" />
           <span className="text-[12px] font-medium">Share</span>

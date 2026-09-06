@@ -295,18 +295,18 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                 <h3 className="font-extrabold text-lg text-white font-['Google_Sans',sans-serif]">
                   {t("businessClaim.verifyListingTitle", "Verify Business Listing")}
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-[10px] font-bold text-zinc-300 uppercase tracking-wider border border-zinc-700">
+                <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-[10px] font-bold text-zinc-200 uppercase tracking-wider border border-zinc-700">
                   {t("businessClaim.merchantAccess", "Merchant Access")}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="text-xs text-zinc-200 mt-0.5">
                 {t("businessClaim.verifyListingDesc", "Verify ownership to reply to video reviews & manage widgets")}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hidden sm:flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hidden sm:flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -324,9 +324,9 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               <div className="truncate">
                 <div className="font-bold text-sm text-white flex items-center gap-1.5 truncate">
                   <span>{targetPlace.name}</span>
-                  <ShieldCheck className="w-4 h-4 text-zinc-400 shrink-0" />
+                  <ShieldCheck className="w-4 h-4 text-zinc-200 shrink-0" />
                 </div>
-                <div className="text-[11px] text-zinc-500 truncate">
+                <div className="text-[11px] text-zinc-200 truncate">
                   {targetPlace.address || t("businessClaim.verifiedVenue", "Verified Business Venue")}
                 </div>
               </div>
@@ -363,9 +363,9 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                   >
                     <div className="truncate">
                       <span className="font-bold text-zinc-200 block truncate">{p.name}</span>
-                      <span className="text-[10px] text-zinc-400 block truncate">{p.address}</span>
+                      <span className="text-[10px] text-zinc-200 block truncate">{p.address}</span>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+                    <ArrowRight className="w-3.5 h-3.5 text-zinc-200" />
                   </button>
                 ))}
               </div>
@@ -379,10 +379,10 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'email' 
                   ? 'bg-zinc-900 text-white shadow-sm border border-zinc-700' 
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  : 'text-zinc-200 hover:text-zinc-200'
               }`}
             >
-              <Mail className="w-4 h-4 text-zinc-300" />
+              <Mail className="w-4 h-4 text-zinc-200" />
               <span>{t("businessClaim.emailVerification", "Email Verification")}</span>
             </button>
             <button
@@ -390,10 +390,10 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'meta_tag' 
                   ? 'bg-zinc-900 text-white shadow-sm border border-zinc-700' 
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  : 'text-zinc-200 hover:text-zinc-200'
               }`}
             >
-              <Code className="w-4 h-4 text-zinc-300" />
+              <Code className="w-4 h-4 text-zinc-200" />
               <span>{t("businessClaim.websiteMetaTag", "Website Meta Tag")}</span>
             </button>
           </div>
@@ -404,11 +404,11 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               {!emailSentSuccess ? (
                 <form onSubmit={handleSendMagicLink} className="space-y-3.5">
                   <div>
-                    <label className="block text-xs font-bold text-zinc-300 mb-1.5">
+                    <label className="block text-xs font-bold text-zinc-200 mb-1.5">
                       {t("businessClaim.businessEmailLabel", "Business Email Address")}
                     </label>
                     <div className="relative">
-                      <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <Mail className="w-4 h-4 text-zinc-200 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="email"
                         required
@@ -418,14 +418,14 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                         className="w-full pl-10 pr-4 py-3 bg-zinc-950 focus:bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-600 font-medium"
                       />
                     </div>
-                    <p className="text-[11px] text-zinc-500 mt-1">
+                    <p className="text-[11px] text-zinc-200 mt-1">
                       {t("businessClaim.sendCodeHint", "We'll send a 6-digit verification code to confirm ownership.")}
                     </p>
                   </div>
 
                   {emailError && (
-                    <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
-                      <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-200">
+                      <AlertCircle className="w-4 h-4 text-zinc-200 shrink-0" />
                       <span>{emailError}</span>
                     </div>
                   )}
@@ -453,10 +453,10 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                 <div className="space-y-4 animate-in fade-in">
                   <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-white">
-                      <Check className="w-4 h-4 text-zinc-300" />
+                      <Check className="w-4 h-4 text-zinc-200" />
                       <span>{t("businessClaim.codeSentSuccess", "Verification Code Sent")}</span>
                     </div>
-                    <p className="text-[11.5px] text-zinc-400 leading-relaxed">
+                    <p className="text-[11.5px] text-zinc-200 leading-relaxed">
                       {t("auth.sentCodeTo", "We sent a 6-digit code to")} <strong className="text-white">{businessEmail}</strong>. {t("businessClaim.enterCodeBelow", "Enter the 6-digit code below:")}
                     </p>
                   </div>
@@ -464,10 +464,10 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                   <form onSubmit={handleVerifyCode} className="space-y-3">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-bold text-zinc-300">
+                        <label className="block text-xs font-bold text-zinc-200">
                           {t("auth.sixDigitCode", "6-Digit Verification Code")}
                         </label>
-                        <span className="text-[11px] text-zinc-500 font-mono">
+                        <span className="text-[11px] text-zinc-200 font-mono">
                           {otpCode.length}/6
                         </span>
                       </div>
@@ -500,14 +500,14 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                                   isFilled
                                     ? "bg-zinc-800/90 text-white border-2 border-white/80"
                                     : isFocused
-                                    ? "bg-zinc-900 text-zinc-300 border-2 border-zinc-400 ring-2 ring-white/10"
+                                    ? "bg-zinc-900 text-zinc-200 border-2 border-zinc-400 ring-2 ring-white/10"
                                     : "bg-zinc-950 text-zinc-600 border border-zinc-800"
                                 }`}
                               >
                                 {isFilled ? (
                                   char
                                 ) : isFocused ? (
-                                  <span className="animate-pulse text-zinc-400 font-normal">|</span>
+                                  <span className="animate-pulse text-zinc-200 font-normal">|</span>
                                 ) : (
                                   <span className="text-zinc-600 font-light text-sm">·</span>
                                 )}
@@ -519,8 +519,8 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                     </div>
 
                     {emailError && (
-                      <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
-                        <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
+                      <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-200">
+                        <AlertCircle className="w-4 h-4 text-zinc-200 shrink-0" />
                         <span>{emailError}</span>
                       </div>
                     )}
@@ -529,7 +529,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setEmailSentSuccess(false)}
-                        className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-zinc-700"
+                        className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-zinc-700"
                       >
                         {t("common.back", "Back")}
                       </button>
@@ -560,13 +560,13 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
           {/* TAB 2: HTML META TAG VERIFICATION */}
           {activeTab === 'meta_tag' && (
             <div className="space-y-4">
-              <div className="text-xs text-zinc-400 leading-relaxed">
+              <div className="text-xs text-zinc-200 leading-relaxed">
                 {t("businessClaim.metaInstruction", "Add this verification meta tag to the <head> section of your website homepage:")}
               </div>
 
               {/* Tag Box with 1-click Copy */}
               <div className="p-3.5 bg-zinc-950 rounded-2xl text-[11px] font-mono text-zinc-200 border border-zinc-800 relative group select-all">
-                <span className="block pr-12 text-zinc-300 break-all">
+                <span className="block pr-12 text-zinc-200 break-all">
                   {expectedTagString}
                 </span>
                 <button
@@ -576,20 +576,20 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
                     setCopiedTag(true);
                     setTimeout(() => setCopiedTag(false), 2000);
                   }}
-                  className="absolute right-2 top-2 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all border border-zinc-700"
+                  className="absolute right-2 top-2 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all border border-zinc-700"
                 >
-                  {copiedTag ? <Check className="w-3.5 h-3.5 text-zinc-300" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedTag ? <Check className="w-3.5 h-3.5 text-zinc-200" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedTag ? t("common.copied", "Copied") : t("common.copy", "Copy")}</span>
                 </button>
               </div>
 
               {/* Website URL input */}
               <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">
+                <label className="block text-xs font-bold text-zinc-200 mb-1.5">
                   {t("businessClaim.officialHomepageUrl", "Official Website Homepage URL")}
                 </label>
                 <div className="relative">
-                  <Globe className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Globe className="w-4 h-4 text-zinc-200 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="url"
                     value={websiteUrl}
@@ -601,8 +601,8 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
               </div>
 
               {tagError && (
-                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-300">
-                  <AlertCircle className="w-4 h-4 text-zinc-400 shrink-0" />
+                <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center gap-2 text-xs text-zinc-200">
+                  <AlertCircle className="w-4 h-4 text-zinc-200 shrink-0" />
                   <span>{tagError}</span>
                 </div>
               )}

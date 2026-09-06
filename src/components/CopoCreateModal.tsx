@@ -1240,11 +1240,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-0.5">
                       <h2 className="text-lg font-bold text-white md:text-white">Record Video Review</h2>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800 md:bg-zinc-700 text-zinc-300 md:text-white font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800 md:bg-zinc-700 text-zinc-200 md:text-white font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
                         Step 1 of 2
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-400 md:text-zinc-400 font-medium">
+                    <p className="text-xs text-zinc-200 md:text-zinc-200 font-medium">
                       Rate your experience & proceed to camera
                     </p>
                   </div>
@@ -1252,7 +1252,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="w-9 h-9 rounded-full bg-zinc-800 md:bg-zinc-200 hover:bg-zinc-700 md:hover:bg-zinc-300 flex items-center justify-center text-zinc-300 md:text-zinc-400 transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-full bg-zinc-800 md:bg-zinc-200 hover:bg-zinc-700 md:hover:bg-zinc-300 flex items-center justify-center text-zinc-200 md:text-zinc-200 transition-colors cursor-pointer"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -1271,7 +1271,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               {/* Responsive Place Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-bold text-zinc-100 md:text-zinc-200 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-zinc-400" />
+                  <MapPin className="w-4 h-4 text-zinc-200" />
                   <span>Selected Business</span>
                 </label>
                 
@@ -1288,11 +1288,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-white md:text-white text-sm truncate">{formatBusinessName(selectedPlace.name)}</h4>
-                    <p className="text-xs text-zinc-400 md:text-zinc-400 truncate">{selectedPlace.brandDomain || selectedPlace.website || selectedPlace.address || selectedPlace.city}</p>
+                    <p className="text-xs text-zinc-200 md:text-zinc-200 truncate">{selectedPlace.brandDomain || selectedPlace.website || selectedPlace.address || selectedPlace.city}</p>
                   </div>
                   <button
                     onClick={() => setSelectedPlace(null)}
-                    className="shrink-0 text-xs font-bold text-zinc-300 hover:text-white px-3 py-2 bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer shadow-sm"
+                    className="shrink-0 text-xs font-bold text-zinc-200 hover:text-white px-3 py-2 bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer shadow-sm"
                   >
                     Change
                   </button>
@@ -1304,11 +1304,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="text-left">
                     <h3 className="text-sm font-bold text-white md:text-white">Your Rating</h3>
-                    <p className="text-[11px] text-zinc-500 md:text-zinc-400 font-medium">Tap stars to rate your experience</p>
+                    <p className="text-[11px] text-zinc-200 md:text-zinc-200 font-medium">Tap stars to rate your experience</p>
                   </div>
                   <div className={`px-3 py-1.5 rounded-full font-black text-[9px] uppercase tracking-[0.1em] transition-all duration-300 ${
                     rating === 0
-                      ? "bg-zinc-800 md:bg-zinc-200 text-zinc-500 md:text-zinc-400 border border-zinc-700 md:border-zinc-700"
+                      ? "bg-zinc-800 md:bg-zinc-200 text-zinc-200 md:text-zinc-200 border border-zinc-700 md:border-zinc-700"
                       : "bg-amber-500/20 md:bg-amber-100 text-amber-400 md:text-amber-600 border border-amber-500/30 md:border-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
                   }`}>
                     {rating === 0 ? "Select Star Rating" : getRatingLabel(rating)}
@@ -1327,7 +1327,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                         className={`w-11 h-11 transition-all duration-300 ${
                           star <= rating 
                              ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]" 
-                             : "text-zinc-800 md:text-zinc-300 group-hover:text-zinc-700 md:group-hover:text-zinc-400"
+                             : "text-zinc-800 md:text-zinc-200 group-hover:text-zinc-700 md:group-hover:text-zinc-200"
                         }`}
                       />
                     </button>
@@ -1340,7 +1340,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800 md:border-zinc-800 bg-zinc-900 md:bg-zinc-900 shrink-0">
               <button
                 onClick={() => setSelectedPlace(null)}
-                className="px-4 py-2.5 rounded-xl text-zinc-400 md:text-zinc-400 hover:bg-zinc-800 md:hover:bg-zinc-800 font-bold text-sm transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-800 font-bold text-sm transition-colors cursor-pointer"
               >
                 {t('create.back', 'Back')}
               </button>
@@ -1491,7 +1491,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
                   {/* Time & Sound row */}
                   <div className="flex items-center justify-between text-white text-xs px-1">
-                    <div className="flex items-center gap-2 font-mono text-zinc-300">
+                    <div className="flex items-center gap-2 font-mono text-zinc-200">
                       <span>{formatTime(currentTime)}</span>
                       <span>/</span>
                       <span>{formatTime(duration)}</span>
@@ -1648,7 +1648,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     <h3 className="text-2xl font-bold font-display tracking-tight text-white mb-2">
                       Speak now to start recording...
                     </h3>
-                    <p className="text-sm text-zinc-300 max-w-xs mb-6 leading-relaxed">
+                    <p className="text-sm text-zinc-200 max-w-xs mb-6 leading-relaxed">
                       Say anything about your experience at <span className="text-emerald-300 font-bold">{formatBusinessName(selectedPlace?.name)}</span> to automatically begin recording!
                     </p>
 

@@ -1128,7 +1128,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <h2 className="text-xl font-bold text-white mb-2">
             {feedContextTitle ? `No Reviews by ${feedContextTitle}` : "No Video Reviews Yet"}
           </h2>
-          <p className="text-sm text-zinc-400 max-w-[280px] mb-8 leading-relaxed">
+          <p className="text-sm text-zinc-200 max-w-[280px] mb-8 leading-relaxed">
             {feedContextTitle
               ? `${feedContextTitle} hasn't published any video reviews yet. Follow them to stay updated on their upcoming reviews!`
               : "Record the first authentic 60-second video review for any business or place!"}
@@ -1243,7 +1243,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               </div>
 
               {/* Feed Completed Pill */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-semibold text-zinc-200 uppercase tracking-wider mb-3">
                 {t("video.feedCompleted", "FEED COMPLETED")}
               </div>
 
@@ -1253,7 +1253,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               </h3>
 
               {/* Subtitle */}
-              <p className="text-sm text-zinc-400 leading-relaxed mb-8 max-w-[280px]">
+              <p className="text-sm text-zinc-200 leading-relaxed mb-8 max-w-[280px]">
                 {t("video.watchedAllReviews", "You've watched all reviews in this feed.")}
               </p>
 
@@ -1284,7 +1284,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     type="button"
                     id="btn-end-card-record-review"
                     onClick={onOpenCreateModal}
-                    className="mt-2 text-xs font-medium text-zinc-400 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer py-2"
+                    className="mt-2 text-xs font-medium text-zinc-200 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer py-2"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
                     <span>{t("video.recordYourOwnReview", "Record your own review")}</span>
@@ -1348,14 +1348,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           >
             <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300">
+                <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-200">
                   <MoreHorizontal className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-zinc-100 line-clamp-1">
                     {formatBusinessName(moreMenuVideo?.placeName || moreMenuVideo?.dishOrItem || moreMenuVideo?.placeId) || t("common.businessPlace", "Business Place")}
                   </h3>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-zinc-200">
                     {t("video.reviewBy", "Review by")} {moreMenuVideo?.author?.name || t("common.verifiedReviewer", "Verified Reviewer")}
                   </p>
                 </div>
@@ -1363,7 +1363,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               <button
                 id="btn-close-more-options"
                 onClick={() => setMoreMenuVideo(null)}
-                className="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
                 title={t("common.close", "Close")}
               >
                 <X className="w-4 h-4" />
@@ -1400,7 +1400,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     </div>
                     <div className="flex-1">
                       <div className="font-bold text-white">{t("video.editRatingTitle", "Edit Star Rating & Review")}</div>
-                      <div className="text-xs text-zinc-400 font-normal">
+                      <div className="text-xs text-zinc-200 font-normal">
                         {t("video.updateYourScore", "Update your score")} ({typeof moreMenuVideo.rating === "number" && !isNaN(moreMenuVideo.rating) ? moreMenuVideo.rating.toFixed(1) : (Number(moreMenuVideo.rating) || 5.0).toFixed(1)} ★) {t("video.placeRating", "& place rating")}
                       </div>
                     </div>
@@ -1415,7 +1415,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                   >
-                    <Share2 className="w-4 h-4 text-zinc-400" />
+                    <Share2 className="w-4 h-4 text-zinc-200" />
                     <span>{t("video.shareReviewLink", "Share Video Review Link")}</span>
                   </button>
 
@@ -1428,7 +1428,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                   >
-                    <MapPin className="w-4 h-4 text-zinc-400" />
+                    <MapPin className="w-4 h-4 text-zinc-200" />
                     <span>{t("video.viewBusinessInfo", "View Business Info & All Reviews")}</span>
                   </button>
 
@@ -1461,7 +1461,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                   >
-                    <Share2 className="w-4 h-4 text-zinc-400" />
+                    <Share2 className="w-4 h-4 text-zinc-200" />
                     <span>{t("video.shareVideoReview", "Share Video Review")}</span>
                   </button>
 
@@ -1474,7 +1474,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                   >
-                    <MapPin className="w-4 h-4 text-zinc-400" />
+                    <MapPin className="w-4 h-4 text-zinc-200" />
                     <span>{t("video.viewPlaceInfo", "View Place Info & All Reviews")}</span>
                   </button>
 
@@ -1488,7 +1488,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
-                      <User className="w-4 h-4 text-zinc-400" />
+                      <User className="w-4 h-4 text-zinc-200" />
                       <span>{t("video.viewCreatorProfile", "View Creator Profile")} ({moreMenuVideo.author.name})</span>
                     </button>
                   )}
@@ -1503,9 +1503,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         setMoreMenuVideo(null);
                         if (vidId) onHideVideo(vidId);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-400 cursor-pointer"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
-                      <EyeOff className="w-4 h-4 text-zinc-400" />
+                      <EyeOff className="w-4 h-4 text-zinc-200" />
                       <span>{t("video.notInterested", "Not interested in this video")}</span>
                     </button>
                   )}
@@ -1553,7 +1553,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   <h3 className="font-bold text-sm text-zinc-100">
                     {t("video.editReviewRating", "Edit Your Review Rating")}
                   </h3>
-                  <p className="text-[11px] text-zinc-400">
+                  <p className="text-[11px] text-zinc-200">
                     {t("video.liveRecalculation", "Instant live recalculation across all places")}
                   </p>
                 </div>
@@ -1563,7 +1563,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 id="btn-close-edit-rating"
                 disabled={isSavingEdit}
                 onClick={() => setEditingReviewVideo(null)}
-                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1580,7 +1580,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   <div className="font-bold text-sm text-white truncate">
                     {formatBusinessName(editingReviewVideo.placeName) || t("common.business", "Business")}
                   </div>
-                  <div className="text-xs text-zinc-400 truncate">
+                  <div className="text-xs text-zinc-200 truncate">
                     {editingReviewVideo.placeCity || editingReviewVideo.placeAddress || t("common.verifiedBusinessReview", "Verified Business Review")}
                   </div>
                 </div>
@@ -1604,7 +1604,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               {/* Star Rating Interactive Selector */}
               <div className="space-y-4 bg-zinc-950/50 p-5 rounded-2xl border border-zinc-800/90">
                 <div className="text-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">
                     {t("video.tapToSelectStars", "Tap to Select Stars (1 to 5)")}
                   </span>
                   <div className="text-base font-black text-amber-400 mt-1">
@@ -1638,7 +1638,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         className={`p-2 rounded-2xl transition-all cursor-pointer transform hover:scale-115 active:scale-95 ${
                           isFilled
                             ? "text-amber-400 drop-shadow-[0_0_16px_rgba(251,191,36,0.6)]"
-                            : "text-zinc-600 hover:text-zinc-400"
+                            : "text-zinc-600 hover:text-zinc-200"
                         }`}
                         title={`Rate ${starNum} Stars`}
                       >
@@ -1652,7 +1652,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   })}
                 </div>
 
-                <div className="flex items-center justify-between px-2 text-[11px] font-bold text-zinc-500">
+                <div className="flex items-center justify-between px-2 text-[11px] font-bold text-zinc-200">
                   <span>{t("video.oneStarPoor", "1 Star (Poor)")}</span>
                   <span>{t("video.fiveStarsExceptional", "5 Stars (Exceptional)")}</span>
                 </div>
@@ -1663,7 +1663,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 <div className="w-5 h-5 rounded-full bg-zinc-700 text-white flex items-center justify-center shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-white" />
                 </div>
-                <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                <p className="text-xs text-zinc-200 leading-relaxed font-normal">
                   {t("video.recalculationNote", "Changing your rating will automatically recalculate the overall average score for this business across all verified reviews.")}
                 </p>
               </div>
@@ -1675,7 +1675,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   id="btn-cancel-edit-rating"
                   disabled={isSavingEdit}
                   onClick={() => setEditingReviewVideo(null)}
-                  className="flex-1 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-750 text-zinc-300 font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-750 text-zinc-200 font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {t("common.cancel", "Cancel")}
                 </button>
@@ -1734,7 +1734,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             </div>
             <div className="text-center space-y-1.5">
               <h3 className="text-lg font-bold text-white tracking-tight">{t("video.deleteReviewTitle", "Delete Video Review?")}</h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
+              <p className="text-xs text-zinc-200 leading-relaxed">
                 {t("video.deleteReviewDesc", "This will permanently delete your review globally from all feeds, databases, and storage.")}
               </p>
             </div>
@@ -1743,7 +1743,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 type="button"
                 id="btn-cancel-delete-video"
                 onClick={() => setVideoConfirmDelete(null)}
-                className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-sm transition-colors cursor-pointer"
+                className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-sm transition-colors cursor-pointer"
               >
                 {t("common.cancel", "Cancel")}
               </button>
