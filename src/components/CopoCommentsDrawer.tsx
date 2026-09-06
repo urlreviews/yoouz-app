@@ -16,14 +16,15 @@ import {
   Edit2,
   Store,
   Camera,
-  AlertCircle
+  AlertCircle,
+  User,
+  LogIn
 } from "lucide-react";
 import { VideoReview, ReviewComment, UserProfile } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { triggerHaptic } from "../utils/haptics";
-import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoCommentsDrawerProps {
@@ -280,10 +281,54 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     setCommentText("");
   };
 
-  const { dragOffsetY, swipeProps } = useSwipeDownToDismiss({
-    onDismiss: onClose,
-    threshold: 60
-  });
+  const [sheetHeight, setSheetHeight] = useState<"normal" | "expanded">("normal");
+  const touchStartY = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const [dragOffsetY, setDragOffsetY] = useState<number>(0);
+  const isDraggingHeader = useRef<boolean>(false);
+
+  const handleHeaderTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartY.current = e.touches[0].clientY;
+      touchStartX.current = e.touches[0].clientX;
+      isDraggingHeader.current = true;
+    }
+  };
+
+  const handleHeaderTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingHeader.current || touchStartY.current === null || touchStartX.current === null) return;
+    const diffY = e.touches[0].clientY - touchStartY.current;
+    const diffX = Math.abs(e.touches[0].clientX - touchStartX.current);
+
+    if (diffY > 0 && diffY > diffX) {
+      setDragOffsetY(diffY);
+    } else if (diffY < 0 && sheetHeight === "normal" && Math.abs(diffY) > diffX) {
+      setDragOffsetY(Math.max(diffY * 0.35, -45));
+    }
+  };
+
+  const handleHeaderTouchEnd = () => {
+    if (!isDraggingHeader.current) return;
+    isDraggingHeader.current = false;
+    const diff = dragOffsetY;
+    setDragOffsetY(0);
+
+    if (diff > 80) {
+      if (sheetHeight === "expanded") {
+        setSheetHeight("normal");
+        triggerHaptic("light");
+      } else {
+        triggerHaptic("medium");
+        onClose();
+      }
+    } else if (diff < -30 && sheetHeight === "normal") {
+      setSheetHeight("expanded");
+      triggerHaptic("light");
+    }
+
+    touchStartY.current = null;
+    touchStartX.current = null;
+  };
 
   // Listen for Escape key on desktop to close comments drawer
   useEffect(() => {
@@ -313,7 +358,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:justify-end bg-black/60 backdrop-blur-sm cursor-pointer overscroll-contain animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:justify-end bg-black/25 md:bg-black/60 pointer-events-auto cursor-pointer overscroll-contain animate-in fade-in duration-200"
     >
       <div
         id="copo-comments-panel"
@@ -321,84 +366,79 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className="w-full md:w-[460px] h-[100dvh] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white md:text-white rounded-none md:rounded-none border-t md:border-l border-zinc-800 md:border-zinc-800 md:border-t-0 flex flex-col justify-between shadow-2xl animate-in slide-in-from-bottom md:slide-in-from-right duration-200 cursor-default overscroll-contain relative transition-transform"
+        style={dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
+        className={`w-full md:w-[460px] ${
+          sheetHeight === "expanded" ? "h-[88dvh]" : "h-[65dvh]"
+        } md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-200 ease-out cursor-default overscroll-contain relative`}
       >
-        {/* Mobile Pull Handle Indicator (Interactive Touch Area) */}
+        {/* Mobile Pull Handle Indicator */}
         <div 
-          {...swipeProps} 
-          className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center z-30 md:hidden cursor-grab active:cursor-grabbing touch-none"
+          onTouchStart={handleHeaderTouchStart}
+          onTouchMove={handleHeaderTouchMove}
+          onTouchEnd={handleHeaderTouchEnd}
+          onClick={() => setSheetHeight((prev) => prev === "normal" ? "expanded" : "normal")}
+          className="w-full pt-3 pb-1 flex items-center justify-center shrink-0 md:hidden cursor-grab active:cursor-grabbing touch-none select-none"
         >
-          <div className="w-12 h-1.5 bg-zinc-700 md:bg-zinc-200 rounded-full" />
+          <div className="w-10 h-1 bg-zinc-600 hover:bg-zinc-400 rounded-full transition-colors" />
         </div>
 
-        {/* Header */}
+        {/* Header (Single Clean Row - YouTube Shorts Style) */}
         <div 
-          {...swipeProps}
-          className="px-5 pt-7 pb-4 md:pt-4 border-b border-zinc-800 md:border-zinc-800 bg-zinc-950 md:bg-zinc-900 shrink-0 rounded-t-none md:rounded-none touch-pan-y"
+          onTouchStart={handleHeaderTouchStart}
+          onTouchMove={handleHeaderTouchMove}
+          onTouchEnd={handleHeaderTouchEnd}
+          className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950 md:bg-zinc-900 shrink-0 select-none touch-none"
         >
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left: Comments Title & Count */}
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-white font-extrabold text-base md:text-lg tracking-tight flex items-center gap-2">
+                <span>{t("comments.commentsTitle", "Comments")}</span>
+                <span className="text-xs font-semibold text-zinc-400">
+                  {totalCommentsCount}
+                </span>
+              </h2>
+            </div>
+
+            {/* Right: Sort Switcher & Close Button */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center bg-zinc-900 p-0.5 rounded-lg border border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setSortBy("top")}
+                  className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+                    sortBy === "top"
+                      ? "bg-zinc-800 text-white font-bold shadow-2xs"
+                      : "text-zinc-400 hover:text-white font-medium"
+                  }`}
+                >
+                  {t("comments.top", "Top")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSortBy("newest")}
+                  className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+                    sortBy === "newest"
+                      ? "bg-zinc-800 text-white font-bold shadow-2xs"
+                      : "text-zinc-400 hover:text-white font-medium"
+                  }`}
+                >
+                  {t("comments.newest", "Newest")}
+                </button>
+              </div>
+
+              {/* Close Button (X on both Mobile & Desktop) */}
               <button
+                id="btn-close-comments"
                 onClick={() => {
                   triggerHaptic("light");
                   onClose();
                 }}
-                className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 md:hidden flex items-center justify-center text-zinc-200 hover:text-white shrink-0 active:scale-95 cursor-pointer shadow-sm"
-                aria-label="Back"
+                className="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-95 shrink-0"
+                title="Close comments"
+                aria-label="Close comments"
               >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 text-zinc-200 hidden md:flex items-center justify-center font-bold shrink-0 shadow-sm">
-                <MessageSquare className="w-4 h-4" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-white font-bold text-lg leading-tight tracking-tight">
-                  {totalCommentsCount} {totalCommentsCount === 1 ? t("comments.comment", "Comment") : t("comments.comments", "Comments")}
-                </h2>
-                <p className="text-[13px] text-zinc-200 font-medium mt-0.5 truncate" title={video.placeName}>
-                  {video.placeName}
-                </p>
-              </div>
-            </div>
-
-            {/* Desktop-optimized close button with clean spacing and high contrast */}
-            <button
-              id="btn-close-comments-desktop"
-              onClick={() => {
-                triggerHaptic("light");
-                onClose();
-              }}
-              className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 hidden md:flex items-center justify-center text-zinc-200 hover:text-white transition-all cursor-pointer border border-zinc-700/80 hover:border-zinc-500 shadow-sm shrink-0 active:scale-95"
-              title="Close comments (Esc)"
-              aria-label="Close comments"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Sub-header controls (Sort) */}
-          <div className="flex justify-end">
-            <div className="flex items-center bg-zinc-900 p-0.5 rounded-lg border border-zinc-800">
-              <button
-                onClick={() => setSortBy("top")}
-                className={`px-3 py-1 rounded-md text-xs transition-all ${
-                  sortBy === "top"
-                    ? "bg-zinc-800 text-white shadow-sm font-bold"
-                    : "text-zinc-200 hover:text-white font-medium"
-                }`}
-              >
-                {t("comments.top", "Top")}
-              </button>
-              <button
-                onClick={() => setSortBy("newest")}
-                className={`px-3 py-1 rounded-md text-xs transition-all ${
-                  sortBy === "newest"
-                    ? "bg-zinc-800 text-white shadow-sm font-bold"
-                    : "text-zinc-200 hover:text-white font-medium"
-                }`}
-              >
-                {t("comments.newest", "Newest")}
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -815,21 +855,27 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         {/* Input & Action Bar Footer */}
         <div className="border-t border-zinc-800 bg-zinc-950 md:bg-zinc-900 p-3.5 space-y-2.5 shrink-0 shadow-lg" style={{ paddingBottom: 'calc(0.875rem + env(safe-area-inset-bottom, 0px))' }}>
           {!currentUser ? (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 shadow-2xs text-zinc-200">
-                  <MessageSquare className="w-4 h-4 text-zinc-200" />
+            <div
+              onClick={() => onRequireAuth?.()}
+              className="w-full bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 rounded-full px-3.5 py-2 flex items-center justify-between gap-3 cursor-pointer active:scale-[0.99] transition-all group shadow-sm"
+            >
+              <div className="flex items-center gap-2.5 text-zinc-400 group-hover:text-zinc-300 min-w-0">
+                <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0">
+                  <User className="w-3.5 h-3.5" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">{t("comments.signInJoin", "Sign in to join the conversation")}</p>
-                  <p className="text-[11px] text-zinc-200 truncate">{t("comments.signInSubtitle", "Leave comments, like reviews, and reply to reviewers")}</p>
-                </div>
+                <span className="text-xs md:text-sm font-medium text-zinc-400 truncate">
+                  {t("comments.addCommentPlaceholder", "Add a comment...")}
+                </span>
               </div>
               <button
                 type="button"
-                onClick={() => onRequireAuth?.()}
-                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-white text-xs font-bold rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1.5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRequireAuth?.();
+                }}
+                className="px-3.5 py-1.5 bg-white hover:bg-zinc-200 active:scale-95 text-zinc-950 text-xs font-bold rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1"
               >
+                <LogIn className="w-3 h-3 text-zinc-950 stroke-[2.25]" />
                 <span>{t("nav.login", "Sign In")}</span>
               </button>
             </div>
