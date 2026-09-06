@@ -110,11 +110,18 @@ export const CopoAuthPrompt: React.FC<{
   onOpenLegal,
   isFullPage = false,
   onStepChange,
+  currentStep,
   onRequestBack
 }) => {
   const { t } = useLanguage();
   // Steps: 'email' -> 'code' -> 'profile' (if new user)
-  const [step, setStepState] = useState<'email' | 'code' | 'profile'>('email');
+  const [step, setStepState] = useState<'email' | 'code' | 'profile'>(currentStep || 'email');
+
+  useEffect(() => {
+    if (currentStep && currentStep !== step) {
+      setStepState(currentStep);
+    }
+  }, [currentStep]);
 
   const setStep = (newStep: 'email' | 'code' | 'profile') => {
     setStepState(newStep);
@@ -312,15 +319,31 @@ export const CopoAuthPrompt: React.FC<{
 
   return (
     <div className={`w-full ${isFullPage ? "min-h-full flex flex-col justify-between" : "flex flex-col items-center"} p-4 sm:p-7 select-none bg-[#09090b] text-white`}>
-      {isFullPage && onOpenHelp && (
-        <div className="w-full flex items-center justify-end py-2 mb-2">
-          <button
-            onClick={onOpenHelp}
-            className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-200 hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-full hover:bg-white/[0.04]"
-          >
-            <HelpCircle className="w-4 h-4 text-zinc-200" />
-            <span>{t("common.help", "Help")}</span>
-          </button>
+      {isFullPage && (
+        <div className="w-full flex items-center justify-between py-2 mb-2">
+          {(step !== 'email' || onRequestBack) ? (
+            <button
+              onClick={() => {
+                if (step === 'profile') setStep('code');
+                else if (step === 'code') setStep('email');
+                else if (onRequestBack) onRequestBack();
+              }}
+              className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 text-white flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer shadow-md group"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-5 h-5 text-white stroke-[2.25] group-hover:-translate-x-0.5 transition-transform" />
+            </button>
+          ) : <div />}
+
+          {onOpenHelp && (
+            <button
+              onClick={onOpenHelp}
+              className="flex items-center gap-1.5 text-[12px] font-semibold text-zinc-200 hover:text-white transition-all px-3 py-1.5 rounded-full bg-zinc-800/80 border border-zinc-700/80 hover:bg-zinc-700/80 cursor-pointer active:scale-95 shadow-sm"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-zinc-200" />
+              <span>{t("common.help", "Help")}</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -692,8 +715,9 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
   if (!isOpen) return null;
 
   const handleBackClick = () => {
-    if (currentStep !== 'email') {
-      // Handled internally if step is code or profile
+    if (currentStep === 'profile') {
+      setCurrentStep('code');
+    } else if (currentStep === 'code') {
       setCurrentStep('email');
     } else {
       onClose();
@@ -765,6 +789,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
             intent={intent}
             customTitle={customTitle}
             customSubtitle={customSubtitle}
+            currentStep={currentStep}
             onStepChange={setCurrentStep}
             onSuccess={(user) => {
               onSuccess(user);
