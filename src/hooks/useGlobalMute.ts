@@ -61,6 +61,11 @@ export function ensureSharedAudioContextUnlocked() {
 const muteListeners = new Set<(val: boolean) => void>();
 const unlockListeners = new Set<(val: boolean) => void>();
 
+export function forceMute() {
+  globalIsMuted = true;
+  muteListeners.forEach(listener => listener(true));
+}
+
 export function useGlobalMute() {
   const [isMuted, setIsMutedState] = useState(globalIsMuted);
   const [isUnlocked, setIsUnlockedState] = useState(globalAudioUnlocked);

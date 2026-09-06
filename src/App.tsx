@@ -1,3 +1,4 @@
+import { forceMute } from "./hooks/useGlobalMute";
 import { useFeedPagination } from "./hooks/useFeedPagination";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, Club, CopoNotification, CopoMessage, VideoAuthor, UserProfile } from "./types";
@@ -148,7 +149,6 @@ export function App() {
   });
   const [activeSubTab, setActiveSubTab] = useState<FeedSubTab>("discover");
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(0);
-  const [isProfileAutoplayPaused, setIsProfileAutoplayPaused] = useState<boolean>(false);
   const [searchResetKey, setSearchResetKey] = useState<number>(0);
   const [recordReviewResetKey, setRecordReviewResetKey] = useState<number>(0);
 
@@ -322,7 +322,6 @@ export function App() {
           const cleanPlaceId = decodeURIComponent(placeParam);
           setSelectedPlaceIdForDrawer(cleanPlaceId);
           setSelectedAuthorForDrawer(null);
-          setIsProfileAutoplayPaused(true);
           // If we are coming from a deep link or popstate, don't force home if we were elsewhere
           // But usually Place Drawer is viewed on top of home
         } else if (creatorParam) {
@@ -347,7 +346,6 @@ export function App() {
           };
           setSelectedAuthorForDrawer(authorObj);
           setSelectedPlaceIdForDrawer(null);
-          setIsProfileAutoplayPaused(true);
 
           // Asynchronously fetch live user data to guarantee exact Google avatar and profile details
           fetch(`/api/nosql/users`)
@@ -2166,7 +2164,6 @@ export function App() {
     videoId: string,
     source?: "profile" | "creator" | "place" | "general"
   ) => {
-    setIsProfileAutoplayPaused(false);
     const targetVid = videos.find((v) => v.id === videoId);
     if (!targetVid) return;
 
@@ -2310,7 +2307,6 @@ export function App() {
 
   // Go to main Home Feed (resetting all filters, drawers, and context)
   const handleGoHome = () => {
-    setIsProfileAutoplayPaused(false);
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
@@ -2348,7 +2344,6 @@ export function App() {
 
   // Close Drawers completely (reset to previous section or global feed)
   const handleCloseDrawers = () => {
-    setIsProfileAutoplayPaused(false);
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
@@ -2361,6 +2356,7 @@ export function App() {
 
   // Open Place Drawer
   const handleOpenPlaceDrawer = (placeId: string) => {
+    forceMute();
     // Explicitly pause all playing videos across the DOM immediately
     document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
       try { v.pause(); } catch (e) {}
@@ -2372,11 +2368,11 @@ export function App() {
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
     setCurrentVideoIndex(0);
-    setIsProfileAutoplayPaused(true);
   };
 
   // Open Creator Drawer
   const handleOpenCreatorDrawer = (author: VideoAuthor) => {
+    forceMute();
     document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
       try { v.pause(); } catch (e) {}
     });
@@ -2387,7 +2383,6 @@ export function App() {
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(author);
     setCurrentVideoIndex(0);
-    setIsProfileAutoplayPaused(true);
   };
 
   // Handle Likes - fully synced with Firestore
@@ -3818,7 +3813,6 @@ export function App() {
                 (activeSection !== "home" && activeSection !== "clubs" && !isPlaceView && !isCreatorView) ||
                 (typeof window !== 'undefined' && window.innerWidth < 768 && (isPlaceView || isCreatorView))
               )}
-              initialAutoplayPaused={Boolean((isPlaceView || isCreatorView) && isProfileAutoplayPaused)}
               contextKey={currentFeedContextKey}
               onOpenCreateModal={() => {
                 if (!currentUser) {
