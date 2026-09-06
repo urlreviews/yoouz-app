@@ -148,6 +148,7 @@ export function App() {
   });
   const [activeSubTab, setActiveSubTab] = useState<FeedSubTab>("discover");
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(0);
+  const [isProfileAutoplayPaused, setIsProfileAutoplayPaused] = useState<boolean>(false);
   const [searchResetKey, setSearchResetKey] = useState<number>(0);
   const [recordReviewResetKey, setRecordReviewResetKey] = useState<number>(0);
 
@@ -321,6 +322,7 @@ export function App() {
           const cleanPlaceId = decodeURIComponent(placeParam);
           setSelectedPlaceIdForDrawer(cleanPlaceId);
           setSelectedAuthorForDrawer(null);
+          setIsProfileAutoplayPaused(true);
           // If we are coming from a deep link or popstate, don't force home if we were elsewhere
           // But usually Place Drawer is viewed on top of home
         } else if (creatorParam) {
@@ -345,6 +347,7 @@ export function App() {
           };
           setSelectedAuthorForDrawer(authorObj);
           setSelectedPlaceIdForDrawer(null);
+          setIsProfileAutoplayPaused(true);
 
           // Asynchronously fetch live user data to guarantee exact Google avatar and profile details
           fetch(`/api/nosql/users`)
@@ -2163,6 +2166,7 @@ export function App() {
     videoId: string,
     source?: "profile" | "creator" | "place" | "general"
   ) => {
+    setIsProfileAutoplayPaused(false);
     const targetVid = videos.find((v) => v.id === videoId);
     if (!targetVid) return;
 
@@ -2306,6 +2310,7 @@ export function App() {
 
   // Go to main Home Feed (resetting all filters, drawers, and context)
   const handleGoHome = () => {
+    setIsProfileAutoplayPaused(false);
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
@@ -2329,8 +2334,7 @@ export function App() {
     }
     const handle = currentUser.name || currentUser.email?.split("@")[0] || "me";
     window.history.pushState(null, "", "/@" + handle);
-    setSelectedPlaceIdForDrawer(null);
-    setSelectedAuthorForDrawer({
+    handleOpenCreatorDrawer({
       //handle: handle,
       name: currentUser.name || "Reviewer",
       avatar: currentUser.avatar || "",
@@ -2340,11 +2344,11 @@ export function App() {
       location: currentUser.location || ""
     });
     setActiveSection("home");
-    setCurrentVideoIndex(0);
   };
 
   // Close Drawers completely (reset to previous section or global feed)
   const handleCloseDrawers = () => {
+    setIsProfileAutoplayPaused(false);
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
@@ -2368,6 +2372,7 @@ export function App() {
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
     setCurrentVideoIndex(0);
+    setIsProfileAutoplayPaused(true);
   };
 
   // Open Creator Drawer
@@ -2382,6 +2387,7 @@ export function App() {
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(author);
     setCurrentVideoIndex(0);
+    setIsProfileAutoplayPaused(true);
   };
 
   // Handle Likes - fully synced with Firestore
@@ -3806,7 +3812,13 @@ export function App() {
         {/* If in Feed View (Home, Clubs) or Place / Creator drawer views: Display center video player */}
         {(isPlaceView || isCreatorView || activeSection === "home" || activeSection === "clubs") && (
             <CopoVideoPlayer
-              isPaused={Boolean(isCreateModalOpen || isAuthModalOpen || (activeSection !== "home" && activeSection !== "clubs" && !isPlaceView && !isCreatorView))}
+              isPaused={Boolean(
+                isCreateModalOpen || 
+                isAuthModalOpen || 
+                (activeSection !== "home" && activeSection !== "clubs" && !isPlaceView && !isCreatorView) ||
+                (typeof window !== 'undefined' && window.innerWidth < 768 && (isPlaceView || isCreatorView))
+              )}
+              initialAutoplayPaused={Boolean((isPlaceView || isCreatorView) && isProfileAutoplayPaused)}
               contextKey={currentFeedContextKey}
               onOpenCreateModal={() => {
                 if (!currentUser) {
@@ -3951,10 +3963,7 @@ export function App() {
                 videos={videos}
                 allUsers={allRegisteredUsers}
                 currentUser={currentUser}
-                onOpenCreator={(author) => {
-                  setSelectedPlaceIdForDrawer(null);
-                  setSelectedAuthorForDrawer(author);
-                }}
+                onOpenCreator={handleOpenCreatorDrawer}
                 onToggleFollow={handleToggleFollow}
                 onStartChat={handleStartChat}
                 onSelectVideo={handleSelectVideoById}
@@ -4118,10 +4127,7 @@ export function App() {
                 onBlockUser={handleBlockUser}
                 onUnblockUser={handleUnblockUser}
                 allUsers={allRegisteredUsers}
-                onOpenCreator={(author) => {
-                  setSelectedPlaceIdForDrawer(null);
-                  setSelectedAuthorForDrawer(author);
-                }}
+                onOpenCreator={handleOpenCreatorDrawer}
                 onDeleteThread={(threadId) => {
                   deleteChatThreadFromFirestore(threadId);
                   setMessages((prev) => prev.filter((m) => m.id !== threadId));
@@ -4185,10 +4191,7 @@ export function App() {
                 onSelectVideo={handleSelectVideoById}
                 onOpenPlace={handleOpenPlaceDrawer}
                 onNavigateHome={handleGoHome}
-                onOpenCreator={(author) => {
-                  setSelectedPlaceIdForDrawer(null);
-                  setSelectedAuthorForDrawer(author);
-                }}
+                onOpenCreator={handleOpenCreatorDrawer}
                 onToggleFollow={handleToggleFollow}
                 onToggleFollowPlace={handleToggleFollowPlace}
               />
@@ -4227,10 +4230,8 @@ export function App() {
                 currentUser={currentUser}
                 onOpenPlaceDrawer={handleOpenPlaceDrawer}
                 onOpenCreator={(author) => {
+                  handleOpenCreatorDrawer(author);
                   previousSectionRef.current = "business";
-                  setSelectedPlaceIdForDrawer(null);
-                  setSelectedAuthorForDrawer(author);
-                  setCurrentVideoIndex(0);
                 }}
                 initialPlace={businessClaimTargetPlace}
                 initialMode={businessInitialMode}
@@ -4307,7 +4308,7 @@ export function App() {
           setActiveCommentVideo(null); // Close the drawer first
           
           // Then open the creator profile
-          setSelectedAuthorForDrawer({
+          handleOpenCreatorDrawer({
             name: name || handle,
             //handle: handle,
             avatar: avatar || `/api/avatar?name=${encodeURIComponent(name || handle || "User")}&background=27272a&color=fff&bold=true&size=128`,

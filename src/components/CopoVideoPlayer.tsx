@@ -60,6 +60,7 @@ interface CopoVideoPlayerProps {
   onDeleteVideo?: (videoId: string) => void;
   onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[] }) => void;
   isPaused?: boolean;
+  initialAutoplayPaused?: boolean;
   contextKey?: string;
   onRecordView?: (videoId: string) => void;
 }
@@ -92,6 +93,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   onDeleteVideo,
   onUpdateVideoReview,
   isPaused = false,
+  initialAutoplayPaused = false,
   contextKey,
   onRecordView
 }) => {
@@ -322,7 +324,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       setIsPlaying(false);
       setProgressPercent(0);
 
-      const shouldStartPaused = Boolean(isPaused);
+      const shouldStartPaused = Boolean(isPaused || initialAutoplayPaused);
 
       if (shouldStartPaused) {
         isManuallyPausedRef.current = true;
