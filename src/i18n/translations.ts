@@ -14,6 +14,65 @@ import { he } from "./locales/he";
 import { ar } from "./locales/ar";
 import { zh } from "./locales/zh";
 import { pl } from "./locales/pl";
+import { uk } from "./locales/uk";
+import { sv } from "./locales/sv";
+import { no } from "./locales/no";
+import { da } from "./locales/da";
+import { fi } from "./locales/fi";
+import { el } from "./locales/el";
+import { cs } from "./locales/cs";
+import { hu } from "./locales/hu";
+import { ro } from "./locales/ro";
+import { bg } from "./locales/bg";
+import { sk } from "./locales/sk";
+import { hr } from "./locales/hr";
+import { sr } from "./locales/sr";
+import { sl } from "./locales/sl";
+import { lt } from "./locales/lt";
+import { lv } from "./locales/lv";
+import { et } from "./locales/et";
+import { vi } from "./locales/vi";
+import { th } from "./locales/th";
+import { ms } from "./locales/ms";
+import { bn } from "./locales/bn";
+import { pa } from "./locales/pa";
+import { ta } from "./locales/ta";
+import { te } from "./locales/te";
+import { mr } from "./locales/mr";
+import { gu } from "./locales/gu";
+import { kn } from "./locales/kn";
+import { ml } from "./locales/ml";
+import { ur } from "./locales/ur";
+import { tl } from "./locales/tl";
+import { sw } from "./locales/sw";
+import { fa } from "./locales/fa";
+import { my } from "./locales/my";
+import { km } from "./locales/km";
+import { am } from "./locales/am";
+import { so } from "./locales/so";
+import { ha } from "./locales/ha";
+import { yo } from "./locales/yo";
+import { ig } from "./locales/ig";
+import { zu } from "./locales/zu";
+import { is } from "./locales/is";
+import { sq } from "./locales/sq";
+import { ga } from "./locales/ga";
+import { ca } from "./locales/ca";
+import { eu } from "./locales/eu";
+import { gl } from "./locales/gl";
+import { mt } from "./locales/mt";
+import { ka } from "./locales/ka";
+import { hy } from "./locales/hy";
+import { az } from "./locales/az";
+import { zhTW } from "./locales/zhTW";
+import { lo } from "./locales/lo";
+import { kk } from "./locales/kk";
+import { uz } from "./locales/uz";
+import { mn } from "./locales/mn";
+import { ne } from "./locales/ne";
+import { si } from "./locales/si";
+import { xh } from "./locales/xh";
+import { af } from "./locales/af";
 
 export interface TranslationSchema {
   [key: string]: any;
@@ -864,5 +923,64 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
   hi,
   tr,
   nl,
-  id
+  id,
+  uk,
+  sv,
+  no,
+  da,
+  fi,
+  el,
+  cs,
+  hu,
+  ro,
+  bg,
+  sk,
+  hr,
+  sr,
+  sl,
+  lt,
+  lv,
+  et,
+  vi,
+  th,
+  ms,
+  bn,
+  pa,
+  ta,
+  te,
+  mr,
+  gu,
+  kn,
+  ml,
+  ur,
+  tl,
+  sw,
+  fa,
+  my,
+  km,
+  am,
+  so,
+  ha,
+  yo,
+  ig,
+  zu,
+  is,
+  sq,
+  ga,
+  ca,
+  eu,
+  gl,
+  mt,
+  ka,
+  hy,
+  az,
+  "zh-TW": zhTW,
+  lo,
+  kk,
+  uz,
+  mn,
+  ne,
+  si,
+  xh,
+  af
 };
