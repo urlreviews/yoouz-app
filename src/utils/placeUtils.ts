@@ -605,12 +605,19 @@ export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null
     return avatarUrl;
   }
 
-  // Proxy Google User Content to bypass Firefox / Safari tracking protection and CORP headers
-  if (avatarUrl.includes("googleusercontent.com") && !avatarUrl.startsWith("/api/proxy-image")) {
-    return `/api/proxy-image?url=${encodeURIComponent(avatarUrl)}`;
+  let targetUrl = avatarUrl;
+  if (targetUrl.startsWith("/api/proxy-image?url=")) {
+    try {
+      targetUrl = decodeURIComponent(targetUrl.replace("/api/proxy-image?url=", ""));
+    } catch (e) {}
   }
 
-  return avatarUrl;
+  // Optimize Google User Content avatars by requesting a smaller size (128x128) if not already specified
+  if (targetUrl.includes("googleusercontent.com") && !targetUrl.includes("=s")) {
+    return targetUrl + "=s128-c";
+  }
+
+  return targetUrl;
 }
 
 export function resolveSafeAuthor(

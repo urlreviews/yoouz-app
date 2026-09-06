@@ -389,8 +389,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             id={`btn-toggle-sound-${video.id}`}
             onClick={(e) => {
               e.stopPropagation();
+              e.nativeEvent.stopImmediatePropagation();
               handleToggleMute(e);
             }}
+            onClickCapture={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            onPointerDownCapture={(e) => e.stopPropagation()}
+            onPointerUpCapture={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
             className={`h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
@@ -520,6 +528,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               website={video.placeWebsite}
               logoUrl={businessLogoUrl || video?.placeLogoUrl}
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
+              loading={isActive || isNear ? "eager" : "lazy"}
+              fetchPriority={isActive ? "high" : "auto"}
               className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-black/10 overflow-hidden flex items-center justify-center shrink-0 p-1 sm:p-1.5 shadow-md group-hover:scale-105 transition-transform ring-1 ring-white/20"
               imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
               fallbackTextClassName="font-extrabold text-xs text-zinc-900"

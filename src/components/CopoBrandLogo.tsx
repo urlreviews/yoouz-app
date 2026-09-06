@@ -10,6 +10,8 @@ interface CopoBrandLogoProps {
   className?: string;
   imageClassName?: string;
   fallbackTextClassName?: string;
+  loading?: "eager" | "lazy";
+  fetchPriority?: "high" | "low" | "auto";
 }
 
 export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
@@ -20,7 +22,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   bannerUrl,
   className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-black/10 bg-white shadow-xl overflow-hidden flex items-center justify-center p-1 z-30 ring-1 ring-white/10",
   imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]",
-  fallbackTextClassName = "font-black text-2xl sm:text-3xl text-zinc-900 drop-shadow-sm"
+  fallbackTextClassName = "font-black text-2xl sm:text-3xl text-zinc-900 drop-shadow-sm",
+  loading = "lazy",
+  fetchPriority = "auto"
 }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -57,11 +61,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       !logoUrl.startsWith("data:;") &&
       (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image"))
     ) {
-      if (logoUrl.startsWith("/api/proxy-image")) {
-        return logoUrl;
-      }
-      if (logoUrl.includes("framerusercontent.com") || logoUrl.includes("googleusercontent.com")) {
-        return `/api/proxy-image?url=${encodeURIComponent(logoUrl)}`;
+      if (logoUrl.startsWith("/api/proxy-image?url=")) {
+        try {
+          return decodeURIComponent(logoUrl.replace("/api/proxy-image?url=", ""));
+        } catch (e) {
+          return logoUrl;
+        }
       }
       return logoUrl;
     }
@@ -81,7 +86,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         <img
           src={monogramSvg}
           alt={name || "Brand Logo"}
-          loading="lazy"
+          loading={loading}
+          fetchPriority={fetchPriority}
           decoding="async"
           className={imageClassName}
         />
@@ -94,7 +100,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       <img
         src={effectiveSrc}
         alt={name || "Brand Logo"}
-        loading="lazy"
+        loading={loading}
+        fetchPriority={fetchPriority}
         decoding="async"
         className={imageClassName}
         referrerPolicy="no-referrer"
