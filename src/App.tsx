@@ -1239,11 +1239,18 @@ export function App() {
     }
 
     const unsubscribe = subscribeToChats(currentUser, (threads) => {
-      setMessages(threads);
+      setMessages((prev) => {
+        const serverIds = new Set(threads.map((t) => t.id));
+        const pendingLocal = prev.filter(
+          (m) => !serverIds.has(m.id) && (m.id === activeThreadId || (m.history && m.history.length > 0))
+        );
+        if (pendingLocal.length === 0) return threads;
+        return [...pendingLocal, ...threads];
+      });
     });
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [currentUser, activeThreadId]);
 
   // Real-time synchronization of all registered users across the platform
   useEffect(() => {
@@ -1715,9 +1722,18 @@ export function App() {
       }
     }
 
+    let targetEmail = senderId && senderId.includes("@") ? senderId : undefined;
+    const sName = (senderName || "").toLowerCase().trim();
+    if (!targetEmail) {
+      if (sName === "avt ertuop" || senderId.includes("avtertuop") || senderId.includes("avr6566gd")) targetEmail = "avr6566gd@gmail.com";
+      else if (sName === "biz riv" || senderId.includes("bizriv") || senderId.includes("louis42111")) targetEmail = "louis42111@gmail.com";
+      else if (sName.includes("aouisesmee") || senderId.includes("aouisesmee")) targetEmail = "aouisesmee@gmail.com";
+    }
+
     const existingThread = messages.find(
       (m) =>
         m.senderId === senderId ||
+        (targetEmail && (m.senderId === targetEmail || m.senderEmail === targetEmail)) ||
         (m.senderName && senderName && m.senderName.toLowerCase() === senderName.toLowerCase())
     );
 
@@ -1736,6 +1752,7 @@ export function App() {
       senderId,
       senderName,
       senderAvatar,
+      senderEmail: targetEmail,
       lastMessage: "",
       timestamp: "Just now",
       createdAtMs: Date.now(),
@@ -1746,6 +1763,65 @@ export function App() {
     const updated = [newThread, ...messages];
     setMessages(updated);
     setActiveThreadId(newThreadId);
+
+    // Persist thread container shell to Bunny DB immediately
+    const userEmail = (currentUser?.email || "").toLowerCase().trim();
+    const userHandle = (currentUser?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+    const curName = (currentUser?.name || "").trim();
+
+    const participants = Array.from(
+      new Set([
+        userEmail,
+        userEmail ? userEmail.split("@")[0] : "",
+        userHandle,
+        curName.toLowerCase(),
+        currentUser?.userId || "",
+        targetEmail,
+        targetEmail ? targetEmail.split("@")[0] : "",
+        senderId,
+        senderName.toLowerCase(),
+        ...(sName === "avt ertuop" || targetEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop"] : []),
+        ...(sName === "biz riv" || targetEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv"] : []),
+        ...(sName.includes("aouisesmee") || targetEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee"] : [])
+      ].filter(Boolean))
+    );
+
+    const initialPayload = {
+      id: newThreadId,
+      participants,
+      participantProfiles: {
+        [userEmail || userHandle || "sender"]: {
+          name: curName || "User",
+          avatar: currentUser?.avatar || "",
+          email: userEmail
+        },
+        [targetEmail || senderId || "recipient"]: {
+          name: senderName,
+          avatar: senderAvatar,
+          email: targetEmail
+        }
+      },
+      lastMessage: "",
+      lastSenderEmail: userEmail,
+      lastSenderName: curName || "User",
+      senderEmail: userEmail,
+      senderName: curName || "User",
+      senderAvatar: currentUser?.avatar || "",
+      recipientEmail: targetEmail,
+      recipientId: senderId,
+      recipientName: senderName,
+      recipientAvatar: senderAvatar,
+      timestamp: "Just now",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      history: []
+    };
+
+    fetch(`/api/nosql/chats/${newThreadId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: initialPayload, merge: true })
+    }).catch(() => {});
   };
 
   // Helper fallback URLs

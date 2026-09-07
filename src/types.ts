@@ -273,6 +273,8 @@ export interface CopoMessage {
   senderId: string;
   senderName: string;
   senderAvatar: string;
+  senderEmail?: string;
+  recipientEmail?: string;
   lastMessage: string;
   timestamp: string;
   createdAtMs?: number;
@@ -284,7 +286,7 @@ export interface CopoMessage {
     senderAvatar: string;
     text: string;
     timestamp: string;
-  createdAtMs?: number;
+    createdAtMs?: number;
     isMe: boolean;
     videoThumbnail?: string;
     videoId?: string;

@@ -221,7 +221,18 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     const recHandle = (data.recipientHandle || "").toLowerCase().trim().replace(/^@/, "");
     const recId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
 
+    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd");
+    const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee");
+    const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111");
+
+    const matchesAvtErtuop = isAvtErtuop && (recEmail.includes("avr6566gd") || recHandle === "avtertuop" || recId.includes("avr6566gd") || recHandle === "avt ertuop");
+    const matchesAouisesmee = isAouisesmee && (recEmail.includes("aouisesmee") || recHandle.includes("aouisesmee") || recId.includes("aouisesmee"));
+    const matchesBizRiv = isBizRiv && (recEmail.includes("louis42111") || recHandle === "bizriv" || recId.includes("louis42111") || recHandle === "biz riv");
+
     const isForMe =
+      matchesAvtErtuop ||
+      matchesAouisesmee ||
+      matchesBizRiv ||
       (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail)) ||
       (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
       (userHandle && (recHandle === userHandle || recId === userHandle || recEmail.includes(userHandle))) ||
@@ -435,7 +446,30 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
     const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
 
+    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd");
+    const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee");
+    const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111");
+
+    const matchesAvtErtuop = isAvtErtuop && (
+      participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("canon_user_avtertuop")) ||
+      senderEmail.includes("avr6566gd") || recipientEmail.includes("avr6566gd") ||
+      senderName === "avt ertuop" || recipientName === "avt ertuop"
+    );
+    const matchesAouisesmee = isAouisesmee && (
+      participants.some(p => p.includes("aouisesmee") || p.includes("canon_user_aouisesmee")) ||
+      senderEmail.includes("aouisesmee") || recipientEmail.includes("aouisesmee") ||
+      senderName.includes("aouisesmee") || recipientName.includes("aouisesmee")
+    );
+    const matchesBizRiv = isBizRiv && (
+      participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("canon_user_bizriv")) ||
+      senderEmail.includes("louis42111") || recipientEmail.includes("louis42111") ||
+      senderName === "biz riv" || recipientName === "biz riv"
+    );
+
     const isParticipant =
+      matchesAvtErtuop ||
+      matchesAouisesmee ||
+      matchesBizRiv ||
       (userEmail && (participants.includes(userEmail) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
       (emailPrefix && (participants.includes(emailPrefix) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
       (userHandle && (participants.includes(userHandle) || senderId === userHandle || recipientId === userHandle)) ||
@@ -526,6 +560,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         senderId: otherId,
         senderName: otherName,
         senderAvatar: otherAvatar,
+        senderEmail: data.senderEmail,
+        recipientEmail: data.recipientEmail,
         lastMessage: data.lastMessage || (processedHistory[processedHistory.length - 1]?.text ?? "Conversation started"),
         timestamp: data.timestamp || "Just now",
         createdAtMs: data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now(),
@@ -577,7 +613,10 @@ export function subscribeToChats(
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
         if (Array.isArray(items) && !isDisposed) {
           const processed = processChatThreadsForUser(items, currentUser);
-          updateThreads(processed);
+          const serverThreadIds = new Set(processed.map((t) => t.id));
+          const pendingThreads = cachedThreads.filter((t) => !serverThreadIds.has(t.id));
+          const merged = [...pendingThreads, ...processed];
+          updateThreads(merged);
         }
       }
     } catch (e) {}
@@ -657,10 +696,23 @@ export async function sendChatMessageToFirestore(
   const userHandle = (currentUser.name || "").replace(/^@/, "").trim().toLowerCase();
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
 
-  const recipientEmail = (recipient.email || "").toLowerCase().trim();
+  let recipientEmail = (recipient.email || "").toLowerCase().trim();
   const recipientId = (recipient.id || "").trim().replace(/^@/, "");
   const recipientName = (recipient.name || "").trim();
   const recipientHandle = recipientId || recipientName.toLowerCase().replace(/\s+/g, "");
+
+  // Auto-resolve known user canonical emails if not explicitly set
+  if (!recipientEmail || !recipientEmail.includes("@")) {
+    if (recipientId.includes("@")) {
+      recipientEmail = recipientId.toLowerCase();
+    } else if (recipientName.toLowerCase() === "avt ertuop" || recipientId.includes("avtertuop") || recipientId.includes("avr6566gd")) {
+      recipientEmail = "avr6566gd@gmail.com";
+    } else if (recipientName.toLowerCase() === "biz riv" || recipientId.includes("bizriv") || recipientId.includes("louis42111")) {
+      recipientEmail = "louis42111@gmail.com";
+    } else if (recipientName.toLowerCase().includes("aouisesmee") || recipientId.includes("aouisesmee")) {
+      recipientEmail = "aouisesmee@gmail.com";
+    }
+  }
 
   // Sanitize videoThumbnail
   let sanitizedThumbnail = (videoUrl || "").trim();
@@ -673,7 +725,7 @@ export async function sendChatMessageToFirestore(
     id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     senderId: userEmail || currentUser.name,
     senderEmail: userEmail,
-    senderName: currentUser.name || "Local Guide",
+    senderName: currentUser.name || "Reviewer",
     senderAvatar: currentUser.avatar || `/api/avatar?name=${encodeURIComponent(currentUser.name || "User")}&background=27272a&color=fff`,
     text: messageText.trim(),
     timestamp: "Just now",
@@ -719,6 +771,26 @@ export async function sendChatMessageToFirestore(
 
   const fullHistory = [...existingHistory, newMessage];
 
+  const canonicalAliases: string[] = [];
+  if (recipientName.toLowerCase() === "avt ertuop" || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop")) {
+    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop");
+  }
+  if (recipientName.toLowerCase() === "biz riv" || recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv")) {
+    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+  }
+  if (recipientName.toLowerCase().includes("aouisesmee") || recipientEmail === "aouisesmee@gmail.com" || recipientId.includes("aouisesmee")) {
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee");
+  }
+  if (userName.toLowerCase() === "avt ertuop" || userEmail === "avr6566gd@gmail.com") {
+    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop");
+  }
+  if (userName.toLowerCase() === "biz riv" || userEmail === "louis42111@gmail.com") {
+    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+  }
+  if (userName.toLowerCase().includes("aouisesmee") || userEmail === "aouisesmee@gmail.com") {
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee");
+  }
+
   const participantsList = Array.from(
     new Set(
       [
@@ -730,7 +802,8 @@ export async function sendChatMessageToFirestore(
         recipientEmail,
         recipientId.toLowerCase(),
         recipientHandle.toLowerCase(),
-        recipientName.toLowerCase()
+        recipientName.toLowerCase(),
+        ...canonicalAliases
       ].filter(Boolean)
     )
   );

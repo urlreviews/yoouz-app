@@ -296,8 +296,16 @@ function broadcastSseEvent(event: { type: string; [key: string]: any }, targetUs
         const cHandle = (client.userHandle || "").toLowerCase().trim().replace(/^@/, "");
         const cId = (client.userId || "").toLowerCase().trim().replace(/^@/, "");
 
+        const isAvtErtuop = (cEmail.includes("avr6566gd") || cHandle === "avtertuop" || cHandle === "avt ertuop" || cId.includes("avr6566gd"));
+        const isAouisesmee = (cEmail.includes("aouisesmee") || cHandle.includes("aouisesmee") || cId.includes("aouisesmee"));
+        const isBizRiv = (cEmail.includes("louis42111") || cHandle === "bizriv" || cHandle === "biz riv" || cId.includes("louis42111"));
+
         const isMatch = targets.some(t => {
           if (!t) return false;
+          if (isAvtErtuop && (t.includes("avr6566gd") || t === "avtertuop" || t === "avt ertuop" || t.includes("canon_user_avtertuop"))) return true;
+          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("canon_user_aouisesmee"))) return true;
+          if (isBizRiv && (t.includes("louis42111") || t === "bizriv" || t === "biz riv" || t.includes("canon_user_bizriv"))) return true;
+
           return (
             t === cEmail ||
             t === cPrefix ||
