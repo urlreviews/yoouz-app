@@ -4577,7 +4577,10 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
             if (existingRow && existingRow.rows && existingRow.rows.length > 0) {
               const curDataRaw = (existingRow.rows[0] as any).data;
               let curData = typeof curDataRaw === 'string' ? JSON.parse(curDataRaw) : (curDataRaw || {});
-              finalDataObj = { ...curData, ...(data || {}) };
+              finalDataObj = mergeDeep(curData, data || {});
+              if (data?.history && Array.isArray(data.history)) {
+                finalDataObj.history = data.history;
+              }
             }
           } catch (mErr) {}
         }

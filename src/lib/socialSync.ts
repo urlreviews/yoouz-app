@@ -1,13 +1,3 @@
-import {
-  db,
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot
-} from "./firebase";
 import { CopoNotification, CopoMessage, UserProfile } from "../types";
 
 export interface CreateNotificationParams {
@@ -211,16 +201,6 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: payload, merge: true })
   }).catch(() => {});
-
-  // 3. Optional Firestore write if available
-  if (db) {
-    try {
-      const notifDocRef = doc(db, "notifications", notifId);
-      await setDoc(notifDocRef, payload);
-    } catch (err) {
-      console.warn("Optional Firestore notification sync notice:", err);
-    }
-  }
 }
 
 /**
@@ -417,33 +397,19 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: { isRead: true }, merge: true })
   }).catch(() => {});
-
-  if (db) {
-    try {
-      const notifRef = doc(db, "notifications", notificationId);
-      await updateDoc(notifRef, { isRead: true });
-    } catch (err) {}
-  }
 }
 
 /**
  * Mark all notifications as read
  */
 export async function markAllNotificationsAsRead(notificationIds: string[]): Promise<void> {
-  if (notificationIds.length === 0) return;
+  if (!notificationIds || notificationIds.length === 0) return;
   for (const id of notificationIds) {
     fetch(`/api/nosql/notifications/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data: { isRead: true }, merge: true })
     }).catch(() => {});
-
-    if (db) {
-      try {
-        const notifRef = doc(db, "notifications", id);
-        await updateDoc(notifRef, { isRead: true });
-      } catch (err) {}
-    }
   }
 }
 
@@ -455,13 +421,6 @@ export async function deleteNotification(notificationId: string): Promise<void> 
   fetch(`/api/nosql/notifications/${notificationId}`, {
     method: "DELETE"
   }).catch(() => {});
-
-  if (db) {
-    try {
-      const notifRef = doc(db, "notifications", notificationId);
-      await deleteDoc(notifRef);
-    } catch (err) {}
-  }
 }
 
 /**
@@ -805,18 +764,6 @@ export async function sendChatMessage(
     }
   } catch (e) {}
 
-  if (existingHistory.length === 0 && db) {
-    try {
-      const snap = await getDoc(doc(db, "chats", threadId));
-      if (typeof (snap as any).exists === "function" ? (snap as any).exists() : Boolean((snap as any).exists)) {
-        const d = snap.data();
-        if (Array.isArray(d?.history)) {
-          existingHistory = d.history;
-        }
-      }
-    } catch (e) {}
-  }
-
   const fullHistory = [...existingHistory, newMessage];
 
   const canonicalAliases: string[] = [];
@@ -932,16 +879,6 @@ export async function sendChatMessage(
     body: JSON.stringify({ data: threadData, merge: true })
   }).catch(() => {});
 
-  // 2. Optional Firestore write
-  if (db) {
-    try {
-      const threadDocRef = doc(db, "chats", threadId);
-      await setDoc(threadDocRef, threadData, { merge: true });
-    } catch (err) {
-      console.warn("Optional Firestore chat write notice:", err);
-    }
-  }
-
   // 3. Activity notification to recipient
   const targetRecipient = recipientEmail || recipientId || recipientHandle;
   if (targetRecipient && targetRecipient.toLowerCase() !== userEmail && targetRecipient.toLowerCase() !== emailPrefix) {
@@ -999,13 +936,52 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
   const userHandle = (currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
   const userName = (currentUser.name || "").toLowerCase().trim();
+  const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
+
+  const isAvt = userEmail.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avr6566gd");
+  const isAou = userEmail.includes("aouisesmee") || userEmail.includes("4samet") || userName.includes("aouisesmee") || userName.includes("4samet") || userId.includes("aouisesmee");
+  const isBiz = userEmail.includes("louis42111") || userName.includes("biz") || userHandle.includes("biz") || userId.includes("louis42111");
 
   const unreadCountsUpdates: Record<string, number> = {};
   if (userEmail) unreadCountsUpdates[userEmail] = 0;
   if (emailPrefix) unreadCountsUpdates[emailPrefix] = 0;
   if (userHandle) unreadCountsUpdates[userHandle] = 0;
   if (userName) unreadCountsUpdates[userName] = 0;
-  if (currentUser.userId) unreadCountsUpdates[currentUser.userId] = 0;
+  if (userId) unreadCountsUpdates[userId] = 0;
+  if (isAvt) {
+    unreadCountsUpdates["avr6566gd@gmail.com"] = 0;
+    unreadCountsUpdates["avr6566gd"] = 0;
+    unreadCountsUpdates["avt ertuop"] = 0;
+    unreadCountsUpdates["avtertuop"] = 0;
+    unreadCountsUpdates["avt"] = 0;
+  }
+  if (isAou) {
+    unreadCountsUpdates["aouisesmee@gmail.com"] = 0;
+    unreadCountsUpdates["aouisesmee"] = 0;
+    unreadCountsUpdates["4samet@gmail.com"] = 0;
+    unreadCountsUpdates["4samet"] = 0;
+  }
+  if (isBiz) {
+    unreadCountsUpdates["louis42111@gmail.com"] = 0;
+    unreadCountsUpdates["louis42111"] = 0;
+    unreadCountsUpdates["biz riv"] = 0;
+    unreadCountsUpdates["bizriv"] = 0;
+    unreadCountsUpdates["biz"] = 0;
+  }
+
+  // Immediately update local cache so on page refresh it's marked as read
+  try {
+    const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+    const cacheKey = `copo_cached_chats_${userKey}`;
+    const rawCache = localStorage.getItem(cacheKey);
+    if (rawCache) {
+      const parsed = JSON.parse(rawCache);
+      if (Array.isArray(parsed)) {
+        const updatedCache = parsed.map((t: any) => t.id === threadId ? { ...t, unreadCount: 0 } : t);
+        localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
+      }
+    }
+  } catch (e) {}
 
   // Mirror to BunnyDB
   fetch(`/api/nosql/chats/${threadId}`, {
@@ -1019,16 +995,6 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
       merge: true
     })
   }).catch(() => {});
-
-  if (db) {
-    try {
-      const threadDocRef = doc(db, "chats", threadId);
-      await setDoc(threadDocRef, { 
-        unreadCount: 0,
-        unreadCounts: unreadCountsUpdates 
-      }, { merge: true });
-    } catch (err) {}
-  }
 }
 
 /**
@@ -1041,13 +1007,6 @@ export async function deleteChatThread(threadId: string): Promise<void> {
   fetch(`/api/nosql/chats/${threadId}`, {
     method: "DELETE"
   }).catch(() => {});
-
-  if (db) {
-    try {
-      const threadDocRef = doc(db, "chats", threadId);
-      await deleteDoc(threadDocRef);
-    } catch (err) {}
-  }
 }
 
 // Aliases for seamless backward compatibility

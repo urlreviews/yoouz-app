@@ -27,7 +27,8 @@ import {
   Film,
   Compass,
   AlertTriangle,
-  User
+  User,
+  CheckCheck
 } from "lucide-react";
 import { CopoMessage, Place, UserProfile, VideoAuthor, VideoReview } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
@@ -177,20 +178,22 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Mark selected thread as read immediately upon load or change
+  // Mark selected thread as read immediately upon load, change, or incoming message
   useEffect(() => {
     if (!selectedThreadId) return;
-    if (onMarkThreadRead) {
-      onMarkThreadRead(selectedThreadId);
-    }
     const thread = messages.find((m) => m.id === selectedThreadId);
-    if (thread && thread.unreadCount > 0) {
+    if (thread && (thread.unreadCount || 0) > 0) {
+      if (onMarkThreadRead) {
+        onMarkThreadRead(selectedThreadId);
+      }
       const updated = messages.map((m) =>
         m.id === selectedThreadId ? { ...m, unreadCount: 0 } : m
       );
       onUpdateMessages(updated);
+    } else if (selectedThreadId && onMarkThreadRead) {
+      onMarkThreadRead(selectedThreadId);
     }
-  }, [selectedThreadId]);
+  }, [selectedThreadId, messages]);
 
   // Scroll to bottom of chat when active thread changes or new message arrives
   useEffect(() => {
@@ -1131,6 +1134,28 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     {/* Options Dropdown Menu */}
                     {isOptionsOpen && (
                       <div className="absolute right-0 top-11 w-56 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+                        {/* Mark as read option */}
+                        <button
+                          id="btn-mark-chat-read"
+                          onClick={() => {
+                            if (activeThread?.id) {
+                              onMarkThreadRead?.(activeThread.id);
+                              const updated = messages.map((m) =>
+                                m.id === activeThread.id ? { ...m, unreadCount: 0 } : m
+                              );
+                              onUpdateMessages(updated);
+                            }
+                            setIsOptionsOpen(false);
+                            showToast("Marked conversation as read.");
+                          }}
+                          className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
+                        >
+                          <CheckCheck className="w-4 h-4 text-emerald-400" />
+                          <span>Mark as Read</span>
+                        </button>
+
+                        <div className="my-1 border-t border-zinc-800" />
+
                         {/* Report option */}
                         <button
                           id="btn-report-chat-user"
