@@ -954,7 +954,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const toggleMute = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     const vid = feedVideoRef.current;
-    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted;
+    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted || (vid ? vid.muted : true);
     const nextMuted = !isCurrentlyMuted;
 
     if (!nextMuted) {

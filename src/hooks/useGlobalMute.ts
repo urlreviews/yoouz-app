@@ -58,24 +58,32 @@ export function ensureSharedAudioContextUnlocked() {
   } catch (e) {}
 }
 
-const muteListeners = new Set<(val: boolean) => void>();
-const unlockListeners = new Set<(val: boolean) => void>();
+interface GlobalAudioState {
+  isMuted: boolean;
+  isUnlocked: boolean;
+}
+
+const audioStateListeners = new Set<(state: GlobalAudioState) => void>();
 
 export function forceMute() {
   globalIsMuted = true;
-  muteListeners.forEach(listener => listener(true));
+  const nextState = { isMuted: true, isUnlocked: globalAudioUnlocked };
+  audioStateListeners.forEach(listener => listener(nextState));
 }
 
 export function useGlobalMute() {
-  const [isMuted, setIsMutedState] = useState(globalIsMuted);
-  const [isUnlocked, setIsUnlockedState] = useState(globalAudioUnlocked);
+  const [audioState, setAudioState] = useState<GlobalAudioState>({
+    isMuted: globalIsMuted,
+    isUnlocked: globalAudioUnlocked
+  });
 
   useEffect(() => {
-    muteListeners.add(setIsMutedState);
-    unlockListeners.add(setIsUnlockedState);
+    const listener = (nextState: GlobalAudioState) => {
+      setAudioState(nextState);
+    };
+    audioStateListeners.add(listener);
     return () => {
-      muteListeners.delete(setIsMutedState);
-      unlockListeners.delete(setIsUnlockedState);
+      audioStateListeners.delete(listener);
     };
   }, []);
 
@@ -88,9 +96,9 @@ export function useGlobalMute() {
     if (!nextVal) {
       globalAudioUnlocked = true;
       ensureSharedAudioContextUnlocked();
-      unlockListeners.forEach(listener => listener(true));
     }
-    muteListeners.forEach(listener => listener(nextVal));
+    const nextState = { isMuted: globalIsMuted, isUnlocked: globalAudioUnlocked };
+    audioStateListeners.forEach(listener => listener(nextState));
   };
 
   const unlockAudioSession = () => {
@@ -100,11 +108,11 @@ export function useGlobalMute() {
     try {
       localStorage.setItem("yoouz_sound_muted", "false");
     } catch {}
-    unlockListeners.forEach(listener => listener(true));
-    muteListeners.forEach(listener => listener(false));
+    const nextState = { isMuted: false, isUnlocked: true };
+    audioStateListeners.forEach(listener => listener(nextState));
   };
 
-  return [isMuted, setIsMuted, isUnlocked, unlockAudioSession] as const;
+  return [audioState.isMuted, setIsMuted, audioState.isUnlocked, unlockAudioSession] as const;
 }
 
 export function isAudioUnlocked(): boolean {
@@ -118,6 +126,6 @@ export function triggerAudioUnlock() {
   try {
     localStorage.setItem("yoouz_sound_muted", "false");
   } catch {}
-  unlockListeners.forEach(listener => listener(true));
-  muteListeners.forEach(listener => listener(false));
+  const nextState = { isMuted: false, isUnlocked: true };
+  audioStateListeners.forEach(listener => listener(nextState));
 }

@@ -176,10 +176,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     e?.stopPropagation();
     triggerHaptic("selection");
     ensureSharedAudioContextUnlocked();
-
-    if (isMuted || !isSessionAudioUnlocked || isActualMuted) {
-      onUnlockAudio?.();
-    }
     onToggleMute(e);
   };
 
