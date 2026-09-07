@@ -131,10 +131,24 @@ function registerRealtimeListener(user: UserProfile, handler: RealtimeEventHandl
  * Send a notification to a recipient (persists in Bunny DB, Firestore & instantly broadcasts via SSE)
  */
 export async function sendSocialNotification(params: CreateNotificationParams): Promise<void> {
-  const targetEmail = (params.recipientEmail || "").trim().toLowerCase();
+  const rawTargetEmail = (params.recipientEmail || "").trim().toLowerCase();
   const targetHandle = (params.recipientHandle || "").trim().toLowerCase().replace(/^@/, "");
   const targetId = (params.recipientId || "").trim().toLowerCase().replace(/^@/, "");
   const senderEmail = (params.user.email || "").trim().toLowerCase();
+
+  // Canonicalize recipient email if missing or username was supplied
+  let targetEmail = rawTargetEmail;
+  if (!targetEmail || !targetEmail.includes("@")) {
+    if (targetId.includes("@")) {
+      targetEmail = targetId;
+    } else if (targetId === "avt ertuop" || targetId.includes("avtertuop") || targetHandle.includes("avtertuop") || targetId.includes("avr6566gd")) {
+      targetEmail = "avr6566gd@gmail.com";
+    } else if (targetId === "biz riv" || targetId.includes("bizriv") || targetHandle.includes("bizriv") || targetId.includes("louis42111")) {
+      targetEmail = "louis42111@gmail.com";
+    } else if (targetId.includes("aouisesmee") || targetHandle.includes("aouisesmee")) {
+      targetEmail = "aouisesmee@gmail.com";
+    }
+  }
 
   // Do not send notifications to oneself
   if (targetEmail && senderEmail && targetEmail === senderEmail) {
@@ -155,7 +169,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     id: notifId,
     recipientEmail: targetEmail,
     recipientHandle: targetHandle,
-    recipientId: targetId,
+    recipientId: targetId || targetEmail,
     type: params.type,
     user: {
       name: params.user.name || "Yoouz Member",
@@ -220,24 +234,45 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     const recEmail = (data.recipientEmail || "").toLowerCase().trim();
     const recHandle = (data.recipientHandle || "").toLowerCase().trim().replace(/^@/, "");
     const recId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
+    const normRecId = recId.replace(/\s+/g, "");
+    const normRecHandle = recHandle.replace(/\s+/g, "");
 
     const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd");
     const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee");
     const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111");
 
-    const matchesAvtErtuop = isAvtErtuop && (recEmail.includes("avr6566gd") || recHandle === "avtertuop" || recId.includes("avr6566gd") || recHandle === "avt ertuop");
-    const matchesAouisesmee = isAouisesmee && (recEmail.includes("aouisesmee") || recHandle.includes("aouisesmee") || recId.includes("aouisesmee"));
-    const matchesBizRiv = isBizRiv && (recEmail.includes("louis42111") || recHandle === "bizriv" || recId.includes("louis42111") || recHandle === "biz riv");
+    const matchesAvtErtuop = isAvtErtuop && (
+      recEmail.includes("avr6566gd") ||
+      recId === "avt ertuop" ||
+      recHandle === "avt ertuop" ||
+      normRecId.includes("avtertuop") ||
+      normRecHandle.includes("avtertuop") ||
+      recId.includes("avr6566gd")
+    );
+    const matchesAouisesmee = isAouisesmee && (
+      recEmail.includes("aouisesmee") ||
+      normRecHandle.includes("aouisesmee") ||
+      normRecId.includes("aouisesmee") ||
+      recId.includes("aouisesmee")
+    );
+    const matchesBizRiv = isBizRiv && (
+      recEmail.includes("louis42111") ||
+      normRecHandle.includes("bizriv") ||
+      normRecId.includes("louis42111") ||
+      normRecId.includes("bizriv") ||
+      recId === "biz riv" ||
+      recHandle === "biz riv"
+    );
 
     const isForMe =
       matchesAvtErtuop ||
       matchesAouisesmee ||
       matchesBizRiv ||
-      (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail)) ||
-      (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
-      (userHandle && (recHandle === userHandle || recId === userHandle || recEmail.includes(userHandle))) ||
-      (userName && (recHandle === userName || recId === userName || recEmail === userName || recId === userName.replace(/\s+/g, ""))) ||
-      (userId && (recId === userId || recEmail === userId));
+      (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail || normRecId === userEmail)) ||
+      (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || normRecId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
+      (userHandle && (recHandle === userHandle || recId === userHandle || normRecId === userHandle || normRecHandle === userHandle || recEmail.includes(userHandle))) ||
+      (userName && (recHandle === userName || recId === userName || recEmail === userName || normRecId === userName.replace(/\s+/g, ""))) ||
+      (userId && (recId === userId || recEmail === userId || normRecId === userId));
 
     if (isForMe) {
       list.push({
@@ -524,6 +559,9 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           data.unreadCounts[userHandle] ??
           data.unreadCounts[userName] ??
           data.unreadCounts[userId] ??
+          (isAvtErtuop ? (data.unreadCounts["avr6566gd@gmail.com"] ?? data.unreadCounts["avr6566gd"] ?? data.unreadCounts["avt ertuop"] ?? data.unreadCounts["avtertuop"]) : undefined) ??
+          (isAouisesmee ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisesmee"]) : undefined) ??
+          (isBizRiv ? (data.unreadCounts["louis42111@gmail.com"] ?? data.unreadCounts["louis42111"] ?? data.unreadCounts["biz riv"] ?? data.unreadCounts["bizriv"]) : undefined) ??
           0;
       } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
         unreadCount = data.unreadCount || 1;
@@ -844,9 +882,26 @@ export async function sendChatMessageToFirestore(
       ...(emailPrefix && { [emailPrefix]: 0 }),
       ...(userHandle && { [userHandle]: 0 }),
       ...(recipientEmail && { [recipientEmail]: nextUnreadCount }),
-      ...(recipientId && { [recipientId.toLowerCase()]: nextUnreadCount }),
-      ...(recipientHandle && { [recipientHandle.toLowerCase()]: nextUnreadCount }),
-      ...(recipientName && { [recipientName.toLowerCase()]: nextUnreadCount })
+      ...(recipientEmail && recipientEmail.includes("@") && { [recipientEmail.split("@")[0]]: nextUnreadCount }),
+      ...(recipientId && { [recipientId.toLowerCase()]: nextUnreadCount, [recipientId.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
+      ...(recipientHandle && { [recipientHandle.toLowerCase()]: nextUnreadCount, [recipientHandle.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
+      ...(recipientName && { [recipientName.toLowerCase()]: nextUnreadCount, [recipientName.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
+      ...((recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientName.toLowerCase() === "avt ertuop") ? {
+        "avr6566gd@gmail.com": nextUnreadCount,
+        "avr6566gd": nextUnreadCount,
+        "avt ertuop": nextUnreadCount,
+        "avtertuop": nextUnreadCount
+      } : {}),
+      ...((recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientName.toLowerCase() === "biz riv") ? {
+        "louis42111@gmail.com": nextUnreadCount,
+        "louis42111": nextUnreadCount,
+        "biz riv": nextUnreadCount,
+        "bizriv": nextUnreadCount
+      } : {}),
+      ...((recipientEmail.includes("aouisesmee") || recipientName.toLowerCase().includes("aouisesmee")) ? {
+        "aouisesmee@gmail.com": nextUnreadCount,
+        "aouisesmee": nextUnreadCount
+      } : {})
     }
   });
 

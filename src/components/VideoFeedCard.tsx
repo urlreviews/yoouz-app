@@ -71,6 +71,7 @@ interface VideoFeedCardProps {
   isSessionAudioUnlocked?: boolean;
   onUnlockAudio?: () => void;
   onRecordView?: (videoId: string) => void;
+  unreadCount?: number;
 }
 
 export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
@@ -110,7 +111,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   slotRef,
   isSessionAudioUnlocked = false,
   onUnlockAudio,
-  onRecordView
+  onRecordView,
+  unreadCount = 0
 }) => {
   const { t } = useLanguage();
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
@@ -379,11 +381,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
                 onTouchEnd={(e) => e.stopPropagation()}
-                className="flex md:hidden w-11 h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 items-center justify-center text-white shadow-2xl transition-all cursor-pointer select-none"
+                className="relative flex md:hidden w-11 h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 items-center justify-center text-white shadow-2xl transition-all cursor-pointer select-none"
                 aria-label={t("nav.openMenu", "Open menu")}
                 title={t("nav.openMenu", "Open menu")}
               >
                 <Menu className="w-5 h-5 text-white stroke-[2.2]" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white font-black text-[10px] flex items-center justify-center border-2 border-black shadow-lg animate-pulse">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </button>
             )
           )}

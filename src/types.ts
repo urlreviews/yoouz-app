@@ -284,6 +284,7 @@ export interface CopoMessage {
     id: string;
     senderName: string;
     senderAvatar: string;
+    senderEmail?: string;
     text: string;
     timestamp: string;
     createdAtMs?: number;

@@ -32,6 +32,7 @@ import { CopoGoogleAuthModal, AuthIntent, CopoAuthPrompt } from "./components/Co
 import { CopoLegalModal } from "./components/CopoLegalModal";
 import { CopoComparisonModal } from "./components/CopoComparisonModal";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
+import { InAppNotificationToast, InAppToastPayload } from "./components/InAppNotificationToast";
 import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "./utils/videoUtils";
@@ -132,6 +133,11 @@ export function App() {
   const [allRegisteredUsers, setAllRegisteredUsers] = useState<any[]>([]);
 
   const [activeThreadId, setActiveThreadId] = useState<string>("");
+  const [inAppToast, setInAppToast] = useState<InAppToastPayload | null>(null);
+  const prevNotifIdsRef = useRef<Set<string>>(new Set());
+  const isFirstNotifLoadRef = useRef<boolean>(true);
+  const prevChatHistoryLengthRef = useRef<Map<string, number>>(new Map());
+  const isFirstChatLoadRef = useRef<boolean>(true);
 
   // 2. Navigation & Active Tab States
   const [activeSection, setActiveSection] = useState<NavSection>(() => {
@@ -1164,15 +1170,44 @@ export function App() {
   useEffect(() => {
     if (!currentUser) {
       setNotifications([]);
+      prevNotifIdsRef.current.clear();
+      isFirstNotifLoadRef.current = true;
       return;
     }
 
     const unsubscribe = subscribeToNotifications(currentUser, (notifs) => {
       setNotifications(notifs);
+
+      if (isFirstNotifLoadRef.current) {
+        isFirstNotifLoadRef.current = false;
+        notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
+        return;
+      }
+
+      // Check for brand new unread notification
+      const newIncoming = notifs.find((n) => !n.isRead && !prevNotifIdsRef.current.has(n.id));
+      notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
+
+      if (newIncoming && activeSection !== "notifications") {
+        setInAppToast({
+          id: newIncoming.id,
+          type: newIncoming.type === "message" ? "message" : "notification",
+          title: newIncoming.type === "message" ? "1 new message" : "1 new notification",
+          subtitle: newIncoming.text ? `${newIncoming.user.name} ${newIncoming.text}` : `${newIncoming.user.name} interacted with you`,
+          avatar: newIncoming.user.avatar,
+          onAction: () => {
+            if (newIncoming.type === "message") {
+              setActiveSection("messages");
+            } else {
+              setActiveSection("notifications");
+            }
+          }
+        });
+      }
     });
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [currentUser, activeSection]);
 
   // Account validity checker (logs out if admin deleted user from database)
   useEffect(() => {
@@ -1235,6 +1270,8 @@ export function App() {
   useEffect(() => {
     if (!currentUser) {
       setMessages([]);
+      prevChatHistoryLengthRef.current.clear();
+      isFirstChatLoadRef.current = true;
       return;
     }
 
@@ -1247,10 +1284,48 @@ export function App() {
         if (pendingLocal.length === 0) return threads;
         return [...pendingLocal, ...threads];
       });
+
+      if (isFirstChatLoadRef.current) {
+        isFirstChatLoadRef.current = false;
+        threads.forEach((t) => {
+          prevChatHistoryLengthRef.current.set(t.id, t.history?.length || 0);
+        });
+        return;
+      }
+
+      // Detect new incoming message from partner
+      const userEmail = (currentUser.email || "").toLowerCase().trim();
+      for (const t of threads) {
+        const prevCount = prevChatHistoryLengthRef.current.get(t.id) ?? 0;
+        const currentCount = t.history?.length || 0;
+        prevChatHistoryLengthRef.current.set(t.id, currentCount);
+
+        if (currentCount > prevCount) {
+          const lastMsg = t.history && t.history.length > 0 ? t.history[t.history.length - 1] : null;
+          if (lastMsg) {
+            const senderEmail = (lastMsg.senderEmail || "").toLowerCase().trim();
+            const isFromOther = !lastMsg.isMe && (!senderEmail || senderEmail !== userEmail);
+            if (isFromOther && (activeSection !== "messages" || activeThreadId !== t.id)) {
+              setInAppToast({
+                id: `chat_${t.id}_${lastMsg.id || Date.now()}`,
+                type: "message",
+                title: `1 new message from ${t.senderName}`,
+                subtitle: lastMsg.text || t.lastMessage || "sent you a message",
+                avatar: t.senderAvatar || lastMsg.senderAvatar,
+                threadId: t.id,
+                onAction: () => {
+                  setActiveSection("messages");
+                  setActiveThreadId(t.id);
+                }
+              });
+            }
+          }
+        }
+      }
     });
 
     return () => unsubscribe();
-  }, [currentUser, activeThreadId]);
+  }, [currentUser, activeThreadId, activeSection]);
 
   // Real-time synchronization of all registered users across the platform
   useEffect(() => {
@@ -3801,6 +3876,19 @@ export function App() {
       <SEOTags title={seoTitle} description={seoDescription} url={seoUrl} />
       <AEOBlock />
       
+      {/* Real-time In-App Pop-up Notifications & Messages Toast */}
+      <InAppNotificationToast
+        toast={inAppToast}
+        onClose={() => setInAppToast(null)}
+        onNavigateToThread={(threadId) => {
+          setActiveSection("messages");
+          setActiveThreadId(threadId);
+        }}
+        onNavigateToNotifications={() => {
+          setActiveSection("notifications");
+        }}
+      />
+      
       {/* 1. Left Section: Business/Place Details Panel OR Creator Profile Panel OR Standard Navigation Sidebar */}
        {isPlaceView ? (
         <CopoPlaceDrawer
@@ -3995,6 +4083,7 @@ export function App() {
               onGoHome={handleGoHome}
               onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
               onRecordView={handleRecordVideoView}
+              unreadCount={(currentUser ? notifications.filter((n) => !n.isRead).length : 0) + (currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0)}
             />
         )}
 
