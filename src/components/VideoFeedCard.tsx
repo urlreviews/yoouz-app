@@ -388,21 +388,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
 
         {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
-        <div 
-          className="pointer-events-auto"
-          onClickCapture={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleToggleMute(e);
-          }}
-          onPointerDownCapture={(e) => e.stopPropagation()}
-          onPointerUpCapture={(e) => e.stopPropagation()}
-          onTouchStartCapture={(e) => e.stopPropagation()}
-          onTouchEndCapture={(e) => e.stopPropagation()}
-        >
+        <div className="pointer-events-auto">
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleMute(e);
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
             className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
             title={isMuted || !isSessionAudioUnlocked || isActualMuted ? t("video.unmuteSound", "Unmute sound") : t("video.muteSound", "Mute sound")}
             aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? t("video.unmuteSound", "Unmute sound") : t("video.muteSound", "Mute sound")}

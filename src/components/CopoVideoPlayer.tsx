@@ -237,13 +237,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const vid = feedVideoRef.current;
     if (!vid) return;
     const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-    try {
-      vid.muted = effectiveMuted;
-      if (!effectiveMuted) {
-        vid.volume = 1;
+    if (vid.muted !== effectiveMuted) {
+      try {
+        vid.muted = effectiveMuted;
+        if (!effectiveMuted) {
+          vid.volume = 1;
+        }
+      } catch (e) {
+        vid.muted = true;
       }
-    } catch (e) {
-      vid.muted = true;
     }
     setIsActualMuted(vid.muted);
   }, [isMuted, isSessionAudioUnlocked]);
@@ -323,13 +325,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     // Configure audio & mute on active element
     const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-    try {
-      activeVid.muted = effectiveMuted;
-      if (!effectiveMuted) {
-        activeVid.volume = 1;
+    if (activeVid.muted !== effectiveMuted) {
+      try {
+        activeVid.muted = effectiveMuted;
+        if (!effectiveMuted) {
+          activeVid.volume = 1;
+        }
+      } catch (e) {
+        activeVid.muted = true;
       }
-    } catch (e) {
-      activeVid.muted = true;
     }
     setIsActualMuted(activeVid.muted);
 
