@@ -359,19 +359,21 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
           </div>
         </div>
 
-        {/* Paused Notifications Notice Banner */}
+        {/* Paused Notifications Notice Banner (Darkmode first) */}
         {currentUser?.notificationSettings?.enabled === false && (
-          <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs">
+          <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-zinc-300 text-xs shadow-md">
             <div className="flex items-center gap-2.5 min-w-0">
-              <BellOff className="w-4 h-4 text-amber-400 shrink-0" />
-              <span className="truncate">In-app notifications are paused in your preferences.</span>
+              <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                <BellOff className="w-3.5 h-3.5 text-zinc-400" />
+              </div>
+              <span className="truncate font-medium">In-app notifications are paused in your preferences.</span>
             </div>
             {onOpenSettings && (
               <button
                 onClick={onOpenSettings}
-                className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold shrink-0 transition-colors active:scale-95"
+                className="px-3 py-1.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 font-bold shrink-0 transition-all active:scale-95 text-xs shadow-sm"
               >
-                Preferences
+                Settings
               </button>
             )}
           </div>

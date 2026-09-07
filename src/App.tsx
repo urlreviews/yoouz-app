@@ -1,7 +1,7 @@
 import { forceMute } from "./hooks/useGlobalMute";
 import { useFeedPagination } from "./hooks/useFeedPagination";
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, Club, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences } from "./types";
+import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, Club, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
 import { CopoSidebar } from "./components/CopoSidebar";
 import { SEOTags } from "./components/SEOTags";
@@ -241,7 +241,35 @@ export function App() {
   };
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState<boolean>(false);
 
-  const handleSaveNotificationSettings = (newSettings: NotificationPreferences) => {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem("copo_user_profile");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const storedNotifs = localStorage.getItem("copo_notification_settings");
+        if (storedNotifs) {
+          try {
+            parsed.notificationSettings = {
+              ...DEFAULT_NOTIFICATION_PREFERENCES,
+              ...JSON.parse(storedNotifs)
+            };
+          } catch (e) {}
+        }
+        return parsed;
+      }
+    } catch (e) {}
+    return null;
+  });
+
+  const handleSaveNotificationSettings = async (newSettings: NotificationPreferences) => {
+    // 1. Instant synchronous local persistence
+    try {
+      localStorage.setItem("copo_notification_settings", JSON.stringify(newSettings));
+    } catch (e) {}
+
+    const currentEmail = currentUser?.email || auth.currentUser?.email || "";
+    const currentUid = auth.currentUser?.uid || (currentUser as any)?.uid || (currentUser as any)?.id || "";
+
     setCurrentUser((prev) => {
       if (!prev) return null;
       const nextUser: UserProfile = {
@@ -251,20 +279,52 @@ export function App() {
       try {
         localStorage.setItem("copo_user_profile", JSON.stringify(nextUser));
       } catch (e) {}
+      return nextUser;
+    });
 
-      const userUid = auth.currentUser?.uid || (nextUser.email ? nextUser.email.replace(/[^a-zA-Z0-9]/g, '_') : 'guest');
-      if (db && auth.currentUser) {
-        setDoc(doc(db, "users", auth.currentUser.uid), { notificationSettings: newSettings }, { merge: true }).catch(() => {});
+    // 2. Real-time Live Database Update (Firestore users collection)
+    const firestorePromises: Promise<any>[] = [];
+    if (db) {
+      if (currentUid) {
+        firestorePromises.push(
+          setDoc(doc(db, "users", currentUid), { notificationSettings: newSettings }, { merge: true }).catch((err) => {
+            console.warn("Firestore notification settings sync error:", err);
+          })
+        );
       }
-      fetch(`/api/nosql/users/${userUid}`, {
+      if (currentEmail) {
+        const emailUid = `usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}`;
+        if (emailUid !== currentUid) {
+          firestorePromises.push(
+            setDoc(doc(db, "users", emailUid), { notificationSettings: newSettings }, { merge: true }).catch(() => {})
+          );
+        }
+      }
+    }
+
+    // 3. Real-time Live Database Update (Server NoSQL API)
+    const targetUid = currentUid || (currentEmail ? `usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}` : 'guest');
+    const nosqlPromises: Promise<any>[] = [
+      fetch(`/api/nosql/users/${targetUid}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: { notificationSettings: newSettings }, merge: true })
-      }).catch(() => {});
+      }).catch((err) => console.warn("NoSQL notification sync warning:", err))
+    ];
 
-      return nextUser;
-    });
+    if (currentEmail && targetUid !== `usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}`) {
+      nosqlPromises.push(
+        fetch(`/api/nosql/users/usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: { notificationSettings: newSettings }, merge: true })
+        }).catch(() => {})
+      );
+    }
+
+    await Promise.allSettled([...firestorePromises, ...nosqlPromises]);
   };
+
   const [preselectedPlaceForRecording, setPreselectedPlaceForRecording] = useState<Place | null>(null);
   const [businessClaimTargetPlace, setBusinessClaimTargetPlace] = useState<Place | null>(null);
   const [businessInitialMode, setBusinessInitialMode] = useState<'signin' | 'claim' | 'demo'>('signin');
@@ -272,16 +332,6 @@ export function App() {
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState<boolean>(false);
   const [comparisonCompetitor, setComparisonCompetitor] = useState<string>('yelp');
   const [deleteSuccessToast, setDeleteSuccessToast] = useState<boolean>(false);
-
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
-    try {
-      const saved = localStorage.getItem("copo_user_profile");
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {}
-    return null;
-  });
 
   const videosRef = useRef(videos);
   useEffect(() => {
@@ -975,7 +1025,14 @@ export function App() {
           followedAuthors: initialFollowed,
           followingCount: initialFollowed.length,
           followersCount: typeof savedProfile.followersCount === "number" ? savedProfile.followersCount : 0,
-          followers: Array.isArray(savedProfile.followers) ? savedProfile.followers : []
+          followers: Array.isArray(savedProfile.followers) ? savedProfile.followers : [],
+          notificationSettings: (() => {
+            try {
+              const storedNotif = localStorage.getItem("copo_notification_settings");
+              if (storedNotif) return { ...DEFAULT_NOTIFICATION_PREFERENCES, ...JSON.parse(storedNotif) };
+            } catch (e) {}
+            return savedProfile.notificationSettings ? { ...DEFAULT_NOTIFICATION_PREFERENCES, ...savedProfile.notificationSettings } : DEFAULT_NOTIFICATION_PREFERENCES;
+          })()
         };
 
         setCurrentUser(profileObj);
@@ -1032,7 +1089,10 @@ export function App() {
                 followedPlaces: fPlaces,
                 followingCount: fAuthors.length + fPlaces.length,
                 followersCount: typeof data.followersCount === "number" ? data.followersCount : (profileObj.followersCount || 0),
-                followers: Array.isArray(data.followers) ? data.followers : (profileObj.followers || [])
+                followers: Array.isArray(data.followers) ? data.followers : (profileObj.followers || []),
+                notificationSettings: data.notificationSettings
+                  ? { ...DEFAULT_NOTIFICATION_PREFERENCES, ...data.notificationSettings }
+                  : profileObj.notificationSettings
               };
               setCurrentUser(updatedProfile);
               try {
