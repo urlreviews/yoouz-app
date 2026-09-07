@@ -518,6 +518,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [currentIndex, videos, onRecordView, isPaused, contextKey]);
 
+  // Handle Seek To Percent for scrubbable progress bar
+  const handleSeekToPercent = useCallback((pct: number) => {
+    const vid = feedVideoRef.current;
+    if (!vid || !vid.duration || isNaN(vid.duration) || vid.duration <= 0) return;
+    const clampedPct = Math.max(0, Math.min(100, pct));
+    const targetTime = (clampedPct / 100) * vid.duration;
+    try {
+      vid.currentTime = targetTime;
+      setProgressPercent(clampedPct);
+    } catch (e) {}
+  }, []);
+
   // Context switch watcher: Immediately pause any active playback and sound when switching contexts
   const previousContextKeyRef = useRef<string | undefined>(contextKey);
   useEffect(() => {
@@ -1225,6 +1237,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isPlaying={isCardActive && !isPaused ? isPlaying : false}
                 isBuffering={isCardActive ? isBuffering : false}
                 progressPercent={isCardActive ? progressPercent : 0}
+                onSeekToPercent={isCardActive ? handleSeekToPercent : undefined}
                 isActualMuted={isActualMuted}
                 isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}
                 hasRenderedFirstFrame={firstFrameRenderedId === vid.id}

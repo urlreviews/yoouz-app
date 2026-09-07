@@ -72,6 +72,7 @@ interface VideoFeedCardProps {
   onUnlockAudio?: () => void;
   onRecordView?: (videoId: string) => void;
   unreadCount?: number;
+  onSeekToPercent?: (percent: number) => void;
 }
 
 export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
@@ -112,7 +113,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   isSessionAudioUnlocked = false,
   onUnlockAudio,
   onRecordView,
-  unreadCount = 0
+  unreadCount = 0,
+  onSeekToPercent
 }) => {
   const { t } = useLanguage();
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
@@ -120,6 +122,49 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const lastTapTimeRef = useRef<number>(0);
   const lastMuteTapTimeRef = useRef<number>(0);
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Video Scrubbing state
+  const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
+  const [scrubPercent, setScrubPercent] = useState<number | null>(null);
+  const scrubberRef = useRef<HTMLDivElement | null>(null);
+
+  const calculatePctFromClientX = (clientX: number) => {
+    if (!scrubberRef.current) return 0;
+    const rect = scrubberRef.current.getBoundingClientRect();
+    if (rect.width <= 0) return 0;
+    const offsetX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    return (offsetX / rect.width) * 100;
+  };
+
+  const handleScrubberSeek = (clientX: number) => {
+    const pct = calculatePctFromClientX(clientX);
+    setScrubPercent(pct);
+    if (onSeekToPercent) {
+      onSeekToPercent(pct);
+    }
+  };
+
+  const handleScrubberPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setIsScrubbing(true);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch (err) {}
+    handleScrubberSeek(e.clientX);
+  };
+
+  const handleScrubberPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isScrubbing) return;
+    e.stopPropagation();
+    handleScrubberSeek(e.clientX);
+  };
+
+  const handleScrubberPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isScrubbing) return;
+    e.stopPropagation();
+    setIsScrubbing(false);
+    setScrubPercent(null);
+  };
 
   // High-fidelity poster URL
   const posterUrl = React.useMemo(() => {
@@ -334,16 +379,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         onDoubleClick={handleDoubleTapLike}
         aria-label="Toggle Play/Pause"
       />
-
-      {/* Progress Bar (Scrubber Indicator at top edge) */}
-      {isActive && (
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/20 z-40 pointer-events-none">
-          <div
-            className="h-full bg-white transition-[width] duration-150 ease-linear shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-            style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
-          />
-        </div>
-      )}
 
       {/* Vignette Gradients for readable text */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/85 z-10 pointer-events-none" />
@@ -669,6 +704,39 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </div>
         </aside>
       </div>
+
+      {/* Interactive Video Progress Bar (Bottom edge, scrubbable left/right) */}
+      {isActive && (
+        <div
+          ref={scrubberRef}
+          onPointerDown={handleScrubberPointerDown}
+          onPointerMove={handleScrubberPointerMove}
+          onPointerUp={handleScrubberPointerUp}
+          onPointerCancel={handleScrubberPointerUp}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute bottom-0 left-0 right-0 z-50 h-5 flex items-end cursor-pointer group pointer-events-auto touch-none select-none pb-0.5 px-0.5"
+          title={t("video.scrubVideo", "Drag or tap to seek video")}
+          aria-label={t("video.scrubVideo", "Drag or tap to seek video")}
+        >
+          {/* Background Track */}
+          <div className="w-full h-1 group-hover:h-2 group-active:h-2 bg-white/25 transition-all duration-150 relative rounded-full overflow-hidden">
+            {/* Filled Progress Track */}
+            <div
+              className="h-full bg-white transition-[width] duration-75 ease-out shadow-[0_0_10px_rgba(255,255,255,0.9)] relative"
+              style={{
+                width: `${Math.min(100, Math.max(0, isScrubbing && scrubPercent !== null ? scrubPercent : progressPercent))}%`
+              }}
+            >
+              {/* Scrubbing Handle Dot */}
+              <div
+                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-black/20 transition-transform ${
+                  isScrubbing ? "scale-125 bg-red-500 ring-2 ring-white" : "scale-100 group-hover:scale-110"
+                }`}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );

@@ -5584,7 +5584,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
   // Save Video Review metadata endpoint (persists review record on server and Firestore)
 
-  function resolveVideoAuthorRecipient(video: any) {
+  async function resolveVideoAuthorRecipient(video: any) {
     let email = "";
     let uid = video.userId ? String(video.userId) : "";
     let authorName = video.authorName ? String(video.authorName) : "";
@@ -5599,13 +5599,37 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       }
     } catch (e) {}
 
-    email = parsedData.userEmail || parsedData.author?.email || "";
+    email = parsedData.userEmail || parsedData.author?.email || parsedData.email || "";
+    if (!authorName) authorName = parsedData.authorName || parsedData.author?.name || "";
+    if (!authorHandle) authorHandle = parsedData.userHandle || parsedData.author?.handle || "";
+
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb && (!email || !email.includes("@"))) {
+      try {
+        const searchKey = uid || authorName || authorHandle;
+        if (searchKey) {
+          const uRows = await bunnyDb.execute({
+            sql: "SELECT email, id, name, data FROM users WHERE id = ? OR email = ? OR name = ? LIMIT 1",
+            args: [searchKey, searchKey, searchKey]
+          });
+          if (uRows && uRows.rows && uRows.rows.length > 0) {
+            const uRow: any = uRows.rows[0];
+            let uData: any = {};
+            try { uData = typeof uRow.data === "string" ? JSON.parse(uRow.data) : (uRow.data || {}); } catch(e){}
+            email = uRow.email || uData.email || email;
+            if (uRow.id) uid = uRow.id;
+            if (uRow.name) authorName = uRow.name;
+          }
+        }
+      } catch (e) {}
+    }
+
     if (!email && uid && uid.includes("@")) {
       email = uid;
     }
 
     if (!email || !email.includes("@")) {
-      const lower = `${authorName} ${uid} ${email}`.toLowerCase();
+      const lower = `${authorName} ${uid} ${email} ${authorHandle}`.toLowerCase();
       if (lower.includes("avtertuop") || lower.includes("avt ertuop") || lower.includes("avr6566gd") || lower.includes("avt")) {
         email = "avr6566gd@gmail.com";
       } else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) {
@@ -5618,7 +5642,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     return {
       recipientEmail: email || authorName || uid,
       recipientId: uid || email || authorName,
-      recipientHandle: authorName || uid
+      recipientHandle: authorHandle || authorName || uid
     };
   }
 
@@ -5776,7 +5800,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           });
           if (videoRows && videoRows.rows && videoRows.rows.length > 0) {
             const video = videoRows.rows[0];
-            const recipient = resolveVideoAuthorRecipient(video);
+            const recipient = await resolveVideoAuthorRecipient(video);
             
             // 1. Send notification to Video Author
             await createAndBroadcastBackendNotification({
@@ -6020,7 +6044,7 @@ app.post("/api/interactions/like", async (req, res) => {
             });
             if (videoRows && videoRows.rows && videoRows.rows.length > 0) {
               const video = videoRows.rows[0];
-              const recipient = resolveVideoAuthorRecipient(video);
+              const recipient = await resolveVideoAuthorRecipient(video);
               
               await createAndBroadcastBackendNotification({
                 senderUserId: userId,
@@ -6080,7 +6104,7 @@ app.post("/api/interactions/like", async (req, res) => {
             });
             if (videoRows && videoRows.rows && videoRows.rows.length > 0) {
               const video = videoRows.rows[0];
-              const recipient = resolveVideoAuthorRecipient(video);
+              const recipient = await resolveVideoAuthorRecipient(video);
               
               await createAndBroadcastBackendNotification({
                 senderUserId: userId,
