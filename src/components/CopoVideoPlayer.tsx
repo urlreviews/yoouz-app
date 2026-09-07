@@ -425,6 +425,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
 
         if (nextVid) {
+          // ALWAYS, UNCONDITIONALLY mute and pause immediately before anything else to prevent sound leaks
+          nextVid.muted = true;
+          try { nextVid.pause(); } catch (e) {}
+
           const nextSlot = document.getElementById(`video-slot-${nextVideo.id}`);
           if (nextSlot && nextVid.parentElement !== nextSlot) {
             nextSlot.appendChild(nextVid);
@@ -433,14 +437,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (!isSameSrc(nextVid.src, nextSrc)) {
             nextVid.src = nextSrc;
             nextVid.preload = "auto";
-            nextVid.muted = true;
             try { nextVid.load(); } catch (e) {}
           }
           const nextPoster = resolveVideoPosterUrl(nextVideo);
           if (nextVid.poster !== nextPoster) {
             nextVid.poster = nextPoster;
           }
-          try { nextVid.pause(); } catch (e) {}
         }
       }
 
@@ -458,6 +460,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
 
         if (prevVid) {
+          // ALWAYS, UNCONDITIONALLY mute and pause immediately before anything else to prevent sound leaks
+          prevVid.muted = true;
+          try { prevVid.pause(); } catch (e) {}
+
           const prevSlot = document.getElementById(`video-slot-${prevVideo.id}`);
           if (prevSlot && prevVid.parentElement !== prevSlot) {
             prevSlot.appendChild(prevVid);
@@ -466,14 +472,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (!isSameSrc(prevVid.src, prevSrc)) {
             prevVid.src = prevSrc;
             prevVid.preload = "auto";
-            prevVid.muted = true;
             try { prevVid.load(); } catch (e) {}
           }
           const prevPoster = resolveVideoPosterUrl(prevVideo);
           if (prevVid.poster !== prevPoster) {
             prevVid.poster = prevPoster;
           }
-          try { prevVid.pause(); } catch (e) {}
         }
       }
     }, 350);
@@ -485,6 +489,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id)) &&
         (!prevVideo || v !== slotBindingRef.current.get(prevVideo?.id || ""))
       ) {
+        v.muted = true;
         try { v.pause(); } catch (e) {}
         v.remove();
       }
@@ -538,11 +543,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [isPaused]);
 
-  // Active Watchdog: Auto-recovers video if frozen for > 2.4 seconds
+  // Active Watchdog: Auto-recovers video if frozen for > 3.0 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       const vid = feedVideoRef.current;
-      if (!vid || vid.paused || isManuallyPausedRef.current || isPaused) {
+      // Skip watchdog if video is paused, manually paused, or in a loading/buffering state (readyState < 3)
+      if (!vid || vid.paused || isManuallyPausedRef.current || isPaused || vid.readyState < 3) {
         lastAdvanceTimeRef.current = { time: Date.now(), currentTime: vid?.currentTime || 0 };
         return;
       }
@@ -551,7 +557,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const current = vid.currentTime;
       const { time: lastTime, currentTime: lastCur } = lastAdvanceTimeRef.current;
 
-      if (Math.abs(current - lastCur) < 0.05 && now - lastTime > 2400) {
+      // Only recover if the stream is supposed to be fully playable but isn't advancing
+      if (Math.abs(current - lastCur) < 0.05 && now - lastTime > 3000) {
         console.warn("[CopoVideoPlayer Watchdog] Stalled frame detected, recovering playback...");
         try {
           vid.currentTime += 0.01;
@@ -561,7 +568,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       } else if (Math.abs(current - lastCur) >= 0.05) {
         lastAdvanceTimeRef.current = { time: now, currentTime: current };
       }
-    }, 1200);
+    }, 1500);
 
     return () => clearInterval(interval);
   }, []);
