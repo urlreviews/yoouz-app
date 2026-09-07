@@ -233,6 +233,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const myUid = (currentUser?.uid || currentUser?.id || "").toLowerCase().trim();
     const myHandle = ((currentUser as any)?.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
+    const isAvtErtuop = myEmail.includes("avr6566gd") || myName === "avt ertuop" || myHandle === "avtertuop" || myUid.includes("avr6566gd") || myName.includes("avt");
+    const isAouisesmee = myEmail.includes("aouisesmee") || myName.includes("aouisesmee") || myHandle.includes("aouisesmee") || myUid.includes("aouisesmee") || myEmail.includes("4samet") || myName.includes("4samet");
+    const isBizRiv = myEmail.includes("louis42111") || myName === "biz riv" || myHandle === "bizriv" || myUid.includes("louis42111") || myEmail.includes("biz");
+
     const isMe = (cand: { email?: string; name?: string; id?: string; handle?: string }) => {
       const e = (cand.email || "").toLowerCase().trim();
       const n = (cand.name || "").toLowerCase().trim();
@@ -240,11 +244,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const h = (cand.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
       if (e && myEmail && e === myEmail) return true;
-      if (e === "4samet@gmail.com") return true;
-      if (n && myName && n === myName) return true;
-      if (n === "samet" || n === "registered user" || n === "reviewer" || n === "user") return true;
+      if (n && myName && n === myName && n !== "reviewer" && n !== "user") return true;
       if (i && myUid && (i === myUid || i === `usr_${myUid}` || myUid === `usr_${i}`)) return true;
       if (h && myHandle && h === myHandle) return true;
+
+      if (isAouisesmee && (e.includes("aouisesmee") || e.includes("4samet") || n.includes("aouisesmee") || h.includes("aouisesmee"))) return true;
+      if (isAvtErtuop && (e.includes("avr6566gd") || n.includes("avt") || h.includes("avt"))) return true;
+      if (isBizRiv && (e.includes("louis42111") || n.includes("biz") || h.includes("biz"))) return true;
+
       return false;
     };
 

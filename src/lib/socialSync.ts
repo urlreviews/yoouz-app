@@ -128,7 +128,7 @@ function registerRealtimeListener(user: UserProfile, handler: RealtimeEventHandl
 }
 
 /**
- * Send a notification to a recipient (persists in Bunny DB, Firestore & instantly broadcasts via SSE)
+ * Send a notification to a recipient (persists in Bunny Cloud Database & instantly broadcasts via SSE)
  */
 export async function sendSocialNotification(params: CreateNotificationParams): Promise<void> {
   const rawTargetEmail = (params.recipientEmail || "").trim().toLowerCase();
@@ -499,24 +499,24 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
     const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
 
-    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd");
-    const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee");
-    const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111");
+    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avt");
+    const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee") || userEmail.includes("4samet") || userName.includes("4samet") || userId.includes("4samet");
+    const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111") || userEmail.includes("biz") || userName.includes("biz");
 
     const matchesAvtErtuop = isAvtErtuop && (
-      participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("canon_user_avtertuop")) ||
-      senderEmail.includes("avr6566gd") || recipientEmail.includes("avr6566gd") ||
-      senderName === "avt ertuop" || recipientName === "avt ertuop"
+      participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("canon_user_avtertuop") || p.includes("avt")) ||
+      senderEmail.includes("avr6566gd") || senderEmail.includes("avt") || recipientEmail.includes("avr6566gd") || recipientEmail.includes("avt") ||
+      senderName.includes("avt") || recipientName.includes("avt")
     );
     const matchesAouisesmee = isAouisesmee && (
-      participants.some(p => p.includes("aouisesmee") || p.includes("canon_user_aouisesmee")) ||
-      senderEmail.includes("aouisesmee") || recipientEmail.includes("aouisesmee") ||
-      senderName.includes("aouisesmee") || recipientName.includes("aouisesmee")
+      participants.some(p => p.includes("aouisesmee") || p.includes("4samet") || p.includes("canon_user_aouisesmee")) ||
+      senderEmail.includes("aouisesmee") || senderEmail.includes("4samet") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("4samet") ||
+      senderName.includes("aouisesmee") || senderName.includes("4samet") || recipientName.includes("aouisesmee") || recipientName.includes("4samet")
     );
     const matchesBizRiv = isBizRiv && (
-      participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("canon_user_bizriv")) ||
-      senderEmail.includes("louis42111") || recipientEmail.includes("louis42111") ||
-      senderName === "biz riv" || recipientName === "biz riv"
+      participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("canon_user_bizriv") || p.includes("biz")) ||
+      senderEmail.includes("louis42111") || senderEmail.includes("biz") || recipientEmail.includes("louis42111") || recipientEmail.includes("biz") ||
+      senderName.includes("biz") || recipientName.includes("biz")
     );
 
     const isParticipant =
@@ -537,13 +537,17 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       if (data.participantProfiles && typeof data.participantProfiles === "object") {
         const otherKey = Object.keys(data.participantProfiles).find((k) => {
           const normK = k.toLowerCase().replace(/^@/, "").trim();
-          return (
-            normK !== userEmail &&
-            normK !== emailPrefix &&
-            normK !== userHandle &&
-            normK !== userName &&
-            normK !== userId
+          const isKeyMe = (
+            normK === userEmail ||
+            normK === emailPrefix ||
+            normK === userHandle ||
+            normK === userName ||
+            normK === userId ||
+            (isAouisesmee && (normK.includes("aouisesmee") || normK.includes("4samet"))) ||
+            (isAvtErtuop && (normK.includes("avr6566gd") || normK.includes("avt"))) ||
+            (isBizRiv && (normK.includes("louis42111") || normK.includes("biz")))
           );
+          return !isKeyMe;
         });
         if (otherKey && data.participantProfiles[otherKey]) {
           const otherProfile = data.participantProfiles[otherKey];
@@ -577,8 +581,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           data.unreadCounts[userHandle] ??
           data.unreadCounts[userName] ??
           data.unreadCounts[userId] ??
-          (isAvtErtuop ? (data.unreadCounts["avr6566gd@gmail.com"] ?? data.unreadCounts["avr6566gd"] ?? data.unreadCounts["avt ertuop"] ?? data.unreadCounts["avtertuop"]) : undefined) ??
-          (isAouisesmee ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisesmee"]) : undefined) ??
+          (isAvtErtuop ? (data.unreadCounts["avr6566gd@gmail.com"] ?? data.unreadCounts["avr6566gd"] ?? data.unreadCounts["avt ertuop"] ?? data.unreadCounts["avtertuop"] ?? data.unreadCounts["avt"]) : undefined) ??
+          (isAouisesmee ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisesmee"] ?? data.unreadCounts["4samet@gmail.com"] ?? data.unreadCounts["4samet"]) : undefined) ??
           (isBizRiv ? (data.unreadCounts["louis42111@gmail.com"] ?? data.unreadCounts["louis42111"] ?? data.unreadCounts["biz riv"] ?? data.unreadCounts["bizriv"]) : undefined) ??
           0;
       } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
@@ -594,9 +598,12 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         const isSender =
           (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
           (emailPrefix && (msgSenderEmail.startsWith(emailPrefix) || msgSenderId === emailPrefix)) ||
-          (userHandle && msgSenderId === userHandle) ||
+          (userHandle && (msgSenderId === userHandle || msgSenderName === userHandle)) ||
           (userName && msgSenderName === userName) ||
-          (userId && msgSenderId === userId);
+          (userId && msgSenderId === userId) ||
+          (isAouisesmee && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("4samet") || msgSenderName.includes("aouisesmee") || msgSenderName.includes("4samet"))) ||
+          (isAvtErtuop && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("avt") || msgSenderId.includes("avt"))) ||
+          (isBizRiv && (msgSenderEmail.includes("louis42111") || msgSenderName.includes("biz") || msgSenderId.includes("biz")));
 
         return {
           id: m.id || `msg_${Date.now()}_${Math.random()}`,
@@ -737,9 +744,9 @@ export function subscribeToChats(
 }
 
 /**
- * Send a message within a chat thread and persist to Bunny DB + Firestore + SSE
+ * Send a message within a chat thread and persist to Bunny Database & SSE
  */
-export async function sendChatMessageToFirestore(
+export async function sendChatMessage(
   threadId: string,
   messageText: string,
   currentUser: UserProfile,
@@ -828,23 +835,23 @@ export async function sendChatMessageToFirestore(
   const fullHistory = [...existingHistory, newMessage];
 
   const canonicalAliases: string[] = [];
-  if (recipientName.toLowerCase() === "avt ertuop" || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop")) {
-    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop");
+  if (recipientName.toLowerCase() === "avt ertuop" || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientId.includes("avt")) {
+    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
   }
-  if (recipientName.toLowerCase() === "biz riv" || recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv")) {
-    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+  if (recipientName.toLowerCase() === "biz riv" || recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientId.includes("biz")) {
+    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv", "biz");
   }
-  if (recipientName.toLowerCase().includes("aouisesmee") || recipientEmail === "aouisesmee@gmail.com" || recipientId.includes("aouisesmee")) {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee");
+  if (recipientName.toLowerCase().includes("aouisesmee") || recipientEmail === "aouisesmee@gmail.com" || recipientEmail.includes("4samet") || recipientId.includes("aouisesmee") || recipientId.includes("4samet")) {
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
   }
-  if (userName.toLowerCase() === "avt ertuop" || userEmail === "avr6566gd@gmail.com") {
-    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop");
+  if (userName.toLowerCase() === "avt ertuop" || userEmail === "avr6566gd@gmail.com" || userEmail.includes("avt") || userName.toLowerCase().includes("avt")) {
+    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
   }
-  if (userName.toLowerCase() === "biz riv" || userEmail === "louis42111@gmail.com") {
-    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+  if (userName.toLowerCase() === "biz riv" || userEmail === "louis42111@gmail.com" || userEmail.includes("biz") || userName.toLowerCase().includes("biz")) {
+    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv", "biz");
   }
-  if (userName.toLowerCase().includes("aouisesmee") || userEmail === "aouisesmee@gmail.com") {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee");
+  if (userName.toLowerCase().includes("aouisesmee") || userEmail === "aouisesmee@gmail.com" || userEmail.includes("4samet") || userName.toLowerCase().includes("4samet")) {
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
   }
 
   const participantsList = Array.from(
@@ -904,21 +911,25 @@ export async function sendChatMessageToFirestore(
       ...(recipientId && { [recipientId.toLowerCase()]: nextUnreadCount, [recipientId.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
       ...(recipientHandle && { [recipientHandle.toLowerCase()]: nextUnreadCount, [recipientHandle.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
       ...(recipientName && { [recipientName.toLowerCase()]: nextUnreadCount, [recipientName.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
-      ...((recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientName.toLowerCase() === "avt ertuop") ? {
+      ...((recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientName.toLowerCase() === "avt ertuop" || recipientId.includes("avt")) ? {
         "avr6566gd@gmail.com": nextUnreadCount,
         "avr6566gd": nextUnreadCount,
         "avt ertuop": nextUnreadCount,
-        "avtertuop": nextUnreadCount
+        "avtertuop": nextUnreadCount,
+        "avt": nextUnreadCount
       } : {}),
-      ...((recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientName.toLowerCase() === "biz riv") ? {
+      ...((recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientName.toLowerCase() === "biz riv" || recipientId.includes("biz")) ? {
         "louis42111@gmail.com": nextUnreadCount,
         "louis42111": nextUnreadCount,
         "biz riv": nextUnreadCount,
-        "bizriv": nextUnreadCount
+        "bizriv": nextUnreadCount,
+        "biz": nextUnreadCount
       } : {}),
-      ...((recipientEmail.includes("aouisesmee") || recipientName.toLowerCase().includes("aouisesmee")) ? {
+      ...((recipientEmail.includes("aouisesmee") || recipientEmail.includes("4samet") || recipientName.toLowerCase().includes("aouisesmee") || recipientName.toLowerCase().includes("4samet")) ? {
         "aouisesmee@gmail.com": nextUnreadCount,
-        "aouisesmee": nextUnreadCount
+        "aouisesmee": nextUnreadCount,
+        "4samet@gmail.com": nextUnreadCount,
+        "4samet": nextUnreadCount
       } : {})
     }
   });
@@ -1036,12 +1047,12 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
 }
 
 /**
- * Delete a chat thread from Firestore & BunnyDB
+ * Delete a chat thread from Bunny Cloud Database
  */
-export async function deleteChatThreadFromFirestore(threadId: string): Promise<void> {
+export async function deleteChatThread(threadId: string): Promise<void> {
   if (!threadId) return;
   
-  // Mirror to BunnyDB
+  // Primary delete in BunnyDB
   fetch(`/api/nosql/chats/${threadId}`, {
     method: "DELETE"
   }).catch(() => {});
@@ -1053,3 +1064,7 @@ export async function deleteChatThreadFromFirestore(threadId: string): Promise<v
     } catch (err) {}
   }
 }
+
+// Aliases for seamless backward compatibility
+export const sendChatMessageToFirestore = sendChatMessage;
+export const deleteChatThreadFromFirestore = deleteChatThread;

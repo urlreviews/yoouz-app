@@ -5687,14 +5687,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           ].filter(Boolean);
 
       const targets = [...rawTargets];
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop")) {
-        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop" || (t || "").toLowerCase().includes("avt"))) {
+        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
       }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
-        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv" || (t || "").toLowerCase().includes("biz"))) {
+        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv", "biz");
       }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee"))) {
-        targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("4samet"))) {
+        targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
       }
 
       broadcastSseEvent({
