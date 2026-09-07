@@ -218,9 +218,13 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
   for (const data of rawItems) {
     if (!data) continue;
     const senderEmail = (data.user?.email || "").toLowerCase().trim();
+    const senderName = (data.user?.name || "").toLowerCase().trim();
 
     // Exclude own actions
     if (userEmail && senderEmail && senderEmail === userEmail) {
+      continue;
+    }
+    if (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail)) {
       continue;
     }
 
@@ -241,7 +245,9 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       normRecId.includes("avtertuop") ||
       normRecHandle.includes("avtertuop") ||
       recId.includes("avr6566gd") ||
-      recEmail.includes("avt")
+      recEmail.includes("avt") ||
+      recHandle.includes("avt") ||
+      recId.includes("avt")
     );
     const matchesAouisesmee = isAouisesmee && (
       recEmail.includes("aouisesmee") ||
@@ -251,7 +257,8 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       recId.includes("aouisesmee") ||
       recId.includes("4samet") ||
       normRecId.includes("4samet") ||
-      normRecHandle.includes("4samet")
+      normRecHandle.includes("4samet") ||
+      recHandle.includes("aouisesmee")
     );
     const matchesBizRiv = isBizRiv && (
       recEmail.includes("louis42111") ||
@@ -259,7 +266,8 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       normRecId.includes("louis42111") ||
       normRecId.includes("bizriv") ||
       recId === "biz riv" ||
-      recHandle === "biz riv"
+      recHandle === "biz riv" ||
+      recHandle.includes("bizriv")
     );
 
     const isForMe =
@@ -285,7 +293,8 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
         createdAtMs: data.createdAt,
         videoId: data.videoId,
         videoThumbnail: data.videoThumbnail,
-        isRead: Boolean(data.isRead)
+        placeName: data.placeName,
+        isRead: Boolean(data.isRead === true || data.isRead === 1 || data.read === true || data.read === 1 || data.isRead === "true" || data.isRead === "1")
       });
     }
   }
@@ -390,25 +399,58 @@ export function subscribeToNotifications(
 /**
  * Mark a single notification as read
  */
-export async function markNotificationAsRead(notificationId: string): Promise<void> {
+export async function markNotificationAsRead(notificationId: string, currentUser?: UserProfile | null): Promise<void> {
   if (!notificationId) return;
+
+  if (currentUser) {
+    try {
+      const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+      const cacheKey = `copo_cached_notifs_${userKey}`;
+      const rawCache = localStorage.getItem(cacheKey);
+      if (rawCache) {
+        const parsed = JSON.parse(rawCache);
+        if (Array.isArray(parsed)) {
+          const updated = parsed.map((n: any) => n.id === notificationId ? { ...n, isRead: true, read: true } : n);
+          localStorage.setItem(cacheKey, JSON.stringify(updated));
+        }
+      }
+    } catch (e) {}
+  }
+
   fetch(`/api/nosql/notifications/${notificationId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ data: { isRead: true }, merge: true })
+    body: JSON.stringify({ data: { isRead: true, read: true }, merge: true })
   }).catch(() => {});
 }
 
 /**
  * Mark all notifications as read
  */
-export async function markAllNotificationsAsRead(notificationIds: string[]): Promise<void> {
+export async function markAllNotificationsAsRead(notificationIds: string[], currentUser?: UserProfile | null): Promise<void> {
   if (!notificationIds || notificationIds.length === 0) return;
+
+  if (currentUser) {
+    try {
+      const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+      const cacheKey = `copo_cached_notifs_${userKey}`;
+      const rawCache = localStorage.getItem(cacheKey);
+      if (rawCache) {
+        const parsed = JSON.parse(rawCache);
+        if (Array.isArray(parsed)) {
+          const idSet = new Set(notificationIds);
+          const updated = parsed.map((n: any) => idSet.has(n.id) ? { ...n, isRead: true, read: true } : n);
+          localStorage.setItem(cacheKey, JSON.stringify(updated));
+        }
+      }
+    } catch (e) {}
+  }
+
   for (const id of notificationIds) {
     fetch(`/api/nosql/notifications/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: { isRead: true }, merge: true })
+      body: JSON.stringify({ data: { isRead: true, read: true }, merge: true })
     }).catch(() => {});
   }
 }

@@ -278,7 +278,6 @@ export interface CopoNotification {
   type: "like" | "comment" | "follow" | "repost" | "message" | "bookmark";
   user: {
     name: string;
-    
     avatar: string;
   };
   text: string;
@@ -286,6 +285,7 @@ export interface CopoNotification {
   createdAtMs?: number;
   videoThumbnail?: string;
   videoId?: string;
+  placeName?: string;
   isRead: boolean;
 }
 
