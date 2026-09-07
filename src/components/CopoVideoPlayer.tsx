@@ -165,10 +165,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         vid.addEventListener("play", () => {
           if (feedVideoRef.current === vid) {
             setIsBuffering(false);
-            setIsPlaying(true);
-            if (lastLoadedVideoIdRef.current) {
-              setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-            }
           }
         });
         vid.addEventListener("pause", () => {
@@ -184,28 +180,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         vid.addEventListener("canplay", () => {
           if (feedVideoRef.current === vid) {
             setIsBuffering(false);
-            if (!vid.paused) {
-              setIsPlaying(true);
-              if (lastLoadedVideoIdRef.current) {
-                setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-              }
-            }
           }
         });
         vid.addEventListener("loadeddata", () => {
           if (feedVideoRef.current === vid) {
             setIsBuffering(false);
-            if (!vid.paused) {
-              setIsPlaying(true);
-              if (lastLoadedVideoIdRef.current) {
-                setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-              }
-            }
           }
         });
         vid.addEventListener("timeupdate", () => {
           if (feedVideoRef.current === vid) {
-            if (!vid.paused && vid.currentTime >= 0.005) {
+            if (!vid.paused && vid.currentTime >= 0.05) {
               setIsPlaying(true);
               setIsBuffering(false);
               if (lastLoadedVideoIdRef.current) {
@@ -333,6 +317,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     if (!isSameSrc(activeVid.src, activeSrc)) {
       activeVid.src = activeSrc;
     }
+    const activePoster = resolveVideoPosterUrl(activeVideo);
+    if (activeVid.poster !== activePoster) {
+      activeVid.poster = activePoster;
+    }
 
     // Configure audio & mute on active element
     const effectiveMuted = isMuted || !isSessionAudioUnlocked;
@@ -355,11 +343,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         setIsPlaying(false);
       }
     } else {
-      // New active video detected
+      // New active video detected - rewind to start
       lastLoadedVideoIdRef.current = activeVideo.id;
       setFirstFrameRenderedId(null);
       setIsPlaying(false);
       setProgressPercent(0);
+      try {
+        activeVid.currentTime = 0;
+      } catch (e) {}
 
       const shouldStartPaused = Boolean(isPaused || initialAutoplayPaused);
 
@@ -390,9 +381,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             playPromiseRef.current = p;
             p.then(() => {
               playPromiseRef.current = null;
-              setIsPlaying(true);
+              // Do NOT set playing/firstFrame rendered here; let compositor events handle it
               setIsBuffering(false);
-              setFirstFrameRenderedId(activeVideo.id);
             }).catch((err) => {
               playPromiseRef.current = null;
               if (err?.name === "NotAllowedError") {
@@ -403,9 +393,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 const retryP = activeVid.play();
                 if (retryP !== undefined) {
                   retryP.then(() => {
-                    setIsPlaying(true);
                     setIsBuffering(false);
-                    setFirstFrameRenderedId(activeVideo.id);
                   }).catch(() => {});
                 }
               } else if (err?.name !== "AbortError") {
@@ -442,8 +430,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           const nextSrc = resolvePlayableVideoSource(nextVideo);
           if (!isSameSrc(nextVid.src, nextSrc)) {
             nextVid.src = nextSrc;
-            nextVid.preload = "metadata";
+            nextVid.preload = "auto";
             nextVid.muted = true;
+          }
+          const nextPoster = resolveVideoPosterUrl(nextVideo);
+          if (nextVid.poster !== nextPoster) {
+            nextVid.poster = nextPoster;
           }
           try { nextVid.pause(); } catch (e) {}
         }
@@ -470,8 +462,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           const prevSrc = resolvePlayableVideoSource(prevVideo);
           if (!isSameSrc(prevVid.src, prevSrc)) {
             prevVid.src = prevSrc;
-            prevVid.preload = "metadata";
+            prevVid.preload = "auto";
             prevVid.muted = true;
+          }
+          const prevPoster = resolveVideoPosterUrl(prevVideo);
+          if (prevVid.poster !== prevPoster) {
+            prevVid.poster = prevPoster;
           }
           try { prevVid.pause(); } catch (e) {}
         }
