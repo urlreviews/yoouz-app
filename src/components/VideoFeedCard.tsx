@@ -705,7 +705,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </aside>
       </div>
 
-      {/* Interactive Video Progress Bar (YouTube Shorts / Reels ultra-thin style) */}
+      {/* Interactive Video Progress Bar (Sleek ultra-thin white reel style) */}
       {isActive && (
         <div
           ref={scrubberRef}
@@ -714,24 +714,24 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onPointerUp={handleScrubberPointerUp}
           onPointerCancel={handleScrubberPointerUp}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-0 left-0 right-0 z-50 h-4 flex items-end cursor-pointer group pointer-events-auto touch-none select-none pb-0 px-0"
+          className="absolute bottom-[calc(max(10px,env(safe-area-inset-bottom,10px))+52px)] md:bottom-0 left-0 right-0 z-50 h-3.5 flex items-end cursor-pointer group pointer-events-auto touch-none select-none pb-0 px-0"
           title={t("video.scrubVideo", "Drag or tap to seek video")}
           aria-label={t("video.scrubVideo", "Drag or tap to seek video")}
         >
           {/* Background Track - Ultra-thin 2px */}
-          <div className="w-full h-[2px] group-hover:h-[4px] group-active:h-[4px] bg-white/20 transition-all duration-150 relative">
-            {/* Filled Progress Track (YouTube Shorts Red) */}
+          <div className="w-full h-[2px] group-hover:h-[3.5px] group-active:h-[3.5px] bg-white/25 transition-all duration-150 relative">
+            {/* Filled Progress Track (Pure White with subtle glow) */}
             <div
-              className="h-full bg-red-600 transition-[width] duration-75 ease-out relative"
+              className="h-full bg-white transition-[width] duration-75 ease-out relative shadow-[0_0_8px_rgba(255,255,255,0.7)]"
               style={{
                 width: `${Math.min(100, Math.max(0, isScrubbing && scrubPercent !== null ? scrubPercent : progressPercent))}%`
               }}
             >
               {/* Scrubbing Handle Dot */}
               <div
-                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-600 shadow-sm transition-all duration-150 ${
+                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-white shadow-md transition-all duration-150 ${
                   isScrubbing
-                    ? "w-3 h-3 ring-2 ring-white scale-110 opacity-100"
+                    ? "w-3 h-3 ring-2 ring-black/40 scale-110 opacity-100"
                     : "w-2.5 h-2.5 opacity-0 group-hover:opacity-100 group-hover:scale-100"
                 }`}
               />
