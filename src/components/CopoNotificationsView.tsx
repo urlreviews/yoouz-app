@@ -267,102 +267,96 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
   return (
     <div 
-      className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-950/80 text-white md:text-white px-3.5 sm:px-6 md:px-8 py-4 sm:py-6 select-none" 
-      style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))', paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}
+      className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white px-3.5 sm:px-6 md:px-8 py-3 sm:py-5 select-none" 
+      style={{ paddingBottom: 'calc(6.5rem + env(safe-area-inset-bottom, 0px))', paddingTop: 'calc(0.5rem + env(safe-area-inset-top, 0px))' }}
     >
-      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5">
+      <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
         
-        {/* Top Sub-Tab Switcher matching Messages */}
-        {onNavigateToMessages && (
-          <div className="flex items-center justify-between pt-1">
-            <div className="inline-flex items-center p-1 bg-zinc-900 backdrop-blur-md rounded-2xl border border-zinc-800 shadow-3xs">
-              <button
-                id="tab-notifs-messages"
-                onClick={onNavigateToMessages}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-200 hover:text-white hover:bg-zinc-800/60 cursor-pointer transition-all active:scale-95"
-              >
-                <Mail className="w-4 h-4 text-zinc-200" />
-                <span>Messages</span>
-              </button>
-
-              <button
-                id="tab-notifs-activity"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-white text-zinc-950 shadow-xs cursor-pointer transition-all"
-              >
-                <Bell className="w-4 h-4 text-zinc-950" />
-                <span>Activity</span>
-                {unreadCount > 0 && (
-                  <span className="min-w-[18px] h-[18px] px-1 text-[10px] rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Native Mobile / Desktop Header */}
-        <div className="flex items-center justify-between gap-3 pt-1 pb-1">
-          <div className="flex items-center gap-3">
+        {/* Top Header & Navigation Bar */}
+        <div className="flex items-center justify-between gap-2 pt-1 pb-1">
+          {/* Left: Back Button + Title */}
+          <div className="flex items-center gap-2.5 min-w-0">
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
                 title="Back to Feed"
               >
-                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </button>
             )}
-            <div className="w-10 h-10 rounded-2xl bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-md shrink-0">
-              <Bell className="w-5 h-5 stroke-[2.5]" />
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight leading-tight truncate">
                 {t("nav.notifications", "Notifications")}
-              </h2>
-              <p className="text-[12px] text-zinc-200 font-medium mt-1">
+              </h1>
+              <p className="text-[11px] sm:text-xs text-zinc-400 font-medium truncate">
                 {unreadCount > 0
-                  ? `${unreadCount} ${t("common.just_now", "updates")}`
+                  ? `${unreadCount} ${t("common.just_now", "new updates")}`
                   : t("common.success", "All caught up")}
               </p>
             </div>
           </div>
 
-          {/* Header Action Buttons */}
-          <div className="flex items-center gap-2">
+          {/* Right: Sub-tab Switcher & Header Controls */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {onNavigateToMessages && (
+              <div className="inline-flex items-center p-0.5 bg-zinc-900/90 rounded-full border border-zinc-800 shadow-3xs">
+                <button
+                  id="tab-notifs-messages"
+                  onClick={onNavigateToMessages}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-bold text-zinc-400 hover:text-white cursor-pointer transition-all active:scale-95"
+                >
+                  Messages
+                </button>
+                <button
+                  id="tab-notifs-activity"
+                  className="px-2.5 py-1 rounded-full text-[11px] font-black bg-white text-zinc-950 shadow-xs cursor-pointer flex items-center gap-1"
+                >
+                  <span>Activity</span>
+                  {unreadCount > 0 && (
+                    <span className="min-w-[15px] h-[15px] px-1 text-[9px] rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+
             {notifications.length > 0 && unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="px-3 py-1.5 rounded-full text-[11px] font-bold text-white bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-700 active:scale-95"
+                className="px-2.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold text-white bg-zinc-800/80 hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-700/80 active:scale-95"
               >
                 Mark read
               </button>
             )}
+
             {notifications.length > 0 && (
               <button
                 onClick={handleClearAll}
-                className="px-3 py-1.5 rounded-full text-[11px] font-bold text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
+                className="px-2.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
               >
                 Clear all
               </button>
             )}
+
             {onOpenSettings && (
               <button
                 id="btn-notifications-settings"
                 onClick={onOpenSettings}
-                className="p-2 rounded-full text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
+                className="p-1.5 sm:p-2 rounded-full text-zinc-400 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
                 title="Notification Preferences"
                 aria-label="Notification Preferences"
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Paused Notifications Notice Banner (Darkmode first) */}
+        {/* Paused Notifications Notice Banner */}
         {currentUser?.notificationSettings?.enabled === false && (
-          <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-zinc-300 text-xs shadow-md">
+          <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-zinc-300 text-xs shadow-md">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
                 <BellOff className="w-3.5 h-3.5 text-zinc-400" />
@@ -381,24 +375,24 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         )}
 
         {/* Filter Pills Segment Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none no-scrollbar -mx-1 px-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none no-scrollbar -mx-1 px-1">
           {filterPills.map((pill) => {
             const isActive = activeFilter === pill.value;
             return (
               <button
                 key={pill.value}
                 onClick={() => setActiveFilter(pill.value)}
-                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 ${
+                className={`px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 active:scale-95 ${
                   isActive
                     ? "bg-white text-zinc-950 shadow-md border border-transparent font-black"
-                    : "bg-zinc-900 text-zinc-200 border border-zinc-800 shadow-2xs hover:bg-zinc-800 hover:text-white"
+                    : "bg-zinc-900/90 text-zinc-300 border border-zinc-800 shadow-2xs hover:bg-zinc-800 hover:text-white"
                 }`}
               >
                 <span>{pill.label}</span>
                 {pill.count !== undefined && (
                   <span
-                    className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-extrabold ${
-                      isActive ? "bg-zinc-900 text-white" : "bg-zinc-800 text-zinc-200 border border-zinc-700"
+                    className={`inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-extrabold ${
+                      isActive ? "bg-zinc-900 text-white" : "bg-zinc-800 text-zinc-300 border border-zinc-700"
                     }`}
                   >
                     {pill.count}
@@ -411,36 +405,36 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
         {/* Notification Feed Card List */}
         {filteredNotifications.length > 0 ? (
-          <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 divide-y divide-zinc-800/60 overflow-hidden shadow-2xs">
+          <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
             {filteredNotifications.map((notif) => {
               // Custom badge styles
               const badgeStyles = {
                 like: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-900",
+                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
                   icon: <Heart className="w-2.5 h-2.5 fill-current" />
                 },
                 comment: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-900",
+                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
                   icon: <MessageSquare className="w-2.5 h-2.5 fill-current" />
                 },
                 follow: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-900",
+                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
                   icon: <UserPlus className="w-2.5 h-2.5" />
                 },
                 repost: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-900",
+                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
                   icon: <Repeat2 className="w-2.5 h-2.5" />
                 },
                 bookmark: {
-                  bg: "bg-amber-500 text-white ring-2 ring-zinc-900",
+                  bg: "bg-amber-500 text-white ring-2 ring-zinc-950",
                   icon: <Bookmark className="w-2.5 h-2.5 fill-current" />
                 },
                 message: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-900",
+                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
                   icon: <Mail className="w-2.5 h-2.5" />
                 }
               }[notif.type] || {
-                bg: "bg-zinc-700 text-white ring-2 ring-zinc-900",
+                bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
                 icon: <Bell className="w-2.5 h-2.5" />
               };
 
@@ -458,16 +452,11 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                       onSelectNotificationVideo(notif.videoId);
                     }
                   }}
-                  className={`group relative p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3.5 hover:bg-zinc-800/60 active:bg-zinc-800 cursor-pointer transition-colors ${
-                    !notif.isRead ? "bg-zinc-800/40" : ""
+                  className={`group relative p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 hover:bg-zinc-800/60 active:bg-zinc-800 cursor-pointer transition-colors ${
+                    !notif.isRead ? "bg-zinc-800/30" : ""
                   }`}
                 >
-                  {/* Left edge unread indicator bar */}
-                  {!notif.isRead && (
-                    <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-white" />
-                  )}
-
-                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 pl-1">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                     {/* Avatar with Badge Overlay */}
                     <div className="relative shrink-0 select-none">
                       {(() => {
@@ -483,7 +472,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           <img
                             src={avatarSrc}
                             alt={notif.user.name}
-                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800 shadow-2xs"
+                            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-zinc-800/80 shadow-2xs"
                             referrerPolicy="no-referrer"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src = isYoouzTeam
@@ -500,68 +489,74 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
                     {/* Notification Text Content */}
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs sm:text-[13px] text-zinc-200 leading-snug break-words line-clamp-2 sm:line-clamp-none">
+                      <div className="text-xs sm:text-[13px] text-zinc-200 leading-snug break-words line-clamp-2">
                         <span className="font-extrabold text-white hover:underline">
                           {notif.user.name}
                         </span>{" "}
                         {details.type === "recommendation" ? (
                           <>
-                            <span className="text-zinc-200 font-medium">recommended</span>{" "}
+                            <span className="text-zinc-300 font-medium">recommended</span>{" "}
                             <span className="font-bold text-white underline-offset-2 hover:underline">
                               <span className="sm:hidden">a website</span>
                               <span className="hidden sm:inline">{details.target}</span>
                             </span>
                             {details.rating && (
-                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px] sm:text-xs">
-                                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-400 inline shrink-0" />
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
                             )}
                           </>
                         ) : details.type === "video_share" ? (
                           <>
-                            <span className="text-zinc-200 font-medium">shared a review for</span>{" "}
+                            <span className="text-zinc-300 font-medium">shared a review for</span>{" "}
                             <span className="font-bold text-white underline-offset-2 hover:underline">
                               <span className="sm:hidden">a place</span>
                               <span className="hidden sm:inline">{details.target}</span>
                             </span>
                             {details.rating && (
-                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px] sm:text-xs">
-                                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-400 inline shrink-0" />
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
                             )}
                           </>
                         ) : details.type === "direct_message" ? (
                           <>
-                            <span className="text-zinc-200 font-medium">sent a message:</span>{" "}
-                            <span className="text-zinc-200 font-medium italic">
+                            <span className="text-zinc-300 font-medium">sent a message:</span>{" "}
+                            <span className="text-zinc-300 font-medium italic">
                               {details.messageBody}
                             </span>
                           </>
                         ) : details.type === "review_activity" ? (
                           <>
-                            <span className="text-zinc-200 font-medium">{details.action}</span>{" "}
+                            <span className="text-zinc-300 font-medium">{details.action}</span>{" "}
                             <span className="font-bold text-white">
                               <span className="sm:hidden">a place</span>
                               <span className="hidden sm:inline">{details.target}</span>
                             </span>
                           </>
                         ) : (
-                          <span className="text-zinc-200 font-medium">{details.rawText}</span>
+                          <span className="text-zinc-300 font-medium">{details.rawText}</span>
                         )}
                       </div>
-                      <span className="text-[10px] sm:text-[11px] text-zinc-200 font-semibold block mt-0.5">
-                        {formatRecordedDate(notif.timestamp, notif.createdAtMs)}
-                      </span>
+
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {!notif.isRead && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                        )}
+                        <span className="text-[10px] sm:text-[11px] text-zinc-400 font-medium block">
+                          {formatRecordedDate(notif.timestamp, notif.createdAtMs)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Right Thumbnail & Dismiss */}
-                  <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 select-none">
+                  <div className="flex items-center gap-2 shrink-0 select-none">
                     {resolvedThumbnail ? (
                       <div 
-                        className="w-11 h-14 sm:w-13 sm:h-16 rounded-xl sm:rounded-2xl overflow-hidden bg-zinc-950 shrink-0 border border-zinc-800 shadow-md relative group-hover:scale-105 transition-transform duration-200"
+                        className="w-11 h-14 sm:w-12 sm:h-15 rounded-xl overflow-hidden bg-zinc-950 shrink-0 border border-zinc-800 shadow-md relative group-hover:scale-105 transition-transform duration-200"
                         title="Watch video review"
                       >
                         <img
@@ -570,7 +565,6 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                           onError={(e) => {
-                            // Fallback to user avatar if thumbnail fails to load
                             const target = e.currentTarget as HTMLImageElement;
                             if (notif.user?.avatar && target.src !== notif.user.avatar) {
                               target.src = notif.user.avatar;
@@ -579,10 +573,9 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             }
                           }}
                         />
-                        {/* Play badge overlay showing it's a live video review */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent flex items-center justify-center">
-                          <div className="w-5 h-5 rounded-full bg-black/50 backdrop-blur-xs text-white flex items-center justify-center shadow-sm">
-                            <Play className="w-2.5 h-2.5 fill-white text-white translate-x-0.5" />
+                          <div className="w-4.5 h-4.5 rounded-full bg-black/50 backdrop-blur-xs text-white flex items-center justify-center shadow-sm">
+                            <Play className="w-2 h-2 fill-white text-white translate-x-0.5" />
                           </div>
                         </div>
                       </div>
@@ -591,7 +584,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     {/* Quick Dismiss Button */}
                     <button
                       onClick={(e) => handleDismiss(notif.id, e)}
-                      className="p-1 sm:p-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 hover:text-white text-zinc-200 border border-zinc-700 transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-90"
+                      className="p-1 sm:p-1.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 hover:text-white text-zinc-400 border border-zinc-700/60 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 cursor-pointer active:scale-90"
                       title="Delete notification"
                     >
                       <X className="w-3.5 h-3.5" />

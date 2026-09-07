@@ -649,15 +649,44 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       senderName.includes("biz") || recipientName.includes("biz")
     );
 
+    const historyHasUser = Array.isArray(data.history) && data.history.some((m: any) => {
+      if (!m) return false;
+      const mSE = (m.senderEmail || "").toLowerCase().trim();
+      const mSI = (m.senderId || "").toLowerCase().trim().replace(/^@/, "");
+      const mSN = (m.senderName || "").toLowerCase().trim();
+      return (
+        (userEmail && (mSE === userEmail || mSI === userEmail || mSE.includes(userEmail))) ||
+        (emailPrefix && (mSE.startsWith(emailPrefix) || mSI === emailPrefix)) ||
+        (userHandle && (mSI === userHandle || mSN === userHandle)) ||
+        (!isGenericName && mSN === userName) ||
+        (userId && mSI === userId) ||
+        (isAouisesmee && (mSE.includes("aouisesmee") || mSE.includes("4samet") || mSN.includes("aouisesmee") || mSN.includes("4samet"))) ||
+        (isAvtErtuop && (mSE.includes("avr6566gd") || mSN.includes("avt") || mSI.includes("avt"))) ||
+        (isBizRiv && (mSE.includes("louis42111") || mSN.includes("biz") || mSI.includes("biz")))
+      );
+    });
+
+    const threadIdStr = String(data.id || "").toLowerCase();
+    const threadIdMatchesUser = Boolean(
+      (userEmail && threadIdStr.includes(userEmail)) ||
+      (emailPrefix && threadIdStr.includes(emailPrefix)) ||
+      (userHandle && threadIdStr.includes(userHandle)) ||
+      (isAouisesmee && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("4samet"))) ||
+      (isAvtErtuop && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("avt"))) ||
+      (isBizRiv && (threadIdStr.includes("louis42111") || threadIdStr.includes("biz")))
+    );
+
     const isParticipant =
       matchesAvtErtuop ||
       matchesAouisesmee ||
       matchesBizRiv ||
-      (userEmail && (participants.includes(userEmail) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
-      (emailPrefix && (participants.includes(emailPrefix) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
-      (userHandle && (participants.includes(userHandle) || senderId === userHandle || recipientId === userHandle)) ||
+      historyHasUser ||
+      threadIdMatchesUser ||
+      (userEmail && (participants.some(p => p.includes(userEmail)) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
+      (emailPrefix && (participants.some(p => p.includes(emailPrefix)) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
+      (userHandle && (participants.some(p => p.includes(userHandle)) || senderId === userHandle || recipientId === userHandle)) ||
       (!isGenericName && (participants.includes(userName) || senderName === userName || recipientName === userName)) ||
-      (userId && (participants.includes(userId) || senderId === userId || recipientId === userId));
+      (userId && (participants.some(p => p.includes(userId)) || senderId === userId || recipientId === userId));
 
     if (isParticipant) {
       let otherName = data.senderName || data.recipientName || "Yoouz Member";
