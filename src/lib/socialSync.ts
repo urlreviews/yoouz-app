@@ -220,19 +220,27 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     const senderEmail = (data.user?.email || "").toLowerCase().trim();
     const senderName = (data.user?.name || "").toLowerCase().trim();
 
-    // Exclude own actions
-    if (userEmail && senderEmail && senderEmail === userEmail) {
-      continue;
-    }
-    if (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail)) {
-      continue;
-    }
-
     const recEmail = (data.recipientEmail || "").toLowerCase().trim();
     const recHandle = (data.recipientHandle || "").toLowerCase().trim().replace(/^@/, "");
     const recId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
     const normRecId = recId.replace(/\s+/g, "");
     const normRecHandle = recHandle.replace(/\s+/g, "");
+
+    // Allow self-notifications if explicitly addressed to self or system
+    const isExplicitSelfRecipient = (
+      (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail)) ||
+      (userHandle && (recHandle === userHandle || recId === userHandle))
+    );
+
+    // Exclude accidental self-action duplicates unless explicitly targeted
+    if (!isExplicitSelfRecipient) {
+      if (userEmail && senderEmail && senderEmail === userEmail) {
+        continue;
+      }
+      if (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail)) {
+        continue;
+      }
+    }
 
     const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt");
     const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee") || userEmail.includes("4samet") || userName.includes("4samet") || userId.includes("4samet");
@@ -274,6 +282,7 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       matchesAvtErtuop ||
       matchesAouisesmee ||
       matchesBizRiv ||
+      recEmail === "all" || recId === "all" || recHandle === "all" ||
       (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail || normRecId === userEmail)) ||
       (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || normRecId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
       (userHandle && (recHandle === userHandle || recId === userHandle || normRecId === userHandle || normRecHandle === userHandle || recEmail.includes(userHandle))) ||
@@ -297,6 +306,22 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
         isRead: Boolean(data.isRead === true || data.isRead === 1 || data.read === true || data.read === 1 || data.isRead === "true" || data.isRead === "1")
       });
     }
+  }
+
+  // System Welcome Notification Fallback if no user notifications exist yet
+  if (list.length === 0) {
+    list.push({
+      id: `welcome_notif_${userHandle || "user"}`,
+      type: "follow",
+      user: {
+        name: "Yoouz Team",
+        avatar: "/api/avatar?name=Yoouz+Team&background=27272a&color=fff&bold=true"
+      },
+      text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review.",
+      timestamp: "Just now",
+      createdAtMs: Date.now(),
+      isRead: false
+    });
   }
 
   // Sort newest first
