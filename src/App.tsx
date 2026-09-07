@@ -1253,7 +1253,7 @@ export function App() {
     };
   }, []);
 
-  // Real-time Firestore sync for Notifications
+  // Real-time BunnyDB sync for Notifications
   useEffect(() => {
     if (!currentUser) {
       setNotifications([]);
@@ -1372,7 +1372,7 @@ export function App() {
     };
   }, [currentUser, activeSection, allRegisteredUsers]);
 
-  // Real-time Firestore sync for Direct Messages & Chats
+  // Real-time BunnyDB sync for Direct Messages & Chats
   useEffect(() => {
     if (!currentUser) {
       setMessages([]);
@@ -3740,24 +3740,24 @@ export function App() {
     }
 
     try {
-      if (db) {
-        let totalCount = 0;
-        updatedComments.forEach((c) => {
-          totalCount += 1;
-          if (Array.isArray(c.replies)) totalCount += c.replies.length;
-        });
+      let totalCount = 0;
+      updatedComments.forEach((c) => {
+        totalCount += 1;
+        if (Array.isArray(c.replies)) totalCount += c.replies.length;
+      });
 
+      const dataToSave = cleanForFirestore({ comments: updatedComments, commentsCount: totalCount });
+      if (db) {
         const vidRef = doc(db, "videoReviews", videoId);
-        const dataToSave = cleanForFirestore({ comments: updatedComments, commentsCount: totalCount });
         await setDoc(vidRef, dataToSave, { merge: true });
-        fetch(`/api/nosql/videoReviews/${videoId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: dataToSave, merge: true })
-        }).catch(() => {});
       }
+      fetch(`/api/nosql/videoReviews/${videoId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: dataToSave, merge: true })
+      }).catch(() => {});
     } catch (err) {
-      console.warn("Firestore delete comment sync warning:", err);
+      console.warn("delete comment sync warning:", err);
     }
   };
 

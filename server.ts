@@ -4221,7 +4221,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
     }
 
     // 2. Query Firestore Admin if initialized (as fallback only for missing items, never overwriting BunnyDB)
-    if (adminDb && colName !== 'chats' && colName !== 'notifications') {
+    if (adminDb) {
       try {
         const snap = await adminDb.collection(colName).get();
         snap.forEach((docSnap: any) => {
@@ -5492,7 +5492,45 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      const merged = Array.from(map.values()).map(enrichReviewPlaceAssets);
+      // Fetch separate comments to ensure they NEVER get lost or fall out of sync
+      const videoCommentsMap = new Map<string, any[]>();
+      if (bunnyDb) {
+        try {
+          const commentsRows = await bunnyDb.execute("SELECT videoId, data FROM comments ORDER BY createdAt ASC");
+          if (commentsRows && commentsRows.rows) {
+            commentsRows.rows.forEach((row: any) => {
+              if (row.videoId) {
+                let parsed: any = {};
+                try {
+                  parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+                } catch(e){}
+                if (parsed && parsed.id) {
+                  const list = videoCommentsMap.get(String(row.videoId)) || [];
+                  if (!list.some(c => c.id === parsed.id)) {
+                    list.push(parsed);
+                  }
+                  videoCommentsMap.set(String(row.videoId), list);
+                }
+              }
+            });
+          }
+        } catch (cErr) {
+          console.warn("BunnyDB read comments in feed error:", cErr);
+        }
+      }
+
+      const merged = Array.from(map.values()).map((r: any) => {
+        const enriched = enrichReviewPlaceAssets(r);
+        const separateComments = videoCommentsMap.get(String(r.id));
+        if (separateComments && separateComments.length > 0) {
+          const existingComments = enriched.comments || [];
+          if (separateComments.length > existingComments.length) {
+            enriched.comments = separateComments;
+            enriched.commentsCount = separateComments.length;
+          }
+        }
+        return enriched;
+      });
       merged.sort((a, b) => {
         const aTime = a.createdAtMs || (a.id && a.id.startsWith('rev-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
         const bTime = b.createdAtMs || (b.id && b.id.startsWith('rev-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
@@ -5675,6 +5713,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           let parsed: any = {};
           try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
           return {
+            ...parsed,
             id: row.id,
             videoId: row.videoId,
             userId: row.userId,
@@ -5780,12 +5819,22 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
               totalCount += 1;
               if (Array.isArray(c.replies)) totalCount += c.replies.length;
             });
-            list[vidIdx] = {
+            const updatedReview = {
               ...curVid,
               comments: nextComments,
               commentsCount: totalCount
             };
+            list[vidIdx] = updatedReview;
             writeReviewsIndex(list);
+
+            if (bunnyDb) {
+              const jsonStr = JSON.stringify(updatedReview);
+              await bunnyDb.execute({
+                sql: `INSERT INTO videoReviews (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                args: [videoId, jsonStr, jsonStr]
+              }).catch(() => {});
+            }
           }
         }
       } catch (syncErr) {}

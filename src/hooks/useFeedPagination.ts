@@ -121,15 +121,17 @@ export function useFeedPagination() {
               .map(normalizeReview);
             
             setVideos((prev) => {
-              // Track local optimistic state (likes, bookmarks, views)
-              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; views?: number }>();
+              // Track local optimistic state (likes, bookmarks, views, comments)
+              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; views?: number; comments?: any[]; commentsCount?: number }>();
               prev.forEach((v) => {
                 if (v && v.id) {
                   interactionMap.set(v.id, {
                     isLiked: v.isLiked,
                     isBookmarked: v.isBookmarked,
                     likes: v.likes,
-                    views: v.views
+                    views: v.views,
+                    comments: v.comments,
+                    commentsCount: v.commentsCount
                   });
                 }
               });
@@ -150,12 +152,18 @@ export function useFeedPagination() {
               const mergedServerVideos = valid.map((v) => {
                 const local = interactionMap.get(v.id);
                 if (local) {
+                  const localComments = local.comments || [];
+                  const serverComments = v.comments || [];
+                  const useLocalComments = localComments.length > serverComments.length;
+
                   return {
                     ...v,
                     isLiked: local.isLiked !== undefined ? local.isLiked : v.isLiked,
                     isBookmarked: local.isBookmarked !== undefined ? local.isBookmarked : v.isBookmarked,
                     likes: typeof local.likes === 'number' && local.likes > v.likes ? local.likes : v.likes,
-                    views: typeof local.views === 'number' && local.views > v.views ? local.views : v.views
+                    views: typeof local.views === 'number' && local.views > v.views ? local.views : v.views,
+                    comments: useLocalComments ? localComments : serverComments,
+                    commentsCount: useLocalComments ? (local.commentsCount || localComments.length) : (v.commentsCount || serverComments.length)
                   };
                 }
                 return v;
