@@ -2061,8 +2061,10 @@ export function App() {
       }
     }
 
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+
     // Priority 1: Place Drawer context (business profile open on desktop/mobile)
-    if (isPlaceView && drawerPlace) {
+    if (isDesktop && isPlaceView && drawerPlace) {
       const pId = drawerPlace.id;
       const pName = drawerPlace.name;
       return visibleVideos.filter(v => 
@@ -2072,7 +2074,7 @@ export function App() {
     }
 
     // Priority 2: Creator Drawer context (creator profile open on desktop/mobile)
-    if (isCreatorView && selectedAuthorForDrawer) {
+    if (isDesktop && isCreatorView && selectedAuthorForDrawer) {
       return visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
     }
 
@@ -2371,7 +2373,11 @@ export function App() {
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
-    setCurrentVideoIndex(0);
+    
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+    if (isDesktop) {
+      setCurrentVideoIndex(0);
+    }
   };
 
   // Open Creator Drawer
@@ -2390,7 +2396,11 @@ export function App() {
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(author);
-    setCurrentVideoIndex(0);
+
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+    if (isDesktop) {
+      setCurrentVideoIndex(0);
+    }
   };
 
   // Handle Likes - fully synced with Firestore

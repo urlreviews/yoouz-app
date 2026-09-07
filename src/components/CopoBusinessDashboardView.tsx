@@ -1260,7 +1260,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   return (
     <div className="w-screen h-[100dvh] flex bg-zinc-950 select-none antialiased overflow-hidden font-sans text-white copo-business-dashboard">
-      <div className={`w-full h-full flex transition-opacity duration-200 ${criticalImagesLoaded ? "opacity-100" : "opacity-0"}`}>
+      <div className="w-full h-full flex">
       {/* Left Google Enterprise Navigation Sidebar */}
       <aside className="w-64 lg:w-72 bg-zinc-950 border-r border-zinc-800/80 flex flex-col justify-between shrink-0 select-none overflow-y-auto hidden md:flex z-50 copo-business-sidebar">
         <div className="flex flex-col">

@@ -520,7 +520,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <div className={`flex flex-col h-full w-full transition-opacity duration-200 ${criticalImagesLoaded ? "opacity-100" : "opacity-0"}`}>
+        <div className="flex flex-col h-full w-full">
         {/* Mobile Pull Handle Indicator */}
         <div 
           {...swipeProps}
