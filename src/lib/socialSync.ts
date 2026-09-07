@@ -322,7 +322,7 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
 
 /**
  * Real-time subscription to notifications for the current user
- * Uses Instant SSE streaming + Bunny DB + Firestore
+ * Uses Instant SSE streaming + Bunny Cloud Database + Instant Local Cache
  */
 export function subscribeToNotifications(
   currentUser: UserProfile | null,
@@ -335,12 +335,29 @@ export function subscribeToNotifications(
 
   let isDisposed = false;
   let cachedNotifs: CopoNotification[] = [];
+  const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+  const cacheKey = `copo_cached_notifs_${userKey}`;
 
   const updateList = (newItems: CopoNotification[]) => {
     if (isDisposed) return;
     cachedNotifs = newItems;
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(newItems));
+    } catch (e) {}
     onUpdate(newItems);
   };
+
+  // 0. Immediate load from LocalStorage cache so notifications never disappear on refresh
+  try {
+    const rawCache = localStorage.getItem(cacheKey);
+    if (rawCache) {
+      const parsed = JSON.parse(rawCache);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cachedNotifs = parsed;
+        onUpdate(parsed);
+      }
+    }
+  } catch (e) {}
 
   // 1. Initial immediate fetch from Bunny Cloud Database
   const fetchFromBunny = async () => {
@@ -366,7 +383,6 @@ export function subscribeToNotifications(
         const filtered = filterNotificationsForUser([notifData], currentUser);
         if (filtered.length > 0) {
           const freshItem = filtered[0];
-          // Prepend or update existing
           const existingIdx = cachedNotifs.findIndex((n) => n.id === freshItem.id);
           let nextList: CopoNotification[];
           if (existingIdx >= 0) {
@@ -381,37 +397,13 @@ export function subscribeToNotifications(
     }
   });
 
-  // 3. Periodic Background Sync (every 5 seconds) for infallible consistency
-  const pollTimer = setInterval(fetchFromBunny, 5000);
-
-  // 4. Optional Firestore snapshot sync
-  let unsubscribeFirestore = () => {};
-  if (db) {
-    try {
-      const notifsRef = collection(db, "notifications");
-      unsubscribeFirestore = onSnapshot(
-        notifsRef,
-        (snapshot) => {
-          if (isDisposed) return;
-          const items: any[] = [];
-          snapshot.forEach((docSnap) => {
-            items.push({ id: docSnap.id, ...docSnap.data() });
-          });
-          const filtered = filterNotificationsForUser(items, currentUser);
-          updateList(filtered);
-        },
-        (error) => {
-          console.warn("Notifications Firestore subscription notice:", error);
-        }
-      );
-    } catch (err) {}
-  }
+  // 3. Periodic Background Sync (every 4 seconds) for infallible consistency
+  const pollTimer = setInterval(fetchFromBunny, 4000);
 
   return () => {
     isDisposed = true;
     clearInterval(pollTimer);
     unregisterSse();
-    unsubscribeFirestore();
   };
 }
 
@@ -647,7 +639,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
 /**
  * Real-time subscription to private chat threads for the current user
- * Instant SSE streaming + Bunny DB + Firestore
+ * Instant SSE streaming + Bunny Cloud Database + Instant Local Cache
  */
 export function subscribeToChats(
   currentUser: UserProfile | null,
@@ -660,12 +652,29 @@ export function subscribeToChats(
 
   let isDisposed = false;
   let cachedThreads: CopoMessage[] = [];
+  const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+  const cacheKey = `copo_cached_chats_${userKey}`;
 
   const updateThreads = (newThreads: CopoMessage[]) => {
     if (isDisposed) return;
     cachedThreads = newThreads;
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(newThreads));
+    } catch (e) {}
     onUpdate(newThreads);
   };
+
+  // 0. Immediate load from LocalStorage cache so messages never disappear on refresh
+  try {
+    const rawCache = localStorage.getItem(cacheKey);
+    if (rawCache) {
+      const parsed = JSON.parse(rawCache);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cachedThreads = parsed;
+        onUpdate(parsed);
+      }
+    }
+  } catch (e) {}
 
   // 1. Initial immediate fetch from Bunny Cloud Database
   const fetchFromBunny = async () => {
@@ -712,34 +721,10 @@ export function subscribeToChats(
   // 3. Fallback background sync (every 4 seconds)
   const pollTimer = setInterval(fetchFromBunny, 4000);
 
-  // 4. Optional Firestore snapshot sync
-  let unsubscribeFirestore = () => {};
-  if (db) {
-    try {
-      const chatsRef = collection(db, "chats");
-      unsubscribeFirestore = onSnapshot(
-        chatsRef,
-        (snapshot) => {
-          if (isDisposed) return;
-          const items: any[] = [];
-          snapshot.forEach((docSnap) => {
-            items.push({ id: docSnap.id, ...docSnap.data() });
-          });
-          const processed = processChatThreadsForUser(items, currentUser);
-          updateThreads(processed);
-        },
-        (error) => {
-          console.warn("Chats Firestore subscription notice:", error);
-        }
-      );
-    } catch (err) {}
-  }
-
   return () => {
     isDisposed = true;
     clearInterval(pollTimer);
     unregisterSse();
-    unsubscribeFirestore();
   };
 }
 

@@ -4192,30 +4192,42 @@ app.get('/api/nosql/:collection', async (req, res) => {
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
       try {
-        const rs = await bunnyDb.execute({
-          sql: `SELECT id, data FROM ${colName} ORDER BY createdAt DESC`,
-          args: []
-        });
-        rs.rows.forEach((row: any) => {
-          if (row.id) {
-            let parsedData = {};
-            try {
-              parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
-            } catch (e) {}
-            itemMap.set(String(row.id), { id: String(row.id), ...parsedData });
-          }
-        });
+        let rs: any;
+        try {
+          rs = await bunnyDb.execute({
+            sql: `SELECT id, data FROM ${colName} ORDER BY updatedAt DESC`,
+            args: []
+          });
+        } catch (e) {
+          rs = await bunnyDb.execute({
+            sql: `SELECT id, data FROM ${colName}`,
+            args: []
+          });
+        }
+        if (rs && rs.rows) {
+          rs.rows.forEach((row: any) => {
+            if (row.id) {
+              let parsedData = {};
+              try {
+                parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+              } catch (e) {}
+              itemMap.set(String(row.id), { id: String(row.id), ...parsedData });
+            }
+          });
+        }
       } catch (bunnyDbErr) {
         // Table may not exist yet or empty
       }
     }
 
-    // 2. Query Firestore Admin if initialized
-    if (adminDb) {
+    // 2. Query Firestore Admin if initialized (as fallback only for missing items, never overwriting BunnyDB)
+    if (adminDb && colName !== 'chats' && colName !== 'notifications') {
       try {
         const snap = await adminDb.collection(colName).get();
         snap.forEach((docSnap: any) => {
-          itemMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+          if (!itemMap.has(docSnap.id)) {
+            itemMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+          }
         });
       } catch (fErr) {
         console.warn(`Firestore read notice for ${colName}:`, (fErr as any)?.message || fErr);
