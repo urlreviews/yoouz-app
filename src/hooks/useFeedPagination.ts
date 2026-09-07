@@ -154,7 +154,29 @@ export function useFeedPagination() {
                 if (local) {
                   const localComments = local.comments || [];
                   const serverComments = v.comments || [];
-                  const useLocalComments = localComments.length > serverComments.length;
+
+                  // Union merge comments by ID so neither local optimistic comments nor server comments are lost
+                  const commentMap = new Map<string, any>();
+                  serverComments.forEach((c: any) => { if (c && c.id) commentMap.set(c.id, c); });
+                  localComments.forEach((c: any) => {
+                    if (c && c.id) {
+                      const existing = commentMap.get(c.id);
+                      if (existing) {
+                        const replyMap = new Map<string, any>();
+                        (existing.replies || []).forEach((r: any) => { if (r && r.id) replyMap.set(r.id, r); });
+                        (c.replies || []).forEach((r: any) => { if (r && r.id) replyMap.set(r.id, r); });
+                        commentMap.set(c.id, { ...existing, ...c, replies: Array.from(replyMap.values()) });
+                      } else {
+                        commentMap.set(c.id, c);
+                      }
+                    }
+                  });
+                  const mergedComments = Array.from(commentMap.values());
+                  let mergedCommentsCount = 0;
+                  mergedComments.forEach((c: any) => {
+                    mergedCommentsCount += 1;
+                    if (Array.isArray(c.replies)) mergedCommentsCount += c.replies.length;
+                  });
 
                   return {
                     ...v,
@@ -162,8 +184,8 @@ export function useFeedPagination() {
                     isBookmarked: local.isBookmarked !== undefined ? local.isBookmarked : v.isBookmarked,
                     likes: typeof local.likes === 'number' && local.likes > v.likes ? local.likes : v.likes,
                     views: typeof local.views === 'number' && local.views > v.views ? local.views : v.views,
-                    comments: useLocalComments ? localComments : serverComments,
-                    commentsCount: useLocalComments ? (local.commentsCount || localComments.length) : (v.commentsCount || serverComments.length)
+                    comments: mergedComments,
+                    commentsCount: Math.max(v.commentsCount || 0, local.commentsCount || 0, mergedCommentsCount)
                   };
                 }
                 return v;

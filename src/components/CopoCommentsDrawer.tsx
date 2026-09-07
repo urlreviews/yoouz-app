@@ -178,25 +178,63 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     }
   }, [replyingTo]);
 
+  const [remoteComments, setRemoteComments] = useState<ReviewComment[]>([]);
+
+  useEffect(() => {
+    if (!video?.id) {
+      setRemoteComments([]);
+      return;
+    }
+    let isMounted = true;
+    fetch(`/api/interactions/comments?videoId=${video.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data && Array.isArray(data.comments)) {
+          setRemoteComments(data.comments);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, [video?.id]);
+
+  // Combined comments from props and remote database
+  const combinedComments = useMemo(() => {
+    const propList = Array.isArray(video?.comments) ? video.comments : [];
+    const commentMap = new Map<string, ReviewComment>();
+    propList.forEach((c) => { if (c && c.id) commentMap.set(c.id, c); });
+    remoteComments.forEach((c) => {
+      if (c && c.id) {
+        const existing = commentMap.get(c.id);
+        if (existing) {
+          const replyMap = new Map<string, any>();
+          (existing.replies || []).forEach((r) => { if (r && r.id) replyMap.set(r.id, r); });
+          (c.replies || []).forEach((r) => { if (r && r.id) replyMap.set(r.id, r); });
+          commentMap.set(c.id, { ...existing, ...c, replies: Array.from(replyMap.values()) });
+        } else {
+          commentMap.set(c.id, c);
+        }
+      }
+    });
+    return Array.from(commentMap.values());
+  }, [video?.comments, remoteComments]);
+
   // Calculate total comments count including nested replies and owner response
   const totalCommentsCount = useMemo(() => {
     if (!video) return 0;
     let count = video.ownerResponse ? 1 : 0;
-    if (Array.isArray(video.comments)) {
-      video.comments.forEach((c) => {
-        count += 1;
-        if (Array.isArray(c.replies)) {
-          count += c.replies.length;
-        }
-      });
-    }
+    combinedComments.forEach((c) => {
+      count += 1;
+      if (Array.isArray(c.replies)) {
+        count += c.replies.length;
+      }
+    });
     return Math.max(count, video.commentsCount || 0);
-  }, [video?.comments, video?.ownerResponse, video?.commentsCount]);
+  }, [combinedComments, video?.ownerResponse, video?.commentsCount]);
 
   // Sort comments according to selected filter
   const sortedComments = useMemo(() => {
-    if (!video || !Array.isArray(video.comments)) return [];
-    const list = [...video.comments];
+    if (!video) return [];
+    const list = [...combinedComments];
     if (sortBy === "top") {
       return list.sort((a, b) => {
         // Pinned creator comments first, then by likes
@@ -208,7 +246,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       // Newest first
       return list;
     }
-  }, [video?.comments, sortBy]);
+  }, [combinedComments, sortBy]);
 
   const handleToggleReplies = (commentId: string) => {
     setExpandedReplies((prev) => ({

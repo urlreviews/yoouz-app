@@ -5522,12 +5522,37 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const merged = Array.from(map.values()).map((r: any) => {
         const enriched = enrichReviewPlaceAssets(r);
         const separateComments = videoCommentsMap.get(String(r.id));
+        
+        // Merge enriched.comments and separateComments cleanly by ID
+        const commentMap = new Map<string, any>();
+        const existingComments = Array.isArray(enriched.comments) ? enriched.comments : [];
+        existingComments.forEach((c: any) => { if (c && c.id) commentMap.set(c.id, c); });
+        
         if (separateComments && separateComments.length > 0) {
-          const existingComments = enriched.comments || [];
-          if (separateComments.length > existingComments.length) {
-            enriched.comments = separateComments;
-            enriched.commentsCount = separateComments.length;
-          }
+          separateComments.forEach((c: any) => {
+            if (c && c.id) {
+              const existing = commentMap.get(c.id);
+              if (existing) {
+                const replyMap = new Map<string, any>();
+                (existing.replies || []).forEach((rep: any) => { if (rep && rep.id) replyMap.set(rep.id, rep); });
+                (c.replies || []).forEach((rep: any) => { if (rep && rep.id) replyMap.set(rep.id, rep); });
+                commentMap.set(c.id, { ...existing, ...c, replies: Array.from(replyMap.values()) });
+              } else {
+                commentMap.set(c.id, c);
+              }
+            }
+          });
+        }
+
+        const mergedComments = Array.from(commentMap.values());
+        if (mergedComments.length > 0) {
+          enriched.comments = mergedComments;
+          let totalCount = 0;
+          mergedComments.forEach((c: any) => {
+            totalCount += 1;
+            if (Array.isArray(c.replies)) totalCount += c.replies.length;
+          });
+          enriched.commentsCount = Math.max(enriched.commentsCount || 0, totalCount);
         }
         return enriched;
       });
