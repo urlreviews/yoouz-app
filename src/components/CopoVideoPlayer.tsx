@@ -288,6 +288,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       slotBindingRef.current.set(activeVideo.id, activeVid);
     }
 
+    // Instantly mute and pause all other video elements in the pool synchronously to prevent audio bleedover
+    pool.forEach((v) => {
+      if (v !== activeVid) {
+        v.muted = true;
+        try {
+          v.pause();
+        } catch (e) {}
+      }
+    });
+
     // Mount activeVid into its target card slot
     const mountActive = () => {
       const activeSlot = document.getElementById(`video-slot-${activeVideo.id}`);
