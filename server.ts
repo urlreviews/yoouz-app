@@ -5520,6 +5520,146 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   });
 
   // Save Video Review metadata endpoint (persists review record on server and Firestore)
+
+  function resolveVideoAuthorRecipient(video: any) {
+    let email = "";
+    let uid = video.userId ? String(video.userId) : "";
+    let authorName = video.authorName ? String(video.authorName) : "";
+    let authorHandle = "";
+
+    let parsedData: any = {};
+    try {
+      if (typeof video.data === "string") {
+        parsedData = JSON.parse(video.data);
+      } else if (video.data) {
+        parsedData = video.data;
+      }
+    } catch (e) {}
+
+    email = parsedData.userEmail || parsedData.author?.email || "";
+    if (!email && uid && uid.includes("@")) {
+      email = uid;
+    }
+
+    if (!email || !email.includes("@")) {
+      const lower = `${authorName} ${uid} ${email}`.toLowerCase();
+      if (lower.includes("avtertuop") || lower.includes("avt ertuop") || lower.includes("avr6566gd") || lower.includes("avt")) {
+        email = "avr6566gd@gmail.com";
+      } else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) {
+        email = "louis42111@gmail.com";
+      } else if (lower.includes("aouisesmee") || lower.includes("4samet")) {
+        email = "aouisesmee@gmail.com";
+      }
+    }
+
+    return {
+      recipientEmail: email || authorName || uid,
+      recipientId: uid || email || authorName,
+      recipientHandle: authorName || uid
+    };
+  }
+
+  async function createAndBroadcastBackendNotification(params: {
+    senderUserId: string;
+    recipientEmail: string;
+    recipientId: string;
+    recipientHandle: string;
+    type: "like" | "comment" | "follow" | "bookmark";
+    text: string;
+    videoId?: string;
+    videoThumbnail?: string;
+    placeName?: string;
+    customId?: string;
+  }) {
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return;
+
+    try {
+      let senderName = "Yoouz Member";
+      let senderAvatar = "";
+      let senderEmail = params.senderUserId;
+
+      const senderRows = await bunnyDb.execute({
+        sql: "SELECT * FROM users WHERE id = ? OR email = ? LIMIT 1",
+        args: [params.senderUserId, params.senderUserId]
+      });
+      if (senderRows && senderRows.rows && senderRows.rows.length > 0) {
+        const row: any = senderRows.rows[0];
+        let pData: any = {};
+        try { pData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+        senderName = row.name || pData.name || senderName;
+        senderAvatar = row.avatar || pData.avatar || senderAvatar;
+        senderEmail = row.email || pData.email || senderEmail;
+      }
+
+      if (!senderAvatar) {
+        senderAvatar = `/api/avatar?name=${encodeURIComponent(senderName)}&background=27272a&color=fff`;
+      }
+
+      const canonRecipientEmail = (params.recipientEmail || "").trim().toLowerCase();
+      const canonSenderEmail = (senderEmail || "").trim().toLowerCase();
+      if (canonRecipientEmail && canonSenderEmail && canonRecipientEmail === canonSenderEmail && !canonRecipientEmail.includes("test")) {
+        console.log(`[Notification Service] Excluded self-notification for ${canonSenderEmail}`);
+        return;
+      }
+
+      const notifId = params.customId || `notif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const payload = {
+        id: notifId,
+        recipientEmail: params.recipientEmail,
+        recipientHandle: params.recipientHandle,
+        recipientId: params.recipientId,
+        type: params.type,
+        user: {
+          name: senderName,
+          avatar: senderAvatar,
+          email: senderEmail
+        },
+        text: params.text,
+        timestamp: "Just now",
+        createdAt: Date.now(),
+        videoId: params.videoId || "",
+        videoThumbnail: params.videoThumbnail || senderAvatar,
+        placeName: params.placeName || "",
+        isRead: false
+      };
+
+      const jsonStr = JSON.stringify(payload);
+
+      await bunnyDb.execute({
+        sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
+              VALUES (?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(id) DO UPDATE SET recipientEmail = ?, type = ?, text = ?, isRead = 0, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+        args: [notifId, params.recipientEmail, params.type, params.text, jsonStr, params.recipientEmail, params.type, params.text, jsonStr]
+      });
+
+      const targets = [
+        params.recipientEmail,
+        params.recipientId,
+        params.recipientHandle
+      ].filter(Boolean);
+
+      const lowerTargets = targets.map(t => String(t).toLowerCase());
+      if (lowerTargets.some(t => t.includes("avr6566gd") || t.includes("avtertuop") || t === "avt ertuop" || t.includes("avt"))) {
+        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
+      }
+      if (lowerTargets.some(t => t.includes("louis42111") || t.includes("bizriv") || t === "biz riv")) {
+        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+      }
+      if (lowerTargets.some(t => t.includes("aouisesmee") || t.includes("4samet"))) {
+        targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+      }
+
+      broadcastSseEvent({
+        type: "notification",
+        notification: payload
+      }, targets);
+
+      console.log(`📡 [Notification Service] Created & Broadcasted notification: ${params.type} to ${params.recipientEmail}`);
+    } catch (err: any) {
+      console.error("❌ [Notification Service] Error creating/broadcasting notification:", err.message);
+    }
+  }
   
   app.get("/api/interactions/comments", async (req, res) => {
     try {
@@ -5563,6 +5703,66 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
           args: [comment.id, videoId, userId || comment.authorHandle || "", comment.authorName || "", comment.authorAvatar || "", comment.text || "", JSON.stringify(comment)]
         });
+
+        // Backend comment / reply notifications
+        try {
+          const videoRows = await bunnyDb.execute({
+            sql: "SELECT id, userId, authorName, placeName, thumbnailUrl, data FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          if (videoRows && videoRows.rows && videoRows.rows.length > 0) {
+            const video = videoRows.rows[0];
+            const recipient = resolveVideoAuthorRecipient(video);
+            
+            // 1. Send notification to Video Author
+            await createAndBroadcastBackendNotification({
+              senderUserId: userId || comment.authorHandle || "",
+              recipientEmail: recipient.recipientEmail,
+              recipientId: recipient.recipientId,
+              recipientHandle: recipient.recipientHandle,
+              type: "comment",
+              text: `commented: "${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}" on your review of ${video.placeName ? String(video.placeName) : "a place"}`,
+              videoId: videoId,
+              videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
+              placeName: video.placeName ? String(video.placeName) : "",
+              customId: `notif_comment_${comment.id}`
+            });
+
+            // 2. If this is a threaded reply, notify the parent comment author as well
+            if (comment.replyToId) {
+              const parentRows = await bunnyDb.execute({
+                sql: "SELECT id, userId, userName FROM comments WHERE id = ? LIMIT 1",
+                args: [comment.replyToId]
+              });
+              if (parentRows && parentRows.rows && parentRows.rows.length > 0) {
+                const parent = parentRows.rows[0];
+                const parentUserId = parent.userId ? String(parent.userId) : "";
+                let parentEmail = parentUserId;
+                if (!parentEmail.includes("@")) {
+                  const lower = String(parent.userName || "").toLowerCase();
+                  if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) parentEmail = "avr6566gd@gmail.com";
+                  else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) parentEmail = "louis42111@gmail.com";
+                  else if (lower.includes("aouisesmee") || lower.includes("4samet")) parentEmail = "aouisesmee@gmail.com";
+                }
+                if (parentEmail) {
+                  await createAndBroadcastBackendNotification({
+                    senderUserId: userId || comment.authorHandle || "",
+                    recipientEmail: parentEmail,
+                    recipientId: parentUserId || parentEmail,
+                    recipientHandle: parent.userName ? String(parent.userName) : parentEmail,
+                    type: "comment",
+                    text: `replied to your comment on a review`,
+                    videoId: videoId,
+                    placeName: video.placeName ? String(video.placeName) : "",
+                    customId: `notif_reply_${comment.id}`
+                  });
+                }
+              }
+            }
+          }
+        } catch (notifErr: any) {
+          console.warn("Notice triggering comment notification on backend:", notifErr.message);
+        }
       }
 
       // Update local reviews index and memory feedCache immediately
@@ -5737,6 +5937,33 @@ app.post("/api/interactions/like", async (req, res) => {
             sql: "INSERT OR IGNORE INTO likes (id, userId, videoId, data) VALUES (?, ?, ?, ?)",
             args: [id, userId, videoId, JSON.stringify({ createdAt: new Date().toISOString() })]
           });
+
+          // Backend notification for like
+          try {
+            const videoRows = await bunnyDb.execute({
+              sql: "SELECT id, userId, authorName, placeName, thumbnailUrl, data FROM videoReviews WHERE id = ? LIMIT 1",
+              args: [videoId]
+            });
+            if (videoRows && videoRows.rows && videoRows.rows.length > 0) {
+              const video = videoRows.rows[0];
+              const recipient = resolveVideoAuthorRecipient(video);
+              
+              await createAndBroadcastBackendNotification({
+                senderUserId: userId,
+                recipientEmail: recipient.recipientEmail,
+                recipientId: recipient.recipientId,
+                recipientHandle: recipient.recipientHandle,
+                type: "like",
+                text: `liked your video review of ${video.placeName ? String(video.placeName) : "a place"}`,
+                videoId: videoId,
+                videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
+                placeName: video.placeName ? String(video.placeName) : "",
+                customId: `notif_like_${userId}_${videoId}`
+              });
+            }
+          } catch (notifErr: any) {
+            console.warn("Notice triggering like notification on backend:", notifErr.message);
+          }
         } else {
           await bunnyDb.execute({
             sql: "DELETE FROM likes WHERE userId = ? AND videoId = ?",
@@ -5753,7 +5980,7 @@ app.post("/api/interactions/like", async (req, res) => {
       }
       res.json({ success: true });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: (err as any).message });
     }
   });
 
@@ -5770,6 +5997,33 @@ app.post("/api/interactions/like", async (req, res) => {
             sql: "INSERT OR IGNORE INTO bookmarks (id, userId, placeId, videoId, data) VALUES (?, ?, ?, ?, ?)",
             args: [id, userId, "", videoId, JSON.stringify({ createdAt: new Date().toISOString() })]
           });
+
+          // Backend notification for bookmark/save
+          try {
+            const videoRows = await bunnyDb.execute({
+              sql: "SELECT id, userId, authorName, placeName, thumbnailUrl, data FROM videoReviews WHERE id = ? LIMIT 1",
+              args: [videoId]
+            });
+            if (videoRows && videoRows.rows && videoRows.rows.length > 0) {
+              const video = videoRows.rows[0];
+              const recipient = resolveVideoAuthorRecipient(video);
+              
+              await createAndBroadcastBackendNotification({
+                senderUserId: userId,
+                recipientEmail: recipient.recipientEmail,
+                recipientId: recipient.recipientId,
+                recipientHandle: recipient.recipientHandle,
+                type: "bookmark",
+                text: `saved your video review of ${video.placeName ? String(video.placeName) : "a place"}`,
+                videoId: videoId,
+                videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
+                placeName: video.placeName ? String(video.placeName) : "",
+                customId: `notif_bookmark_${userId}_${videoId}`
+              });
+            }
+          } catch (notifErr: any) {
+            console.warn("Notice triggering bookmark notification on backend:", notifErr.message);
+          }
         } else {
           await bunnyDb.execute({
             sql: "DELETE FROM bookmarks WHERE userId = ? AND videoId = ?",
@@ -5918,6 +6172,43 @@ app.post("/api/interactions/like", async (req, res) => {
               })
             ]
           });
+
+          // Backend notification for follow
+          try {
+            let recEmail = "";
+            let recId = targetUserId || "";
+            let recHandle = targetHandle || "";
+
+            const targetUserRows = await bunnyDb.execute({
+              sql: "SELECT id, email, name FROM users WHERE name = ? OR id = ? LIMIT 1",
+              args: [String(targetHandle), String(targetUserId || "")]
+            });
+            if (targetUserRows && targetUserRows.rows && targetUserRows.rows.length > 0) {
+              const row: any = targetUserRows.rows[0];
+              recEmail = row.email || recEmail;
+              recId = row.id || recId;
+              recHandle = row.name || recHandle;
+            }
+
+            if (!recEmail) {
+              const lower = String(targetHandle || "").toLowerCase();
+              if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) recEmail = "avr6566gd@gmail.com";
+              else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) recEmail = "louis42111@gmail.com";
+              else if (lower.includes("aouisesmee") || lower.includes("4samet")) recEmail = "aouisesmee@gmail.com";
+            }
+
+            await createAndBroadcastBackendNotification({
+              senderUserId: followerUserId,
+              recipientEmail: recEmail || targetHandle,
+              recipientId: recId || recEmail || targetHandle,
+              recipientHandle: recHandle || targetHandle,
+              type: "follow",
+              text: `started following your reviews`,
+              customId: `notif_follow_${followerUserId}_${targetHandle.toLowerCase().replace(/[^a-z0-9]/g, '_')}`
+            });
+          } catch (notifErr: any) {
+            console.warn("Notice triggering follow notification on backend:", notifErr.message);
+          }
         } else {
           await bunnyDb.execute({
             sql: "DELETE FROM follows WHERE followerId = ? AND followingId = ?",
