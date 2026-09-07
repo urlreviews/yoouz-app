@@ -120,7 +120,15 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(video.videoData);
   }
 
-  // 3. Direct Bunny CDN Pull Zone Edge URLs (PRIMARY HIGH-SPEED EDGE STREAMING)
+  // 3. Prioritize fully qualified remote CDN URLs stored directly in the database (0ms startup, bypasses dynamic lookups)
+  if (video.videoUrl && (video.videoUrl.startsWith("http://") || video.videoUrl.startsWith("https://"))) {
+    const norm = normalizeVideoUrl(video.videoUrl);
+    if (norm && !sources.includes(norm)) {
+      sources.push(norm);
+    }
+  }
+
+  // 4. Direct Bunny CDN Pull Zone Edge URLs Fallback
   if (activeBunnyPullZone) {
     const cleanZone = activeBunnyPullZone.replace(/\/+$/, "");
     

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
@@ -134,7 +134,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const lastLoadedVideoIdRef = useRef<string | null>(null);
 
   // Initialize pool of 3 hardware-accelerated video elements once
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof document === "undefined") return;
 
     if (videoPoolRef.current.length === 0) {
@@ -246,7 +246,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [isMuted, isSessionAudioUnlocked]);
 
   // Master Orchestration: Mount active video, pre-buffer upcoming video, and start immediate playback
-  useEffect(() => {
+  useLayoutEffect(() => {
     const pool = videoPoolRef.current;
     if (!pool || pool.length === 0) return;
 
@@ -311,11 +311,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     };
 
-    // Load active source if not matching
+    // Load active source if not matching and it is a new video or empty
     const activeSrc = resolvePlayableVideoSource(activeVideo);
     activeVid.preload = "auto";
-    if (!isSameSrc(activeVid.src, activeSrc)) {
-      activeVid.src = activeSrc;
+    if (isNewVideo || !activeVid.src) {
+      if (!isSameSrc(activeVid.src, activeSrc)) {
+        activeVid.src = activeSrc;
+      }
     }
     const activePoster = resolveVideoPosterUrl(activeVideo);
     if (activeVid.poster !== activePoster) {
@@ -432,6 +434,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             nextVid.src = nextSrc;
             nextVid.preload = "auto";
             nextVid.muted = true;
+            try { nextVid.load(); } catch (e) {}
           }
           const nextPoster = resolveVideoPosterUrl(nextVideo);
           if (nextVid.poster !== nextPoster) {
@@ -464,6 +467,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             prevVid.src = prevSrc;
             prevVid.preload = "auto";
             prevVid.muted = true;
+            try { prevVid.load(); } catch (e) {}
           }
           const prevPoster = resolveVideoPosterUrl(prevVideo);
           if (prevVid.poster !== prevPoster) {
