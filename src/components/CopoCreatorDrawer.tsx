@@ -19,7 +19,8 @@ import {
   MapPin,
   ArrowLeft,
   Bookmark,
-  BookmarkCheck
+  BookmarkCheck,
+  Bell
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor } from "../utils/placeUtils";
@@ -56,6 +57,7 @@ interface CopoCreatorDrawerProps {
   onDeleteProfile?: () => Promise<void>;
   isSaved?: boolean;
   onToggleSaveCreator?: (author: VideoAuthor) => void;
+  onOpenNotificationSettings?: () => void;
 }
 
 export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
@@ -75,7 +77,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   onSignOut,
   onDeleteProfile,
   isSaved: propIsSaved,
-  onToggleSaveCreator
+  onToggleSaveCreator,
+  onOpenNotificationSettings
 }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -656,6 +659,20 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       <Share2 className="w-4 h-4 text-zinc-200" />
                       <span>{t("profile.shareProfileLink", "Share Profile Link")}</span>
                     </button>
+
+                    {onOpenNotificationSettings && (
+                      <button
+                        id="btn-creator-notification-settings"
+                        onClick={() => {
+                          setIsSettingsMenuOpen(false);
+                          onOpenNotificationSettings();
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <Bell className="w-4 h-4 text-zinc-200" />
+                        <span>Notification Preferences</span>
+                      </button>
+                    )}
 
                     {onSignOut && (
                       <button

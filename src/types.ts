@@ -54,6 +54,26 @@ export interface ReviewComment {
   replies?: ReviewComment[];
 }
 
+export interface NotificationPreferences {
+  enabled: boolean;
+  likes: boolean;
+  comments: boolean;
+  messages: boolean;
+  follows: boolean;
+  bookmarks: boolean;
+  emailNotifications: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  enabled: true,
+  likes: true,
+  comments: true,
+  messages: true,
+  follows: true,
+  bookmarks: true,
+  emailNotifications: false,
+};
+
 export interface UserProfile {
   name: string;
   email: string;
@@ -82,6 +102,7 @@ export interface UserProfile {
   savedVideoIds?: string[];
   savedPlaceIds?: string[];
   savedCreators?: string[];
+  notificationSettings?: NotificationPreferences;
 }
 
 export interface VideoReview {
@@ -254,7 +275,7 @@ export interface Club {
 
 export interface CopoNotification {
   id: string;
-  type: "like" | "comment" | "follow" | "repost" | "message";
+  type: "like" | "comment" | "follow" | "repost" | "message" | "bookmark";
   user: {
     name: string;
     

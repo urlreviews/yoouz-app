@@ -14,7 +14,9 @@ import {
   Film,
   Sparkles,
   Star,
-  ChevronLeft
+  ChevronLeft,
+  Bookmark,
+  Settings
 } from "lucide-react";
 import { CopoNotification, UserProfile, VideoReview } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
@@ -36,9 +38,10 @@ interface CopoNotificationsViewProps {
   onDeleteNotification?: (id: string) => void;
   onClearAll?: () => void;
   onSuccessAuth?: (userData: { name: string; email: string; avatar: string }) => void;
+  onOpenSettings?: () => void;
 }
 
-type FilterType = "all" | "unread" | "likes" | "comments" | "people";
+type FilterType = "all" | "unread" | "likes" | "comments" | "people" | "bookmarks";
 
 export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   notifications,
@@ -55,7 +58,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   onMarkAllRead,
   onDeleteNotification,
   onClearAll,
-  onSuccessAuth
+  onSuccessAuth,
+  onOpenSettings
 }) => {
   const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
@@ -121,6 +125,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       if (activeFilter === "likes") return n.type === "like";
       if (activeFilter === "comments") return n.type === "comment";
       if (activeFilter === "people") return n.type === "follow";
+      if (activeFilter === "bookmarks") return n.type === "bookmark";
       return true;
     });
   }, [notifications, activeFilter]);
@@ -136,7 +141,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
     { label: "Unread", value: "unread", count: unreadCount > 0 ? unreadCount : undefined },
     { label: "Likes", value: "likes" },
     { label: "Comments", value: "comments" },
-    { label: "Followers", value: "people" }
+    { label: "Followers", value: "people" },
+    { label: "Saves", value: "bookmarks" }
   ];
 
   // Helper to parse notification text into clean, scannable parts
@@ -193,8 +199,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       };
     }
 
-    // Case D: Likes / Shares / Comments on a review of a place/domain
-    const ofMatch = raw.match(/^(liked your video review of|shared your video review of|commented:\s*".*?"\s*on your review of)\s*(.+)$/i);
+    // Case D: Likes / Shares / Comments / Saves on a review of a place/domain
+    const ofMatch = raw.match(/^(liked your video review of|shared your video review of|saved your video review of|saved your review of|bookmarked your review of|commented:\s*".*?"\s*on your review of)\s*(.+)$/i);
     if (ofMatch) {
       const actionPart = ofMatch[1];
       const placePart = ofMatch[2].trim();
@@ -322,25 +328,54 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
           </div>
 
           {/* Header Action Buttons */}
-          {notifications.length > 0 && (
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllRead}
-                  className="px-3 py-1.5 rounded-full text-[11px] font-bold text-white bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-700 active:scale-95"
-                >
-                  Mark read
-                </button>
-              )}
+          <div className="flex items-center gap-2">
+            {notifications.length > 0 && unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="px-3 py-1.5 rounded-full text-[11px] font-bold text-white bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-700 active:scale-95"
+              >
+                Mark read
+              </button>
+            )}
+            {notifications.length > 0 && (
               <button
                 onClick={handleClearAll}
                 className="px-3 py-1.5 rounded-full text-[11px] font-bold text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
               >
                 Clear all
               </button>
-            </div>
-          )}
+            )}
+            {onOpenSettings && (
+              <button
+                id="btn-notifications-settings"
+                onClick={onOpenSettings}
+                className="p-2 rounded-full text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
+                title="Notification Preferences"
+                aria-label="Notification Preferences"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Paused Notifications Notice Banner */}
+        {currentUser?.notificationSettings?.enabled === false && (
+          <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <BellOff className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="truncate">In-app notifications are paused in your preferences.</span>
+            </div>
+            {onOpenSettings && (
+              <button
+                onClick={onOpenSettings}
+                className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold shrink-0 transition-colors active:scale-95"
+              >
+                Preferences
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Filter Pills Segment Bar */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none no-scrollbar -mx-1 px-1">
@@ -392,6 +427,10 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                 repost: {
                   bg: "bg-zinc-700 text-white ring-2 ring-zinc-900",
                   icon: <Repeat2 className="w-2.5 h-2.5" />
+                },
+                bookmark: {
+                  bg: "bg-amber-500 text-white ring-2 ring-zinc-900",
+                  icon: <Bookmark className="w-2.5 h-2.5 fill-current" />
                 },
                 message: {
                   bg: "bg-zinc-700 text-white ring-2 ring-zinc-900",

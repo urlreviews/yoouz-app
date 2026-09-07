@@ -41,6 +41,7 @@ interface CopoMobileNavDrawerProps {
   onOpenLegal?: (tab: "terms" | "privacy") => void;
   onSignOut?: () => void;
   onOpenEditProfile?: () => void;
+  onOpenNotificationSettings?: () => void;
 }
 
 export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
@@ -56,7 +57,8 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
   onOpenAuth,
   onOpenLegal,
   onSignOut,
-  onOpenEditProfile
+  onOpenEditProfile,
+  onOpenNotificationSettings
 }) => {
   const { t, currentLanguageMeta, isRTL } = useLanguage();
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
@@ -434,6 +436,22 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 <div className="flex items-center gap-3">
                   <User className="w-4 h-4 text-white" />
                   <span>{t("profile.editProfile", "Edit Profile")}</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-200" />
+              </button>
+
+              {/* Notification Settings Action */}
+              <button
+                id="btn-mobile-nav-notification-settings"
+                onClick={() => {
+                  onClose();
+                  if (onOpenNotificationSettings) onOpenNotificationSettings();
+                }}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell className="w-4 h-4 text-white" />
+                  <span>Notification Preferences</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-zinc-200" />
               </button>

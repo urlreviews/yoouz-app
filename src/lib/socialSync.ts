@@ -14,7 +14,7 @@ export interface CreateNotificationParams {
   recipientEmail?: string;
   recipientHandle?: string;
   recipientId?: string;
-  type: "like" | "comment" | "follow" | "repost" | "message";
+  type: "like" | "comment" | "follow" | "repost" | "message" | "bookmark";
   user: {
     name: string;
     avatar: string;

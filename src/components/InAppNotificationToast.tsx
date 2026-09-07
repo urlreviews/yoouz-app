@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { MessageSquare, Bell, X, ChevronRight } from "lucide-react";
+import { MessageSquare, Bell, Heart, UserPlus, Bookmark, Repeat2, Mail, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export interface InAppToastPayload {
   id: string;
   type: "message" | "notification";
+  actionType?: "like" | "comment" | "follow" | "bookmark" | "repost" | "message";
   title: string;
   subtitle: string;
   avatar?: string;
@@ -63,6 +64,38 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
     onClose();
   };
 
+  // Determine badge styling based on actionType
+  const actionType = toast.actionType || (toast.type === "message" ? "message" : undefined);
+  let badgeBg = "bg-amber-400";
+  let progressBg = "bg-amber-400";
+  let ActionIcon = Bell;
+
+  if (actionType === "message") {
+    badgeBg = "bg-emerald-400";
+    progressBg = "bg-emerald-400";
+    ActionIcon = Mail;
+  } else if (actionType === "like") {
+    badgeBg = "bg-rose-500";
+    progressBg = "bg-rose-500";
+    ActionIcon = Heart;
+  } else if (actionType === "comment") {
+    badgeBg = "bg-sky-400";
+    progressBg = "bg-sky-400";
+    ActionIcon = MessageSquare;
+  } else if (actionType === "follow") {
+    badgeBg = "bg-violet-400";
+    progressBg = "bg-violet-400";
+    ActionIcon = UserPlus;
+  } else if (actionType === "bookmark") {
+    badgeBg = "bg-amber-400";
+    progressBg = "bg-amber-400";
+    ActionIcon = Bookmark;
+  } else if (actionType === "repost") {
+    badgeBg = "bg-blue-400";
+    progressBg = "bg-blue-400";
+    ActionIcon = Repeat2;
+  }
+
   return (
     <AnimatePresence>
       <div className="fixed top-4 left-0 right-0 z-[400] flex justify-center px-3 pointer-events-none select-none">
@@ -78,9 +111,7 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
           {/* Top Progress Bar */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 overflow-hidden">
             <div
-              className={`h-full transition-all duration-75 ${
-                toast.type === "message" ? "bg-emerald-400" : "bg-amber-400"
-              }`}
+              className={`h-full transition-all duration-75 ${progressBg}`}
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -101,22 +132,16 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
                   }}
                 />
               ) : (
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    toast.type === "message" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
-                  }`}
-                >
-                  {toast.type === "message" ? <MessageSquare className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-zinc-800 text-white`}>
+                  <ActionIcon className="w-5 h-5" />
                 </div>
               )}
 
               {/* Type Badge on avatar */}
               <span
-                className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-black ${
-                  toast.type === "message" ? "bg-emerald-400" : "bg-amber-400"
-                } ring-2 ring-zinc-950`}
+                className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-black ${badgeBg} ring-2 ring-zinc-950`}
               >
-                {toast.type === "message" ? "1" : "!"}
+                <ActionIcon className="w-2.5 h-2.5 stroke-[2.5]" />
               </span>
             </div>
 
@@ -148,6 +173,7 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
                 <span>{toast.type === "message" ? "Reply" : "View"}</span>
                 <ChevronRight className="w-3 h-3" />
               </button>
+
               <button
                 type="button"
                 onClick={(e) => {

@@ -53,6 +53,7 @@ interface CopoMoreViewProps {
   onDeleteProfile: () => Promise<void>;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
   onOpenComparison?: (competitor?: string) => void;
+  onOpenNotificationSettings?: () => void;
 }
 
 interface FaqItem {
@@ -69,7 +70,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   onNavigate,
   onDeleteProfile,
   onOpenLegal,
-  onOpenComparison
+  onOpenComparison,
+  onOpenNotificationSettings
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState<"about" | "faq" | "business" | "security" | "contact" | "language">("about");
@@ -434,6 +436,16 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <User className="w-3.5 h-3.5 text-zinc-200" />
                   <span>Edit Profile</span>
                 </button>
+                {onOpenNotificationSettings && (
+                  <button
+                    id="btn-more-notification-settings"
+                    onClick={onOpenNotificationSettings}
+                    className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-zinc-200" />
+                    <span>Notification Settings</span>
+                  </button>
+                )}
                 <button
                   onClick={onSignOut}
                   className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-zinc-800 hover:bg-red-950/40 hover:border-red-800 text-red-400 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
