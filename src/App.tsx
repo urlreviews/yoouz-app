@@ -50,6 +50,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
+  clearAllNotifications,
   subscribeToChats,
   sendChatMessageToFirestore,
   markChatThreadAsRead,
@@ -4671,9 +4672,9 @@ export function App() {
                   markAllNotificationsAsRead(notifications.map(n => n.id));
                   setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
                 }}
-                onDeleteNotification={deleteNotification}
+                onDeleteNotification={(id) => deleteNotification(id, currentUser)}
                 onClearAll={() => {
-                  notifications.forEach(n => deleteNotification(n.id));
+                  clearAllNotifications(notifications.map(n => n.id), currentUser);
                   setNotifications([]);
                 }}
               />

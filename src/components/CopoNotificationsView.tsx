@@ -221,20 +221,27 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
   // Helper to resolve the best person speaking / video review thumbnail
   const resolveNotificationThumbnail = (notif: CopoNotification): string | null => {
+    // Only display right video thumbnail if this is actually a video review interaction or has an explicit videoId
+    if (!notif.videoId && notif.type !== "like" && notif.type !== "comment" && notif.type !== "repost" && notif.type !== "bookmark") {
+      return null;
+    }
+
     // 1. If notif.videoId, look it up in allVideos for a valid thumbnail
     if (notif.videoId && allVideos.length > 0) {
       const match = allVideos.find((v) => v.id === notif.videoId);
-      if (match && match.thumbnailUrl &&
-          !match.thumbnailUrl.endsWith(".mp4") &&
-          !match.thumbnailUrl.includes("clearbit") &&
-          !match.thumbnailUrl.includes("logo.png") &&
-          !match.thumbnailUrl.includes("favicon")
+      if (
+        match &&
+        match.thumbnailUrl &&
+        !match.thumbnailUrl.endsWith(".mp4") &&
+        !match.thumbnailUrl.includes("clearbit") &&
+        !match.thumbnailUrl.includes("logo.png") &&
+        !match.thumbnailUrl.includes("favicon")
       ) {
         return match.thumbnailUrl;
       }
     }
 
-    // 2. If notif.videoThumbnail is provided, validate it's a good thumbnail (not a logo)
+    // 2. If notif.videoThumbnail is explicitly provided and valid
     if (notif.videoThumbnail && typeof notif.videoThumbnail === "string" && notif.videoThumbnail.trim()) {
       const raw = notif.videoThumbnail.trim();
       const isLogoOrFavicon =
@@ -243,24 +250,18 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         raw.includes("logo.jpg") ||
         raw.includes("favicon") ||
         raw.includes("google.com/s2");
-      const isVideoFile = raw.endsWith(".mp4") || raw.endsWith(".webm") || raw.endsWith(".mov") || raw.includes("/api/videos/stream/");
+      const isVideoFile =
+        raw.endsWith(".mp4") ||
+        raw.endsWith(".webm") ||
+        raw.endsWith(".mov") ||
+        raw.includes("/api/videos/stream/");
 
       if (!isLogoOrFavicon && !isVideoFile) {
         return raw;
       }
     }
-    
-    // 3. Fallback: Find the latest video by this user in allVideos
-    const userLatestVideo = allVideos
-      .filter((v) => v.author.name === notif.user.name)
-      .sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0))[0];
-    
-    if (userLatestVideo && userLatestVideo.thumbnailUrl) {
-      return userLatestVideo.thumbnailUrl;
-    }
 
-    // 4. Fallback to user avatar
-    return notif.user?.avatar || null;
+    return null;
   };
 
 
@@ -469,15 +470,29 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 pl-1">
                     {/* Avatar with Badge Overlay */}
                     <div className="relative shrink-0 select-none">
-                      <img
-                        src={notif.user.avatar || `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`}
-                        alt={notif.user.name}
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800 shadow-2xs grayscale"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
-                        }}
-                      />
+                      {(() => {
+                        const isYoouzTeam =
+                          (notif.user.name || "").toLowerCase().includes("yoouz") ||
+                          (notif.user.email || "").toLowerCase().includes("yoouz") ||
+                          (notif.user.email || "").toLowerCase().includes("admin");
+                        const avatarSrc = isYoouzTeam
+                          ? "/yoouz-facebook-avatar.png"
+                          : notif.user.avatar || `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
+
+                        return (
+                          <img
+                            src={avatarSrc}
+                            alt={notif.user.name}
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800 shadow-2xs"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = isYoouzTeam
+                                ? "/apple-touch-icon.png"
+                                : `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
+                            }}
+                          />
+                        );
+                      })()}
                       <span className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center text-[9px] shadow-xs ${badgeStyles.bg}`}>
                         {badgeStyles.icon}
                       </span>

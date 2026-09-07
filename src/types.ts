@@ -279,6 +279,7 @@ export interface CopoNotification {
   user: {
     name: string;
     avatar: string;
+    email?: string;
   };
   text: string;
   timestamp: string;

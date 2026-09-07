@@ -203,20 +203,57 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
   }).catch(() => {});
 }
 
+// Persistent deleted notification tracking
+const deletedNotifIds = new Set<string>();
+
+export function getDeletedNotifIds(userKey?: string): Set<string> {
+  if (userKey) {
+    try {
+      const stored = localStorage.getItem(`yoouz_deleted_notifs_${userKey}`);
+      if (stored) {
+        const arr = JSON.parse(stored);
+        if (Array.isArray(arr)) {
+          arr.forEach((id) => deletedNotifIds.add(id));
+        }
+      }
+    } catch (e) {}
+  }
+  return deletedNotifIds;
+}
+
+export function recordDeletedNotifId(notificationId: string, userKey?: string) {
+  if (!notificationId) return;
+  deletedNotifIds.add(notificationId);
+  if (userKey) {
+    try {
+      localStorage.setItem(`yoouz_deleted_notifs_${userKey}`, JSON.stringify(Array.from(deletedNotifIds)));
+    } catch (e) {}
+  }
+}
+
 /**
  * Filter notifications intended for the current user
  */
 function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): CopoNotification[] {
   const userEmail = (currentUser.email || "").toLowerCase().trim();
+  const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
   const userHandle = (currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
   const userName = (currentUser.name || "").toLowerCase().trim();
   const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
 
+  const deletedSet = getDeletedNotifIds(userKey);
+
   const list: CopoNotification[] = [];
 
   for (const data of rawItems) {
-    if (!data) continue;
+    if (!data || !data.id) continue;
+
+    // Skip permanently deleted notifications
+    if (deletedSet.has(data.id)) {
+      continue;
+    }
+
     const senderEmail = (data.user?.email || "").toLowerCase().trim();
     const senderName = (data.user?.name || "").toLowerCase().trim();
 
@@ -308,14 +345,15 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     }
   }
 
-  // System Welcome Notification Fallback if no user notifications exist yet
-  if (list.length === 0) {
+  // System Welcome Notification Fallback if no user notifications exist yet and not deleted/cleared
+  const welcomeId = `welcome_notif_${userHandle || "user"}`;
+  if (list.length === 0 && !deletedSet.has(welcomeId) && !deletedSet.has("all_cleared")) {
     list.push({
-      id: `welcome_notif_${userHandle || "user"}`,
+      id: welcomeId,
       type: "follow",
       user: {
         name: "Yoouz Team",
-        avatar: "/api/avatar?name=Yoouz+Team&background=27272a&color=fff&bold=true"
+        avatar: "/yoouz-facebook-avatar.png"
       },
       text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review.",
       timestamp: "Just now",
@@ -335,6 +373,32 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
 }
 
 /**
+ * Send a official welcome notification to new users on their first sign in
+ */
+export async function sendWelcomeNotificationIfNeeded(currentUser: UserProfile): Promise<void> {
+  if (!currentUser) return;
+  const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+  const welcomeKey = `yoouz_welcome_sent_${userKey}`;
+  const deletedSet = getDeletedNotifIds(userKey);
+
+  if (!localStorage.getItem(welcomeKey) && !deletedSet.has(`welcome_notif_${userKey}`) && !deletedSet.has("all_cleared")) {
+    localStorage.setItem(welcomeKey, "true");
+    sendSocialNotification({
+      recipientEmail: currentUser.email || userKey,
+      recipientHandle: currentUser.name || userKey,
+      recipientId: currentUser.userId || userKey,
+      type: "follow",
+      user: {
+        name: "Yoouz Team",
+        avatar: "/yoouz-facebook-avatar.png",
+        email: "team@yoouz.com"
+      },
+      text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review."
+    }).catch(() => {});
+  }
+}
+
+/**
  * Real-time subscription to notifications for the current user
  * Uses Instant SSE streaming + Bunny Cloud Database + Instant Local Cache
  */
@@ -346,6 +410,9 @@ export function subscribeToNotifications(
     onUpdate([]);
     return () => {};
   }
+
+  // Ensure first-time signups receive the official welcome notification
+  sendWelcomeNotificationIfNeeded(currentUser);
 
   let isDisposed = false;
   let cachedNotifs: CopoNotification[] = [];
@@ -481,13 +548,58 @@ export async function markAllNotificationsAsRead(notificationIds: string[], curr
 }
 
 /**
- * Delete a notification
+ * Delete a notification permanently
  */
-export async function deleteNotification(notificationId: string): Promise<void> {
+export async function deleteNotification(notificationId: string, currentUser?: UserProfile | null): Promise<void> {
   if (!notificationId) return;
+
+  const userKey = currentUser
+    ? (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim()
+    : "";
+
+  recordDeletedNotifId(notificationId, userKey);
+
+  if (userKey) {
+    try {
+      const cacheKey = `copo_cached_notifs_${userKey}`;
+      const rawCache = localStorage.getItem(cacheKey);
+      if (rawCache) {
+        const parsed = JSON.parse(rawCache);
+        if (Array.isArray(parsed)) {
+          const updated = parsed.filter((n: any) => n.id !== notificationId);
+          localStorage.setItem(cacheKey, JSON.stringify(updated));
+        }
+      }
+    } catch (e) {}
+  }
+
   fetch(`/api/nosql/notifications/${notificationId}`, {
     method: "DELETE"
   }).catch(() => {});
+}
+
+/**
+ * Clear all notifications for user
+ */
+export async function clearAllNotifications(notificationIds: string[], currentUser?: UserProfile | null): Promise<void> {
+  const userKey = currentUser
+    ? (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim()
+    : "";
+
+  recordDeletedNotifId("all_cleared", userKey);
+
+  if (Array.isArray(notificationIds)) {
+    for (const id of notificationIds) {
+      deleteNotification(id, currentUser);
+    }
+  }
+
+  if (userKey) {
+    try {
+      const cacheKey = `copo_cached_notifs_${userKey}`;
+      localStorage.setItem(cacheKey, JSON.stringify([]));
+    } catch (e) {}
+  }
 }
 
 /**
