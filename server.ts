@@ -255,6 +255,10 @@ function writeReviewsIndex(list: any[]): void {
     const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
     fs.writeFileSync(reviewsIndexPath, JSON.stringify(sanitized, null, 2), "utf8");
 
+    // Keep memory feedCache instantly synchronized
+    feedCache.videos = sanitized;
+    feedCache.lastFetched = Date.now();
+
     const seedCandidates = [
       path.join(process.cwd(), "public", "seeds", "reviews_index.json"),
       path.join(process.cwd(), "public", "reviews_index.json"),
@@ -296,14 +300,14 @@ function broadcastSseEvent(event: { type: string; [key: string]: any }, targetUs
         const cHandle = (client.userHandle || "").toLowerCase().trim().replace(/^@/, "");
         const cId = (client.userId || "").toLowerCase().trim().replace(/^@/, "");
 
-        const isAvtErtuop = (cEmail.includes("avr6566gd") || cHandle === "avtertuop" || cHandle === "avt ertuop" || cId.includes("avr6566gd"));
-        const isAouisesmee = (cEmail.includes("aouisesmee") || cHandle.includes("aouisesmee") || cId.includes("aouisesmee"));
+        const isAvtErtuop = (cEmail.includes("avr6566gd") || cHandle === "avtertuop" || cHandle === "avt ertuop" || cId.includes("avr6566gd") || cHandle.includes("avt") || cEmail.includes("avt"));
+        const isAouisesmee = (cEmail.includes("aouisesmee") || cHandle.includes("aouisesmee") || cId.includes("aouisesmee") || cEmail.includes("4samet") || cHandle.includes("4samet") || cId.includes("4samet"));
         const isBizRiv = (cEmail.includes("louis42111") || cHandle === "bizriv" || cHandle === "biz riv" || cId.includes("louis42111"));
 
         const isMatch = targets.some(t => {
           if (!t) return false;
-          if (isAvtErtuop && (t.includes("avr6566gd") || t === "avtertuop" || t === "avt ertuop" || t.includes("canon_user_avtertuop"))) return true;
-          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("canon_user_aouisesmee"))) return true;
+          if (isAvtErtuop && (t.includes("avr6566gd") || t === "avtertuop" || t === "avt ertuop" || t.includes("canon_user_avtertuop") || t.includes("avt"))) return true;
+          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("canon_user_aouisesmee") || t.includes("4samet"))) return true;
           if (isBizRiv && (t.includes("louis42111") || t === "bizriv" || t === "biz riv" || t.includes("canon_user_bizriv"))) return true;
 
           return (
@@ -4578,12 +4582,23 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
             args: [id, recipientEmail, type, text, isRead, jsonStr, recipientEmail, type, text, isRead, jsonStr]
           });
 
-          // Broadcast notification via SSE immediately
+          // Broadcast notification via SSE immediately with alias expansion
           const targets = [
             finalDataObj.recipientEmail,
             finalDataObj.recipientId,
             finalDataObj.recipientHandle
           ].filter(Boolean);
+
+          if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop" || (t || "").toLowerCase().includes("avt"))) {
+            targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
+          }
+          if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
+            targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+          }
+          if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("4samet"))) {
+            targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+          }
+
           broadcastSseEvent({
             type: "notification",
             notification: { id, ...finalDataObj }
@@ -5535,6 +5550,31 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         });
       }
 
+      // Update local reviews index and memory feedCache immediately
+      try {
+        const list = readReviewsIndex();
+        const vidIdx = list.findIndex((v: any) => v.id === videoId);
+        if (vidIdx !== -1) {
+          const curVid = list[vidIdx];
+          const existingComments = Array.isArray(curVid.comments) ? curVid.comments : [];
+          const exists = existingComments.some((c: any) => c.id === comment.id);
+          if (!exists) {
+            const nextComments = [comment, ...existingComments];
+            let totalCount = 0;
+            nextComments.forEach((c: any) => {
+              totalCount += 1;
+              if (Array.isArray(c.replies)) totalCount += c.replies.length;
+            });
+            list[vidIdx] = {
+              ...curVid,
+              comments: nextComments,
+              commentsCount: totalCount
+            };
+            writeReviewsIndex(list);
+          }
+        }
+      } catch (syncErr) {}
+
       // Broadcast comment live to all viewers
       broadcastSseEvent({
         type: "new_comment",
@@ -5554,14 +5594,16 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const notifObj = notification || data;
       if (!notifObj || !notifObj.id) return res.status(400).json({ error: "Missing notification object" });
 
+      const idLower = (notifObj.recipientId || "").toLowerCase();
+      const handleLower = (notifObj.recipientHandle || "").toLowerCase();
+      const emailLower = (notifObj.recipientEmail || "").toLowerCase();
+
       if (!notifObj.recipientEmail || !notifObj.recipientEmail.includes("@")) {
-        const idLower = (notifObj.recipientId || "").toLowerCase();
-        const handleLower = (notifObj.recipientHandle || "").toLowerCase();
-        if (idLower.includes("avr6566gd") || idLower.includes("avt ertuop") || idLower.includes("avtertuop") || handleLower.includes("avtertuop")) {
+        if (idLower.includes("avr6566gd") || idLower.includes("avt ertuop") || idLower.includes("avtertuop") || handleLower.includes("avtertuop") || handleLower.includes("avt")) {
           notifObj.recipientEmail = "avr6566gd@gmail.com";
         } else if (idLower.includes("louis42111") || idLower.includes("biz riv") || idLower.includes("bizriv") || handleLower.includes("bizriv")) {
           notifObj.recipientEmail = "louis42111@gmail.com";
-        } else if (idLower.includes("aouisesmee") || handleLower.includes("aouisesmee")) {
+        } else if (idLower.includes("aouisesmee") || handleLower.includes("aouisesmee") || idLower.includes("4samet") || handleLower.includes("4samet")) {
           notifObj.recipientEmail = "aouisesmee@gmail.com";
         }
       }
@@ -5582,21 +5624,21 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         });
       }
 
-      // Instant live broadcast to the targeted recipient
+      // Instant live broadcast to the targeted recipient across all devices and aliases
       const targets = [
         notifObj.recipientEmail,
         notifObj.recipientId,
         notifObj.recipientHandle
       ].filter(Boolean);
 
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop")) {
-        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop" || (t || "").toLowerCase().includes("avt"))) {
+        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
       }
       if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
         targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
       }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee"))) {
-        targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("4samet"))) {
+        targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
       }
 
       broadcastSseEvent({

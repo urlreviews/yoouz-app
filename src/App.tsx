@@ -2721,7 +2721,10 @@ export function App() {
 
     // Send social activity notification to video author
     if (nextIsLiked && currentUser) {
-      const targetVid = videos.find((v) => v.id === videoId);
+      const targetVid =
+        videos.find((v) => v.id === videoId) ||
+        videosRef.current.find((v) => v.id === videoId) ||
+        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
       if (targetVid) {
         const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVid);
 
@@ -2748,6 +2751,7 @@ export function App() {
     const author = targetVid.author;
     const authorName = (author?.name || "").trim();
     const cleanHandle = authorName.replace(/^@/, "").trim();
+    const authorHandle = ((author as any)?.handle || (targetVid as any).userHandle || "").toLowerCase().replace(/^@/, "").trim();
 
     let email = (targetVid.userEmail && targetVid.userEmail.includes("@") ? targetVid.userEmail : "") ||
                 (author?.email && author.email.includes("@") ? author.email : "") ||
@@ -2763,7 +2767,8 @@ export function App() {
         const uId = (u.id || u.uid || "").toLowerCase();
         return (
           (uid && (uId === uid.toLowerCase() || uEmail === uid.toLowerCase())) ||
-          (cleanHandle && (uHandle === cleanHandle.toLowerCase() || uName === cleanHandle.toLowerCase() || uEmail.startsWith(cleanHandle.toLowerCase())))
+          (cleanHandle && (uHandle === cleanHandle.toLowerCase() || uName === cleanHandle.toLowerCase() || uEmail.startsWith(cleanHandle.toLowerCase()))) ||
+          (authorHandle && (uHandle === authorHandle || uEmail.startsWith(authorHandle)))
         );
       });
       if (match) {
@@ -2773,12 +2778,12 @@ export function App() {
     }
 
     if (!email || !email.includes("@")) {
-      const lower = cleanHandle.toLowerCase();
-      if (lower.includes("avtertuop") || lower === "avt ertuop" || lower.includes("avr6566gd")) {
+      const lower = `${cleanHandle} ${authorHandle} ${(targetVid.userEmail || "")} ${(targetVid.userId || "")}`.toLowerCase();
+      if (lower.includes("avtertuop") || lower.includes("avt ertuop") || lower.includes("avr6566gd") || lower.includes("avt")) {
         email = "avr6566gd@gmail.com";
-      } else if (lower.includes("bizriv") || lower === "biz riv" || lower.includes("louis42111")) {
+      } else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) {
         email = "louis42111@gmail.com";
-      } else if (lower.includes("aouisesmee")) {
+      } else if (lower.includes("aouisesmee") || lower.includes("4samet")) {
         email = "aouisesmee@gmail.com";
       }
     }
@@ -2786,7 +2791,7 @@ export function App() {
     return {
       recipientEmail: email || cleanHandle,
       recipientId: uid || email || cleanHandle,
-      recipientHandle: cleanHandle || authorName
+      recipientHandle: cleanHandle || authorHandle || authorName
     };
   };
 
@@ -2856,7 +2861,10 @@ export function App() {
 
     // Send social activity notification to video author for bookmark/save
     if (nextBookmarked && currentUser) {
-      const targetVid = videos.find((v) => v.id === videoId);
+      const targetVid =
+        videos.find((v) => v.id === videoId) ||
+        videosRef.current.find((v) => v.id === videoId) ||
+        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
       if (targetVid) {
         const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVid);
 
@@ -3116,9 +3124,9 @@ export function App() {
       let recId = targetUserObj?.id || targetUserObj?.uid || "";
       if (!recEmail) {
         const lower = cleanAuthorHandle.toLowerCase();
-        if (lower.includes("avtertuop") || lower === "avt ertuop") recEmail = "avr6566gd@gmail.com";
-        else if (lower.includes("bizriv") || lower === "biz riv") recEmail = "louis42111@gmail.com";
-        else if (lower.includes("aouisesmee")) recEmail = "aouisesmee@gmail.com";
+        if (lower.includes("avtertuop") || lower.includes("avt ertuop") || lower.includes("avr6566gd") || lower.includes("avt")) recEmail = "avr6566gd@gmail.com";
+        else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) recEmail = "louis42111@gmail.com";
+        else if (lower.includes("aouisesmee") || lower.includes("4samet")) recEmail = "aouisesmee@gmail.com";
       }
 
       sendSocialNotification({
@@ -3249,7 +3257,12 @@ export function App() {
       return;
     }
 
-    const targetVid = videos.find((v) => v.id === videoId);
+    const targetVid =
+      videos.find((v) => v.id === videoId) ||
+      videosRef.current.find((v) => v.id === videoId) ||
+      (activeCommentVideo && activeCommentVideo.id === videoId ? activeCommentVideo : null) ||
+      places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
+
     const isTargetCreator = Boolean(
       options?.postAsCreator ||
       (currentUser.email && targetVid?.userEmail && currentUser.email.toLowerCase().trim() === (targetVid?.userEmail || "").toLowerCase().trim()) ||
@@ -3358,7 +3371,7 @@ export function App() {
       console.warn("Firestore comment sync warning:", err);
     }
 
-    // Send social notification for comment / reply
+    // Send social notification for comment / reply IMMEDIATELY
     if (currentUser && targetVid) {
       const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVid);
 
@@ -3377,6 +3390,39 @@ export function App() {
         videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
         placeName: targetVid.placeName
       }).catch(() => {});
+
+      // If replying to someone else's comment, also notify the comment author!
+      if (options?.replyToId) {
+        const parentComm = (targetVid.comments || []).find((c) => c.id === options.replyToId);
+        if (parentComm) {
+          const parentAuthor = (parentComm.authorName || parentComm.authorHandle || "").trim();
+          const cleanP = parentAuthor.replace(/^@/, "");
+          if (parentAuthor && cleanP.toLowerCase() !== (currentUser.name || "").toLowerCase() && parentAuthor !== currentUser.email) {
+            let pEmail = parentComm.authorHandle?.includes("@") ? parentComm.authorHandle : "";
+            if (!pEmail) {
+              const lower = `${cleanP} ${parentComm.authorHandle || ""}`.toLowerCase();
+              if (lower.includes("aouisesmee") || lower.includes("4samet")) pEmail = "aouisesmee@gmail.com";
+              else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) pEmail = "avr6566gd@gmail.com";
+              else if (lower.includes("bizriv") || lower.includes("louis42111")) pEmail = "louis42111@gmail.com";
+            }
+            sendSocialNotification({
+              recipientEmail: pEmail || cleanP,
+              recipientHandle: parentComm.authorHandle || cleanP,
+              recipientId: pEmail || cleanP,
+              type: "comment",
+              user: {
+                name: currentUser.name,
+                avatar: currentUser.avatar,
+                email: currentUser.email
+              },
+              text: `replied to your comment: "${text.slice(0, 50)}${text.length > 50 ? '...' : ''}"`,
+              videoId: targetVid.id,
+              videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
+              placeName: targetVid.placeName
+            }).catch(() => {});
+          }
+        }
+      }
     }
   };
 
@@ -3469,7 +3515,12 @@ export function App() {
 
     // Send social activity notification to comment/reply author
     if (currentUser) {
-      const targetVid = videos.find((v) => v.id === videoId);
+      const targetVid =
+        videos.find((v) => v.id === videoId) ||
+        videosRef.current.find((v) => v.id === videoId) ||
+        (activeCommentVideo && activeCommentVideo.id === videoId ? activeCommentVideo : null) ||
+        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
+
       if (targetVid && targetVid.comments) {
         let likedComment: any = null;
         if (replyId) {
@@ -3487,10 +3538,16 @@ export function App() {
         });
 
         if (isNowLiked && likedComment) {
-          const authorName = (likedComment.user?.name || likedComment.author?.name || "").trim();
+          const authorName = (likedComment.authorName || likedComment.authorHandle || likedComment.user?.name || "").trim();
           const cleanH = authorName.replace(/^@/, "");
-          const authorEmail = likedComment.user?.email || (likedComment.userId && likedComment.userId.includes("@") ? likedComment.userId : "");
-          if (authorEmail !== currentUser.email && cleanH !== currentUser.name) {
+          let authorEmail = likedComment.authorHandle?.includes("@") ? likedComment.authorHandle : (likedComment.user?.email || "");
+          if (!authorEmail) {
+            const lower = `${cleanH} ${likedComment.authorHandle || ""}`.toLowerCase();
+            if (lower.includes("aouisesmee") || lower.includes("4samet")) authorEmail = "aouisesmee@gmail.com";
+            else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) authorEmail = "avr6566gd@gmail.com";
+            else if (lower.includes("bizriv") || lower.includes("louis42111")) authorEmail = "louis42111@gmail.com";
+          }
+          if (authorEmail !== currentUser.email && cleanH.toLowerCase() !== (currentUser.name || "").toLowerCase()) {
             sendSocialNotification({
               recipientEmail: authorEmail || cleanH,
               recipientHandle: cleanH || authorName,
@@ -3566,6 +3623,59 @@ export function App() {
       }).catch(() => {});
     } catch (err) {
       console.warn("Firestore creator heart sync warning:", err);
+    }
+
+    // Send social activity notification to comment author if creator loved it
+    if (currentUser) {
+      const targetVid =
+        videos.find((v) => v.id === videoId) ||
+        videosRef.current.find((v) => v.id === videoId) ||
+        (activeCommentVideo && activeCommentVideo.id === videoId ? activeCommentVideo : null) ||
+        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
+
+      if (targetVid && targetVid.comments) {
+        let lovedComment: any = null;
+        if (replyId) {
+          const parent = targetVid.comments.find((c) => c.id === commentId);
+          lovedComment = parent?.replies?.find((r) => r.id === replyId);
+        } else {
+          lovedComment = targetVid.comments.find((c) => c.id === commentId);
+        }
+
+        const isLoved = updatedComments.some((c) => {
+          if (replyId) return c.replies?.some((r) => r.id === replyId && r.likedByCreator);
+          return c.id === commentId && c.likedByCreator;
+        });
+
+        if (isLoved && lovedComment) {
+          const cAuthor = (lovedComment.authorName || lovedComment.authorHandle || "").trim();
+          const cleanH = cAuthor.replace(/^@/, "");
+          let aEmail = lovedComment.authorHandle?.includes("@") ? lovedComment.authorHandle : "";
+          if (!aEmail) {
+            const lower = `${cleanH} ${lovedComment.authorHandle || ""}`.toLowerCase();
+            if (lower.includes("aouisesmee") || lower.includes("4samet")) aEmail = "aouisesmee@gmail.com";
+            else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) aEmail = "avr6566gd@gmail.com";
+            else if (lower.includes("bizriv") || lower.includes("louis42111")) aEmail = "louis42111@gmail.com";
+          }
+          if (aEmail !== currentUser.email && cleanH.toLowerCase() !== (currentUser.name || "").toLowerCase()) {
+            sendSocialNotification({
+              recipientEmail: aEmail || cleanH,
+              recipientHandle: cleanH || cAuthor,
+              recipientId: aEmail || cleanH,
+              type: "like",
+              user: {
+                name: currentUser.name,
+                avatar: currentUser.avatar,
+                email: currentUser.email
+              },
+              text: `loved your comment: "${(lovedComment.text || "").slice(0, 40)}${(lovedComment.text || "").length > 40 ? '...' : ''}"`,
+              videoId: targetVid.id,
+              videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
+              placeName: targetVid.placeName
+            }).catch(() => {});
+          }
+        }
+      }
     }
   };
 
@@ -3736,6 +3846,35 @@ export function App() {
       }
     } catch (err) {
       console.warn("Firestore owner response sync warning:", err);
+    }
+
+    // Send social notification to review author that business responded
+    if (text.trim()) {
+      const targetVid =
+        videos.find((v) => v.id === videoId) ||
+        videosRef.current.find((v) => v.id === videoId) ||
+        (activeCommentVideo && activeCommentVideo.id === videoId ? activeCommentVideo : null) ||
+        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
+
+      if (targetVid) {
+        const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVid);
+        const placeName = targetVid.placeName || "Business";
+        sendSocialNotification({
+          recipientEmail,
+          recipientId,
+          recipientHandle,
+          type: "comment",
+          user: {
+            name: `${placeName} (Owner)`,
+            avatar: targetVid.placeLogoUrl || `/api/avatar?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`,
+            email: currentUser?.email || "owner@yoouz.com"
+          },
+          text: `responded to your review: "${text.trim().slice(0, 50)}${text.trim().length > 50 ? '...' : ''}"`,
+          videoId: targetVid.id,
+          videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
+          placeName: targetVid.placeName
+        }).catch(() => {});
+      }
     }
   };
 

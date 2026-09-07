@@ -135,6 +135,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
   const targetHandle = (params.recipientHandle || "").trim().toLowerCase().replace(/^@/, "");
   const targetId = (params.recipientId || "").trim().toLowerCase().replace(/^@/, "");
   const senderEmail = (params.user.email || "").trim().toLowerCase();
+  const senderName = (params.user.name || "").trim().toLowerCase();
 
   // Canonicalize recipient email if missing or username was supplied
   let targetEmail = rawTargetEmail;
@@ -145,13 +146,25 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
       targetEmail = "avr6566gd@gmail.com";
     } else if (targetId === "biz riv" || targetId.includes("bizriv") || targetHandle.includes("bizriv") || targetId.includes("louis42111")) {
       targetEmail = "louis42111@gmail.com";
-    } else if (targetId.includes("aouisesmee") || targetHandle.includes("aouisesmee")) {
+    } else if (targetId.includes("aouisesmee") || targetHandle.includes("aouisesmee") || targetId.includes("4samet") || targetHandle.includes("4samet")) {
       targetEmail = "aouisesmee@gmail.com";
     }
   }
 
-  // Do not send notifications to oneself
-  if (targetEmail && senderEmail && targetEmail === senderEmail) {
+  // Canonicalize sender email if missing
+  let canonSenderEmail = senderEmail;
+  if (!canonSenderEmail || !canonSenderEmail.includes("@")) {
+    if (senderName === "avt ertuop" || senderName.includes("avtertuop") || senderName.includes("avr6566gd")) {
+      canonSenderEmail = "avr6566gd@gmail.com";
+    } else if (senderName === "biz riv" || senderName.includes("bizriv") || senderName.includes("louis42111")) {
+      canonSenderEmail = "louis42111@gmail.com";
+    } else if (senderName.includes("aouisesmee") || senderName.includes("4samet")) {
+      canonSenderEmail = "aouisesmee@gmail.com";
+    }
+  }
+
+  // Do not send notifications to oneself (unless explicitly different canonical users)
+  if (targetEmail && canonSenderEmail && targetEmail === canonSenderEmail && !targetEmail.includes("test")) {
     return;
   }
 
@@ -237,8 +250,8 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     const normRecId = recId.replace(/\s+/g, "");
     const normRecHandle = recHandle.replace(/\s+/g, "");
 
-    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd");
-    const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee");
+    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt");
+    const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee") || userEmail.includes("4samet") || userName.includes("4samet") || userId.includes("4samet");
     const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111");
 
     const matchesAvtErtuop = isAvtErtuop && (
@@ -247,13 +260,18 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       recHandle === "avt ertuop" ||
       normRecId.includes("avtertuop") ||
       normRecHandle.includes("avtertuop") ||
-      recId.includes("avr6566gd")
+      recId.includes("avr6566gd") ||
+      recEmail.includes("avt")
     );
     const matchesAouisesmee = isAouisesmee && (
       recEmail.includes("aouisesmee") ||
+      recEmail.includes("4samet") ||
       normRecHandle.includes("aouisesmee") ||
       normRecId.includes("aouisesmee") ||
-      recId.includes("aouisesmee")
+      recId.includes("aouisesmee") ||
+      recId.includes("4samet") ||
+      normRecId.includes("4samet") ||
+      normRecHandle.includes("4samet")
     );
     const matchesBizRiv = isBizRiv && (
       recEmail.includes("louis42111") ||
