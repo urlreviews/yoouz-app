@@ -5078,7 +5078,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   // Video Upload Endpoint (Saves multipart form-data binary stream OR base64 to persistent server file / Firebase Storage)
   app.post("/api/videos/upload", (req, res, next) => {
     console.log("🔥 [Server] Received POST request to /api/videos/upload");
-    multerUpload.single("video")(req, res, (err: any) => {
+    multerUpload.single("video")(req as any, res as any, (err: any) => {
       if (err) {
         console.error("🔥 [Multer Error]", err);
         return res.status(400).json({ error: err.message || "File upload error" });
