@@ -730,78 +730,130 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="w-full sm:max-w-[440px] h-auto max-h-[85dvh] sm:max-h-[90dvh] bg-[#09090b] rounded-t-[28px] sm:rounded-[28px] shadow-2xl border-t sm:border border-white/10 text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto pb-[max(16px,env(safe-area-inset-bottom,16px))] mt-auto"
+        className="w-full sm:max-w-[440px] md:max-w-[800px] h-auto max-h-[85dvh] sm:max-h-[90dvh] md:max-h-[580px] bg-[#09090b] rounded-t-[28px] sm:rounded-[28px] md:rounded-[32px] shadow-2xl border-t sm:border border-white/10 md:border-white/[0.08] text-white flex flex-row relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-hidden pb-[max(16px,env(safe-area-inset-bottom,16px))] md:pb-0 mt-auto md:my-auto"
         style={{
           transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Sticky Header with Drag Indicator, High-Contrast Back Button & Help */}
-        <div 
-          className="sticky top-0 z-30 bg-[#09090b]/95 backdrop-blur-md border-b border-white/[0.06] pt-2 pb-2.5 px-4 sm:px-5 flex flex-col gap-1 shrink-0 touch-pan-y"
-          {...swipeProps}
-        >
-          {/* Top Drag Handle Indicator */}
-          <div className="w-full flex justify-center py-0.5 sm:hidden cursor-grab active:cursor-grabbing touch-none">
-            <div className="w-12 h-1.5 rounded-full bg-zinc-700/80" />
+        {/* Left Column (Brand Showcase) - Desktop Only */}
+        <div className="hidden md:flex md:w-[360px] bg-gradient-to-b from-zinc-950 via-zinc-900 to-black border-r border-white/[0.06] p-8 flex-col justify-between relative overflow-hidden shrink-0 select-none">
+          {/* Ambient Aurora Glow */}
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-white/[0.02] blur-[48px] pointer-events-none" />
+          
+          {/* Top Brand Label */}
+          <div className="space-y-1.5 z-10">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md bg-white flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-black">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </div>
+              <span className="text-[12px] font-bold tracking-[0.2em] text-white uppercase font-sans">Yoouz</span>
+            </div>
+            <p className="text-[11px] font-medium text-zinc-400 tracking-wide">REAL PEOPLE. REAL REVIEWS.</p>
           </div>
 
-          <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-2.5">
-              {/* High-Contrast Prominent Back Button */}
-              <button
-                onClick={handleBackClick}
-                className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 hover:bg-zinc-700/90 text-white flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer shadow-md group"
-                aria-label="Back"
-                title="Go Back"
-              >
-                <ArrowLeft className="w-5 h-5 text-white stroke-[2.25] group-hover:-translate-x-0.5 transition-transform" />
-              </button>
-
-              {onOpenHelp ? (
-                <button
-                  onClick={() => {
-                    onClose();
-                    onOpenHelp();
-                  }}
-                  className="flex items-center gap-1.5 text-[12px] font-semibold text-zinc-200 hover:text-white transition-all px-3 py-1.5 rounded-full bg-zinc-800/80 border border-zinc-700/80 hover:bg-zinc-700/80 cursor-pointer active:scale-95 shadow-sm"
-                >
-                  <HelpCircle className="w-3.5 h-3.5 text-zinc-200" />
-                  <span>Help</span>
-                </button>
-              ) : null}
+          {/* Core Feature Teaser Cards */}
+          <div className="space-y-4 my-auto z-10">
+            {/* Feature 1 */}
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] backdrop-blur-md space-y-2 transform hover:scale-[1.01] transition-transform duration-300">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-white/[0.06] flex items-center justify-center border border-white/[0.08]">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-xs font-bold text-white">Interactive Feed</span>
+              </div>
+              <p className="text-[11.5px] leading-relaxed text-zinc-400">Swipe through fast, authentic video reviews from genuine local customers.</p>
             </div>
 
-            <button
-              onClick={onClose}
-              aria-label="Close modal"
-              className="w-9 h-9 rounded-full bg-zinc-800/80 border border-zinc-700/80 text-zinc-300 hover:text-white hover:bg-zinc-700 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-90"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* Feature 2 */}
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] backdrop-blur-md space-y-2 transform hover:scale-[1.01] transition-transform duration-300">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-white/[0.06] flex items-center justify-center border border-white/[0.08]">
+                  <MapPin className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-xs font-bold text-white">Verified Places</span>
+              </div>
+              <p className="text-[11.5px] leading-relaxed text-zinc-400">Explore real, verified businesses with verified maps coordinates & ratings.</p>
+            </div>
+          </div>
+
+          {/* Bottom Tagline */}
+          <div className="z-10">
+            <span className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">JOIN THE COMMUNITY</span>
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-2 sm:p-4 flex-1 flex flex-col justify-center">
-          <CopoAuthPrompt
-            intent={intent}
-            customTitle={customTitle}
-            customSubtitle={customSubtitle}
-            currentStep={currentStep}
-            onStepChange={setCurrentStep}
-            onSuccess={(user) => {
-              onSuccess(user);
-              onClose();
-            }}
-            onOpenHelp={() => {
-              onClose();
-              if (onOpenHelp) onOpenHelp();
-            }}
-            onOpenLegal={onOpenLegal}
-            isFullPage={false}
-          />
+        {/* Right Column (Auth Content) */}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          {/* Sticky Header with Drag Indicator, High-Contrast Back Button & Help */}
+          <div 
+            className="sticky top-0 z-30 bg-[#09090b]/95 backdrop-blur-md border-b border-white/[0.06] pt-2 pb-2.5 px-4 sm:px-5 flex flex-col gap-1 shrink-0 touch-pan-y"
+            {...swipeProps}
+          >
+            {/* Top Drag Handle Indicator */}
+            <div className="w-full flex justify-center py-0.5 sm:hidden cursor-grab active:cursor-grabbing touch-none">
+              <div className="w-12 h-1.5 rounded-full bg-zinc-700/80" />
+            </div>
+
+            <div className="flex items-center justify-between mt-1">
+              <div className="flex items-center gap-2.5">
+                {/* High-Contrast Prominent Back Button */}
+                <button
+                  onClick={handleBackClick}
+                  className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 hover:bg-zinc-700/90 text-white flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer shadow-md group"
+                  aria-label="Back"
+                  title="Go Back"
+                >
+                  <ArrowLeft className="w-5 h-5 text-white stroke-[2.25] group-hover:-translate-x-0.5 transition-transform" />
+                </button>
+
+                {onOpenHelp ? (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onOpenHelp();
+                    }}
+                    className="flex items-center gap-1.5 text-[12px] font-semibold text-zinc-200 hover:text-white transition-all px-3 py-1.5 rounded-full bg-zinc-800/80 border border-zinc-700/80 hover:bg-zinc-700/80 cursor-pointer active:scale-95 shadow-sm"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 text-zinc-200" />
+                    <span>Help</span>
+                  </button>
+                ) : null}
+              </div>
+
+              <button
+                onClick={onClose}
+                aria-label="Close modal"
+                className="w-9 h-9 rounded-full bg-zinc-800/80 border border-zinc-700/80 text-zinc-300 hover:text-white hover:bg-zinc-700 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-90"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-2 sm:p-4 flex-1 flex flex-col justify-center">
+            <CopoAuthPrompt
+              intent={intent}
+              customTitle={customTitle}
+              customSubtitle={customSubtitle}
+              currentStep={currentStep}
+              onStepChange={setCurrentStep}
+              onSuccess={(user) => {
+                onSuccess(user);
+                onClose();
+              }}
+              onOpenHelp={() => {
+                onClose();
+                if (onOpenHelp) onOpenHelp();
+              }}
+              onOpenLegal={onOpenLegal}
+              isFullPage={false}
+            />
+          </div>
         </div>
       </div>
     </div>
