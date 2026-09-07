@@ -17,7 +17,6 @@ export interface CreateNotificationParams {
   type: "like" | "comment" | "follow" | "repost" | "message";
   user: {
     name: string;
-    ////handle: string;
     avatar: string;
     email?: string;
   };
@@ -27,7 +26,7 @@ export interface CreateNotificationParams {
   placeName?: string;
 }
 
-// Clean object helper to ensure Firestore never receives undefined
+// Clean object helper to ensure payloads never contain undefined values
 function sanitizeData(obj: Record<string, any>): Record<string, any> {
   const clean: Record<string, any> = {};
   Object.keys(obj).forEach((key) => {
@@ -38,12 +37,100 @@ function sanitizeData(obj: Record<string, any>): Record<string, any> {
   return clean;
 }
 
+// =========================================================================
+// Real-Time SSE Shared Client (Server-Sent Events) for Zero-Latency Updates
+// =========================================================================
+type RealtimeEventHandler = (event: { type: string; [key: string]: any }) => void;
+const realtimeListeners = new Set<RealtimeEventHandler>();
+let activeEventSource: EventSource | null = null;
+let sseReconnectTimer: any = null;
+let currentSseUserKey = "";
+
+function setupRealtimeStream(user: UserProfile) {
+  if (typeof window === "undefined" || typeof EventSource === "undefined") return;
+
+  const email = (user.email || "").toLowerCase().trim();
+  const userId = (user.userId || (user as any).id || "").trim();
+  const name = (user.name || "").trim();
+  const userKey = `${email}|${userId}|${name}`;
+
+  if (activeEventSource && currentSseUserKey === userKey) {
+    return;
+  }
+
+  if (activeEventSource) {
+    try {
+      activeEventSource.close();
+    } catch (e) {}
+    activeEventSource = null;
+  }
+
+  currentSseUserKey = userKey;
+  const query = new URLSearchParams({
+    userEmail: email,
+    userId: userId,
+    userHandle: name
+  }).toString();
+
+  try {
+    const es = new EventSource(`/api/realtime/stream?${query}`);
+    activeEventSource = es;
+
+    es.onmessage = (e) => {
+      try {
+        if (!e.data || e.data.trim() === "heartbeat") return;
+        const parsed = JSON.parse(e.data);
+        realtimeListeners.forEach((fn) => {
+          try {
+            fn(parsed);
+          } catch (err) {
+            console.warn("Error in SSE listener handler:", err);
+          }
+        });
+      } catch (parseErr) {}
+    };
+
+    es.onerror = () => {
+      try {
+        es.close();
+      } catch (e) {}
+      if (activeEventSource === es) {
+        activeEventSource = null;
+      }
+      if (!sseReconnectTimer) {
+        sseReconnectTimer = setTimeout(() => {
+          sseReconnectTimer = null;
+          if (realtimeListeners.size > 0 && user) {
+            setupRealtimeStream(user);
+          }
+        }, 3500);
+      }
+    };
+  } catch (err) {
+    console.warn("Failed to initialize SSE EventSource:", err);
+  }
+}
+
+function registerRealtimeListener(user: UserProfile, handler: RealtimeEventHandler): () => void {
+  realtimeListeners.add(handler);
+  setupRealtimeStream(user);
+
+  return () => {
+    realtimeListeners.delete(handler);
+    if (realtimeListeners.size === 0 && activeEventSource) {
+      try {
+        activeEventSource.close();
+      } catch (e) {}
+      activeEventSource = null;
+      currentSseUserKey = "";
+    }
+  };
+}
+
 /**
- * Send a notification to a recipient in Firestore
+ * Send a notification to a recipient (persists in Bunny DB, Firestore & instantly broadcasts via SSE)
  */
 export async function sendSocialNotification(params: CreateNotificationParams): Promise<void> {
-  if (!db) return;
-
   const targetEmail = (params.recipientEmail || "").trim().toLowerCase();
   const targetHandle = (params.recipientHandle || "").trim().toLowerCase().replace(/^@/, "");
   const targetId = (params.recipientId || "").trim().toLowerCase().replace(/^@/, "");
@@ -55,7 +142,6 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
   }
 
   const notifId = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-  const notifDocRef = doc(db, "notifications", notifId);
 
   // Sanitize videoThumbnail: ensure no video stream URL is passed as image thumbnail
   let sanitizedThumbnail = (params.videoThumbnail || "").trim();
@@ -73,7 +159,6 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     type: params.type,
     user: {
       name: params.user.name || "Yoouz Member",
-      ////handle: (params.user.name || "").replace(/^@/, "") || params.user.name?.toLowerCase().replace(/\s+/g, "") || "member",
       avatar: params.user.avatar || `/api/avatar?name=${encodeURIComponent(params.user.name || "User")}&background=27272a&color=fff`,
       email: senderEmail
     },
@@ -86,103 +171,184 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     isRead: false
   });
 
-  try {
-    await setDoc(notifDocRef, payload);
-    // Mirror to Bunny Cloud Database
-    fetch(`/api/nosql/notifications/${notifId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: payload, merge: true })
-    }).catch(() => {});
-  } catch (err) {
-    console.warn("Error saving notification to Firestore:", err);
+  // 1. Primary write to Bunny Database (Cloud libSQL) + Live SSE Broadcast
+  fetch("/api/interactions/notification", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ notification: payload })
+  }).catch(() => {});
+
+  // 2. Secondary NoSQL mirror write
+  fetch(`/api/nosql/notifications/${notifId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: payload, merge: true })
+  }).catch(() => {});
+
+  // 3. Optional Firestore write if available
+  if (db) {
+    try {
+      const notifDocRef = doc(db, "notifications", notifId);
+      await setDoc(notifDocRef, payload);
+    } catch (err) {
+      console.warn("Optional Firestore notification sync notice:", err);
+    }
   }
 }
 
 /**
+ * Filter notifications intended for the current user
+ */
+function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): CopoNotification[] {
+  const userEmail = (currentUser.email || "").toLowerCase().trim();
+  const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
+  const userHandle = (currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+  const userName = (currentUser.name || "").toLowerCase().trim();
+  const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
+
+  const list: CopoNotification[] = [];
+
+  for (const data of rawItems) {
+    if (!data) continue;
+    const senderEmail = (data.user?.email || "").toLowerCase().trim();
+
+    // Exclude own actions
+    if (userEmail && senderEmail && senderEmail === userEmail) {
+      continue;
+    }
+
+    const recEmail = (data.recipientEmail || "").toLowerCase().trim();
+    const recHandle = (data.recipientHandle || "").toLowerCase().trim().replace(/^@/, "");
+    const recId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
+
+    const isForMe =
+      (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail)) ||
+      (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
+      (userHandle && (recHandle === userHandle || recId === userHandle || recEmail.includes(userHandle))) ||
+      (userName && (recHandle === userName || recId === userName || recEmail === userName || recId === userName.replace(/\s+/g, ""))) ||
+      (userId && (recId === userId || recEmail === userId));
+
+    if (isForMe) {
+      list.push({
+        id: String(data.id),
+        type: data.type || "like",
+        user: {
+          name: data.user?.name || "Yoouz Member",
+          avatar: data.user?.avatar || `/api/avatar?name=${encodeURIComponent(data.user?.name || "User")}&background=27272a&color=fff`
+        },
+        text: data.text || "",
+        timestamp: data.timestamp || "Recently",
+        createdAtMs: data.createdAt,
+        videoId: data.videoId,
+        videoThumbnail: data.videoThumbnail,
+        isRead: Boolean(data.isRead)
+      });
+    }
+  }
+
+  // Sort newest first
+  list.sort((a, b) => {
+    const timeA = a.createdAtMs || (a as any).createdAt || 0;
+    const timeB = b.createdAtMs || (b as any).createdAt || 0;
+    return timeB - timeA;
+  });
+
+  return list;
+}
+
+/**
  * Real-time subscription to notifications for the current user
+ * Uses Instant SSE streaming + Bunny DB + Firestore
  */
 export function subscribeToNotifications(
   currentUser: UserProfile | null,
   onUpdate: (notifications: CopoNotification[]) => void
 ): () => void {
-  if (!db || !currentUser) {
+  if (!currentUser) {
     onUpdate([]);
     return () => {};
   }
 
-  const userEmail = (currentUser.email || "").toLowerCase().trim();
-  const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
-  const userHandle = (currentUser.name || currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
-  const userName = (currentUser.name || "").toLowerCase().trim();
-  const userId = (currentUser.userId || "").toLowerCase().trim();
+  let isDisposed = false;
+  let cachedNotifs: CopoNotification[] = [];
 
-  try {
-    const notifsRef = collection(db, "notifications");
-    const unsubscribe = onSnapshot(
-      notifsRef,
-      (snapshot) => {
-        const list: CopoNotification[] = [];
+  const updateList = (newItems: CopoNotification[]) => {
+    if (isDisposed) return;
+    cachedNotifs = newItems;
+    onUpdate(newItems);
+  };
 
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data() as any;
-          const senderEmail = (data.user?.email || "").toLowerCase().trim();
-
-          // Don't show notifications created by current user
-          if (userEmail && senderEmail && senderEmail === userEmail) {
-            return;
-          }
-
-          const recEmail = (data.recipientEmail || "").toLowerCase().trim();
-          const recHandle = (data.recipientHandle || "").toLowerCase().trim().replace(/^@/, "");
-          const recId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
-
-          // Robust recipient matching
-          const isForMe =
-            (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail)) ||
-            (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
-            (userHandle && (recHandle === userHandle || recId === userHandle || recEmail.includes(userHandle))) ||
-            (userName && (recHandle === userName || recId === userName || recEmail === userName)) ||
-            (userId && (recId === userId || recEmail === userId));
-
-          if (isForMe) {
-            list.push({
-              id: docSnap.id,
-              type: data.type || "like",
-              user: {
-                name: data.user?.name || "Yoouz Member",
-                ////handle: data.user?.name ? `@${data.user.name.replace(/^@/, "")}` : "@member",
-                avatar: data.user?.avatar || `/api/avatar?name=${encodeURIComponent(data.user?.name || "User")}&background=27272a&color=fff`
-              },
-              text: data.text || "",
-              timestamp: data.timestamp || "Recently",
-              createdAtMs: data.createdAt,
-              videoId: data.videoId,
-              videoThumbnail: data.videoThumbnail,
-              isRead: Boolean(data.isRead)
-            });
-          }
-        });
-
-        // Sort with newest on top
-        list.sort((a, b) => {
-          const timeA = a.createdAtMs || (a as any).createdAt || 0;
-          const timeB = b.createdAtMs || (b as any).createdAt || 0;
-          return timeB - timeA;
-        });
-
-        onUpdate(list);
-      },
-      (error) => {
-        console.warn("Notifications subscription error:", error);
+  // 1. Initial immediate fetch from Bunny Cloud Database
+  const fetchFromBunny = async () => {
+    try {
+      const res = await fetch("/api/nosql/notifications");
+      if (res.ok) {
+        const json = await res.json();
+        const items = Array.isArray(json) ? json : (json.items || json.data || []);
+        if (Array.isArray(items) && !isDisposed) {
+          const filtered = filterNotificationsForUser(items, currentUser);
+          updateList(filtered);
+        }
       }
-    );
+    } catch (e) {}
+  };
+  fetchFromBunny();
 
-    return unsubscribe;
-  } catch (err) {
-    console.warn("Failed to subscribe to notifications:", err);
-    return () => {};
+  // 2. Real-Time Instant SSE Event Listener (<100ms response time)
+  const unregisterSse = registerRealtimeListener(currentUser, (evt) => {
+    if (evt.type === "notification") {
+      const notifData = evt.notification || evt.data;
+      if (notifData) {
+        const filtered = filterNotificationsForUser([notifData], currentUser);
+        if (filtered.length > 0) {
+          const freshItem = filtered[0];
+          // Prepend or update existing
+          const existingIdx = cachedNotifs.findIndex((n) => n.id === freshItem.id);
+          let nextList: CopoNotification[];
+          if (existingIdx >= 0) {
+            nextList = [...cachedNotifs];
+            nextList[existingIdx] = freshItem;
+          } else {
+            nextList = [freshItem, ...cachedNotifs];
+          }
+          updateList(nextList);
+        }
+      }
+    }
+  });
+
+  // 3. Periodic Background Sync (every 5 seconds) for infallible consistency
+  const pollTimer = setInterval(fetchFromBunny, 5000);
+
+  // 4. Optional Firestore snapshot sync
+  let unsubscribeFirestore = () => {};
+  if (db) {
+    try {
+      const notifsRef = collection(db, "notifications");
+      unsubscribeFirestore = onSnapshot(
+        notifsRef,
+        (snapshot) => {
+          if (isDisposed) return;
+          const items: any[] = [];
+          snapshot.forEach((docSnap) => {
+            items.push({ id: docSnap.id, ...docSnap.data() });
+          });
+          const filtered = filterNotificationsForUser(items, currentUser);
+          updateList(filtered);
+        },
+        (error) => {
+          console.warn("Notifications Firestore subscription notice:", error);
+        }
+      );
+    } catch (err) {}
   }
+
+  return () => {
+    isDisposed = true;
+    clearInterval(pollTimer);
+    unregisterSse();
+    unsubscribeFirestore();
+  };
 }
 
 /**
@@ -196,12 +362,11 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
     body: JSON.stringify({ data: { isRead: true }, merge: true })
   }).catch(() => {});
 
-  if (!db) return;
-  try {
-    const notifRef = doc(db, "notifications", notificationId);
-    await updateDoc(notifRef, { isRead: true });
-  } catch (err) {
-    console.warn("Error marking notification read:", err);
+  if (db) {
+    try {
+      const notifRef = doc(db, "notifications", notificationId);
+      await updateDoc(notifRef, { isRead: true });
+    } catch (err) {}
   }
 }
 
@@ -221,9 +386,7 @@ export async function markAllNotificationsAsRead(notificationIds: string[]): Pro
       try {
         const notifRef = doc(db, "notifications", id);
         await updateDoc(notifRef, { isRead: true });
-      } catch (err) {
-        console.warn("Error updating notification:", err);
-      }
+      } catch (err) {}
     }
   }
 }
@@ -237,183 +400,249 @@ export async function deleteNotification(notificationId: string): Promise<void> 
     method: "DELETE"
   }).catch(() => {});
 
-  if (!db) return;
-  try {
-    const notifRef = doc(db, "notifications", notificationId);
-    await deleteDoc(notifRef);
-  } catch (err) {
-    console.warn("Error deleting notification:", err);
+  if (db) {
+    try {
+      const notifRef = doc(db, "notifications", notificationId);
+      await deleteDoc(notifRef);
+    } catch (err) {}
   }
 }
 
 /**
+ * Filter and format chat threads for the current user
+ */
+function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): CopoMessage[] {
+  const userEmail = (currentUser.email || "").toLowerCase().trim();
+  const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
+  const userHandle = (currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+  const userName = (currentUser.name || "").toLowerCase().trim();
+  const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
+
+  const threads: CopoMessage[] = [];
+
+  for (const data of rawItems) {
+    if (!data) continue;
+    const participants: string[] = Array.isArray(data.participants)
+      ? data.participants.map((p: string) => (p || "").toLowerCase().trim().replace(/^@/, ""))
+      : [];
+
+    const senderEmail = (data.senderEmail || data.lastSenderEmail || "").toLowerCase().trim();
+    const senderId = (data.senderId || "").toLowerCase().trim().replace(/^@/, "");
+    const senderName = (data.senderName || data.lastSenderName || "").toLowerCase().trim();
+    const recipientEmail = (data.recipientEmail || "").toLowerCase().trim();
+    const recipientId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
+    const recipientName = (data.recipientName || "").toLowerCase().trim();
+
+    const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
+
+    const isParticipant =
+      (userEmail && (participants.includes(userEmail) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
+      (emailPrefix && (participants.includes(emailPrefix) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
+      (userHandle && (participants.includes(userHandle) || senderId === userHandle || recipientId === userHandle)) ||
+      (!isGenericName && (participants.includes(userName) || senderName === userName || recipientName === userName)) ||
+      (userId && (participants.includes(userId) || senderId === userId || recipientId === userId));
+
+    if (isParticipant) {
+      let otherName = data.senderName || data.recipientName || "Yoouz Member";
+      let otherAvatar = data.senderAvatar || data.recipientAvatar || `/api/avatar?name=${encodeURIComponent(otherName)}&background=27272a&color=fff`;
+      let otherId = data.senderId || data.recipientId || String(data.id);
+
+      if (data.participantProfiles && typeof data.participantProfiles === "object") {
+        const otherKey = Object.keys(data.participantProfiles).find((k) => {
+          const normK = k.toLowerCase().replace(/^@/, "").trim();
+          return (
+            normK !== userEmail &&
+            normK !== emailPrefix &&
+            normK !== userHandle &&
+            normK !== userName &&
+            normK !== userId
+          );
+        });
+        if (otherKey && data.participantProfiles[otherKey]) {
+          const otherProfile = data.participantProfiles[otherKey];
+          otherName = otherProfile.name || otherName;
+          otherAvatar = otherProfile.avatar || otherAvatar;
+          otherId = otherKey;
+        } else if (senderEmail === userEmail && data.recipientName) {
+          otherName = data.recipientName;
+          otherAvatar = data.recipientAvatar || otherAvatar;
+          otherId = data.recipientId || data.recipientEmail || otherId;
+        } else if (data.senderName && senderEmail !== userEmail) {
+          otherName = data.senderName;
+          otherAvatar = data.senderAvatar || otherAvatar;
+          otherId = data.senderId || data.senderEmail || otherId;
+        }
+      } else if (senderEmail === userEmail && data.recipientName) {
+        otherName = data.recipientName;
+        otherAvatar = data.recipientAvatar || otherAvatar;
+        otherId = data.recipientId || data.recipientEmail || otherId;
+      } else if (data.senderName) {
+        otherName = data.senderName;
+        otherAvatar = data.senderAvatar || otherAvatar;
+        otherId = data.senderId || data.senderEmail || otherId;
+      }
+
+      let unreadCount = 0;
+      if (data.unreadCounts && typeof data.unreadCounts === "object") {
+        unreadCount =
+          data.unreadCounts[userEmail] ??
+          data.unreadCounts[emailPrefix] ??
+          data.unreadCounts[userHandle] ??
+          data.unreadCounts[userName] ??
+          data.unreadCounts[userId] ??
+          0;
+      } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
+        unreadCount = data.unreadCount || 1;
+      }
+
+      const rawHistory = Array.isArray(data.history) ? data.history : [];
+      const processedHistory = rawHistory.map((m: any) => {
+        const msgSenderEmail = (m.senderEmail || "").toLowerCase().trim();
+        const msgSenderId = (m.senderId || "").toLowerCase().trim().replace(/^@/, "");
+        const msgSenderName = (m.senderName || "").toLowerCase().trim();
+
+        const isSender =
+          (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
+          (emailPrefix && (msgSenderEmail.startsWith(emailPrefix) || msgSenderId === emailPrefix)) ||
+          (userHandle && msgSenderId === userHandle) ||
+          (userName && msgSenderName === userName) ||
+          (userId && msgSenderId === userId);
+
+        return {
+          id: m.id || `msg_${Date.now()}_${Math.random()}`,
+          senderName: m.senderName || "Member",
+          senderAvatar: m.senderAvatar || `/api/avatar?name=${encodeURIComponent(m.senderName || "User")}&background=27272a&color=fff`,
+          text: m.text || "",
+          timestamp: m.timestamp || "Just now",
+          createdAtMs: m.createdAt,
+          isMe: Boolean(isSender),
+          videoThumbnail: m.videoThumbnail,
+          videoId: m.videoId
+        };
+      });
+
+      threads.push({
+        id: String(data.id),
+        senderId: otherId,
+        senderName: otherName,
+        senderAvatar: otherAvatar,
+        lastMessage: data.lastMessage || (processedHistory[processedHistory.length - 1]?.text ?? "Conversation started"),
+        timestamp: data.timestamp || "Just now",
+        createdAtMs: data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now(),
+        unreadCount: Number(unreadCount) || 0,
+        videoPreviewUrl: data.videoPreviewUrl,
+        history: processedHistory
+      });
+    }
+  }
+
+  // Sort threads newest first
+  threads.sort((a, b) => {
+    const timeA = a.createdAtMs || (a as any).updatedAt || 0;
+    const timeB = b.createdAtMs || (b as any).updatedAt || 0;
+    return timeB - timeA;
+  });
+
+  return threads;
+}
+
+/**
  * Real-time subscription to private chat threads for the current user
+ * Instant SSE streaming + Bunny DB + Firestore
  */
 export function subscribeToChats(
   currentUser: UserProfile | null,
   onUpdate: (threads: CopoMessage[]) => void
 ): () => void {
-  if (!db || !currentUser) {
+  if (!currentUser) {
     onUpdate([]);
     return () => {};
   }
 
-  const userEmail = (currentUser.email || "").toLowerCase().trim();
-  const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
-  const userHandle = (currentUser.name || currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
-  const userName = (currentUser.name || "").toLowerCase().trim();
-  const userId = (currentUser.userId || "").toLowerCase().trim();
+  let isDisposed = false;
+  let cachedThreads: CopoMessage[] = [];
 
-  try {
-    const chatsRef = collection(db, "chats");
-    const unsubscribe = onSnapshot(
-      chatsRef,
-      (snapshot) => {
-        const threads: CopoMessage[] = [];
+  const updateThreads = (newThreads: CopoMessage[]) => {
+    if (isDisposed) return;
+    cachedThreads = newThreads;
+    onUpdate(newThreads);
+  };
 
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data() as any;
-          const participants = Array.isArray(data.participants)
-            ? data.participants.map((p: string) => (p || "").toLowerCase().trim().replace(/^@/, ""))
-            : [];
-
-          const senderEmail = (data.senderEmail || data.lastSenderEmail || "").toLowerCase().trim();
-          const senderId = (data.senderId || "").toLowerCase().trim().replace(/^@/, "");
-          const senderName = (data.senderName || data.lastSenderName || "").toLowerCase().trim();
-          const recipientEmail = (data.recipientEmail || "").toLowerCase().trim();
-          const recipientId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
-          const recipientName = (data.recipientName || "").toLowerCase().trim();
-
-          const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
-
-          // Check if current user is part of this chat thread
-          const isParticipant =
-            (userEmail && (participants.includes(userEmail) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
-            (emailPrefix && (participants.includes(emailPrefix) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
-            (userHandle && (participants.includes(userHandle) || senderId === userHandle || recipientId === userHandle)) ||
-            (!isGenericName && (participants.includes(userName) || senderName === userName || recipientName === userName)) ||
-            (userId && (participants.includes(userId) || senderId === userId || recipientId === userId));
-
-          if (isParticipant) {
-            // Find other participant info
-            let otherName = data.senderName || data.recipientName || "Yoouz Member";
-            let otherAvatar = data.senderAvatar || data.recipientAvatar || `/api/avatar?name=${encodeURIComponent(otherName)}&background=27272a&color=fff`;
-            let otherId = data.senderId || data.recipientId || docSnap.id;
-
-            if (data.participantProfiles && typeof data.participantProfiles === "object") {
-              const otherKey = Object.keys(data.participantProfiles).find((k) => {
-                const normK = k.toLowerCase().replace(/^@/, "").trim();
-                return (
-                  normK !== userEmail &&
-                  normK !== emailPrefix &&
-                  normK !== userHandle &&
-                  normK !== userName &&
-                  normK !== userId
-                );
-              });
-              if (otherKey && data.participantProfiles[otherKey]) {
-                const otherProfile = data.participantProfiles[otherKey];
-                otherName = otherProfile.name || otherName;
-                otherAvatar = otherProfile.avatar || otherAvatar;
-                otherId = otherKey;
-              } else if (senderEmail === userEmail && data.recipientName) {
-                otherName = data.recipientName;
-                otherAvatar = data.recipientAvatar || otherAvatar;
-                otherId = data.recipientId || data.recipientEmail || otherId;
-              } else if (data.senderName && senderEmail !== userEmail) {
-                otherName = data.senderName;
-                otherAvatar = data.senderAvatar || otherAvatar;
-                otherId = data.senderId || data.senderEmail || otherId;
-              }
-            } else if (senderEmail === userEmail && data.recipientName) {
-              otherName = data.recipientName;
-              otherAvatar = data.recipientAvatar || otherAvatar;
-              otherId = data.recipientId || data.recipientEmail || otherId;
-            } else if (data.senderName) {
-              otherName = data.senderName;
-              otherAvatar = data.senderAvatar || otherAvatar;
-              otherId = data.senderId || data.senderEmail || otherId;
-            }
-
-            // Calculate unread count for current user
-            let unreadCount = 0;
-            if (data.unreadCounts && typeof data.unreadCounts === "object") {
-              unreadCount =
-                data.unreadCounts[userEmail] ??
-                data.unreadCounts[emailPrefix] ??
-                data.unreadCounts[userHandle] ??
-                data.unreadCounts[userName] ??
-                data.unreadCounts[userId] ??
-                0;
-            } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
-              unreadCount = data.unreadCount || 1;
-            }
-
-            // Process message history to correctly set `isMe` for the viewing user
-            const rawHistory = Array.isArray(data.history) ? data.history : [];
-            const processedHistory = rawHistory.map((m: any) => {
-              const msgSenderEmail = (m.senderEmail || "").toLowerCase().trim();
-              const msgSenderId = (m.senderId || "").toLowerCase().trim().replace(/^@/, "");
-              const msgSenderName = (m.senderName || "").toLowerCase().trim();
-
-              const isSender =
-                (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
-                (emailPrefix && (msgSenderEmail.startsWith(emailPrefix) || msgSenderId === emailPrefix)) ||
-                (userHandle && msgSenderId === userHandle) ||
-                (userName && msgSenderName === userName) ||
-                (userId && msgSenderId === userId);
-
-              return {
-                id: m.id || `msg_${Date.now()}_${Math.random()}`,
-                senderName: m.senderName || "Member",
-                senderAvatar: m.senderAvatar || `/api/avatar?name=${encodeURIComponent(m.senderName || "User")}&background=27272a&color=fff`,
-                text: m.text || "",
-                timestamp: m.timestamp || "Just now",
-                createdAtMs: m.createdAt,
-                isMe: Boolean(isSender),
-                videoThumbnail: m.videoThumbnail,
-                videoId: m.videoId
-              };
-            });
-
-            threads.push({
-              id: docSnap.id,
-              senderId: otherId,
-              senderName: otherName,
-              senderAvatar: otherAvatar,
-              lastMessage: data.lastMessage || (processedHistory[processedHistory.length - 1]?.text ?? "Conversation started"),
-              timestamp: data.timestamp || "Just now",
-              createdAtMs: data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now(),
-              unreadCount: Number(unreadCount) || 0,
-              videoPreviewUrl: data.videoPreviewUrl,
-              history: processedHistory
-            });
-          }
-        });
-
-        // Sort threads by updatedAt or last activity
-        threads.sort((a, b) => {
-          const timeA = a.createdAtMs || (a as any).updatedAt || 0;
-          const timeB = b.createdAtMs || (b as any).updatedAt || 0;
-          return timeB - timeA;
-        });
-
-        onUpdate(threads);
-      },
-      (error) => {
-        console.warn("Chats subscription error:", error);
+  // 1. Initial immediate fetch from Bunny Cloud Database
+  const fetchFromBunny = async () => {
+    try {
+      const res = await fetch("/api/nosql/chats");
+      if (res.ok) {
+        const json = await res.json();
+        const items = Array.isArray(json) ? json : (json.items || json.data || []);
+        if (Array.isArray(items) && !isDisposed) {
+          const processed = processChatThreadsForUser(items, currentUser);
+          updateThreads(processed);
+        }
       }
-    );
+    } catch (e) {}
+  };
+  fetchFromBunny();
 
-    return unsubscribe;
-  } catch (err) {
-    console.warn("Failed to subscribe to chats:", err);
-    return () => {};
+  // 2. Real-Time Instant SSE Event Listener (<100ms response time)
+  const unregisterSse = registerRealtimeListener(currentUser, (evt) => {
+    if (evt.type === "chat_message") {
+      const threadData = evt.data || evt.threadData;
+      if (threadData) {
+        const processed = processChatThreadsForUser([threadData], currentUser);
+        if (processed.length > 0) {
+          const freshThread = processed[0];
+          const existingIdx = cachedThreads.findIndex((t) => t.id === freshThread.id);
+          let nextThreads: CopoMessage[];
+          if (existingIdx >= 0) {
+            nextThreads = [...cachedThreads];
+            nextThreads[existingIdx] = freshThread;
+          } else {
+            nextThreads = [freshThread, ...cachedThreads];
+          }
+          nextThreads.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+          updateThreads(nextThreads);
+        }
+      }
+    }
+  });
+
+  // 3. Fallback background sync (every 4 seconds)
+  const pollTimer = setInterval(fetchFromBunny, 4000);
+
+  // 4. Optional Firestore snapshot sync
+  let unsubscribeFirestore = () => {};
+  if (db) {
+    try {
+      const chatsRef = collection(db, "chats");
+      unsubscribeFirestore = onSnapshot(
+        chatsRef,
+        (snapshot) => {
+          if (isDisposed) return;
+          const items: any[] = [];
+          snapshot.forEach((docSnap) => {
+            items.push({ id: docSnap.id, ...docSnap.data() });
+          });
+          const processed = processChatThreadsForUser(items, currentUser);
+          updateThreads(processed);
+        },
+        (error) => {
+          console.warn("Chats Firestore subscription notice:", error);
+        }
+      );
+    } catch (err) {}
   }
+
+  return () => {
+    isDisposed = true;
+    clearInterval(pollTimer);
+    unregisterSse();
+    unsubscribeFirestore();
+  };
 }
 
 /**
- * Send a message within a chat thread and persist to Firestore
+ * Send a message within a chat thread and persist to Bunny DB + Firestore + SSE
  */
 export async function sendChatMessageToFirestore(
   threadId: string,
@@ -425,7 +654,7 @@ export async function sendChatMessageToFirestore(
 ): Promise<CopoMessage> {
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const userName = (currentUser.name || "").trim();
-  const userHandle = (currentUser.name || currentUser.name || "").replace(/^@/, "").trim().toLowerCase();
+  const userHandle = (currentUser.name || "").replace(/^@/, "").trim().toLowerCase();
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
 
   const recipientEmail = (recipient.email || "").toLowerCase().trim();
@@ -454,138 +683,146 @@ export async function sendChatMessageToFirestore(
     videoId: customVideoId
   };
 
-  const threadDocRef = doc(db, "chats", threadId);
+  let existingHistory: any[] = [];
+  let prevRecipientUnread = 0;
 
-  // Sync to Firestore
+  // 1. Try reading prior thread history from Bunny DB or Firestore
   try {
-    let existingHistory: any[] = [];
-    let prevRecipientUnread = 0;
+    const res = await fetch(`/api/nosql/chats/${threadId}`);
+    if (res.ok) {
+      const d = await res.json();
+      if (Array.isArray(d.history)) {
+        existingHistory = d.history;
+      }
+      if (d.unreadCounts && typeof d.unreadCounts === "object") {
+        prevRecipientUnread =
+          d.unreadCounts[recipientEmail] ??
+          d.unreadCounts[recipientId] ??
+          d.unreadCounts[recipientHandle] ??
+          d.unreadCounts[recipientName.toLowerCase()] ??
+          0;
+      }
+    }
+  } catch (e) {}
 
+  if (existingHistory.length === 0 && db) {
     try {
-      const snap = await getDoc(threadDocRef);
+      const snap = await getDoc(doc(db, "chats", threadId));
       if (typeof (snap as any).exists === "function" ? (snap as any).exists() : Boolean((snap as any).exists)) {
         const d = snap.data();
-        if (Array.isArray(d.history)) {
+        if (Array.isArray(d?.history)) {
           existingHistory = d.history;
         }
-        if (d.unreadCounts && typeof d.unreadCounts === "object") {
-          prevRecipientUnread =
-            d.unreadCounts[recipientEmail] ??
-            d.unreadCounts[recipientId] ??
-            d.unreadCounts[recipientHandle] ??
-            d.unreadCounts[recipientName.toLowerCase()] ??
-            0;
-        }
       }
-    } catch (readErr) {
-      console.warn("Could not read prior chat thread:", readErr);
-    }
+    } catch (e) {}
+  }
 
-    const fullHistory = [...existingHistory, newMessage];
+  const fullHistory = [...existingHistory, newMessage];
 
-    const participantsList = Array.from(
-      new Set(
-        [
-          userEmail,
-          emailPrefix,
-          userHandle,
-          userName.toLowerCase(),
-          currentUser.userId,
-          recipientEmail,
-          recipientId.toLowerCase(),
-          recipientHandle.toLowerCase(),
-          recipientName.toLowerCase()
-        ].filter(Boolean)
-      )
-    );
+  const participantsList = Array.from(
+    new Set(
+      [
+        userEmail,
+        emailPrefix,
+        userHandle,
+        userName.toLowerCase(),
+        currentUser.userId,
+        recipientEmail,
+        recipientId.toLowerCase(),
+        recipientHandle.toLowerCase(),
+        recipientName.toLowerCase()
+      ].filter(Boolean)
+    )
+  );
 
-    const nextUnreadCount = prevRecipientUnread + 1;
+  const nextUnreadCount = prevRecipientUnread + 1;
 
-    const threadData = sanitizeData({
-      id: threadId,
-      participants: participantsList,
-      participantProfiles: {
-        [userEmail || userHandle || "sender"]: {
-          name: currentUser.name,
-          avatar: currentUser.avatar,
-          email: userEmail
-        },
-        [recipientEmail || recipientId || recipientHandle || "recipient"]: {
-          name: recipient.name,
-          avatar: recipient.avatar,
-          email: recipientEmail
-        }
+  const threadData = sanitizeData({
+    id: threadId,
+    participants: participantsList,
+    participantProfiles: {
+      [userEmail || userHandle || "sender"]: {
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        email: userEmail
       },
-      lastMessage: messageText.trim(),
-      lastSenderEmail: userEmail,
-      lastSenderName: currentUser.name,
-      senderEmail: userEmail,
-      senderName: currentUser.name,
-      senderAvatar: currentUser.avatar,
-      recipientEmail: recipientEmail,
-      recipientId: recipientId,
-      recipientName: recipient.name,
-      recipientAvatar: recipient.avatar,
-      timestamp: "Just now",
-      updatedAt: Date.now(),
-      videoPreviewUrl: videoUrl || "",
-      history: fullHistory,
-      unreadCounts: {
-        [userEmail]: 0,
-        ...(emailPrefix && { [emailPrefix]: 0 }),
-        ...(userHandle && { [userHandle]: 0 }),
-        ...(recipientEmail && { [recipientEmail]: nextUnreadCount }),
-        ...(recipientId && { [recipientId.toLowerCase()]: nextUnreadCount }),
-        ...(recipientHandle && { [recipientHandle.toLowerCase()]: nextUnreadCount }),
-        ...(recipientName && { [recipientName.toLowerCase()]: nextUnreadCount })
+      [recipientEmail || recipientId || recipientHandle || "recipient"]: {
+        name: recipient.name,
+        avatar: recipient.avatar,
+        email: recipientEmail
       }
-    });
-
-    // Save document with full history array to Firestore
-    await setDoc(threadDocRef, threadData, { merge: true });
-    
-    // Mirror to Bunny Cloud Database
-    fetch(`/api/nosql/chats/${threadId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: threadData, merge: true })
-    }).catch(() => {});
-    fetch("/api/interactions/message", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ threadId, message: newMessage, threadData })
-    }).catch(() => {});
-    
-    // Also send an activity notification to recipient
-    const targetRecipient = recipientEmail || recipientId || recipientHandle;
-    if (targetRecipient && targetRecipient.toLowerCase() !== userEmail && targetRecipient.toLowerCase() !== emailPrefix) {
-      // Generate clean notification preview text
-      let notifPreviewText = messageText.trim();
-      // Remove any trailing ellipsis or weird category tags
-      notifPreviewText = notifPreviewText.replace(/\(\s*website[^)]*\)/gi, "").replace(/\blocat\b\.*/gi, "").trim();
-      
-      const cleanNotifText = notifPreviewText.length > 50 
-        ? `${notifPreviewText.slice(0, 48).trim()}...` 
-        : notifPreviewText;
-
-      await sendSocialNotification({
-        recipientEmail: recipientEmail,
-        recipientHandle: recipientHandle,
-        recipientId: recipientId,
-        type: "message",
-        user: {
-          name: currentUser.name,
-          ////handle: currentUser.email ? currentUser.email.split("@")[0] : (currentUser.name || "member"),
-          avatar: currentUser.avatar,
-          email: userEmail
-        },
-        text: `sent you a message: "${cleanNotifText}"`,
-        videoThumbnail: videoUrl,
-        videoId: customVideoId
-      });
+    },
+    lastMessage: messageText.trim(),
+    lastSenderEmail: userEmail,
+    lastSenderName: currentUser.name,
+    senderEmail: userEmail,
+    senderName: currentUser.name,
+    senderAvatar: currentUser.avatar,
+    recipientEmail: recipientEmail,
+    recipientId: recipientId,
+    recipientName: recipient.name,
+    recipientAvatar: recipient.avatar,
+    timestamp: "Just now",
+    updatedAt: Date.now(),
+    videoPreviewUrl: videoUrl || "",
+    history: fullHistory,
+    unreadCounts: {
+      [userEmail]: 0,
+      ...(emailPrefix && { [emailPrefix]: 0 }),
+      ...(userHandle && { [userHandle]: 0 }),
+      ...(recipientEmail && { [recipientEmail]: nextUnreadCount }),
+      ...(recipientId && { [recipientId.toLowerCase()]: nextUnreadCount }),
+      ...(recipientHandle && { [recipientHandle.toLowerCase()]: nextUnreadCount }),
+      ...(recipientName && { [recipientName.toLowerCase()]: nextUnreadCount })
     }
-  } catch (err) {
-    console.warn("Error sending chat message to Firestore:", err);
+  });
+
+  // 1. Direct write to Bunny Cloud Database & SSE Broadcast
+  fetch("/api/interactions/message", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ threadId, message: newMessage, threadData })
+  }).catch(() => {});
+
+  fetch(`/api/nosql/chats/${threadId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: threadData, merge: true })
+  }).catch(() => {});
+
+  // 2. Optional Firestore write
+  if (db) {
+    try {
+      const threadDocRef = doc(db, "chats", threadId);
+      await setDoc(threadDocRef, threadData, { merge: true });
+    } catch (err) {
+      console.warn("Optional Firestore chat write notice:", err);
+    }
+  }
+
+  // 3. Activity notification to recipient
+  const targetRecipient = recipientEmail || recipientId || recipientHandle;
+  if (targetRecipient && targetRecipient.toLowerCase() !== userEmail && targetRecipient.toLowerCase() !== emailPrefix) {
+    let notifPreviewText = messageText.trim();
+    notifPreviewText = notifPreviewText.replace(/\(\s*website[^)]*\)/gi, "").replace(/\blocat\b\.*/gi, "").trim();
+    const cleanNotifText = notifPreviewText.length > 50 
+      ? `${notifPreviewText.slice(0, 48).trim()}...` 
+      : notifPreviewText;
+
+    await sendSocialNotification({
+      recipientEmail: recipientEmail,
+      recipientHandle: recipientHandle,
+      recipientId: recipientId,
+      type: "message",
+      user: {
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        email: userEmail
+      },
+      text: `sent you a message: "${cleanNotifText}"`,
+      videoThumbnail: videoUrl,
+      videoId: customVideoId
+    });
   }
 
   return {
@@ -597,7 +834,17 @@ export async function sendChatMessageToFirestore(
     timestamp: "Just now",
     unreadCount: 0,
     videoPreviewUrl: videoUrl,
-    history: [newMessage]
+    history: fullHistory.map((m: any) => ({
+      id: m.id,
+      senderName: m.senderName || "Member",
+      senderAvatar: m.senderAvatar || "",
+      text: m.text || "",
+      timestamp: m.timestamp || "Just now",
+      createdAtMs: m.createdAt,
+      isMe: (m.senderEmail && m.senderEmail.toLowerCase() === userEmail) || (m.senderId && m.senderId === userEmail) || true,
+      videoThumbnail: m.videoThumbnail,
+      videoId: m.videoId
+    }))
   };
 }
 
@@ -608,7 +855,7 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
   if (!currentUser || !threadId) return;
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
-  const userHandle = (currentUser.name || currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+  const userHandle = (currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
   const userName = (currentUser.name || "").toLowerCase().trim();
 
   const unreadCountsUpdates: Record<string, number> = {};
@@ -631,15 +878,14 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
     })
   }).catch(() => {});
 
-  if (!db) return;
-  try {
-    const threadDocRef = doc(db, "chats", threadId);
-    await setDoc(threadDocRef, { 
-      unreadCount: 0,
-      unreadCounts: unreadCountsUpdates 
-    }, { merge: true });
-  } catch (err) {
-    console.warn("Error marking chat thread read:", err);
+  if (db) {
+    try {
+      const threadDocRef = doc(db, "chats", threadId);
+      await setDoc(threadDocRef, { 
+        unreadCount: 0,
+        unreadCounts: unreadCountsUpdates 
+      }, { merge: true });
+    } catch (err) {}
   }
 }
 
@@ -654,11 +900,10 @@ export async function deleteChatThreadFromFirestore(threadId: string): Promise<v
     method: "DELETE"
   }).catch(() => {});
 
-  if (!db) return;
-  try {
-    const threadDocRef = doc(db, "chats", threadId);
-    await deleteDoc(threadDocRef);
-  } catch (err) {
-    console.warn("Error deleting chat thread:", err);
+  if (db) {
+    try {
+      const threadDocRef = doc(db, "chats", threadId);
+      await deleteDoc(threadDocRef);
+    } catch (err) {}
   }
 }

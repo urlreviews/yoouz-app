@@ -272,15 +272,46 @@ function writeReviewsIndex(list: any[]): void {
   }
 }
 
-// Live Real-Time Event Bus (Server-Sent Events) for instant cross-device updates (deletions, creations, edits)
-type SseClient = { id: string; res: express.Response };
+// Live Real-Time Event Bus (Server-Sent Events) for instant cross-device updates (deletions, creations, edits, chats, notifications)
+type SseClient = {
+  id: string;
+  res: express.Response;
+  userId?: string;
+  userEmail?: string;
+  userHandle?: string;
+};
 const sseClients: Set<SseClient> = new Set();
 
-function broadcastSseEvent(event: { type: string; [key: string]: any }) {
+function broadcastSseEvent(event: { type: string; [key: string]: any }, targetUserIds?: string[]) {
   const payload = `data: ${JSON.stringify(event)}\n\n`;
+  const targets = (targetUserIds || []).map(u => (u || "").toLowerCase().trim().replace(/^@/, ""));
+
   for (const client of sseClients) {
     try {
-      client.res.write(payload);
+      if (targets.length === 0) {
+        client.res.write(payload);
+      } else {
+        const cEmail = (client.userEmail || "").toLowerCase().trim();
+        const cPrefix = cEmail.includes("@") ? cEmail.split("@")[0] : "";
+        const cHandle = (client.userHandle || "").toLowerCase().trim().replace(/^@/, "");
+        const cId = (client.userId || "").toLowerCase().trim().replace(/^@/, "");
+
+        const isMatch = targets.some(t => {
+          if (!t) return false;
+          return (
+            t === cEmail ||
+            t === cPrefix ||
+            t === cHandle ||
+            t === cId ||
+            (cEmail && (t.includes(cEmail) || cEmail.includes(t))) ||
+            (cHandle && (t.includes(cHandle) || cHandle.includes(t)))
+          );
+        });
+
+        if (isMatch) {
+          client.res.write(payload);
+        }
+      }
     } catch (e) {
       sseClients.delete(client);
     }
@@ -4527,11 +4558,61 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
           } catch (mErr) {}
         }
         const jsonStr = JSON.stringify(finalDataObj);
-        await bunnyDb.execute({
-          sql: `INSERT INTO ${colName} (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
-          args: [id, jsonStr, jsonStr]
-        });
+        if (colName === 'notifications') {
+          const recipientEmail = finalDataObj.recipientEmail || finalDataObj.recipientId || "";
+          const type = finalDataObj.type || "info";
+          const text = finalDataObj.text || "";
+          const isRead = finalDataObj.isRead ? 1 : 0;
+          await bunnyDb.execute({
+            sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET recipientEmail = ?, type = ?, text = ?, isRead = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [id, recipientEmail, type, text, isRead, jsonStr, recipientEmail, type, text, isRead, jsonStr]
+          });
+
+          // Broadcast notification via SSE immediately
+          const targets = [
+            finalDataObj.recipientEmail,
+            finalDataObj.recipientId,
+            finalDataObj.recipientHandle
+          ].filter(Boolean);
+          broadcastSseEvent({
+            type: "notification",
+            notification: { id, ...finalDataObj }
+          }, targets);
+        } else if (colName === 'chats') {
+          const participantsStr = JSON.stringify(finalDataObj.participants || []);
+          const lastMessage = finalDataObj.lastMessage || "";
+          const lastSenderEmail = finalDataObj.lastSenderEmail || "";
+          await bunnyDb.execute({
+            sql: `INSERT INTO chats (id, participants, lastMessage, lastSenderEmail, data, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET participants = ?, lastMessage = ?, lastSenderEmail = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [id, participantsStr, lastMessage, lastSenderEmail, jsonStr, participantsStr, lastMessage, lastSenderEmail, jsonStr]
+          });
+
+          // Broadcast chat message / thread update via SSE immediately
+          const targets = Array.isArray(finalDataObj.participants)
+            ? finalDataObj.participants
+            : [
+                finalDataObj.recipientEmail,
+                finalDataObj.recipientId,
+                finalDataObj.recipientHandle,
+                finalDataObj.senderEmail,
+                finalDataObj.senderId
+              ].filter(Boolean);
+          broadcastSseEvent({
+            type: "chat_message",
+            threadId: id,
+            data: { id, ...finalDataObj }
+          }, targets);
+        } else {
+          await bunnyDb.execute({
+            sql: `INSERT INTO ${colName} (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [id, jsonStr, jsonStr]
+          });
+        }
       } catch (bunnyWriteErr: any) {
         console.warn(`BunnyDB write notice for ${colName}/${id}:`, bunnyWriteErr?.message || bunnyWriteErr);
       }
@@ -5192,8 +5273,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     };
   };
 
-  // Real-Time Server-Sent Events (SSE) Stream for Instant Global Video Updates & Deletions
-  app.get("/api/videos/stream", (req, res) => {
+  // Real-Time Server-Sent Events (SSE) Stream for Instant Global Video Updates, Deletions, Chats & Notifications
+  app.get(["/api/videos/stream", "/api/realtime/stream"], (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache, no-transform");
     res.setHeader("Connection", "keep-alive");
@@ -5203,13 +5284,19 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
 
     const clientId = `sse-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const client: SseClient = { id: clientId, res };
+    const client: SseClient = {
+      id: clientId,
+      res,
+      userId: typeof req.query.userId === "string" ? req.query.userId : "",
+      userEmail: typeof req.query.userEmail === "string" ? req.query.userEmail : "",
+      userHandle: typeof req.query.userHandle === "string" ? req.query.userHandle : ""
+    };
     sseClients.add(client);
 
     // Initial handshake payload
     const deletedIds = readDeletedReviewsIndex();
     try {
-      res.write(`data: ${JSON.stringify({ type: "init", deletedIds, timestamp: Date.now() })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, timestamp: Date.now() })}\n\n`);
     } catch (e) {}
 
     // Heartbeat to keep connection alive indefinitely
@@ -5435,12 +5522,60 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
         await bunnyDb.execute({
-          sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
           args: [comment.id, videoId, userId || comment.authorHandle || "", comment.authorName || "", comment.authorAvatar || "", comment.text || "", JSON.stringify(comment)]
         });
       }
+
+      // Broadcast comment live to all viewers
+      broadcastSseEvent({
+        type: "new_comment",
+        videoId,
+        comment
+      });
+
       res.json({ success: true });
     } catch (err) {
+      res.status(500).json({ error: (err as any).message });
+    }
+  });
+
+  app.post("/api/interactions/notification", async (req, res) => {
+    try {
+      const { notification, data } = req.body;
+      const notifObj = notification || data;
+      if (!notifObj || !notifObj.id) return res.status(400).json({ error: "Missing notification object" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const recipientEmail = notifObj.recipientEmail || notifObj.recipientId || "";
+        const type = notifObj.type || "info";
+        const text = notifObj.text || "";
+        const isRead = notifObj.isRead ? 1 : 0;
+        const jsonStr = JSON.stringify(notifObj);
+
+        await bunnyDb.execute({
+          sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET recipientEmail = ?, type = ?, text = ?, isRead = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+          args: [notifObj.id, recipientEmail, type, text, isRead, jsonStr, recipientEmail, type, text, isRead, jsonStr]
+        });
+      }
+
+      // Instant live broadcast to the targeted recipient
+      const targets = [
+        notifObj.recipientEmail,
+        notifObj.recipientId,
+        notifObj.recipientHandle
+      ].filter(Boolean);
+
+      broadcastSseEvent({
+        type: "notification",
+        notification: notifObj
+      }, targets);
+
+      res.json({ success: true });
+    } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
@@ -5466,9 +5601,27 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           ]
         });
       }
+
+      // Instant live broadcast to participants
+      const targets = Array.isArray(threadData.participants)
+        ? threadData.participants
+        : [
+            threadData.recipientEmail,
+            threadData.recipientId,
+            threadData.recipientHandle,
+            threadData.senderEmail,
+            threadData.senderId
+          ].filter(Boolean);
+
+      broadcastSseEvent({
+        type: "chat_message",
+        threadId,
+        data: threadData
+      }, targets);
+
       res.json({ success: true });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: (err as any).message });
     }
   });
 

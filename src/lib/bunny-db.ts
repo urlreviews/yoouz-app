@@ -99,7 +99,8 @@ export async function initBunnyDbSchema() {
       userAvatar TEXT,
       text TEXT,
       data TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS bookmarks (
       id TEXT PRIMARY KEY,
@@ -107,7 +108,8 @@ export async function initBunnyDbSchema() {
       placeId TEXT,
       videoId TEXT,
       data TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS chats (
       id TEXT PRIMARY KEY,
@@ -125,7 +127,8 @@ export async function initBunnyDbSchema() {
       text TEXT,
       isRead INTEGER DEFAULT 0,
       data TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS businessClaims (
       id TEXT PRIMARY KEY,
@@ -142,14 +145,16 @@ export async function initBunnyDbSchema() {
       followerId TEXT,
       followingId TEXT,
       data TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS likes (
       id TEXT PRIMARY KEY,
       userId TEXT,
       videoId TEXT,
       data TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS contact_requests (
       id TEXT PRIMARY KEY,
