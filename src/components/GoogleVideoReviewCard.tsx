@@ -105,7 +105,7 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
       setIsActualMuted(false);
       if (videoRef.current) {
         videoRef.current.muted = false;
-        videoRef.current.volume = 1;
+        try { videoRef.current.volume = 1; } catch {}
       }
     } else {
       setIsMuted(true);

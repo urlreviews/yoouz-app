@@ -68,6 +68,15 @@ interface CopoVideoPlayerProps {
   onRecordView?: (videoId: string) => void;
 }
 
+const safeSetVolume = (v: HTMLVideoElement | null, vol: number = 1) => {
+  if (!v) return;
+  try {
+    v.volume = vol;
+  } catch (e) {
+    // Gracefully ignore on iOS Safari/WebKit where volume is strictly read-only and hardware-managed
+  }
+};
+
 export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   videos,
   isLoading,
@@ -241,10 +250,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       try {
         vid.muted = effectiveMuted;
         if (!effectiveMuted) {
-          vid.volume = 1;
+          safeSetVolume(vid, 1);
         }
       } catch (e) {
-        vid.muted = true;
+        // Only ignore if setting muted property was prohibited
       }
     }
     setIsActualMuted(vid.muted);
@@ -329,10 +338,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       try {
         activeVid.muted = effectiveMuted;
         if (!effectiveMuted) {
-          activeVid.volume = 1;
+          safeSetVolume(activeVid, 1);
         }
       } catch (e) {
-        activeVid.muted = true;
+        // Only ignore if setting muted property was prohibited
       }
     }
     setIsActualMuted(activeVid.muted);
@@ -842,7 +851,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           // Pre-authorize singleton player playback synchronously within the touch gesture
           if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
             feedVideoRef.current.muted = false;
-            feedVideoRef.current.volume = 1;
+            safeSetVolume(feedVideoRef.current, 1);
             feedVideoRef.current.play().catch(() => {});
           }
           scrollToCard(targetIdx, "smooth");
@@ -890,7 +899,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const nextIdx = currentIndexRef.current + 1;
       if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
         feedVideoRef.current.muted = false;
-        feedVideoRef.current.volume = 1;
+        safeSetVolume(feedVideoRef.current, 1);
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(nextIdx, "smooth");
@@ -905,7 +914,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const prevIdx = currentIndexRef.current - 1;
       if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
         feedVideoRef.current.muted = false;
-        feedVideoRef.current.volume = 1;
+        safeSetVolume(feedVideoRef.current, 1);
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(prevIdx, "smooth");
@@ -925,7 +934,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       setIsManuallyPaused(false);
       if (isSessionAudioUnlocked && !isMuted) {
         vid.muted = false;
-        vid.volume = 1;
+        safeSetVolume(vid, 1);
         setIsActualMuted(false);
       }
       vid.play().catch(() => {});
@@ -951,7 +960,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, []);
 
   // Sound toggle with session audio unlocking
-  const toggleMute = useCallback((e?: React.MouseEvent) => {
+  const toggleMute = useCallback((e?: React.SyntheticEvent | Event) => {
     e?.stopPropagation();
     const vid = feedVideoRef.current;
     const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted || (vid ? vid.muted : true);
@@ -961,8 +970,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       unlockAudioSession();
       if (vid) {
         vid.muted = false;
-        vid.volume = 1;
-        vid.play().catch(() => {});
+        safeSetVolume(vid, 1);
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {});
+        }
       }
       setIsActualMuted(false);
     } else {

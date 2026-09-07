@@ -48,9 +48,9 @@ interface VideoFeedCardProps {
   
   activeSubTab?: FeedSubTab;
   onSelectSubTab?: (tab: FeedSubTab) => void;
-  onToggleMute: (e?: React.MouseEvent) => void;
+  onToggleMute: (e?: React.SyntheticEvent | Event) => void;
   onForceMute?: () => void;
-  onTogglePlayPause?: (e?: React.MouseEvent) => void;
+  onTogglePlayPause?: (e?: React.SyntheticEvent | Event) => void;
   onPauseVideo?: () => void;
   onOpenComments: (video: VideoReview) => void;
   onOpenPlace: (placeId: string) => void;
@@ -116,6 +116,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
   const lastTapTimeRef = useRef<number>(0);
+  const lastMuteTapTimeRef = useRef<number>(0);
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // High-fidelity poster URL
@@ -171,9 +172,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     onTogglePlayPause?.(e);
   };
 
-  // Sound toggle button
-  const handleToggleMute = (e?: React.MouseEvent) => {
+  // Sound toggle button - immediately handles user gesture on both touch and click without delay
+  const handleToggleMute = (e?: React.SyntheticEvent) => {
     e?.stopPropagation();
+    const now = Date.now();
+    // Debounce to prevent duplicate execution when synthetic click follows touchend on mobile
+    if (now - lastMuteTapTimeRef.current < 450) return;
+    lastMuteTapTimeRef.current = now;
+
     triggerHaptic("selection");
     ensureSharedAudioContextUnlocked();
     onToggleMute(e);
@@ -393,8 +399,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               handleToggleMute(e);
             }}
             onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
-            className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              handleToggleMute(e);
+            }}
+            className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/85 md:hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
             title={isMuted || !isSessionAudioUnlocked || isActualMuted ? t("video.unmuteSound", "Unmute sound") : t("video.muteSound", "Mute sound")}
             aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? t("video.unmuteSound", "Unmute sound") : t("video.muteSound", "Mute sound")}
           >

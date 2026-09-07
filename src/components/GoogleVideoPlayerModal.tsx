@@ -95,7 +95,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
       el.muted = shouldBeMuted;
       if (!shouldBeMuted) {
-        el.volume = 1;
+        try { el.volume = 1; } catch {}
       }
       
       if (hasStarted) {
@@ -122,7 +122,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                       const restoreAudio = () => {
                         if (videoRef.current) {
                           videoRef.current.muted = false;
-                          videoRef.current.volume = 1;
+                          try { videoRef.current.volume = 1; } catch {}
                           setIsActualMuted(false);
                         }
                       };
@@ -190,7 +190,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
       videoRef.current.muted = shouldBeMuted;
       if (!shouldBeMuted) {
-        videoRef.current.volume = 1;
+        try { videoRef.current.volume = 1; } catch {}
       }
       videoRef.current
         .play()
@@ -218,7 +218,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       setIsActualMuted(false);
       if (videoRef.current) {
         videoRef.current.muted = false;
-        videoRef.current.volume = 1;
+        try { videoRef.current.volume = 1; } catch {}
       }
     } else {
       setIsMuted(true);
