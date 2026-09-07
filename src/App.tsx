@@ -169,6 +169,7 @@ export function App() {
   // 3. Drawers & Modals States
     const previousSectionRef = useRef<NavSection | null>(null);
   const previousVideoIndexRef = useRef<number>(0);
+  const savedHomeVideoIndexRef = useRef<number>(0);
   const [selectedPlaceIdForDrawer, setSelectedPlaceIdForDrawer] = useState<string | null>(null);
   const [selectedAuthorForDrawer, setSelectedAuthorForDrawer] = useState<VideoAuthor | null>(null);
   const [pendingVideoId, setPendingVideoId] = useState<string | null>(null);
@@ -2346,6 +2347,11 @@ export function App() {
       setActiveSection(previousSectionRef.current);
       previousSectionRef.current = null;
     }
+
+    // Restore the saved background feed video index!
+    if (savedHomeVideoIndexRef.current !== undefined) {
+      setCurrentVideoIndex(savedHomeVideoIndexRef.current);
+    }
   };
 
   // Open Place Drawer
@@ -2355,9 +2361,13 @@ export function App() {
     document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
       try { v.pause(); } catch (e) {}
     });
-    if (activeSection !== "home") {
+    
+    // Save background video index and section before entering the drawer context
+    if (!selectedPlaceIdForDrawer && !selectedAuthorForDrawer) {
+      savedHomeVideoIndexRef.current = currentVideoIndex;
       previousSectionRef.current = activeSection;
     }
+
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
@@ -2370,9 +2380,13 @@ export function App() {
     document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
       try { v.pause(); } catch (e) {}
     });
-    if (activeSection !== "home") {
+    
+    // Save background video index and section before entering the drawer context
+    if (!selectedPlaceIdForDrawer && !selectedAuthorForDrawer) {
+      savedHomeVideoIndexRef.current = currentVideoIndex;
       previousSectionRef.current = activeSection;
     }
+
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(author);
