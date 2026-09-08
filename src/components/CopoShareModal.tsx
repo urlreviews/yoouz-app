@@ -20,7 +20,8 @@ import {
   MoreHorizontal,
   Search,
   SlidersHorizontal,
-  Bookmark
+  Bookmark,
+  Download
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -81,6 +82,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     threshold: 80
   });
 
+  // Image loading & fallback states
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
   // Reset copied states and view on open
   useEffect(() => {
     if (isModalOpen) {
@@ -89,8 +94,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       setToastMessage(null);
       setActiveView("sheet");
       setSearchQuery("");
+      setImageLoaded(false);
+      setImageError(false);
     }
-  }, [isModalOpen]);
+  }, [isModalOpen, video?.id]);
 
   // Keyboard shortcut: Escape to close
   useEffect(() => {
@@ -126,9 +133,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     shareUrl = `${appOrigin}/?reviewId=${encodeURIComponent(video.id)}`;
     const placeName = formatBusinessName(video.placeName || "Business");
     title = placeName;
-    subtitle = video.author?.name ? `${video.author.name} • 60s Review` : "Authentic 60s Video Review";
+    const authorName = video.author?.name || (video as any)?.authorName || "Verified Reviewer";
+    subtitle = authorName ? `${authorName} • 60s Review` : "Authentic 60s Video Review";
     isBusiness = false;
-    resolvedAvatarUrl = video.author?.avatar;
+    resolvedAvatarUrl = video.author?.avatar || (video as any)?.authorAvatar;
     resolvedDomain = video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "";
     resolvedWebsite = video.placeWebsite || "";
     resolvedLogoUrl = video.placeLogoUrl;
@@ -145,11 +153,24 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     resolvedBannerUrl = propBannerUrl;
   }
 
-  // Pre-generate dynamic social preview image url
+  // Fallback background image (instant, zero-latency thumbnail)
+  const localPreviewBg = isVideoMode && video
+    ? (video.thumbnailUrl || (video as any).videoThumbnail || (video as any).videoPreviewUrl || resolvedBannerUrl || "")
+    : (resolvedBannerUrl || resolvedLogoUrl || "");
+
+  const resolvedAuthorName = isVideoMode && video
+    ? (video.author?.name || (video as any)?.authorName || "Verified Reviewer")
+    : (title || "Yoouz Member");
+
+  const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : 5;
+
+  // Pre-generate dynamic social preview image url (server generated composite)
   const previewImageUrl = `${appOrigin}/api/og?${
     isVideoMode && video
-      ? `title=${encodeURIComponent(title)}&author=${encodeURIComponent(video.author?.name || "Reviewer")}&rating=${video.rating || 5}&type=video`
-      : `title=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain)}&type=${isBusiness ? "place" : "profile"}`
+      ? `type=video&id=${encodeURIComponent(video.id)}&v=4`
+      : isBusiness
+      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}&v=20`
+      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}&v=16`
   }`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
@@ -491,59 +512,109 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
         {/* VIEW 1: Main iOS / Android Dark Mode Share Sheet */}
         {activeView === "sheet" && (
           <div className="p-4 sm:p-5 flex flex-col space-y-3.5 animate-in fade-in duration-150">
-            {/* Item Preview Card with "Options >" */}
-            <div className="flex items-center justify-between gap-3 bg-zinc-850/60 p-2.5 rounded-2xl border border-zinc-800/80">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700/60 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
-                  {isBusiness ? (
-                    <CopoBrandLogo
-                      domain={resolvedDomain}
-                      name={title}
-                      website={resolvedWebsite}
-                      logoUrl={resolvedLogoUrl}
-                      bannerUrl={resolvedBannerUrl}
-                      className="w-full h-full flex items-center justify-center p-1"
-                      imageClassName="w-full h-full object-contain"
-                      fallbackTextClassName="font-black text-base text-zinc-200"
-                    />
-                  ) : resolvedAvatarUrl ? (
-                    <img
-                      src={resolvedAvatarUrl}
-                      alt={title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white font-bold text-sm">
-                      {title.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+            {/* FULL SOCIAL PREVIEW CARD (Mobile & Desktop) */}
+            <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
+              <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
+                {/* Fallback image or direct thumbnail background */}
+                {localPreviewBg && (
+                  <img
+                    src={localPreviewBg}
+                    alt={title}
+                    className="absolute inset-0 w-full h-full object-cover filter brightness-90"
+                  />
+                )}
+
+                {/* Server OG dynamic image overlay */}
+                <img
+                  src={previewImageUrl}
+                  alt={`${title} Social Card`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                    imageLoaded && !imageError ? "opacity-100" : localPreviewBg ? "opacity-0" : "opacity-100"
+                  }`}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => {
+                    setImageError(true);
+                    setImageLoaded(true);
+                  }}
+                />
+
+                {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
+
+                {/* TOP BAR: Place pill & Options button */}
+                <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[72%]">
+                    <span className="text-amber-400 text-xs font-black shrink-0">★</span>
+                    <span className="text-white text-xs font-bold truncate">
+                      {title}
+                    </span>
+                    {ratingVal && (
+                      <span className="text-amber-400 text-[11px] font-bold shrink-0">
+                        {ratingVal}.0
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setActiveView("options");
+                    }}
+                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-black/65 hover:bg-black/85 active:scale-95 backdrop-blur-md border border-white/25 text-white text-xs font-semibold shadow-md transition-all cursor-pointer shrink-0"
+                    title="Options & Embed Code"
+                  >
+                    <span>{t("shareModal.options", "Options")}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-300" />
+                  </button>
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <h4 id="yoouz-share-modal-title" className="font-semibold text-white text-[13.5px] leading-tight truncate">
-                    {title}
-                  </h4>
-                  <p className="text-zinc-400 text-[11.5px] leading-snug truncate mt-0.5">
-                    {resolvedSubtitle}
-                  </p>
+                {/* CENTER: Play Button for Videos */}
+                {isVideoMode && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-black/55 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+
+                {/* BOTTOM BAR: Author Info & Yoouz Watermark */}
+                <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
+                      {resolvedAvatarUrl ? (
+                        <img
+                          src={resolvedAvatarUrl}
+                          alt={resolvedAuthorName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(resolvedAuthorName)}&background=27272a&color=fff&bold=true&size=128`;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
+                          {resolvedAuthorName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
+                        {resolvedAuthorName}
+                      </p>
+                      <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
+                        {resolvedSubtitle}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    <span>yoouz.com</span>
+                  </div>
                 </div>
               </div>
-
-              {/* Options Navigation Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic("light");
-                  setActiveView("options");
-                }}
-                className="flex items-center gap-0.5 px-2.5 py-1.5 rounded-lg text-zinc-300 hover:text-white text-xs font-semibold hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
-              >
-                <span>{t("shareModal.options", "Options")}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-              </button>
             </div>
 
             {/* Hairline Divider */}
@@ -871,17 +942,52 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               </div>
             </div>
 
-            {/* Social Card Preview */}
+            {/* Full Social Card Preview (1200x630 HD) */}
             <div className="space-y-2 pt-1">
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                {t("shareModal.socialPreviewCard", "Social Preview")}
-              </span>
-              <div className="rounded-xl overflow-hidden border border-zinc-800 bg-black flex items-center justify-center max-h-40">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  {t("shareModal.socialPreviewCard", "Social Preview")} (1200 × 630)
+                </span>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={previewImageUrl}
+                    download="yoouz-share-card.png"
+                    className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1 transition"
+                  >
+                    <Download className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>{t("shareModal.downloadCard", "Download PNG")}</span>
+                  </a>
+                  <a
+                    href={previewImageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1 transition"
+                  >
+                    <span>{t("shareModal.openFullImage", "Open Image")}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-lg group">
+                {/* Fallback local thumbnail if server image is loading or unavailable */}
+                {localPreviewBg && (
+                  <img
+                    src={localPreviewBg}
+                    alt={title}
+                    className="absolute inset-0 w-full h-full object-cover filter brightness-90"
+                  />
+                )}
                 <img
                   src={previewImageUrl}
                   alt="Social Preview Card"
-                  className="w-full h-auto max-h-40 object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                   loading="lazy"
+                  onError={(e) => {
+                    if (localPreviewBg) {
+                      (e.currentTarget as HTMLImageElement).src = localPreviewBg;
+                    }
+                  }}
                 />
               </div>
             </div>

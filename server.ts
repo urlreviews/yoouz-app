@@ -12312,12 +12312,18 @@ app.get('/api/og-preview-v2', async (req, res) => {
   res.send(svg);
 });
 
-    app.get(['/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
+    app.get(['/api/og', '/api/og.png', '/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
     try {
-      let type = (req.query.type as string) || "homepage";
+      let type = (req.query.type as string) || "";
+      if (!type) {
+        if (req.query.id || req.query.reviewId) type = "video";
+        else if (req.query.domain || req.query.logoUrl || req.query.website) type = "place";
+        else if (req.query.avatarUrl || req.query.handle) type = "creator";
+        else type = "homepage";
+      }
 
       if (type === 'video') {
-         const videoId = req.query.id;
+         const videoId = req.query.id || req.query.reviewId;
          let thumbBuf;
          
          if (videoId) {
@@ -12363,6 +12369,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
              try {
                 const tr = await fetch(tUrl);
                 thumbBuf = Buffer.from(await tr.arrayBuffer());
+             } catch(e) {}
+           } else {
+             try {
+                const b64 = tUrl.split(',')[1];
+                if (b64) thumbBuf = Buffer.from(b64, 'base64');
              } catch(e) {}
            }
          }
