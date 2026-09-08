@@ -4195,22 +4195,33 @@ app.get('/api/nosql/:collection', async (req, res) => {
         let rs: any;
         try {
           rs = await bunnyDb.execute({
-            sql: `SELECT id, data FROM ${colName} ORDER BY updatedAt DESC`,
+            sql: colName === 'notifications' 
+              ? `SELECT id, recipientEmail, type, text, isRead, data, updatedAt FROM notifications ORDER BY updatedAt DESC`
+              : `SELECT id, data FROM ${colName} ORDER BY updatedAt DESC`,
             args: []
           });
         } catch (e) {
           rs = await bunnyDb.execute({
-            sql: `SELECT id, data FROM ${colName}`,
+            sql: colName === 'notifications'
+              ? `SELECT id, recipientEmail, type, text, isRead, data, updatedAt FROM notifications`
+              : `SELECT id, data FROM ${colName}`,
             args: []
           });
         }
         if (rs && rs.rows) {
           rs.rows.forEach((row: any) => {
             if (row.id) {
-              let parsedData = {};
+              let parsedData: any = {};
               try {
                 parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
               } catch (e) {}
+              if (colName === 'notifications') {
+                const isReadVal = row.isRead !== undefined 
+                  ? Boolean(row.isRead === 1 || row.isRead === '1' || row.isRead === true) 
+                  : Boolean(parsedData.isRead || parsedData.read);
+                parsedData.isRead = isReadVal;
+                parsedData.read = isReadVal;
+              }
               itemMap.set(String(row.id), { id: String(row.id), ...parsedData });
             }
           });
@@ -5819,6 +5830,156 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       console.error("❌ [Notification Service] Error creating/broadcasting notification:", err.message);
     }
   }
+
+  // Mark single notification as read / unread (BunnyDB + Firestore + SSE)
+  app.post("/api/interactions/notification/read", async (req, res) => {
+    try {
+      const { id, isRead = true } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing notification id" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const rowRes = await bunnyDb.execute({
+          sql: "SELECT data FROM notifications WHERE id = ? LIMIT 1",
+          args: [id]
+        });
+        let notifData: any = {};
+        if (rowRes && rowRes.rows && rowRes.rows.length > 0) {
+          try { notifData = JSON.parse((rowRes.rows[0] as any).data || '{}'); } catch (e) {}
+        }
+        notifData.isRead = Boolean(isRead);
+        notifData.read = Boolean(isRead);
+        const jsonStr = JSON.stringify(notifData);
+        await bunnyDb.execute({
+          sql: "UPDATE notifications SET isRead = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+          args: [isRead ? 1 : 0, jsonStr, id]
+        });
+      }
+
+      if (adminDb) {
+        try {
+          await adminDb.collection("notifications").doc(id).set({ isRead: Boolean(isRead), read: Boolean(isRead) }, { merge: true });
+        } catch (e) {}
+      }
+
+      broadcastSseEvent({
+        type: "notification_read",
+        id,
+        isRead: Boolean(isRead)
+      });
+
+      return res.json({ success: true, id, isRead: Boolean(isRead) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Mark all notifications as read (BunnyDB + Firestore + SSE)
+  app.post("/api/interactions/notification/read-all", async (req, res) => {
+    try {
+      const { ids = [], recipientEmail } = req.body;
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        if (Array.isArray(ids) && ids.length > 0) {
+          for (const id of ids) {
+            const rowRes = await bunnyDb.execute({
+              sql: "SELECT data FROM notifications WHERE id = ? LIMIT 1",
+              args: [id]
+            });
+            let notifData: any = {};
+            if (rowRes && rowRes.rows && rowRes.rows.length > 0) {
+              try { notifData = JSON.parse((rowRes.rows[0] as any).data || '{}'); } catch (e) {}
+            }
+            notifData.isRead = true;
+            notifData.read = true;
+            await bunnyDb.execute({
+              sql: "UPDATE notifications SET isRead = 1, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+              args: [JSON.stringify(notifData), id]
+            });
+          }
+        } else if (recipientEmail) {
+          await bunnyDb.execute({
+            sql: "UPDATE notifications SET isRead = 1, updatedAt = CURRENT_TIMESTAMP WHERE recipientEmail = ?",
+            args: [recipientEmail]
+          });
+        }
+      }
+
+      broadcastSseEvent({
+        type: "notifications_all_read",
+        ids: Array.isArray(ids) ? ids : [],
+        recipientEmail
+      });
+
+      return res.json({ success: true, count: Array.isArray(ids) ? ids.length : 0 });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Delete notification (BunnyDB + Firestore + SSE)
+  app.post("/api/interactions/notification/delete", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing notification id" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: "DELETE FROM notifications WHERE id = ?",
+          args: [id]
+        });
+      }
+
+      if (adminDb) {
+        try {
+          await adminDb.collection("notifications").doc(id).delete();
+        } catch (e) {}
+      }
+
+      broadcastSseEvent({
+        type: "notification_deleted",
+        id
+      });
+
+      return res.json({ success: true, id });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Clear all notifications (BunnyDB + Firestore + SSE)
+  app.post("/api/interactions/notification/clear-all", async (req, res) => {
+    try {
+      const { ids = [], recipientEmail } = req.body;
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        if (Array.isArray(ids) && ids.length > 0) {
+          for (const id of ids) {
+            await bunnyDb.execute({
+              sql: "DELETE FROM notifications WHERE id = ?",
+              args: [id]
+            });
+          }
+        } else if (recipientEmail) {
+          await bunnyDb.execute({
+            sql: "DELETE FROM notifications WHERE recipientEmail = ?",
+            args: [recipientEmail]
+          });
+        }
+      }
+
+      broadcastSseEvent({
+        type: "notifications_cleared",
+        ids: Array.isArray(ids) ? ids : [],
+        recipientEmail
+      });
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
   
   app.get("/api/interactions/comments", async (req, res) => {
     try {

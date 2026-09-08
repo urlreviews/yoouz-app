@@ -14,6 +14,7 @@ export interface CreateNotificationParams {
   videoId?: string;
   videoThumbnail?: string;
   placeName?: string;
+  customId?: string;
 }
 
 // Clean object helper to ensure payloads never contain undefined values
@@ -158,7 +159,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     return;
   }
 
-  const notifId = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  const notifId = params.customId || `notif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
   // Sanitize videoThumbnail: ensure no video stream URL is passed as image thumbnail
   let sanitizedThumbnail = (params.videoThumbnail || "").trim();
@@ -411,6 +412,7 @@ export async function sendWelcomeNotificationIfNeeded(currentUser: UserProfile):
   if (!localStorage.getItem(welcomeKey) && !deletedSet.has(`welcome_notif_${userKey}`) && !deletedSet.has("all_cleared")) {
     localStorage.setItem(welcomeKey, "true");
     sendSocialNotification({
+      customId: `welcome_notif_${userKey}`,
       recipientEmail: currentUser.email || userKey,
       recipientHandle: currentUser.name || userKey,
       recipientId: currentUser.userId || userKey,
@@ -532,6 +534,18 @@ export function subscribeToNotifications(
           updateList(nextList);
         }
       }
+    } else if (evt.type === "notification_read" && evt.id) {
+      const nextList = cachedNotifs.map((n) => n.id === evt.id ? { ...n, isRead: evt.isRead !== false, read: evt.isRead !== false } : n);
+      updateList(nextList);
+    } else if (evt.type === "notifications_all_read") {
+      const idSet = Array.isArray(evt.ids) && evt.ids.length > 0 ? new Set(evt.ids) : null;
+      const nextList = cachedNotifs.map((n) => !idSet || idSet.has(n.id) ? { ...n, isRead: true, read: true } : n);
+      updateList(nextList);
+    } else if (evt.type === "notification_deleted" && evt.id) {
+      const nextList = cachedNotifs.filter((n) => n.id !== evt.id);
+      updateList(nextList);
+    } else if (evt.type === "notifications_cleared") {
+      updateList([]);
     }
   });
 
@@ -551,9 +565,12 @@ export function subscribeToNotifications(
 export async function markNotificationAsRead(notificationId: string, currentUser?: UserProfile | null): Promise<void> {
   if (!notificationId) return;
 
-  if (currentUser) {
+  const userKey = currentUser
+    ? (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim()
+    : "";
+
+  if (userKey) {
     try {
-      const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
       const cacheKey = `copo_cached_notifs_${userKey}`;
       const rawCache = localStorage.getItem(cacheKey);
       if (rawCache) {
@@ -566,6 +583,14 @@ export async function markNotificationAsRead(notificationId: string, currentUser
     } catch (e) {}
   }
 
+  // 1. Dedicated high-performance interaction endpoint
+  fetch("/api/interactions/notification/read", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: notificationId, isRead: true })
+  }).catch(() => {});
+
+  // 2. Secondary NoSQL mirror endpoint
   fetch(`/api/nosql/notifications/${notificationId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -579,9 +604,12 @@ export async function markNotificationAsRead(notificationId: string, currentUser
 export async function markAllNotificationsAsRead(notificationIds: string[], currentUser?: UserProfile | null): Promise<void> {
   if (!notificationIds || notificationIds.length === 0) return;
 
-  if (currentUser) {
+  const userKey = currentUser
+    ? (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim()
+    : "";
+
+  if (userKey) {
     try {
-      const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
       const cacheKey = `copo_cached_notifs_${userKey}`;
       const rawCache = localStorage.getItem(cacheKey);
       if (rawCache) {
@@ -595,6 +623,14 @@ export async function markAllNotificationsAsRead(notificationIds: string[], curr
     } catch (e) {}
   }
 
+  // 1. Dedicated high-performance bulk endpoint
+  fetch("/api/interactions/notification/read-all", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: notificationIds, recipientEmail: currentUser?.email || userKey })
+  }).catch(() => {});
+
+  // 2. Secondary NoSQL mirror update
   for (const id of notificationIds) {
     fetch(`/api/nosql/notifications/${id}`, {
       method: "POST",
@@ -630,6 +666,14 @@ export async function deleteNotification(notificationId: string, currentUser?: U
     } catch (e) {}
   }
 
+  // 1. Dedicated delete endpoint
+  fetch("/api/interactions/notification/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: notificationId })
+  }).catch(() => {});
+
+  // 2. Secondary NoSQL DELETE
   fetch(`/api/nosql/notifications/${notificationId}`, {
     method: "DELETE"
   }).catch(() => {});
@@ -645,17 +689,24 @@ export async function clearAllNotifications(notificationIds: string[], currentUs
 
   recordDeletedNotifId("all_cleared", userKey);
 
-  if (Array.isArray(notificationIds)) {
-    for (const id of notificationIds) {
-      deleteNotification(id, currentUser);
-    }
-  }
-
   if (userKey) {
     try {
       const cacheKey = `copo_cached_notifs_${userKey}`;
       localStorage.setItem(cacheKey, JSON.stringify([]));
     } catch (e) {}
+  }
+
+  // 1. Dedicated clear-all endpoint
+  fetch("/api/interactions/notification/clear-all", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: notificationIds, recipientEmail: currentUser?.email || userKey })
+  }).catch(() => {});
+
+  if (Array.isArray(notificationIds)) {
+    for (const id of notificationIds) {
+      deleteNotification(id, currentUser);
+    }
   }
 }
 

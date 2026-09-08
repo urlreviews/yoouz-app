@@ -4704,9 +4704,9 @@ export function App() {
                 onNavigateToMessages={() => setActiveSection("messages")}
                 onNavigateHome={handleGoHome}
                 onUpdateNotifications={setNotifications}
-                onMarkRead={markNotificationAsRead}
+                onMarkRead={(id) => markNotificationAsRead(id, currentUser)}
                 onMarkAllRead={() => {
-                  markAllNotificationsAsRead(notifications.map(n => n.id));
+                  markAllNotificationsAsRead(notifications.map(n => n.id), currentUser);
                   setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
                 }}
                 onDeleteNotification={(id) => deleteNotification(id, currentUser)}
