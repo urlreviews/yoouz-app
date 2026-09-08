@@ -156,6 +156,7 @@ export interface VideoReview {
   commentsCount: number;
   comments: ReviewComment[];
   bookmarksCount?: number;
+  bookmarks?: number;
   isBookmarked: boolean;
   repostsCount?: number;
   isReposted?: boolean;

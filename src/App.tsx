@@ -2907,7 +2907,7 @@ export function App() {
     }
   };
 
-  // Handle Follow
+  // Handle Share
   const handleOpenShare = async (video: VideoReview) => {
     setActiveShareVideo(video);
     const newSharesCount = (video.sharesCount || video.shares || 0) + 1;
@@ -2918,6 +2918,12 @@ export function App() {
       return v;
     }));
     try {
+      fetch("/api/interactions/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId: video.id, userId: currentUser?.email || auth.currentUser?.uid })
+      }).catch(() => {});
+
       const shareData = { shares: newSharesCount, sharesCount: newSharesCount };
       if (db) {
         const vidRef = doc(db, "videoReviews", video.id);

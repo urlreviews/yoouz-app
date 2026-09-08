@@ -43,13 +43,21 @@ function normalizeReview(v: any): VideoReview {
     const computedViews = getDisplayViews(v);
 
     const videoId = v.id || v.videoId || `rev-${Math.random().toString(36).substring(2, 9)}`;
+    const likesCountVal = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
+    const bookmarksCountVal = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
+    const sharesCountVal = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
 
     return {
       ...v,
       id: videoId,
       views: computedViews,
       viewsCount: computedViews,
-      likes: typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0),
+      likes: likesCountVal,
+      likesCount: likesCountVal,
+      bookmarksCount: bookmarksCountVal,
+      bookmarks: bookmarksCountVal,
+      shares: sharesCountVal,
+      sharesCount: sharesCountVal,
       isLiked: likedIds.includes(videoId),
       isBookmarked: savedIds.includes(videoId),
       author: safeAuthor
@@ -128,14 +136,16 @@ export function useFeedPagination() {
               .map(normalizeReview);
             
             setVideos((prev) => {
-              // Track local optimistic state (likes, bookmarks, views, comments)
-              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; views?: number; comments?: any[]; commentsCount?: number }>();
+              // Track local optimistic state (likes, bookmarks, views, comments, shares)
+              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; bookmarksCount?: number; sharesCount?: number; views?: number; comments?: any[]; commentsCount?: number }>();
               prev.forEach((v) => {
                 if (v && v.id) {
                   interactionMap.set(v.id, {
                     isLiked: v.isLiked,
                     isBookmarked: v.isBookmarked,
                     likes: v.likes,
+                    bookmarksCount: v.bookmarksCount,
+                    sharesCount: v.sharesCount,
                     views: v.views,
                     comments: v.comments,
                     commentsCount: v.commentsCount
@@ -166,11 +176,20 @@ export function useFeedPagination() {
                   const combinedRaw = [...serverComments, ...localComments];
                   const tree = buildCommentTree(combinedRaw);
 
+                  const effLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof local.likes === 'number' && local.likes > v.likes ? local.likes : v.likes);
+                  const effBookmarks = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof local.bookmarksCount === 'number' ? local.bookmarksCount : 0);
+                  const effShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof local.sharesCount === 'number' ? local.sharesCount : 0);
+
                   return {
                     ...v,
                     isLiked: local.isLiked !== undefined ? local.isLiked : v.isLiked,
                     isBookmarked: local.isBookmarked !== undefined ? local.isBookmarked : v.isBookmarked,
-                    likes: typeof local.likes === 'number' && local.likes > v.likes ? local.likes : v.likes,
+                    likes: effLikes,
+                    likesCount: effLikes,
+                    bookmarks: effBookmarks,
+                    bookmarksCount: effBookmarks,
+                    shares: effShares,
+                    sharesCount: effShares,
                     views: typeof local.views === 'number' && local.views > v.views ? local.views : v.views,
                     comments: tree.comments,
                     commentsCount: tree.count
@@ -272,6 +291,13 @@ export function useFeedPagination() {
                 ...v,
                 likes: typeof payload.likesCount === 'number' ? payload.likesCount : v.likes,
                 likesCount: typeof payload.likesCount === 'number' ? payload.likesCount : v.likesCount
+              } : v));
+            } else if (payload.type === "video_bookmarked" && payload.videoId) {
+              const vidId = String(payload.videoId);
+              setVideos((prev) => prev.map((v) => v.id === vidId ? {
+                ...v,
+                bookmarks: typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : v.bookmarks,
+                bookmarksCount: typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : v.bookmarksCount
               } : v));
             } else if (payload.type === "video_shared" && payload.videoId) {
               const vidId = String(payload.videoId);

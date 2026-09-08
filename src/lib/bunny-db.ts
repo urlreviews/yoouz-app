@@ -172,6 +172,8 @@ export async function initBunnyDbSchema() {
     for (const sql of tableSchemas) {
       await client.execute(sql);
     }
+    try { await client.execute("ALTER TABLE videoReviews ADD COLUMN bookmarksCount INTEGER DEFAULT 0"); } catch (e) {}
+    try { await client.execute("ALTER TABLE videoReviews ADD COLUMN sharesCount INTEGER DEFAULT 0"); } catch (e) {}
     isInitialized = true;
   } catch (err: any) {
     console.error("⚠️ [BunnyDB] Schema migration warning:", err?.message || err);

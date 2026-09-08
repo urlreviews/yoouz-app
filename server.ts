@@ -5513,6 +5513,11 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
                 name: r.authorName || parsedData.authorName || (parsedData.author && parsedData.author.name) || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId),
                 avatar: r.authorAvatar || parsedData.authorAvatar || (parsedData.author && parsedData.author.avatar) || ''
               };
+              const likesCountVal = typeof r.likesCount === 'number' ? r.likesCount : (typeof parsedData.likesCount === 'number' ? parsedData.likesCount : (parsedData.likes || 0));
+              const bookmarksCountVal = typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof parsedData.bookmarksCount === 'number' ? parsedData.bookmarksCount : (parsedData.bookmarks || 0));
+              const sharesCountVal = typeof r.sharesCount === 'number' ? r.sharesCount : (typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : (parsedData.shares || 0));
+              const viewsCountVal = typeof r.viewsCount === 'number' ? r.viewsCount : (typeof parsedData.viewsCount === 'number' ? parsedData.viewsCount : (parsedData.views || 0));
+
               map.set(r.id, {
                 ...existing,
                 ...parsedData,
@@ -5525,8 +5530,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
                 videoUrl: r.videoUrl || parsedData.videoUrl,
                 thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
                 duration: r.duration || parsedData.duration || 60,
-                likesCount: r.likesCount || parsedData.likesCount || 0,
-                viewsCount: r.viewsCount || parsedData.viewsCount || 0,
+                likesCount: likesCountVal,
+                likes: likesCountVal,
+                bookmarksCount: bookmarksCountVal,
+                bookmarks: bookmarksCountVal,
+                sharesCount: sharesCountVal,
+                shares: sharesCountVal,
+                viewsCount: viewsCountVal,
+                views: viewsCountVal,
                 author: mergedAuthor
               });
             }
@@ -6640,6 +6651,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       if (!videoId) return res.status(400).json({ error: "Missing videoId" });
 
       const bunnyDb = getBunnyDb();
+      let updatedBookmarksCount = 0;
       if (bunnyDb) {
         const bmId = `bm_${userId || 'anon'}_${videoId}`;
         if (isBookmarked) {
@@ -6653,12 +6665,50 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
             args: [userId || "", videoId, bmId]
           });
         }
+
+        const countRes = await bunnyDb.execute({
+          sql: "SELECT COUNT(*) as total FROM bookmarks WHERE videoId = ?",
+          args: [videoId]
+        });
+        const dbBookmarks = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+
+        const vRow = await bunnyDb.execute({
+          sql: "SELECT data, bookmarksCount FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (vRow && vRow.rows && vRow.rows.length > 0) {
+          let vData: any = {};
+          try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+          const baseBookmarks = Math.max(0, (vData.bookmarksCount || vData.bookmarks || 0));
+          updatedBookmarksCount = Math.max(dbBookmarks, isBookmarked ? baseBookmarks + 1 : Math.max(0, baseBookmarks - 1));
+          vData.bookmarks = updatedBookmarksCount;
+          vData.bookmarksCount = updatedBookmarksCount;
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET bookmarksCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [updatedBookmarksCount, JSON.stringify(vData), videoId]
+          });
+        } else {
+          updatedBookmarksCount = dbBookmarks || (isBookmarked ? 1 : 0);
+        }
       }
+
+      // Also sync to local review index
+      try {
+        const list = readReviewsIndex();
+        const vid = list.find((v: any) => v.id === videoId);
+        if (vid) {
+          updatedBookmarksCount = Math.max(updatedBookmarksCount, isBookmarked ? (vid.bookmarksCount || 0) + 1 : Math.max(0, (vid.bookmarksCount || 1) - 1));
+          vid.bookmarks = updatedBookmarksCount;
+          vid.bookmarksCount = updatedBookmarksCount;
+          writeReviewsIndex(list);
+        }
+      } catch (e) {}
 
       broadcastSseEvent({
         type: "video_bookmarked",
         videoId,
         isBookmarked: Boolean(isBookmarked),
+        bookmarksCount: updatedBookmarksCount,
         userId: userId || ""
       });
 
@@ -6709,7 +6759,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      return res.json({ success: true });
+      return res.json({ success: true, bookmarksCount: updatedBookmarksCount });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -6718,25 +6768,28 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   // Increment Video Share Count (persisted to Bunny.net)
   app.post("/api/interactions/share", async (req, res) => {
     try {
-      const { videoId } = req.body;
+      const { videoId, userId } = req.body;
       if (!videoId) return res.status(400).json({ error: "Missing videoId" });
 
       let nextShares = 1;
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
         const vRow = await bunnyDb.execute({
-          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+          sql: "SELECT data, sharesCount FROM videoReviews WHERE id = ? LIMIT 1",
           args: [videoId]
         });
         if (vRow && vRow.rows && vRow.rows.length > 0) {
           let vData: any = {};
           try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
-          nextShares = (vData.sharesCount || vData.shares || 0) + 1;
+          const existingShares = typeof (vRow.rows[0] as any).sharesCount === 'number'
+            ? (vRow.rows[0] as any).sharesCount
+            : (vData.sharesCount || vData.shares || 0);
+          nextShares = Math.max(1, existingShares + 1);
           vData.shares = nextShares;
           vData.sharesCount = nextShares;
           await bunnyDb.execute({
-            sql: "UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-            args: [JSON.stringify(vData), videoId]
+            sql: "UPDATE videoReviews SET sharesCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [nextShares, JSON.stringify(vData), videoId]
           });
         }
       }
@@ -6755,7 +6808,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       broadcastSseEvent({
         type: "video_shared",
         videoId,
-        sharesCount: nextShares
+        sharesCount: nextShares,
+        userId: userId || ""
       });
 
       // Send backend notification for share
