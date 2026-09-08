@@ -714,15 +714,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onPointerUp={handleScrubberPointerUp}
           onPointerCancel={handleScrubberPointerUp}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-0 left-0 right-0 z-50 h-3.5 flex items-end cursor-pointer group pointer-events-auto touch-none select-none pb-0 px-0"
+          className="absolute bottom-0 left-0 right-0 z-50 h-6 flex items-center cursor-pointer group pointer-events-auto touch-none select-none px-0"
           title={t("video.scrubVideo", "Drag or tap to seek video")}
           aria-label={t("video.scrubVideo", "Drag or tap to seek video")}
         >
-          {/* Background Track - Ultra-thin 2px */}
-          <div className="w-full h-[2px] group-hover:h-[3.5px] group-active:h-[3.5px] bg-white/25 transition-all duration-150 relative">
+          {/* Background Track - 3px for better visibility */}
+          <div className="w-full h-[3px] group-hover:h-[5px] group-active:h-[5px] bg-white/30 transition-all duration-150 relative">
             {/* Filled Progress Track (Pure White with subtle glow) */}
             <div
-              className="h-full bg-white transition-[width] duration-75 ease-out relative shadow-[0_0_8px_rgba(255,255,255,0.7)]"
+              className="h-full bg-white transition-[width] duration-75 ease-out relative shadow-[0_0_8px_rgba(255,255,255,0.8)]"
               style={{
                 width: `${Math.min(100, Math.max(0, isScrubbing && scrubPercent !== null ? scrubPercent : progressPercent))}%`
               }}
