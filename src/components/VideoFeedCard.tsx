@@ -136,6 +136,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     return (offsetX / rect.width) * 100;
   };
 
+  const getScrubTimeText = (pct: number) => {
+    if (typeof document === "undefined") return "0:00";
+    const vidEl = document.querySelector(`#video-slot-${video.id} video`) as HTMLVideoElement;
+    const duration = vidEl?.duration && !isNaN(vidEl.duration) ? vidEl.duration : 60; // Fallback to 60s
+    const current = Math.round((pct / 100) * duration);
+    const m = Math.floor(current / 60);
+    const s = Math.floor(current % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
   const handleScrubberSeek = (clientX: number) => {
     const pct = calculatePctFromClientX(clientX);
     setScrubPercent(pct);
@@ -331,6 +341,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   };
 
   const isExplicitVideoUrl = window.location.pathname.includes('/video/') || window.location.pathname.startsWith('/v/');
+
+  const currentScrubPct = Math.min(100, Math.max(0, isScrubbing && scrubPercent !== null ? scrubPercent : (progressPercent || 0)));
+  const safeTooltipPct = Math.min(85, Math.max(15, currentScrubPct));
+  const scrubTimeText = isScrubbing ? getScrubTimeText(currentScrubPct) : "0:00";
 
   return (
     <>
@@ -720,12 +734,34 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         >
           {/* Background Track - 3px for better visibility */}
           <div className="w-full h-[3px] group-hover:h-[5px] group-active:h-[5px] bg-white/30 transition-all duration-150 relative">
+            
+            {/* Premium Scrubbing Tooltip (Thumbnail + Timestamp) */}
+            {isScrubbing && (
+              <div 
+                className="absolute bottom-6 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+                style={{ 
+                  left: `${safeTooltipPct}%`,
+                  transform: 'translateX(-50%)'
+                }}
+              >
+                <div className="w-[84px] h-[140px] md:w-[120px] md:h-[200px] rounded-xl overflow-hidden border-2 border-white/20 bg-black/50 shadow-2xl backdrop-blur-sm relative">
+                   <img 
+                     src={posterUrl} 
+                     alt="Scrub Preview" 
+                     className="w-full h-full object-cover opacity-90" 
+                     loading="eager"
+                   />
+                </div>
+                <div className="mt-2 px-3 py-1 rounded-md bg-black/80 backdrop-blur-md text-white text-xs font-bold font-mono tracking-wider shadow-lg">
+                  {scrubTimeText}
+                </div>
+              </div>
+            )}
+
             {/* Filled Progress Track (Pure White with subtle glow) */}
             <div
               className="h-full bg-white transition-[width] duration-75 ease-out relative shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-              style={{
-                width: `${Math.min(100, Math.max(0, isScrubbing && scrubPercent !== null ? scrubPercent : progressPercent))}%`
-              }}
+              style={{ width: `${currentScrubPct}%` }}
             >
               {/* Scrubbing Handle Dot */}
               <div
