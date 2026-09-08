@@ -41,7 +41,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleF
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/firebase";
 import { cleanUndefinedFields, cleanForFirestore } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import {
@@ -2659,9 +2659,24 @@ export function App() {
       previousSectionRef.current = activeSection;
     }
 
+    const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
+    const registeredUser = allRegisteredUsers?.find((u: any) => {
+      const uName = (u.name || "").trim().toLowerCase();
+      const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
+      const uEmail = (u.email || "").split("@")[0].toLowerCase();
+      return uName === authorIdentifier || uHandle === authorIdentifier || uEmail === authorIdentifier;
+    });
+    const known = KNOWN_COMMUNITY_USERS[authorIdentifier];
+    const enrichedAuthor: VideoAuthor = {
+      ...author,
+      location: author.location || registeredUser?.location || known?.location,
+      avatar: author.avatar || registeredUser?.avatar || known?.avatar,
+      bio: author.bio || registeredUser?.bio || known?.bio
+    };
+
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
-    setSelectedAuthorForDrawer(author);
+    setSelectedAuthorForDrawer(enrichedAuthor);
 
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
     if (isDesktop) {

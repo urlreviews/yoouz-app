@@ -224,13 +224,22 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  // State to hold live fetched user profile for this creator (initialized synchronously to prevent location blinking)
-  const [liveUserProfile, setLiveUserProfile] = useState<{ avatar?: string; banner?: string; bio?: string; name?: string; location?: string } | null>(() => {
-    if (currentUser) return currentUser;
-    if (!author) return null;
-    const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
-    if (allUsers && allUsers.length > 0) {
-      const matched = allUsers.find((u: any) => {
+  // Helper to synchronously resolve the best initial profile matching the author
+  const resolveTargetProfile = (
+    targetAuthor: VideoAuthor | null,
+    isProfileOwner: boolean,
+    user: any,
+    userList?: any[],
+    videosList?: any[]
+  ) => {
+    if (isProfileOwner && user) return user;
+    if (!targetAuthor) return null;
+    const authorIdentifier = (targetAuthor.name || "").replace(/^@+/, "").trim().toLowerCase();
+    if (!authorIdentifier) return targetAuthor;
+
+    // 1. Check passed userList
+    if (userList && userList.length > 0) {
+      const matched = userList.find((u: any) => {
         const uName = (u.name || "").trim().toLowerCase();
         const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
         const uEmail = (u.email || "").split("@")[0].toLowerCase();
@@ -238,6 +247,30 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       });
       if (matched) return matched;
     }
+
+    // 2. Check KNOWN_COMMUNITY_USERS
+    const known = KNOWN_COMMUNITY_USERS[authorIdentifier];
+    if (known) {
+      return {
+        ...targetAuthor,
+        ...known,
+        location: targetAuthor.location || known.location
+      };
+    }
+
+    // 3. Check videos for matching author with location
+    if (videosList && videosList.length > 0) {
+      const matchVid = videosList.find((v) => isAuthorMatch(v, targetAuthor) && (v.author?.location || v.author?.avatar));
+      if (matchVid?.author) {
+        return {
+          ...targetAuthor,
+          ...matchVid.author,
+          location: targetAuthor.location || matchVid.author.location
+        };
+      }
+    }
+
+    // 4. Check localStorage
     try {
       const savedUsers = localStorage.getItem("yoouz_all_users");
       if (savedUsers) {
@@ -252,14 +285,22 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           if (matched) return matched;
         }
       }
-      const savedProfile = localStorage.getItem("copo_user_profile");
-      if (savedProfile) {
-        const parsed = JSON.parse(savedProfile);
-        const pName = (parsed.name || "").trim().toLowerCase();
-        if (pName === authorIdentifier) return parsed;
+      if (isProfileOwner) {
+        const savedProfile = localStorage.getItem("copo_user_profile");
+        if (savedProfile) {
+          const parsed = JSON.parse(savedProfile);
+          const pName = (parsed.name || "").trim().toLowerCase();
+          if (pName === authorIdentifier) return parsed;
+        }
       }
     } catch (e) {}
-    return author;
+
+    return targetAuthor;
+  };
+
+  // State to hold live fetched user profile for this creator (initialized synchronously to prevent location blinking)
+  const [liveUserProfile, setLiveUserProfile] = useState<{ avatar?: string; banner?: string; bio?: string; name?: string; location?: string } | null>(() => {
+    return resolveTargetProfile(author, isOwner, currentUser, allUsers, allVideos);
   });
 
   useEffect(() => {
@@ -267,18 +308,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
     if (!authorIdentifier) return;
 
+    // Immediately sync with synchronous resolution first to prevent any visual delay
+    const initialMatch = resolveTargetProfile(author, isOwner, currentUser, allUsers, allVideos);
+    if (initialMatch) {
+      setLiveUserProfile(initialMatch);
+    }
+
     if (isOwner && currentUser) {
       setLiveUserProfile((prev) => ({ ...(prev || {}), ...currentUser }));
-    } else if (allUsers && allUsers.length > 0) {
-      const matched = allUsers.find((u: any) => {
-        const uName = (u.name || "").trim().toLowerCase();
-        const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
-        const uEmail = (u.email || "").split("@")[0].toLowerCase();
-        return uName === authorIdentifier || uHandle === authorIdentifier || uEmail === authorIdentifier;
-      });
-      if (matched) {
-        setLiveUserProfile(matched);
-      }
     }
 
     let isMounted = true;
@@ -293,7 +330,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           return uName === authorIdentifier || uHandle === authorIdentifier || uEmail === authorIdentifier;
         });
         if (matched && isMounted) {
-          setLiveUserProfile(matched);
+          setLiveUserProfile((prev) => ({ ...(prev || {}), ...matched }));
         }
       })
       .catch(() => {});
@@ -315,7 +352,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       isMounted = false;
       window.removeEventListener("copo-profile-updated", handleProfileUpdate);
     };
-  }, [author?.name, allUsers, isOwner, currentUser]);
+  }, [author?.name, allUsers, isOwner, currentUser, allVideos]);
 
   if (!author) return null;
 
@@ -347,12 +384,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         name: liveUserProfile?.name || (isOwner && currentUser?.name ? currentUser.name : author.name),
         bio: liveUserProfile?.bio || author.bio,
         banner: liveUserProfile?.banner || author.banner,
-        location: liveUserProfile?.location || author.location
+        location: liveUserProfile?.location || author.location || (KNOWN_COMMUNITY_USERS[(author.name || "").replace(/^@+/, "").trim().toLowerCase()]?.location)
       },
       userId: (author as any)?.userId || (isOwner ? currentUser?.email : undefined),
       userEmail: (author as any)?.email || (isOwner ? currentUser?.email : undefined)
     },
-    currentUser,
+    isOwner ? currentUser : null,
     allUsers || (liveUserProfile ? [liveUserProfile] : [])
   );
 
@@ -370,7 +407,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
   const displayLocation = isOwner && currentUser?.location
     ? currentUser.location
-    : (liveUserProfile?.location || safeCreator.location || author.location);
+    : (liveUserProfile?.location || safeCreator.location || author.location || (KNOWN_COMMUNITY_USERS[(author.name || "").replace(/^@+/, "").trim().toLowerCase()]?.location));
 
   const displayBio = isOwner && currentUser?.bio
     ? currentUser.bio
@@ -782,20 +819,22 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap text-sm">
-            <span className="text-zinc-200 font-medium">
-              {authorVideos.length} {authorVideos.length === 1 ? t("place.review", "review") : t("place.reviews", "reviews")}
-            </span>
-            <span className="text-zinc-700">·</span>
-            <span className="text-zinc-200 font-medium">
-              {(author.followersCount || 0) + (author.isFollowed ? 1 : 0)} {t("profile.followers", "followers")}
-            </span>
+          <div className="flex items-center gap-x-2 gap-y-1 flex-wrap text-sm text-zinc-300 min-h-[22px]">
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-zinc-200 font-medium">
+                {authorVideos.length} {authorVideos.length === 1 ? t("place.review", "review") : t("place.reviews", "reviews")}
+              </span>
+              <span className="text-zinc-700">·</span>
+              <span className="text-zinc-200 font-medium">
+                {(author.followersCount || 0) + (author.isFollowed ? 1 : 0)} {t("profile.followers", "followers")}
+              </span>
+            </div>
             {displayLocation && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-zinc-700">·</span>
-                <span className="text-zinc-200 text-xs font-medium flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                  <span>{displayLocation}</span>
+              <div className="flex items-center gap-1.5 min-w-0 max-w-full">
+                <span className="text-zinc-700 hidden sm:inline">·</span>
+                <span className="text-zinc-300 text-xs font-medium flex items-center gap-1 truncate">
+                  <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <span className="truncate">{displayLocation}</span>
                 </span>
               </div>
             )}

@@ -432,54 +432,62 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
   };
 }
 
-export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string }> = {
+export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {
   "aouisesmee": {
     name: "aouisesmee",
     handle: "@aouisesmee",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "aouisesmee@gmail.com": {
     name: "aouisesmee",
     handle: "@aouisesmee",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "usr_aouisesmee_gmail_com": {
     name: "aouisesmee",
     handle: "@aouisesmee",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "aouisesmee_gmail_com": {
     name: "aouisesmee",
     handle: "@aouisesmee",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "mLiO66HDR9TRvOFdGddGWm30rKu2": {
     name: "aouisesmee",
     handle: "@aouisesmee",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "mlio66hdr9trvofdgddgwm30rku2": {
     name: "aouisesmee",
     handle: "@aouisesmee",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "aouisesme": {
     name: "aouisesmee",
     handle: "@aouisesmee",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "aouisesme@gmail.com": {
     name: "aouisesmee",
     handle: "@aouisesmee",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "biz riv": {
     name: "Biz Riv",
