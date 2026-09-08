@@ -148,14 +148,21 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     return 60;
   }, [videoDuration, video?.durationSeconds]);
 
+  const scrubberRectRef = useRef<DOMRect | null>(null);
+  const previewVideoRafRef = useRef<number | null>(null);
+  const lastHapticSecondRef = useRef<number>(-1);
+
   const playableSrc = React.useMemo(() => {
     return resolvePlayableVideoSource(video);
   }, [video]);
 
   const calculatePctFromClientX = useCallback((clientX: number) => {
-    if (!scrubberRef.current) return 0;
-    const rect = scrubberRef.current.getBoundingClientRect();
-    if (rect.width <= 0) return 0;
+    let rect = scrubberRectRef.current;
+    if (!rect && scrubberRef.current) {
+      rect = scrubberRef.current.getBoundingClientRect();
+      scrubberRectRef.current = rect;
+    }
+    if (!rect || rect.width <= 0) return 0;
     const offsetX = Math.max(0, Math.min(clientX - rect.left, rect.width));
     return (offsetX / rect.width) * 100;
   }, []);
@@ -171,21 +178,43 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     const clampedPct = Math.max(0, Math.min(100, pct));
     const targetSeconds = (clampedPct / 100) * effectiveDuration;
 
+    // Instant state update for 120fps direct finger tracking
     setScrubPercent(clampedPct);
 
-    // Synchronize preview thumbnail video frame to the exact target time
+    // Subtle tactile haptic tick when crossing integer seconds (YouTube / TikTok native feel)
+    const currentSec = Math.floor(targetSeconds);
+    if (currentSec !== lastHapticSecondRef.current) {
+      lastHapticSecondRef.current = currentSec;
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try {
+          navigator.vibrate(8);
+        } catch (e) {}
+      }
+    }
+
+    // Throttle preview video decoder using requestAnimationFrame to keep UI completely lag-free
     if (previewVideoRef.current) {
-      try {
-        if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.04) {
-          previewVideoRef.current.currentTime = targetSeconds;
+      if (previewVideoRafRef.current) {
+        cancelAnimationFrame(previewVideoRafRef.current);
+      }
+      previewVideoRafRef.current = requestAnimationFrame(() => {
+        previewVideoRafRef.current = null;
+        if (previewVideoRef.current) {
+          try {
+            if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.05) {
+              previewVideoRef.current.currentTime = targetSeconds;
+            }
+          } catch (e) {}
         }
-      } catch (e) {}
+      });
     }
 
     // YouTube Shorts & TikTok standard:
     // Only seek the main video when isFinal is true (user releases finger or mouse).
     // While swiping left and right, the main video continues playing uninterrupted!
     if (isFinal) {
+      scrubberRectRef.current = null;
+      lastHapticSecondRef.current = -1;
       if (seekRafRef.current) {
         cancelAnimationFrame(seekRafRef.current);
         seekRafRef.current = null;
@@ -196,6 +225,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
   const handleScrubberPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
+    if (scrubberRef.current) {
+      scrubberRectRef.current = scrubberRef.current.getBoundingClientRect();
+    }
     setIsScrubbing(true);
     triggerHaptic("selection");
     onScrubStart?.();
@@ -223,7 +255,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       if (previewVideoRef.current) {
         const targetSeconds = (pct / 100) * effectiveDuration;
         try {
-          if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.04) {
+          if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.05) {
             previewVideoRef.current.currentTime = targetSeconds;
           }
         } catch (e) {}
@@ -244,12 +276,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     onScrubEnd?.(pct);
     setIsScrubbing(false);
     setScrubPercent(null);
+    scrubberRectRef.current = null;
+    lastHapticSecondRef.current = -1;
     triggerHaptic("selection");
   };
 
   const handleScrubberTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (isScrubbing) return;
     e.stopPropagation();
     if (e.touches && e.touches[0]) {
+      if (scrubberRef.current) {
+        scrubberRectRef.current = scrubberRef.current.getBoundingClientRect();
+      }
       setIsScrubbing(true);
       triggerHaptic("selection");
       onScrubStart?.();
@@ -276,6 +314,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     onScrubEnd?.(pct);
     setIsScrubbing(false);
     setScrubPercent(null);
+    scrubberRectRef.current = null;
+    lastHapticSecondRef.current = -1;
     triggerHaptic("selection");
   };
 
@@ -283,6 +323,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     if (!isScrubbing) {
       setIsHovering(false);
       setHoverPercent(null);
+      scrubberRectRef.current = null;
     }
   };
 
@@ -301,6 +342,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       onScrubEnd?.(pct);
       setIsScrubbing(false);
       setScrubPercent(null);
+      scrubberRectRef.current = null;
+      lastHapticSecondRef.current = -1;
       triggerHaptic("selection");
     };
 
@@ -318,6 +361,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       onScrubEnd?.(pct);
       setIsScrubbing(false);
       setScrubPercent(null);
+      scrubberRectRef.current = null;
+      lastHapticSecondRef.current = -1;
       triggerHaptic("selection");
     };
 
@@ -910,19 +955,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             updateSeekPosition(pct, true);
             onScrubEnd?.(pct);
           }}
-          className="copo-video-scrubber-position absolute left-0 right-0 z-40 h-8 sm:h-9 flex items-end pb-0 cursor-pointer select-none px-0 group touch-none"
+          className="copo-video-scrubber-position absolute left-0 right-0 z-40 h-11 sm:h-12 flex items-end pb-1 cursor-pointer select-none px-0 group touch-none"
         >
           {/* YouTube Shorts / TikTok Style Compact Floating Thumbnail Frame Preview */}
           {(isScrubbing || isHovering) && (
             <div 
-              className="absolute bottom-4 sm:bottom-5 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-90 duration-150"
+              className="absolute bottom-6 sm:bottom-7 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
               style={{ 
                 left: `${clampedPreviewLeftPct}%`,
                 transform: 'translateX(-50%)'
               }}
             >
               {/* Compact 9:16 Vertical Miniature Video Frame Preview Card */}
-              <div className="w-[54px] h-[96px] sm:w-[62px] sm:h-[110px] rounded-xl bg-black border border-white/80 shadow-[0_6px_24px_rgba(0,0,0,0.85)] overflow-hidden relative ring-1 ring-black/50 flex items-center justify-center">
+              <div className="w-[58px] h-[103px] sm:w-[66px] sm:h-[118px] rounded-xl bg-black border border-white/90 shadow-[0_8px_28px_rgba(0,0,0,0.9)] overflow-hidden relative ring-1 ring-black/60 flex items-center justify-center">
                 {/* Fallback Poster Image */}
                 <img
                   src={posterUrl}
@@ -942,35 +987,39 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/10 pointer-events-none" />
               </div>
 
-              {/* Floating High-Contrast Time (Clean text directly below preview, matching YouTube Shorts) */}
-              <span className="mt-1 text-white text-[11px] sm:text-xs font-semibold font-mono tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] select-none">
-                {scrubTimeText}
-              </span>
+              {/* Floating High-Contrast Time Pill Badge */}
+              <div className="mt-1.5 px-2.5 py-0.5 rounded-full bg-black/85 backdrop-blur-md border border-white/20 shadow-md">
+                <span className="text-white text-[11px] sm:text-xs font-semibold font-mono tracking-wider select-none">
+                  {scrubTimeText}
+                </span>
+              </div>
             </div>
           )}
 
-          {/* Background Track - Ultra-thin hairline (1.5px resting, expands to 3px on hover/scrub) */}
+          {/* Background Track - Expands smoothly from 2px hairline to 5px/6px tactile bar on touch/hover */}
           <div 
-            className="w-full relative transition-all duration-200"
-            style={{
-              height: isScrubbing || isHovering ? '3px' : '1.5px',
-              backgroundColor: isScrubbing || isHovering ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.22)'
-            }}
+            className={`w-full relative transition-all duration-150 ease-out ${
+              isScrubbing || isHovering 
+                ? 'h-[5px] sm:h-[6px] bg-white/35 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.25)]' 
+                : 'h-[2px] bg-white/25'
+            }`}
           >
-            {/* Filled Progress Track (Clean white without heavy glow, almost invisible when resting) */}
+            {/* Filled Progress Track */}
             <div
-              className="h-full bg-white transition-[width] duration-75 ease-out relative"
+              className={`h-full bg-white relative ${
+                isScrubbing ? 'transition-none' : 'transition-[width] duration-100 ease-out'
+              } ${isScrubbing || isHovering ? 'rounded-full' : ''}`}
               style={{ 
                 width: `${currentScrubPct}%`,
-                opacity: isScrubbing || isHovering ? 1 : 0.85
+                opacity: isScrubbing || isHovering ? 1 : 0.9
               }}
             >
-              {/* Scrubbing Handle Dot - Only appears when touching or hovering */}
+              {/* Scrubbing Handle Dot / Thumb - Tactile white circle appearing instantly under finger/cursor */}
               <div
-                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-white transition-all duration-150 ${
+                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-white transition-transform duration-100 ${
                   isScrubbing || isHovering
-                    ? "w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-100 scale-100 ring-1 ring-black/40 shadow-sm"
-                    : "w-1 h-1 opacity-0 scale-0 pointer-events-none"
+                    ? "w-4 h-4 sm:w-4.5 sm:h-4.5 scale-100 opacity-100 shadow-[0_2px_8px_rgba(0,0,0,0.85)] ring-2 ring-black/40"
+                    : "w-1 h-1 scale-0 opacity-0 pointer-events-none"
                 }`}
               />
             </div>
