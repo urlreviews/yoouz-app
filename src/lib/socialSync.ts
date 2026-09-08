@@ -202,6 +202,13 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: payload, merge: true })
   }).catch(() => {});
+
+  // 3. Local instantaneous event dispatch for 0ms UI responsiveness
+  if (typeof window !== "undefined") {
+    try {
+      window.dispatchEvent(new CustomEvent("copo-notification-received", { detail: payload }));
+    } catch (e) {}
+  }
 }
 
 // Persistent deleted notification tracking
@@ -552,10 +559,37 @@ export function subscribeToNotifications(
   // 3. Periodic Background Sync (every 4 seconds) for infallible consistency
   const pollTimer = setInterval(fetchFromBunny, 4000);
 
+  // 4. Instant local window event listener for 0ms in-app actions
+  const handleLocalNotif = (e: Event) => {
+    const customEvt = e as CustomEvent;
+    if (customEvt && customEvt.detail) {
+      const filtered = filterNotificationsForUser([customEvt.detail], currentUser);
+      if (filtered.length > 0) {
+        const freshItem = filtered[0];
+        const existingIdx = cachedNotifs.findIndex((n) => n.id === freshItem.id);
+        let nextList: CopoNotification[];
+        if (existingIdx >= 0) {
+          nextList = [...cachedNotifs];
+          nextList[existingIdx] = freshItem;
+        } else {
+          nextList = [freshItem, ...cachedNotifs];
+        }
+        updateList(nextList);
+      }
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("copo-notification-received", handleLocalNotif);
+  }
+
   return () => {
     isDisposed = true;
     clearInterval(pollTimer);
     unregisterSse();
+    if (typeof window !== "undefined") {
+      window.removeEventListener("copo-notification-received", handleLocalNotif);
+    }
   };
 }
 

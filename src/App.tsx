@@ -4714,6 +4714,7 @@ export function App() {
                 onOpenHelp={() => setActiveSection('more')}
                 onOpenLegal={handleOpenLegal}
                 onOpenSettings={() => setIsNotificationSettingsOpen(true)}
+                onOpenCreator={handleOpenCreatorDrawer}
                 onSuccessAuth={(user) => setCurrentUser(user)}
                 onSelectNotificationVideo={(vidId) => vidId && handleSelectVideoById(vidId)}
                 onNavigateToMessages={() => setActiveSection("messages")}

@@ -39,6 +39,7 @@ interface CopoNotificationsViewProps {
   onClearAll?: () => void;
   onSuccessAuth?: (userData: { name: string; email: string; avatar: string }) => void;
   onOpenSettings?: () => void;
+  onOpenCreator?: (author: any) => void;
 }
 
 type FilterType = "all" | "unread" | "likes" | "comments" | "people" | "bookmarks";
@@ -59,7 +60,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   onDeleteNotification,
   onClearAll,
   onSuccessAuth,
-  onOpenSettings
+  onOpenSettings,
+  onOpenCreator,
 }) => {
   const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
@@ -125,7 +127,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       if (activeFilter === "likes") return n.type === "like";
       if (activeFilter === "comments") return n.type === "comment";
       if (activeFilter === "people") return n.type === "follow";
-      if (activeFilter === "bookmarks") return n.type === "bookmark";
+      if (activeFilter === "bookmarks") return n.type === "bookmark" || n.type === "repost";
       return true;
     });
   }, [notifications, activeFilter]);
@@ -450,6 +452,13 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                       onNavigateToMessages();
                     } else if (notif.videoId) {
                       onSelectNotificationVideo(notif.videoId);
+                    } else if (notif.type === "follow" && notif.user?.name && onOpenCreator) {
+                      onOpenCreator({
+                        name: notif.user.name,
+                        avatar: notif.user.avatar,
+                        handle: notif.user.name.toLowerCase().replace(/\s+/g, ""),
+                        isFollowed: false
+                      });
                     }
                   }}
                   className={`group relative p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 hover:bg-zinc-800/60 active:bg-zinc-800 cursor-pointer transition-colors ${

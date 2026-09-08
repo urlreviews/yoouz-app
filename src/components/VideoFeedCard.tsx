@@ -6,6 +6,7 @@ import {
   Heart,
   MessageCircle,
   Share2,
+  Bookmark,
   Volume2,
   VolumeX,
   Star,
@@ -968,6 +969,30 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </button>
             <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {(video.commentsCount || video.comments?.length || 0) + (video.ownerResponse ? 1 : 0)}
+            </span>
+          </div>
+
+          {/* Save / Bookmark */}
+          <div className="flex flex-col items-center">
+            <button
+              id={`btn-bookmark-${video.id}`}
+              onClick={() => {
+                triggerHaptic(video.isBookmarked ? "selection" : "medium");
+                onToggleBookmark(video.id);
+              }}
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center transition-all active:scale-90 shadow-xl"
+              title={t("video.save", "Save Review")}
+            >
+              <Bookmark
+                className={`w-6 h-6 transition-colors ${
+                  video.isBookmarked
+                    ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                    : "text-white fill-none stroke-[2.2]"
+                }`}
+              />
+            </button>
+            <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+              {typeof video.bookmarksCount === 'number' && video.bookmarksCount > 0 ? video.bookmarksCount : (video.isBookmarked ? 1 : 0)}
             </span>
           </div>
 
