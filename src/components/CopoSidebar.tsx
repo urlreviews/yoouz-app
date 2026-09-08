@@ -317,26 +317,26 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             </span>
           </button>
 
-          {/* 3. CENTER HERO ACTION: [+] Record Review */}
-          <div className="flex flex-col items-center justify-center px-1 flex-1 relative -top-3">
-            <button
-              id="mobile-nav-record-btn"
-              onClick={() => {
-                if (onOpenCreateModal) {
-                  onOpenCreateModal();
-                } else {
-                  onSelectSection("record_review");
-                }
-              }}
-              aria-label="Record 60-Second Video Review"
-              className="group relative flex items-center justify-center w-[52px] h-[52px] rounded-full bg-white text-zinc-950 shadow-[0_8px_20px_rgba(255,255,255,0.2)] border-[3px] border-zinc-950 active:scale-95 transition-all duration-200 hover:bg-zinc-200 cursor-pointer"
-            >
-              <Video className="w-[24px] h-[24px] stroke-[2.2] text-zinc-950" />
-            </button>
-            <span className="text-[9px] tracking-tight mt-1 font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[64px]">
+          {/* 3. CENTER ACTION: Record Review (Aligned with other items) */}
+          <button
+            id="mobile-nav-record-btn"
+            onClick={() => {
+              if (onOpenCreateModal) {
+                onOpenCreateModal();
+              } else {
+                onSelectSection("record_review");
+              }
+            }}
+            aria-label="Record 60-Second Video Review"
+            className="flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer"
+          >
+            <div className="flex items-center justify-center w-[32px] h-[32px] rounded-full bg-white text-zinc-950 shadow-sm border border-zinc-950 hover:bg-zinc-200">
+              <Video className="w-[16px] h-[16px] stroke-[2.5]" />
+            </div>
+            <span className="text-[10px] tracking-tight mt-1 font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[64px]">
               {t("nav.record_review", "Review")}
             </span>
-          </div>
+          </button>
 
           {/* 4. Inbox & Activity */}
           <button

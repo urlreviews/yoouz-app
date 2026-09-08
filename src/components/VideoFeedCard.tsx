@@ -501,7 +501,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Bottom Area: Metadata & Actions Container - sits cleanly above the bottom progress bar & navigation on mobile and desktop */}
       <div 
-        className="relative z-30 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none pb-[calc(max(10px,env(safe-area-inset-bottom,10px))+78px)] md:pb-5"
+        className="relative z-30 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none pb-[calc(max(10px,env(safe-area-inset-bottom,10px))+70px)] md:pb-5"
       >
         
         {/* Bottom Video Metadata & Place Badge */}
@@ -714,7 +714,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onPointerUp={handleScrubberPointerUp}
           onPointerCancel={handleScrubberPointerUp}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-[calc(max(10px,env(safe-area-inset-bottom,10px))+54px)] md:bottom-0 left-0 right-0 z-50 h-3.5 flex items-end cursor-pointer group pointer-events-auto touch-none select-none pb-0 px-0"
+          className="absolute bottom-[calc(max(10px,env(safe-area-inset-bottom,10px))+60px)] md:bottom-0 left-0 right-0 z-50 h-3.5 flex items-end cursor-pointer group pointer-events-auto touch-none select-none pb-0 px-0"
           title={t("video.scrubVideo", "Drag or tap to seek video")}
           aria-label={t("video.scrubVideo", "Drag or tap to seek video")}
         >
