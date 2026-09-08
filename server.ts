@@ -301,13 +301,13 @@ function broadcastSseEvent(event: { type: string; [key: string]: any }, targetUs
         const cId = (client.userId || "").toLowerCase().trim().replace(/^@/, "");
 
         const isAvtErtuop = (cEmail.includes("avr6566gd") || cHandle === "avtertuop" || cHandle === "avt ertuop" || cId.includes("avr6566gd") || cHandle.includes("avt") || cEmail.includes("avt"));
-        const isAouisesmee = (cEmail.includes("aouisesmee") || cHandle.includes("aouisesmee") || cId.includes("aouisesmee") || cEmail.includes("4samet") || cHandle.includes("4samet") || cId.includes("4samet"));
+        const isAouisesmee = (cEmail.includes("aouisesmee") || cEmail.includes("aouisemee") || cEmail.includes("aouisesme") || cEmail.includes("aouiseme") || cHandle.includes("aouisesmee") || cHandle.includes("aouisemee") || cHandle.includes("aouisesme") || cHandle.includes("aouiseme") || cId.includes("aouisesmee") || cId.includes("aouisemee") || cId.includes("aouisesme") || cId.includes("aouiseme") || cEmail.includes("4samet") || cHandle.includes("4samet") || cId.includes("4samet"));
         const isBizRiv = (cEmail.includes("louis42111") || cHandle === "bizriv" || cHandle === "biz riv" || cId.includes("louis42111"));
 
         const isMatch = targets.some(t => {
           if (!t) return false;
           if (isAvtErtuop && (t.includes("avr6566gd") || t === "avtertuop" || t === "avt ertuop" || t.includes("canon_user_avtertuop") || t.includes("avt"))) return true;
-          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("canon_user_aouisesmee") || t.includes("4samet"))) return true;
+          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme") || t.includes("canon_user_aouisesmee") || t.includes("4samet"))) return true;
           if (isBizRiv && (t.includes("louis42111") || t === "bizriv" || t === "biz riv" || t.includes("canon_user_bizriv"))) return true;
 
           return (
@@ -5611,8 +5611,10 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      // Fetch separate comments to ensure they NEVER get lost or fall out of sync
+      // Fetch separate comments, bookmarks count, and likes count to ensure they NEVER get lost or fall out of sync
       const videoCommentsMap = new Map<string, any[]>();
+      const videoBookmarksCountMap = new Map<string, number>();
+      const videoLikesCountMap = new Map<string, number>();
       if (bunnyDb) {
         try {
           const commentsRows = await bunnyDb.execute("SELECT videoId, data FROM comments ORDER BY createdAt ASC");
@@ -5636,6 +5638,28 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         } catch (cErr) {
           console.warn("BunnyDB read comments in feed error:", cErr);
         }
+
+        try {
+          const bmRows = await bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM bookmarks GROUP BY videoId");
+          if (bmRows && bmRows.rows) {
+            bmRows.rows.forEach((row: any) => {
+              if (row.videoId) {
+                videoBookmarksCountMap.set(String(row.videoId), Number(row.total) || 0);
+              }
+            });
+          }
+        } catch (bmErr) {}
+
+        try {
+          const likesRows = await bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM likes GROUP BY videoId");
+          if (likesRows && likesRows.rows) {
+            likesRows.rows.forEach((row: any) => {
+              if (row.videoId) {
+                videoLikesCountMap.set(String(row.videoId), Number(row.total) || 0);
+              }
+            });
+          }
+        } catch (lErr) {}
       }
 
       const merged = Array.from(map.values()).map((r: any) => {
@@ -5648,6 +5672,19 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         const tree = buildCommentTree(allComments);
         enriched.comments = tree.comments;
         enriched.commentsCount = tree.count;
+
+        const realBookmarks = videoBookmarksCountMap.has(String(r.id))
+          ? videoBookmarksCountMap.get(String(r.id))!
+          : (typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0));
+        enriched.bookmarks = realBookmarks;
+        enriched.bookmarksCount = realBookmarks;
+
+        const realLikes = videoLikesCountMap.has(String(r.id))
+          ? videoLikesCountMap.get(String(r.id))!
+          : (typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0));
+        enriched.likes = realLikes;
+        enriched.likesCount = realLikes;
+
         return enriched;
       });
       merged.sort((a, b) => {
@@ -5728,7 +5765,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         email = "avr6566gd@gmail.com";
       } else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) {
         email = "louis42111@gmail.com";
-      } else if (lower.includes("aouisesmee") || lower.includes("4samet")) {
+      } else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme") || lower.includes("4samet")) {
         email = "aouisesmee@gmail.com";
       }
     }
@@ -5827,8 +5864,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       if (lowerTargets.some(t => t.includes("louis42111") || t.includes("bizriv") || t === "biz riv")) {
         targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
       }
-      if (lowerTargets.some(t => t.includes("aouisesmee") || t.includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+      if (lowerTargets.some(t => t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme") || t.includes("4samet"))) {
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
       }
 
       broadcastSseEvent({
@@ -6179,7 +6216,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
                   const lower = String(parent.userName || "").toLowerCase();
                   if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) parentEmail = "avr6566gd@gmail.com";
                   else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) parentEmail = "louis42111@gmail.com";
-                  else if (lower.includes("aouisesmee") || lower.includes("4samet")) parentEmail = "aouisesmee@gmail.com";
+                  else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme") || lower.includes("4samet")) parentEmail = "aouisesmee@gmail.com";
                 }
                 if (parentEmail) {
                   await createAndBroadcastBackendNotification({
@@ -6335,7 +6372,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
                 const lower = String(c.userName || "").toLowerCase();
                 if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) cEmail = "avr6566gd@gmail.com";
                 else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) cEmail = "louis42111@gmail.com";
-                else if (lower.includes("aouisesmee") || lower.includes("4samet")) cEmail = "aouisesmee@gmail.com";
+                else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme") || lower.includes("4samet")) cEmail = "aouisesmee@gmail.com";
               }
               if (cEmail) {
                 await createAndBroadcastBackendNotification({
@@ -6878,7 +6915,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           notifObj.recipientEmail = "avr6566gd@gmail.com";
         } else if (idLower.includes("louis42111") || idLower.includes("biz riv") || idLower.includes("bizriv") || handleLower.includes("bizriv")) {
           notifObj.recipientEmail = "louis42111@gmail.com";
-        } else if (idLower.includes("aouisesmee") || handleLower.includes("aouisesmee") || idLower.includes("4samet") || handleLower.includes("4samet")) {
+        } else if (idLower.includes("aouisesmee") || idLower.includes("aouisemee") || idLower.includes("aouisesme") || idLower.includes("aouiseme") || handleLower.includes("aouisesmee") || handleLower.includes("aouisemee") || handleLower.includes("aouisesme") || handleLower.includes("aouiseme") || idLower.includes("4samet") || handleLower.includes("4samet")) {
           notifObj.recipientEmail = "aouisesmee@gmail.com";
         }
       }
@@ -6912,8 +6949,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
         targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
       }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme") || (t || "").toLowerCase().includes("4samet"))) {
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
       }
 
       broadcastSseEvent({
@@ -6968,8 +7005,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv" || (t || "").toLowerCase().includes("biz"))) {
         targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv", "biz");
       }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme") || (t || "").toLowerCase().includes("4samet"))) {
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
       }
 
       broadcastSseEvent({
@@ -7140,7 +7177,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
               const lower = String(targetHandle || "").toLowerCase();
               if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) recEmail = "avr6566gd@gmail.com";
               else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) recEmail = "louis42111@gmail.com";
-              else if (lower.includes("aouisesmee") || lower.includes("4samet")) recEmail = "aouisesmee@gmail.com";
+              else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme") || lower.includes("4samet")) recEmail = "aouisesmee@gmail.com";
             }
 
             await createAndBroadcastBackendNotification({
