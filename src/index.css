@@ -4,6 +4,19 @@ html, body, #root {
   background-color: #09090b;
   color: #ffffff;
   color-scheme: dark;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Prevent iOS Safari touch magnifier, callouts, and search lookup popups across all video interactions */
+.copo-no-select,
+.copo-video-card,
+.copo-video-card * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 /* Global Dark Theme Scrollbar for general desktop overflow */

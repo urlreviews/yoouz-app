@@ -151,19 +151,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }, 750);
   }, []);
 
-  // Card horizontal swipe gesture tracking
-  const cardTouchStartXRef = useRef<number>(0);
-  const cardTouchStartYRef = useRef<number>(0);
-  const cardTouchStartTimeRef = useRef<number>(0);
-  const isCardHorizontalSwipeRef = useRef<boolean>(false);
-
   // Video Scrubbing state (supports live seeking, desktop hover preview, and unified mobile touch)
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const [scrubPercent, setScrubPercent] = useState<number | null>(null);
   const [isHovering, setIsHovering] = useState<boolean>(false);
   const [hoverPercent, setHoverPercent] = useState<number | null>(null);
   const scrubberRef = useRef<HTMLDivElement | null>(null);
-  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
   const seekRafRef = useRef<number | null>(null);
 
   const effectiveDuration = React.useMemo(() => {
@@ -220,25 +213,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       }
     }
 
-    // High-speed preview video seeking
-    if (previewVideoRef.current) {
-      if (previewVideoRafRef.current) {
-        cancelAnimationFrame(previewVideoRafRef.current);
-      }
-      previewVideoRafRef.current = requestAnimationFrame(() => {
-        previewVideoRafRef.current = null;
-        if (previewVideoRef.current) {
-          try {
-            if (typeof (previewVideoRef.current as any).fastSeek === "function") {
-              (previewVideoRef.current as any).fastSeek(targetSeconds);
-            } else if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.03) {
-              previewVideoRef.current.currentTime = targetSeconds;
-            }
-          } catch (e) {}
-        }
-      });
-    }
-
     // Live update main video frame during dragging for physical app responsiveness
     if (seekRafRef.current) {
       cancelAnimationFrame(seekRafRef.current);
@@ -284,18 +258,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       const pct = calculatePctFromClientX(e.clientX);
       updateSeekPosition(pct, false);
     } else if (e.pointerType === "mouse") {
-      // Desktop hover preview thumbnail
+      // Desktop hover preview timestamp
       const pct = calculatePctFromClientX(e.clientX);
       setHoverPercent(pct);
       setIsHovering(true);
-      if (previewVideoRef.current) {
-        const targetSeconds = (pct / 100) * effectiveDuration;
-        try {
-          if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.05) {
-            previewVideoRef.current.currentTime = targetSeconds;
-          }
-        } catch (e) {}
-      }
     }
   };
 
@@ -565,39 +531,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   };
 
-  const handleCardTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (e.touches && e.touches[0]) {
-      cardTouchStartXRef.current = e.touches[0].clientX;
-      cardTouchStartYRef.current = e.touches[0].clientY;
-      cardTouchStartTimeRef.current = Date.now();
-      isCardHorizontalSwipeRef.current = false;
-    }
-  };
-
-  const handleCardTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!e.touches || !e.touches[0]) return;
-    const dx = e.touches[0].clientX - cardTouchStartXRef.current;
-    const dy = e.touches[0].clientY - cardTouchStartYRef.current;
-    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 18) {
-      isCardHorizontalSwipeRef.current = true;
-    }
-  };
-
-  const handleCardTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (isCardHorizontalSwipeRef.current && e.changedTouches && e.changedTouches[0]) {
-      const dx = e.changedTouches[0].clientX - cardTouchStartXRef.current;
-      const elapsed = Date.now() - cardTouchStartTimeRef.current;
-      if (Math.abs(dx) > 30 && elapsed < 450) {
-        const delta = dx < 0 ? -1.5 : 1.5;
-        onSeekDelta?.(delta);
-        triggerJumpFeedback(delta);
-        isCardHorizontalSwipeRef.current = false;
-        return;
-      }
-    }
-    isCardHorizontalSwipeRef.current = false;
-  };
-
   const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
 
   // Preload high-priority assets when the card is active or near-active
@@ -694,14 +627,33 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       {/* This sits strictly behind all UI buttons (z-40, z-50) so button taps NEVER accidentally pause the video */}
       <div 
         id={`copo-card-tap-overlay-${video.id}`}
-        className="absolute inset-0 z-20 cursor-pointer"
+        className="absolute inset-0 z-20 cursor-pointer touch-manipulation select-none"
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTapLike}
-        onTouchStart={handleCardTouchStart}
-        onTouchMove={handleCardTouchMove}
-        onTouchEnd={handleCardTouchEnd}
         aria-label="Toggle Play/Pause"
       />
+
+      {/* Scrubbing Centered HUD */}
+      {isScrubbing && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none animate-in fade-in zoom-in-95 duration-100">
+          <div className="px-6 py-3.5 rounded-2xl bg-black/85 backdrop-blur-2xl border border-white/30 shadow-[0_12px_40px_rgba(0,0,0,0.85)] flex flex-col items-center gap-1.5 text-white">
+            <div className="flex items-baseline gap-2 font-mono">
+              <span className="font-black text-3xl sm:text-4xl tracking-tight text-white drop-shadow-md">
+                {scrubTimeText}
+              </span>
+              <span className="text-white/60 text-lg sm:text-xl font-semibold">
+                / {formatTimeText(effectiveDuration)}
+              </span>
+            </div>
+            <div className="w-28 h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-white rounded-full transition-none"
+                style={{ width: `${currentScrubPct}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Visual Jump Feedback Overlay (e.g. -1.5s or +1.5s) */}
       {jumpFeedback && (
@@ -840,7 +792,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Bottom Area: Metadata & Actions Container - sits cleanly above the bottom progress bar on mobile and desktop */}
       <div 
-        className="relative z-45 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none copo-video-bottom-metadata"
+        className={`relative z-45 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none copo-video-bottom-metadata transition-opacity duration-200 select-none ${
+          isScrubbing ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
       >
         
         {/* Bottom Video Metadata & Place Badge */}
@@ -1080,8 +1034,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           }}
           className="copo-video-scrubber-position absolute left-0 right-0 z-40 h-9 sm:h-10 flex items-end pb-1 cursor-pointer select-none px-0 group touch-none"
         >
-          {/* YouTube Shorts / TikTok Style Compact Floating Thumbnail Frame Preview */}
-          {(isScrubbing || isHovering) && (
+          {/* Desktop Hover Floating Time Badge */}
+          {isHovering && !isScrubbing && (
             <div 
               className="absolute bottom-6 sm:bottom-7 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
               style={{ 
@@ -1089,30 +1043,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 transform: 'translateX(-50%)'
               }}
             >
-              {/* Compact 9:16 Vertical Miniature Video Frame Preview Card */}
-              <div className="w-[58px] h-[103px] sm:w-[66px] sm:h-[118px] rounded-xl bg-black border border-white/90 shadow-[0_8px_28px_rgba(0,0,0,0.9)] overflow-hidden relative ring-1 ring-black/60 flex items-center justify-center">
-                {/* Fallback Poster Image */}
-                <img
-                  src={posterUrl}
-                  alt="Preview frame"
-                  className="w-full h-full object-cover absolute inset-0 pointer-events-none"
-                />
-                {/* Live Frame Preview Video Element */}
-                <video
-                  ref={previewVideoRef}
-                  src={playableSrc}
-                  preload="auto"
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover absolute inset-0 pointer-events-none"
-                />
-                {/* Subtle gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/10 pointer-events-none" />
-              </div>
-
-              {/* Floating High-Contrast Time Pill Badge */}
-              <div className="mt-1.5 px-2.5 py-0.5 rounded-full bg-black/85 backdrop-blur-md border border-white/20 shadow-md">
-                <span className="text-white text-[11px] sm:text-xs font-semibold font-mono tracking-wider select-none">
+              <div className="px-2.5 py-1 rounded-full bg-black/90 backdrop-blur-md border border-white/30 shadow-lg">
+                <span className="text-white text-xs font-bold font-mono tracking-wider select-none">
                   {scrubTimeText}
                 </span>
               </div>
