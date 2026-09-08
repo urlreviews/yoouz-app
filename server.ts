@@ -13063,6 +13063,8 @@ function injectOpenGraphTags(html: string, meta: any) {
           res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
           res.setHeader('Pragma', 'no-cache');
           res.setHeader('Expires', '0');
+        } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+          res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         }
       }
     }));

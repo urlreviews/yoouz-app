@@ -252,6 +252,38 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     triggerHaptic("selection");
   };
 
+  const handleScrubberTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (e.touches && e.touches[0]) {
+      setIsScrubbing(true);
+      triggerHaptic("selection");
+      onScrubStart?.();
+      const pct = calculatePctFromClientX(e.touches[0].clientX);
+      updateSeekPosition(pct, false);
+    }
+  };
+
+  const handleScrubberTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isScrubbing) return;
+    e.stopPropagation();
+    if (e.touches && e.touches[0]) {
+      const pct = calculatePctFromClientX(e.touches[0].clientX);
+      updateSeekPosition(pct, false);
+    }
+  };
+
+  const handleScrubberTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isScrubbing) return;
+    e.stopPropagation();
+    const clientX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : 0;
+    const pct = calculatePctFromClientX(clientX);
+    updateSeekPosition(pct, true);
+    onScrubEnd?.(pct);
+    setIsScrubbing(false);
+    setScrubPercent(null);
+    triggerHaptic("selection");
+  };
+
   const handleScrubberPointerLeave = () => {
     if (!isScrubbing) {
       setIsHovering(false);
@@ -277,14 +309,37 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       triggerHaptic("selection");
     };
 
+    const onGlobalTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        const pct = calculatePctFromClientX(e.touches[0].clientX);
+        updateSeekPosition(pct, false);
+      }
+    };
+
+    const onGlobalTouchEnd = (e: TouchEvent) => {
+      const clientX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : 0;
+      const pct = calculatePctFromClientX(clientX);
+      updateSeekPosition(pct, true);
+      onScrubEnd?.(pct);
+      setIsScrubbing(false);
+      setScrubPercent(null);
+      triggerHaptic("selection");
+    };
+
     window.addEventListener("pointermove", onGlobalMove, { passive: false });
     window.addEventListener("pointerup", onGlobalUp);
     window.addEventListener("pointercancel", onGlobalUp);
+    window.addEventListener("touchmove", onGlobalTouchMove, { passive: false });
+    window.addEventListener("touchend", onGlobalTouchEnd);
+    window.addEventListener("touchcancel", onGlobalTouchEnd);
 
     return () => {
       window.removeEventListener("pointermove", onGlobalMove);
       window.removeEventListener("pointerup", onGlobalUp);
       window.removeEventListener("pointercancel", onGlobalUp);
+      window.removeEventListener("touchmove", onGlobalTouchMove);
+      window.removeEventListener("touchend", onGlobalTouchEnd);
+      window.removeEventListener("touchcancel", onGlobalTouchEnd);
     };
   }, [isScrubbing, calculatePctFromClientX, updateSeekPosition, onScrubEnd]);
 
@@ -456,7 +511,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
   const currentScrubPct = Math.min(100, Math.max(0, isScrubbing && scrubPercent !== null ? scrubPercent : (progressPercent || 0)));
   const previewPct = isScrubbing && scrubPercent !== null ? scrubPercent : (isHovering && hoverPercent !== null ? hoverPercent : currentScrubPct);
-  const clampedPreviewLeftPct = Math.min(86, Math.max(14, previewPct));
+  const clampedPreviewLeftPct = Math.min(90, Math.max(10, previewPct));
   const activeSeconds = Math.max(0, Math.min(effectiveDuration, (previewPct / 100) * effectiveDuration));
   const scrubTimeText = formatTimeText(activeSeconds);
 
@@ -841,7 +896,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </aside>
       </div>
 
-      {/* Interactive Video Progress Bar (Sleek ultra-thin white reel style with floating thumbnail frame preview) */}
+      {/* Interactive Video Progress Bar (Ultra-thin hairline YouTube Shorts / TikTok style) */}
       {isActive && (
         <div
           ref={scrubberRef}
@@ -850,23 +905,24 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onPointerUp={handleScrubberPointerUp}
           onPointerCancel={handleScrubberPointerUp}
           onPointerLeave={handleScrubberPointerLeave}
+          onTouchStart={handleScrubberTouchStart}
+          onTouchMove={handleScrubberTouchMove}
+          onTouchEnd={handleScrubberTouchEnd}
+          onTouchCancel={handleScrubberTouchEnd}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-0 left-0 right-0 z-50 h-8 flex items-center cursor-pointer group pointer-events-auto select-none px-0"
-          style={{ touchAction: 'none' }}
-          title={t("video.scrubVideo", "Drag or tap to seek video")}
-          aria-label={t("video.scrubVideo", "Drag or tap to seek video")}
+          className="absolute bottom-0 left-0 right-0 z-50 h-7 sm:h-8 flex items-end pb-0 cursor-pointer select-none px-0 group touch-none"
         >
-          {/* YouTube Shorts / TikTok Style Floating Thumbnail Frame Preview */}
+          {/* YouTube Shorts / TikTok Style Compact Floating Thumbnail Frame Preview */}
           {(isScrubbing || isHovering) && (
             <div 
-              className="absolute bottom-7 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-90 duration-150"
+              className="absolute bottom-4 sm:bottom-5 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-90 duration-150"
               style={{ 
                 left: `${clampedPreviewLeftPct}%`,
                 transform: 'translateX(-50%)'
               }}
             >
-              {/* 9:16 Vertical Miniature Video Frame Preview Card */}
-              <div className="w-[78px] h-[138px] sm:w-[86px] sm:h-[152px] rounded-2xl bg-black border-2 border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.9)] overflow-hidden relative ring-1 ring-black/50 flex items-center justify-center">
+              {/* Compact 9:16 Vertical Miniature Video Frame Preview Card */}
+              <div className="w-[54px] h-[96px] sm:w-[62px] sm:h-[110px] rounded-xl bg-black border border-white/80 shadow-[0_6px_24px_rgba(0,0,0,0.85)] overflow-hidden relative ring-1 ring-black/50 flex items-center justify-center">
                 {/* Fallback Poster Image */}
                 <img
                   src={posterUrl}
@@ -882,30 +938,39 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   playsInline
                   className="w-full h-full object-cover absolute inset-0 pointer-events-none"
                 />
-                {/* Subtle glass gloss sheen */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/10 pointer-events-none" />
+                {/* Subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/10 pointer-events-none" />
               </div>
 
-              {/* Floating High-Contrast Time Pill */}
-              <div className="mt-1.5 px-3 py-0.5 rounded-full bg-black/90 backdrop-blur-md text-white text-[11px] sm:text-xs font-bold font-mono tracking-wider shadow-lg border border-white/20">
+              {/* Floating High-Contrast Time (Clean text directly below preview, matching YouTube Shorts) */}
+              <span className="mt-1 text-white text-[11px] sm:text-xs font-semibold font-mono tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] select-none">
                 {scrubTimeText}
-              </div>
+              </span>
             </div>
           )}
 
-          {/* Background Track - 3px for better visibility */}
-          <div className="w-full h-[3px] group-hover:h-[5px] group-active:h-[5px] bg-white/30 transition-all duration-150 relative">
-            {/* Filled Progress Track (Pure White with subtle glow) */}
+          {/* Background Track - Ultra-thin hairline (1.5px resting, expands to 3px on hover/scrub) */}
+          <div 
+            className="w-full relative transition-all duration-200"
+            style={{
+              height: isScrubbing || isHovering ? '3px' : '1.5px',
+              backgroundColor: isScrubbing || isHovering ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.22)'
+            }}
+          >
+            {/* Filled Progress Track (Clean white without heavy glow, almost invisible when resting) */}
             <div
-              className="h-full bg-white transition-[width] duration-75 ease-out relative shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-              style={{ width: `${currentScrubPct}%` }}
+              className="h-full bg-white transition-[width] duration-75 ease-out relative"
+              style={{ 
+                width: `${currentScrubPct}%`,
+                opacity: isScrubbing || isHovering ? 1 : 0.85
+              }}
             >
-              {/* Scrubbing Handle Dot */}
+              {/* Scrubbing Handle Dot - Only appears when touching or hovering */}
               <div
-                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-white shadow-md transition-all duration-150 ${
-                  isScrubbing
-                    ? "w-3.5 h-3.5 ring-2 ring-black/40 scale-110 opacity-100 shadow-[0_0_10px_rgba(255,255,255,1)]"
-                    : "w-2.5 h-2.5 opacity-0 group-hover:opacity-100 group-hover:scale-100"
+                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-white transition-all duration-150 ${
+                  isScrubbing || isHovering
+                    ? "w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-100 scale-100 ring-1 ring-black/40 shadow-sm"
+                    : "w-1 h-1 opacity-0 scale-0 pointer-events-none"
                 }`}
               />
             </div>
