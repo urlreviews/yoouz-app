@@ -182,20 +182,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       } catch (e) {}
     }
 
-    // Move main video playback smoothly
+    // YouTube Shorts & TikTok standard:
+    // Only seek the main video when isFinal is true (user releases finger or mouse).
+    // While swiping left and right, the main video continues playing uninterrupted!
     if (isFinal) {
       if (seekRafRef.current) {
         cancelAnimationFrame(seekRafRef.current);
         seekRafRef.current = null;
       }
       onSeekToPercent?.(clampedPct);
-    } else {
-      if (!seekRafRef.current) {
-        seekRafRef.current = requestAnimationFrame(() => {
-          seekRafRef.current = null;
-          onSeekToPercent?.(clampedPct);
-        });
-      }
     }
   }, [effectiveDuration, onSeekToPercent]);
 
@@ -909,7 +904,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onTouchMove={handleScrubberTouchMove}
           onTouchEnd={handleScrubberTouchEnd}
           onTouchCancel={handleScrubberTouchEnd}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            const pct = calculatePctFromClientX(e.clientX);
+            updateSeekPosition(pct, true);
+            onScrubEnd?.(pct);
+          }}
           className="copo-video-scrubber-position absolute left-0 right-0 z-40 h-8 sm:h-9 flex items-end pb-0 cursor-pointer select-none px-0 group touch-none"
         >
           {/* YouTube Shorts / TikTok Style Compact Floating Thumbnail Frame Preview */}

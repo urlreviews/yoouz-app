@@ -529,16 +529,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [currentIndex, videos, onRecordView, isPaused, contextKey]);
 
   // Scrubbing & High-Precision Seeking Handlers
-  const wasPlayingBeforeScrubRef = useRef<boolean>(false);
+  const wasPlayingBeforeScrubRef = useRef<boolean>(true);
 
   const handleScrubStart = useCallback(() => {
     const vid = feedVideoRef.current;
     if (!vid) return;
     wasPlayingBeforeScrubRef.current = !vid.paused;
-    try {
-      vid.pause();
-    } catch (e) {}
-    setIsPlaying(false);
+    // YouTube Shorts & TikTok standard: keep main video playing continuously while swiping
   }, []);
 
   const handleSeekToPercent = useCallback((pct: number) => {
@@ -550,11 +547,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const clampedPct = Math.max(0, Math.min(100, pct));
     const targetTime = Math.max(0, Math.min(dur, (clampedPct / 100) * dur));
     try {
-      if ("fastSeek" in vid && typeof (vid as any).fastSeek === "function") {
-        (vid as any).fastSeek(targetTime);
-      } else {
-        vid.currentTime = targetTime;
-      }
+      vid.currentTime = targetTime;
       setProgressPercent(clampedPct);
     } catch (e) {}
   }, [currentIndex, videos, videoDuration]);
@@ -572,7 +565,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       setProgressPercent(clampedPct);
     } catch (e) {}
 
-    if (wasPlayingBeforeScrubRef.current && !isPaused && !isManuallyPausedRef.current) {
+    // When the user stops swiping, the video jumps to the selected point and plays
+    if (!isPaused && !isManuallyPausedRef.current) {
       const p = vid.play();
       if (p !== undefined) {
         p.then(() => {
