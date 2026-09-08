@@ -502,10 +502,22 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                         const isYoouzTeam =
                           (notif.user.name || "").toLowerCase().includes("yoouz") ||
                           (notif.user.email || "").toLowerCase().includes("yoouz") ||
-                          (notif.user.email || "").toLowerCase().includes("admin");
-                        const avatarSrc = isYoouzTeam
-                          ? "/yoouz-facebook-avatar.png"
-                          : notif.user.avatar || `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
+                          (notif.user.email || "").toLowerCase().includes("admin") ||
+                          (notif.user.avatar || "").includes("yoouz");
+
+                        if (isYoouzTeam) {
+                          return (
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white flex items-center justify-center border border-zinc-200/90 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all shrink-0">
+                              <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-5.5 sm:h-5.5 fill-zinc-950">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                            </div>
+                          );
+                        }
+
+                        const avatarSrc =
+                          notif.user.avatar ||
+                          `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
 
                         return (
                           <img
@@ -514,9 +526,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-zinc-800/80 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all"
                             referrerPolicy="no-referrer"
                             onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = isYoouzTeam
-                                ? "/apple-touch-icon.png"
-                                : `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
+                              (e.currentTarget as HTMLImageElement).src =
+                                `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
                             }}
                           />
                         );

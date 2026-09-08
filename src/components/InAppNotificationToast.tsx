@@ -119,23 +119,43 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
           <div className="flex items-center gap-3">
             {/* Avatar or Icon */}
             <div className="relative shrink-0">
-              {toast.avatar ? (
-                <img
-                  src={toast.avatar}
-                  alt={toast.title}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-700/80"
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement;
-                    if (!target.src.includes("/api/avatar")) {
-                      target.src = `/api/avatar?name=${encodeURIComponent(toast.title || "User")}&background=27272a&color=fff`;
-                    }
-                  }}
-                />
-              ) : (
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-zinc-800 text-white`}>
-                  <ActionIcon className="w-5 h-5" />
-                </div>
-              )}
+              {(() => {
+                const isYoouz =
+                  (toast.title || "").toLowerCase().includes("yoouz") ||
+                  (toast.avatar || "").includes("yoouz");
+
+                if (isYoouz) {
+                  return (
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-zinc-200/90 shadow-sm ring-2 ring-zinc-700/80 shrink-0">
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                    </div>
+                  );
+                }
+
+                if (toast.avatar) {
+                  return (
+                    <img
+                      src={toast.avatar}
+                      alt={toast.title}
+                      className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-700/80"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        if (!target.src.includes("/api/avatar")) {
+                          target.src = `/api/avatar?name=${encodeURIComponent(toast.title || "User")}&background=27272a&color=fff`;
+                        }
+                      }}
+                    />
+                  );
+                }
+
+                return (
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-zinc-800 text-white`}>
+                    <ActionIcon className="w-5 h-5" />
+                  </div>
+                );
+              })()}
 
               {/* Type Badge on avatar */}
               <span

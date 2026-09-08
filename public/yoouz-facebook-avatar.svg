@@ -1,49 +1,16 @@
 <svg width="1000" height="1000" viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Deep obsidian luxury gradient filling the entire circle -->
-    <linearGradient id="avatarCircleBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1c1c21"/>
-      <stop offset="50%" stop-color="#121215"/>
-      <stop offset="100%" stop-color="#08080a"/>
-    </linearGradient>
-
-    <!-- Subtle radial inner rim lighting -->
-    <radialGradient id="innerGlow" cx="50%" cy="35%" r="60%">
-      <stop offset="0%" stop-color="rgba(255, 255, 255, 0.12)"/>
-      <stop offset="100%" stop-color="rgba(0, 0, 0, 0)"/>
-    </radialGradient>
-
-    <!-- Warm Amber Ring for Brand Signature -->
-    <linearGradient id="brandRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fbbf24"/>
-      <stop offset="50%" stop-color="#f59e0b"/>
-      <stop offset="100%" stop-color="#d97706"/>
-    </linearGradient>
-
-    <!-- Star Fill Gradient -->
-    <linearGradient id="starFill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="60%" stop-color="#fdfdfd"/>
-      <stop offset="100%" stop-color="#f1f1f3"/>
-    </linearGradient>
-
-    <!-- 3D Drop Shadow on Star -->
     <filter id="starShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.75"/>
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.4"/>
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.15"/>
     </filter>
   </defs>
 
-  <!-- Full Circular Base Canvas (Fills Facebook's 100% circle with no weird square corners) -->
-  <circle cx="500" cy="500" r="500" fill="url(#avatarCircleBg)"/>
-  <circle cx="500" cy="500" r="500" fill="url(#innerGlow)"/>
+  <!-- Full Circular Base Canvas with Crisp Pure White Background -->
+  <circle cx="500" cy="500" r="500" fill="#ffffff"/>
+  <circle cx="500" cy="500" r="490" stroke="#e4e4e7" stroke-width="12"/>
 
-  <!-- Elegant Brand Accent Ring: Defines the edge of the circle with amber glow -->
-  <circle cx="500" cy="500" r="482" stroke="url(#brandRingGrad)" stroke-width="12" stroke-opacity="0.7"/>
-  <circle cx="500" cy="500" r="470" stroke="rgba(255, 255, 255, 0.12)" stroke-width="3"/>
-
-  <!-- Centered Iconic Yoouz Star (Crisp, Monumental, Perfectly Scaled at 500x500 center) -->
-  <g transform="translate(500, 485) scale(24)" filter="url(#starShadow)">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" transform="translate(-12, -11.5)" fill="url(#starFill)"/>
+  <!-- Centered Iconic Yoouz Star (Crisp, Monumental Zinc-950 / Black Star, matching Homepage) -->
+  <g transform="translate(500, 488) scale(25)" filter="url(#starShadow)">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" transform="translate(-12, -11.5)" fill="#09090b"/>
   </g>
 </svg>

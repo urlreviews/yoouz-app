@@ -10036,6 +10036,19 @@ Return JSON:
       const cleanName = name.replace(/^(een|a|the)\s+/i, "").trim() || "U";
       const char = cleanName.charAt(0).toUpperCase() || "U";
 
+      if (cleanName.toLowerCase().includes("yoouz") || cleanName.toLowerCase().includes("admin")) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+          <circle cx="64" cy="64" r="64" fill="#ffffff"/>
+          <circle cx="64" cy="64" r="63" fill="none" stroke="#e4e4e7" stroke-width="2"/>
+          <g transform="translate(64, 62) scale(3.2)">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" transform="translate(-12, -11.5)" fill="#09090b"/>
+          </g>
+        </svg>`;
+        res.setHeader("Content-Type", "image/svg+xml");
+        res.setHeader("Cache-Control", "public, max-age=31536000");
+        return res.send(svg);
+      }
+
       const PALETTE = [
         '#E53935', '#D81B60', '#8E24AA', '#5E35B1', '#3949AB', 
         '#1E88E5', '#039BE5', '#00ACC1', '#00897B', '#43A047', 
@@ -11057,6 +11070,19 @@ Return JSON:
     const rawName = (req.query.name as string) || "User";
     const cleanName = rawName.trim().replace(/^@+/, "");
     const initial = (cleanName.charAt(0) || "U").toUpperCase();
+
+    if (cleanName.toLowerCase().includes("yoouz") || cleanName.toLowerCase().includes("admin")) {
+      const svg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="64" cy="64" r="64" fill="#ffffff"/>
+        <circle cx="64" cy="64" r="63" fill="none" stroke="#e4e4e7" stroke-width="2"/>
+        <g transform="translate(64, 62) scale(3.2)">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" transform="translate(-12, -11.5)" fill="#09090b"/>
+        </g>
+      </svg>`;
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=31536000");
+      return res.send(svg);
+    }
     
     let hash = 0;
     for (let i = 0; i < cleanName.length; i++) {

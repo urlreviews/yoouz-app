@@ -442,7 +442,7 @@ export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile
       type: "follow",
       user: {
         name: "Yoouz Team",
-        avatar: "/yoouz-facebook-avatar.png",
+        avatar: "/yoouz-avatar-white.png",
         email: "team@yoouz.com"
       },
       text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review."
