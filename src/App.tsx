@@ -56,6 +56,7 @@ import {
   markChatThreadAsRead,
   deleteChatThreadFromFirestore
 } from "./lib/socialSync";
+import { buildCommentTree } from "./utils/commentUtils";
 
 export function App() {
   // 0. Cache-Busting & Smart Sync Logic
@@ -3317,20 +3318,15 @@ export function App() {
       nextComments = [newCommentItem, ...(targetVid?.comments || [])];
     }
 
-    // Calculate total count (comments + all nested replies)
-    let totalCount = 0;
-    nextComments.forEach((c) => {
-      totalCount += 1;
-      if (Array.isArray(c.replies)) totalCount += c.replies.length;
-    });
+    const tree = buildCommentTree(nextComments);
 
     setVideos((prev) =>
       prev.map((v) =>
         v.id === videoId
           ? {
               ...v,
-              commentsCount: totalCount,
-              comments: nextComments
+              commentsCount: tree.count,
+              comments: tree.comments
             }
           : v
       )
@@ -3341,18 +3337,18 @@ export function App() {
         prev
           ? {
               ...prev,
-              commentsCount: totalCount,
-              comments: nextComments
+              commentsCount: tree.count,
+              comments: tree.comments
             }
           : null
       );
     }
 
-    // Persist to Firestore database
+    // Persist to Firestore database & SQLite
     try {
       const dataToSave = cleanForFirestore({
-        comments: nextComments,
-        commentsCount: totalCount
+        comments: tree.comments,
+        commentsCount: tree.count
       });
       if (db) {
         const vidRef = doc(db, "videoReviews", videoId);
@@ -3498,7 +3494,7 @@ export function App() {
       );
     }
 
-    // Persist to Firestore database
+    // Persist to Firestore database & SQLite
     try {
       const dataToSave = cleanForFirestore({ comments: updatedComments });
       if (db) {
@@ -3509,6 +3505,20 @@ export function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: dataToSave, merge: true })
+      }).catch(() => {});
+      fetch("/api/interactions/comment/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId,
+          commentId,
+          replyId,
+          userId: currentUser?.email || auth.currentUser?.uid,
+          isLiked: updatedComments.some((c) => {
+            if (replyId) return c.replies?.some((r) => r.id === replyId && r.isLiked);
+            return c.id === commentId && c.isLiked;
+          })
+        })
       }).catch(() => {});
     } catch (err) {
       console.warn("Firestore comment like sync warning:", err);
@@ -3621,6 +3631,20 @@ export function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: dataToSave, merge: true })
+      }).catch(() => {});
+      fetch("/api/interactions/comment/heart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId,
+          commentId,
+          replyId,
+          userId: currentUser?.email || auth.currentUser?.uid,
+          likedByCreator: updatedComments.some((c) => {
+            if (replyId) return c.replies?.some((r) => r.id === replyId && r.likedByCreator);
+            return c.id === commentId && c.likedByCreator;
+          })
+        })
       }).catch(() => {});
     } catch (err) {
       console.warn("Firestore creator heart sync warning:", err);
@@ -3756,6 +3780,16 @@ export function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: dataToSave, merge: true })
+      }).catch(() => {});
+      fetch("/api/interactions/comment/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId,
+          commentId,
+          replyId,
+          userId: currentUser?.email || auth.currentUser?.uid
+        })
       }).catch(() => {});
     } catch (err) {
       console.warn("delete comment sync warning:", err);

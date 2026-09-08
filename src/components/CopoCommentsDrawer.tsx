@@ -26,6 +26,7 @@ import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
+import { buildCommentTree } from "../utils/commentUtils";
 
 interface CopoCommentsDrawerProps {
   video: VideoReview | null;
@@ -194,42 +195,113 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         }
       })
       .catch(() => {});
-    return () => { isMounted = false; };
-  }, [video?.id]);
 
-  // Combined comments from props and remote database
-  const combinedComments = useMemo(() => {
-    const propList = Array.isArray(video?.comments) ? video.comments : [];
-    const commentMap = new Map<string, ReviewComment>();
-    propList.forEach((c) => { if (c && c.id) commentMap.set(c.id, c); });
-    remoteComments.forEach((c) => {
-      if (c && c.id) {
-        const existing = commentMap.get(c.id);
-        if (existing) {
-          const replyMap = new Map<string, any>();
-          (existing.replies || []).forEach((r) => { if (r && r.id) replyMap.set(r.id, r); });
-          (c.replies || []).forEach((r) => { if (r && r.id) replyMap.set(r.id, r); });
-          commentMap.set(c.id, { ...existing, ...c, replies: Array.from(replyMap.values()) });
-        } else {
-          commentMap.set(c.id, c);
+    // Listen to real-time events for this video
+    const handleNewCommentEvent = (e: any) => {
+      const detail = e.detail;
+      if (detail && String(detail.videoId) === String(video.id)) {
+        if (Array.isArray(detail.comments)) {
+          setRemoteComments(detail.comments);
+        } else if (detail.comment) {
+          setRemoteComments((prev) => {
+            const tree = buildCommentTree([...prev, detail.comment]);
+            return tree.comments;
+          });
         }
       }
-    });
-    return Array.from(commentMap.values());
+    };
+
+    const handleDeleteCommentEvent = (e: any) => {
+      const detail = e.detail;
+      if (detail && String(detail.videoId) === String(video.id)) {
+        if (Array.isArray(detail.comments)) {
+          setRemoteComments(detail.comments);
+        }
+      }
+    };
+
+    const handleLikeCommentEvent = (e: any) => {
+      const detail = e.detail;
+      if (detail && String(detail.videoId) === String(video.id)) {
+        setRemoteComments((prev) => {
+          return prev.map((c) => {
+            if (c.id === detail.commentId) {
+              if (detail.replyId && Array.isArray(c.replies)) {
+                return {
+                  ...c,
+                  replies: c.replies.map((r) => r.id === detail.replyId ? {
+                    ...r,
+                    isLiked: detail.isLiked !== undefined ? Boolean(detail.isLiked) : !r.isLiked,
+                    likesCount: typeof detail.likesCount === 'number' ? detail.likesCount : (r.isLiked ? (r.likesCount || 0) - 1 : (r.likesCount || 0) + 1)
+                  } : r)
+                };
+              }
+              return {
+                ...c,
+                isLiked: detail.isLiked !== undefined ? Boolean(detail.isLiked) : !c.isLiked,
+                likesCount: typeof detail.likesCount === 'number' ? detail.likesCount : (c.isLiked ? (c.likesCount || 0) - 1 : (c.likesCount || 0) + 1)
+              };
+            }
+            return c;
+          });
+        });
+      }
+    };
+
+    const handleHeartCommentEvent = (e: any) => {
+      const detail = e.detail;
+      if (detail && String(detail.videoId) === String(video.id)) {
+        setRemoteComments((prev) => {
+          return prev.map((c) => {
+            if (c.id === detail.commentId) {
+              if (detail.replyId && Array.isArray(c.replies)) {
+                return {
+                  ...c,
+                  replies: c.replies.map((r) => r.id === detail.replyId ? {
+                    ...r,
+                    likedByCreator: detail.likedByCreator !== undefined ? Boolean(detail.likedByCreator) : !r.likedByCreator
+                  } : r)
+                };
+              }
+              return {
+                ...c,
+                likedByCreator: detail.likedByCreator !== undefined ? Boolean(detail.likedByCreator) : !c.likedByCreator
+              };
+            }
+            return c;
+          });
+        });
+      }
+    };
+
+    window.addEventListener("copo-new-comment", handleNewCommentEvent);
+    window.addEventListener("copo-delete-comment", handleDeleteCommentEvent);
+    window.addEventListener("copo-like-comment", handleLikeCommentEvent);
+    window.addEventListener("copo-heart-comment", handleHeartCommentEvent);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("copo-new-comment", handleNewCommentEvent);
+      window.removeEventListener("copo-delete-comment", handleDeleteCommentEvent);
+      window.removeEventListener("copo-like-comment", handleLikeCommentEvent);
+      window.removeEventListener("copo-heart-comment", handleHeartCommentEvent);
+    };
+  }, [video?.id]);
+
+  // Combined comments from props and remote database with canonical tree hierarchy
+  const combinedComments = useMemo(() => {
+    const propList = Array.isArray(video?.comments) ? video.comments : [];
+    const tree = buildCommentTree([...propList, ...remoteComments]);
+    return tree.comments;
   }, [video?.comments, remoteComments]);
 
   // Calculate total comments count including nested replies and owner response
   const totalCommentsCount = useMemo(() => {
     if (!video) return 0;
-    let count = video.ownerResponse ? 1 : 0;
-    combinedComments.forEach((c) => {
-      count += 1;
-      if (Array.isArray(c.replies)) {
-        count += c.replies.length;
-      }
-    });
-    return Math.max(count, video.commentsCount || 0);
-  }, [combinedComments, video?.ownerResponse, video?.commentsCount]);
+    const tree = buildCommentTree(combinedComments);
+    const ownerExtra = video.ownerResponse && !tree.comments.some(c => c.isOwner) ? 1 : 0;
+    return tree.count + ownerExtra;
+  }, [combinedComments, video?.ownerResponse]);
 
   // Sort comments according to selected filter
   const sortedComments = useMemo(() => {

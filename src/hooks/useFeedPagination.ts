@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { VideoReview } from '../types';
 import { getDisplayViews, resolveSafeAuthor } from '../utils/placeUtils';
 import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
+import { buildCommentTree } from '../utils/commentUtils';
 
 // Helper to record deleted video IDs in localStorage to avoid re-rendering stale caches
 function recordClientDeletedId(id: string) {
@@ -75,7 +76,13 @@ export function useFeedPagination() {
     try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
 
     try {
-      const cached = localStorage.getItem("yoouz_cached_videos_v20");
+      // Purge legacy caches to eliminate corrupted counts
+      localStorage.removeItem("yoouz_cached_videos_v20");
+      localStorage.removeItem("yoouz_cached_videos_v19");
+      localStorage.removeItem("yoouz_cached_videos_v18");
+      localStorage.removeItem("yoouz_cached_videos_v16");
+
+      const cached = localStorage.getItem("yoouz_cached_videos_v21");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -155,28 +162,9 @@ export function useFeedPagination() {
                   const localComments = local.comments || [];
                   const serverComments = v.comments || [];
 
-                  // Union merge comments by ID so neither local optimistic comments nor server comments are lost
-                  const commentMap = new Map<string, any>();
-                  serverComments.forEach((c: any) => { if (c && c.id) commentMap.set(c.id, c); });
-                  localComments.forEach((c: any) => {
-                    if (c && c.id) {
-                      const existing = commentMap.get(c.id);
-                      if (existing) {
-                        const replyMap = new Map<string, any>();
-                        (existing.replies || []).forEach((r: any) => { if (r && r.id) replyMap.set(r.id, r); });
-                        (c.replies || []).forEach((r: any) => { if (r && r.id) replyMap.set(r.id, r); });
-                        commentMap.set(c.id, { ...existing, ...c, replies: Array.from(replyMap.values()) });
-                      } else {
-                        commentMap.set(c.id, c);
-                      }
-                    }
-                  });
-                  const mergedComments = Array.from(commentMap.values());
-                  let mergedCommentsCount = 0;
-                  mergedComments.forEach((c: any) => {
-                    mergedCommentsCount += 1;
-                    if (Array.isArray(c.replies)) mergedCommentsCount += c.replies.length;
-                  });
+                  // Canonical tree build eliminates duplicate top-level entries and guarantees exact count parity
+                  const combinedRaw = [...serverComments, ...localComments];
+                  const tree = buildCommentTree(combinedRaw);
 
                   return {
                     ...v,
@@ -184,8 +172,8 @@ export function useFeedPagination() {
                     isBookmarked: local.isBookmarked !== undefined ? local.isBookmarked : v.isBookmarked,
                     likes: typeof local.likes === 'number' && local.likes > v.likes ? local.likes : v.likes,
                     views: typeof local.views === 'number' && local.views > v.views ? local.views : v.views,
-                    comments: mergedComments,
-                    commentsCount: Math.max(v.commentsCount || 0, local.commentsCount || 0, mergedCommentsCount)
+                    comments: tree.comments,
+                    commentsCount: tree.count
                   };
                 }
                 return v;
@@ -199,7 +187,7 @@ export function useFeedPagination() {
               });
               
               // Persist fresh feed to cache
-              try { localStorage.setItem("yoouz_cached_videos_v20", JSON.stringify(merged.slice(0, 50))); } catch(e){}
+              try { localStorage.setItem("yoouz_cached_videos_v21", JSON.stringify(merged.slice(0, 50))); } catch(e){}
               
               return merged;
             });
@@ -244,10 +232,59 @@ export function useFeedPagination() {
               payload.videoIds.forEach((id: string) => {
                 window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: id } }));
               });
+            } else if (payload.type === "new_comment" && payload.videoId) {
+              const vidId = String(payload.videoId);
+              setVideos((prev) => prev.map((v) => {
+                if (v.id === vidId) {
+                  const rawList = payload.comments || [...(v.comments || []), payload.comment];
+                  const tree = buildCommentTree(rawList);
+                  return {
+                    ...v,
+                    comments: tree.comments,
+                    commentsCount: payload.commentsCount !== undefined ? payload.commentsCount : tree.count
+                  };
+                }
+                return v;
+              }));
+              window.dispatchEvent(new CustomEvent("copo-new-comment", { detail: payload }));
+            } else if (payload.type === "delete_comment" && payload.videoId) {
+              const vidId = String(payload.videoId);
+              setVideos((prev) => prev.map((v) => {
+                if (v.id === vidId) {
+                  const rawList = payload.comments || [];
+                  const tree = buildCommentTree(rawList);
+                  return {
+                    ...v,
+                    comments: tree.comments,
+                    commentsCount: payload.commentsCount !== undefined ? payload.commentsCount : tree.count
+                  };
+                }
+                return v;
+              }));
+              window.dispatchEvent(new CustomEvent("copo-delete-comment", { detail: payload }));
+            } else if (payload.type === "like_comment" && payload.videoId) {
+              window.dispatchEvent(new CustomEvent("copo-like-comment", { detail: payload }));
+            } else if (payload.type === "heart_comment" && payload.videoId) {
+              window.dispatchEvent(new CustomEvent("copo-heart-comment", { detail: payload }));
+            } else if (payload.type === "video_liked" && payload.videoId) {
+              const vidId = String(payload.videoId);
+              setVideos((prev) => prev.map((v) => v.id === vidId ? {
+                ...v,
+                likes: typeof payload.likesCount === 'number' ? payload.likesCount : v.likes,
+                likesCount: typeof payload.likesCount === 'number' ? payload.likesCount : v.likesCount
+              } : v));
+            } else if (payload.type === "video_shared" && payload.videoId) {
+              const vidId = String(payload.videoId);
+              setVideos((prev) => prev.map((v) => v.id === vidId ? {
+                ...v,
+                shares: typeof payload.sharesCount === 'number' ? payload.sharesCount : v.shares,
+                sharesCount: typeof payload.sharesCount === 'number' ? payload.sharesCount : v.sharesCount
+              } : v));
             } else if (payload.type === "purge_all_videos") {
               setVideos([]);
               try {
                 localStorage.removeItem("copo_videos");
+                localStorage.removeItem("yoouz_cached_videos_v21");
                 localStorage.removeItem("yoouz_cached_videos_v20");
                 localStorage.removeItem("yoouz_cached_videos_v16");
               } catch (e) {}

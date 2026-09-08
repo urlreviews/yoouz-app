@@ -5311,6 +5311,103 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     };
   };
 
+  // Canonical Comment Tree Builder: De-duplicates comments, places replies inside parent's replies, eliminates duplicate top-level entries, and computes exact total count
+  function buildCommentTree(rawComments: any[]): { comments: any[]; count: number } {
+    if (!Array.isArray(rawComments) || rawComments.length === 0) {
+      return { comments: [], count: 0 };
+    }
+
+    const allMap = new Map<string, any>();
+
+    // 1. Flatten and index all comments and nested replies by ID
+    rawComments.forEach((c) => {
+      if (c && c.id) {
+        const existing = allMap.get(c.id);
+        if (existing) {
+          allMap.set(c.id, {
+            ...existing,
+            ...c,
+            replies: [...(existing.replies || []), ...(c.replies || [])]
+          });
+        } else {
+          allMap.set(c.id, {
+            ...c,
+            replies: Array.isArray(c.replies) ? [...c.replies] : []
+          });
+        }
+
+        if (Array.isArray(c.replies)) {
+          c.replies.forEach((r: any) => {
+            if (r && r.id) {
+              const existingReply = allMap.get(r.id);
+              const parentId = r.replyToId || c.id;
+              if (existingReply) {
+                allMap.set(r.id, { ...existingReply, ...r, replyToId: parentId });
+              } else {
+                allMap.set(r.id, { ...r, replyToId: parentId, replies: [] });
+              }
+            }
+          });
+        }
+      }
+    });
+
+    const topLevel: any[] = [];
+    const replies: any[] = [];
+
+    // 2. Separate into top-level comments vs replies based on replyToId
+    allMap.forEach((c) => {
+      if (c.replyToId) {
+        replies.push(c);
+      } else {
+        topLevel.push({ ...c, replies: [] });
+      }
+    });
+
+    // 3. Attach replies to their parent comments
+    replies.forEach((reply) => {
+      const parent = topLevel.find((p) => p.id === reply.replyToId);
+      if (parent) {
+        if (!Array.isArray(parent.replies)) parent.replies = [];
+        if (!parent.replies.some((r: any) => r.id === reply.id)) {
+          parent.replies.push(reply);
+        }
+      } else {
+        let placed = false;
+        for (const p of topLevel) {
+          if (Array.isArray(p.replies) && p.replies.some((r: any) => r.id === reply.replyToId)) {
+            if (!p.replies.some((r: any) => r.id === reply.id)) {
+              p.replies.push(reply);
+            }
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          topLevel.push(reply);
+        }
+      }
+    });
+
+    // Sort top-level by createdAtMs / createdAt desc or keep order
+    topLevel.sort((a, b) => {
+      const aTime = a.createdAtMs || (a.id && a.id.startsWith('comm-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
+      const bTime = b.createdAtMs || (b.id && b.id.startsWith('comm-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
+      return bTime - aTime;
+    });
+
+    // 4. Calculate exact canonical count: top-level + all replies
+    let totalCount = 0;
+    topLevel.forEach((c) => {
+      totalCount += 1;
+      if (Array.isArray(c.replies)) {
+        totalCount += c.replies.length;
+      }
+    });
+
+    return { comments: topLevel, count: totalCount };
+  }
+
   // Real-Time Server-Sent Events (SSE) Stream for Instant Global Video Updates, Deletions, Chats & Notifications
   app.get(["/api/videos/stream", "/api/realtime/stream"], (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
@@ -5521,39 +5618,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
       const merged = Array.from(map.values()).map((r: any) => {
         const enriched = enrichReviewPlaceAssets(r);
-        const separateComments = videoCommentsMap.get(String(r.id));
-        
-        // Merge enriched.comments and separateComments cleanly by ID
-        const commentMap = new Map<string, any>();
+        const separateComments = videoCommentsMap.get(String(r.id)) || [];
         const existingComments = Array.isArray(enriched.comments) ? enriched.comments : [];
-        existingComments.forEach((c: any) => { if (c && c.id) commentMap.set(c.id, c); });
         
-        if (separateComments && separateComments.length > 0) {
-          separateComments.forEach((c: any) => {
-            if (c && c.id) {
-              const existing = commentMap.get(c.id);
-              if (existing) {
-                const replyMap = new Map<string, any>();
-                (existing.replies || []).forEach((rep: any) => { if (rep && rep.id) replyMap.set(rep.id, rep); });
-                (c.replies || []).forEach((rep: any) => { if (rep && rep.id) replyMap.set(rep.id, rep); });
-                commentMap.set(c.id, { ...existing, ...c, replies: Array.from(replyMap.values()) });
-              } else {
-                commentMap.set(c.id, c);
-              }
-            }
-          });
-        }
-
-        const mergedComments = Array.from(commentMap.values());
-        if (mergedComments.length > 0) {
-          enriched.comments = mergedComments;
-          let totalCount = 0;
-          mergedComments.forEach((c: any) => {
-            totalCount += 1;
-            if (Array.isArray(c.replies)) totalCount += c.replies.length;
-          });
-          enriched.commentsCount = Math.max(enriched.commentsCount || 0, totalCount);
-        }
+        // Use buildCommentTree to produce the canonical deduplicated hierarchy and exact count
+        const allComments = [...existingComments, ...separateComments];
+        const tree = buildCommentTree(allComments);
+        enriched.comments = tree.comments;
+        enriched.commentsCount = tree.count;
         return enriched;
       });
       merged.sort((a, b) => {
@@ -5751,46 +5823,134 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   app.get("/api/interactions/comments", async (req, res) => {
     try {
       const videoId = typeof req.query.videoId === 'string' ? req.query.videoId : '';
-      if (!videoId) return res.json({ comments: [] });
+      if (!videoId) return res.json({ comments: [], count: 0, commentsCount: 0 });
       const bunnyDb = getBunnyDb();
+      let rawComments: any[] = [];
       if (bunnyDb) {
-        const result = await bunnyDb.execute({
-          sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
-          args: [videoId]
-        });
-        const comments = (result.rows || []).map((row: any) => {
-          let parsed: any = {};
-          try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
-          return {
-            ...parsed,
-            id: row.id,
-            videoId: row.videoId,
-            userId: row.userId,
-            authorName: row.userName || parsed.authorName || 'Guest',
-            authorAvatar: row.userAvatar || parsed.authorAvatar,
-            text: row.text,
-            createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
-          };
-        });
-        return res.json({ comments });
+        try {
+          const result = await bunnyDb.execute({
+            sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
+            args: [videoId]
+          });
+          if (result && result.rows && result.rows.length > 0) {
+            rawComments = result.rows.map((row: any) => {
+              let parsed: any = {};
+              try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
+              return {
+                ...parsed,
+                id: String(row.id),
+                videoId: String(row.videoId),
+                userId: row.userId || parsed.userId || '',
+                authorName: row.userName || parsed.authorName || 'Guest',
+                authorAvatar: row.userAvatar || parsed.authorAvatar,
+                text: row.text || parsed.text || '',
+                createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+              };
+            });
+          } else {
+            // Check videoReviews table row in BunnyDB
+            const vidRow = await bunnyDb.execute({
+              sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+              args: [videoId]
+            });
+            if (vidRow && vidRow.rows && vidRow.rows.length > 0) {
+              const d = JSON.parse((vidRow.rows[0] as any).data || '{}');
+              if (Array.isArray(d.comments)) rawComments = d.comments;
+            }
+          }
+        } catch (dbErr) {
+          console.warn("BunnyDB comments read warning:", dbErr);
+        }
       }
-      return res.json({ comments: [] });
+
+      // If still empty, check local reviews index
+      if (rawComments.length === 0) {
+        const localList = readReviewsIndex();
+        const localVid = localList.find((v: any) => v.id === videoId);
+        if (localVid && Array.isArray(localVid.comments)) {
+          rawComments = localVid.comments;
+        }
+      }
+
+      const { comments, count } = buildCommentTree(rawComments);
+      return res.json({ comments, count, commentsCount: count });
     } catch (err: any) {
-      return res.json({ comments: [] });
+      return res.json({ comments: [], count: 0, commentsCount: 0 });
     }
   });
   
   app.post("/api/interactions/comment", async (req, res) => {
     try {
       const { videoId, comment, userId } = req.body;
-      if (!videoId || !comment) return res.status(400).json({ error: "Missing fields" });
+      if (!videoId || !comment || !comment.id) return res.status(400).json({ error: "Missing fields" });
 
       const bunnyDb = getBunnyDb();
+      let treeResult = { comments: [] as any[], count: 0 };
+
       if (bunnyDb) {
+        // 1. Insert or replace this comment into BunnyDB comments table
         await bunnyDb.execute({
           sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
-          args: [comment.id, videoId, userId || comment.authorHandle || "", comment.authorName || "", comment.authorAvatar || "", comment.text || "", JSON.stringify(comment)]
+          args: [
+            comment.id,
+            videoId,
+            userId || comment.authorHandle || "",
+            comment.authorName || "",
+            comment.authorAvatar || "",
+            comment.text || "",
+            JSON.stringify(comment)
+          ]
         });
+
+        // 2. Fetch all raw comments for this video from BunnyDB
+        const allCommentsRes = await bunnyDb.execute({
+          sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
+          args: [videoId]
+        });
+        const allDbComments = (allCommentsRes.rows || []).map((row: any) => {
+          let parsed: any = {};
+          try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
+          return {
+            ...parsed,
+            id: String(row.id),
+            videoId: String(row.videoId),
+            userId: row.userId || parsed.userId || '',
+            authorName: row.userName || parsed.authorName || 'Guest',
+            authorAvatar: row.userAvatar || parsed.authorAvatar,
+            text: row.text || parsed.text || '',
+            createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+          };
+        });
+
+        // Ensure incoming comment is present in the list
+        if (!allDbComments.some(c => c.id === comment.id)) {
+          allDbComments.push(comment);
+        }
+
+        // Build canonical hierarchical tree and exact count
+        treeResult = buildCommentTree(allDbComments);
+
+        // 3. Update videoReviews table in BunnyDB
+        try {
+          const vRow = await bunnyDb.execute({
+            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          let vData: any = {};
+          if (vRow && vRow.rows && vRow.rows.length > 0) {
+            try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+          }
+          vData.comments = treeResult.comments;
+          vData.commentsCount = treeResult.count;
+          const jsonStr = JSON.stringify(vData);
+          await bunnyDb.execute({
+            sql: `INSERT INTO videoReviews (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [videoId, jsonStr, jsonStr]
+          });
+        } catch (vErr) {
+          console.warn("BunnyDB videoReviews update notice:", vErr);
+        }
 
         // Backend comment / reply notifications
         try {
@@ -5851,6 +6011,11 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         } catch (notifErr: any) {
           console.warn("Notice triggering comment notification on backend:", notifErr.message);
         }
+      } else {
+        const list = readReviewsIndex();
+        const curVid = list.find((v: any) => v.id === videoId);
+        const existing = curVid && Array.isArray(curVid.comments) ? curVid.comments : [];
+        treeResult = buildCommentTree([...existing, comment]);
       }
 
       // Update local reviews index and memory feedCache immediately
@@ -5858,46 +6023,436 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         const list = readReviewsIndex();
         const vidIdx = list.findIndex((v: any) => v.id === videoId);
         if (vidIdx !== -1) {
-          const curVid = list[vidIdx];
-          const existingComments = Array.isArray(curVid.comments) ? curVid.comments : [];
-          const exists = existingComments.some((c: any) => c.id === comment.id);
-          if (!exists) {
-            const nextComments = [comment, ...existingComments];
-            let totalCount = 0;
-            nextComments.forEach((c: any) => {
-              totalCount += 1;
-              if (Array.isArray(c.replies)) totalCount += c.replies.length;
-            });
-            const updatedReview = {
-              ...curVid,
-              comments: nextComments,
-              commentsCount: totalCount
-            };
-            list[vidIdx] = updatedReview;
-            writeReviewsIndex(list);
-
-            if (bunnyDb) {
-              const jsonStr = JSON.stringify(updatedReview);
-              await bunnyDb.execute({
-                sql: `INSERT INTO videoReviews (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
-                args: [videoId, jsonStr, jsonStr]
-              }).catch(() => {});
-            }
-          }
+          list[vidIdx] = {
+            ...list[vidIdx],
+            comments: treeResult.comments,
+            commentsCount: treeResult.count
+          };
+          writeReviewsIndex(list);
+        }
+        const cachedIdx = feedCache.videos.findIndex((v: any) => v.id === videoId);
+        if (cachedIdx !== -1) {
+          feedCache.videos[cachedIdx] = {
+            ...feedCache.videos[cachedIdx],
+            comments: treeResult.comments,
+            commentsCount: treeResult.count
+          };
         }
       } catch (syncErr) {}
 
-      // Broadcast comment live to all viewers
+      // Broadcast canonical comment update live to ALL viewers across desktop & mobile
       broadcastSseEvent({
         type: "new_comment",
         videoId,
-        comment
+        comment,
+        comments: treeResult.comments,
+        commentsCount: treeResult.count
       });
 
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: (err as any).message });
+      return res.json({
+        success: true,
+        comment,
+        comments: treeResult.comments,
+        commentsCount: treeResult.count
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Toggle Like on Comment or Reply (persisted to Bunny.net comments table)
+  app.post("/api/interactions/comment/like", async (req, res) => {
+    try {
+      const { videoId, commentId, replyId, isLiked, likesCount } = req.body;
+      if (!videoId || !commentId) return res.status(400).json({ error: "Missing fields" });
+      const targetId = replyId || commentId;
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        // Update comments table row data
+        const rowRes = await bunnyDb.execute({
+          sql: "SELECT data FROM comments WHERE id = ? LIMIT 1",
+          args: [targetId]
+        });
+        if (rowRes && rowRes.rows && rowRes.rows.length > 0) {
+          let d: any = {};
+          try { d = JSON.parse((rowRes.rows[0] as any).data || '{}'); } catch(e){}
+          d.isLiked = isLiked !== undefined ? Boolean(isLiked) : !d.isLiked;
+          d.likesCount = typeof likesCount === 'number' ? likesCount : (d.isLiked ? (d.likesCount || 0) + 1 : Math.max(0, (d.likesCount || 0) - 1));
+          await bunnyDb.execute({
+            sql: "UPDATE comments SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [JSON.stringify(d), targetId]
+          });
+        }
+
+        // Update videoReviews table data
+        const vRow = await bunnyDb.execute({
+          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (vRow && vRow.rows && vRow.rows.length > 0) {
+          let vData: any = {};
+          try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+          if (Array.isArray(vData.comments)) {
+            vData.comments = vData.comments.map((c: any) => {
+              if (c.id === commentId) {
+                if (replyId && Array.isArray(c.replies)) {
+                  return {
+                    ...c,
+                    replies: c.replies.map((r: any) => r.id === replyId ? {
+                      ...r,
+                      isLiked: isLiked !== undefined ? Boolean(isLiked) : !r.isLiked,
+                      likesCount: typeof likesCount === 'number' ? likesCount : (r.isLiked ? (r.likesCount || 0) - 1 : (r.likesCount || 0) + 1)
+                    } : r)
+                  };
+                }
+                return {
+                  ...c,
+                  isLiked: isLiked !== undefined ? Boolean(isLiked) : !c.isLiked,
+                  likesCount: typeof likesCount === 'number' ? likesCount : (c.isLiked ? (c.likesCount || 0) - 1 : (c.likesCount || 0) + 1)
+                };
+              }
+              return c;
+            });
+            await bunnyDb.execute({
+              sql: "UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+              args: [JSON.stringify(vData), videoId]
+            });
+          }
+        }
+      }
+
+      broadcastSseEvent({
+        type: "like_comment",
+        videoId,
+        commentId,
+        replyId,
+        isLiked,
+        likesCount
+      });
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Toggle Creator Heart on Comment or Reply (persisted to Bunny.net)
+  app.post("/api/interactions/comment/heart", async (req, res) => {
+    try {
+      const { videoId, commentId, replyId, likedByCreator } = req.body;
+      if (!videoId || !commentId) return res.status(400).json({ error: "Missing fields" });
+      const targetId = replyId || commentId;
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const rowRes = await bunnyDb.execute({
+          sql: "SELECT data FROM comments WHERE id = ? LIMIT 1",
+          args: [targetId]
+        });
+        if (rowRes && rowRes.rows && rowRes.rows.length > 0) {
+          let d: any = {};
+          try { d = JSON.parse((rowRes.rows[0] as any).data || '{}'); } catch(e){}
+          d.likedByCreator = likedByCreator !== undefined ? Boolean(likedByCreator) : !d.likedByCreator;
+          await bunnyDb.execute({
+            sql: "UPDATE comments SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [JSON.stringify(d), targetId]
+          });
+        }
+
+        const vRow = await bunnyDb.execute({
+          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (vRow && vRow.rows && vRow.rows.length > 0) {
+          let vData: any = {};
+          try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+          if (Array.isArray(vData.comments)) {
+            vData.comments = vData.comments.map((c: any) => {
+              if (c.id === commentId) {
+                if (replyId && Array.isArray(c.replies)) {
+                  return {
+                    ...c,
+                    replies: c.replies.map((r: any) => r.id === replyId ? { ...r, likedByCreator: !r.likedByCreator } : r)
+                  };
+                }
+                return { ...c, likedByCreator: !c.likedByCreator };
+              }
+              return c;
+            });
+            await bunnyDb.execute({
+              sql: "UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+              args: [JSON.stringify(vData), videoId]
+            });
+          }
+        }
+      }
+
+      broadcastSseEvent({
+        type: "heart_comment",
+        videoId,
+        commentId,
+        replyId,
+        likedByCreator
+      });
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Delete Comment or Reply (persisted to Bunny.net with automatic cascade to replies)
+  app.post("/api/interactions/comment/delete", async (req, res) => {
+    try {
+      const { videoId, commentId, replyId } = req.body;
+      if (!videoId || !commentId) return res.status(400).json({ error: "Missing fields" });
+
+      const bunnyDb = getBunnyDb();
+      let treeResult = { comments: [] as any[], count: 0 };
+
+      if (bunnyDb) {
+        if (replyId) {
+          await bunnyDb.execute({
+            sql: "DELETE FROM comments WHERE id = ?",
+            args: [replyId]
+          });
+        } else {
+          await bunnyDb.execute({
+            sql: "DELETE FROM comments WHERE id = ? OR json_extract(data, '$.replyToId') = ?",
+            args: [commentId, commentId]
+          });
+        }
+
+        const allCommentsRes = await bunnyDb.execute({
+          sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
+          args: [videoId]
+        });
+        const remaining = (allCommentsRes.rows || []).map((row: any) => {
+          let parsed: any = {};
+          try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
+          return {
+            ...parsed,
+            id: String(row.id),
+            videoId: String(row.videoId),
+            userId: row.userId || parsed.userId || '',
+            authorName: row.userName || parsed.authorName || 'Guest',
+            authorAvatar: row.userAvatar || parsed.authorAvatar,
+            text: row.text || parsed.text || '',
+            createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+          };
+        });
+
+        treeResult = buildCommentTree(remaining);
+
+        const vRow = await bunnyDb.execute({
+          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (vRow && vRow.rows && vRow.rows.length > 0) {
+          let vData: any = {};
+          try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+          vData.comments = treeResult.comments;
+          vData.commentsCount = treeResult.count;
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [JSON.stringify(vData), videoId]
+          });
+        }
+      } else {
+        const list = readReviewsIndex();
+        const curVid = list.find((v: any) => v.id === videoId);
+        let currentComments = curVid && Array.isArray(curVid.comments) ? curVid.comments : [];
+        if (replyId) {
+          currentComments = currentComments.map((c: any) => c.id === commentId && Array.isArray(c.replies) ? { ...c, replies: c.replies.filter((r: any) => r.id !== replyId) } : c);
+        } else {
+          currentComments = currentComments.filter((c: any) => c.id !== commentId);
+        }
+        treeResult = buildCommentTree(currentComments);
+      }
+
+      // Update local index & memory cache
+      try {
+        const list = readReviewsIndex();
+        const vidIdx = list.findIndex((v: any) => v.id === videoId);
+        if (vidIdx !== -1) {
+          list[vidIdx] = {
+            ...list[vidIdx],
+            comments: treeResult.comments,
+            commentsCount: treeResult.count
+          };
+          writeReviewsIndex(list);
+        }
+        const cachedIdx = feedCache.videos.findIndex((v: any) => v.id === videoId);
+        if (cachedIdx !== -1) {
+          feedCache.videos[cachedIdx] = {
+            ...feedCache.videos[cachedIdx],
+            comments: treeResult.comments,
+            commentsCount: treeResult.count
+          };
+        }
+      } catch(e) {}
+
+      broadcastSseEvent({
+        type: "delete_comment",
+        videoId,
+        commentId,
+        replyId,
+        comments: treeResult.comments,
+        commentsCount: treeResult.count
+      });
+
+      return res.json({
+        success: true,
+        comments: treeResult.comments,
+        commentsCount: treeResult.count
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Toggle Video Like (persisted to Bunny.net likes table)
+  app.post("/api/interactions/like", async (req, res) => {
+    try {
+      const { videoId, userId, isLiked } = req.body;
+      if (!videoId) return res.status(400).json({ error: "Missing videoId" });
+
+      const bunnyDb = getBunnyDb();
+      let updatedLikesCount = 0;
+      if (bunnyDb) {
+        const likeId = `like_${userId || 'anon'}_${videoId}`;
+        if (isLiked) {
+          await bunnyDb.execute({
+            sql: "INSERT OR REPLACE INTO likes (id, userId, videoId, data, updatedAt) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+            args: [likeId, userId || "", videoId, JSON.stringify({ videoId, userId, isLiked: true })]
+          });
+        } else {
+          await bunnyDb.execute({
+            sql: "DELETE FROM likes WHERE (userId = ? AND videoId = ?) OR id = ?",
+            args: [userId || "", videoId, likeId]
+          });
+        }
+
+        const countRes = await bunnyDb.execute({
+          sql: "SELECT COUNT(*) as total FROM likes WHERE videoId = ?",
+          args: [videoId]
+        });
+        const dbLikes = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+
+        const vRow = await bunnyDb.execute({
+          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (vRow && vRow.rows && vRow.rows.length > 0) {
+          let vData: any = {};
+          try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+          const baseLikes = Math.max(0, (vData.likesCount || vData.likes || 0));
+          updatedLikesCount = Math.max(dbLikes, isLiked ? baseLikes + 1 : Math.max(0, baseLikes - 1));
+          vData.likes = updatedLikesCount;
+          vData.likesCount = updatedLikesCount;
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET likesCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [updatedLikesCount, JSON.stringify(vData), videoId]
+          });
+        }
+      }
+
+      broadcastSseEvent({
+        type: "video_liked",
+        videoId,
+        isLiked: Boolean(isLiked),
+        likesCount: updatedLikesCount,
+        userId: userId || ""
+      });
+
+      return res.json({ success: true, likesCount: updatedLikesCount });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Toggle Video Bookmark (persisted to Bunny.net bookmarks table)
+  app.post("/api/interactions/bookmark", async (req, res) => {
+    try {
+      const { videoId, placeId, userId, isBookmarked } = req.body;
+      if (!videoId) return res.status(400).json({ error: "Missing videoId" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const bmId = `bm_${userId || 'anon'}_${videoId}`;
+        if (isBookmarked) {
+          await bunnyDb.execute({
+            sql: "INSERT OR REPLACE INTO bookmarks (id, userId, placeId, videoId, data, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+            args: [bmId, userId || "", placeId || "", videoId, JSON.stringify({ videoId, placeId, userId, isBookmarked: true })]
+          });
+        } else {
+          await bunnyDb.execute({
+            sql: "DELETE FROM bookmarks WHERE (userId = ? AND videoId = ?) OR id = ?",
+            args: [userId || "", videoId, bmId]
+          });
+        }
+      }
+
+      broadcastSseEvent({
+        type: "video_bookmarked",
+        videoId,
+        isBookmarked: Boolean(isBookmarked),
+        userId: userId || ""
+      });
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Increment Video Share Count (persisted to Bunny.net)
+  app.post("/api/interactions/share", async (req, res) => {
+    try {
+      const { videoId } = req.body;
+      if (!videoId) return res.status(400).json({ error: "Missing videoId" });
+
+      let nextShares = 1;
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const vRow = await bunnyDb.execute({
+          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (vRow && vRow.rows && vRow.rows.length > 0) {
+          let vData: any = {};
+          try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+          nextShares = (vData.sharesCount || vData.shares || 0) + 1;
+          vData.shares = nextShares;
+          vData.sharesCount = nextShares;
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [JSON.stringify(vData), videoId]
+          });
+        }
+      }
+
+      try {
+        const list = readReviewsIndex();
+        const vid = list.find((v: any) => v.id === videoId);
+        if (vid) {
+          nextShares = Math.max(nextShares, (vid.sharesCount || vid.shares || 0) + 1);
+          vid.shares = nextShares;
+          vid.sharesCount = nextShares;
+          writeReviewsIndex(list);
+        }
+      } catch(e) {}
+
+      broadcastSseEvent({
+        type: "video_shared",
+        videoId,
+        sharesCount: nextShares
+      });
+
+      return res.json({ success: true, sharesCount: nextShares });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
     }
   });
 
