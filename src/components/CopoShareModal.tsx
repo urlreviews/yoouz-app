@@ -273,6 +273,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "whatsapp",
       name: "WhatsApp",
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
       icon: (
         <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.528 1.977 14.07 1.9 12.01 1.9c-5.44 0-9.866 4.372-9.87 9.802 0 1.714.453 3.39 1.31 4.88l-.994 3.63 3.734-.972h-.143zm11.367-7.584c-.321-.16-1.897-.938-2.185-1.043-.289-.104-.499-.158-.709.158-.21.317-.812 1.044-.995 1.254-.183.21-.366.237-.687.077-.321-.16-1.353-.499-2.577-1.59-1.002-.892-1.63-1.997-1.83-2.333-.2-.336-.022-.518.139-.677.145-.143.321-.374.482-.56.16-.187.214-.32.321-.534.107-.214.053-.4-.027-.56-.08-.16-.709-1.708-.971-2.339-.255-.612-.514-.53-.709-.54-.183-.009-.393-.011-.603-.011s-.552.079-.841.395c-.289.317-1.103 1.079-1.103 2.63s1.129 3.051 1.287 3.262c.158.21 2.22 3.391 5.377 4.754.752.325 1.339.519 1.797.665.755.24 1.443.206 1.987.125.606-.09 1.897-.775 2.16-1.485.263-.709.263-1.316.184-1.442-.079-.126-.289-.205-.61-.365z" />
@@ -283,12 +284,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "wabusiness",
       name: "WA Business",
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
       icon: (
         <div className="relative flex items-center justify-center">
           <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
             <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.528 1.977 14.07 1.9 12.01 1.9c-5.44 0-9.866 4.372-9.87 9.802 0 1.714.453 3.39 1.31 4.88l-.994 3.63 3.734-.972h-.143z" />
           </svg>
-          <span className="absolute -top-1 -right-1 text-[9px] font-black bg-zinc-200 text-zinc-950 rounded-full w-3 h-3 flex items-center justify-center leading-none">+</span>
+          <span className="absolute -top-1 -right-1 text-[8px] font-black bg-zinc-100 text-zinc-950 rounded-full w-3.5 h-3.5 flex items-center justify-center leading-none shadow-xs">B</span>
         </div>
       ),
       onClick: () => openAppOrUrl(`whatsapp://send?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`, `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`, "WA Business")
@@ -296,6 +298,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "messenger",
       name: "Messenger",
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
       icon: (
         <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
           <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.615 4.47 8.653V24l4.088-2.244c1.077.299 2.222.464 3.442.464 6.627 0 12-4.974 12-11.109C24 4.974 18.627 0 12 0zm1.192 14.962l-3.056-3.26-5.964 3.26 6.562-6.966 3.13 3.26 5.89-3.26-6.562 6.966z" />
@@ -306,6 +309,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "telegram",
       name: "Telegram",
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
       icon: (
         <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
           <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.458c.538-.196 1.006.128.832.945z" />
@@ -316,6 +320,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "line",
       name: "Line",
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
       icon: (
         <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
           <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
@@ -326,6 +331,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "x",
       name: "X (Twitter)",
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
       icon: (
         <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -336,12 +342,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "facebook",
       name: "Facebook",
-      icon: <Facebook className="w-5.5 h-5.5" />,
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
+      icon: <Facebook className="w-5.5 h-5.5 fill-current" />,
       onClick: () => openAppOrUrl(`fb://facewebmodal/f?href=${encodeURIComponent(shareUrl)}`, `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`, "Facebook")
     },
     {
       id: "reddit",
       name: "Reddit",
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
       icon: (
         <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
           <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.703zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.688-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
@@ -352,7 +360,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "sms",
       name: "Messages",
-      icon: <MessageSquare className="w-5.5 h-5.5" />,
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
+      icon: <MessageSquare className="w-5.5 h-5.5 fill-current" />,
       onClick: () => {
         triggerHaptic("medium");
         window.location.href = `sms:?&body=${encodeURIComponent(shareText + "\n" + shareUrl)}`;
@@ -361,82 +370,94 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "email",
       name: "Email",
-      icon: <Mail className="w-5.5 h-5.5" />,
+      bgClass: "bg-zinc-900 border border-zinc-800/90 text-zinc-200 group-hover:text-white group-hover:bg-zinc-800 group-hover:border-zinc-700",
+      icon: <Mail className="w-5.5 h-5.5 stroke-[2.2]" />,
       onClick: () => {
         window.location.href = `mailto:?subject=${encodeURIComponent(title || "Yoouz Video Review")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`;
       }
     }
   ];
 
-  // Mobile Shelf 1: Direct Messaging & Fast Actions (100% Dark Mode)
+  // Mobile Shelf 1: Direct Messaging & Fast Actions with Dark Mode Aesthetic
   const mobileMessagingPlatforms = [
     {
       id: "copy",
       name: copied ? "Copied" : "Copy link",
+      bgClass: copied ? "bg-emerald-600 text-white shadow-emerald-600/30" : "bg-zinc-900 text-zinc-100 border border-zinc-800/90 shadow-zinc-950/40",
       icon: copied ? <Check className="w-5.5 h-5.5 stroke-[2.5] text-white" /> : <Link2 className="w-5.5 h-5.5 stroke-[2.2]" />,
       onClick: handleCopy
     },
     {
       id: "whatsapp",
       name: "WhatsApp",
+      bgClass: allSharePlatforms.find((p) => p.id === "whatsapp")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "whatsapp")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "whatsapp")?.onClick
     },
     {
       id: "wabusiness",
       name: "WA Business",
+      bgClass: allSharePlatforms.find((p) => p.id === "wabusiness")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "wabusiness")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "wabusiness")?.onClick
     },
     {
       id: "line",
       name: "Line",
+      bgClass: allSharePlatforms.find((p) => p.id === "line")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "line")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "line")?.onClick
     },
     {
       id: "messenger",
       name: "Messenger",
+      bgClass: allSharePlatforms.find((p) => p.id === "messenger")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "messenger")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "messenger")?.onClick
     },
     {
       id: "telegram",
       name: "Telegram",
+      bgClass: allSharePlatforms.find((p) => p.id === "telegram")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "telegram")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "telegram")?.onClick
     },
     {
       id: "sms",
       name: "Messages",
-      icon: <MessageSquare className="w-5 h-5" />,
+      bgClass: allSharePlatforms.find((p) => p.id === "sms")?.bgClass,
+      icon: allSharePlatforms.find((p) => p.id === "sms")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "sms")?.onClick
     }
   ];
 
-  // Mobile Shelf 2: Social Networks & Broadcast Channels (100% Dark Mode)
+  // Mobile Shelf 2: Social Networks & Broadcast Channels with Brand Colors
   const mobileSocialPlatforms = [
     {
       id: "x",
       name: "X (Twitter)",
+      bgClass: allSharePlatforms.find((p) => p.id === "x")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "x")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "x")?.onClick
     },
     {
       id: "facebook",
       name: "Facebook",
+      bgClass: allSharePlatforms.find((p) => p.id === "facebook")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "facebook")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "facebook")?.onClick
     },
     {
       id: "reddit",
       name: "Reddit",
+      bgClass: allSharePlatforms.find((p) => p.id === "reddit")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "reddit")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "reddit")?.onClick
     },
     {
       id: "email",
       name: "Email",
+      bgClass: allSharePlatforms.find((p) => p.id === "email")?.bgClass,
       icon: allSharePlatforms.find((p) => p.id === "email")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "email")?.onClick
     }
@@ -647,24 +668,24 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Desktop 5-Column Compact, Premium Dark Grid */}
+              {/* Desktop 5-Column Compact, Vibrant Brand Color Grid */}
               <div className="hidden sm:block space-y-2 pt-0.5">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   {t("shareModal.shareToPlatform", "Share to Platform")}
                 </label>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-5 gap-2.5">
                   {allSharePlatforms.map((platform) => (
                     <button
                       key={platform.id}
                       onClick={platform.onClick}
                       type="button"
-                      className="group flex flex-col items-center justify-center py-2.5 px-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800/90 border border-zinc-800/90 hover:border-zinc-700 text-center transition-all cursor-pointer active:scale-95 shadow-2xs hover:shadow-xs"
+                      className="group flex flex-col items-center justify-center py-2.5 px-1.5 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800/90 border border-zinc-800/90 hover:border-zinc-700 text-center transition-all cursor-pointer active:scale-95 shadow-xs hover:shadow-md"
                       title={platform.name}
                     >
-                      <div className="w-8.5 h-8.5 rounded-lg bg-zinc-900 border border-zinc-800/90 flex items-center justify-center text-zinc-300 group-hover:text-white group-hover:border-zinc-600 group-hover:bg-zinc-800 transition mb-1 shadow-2xs">
+                      <div className={`w-10 h-10 rounded-2xl ${platform.bgClass || 'bg-zinc-800 text-white'} flex items-center justify-center transition-transform group-hover:scale-110 shadow-md mb-1.5`}>
                         {platform.icon}
                       </div>
-                      <span className="text-[11px] font-medium text-zinc-300 group-hover:text-white truncate max-w-full leading-tight">
+                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white truncate max-w-full leading-tight">
                         {platform.name}
                       </span>
                     </button>
@@ -672,7 +693,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Mobile Shelf 1: Circular Quick Actions & Messaging Apps */}
+              {/* Mobile Shelf 1: Squircle App Icons with Authentic Brand Colors */}
               <div className="sm:hidden space-y-2 pt-1">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider block">
@@ -681,9 +702,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
                     <button
                       onClick={handleNativeShare}
-                      className="text-[11px] font-semibold text-zinc-200 hover:text-white transition cursor-pointer flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-full bg-zinc-800/90 hover:bg-zinc-700 text-zinc-100 text-[11px] font-semibold border border-zinc-700/80 flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
                     >
-                      <Smartphone className="w-3 h-3 text-zinc-200" />
+                      <Smartphone className="w-3.5 h-3.5 text-zinc-300" />
                       <span>{t("shareModal.systemApps", "System apps")}</span>
                     </button>
                   )}
@@ -702,10 +723,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       className="group flex flex-col items-center gap-1.5 shrink-0 focus:outline-none cursor-pointer transition-transform active:scale-95"
                       title={platform.name}
                     >
-                      <div className={`w-13 h-13 rounded-full ${platform.id === 'copy' && copied ? 'bg-zinc-800 border-zinc-600 text-white shadow-md' : 'bg-zinc-900 border-zinc-800/90 text-zinc-200'} border flex items-center justify-center group-hover:text-white group-hover:border-zinc-700 group-active:bg-zinc-800 transition-all duration-200 shadow-sm`}>
+                      <div className={`w-13 h-13 rounded-2xl ${platform.bgClass || 'bg-zinc-800 text-white'} flex items-center justify-center shadow-md transition-transform group-hover:scale-105`}>
                         {platform.icon}
                       </div>
-                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white text-center truncate max-w-[64px] leading-tight select-none">
+                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white text-center truncate max-w-[68px] leading-tight select-none">
                         {platform.name}
                       </span>
                     </button>
@@ -713,7 +734,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Mobile Shelf 2: Circular Social Platforms */}
+              {/* Mobile Shelf 2: Social Networks with Vibrant Brand Colors */}
               <div className="sm:hidden space-y-2 pt-0.5">
                 <label className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider block">
                   {t("shareModal.shareTo", "Share to")}
@@ -732,10 +753,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       className="group flex flex-col items-center gap-1.5 shrink-0 focus:outline-none cursor-pointer transition-transform active:scale-95"
                       title={platform.name}
                     >
-                      <div className="w-13 h-13 rounded-full bg-zinc-900 border border-zinc-800/90 flex items-center justify-center text-zinc-200 group-hover:text-white group-hover:border-zinc-700 group-active:bg-zinc-800 transition-all duration-200 shadow-sm">
+                      <div className={`w-13 h-13 rounded-2xl ${platform.bgClass || 'bg-zinc-800 text-white'} flex items-center justify-center shadow-md transition-transform group-hover:scale-105`}>
                         {platform.icon}
                       </div>
-                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white text-center truncate max-w-[64px] leading-tight select-none">
+                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white text-center truncate max-w-[68px] leading-tight select-none">
                         {platform.name}
                       </span>
                     </button>
