@@ -1255,6 +1255,9 @@ export function App() {
     };
   }, []);
 
+  const activeSectionRef = useRef(activeSection);
+  activeSectionRef.current = activeSection;
+
   // Real-time BunnyDB sync for Notifications
   useEffect(() => {
     if (!currentUser) {
@@ -1277,7 +1280,7 @@ export function App() {
       const newIncoming = notifs.find((n) => !n.isRead && !prevNotifIdsRef.current.has(n.id));
       notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
 
-      if (newIncoming && activeSection !== "notifications") {
+      if (newIncoming && activeSectionRef.current !== "notifications") {
         const prefs = currentUser.notificationSettings;
         if (prefs?.enabled === false) return;
         if (newIncoming.type === "like" && prefs?.likes === false) return;
@@ -1315,7 +1318,7 @@ export function App() {
     });
 
     return () => unsubscribe();
-  }, [currentUser, activeSection]);
+  }, [currentUser]);
 
   // Account validity checker (logs out if admin deleted user from database)
   useEffect(() => {

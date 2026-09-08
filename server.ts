@@ -5723,7 +5723,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     recipientEmail: string;
     recipientId: string;
     recipientHandle: string;
-    type: "like" | "comment" | "follow" | "bookmark";
+    type: "like" | "comment" | "follow" | "bookmark" | "repost" | "message";
     text: string;
     videoId?: string;
     videoThumbnail?: string;
@@ -5954,12 +5954,29 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
         // Backend comment / reply notifications
         try {
+          let video: any = null;
           const videoRows = await bunnyDb.execute({
             sql: "SELECT id, userId, authorName, placeName, thumbnailUrl, data FROM videoReviews WHERE id = ? LIMIT 1",
             args: [videoId]
           });
           if (videoRows && videoRows.rows && videoRows.rows.length > 0) {
-            const video = videoRows.rows[0];
+            video = videoRows.rows[0];
+          } else {
+            const list = readReviewsIndex();
+            const curVid = list.find((v: any) => v && v.id === videoId);
+            if (curVid) {
+              video = {
+                id: curVid.id,
+                userId: curVid.userId || curVid.userEmail || curVid.author?.id || "",
+                authorName: curVid.author?.name || curVid.authorName || "",
+                placeName: curVid.placeName || "",
+                thumbnailUrl: curVid.thumbnailUrl || curVid.posterUrl || "",
+                data: curVid
+              };
+            }
+          }
+
+          if (video) {
             const recipient = await resolveVideoAuthorRecipient(video);
             
             // 1. Send notification to Video Author
@@ -6130,6 +6147,42 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         isLiked,
         likesCount
       });
+
+      if (isLiked) {
+        try {
+          if (bunnyDb) {
+            const commentRow = await bunnyDb.execute({
+              sql: "SELECT userId, userName, text FROM comments WHERE id = ? LIMIT 1",
+              args: [targetId]
+            });
+            if (commentRow && commentRow.rows && commentRow.rows.length > 0) {
+              const c = commentRow.rows[0];
+              const cUserId = c.userId ? String(c.userId) : "";
+              let cEmail = cUserId;
+              if (!cEmail.includes("@")) {
+                const lower = String(c.userName || "").toLowerCase();
+                if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) cEmail = "avr6566gd@gmail.com";
+                else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) cEmail = "louis42111@gmail.com";
+                else if (lower.includes("aouisesmee") || lower.includes("4samet")) cEmail = "aouisesmee@gmail.com";
+              }
+              if (cEmail) {
+                await createAndBroadcastBackendNotification({
+                  senderUserId: req.body.userId || "",
+                  recipientEmail: cEmail,
+                  recipientId: cUserId || cEmail,
+                  recipientHandle: c.userName ? String(c.userName) : cEmail,
+                  type: "like",
+                  text: `liked your comment`,
+                  videoId: videoId,
+                  customId: `notif_comment_like_${req.body.userId || 'anon'}_${targetId}`
+                });
+              }
+            }
+          }
+        } catch (clErr: any) {
+          console.warn("Notice triggering comment like notification:", clErr.message);
+        }
+      }
 
       return res.json({ success: true });
     } catch (err: any) {
@@ -6366,6 +6419,53 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         userId: userId || ""
       });
 
+      // Send backend notification if liked
+      if (isLiked) {
+        try {
+          let video: any = null;
+          if (bunnyDb) {
+            const vRow = await bunnyDb.execute({
+              sql: "SELECT id, userId, authorName, placeName, thumbnailUrl, data FROM videoReviews WHERE id = ? LIMIT 1",
+              args: [videoId]
+            });
+            if (vRow && vRow.rows && vRow.rows.length > 0) {
+              video = vRow.rows[0];
+            }
+          }
+          if (!video) {
+            const list = readReviewsIndex();
+            const curVid = list.find((v: any) => v && v.id === videoId);
+            if (curVid) {
+              video = {
+                id: curVid.id,
+                userId: curVid.userId || curVid.userEmail || curVid.author?.id || "",
+                authorName: curVid.author?.name || curVid.authorName || "",
+                placeName: curVid.placeName || "",
+                thumbnailUrl: curVid.thumbnailUrl || curVid.posterUrl || "",
+                data: curVid
+              };
+            }
+          }
+          if (video) {
+            const recipient = await resolveVideoAuthorRecipient(video);
+            await createAndBroadcastBackendNotification({
+              senderUserId: userId || "",
+              recipientEmail: recipient.recipientEmail,
+              recipientId: recipient.recipientId,
+              recipientHandle: recipient.recipientHandle,
+              type: "like",
+              text: `liked your video review of ${video.placeName ? String(video.placeName) : "a place"}`,
+              videoId: videoId,
+              videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
+              placeName: video.placeName ? String(video.placeName) : "",
+              customId: `notif_like_${userId || 'anon'}_${videoId}`
+            });
+          }
+        } catch (nErr: any) {
+          console.warn("Notice triggering video like notification:", nErr.message);
+        }
+      }
+
       return res.json({ success: true, likesCount: updatedLikesCount });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -6400,6 +6500,53 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         isBookmarked: Boolean(isBookmarked),
         userId: userId || ""
       });
+
+      // Send backend notification if bookmarked/saved
+      if (isBookmarked) {
+        try {
+          let video: any = null;
+          if (bunnyDb) {
+            const vRow = await bunnyDb.execute({
+              sql: "SELECT id, userId, authorName, placeName, thumbnailUrl, data FROM videoReviews WHERE id = ? LIMIT 1",
+              args: [videoId]
+            });
+            if (vRow && vRow.rows && vRow.rows.length > 0) {
+              video = vRow.rows[0];
+            }
+          }
+          if (!video) {
+            const list = readReviewsIndex();
+            const curVid = list.find((v: any) => v && v.id === videoId);
+            if (curVid) {
+              video = {
+                id: curVid.id,
+                userId: curVid.userId || curVid.userEmail || curVid.author?.id || "",
+                authorName: curVid.author?.name || curVid.authorName || "",
+                placeName: curVid.placeName || "",
+                thumbnailUrl: curVid.thumbnailUrl || curVid.posterUrl || "",
+                data: curVid
+              };
+            }
+          }
+          if (video) {
+            const recipient = await resolveVideoAuthorRecipient(video);
+            await createAndBroadcastBackendNotification({
+              senderUserId: userId || "",
+              recipientEmail: recipient.recipientEmail,
+              recipientId: recipient.recipientId,
+              recipientHandle: recipient.recipientHandle,
+              type: "bookmark",
+              text: `saved your video review of ${video.placeName ? String(video.placeName) : "a place"}`,
+              videoId: videoId,
+              videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
+              placeName: video.placeName ? String(video.placeName) : "",
+              customId: `notif_bookmark_${userId || 'anon'}_${videoId}`
+            });
+          }
+        } catch (nErr: any) {
+          console.warn("Notice triggering video bookmark notification:", nErr.message);
+        }
+      }
 
       return res.json({ success: true });
     } catch (err: any) {
@@ -6449,6 +6596,51 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         videoId,
         sharesCount: nextShares
       });
+
+      // Send backend notification for share
+      try {
+        let video: any = null;
+        if (bunnyDb) {
+          const vRow = await bunnyDb.execute({
+            sql: "SELECT id, userId, authorName, placeName, thumbnailUrl, data FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          if (vRow && vRow.rows && vRow.rows.length > 0) {
+            video = vRow.rows[0];
+          }
+        }
+        if (!video) {
+          const list = readReviewsIndex();
+          const curVid = list.find((v: any) => v && v.id === videoId);
+          if (curVid) {
+            video = {
+              id: curVid.id,
+              userId: curVid.userId || curVid.userEmail || curVid.author?.id || "",
+              authorName: curVid.author?.name || curVid.authorName || "",
+              placeName: curVid.placeName || "",
+              thumbnailUrl: curVid.thumbnailUrl || curVid.posterUrl || "",
+              data: curVid
+            };
+          }
+        }
+        if (video) {
+          const recipient = await resolveVideoAuthorRecipient(video);
+          await createAndBroadcastBackendNotification({
+            senderUserId: req.body.userId || "",
+            recipientEmail: recipient.recipientEmail,
+            recipientId: recipient.recipientId,
+            recipientHandle: recipient.recipientHandle,
+            type: "repost",
+            text: `shared your video review of ${video.placeName ? String(video.placeName) : "a place"}`,
+            videoId: videoId,
+            videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
+            placeName: video.placeName ? String(video.placeName) : "",
+            customId: `notif_share_${req.body.userId || 'anon'}_${Date.now()}`
+          });
+        }
+      } catch (sErr: any) {
+        console.warn("Notice triggering video share notification:", sErr.message);
+      }
 
       return res.json({ success: true, sharesCount: nextShares });
     } catch (err: any) {

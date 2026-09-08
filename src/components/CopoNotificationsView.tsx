@@ -497,8 +497,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           <>
                             <span className="text-zinc-300 font-medium">recommended</span>{" "}
                             <span className="font-bold text-white underline-offset-2 hover:underline">
-                              <span className="sm:hidden">a website</span>
-                              <span className="hidden sm:inline">{details.target}</span>
+                              {details.target}
                             </span>
                             {details.rating && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
@@ -511,8 +510,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           <>
                             <span className="text-zinc-300 font-medium">shared a review for</span>{" "}
                             <span className="font-bold text-white underline-offset-2 hover:underline">
-                              <span className="sm:hidden">a place</span>
-                              <span className="hidden sm:inline">{details.target}</span>
+                              {details.target}
                             </span>
                             {details.rating && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
@@ -532,8 +530,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           <>
                             <span className="text-zinc-300 font-medium">{details.action}</span>{" "}
                             <span className="font-bold text-white">
-                              <span className="sm:hidden">a place</span>
-                              <span className="hidden sm:inline">{details.target}</span>
+                              {details.target}
                             </span>
                           </>
                         ) : (

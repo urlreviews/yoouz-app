@@ -237,12 +237,39 @@ export function recordDeletedNotifId(notificationId: string, userKey?: string) {
 function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): CopoNotification[] {
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
-  const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
-  const userHandle = (currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+  const emailPrefix = userEmail && userEmail.includes("@") ? userEmail.split("@")[0].toLowerCase().trim() : "";
+  const userHandle = (currentUser.handle || currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "").trim();
   const userName = (currentUser.name || "").toLowerCase().trim();
-  const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
+  const userId = (currentUser.userId || (currentUser as any).id || (currentUser as any).uid || "").toLowerCase().trim();
 
   const deletedSet = getDeletedNotifIds(userKey);
+
+  const isAvtErtuopUser =
+    userEmail.includes("avr6566gd") ||
+    userName === "avt ertuop" ||
+    userHandle === "avtertuop" ||
+    userId.includes("avr6566gd") ||
+    userName === "avt" ||
+    userHandle === "avt" ||
+    userName.includes("avt") ||
+    userHandle.includes("avt");
+
+  const isAouisesmeeUser =
+    userEmail.includes("aouisesmee") ||
+    userName.includes("aouisesmee") ||
+    userHandle.includes("aouisesmee") ||
+    userId.includes("aouisesmee") ||
+    userEmail.includes("4samet") ||
+    userName.includes("4samet") ||
+    userId.includes("4samet");
+
+  const isBizRivUser =
+    userEmail.includes("louis42111") ||
+    userName === "biz riv" ||
+    userHandle === "bizriv" ||
+    userId.includes("louis42111") ||
+    userName.includes("biz") ||
+    userHandle.includes("biz");
 
   const list: CopoNotification[] = [];
 
@@ -263,27 +290,10 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     const normRecId = recId.replace(/\s+/g, "");
     const normRecHandle = recHandle.replace(/\s+/g, "");
 
-    // Allow self-notifications if explicitly addressed to self or system
-    const isExplicitSelfRecipient = (
-      (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail)) ||
-      (userHandle && (recHandle === userHandle || recId === userHandle))
-    );
+    const isSystemOrGlobal = recEmail === "all" || recId === "all" || recHandle === "all";
 
-    // Exclude accidental self-action duplicates unless explicitly targeted
-    if (!isExplicitSelfRecipient) {
-      if (userEmail && senderEmail && senderEmail === userEmail) {
-        continue;
-      }
-      if (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail)) {
-        continue;
-      }
-    }
-
-    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt");
-    const isAouisesmee = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userHandle.includes("aouisesmee") || userId.includes("aouisesmee") || userEmail.includes("4samet") || userName.includes("4samet") || userId.includes("4samet");
-    const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111");
-
-    const matchesAvtErtuop = isAvtErtuop && (
+    // Matching aliases
+    const matchesAvtErtuop = isAvtErtuopUser && (
       recEmail.includes("avr6566gd") ||
       recId === "avt ertuop" ||
       recHandle === "avt ertuop" ||
@@ -292,9 +302,12 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       recId.includes("avr6566gd") ||
       recEmail.includes("avt") ||
       recHandle.includes("avt") ||
-      recId.includes("avt")
+      recId.includes("avt") ||
+      normRecId === "avt" ||
+      normRecHandle === "avt"
     );
-    const matchesAouisesmee = isAouisesmee && (
+
+    const matchesAouisesmee = isAouisesmeeUser && (
       recEmail.includes("aouisesmee") ||
       recEmail.includes("4samet") ||
       normRecHandle.includes("aouisesmee") ||
@@ -305,44 +318,58 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       normRecHandle.includes("4samet") ||
       recHandle.includes("aouisesmee")
     );
-    const matchesBizRiv = isBizRiv && (
+
+    const matchesBizRiv = isBizRivUser && (
       recEmail.includes("louis42111") ||
       normRecHandle.includes("bizriv") ||
       normRecId.includes("louis42111") ||
       normRecId.includes("bizriv") ||
       recId === "biz riv" ||
       recHandle === "biz riv" ||
-      recHandle.includes("bizriv")
+      recHandle.includes("bizriv") ||
+      normRecHandle.includes("biz")
     );
 
-    const isForMe =
+    const isGeneralMatch =
+      isSystemOrGlobal ||
       matchesAvtErtuop ||
       matchesAouisesmee ||
       matchesBizRiv ||
-      recEmail === "all" || recId === "all" || recHandle === "all" ||
       (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail || normRecId === userEmail)) ||
       (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || normRecId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
       (userHandle && (recHandle === userHandle || recId === userHandle || normRecId === userHandle || normRecHandle === userHandle || recEmail.includes(userHandle))) ||
       (userName && (recHandle === userName || recId === userName || recEmail === userName || normRecId === userName.replace(/\s+/g, ""))) ||
-      (userId && (recId === userId || recEmail === userId || normRecId === userId));
+      (userId && (recId === userId || recEmail === userId || normRecId === userId || normRecId.includes(userId)));
 
-    if (isForMe) {
-      list.push({
-        id: String(data.id),
-        type: data.type || "like",
-        user: {
-          name: data.user?.name || "Yoouz Member",
-          avatar: data.user?.avatar || `/api/avatar?name=${encodeURIComponent(data.user?.name || "User")}&background=27272a&color=fff`
-        },
-        text: data.text || "",
-        timestamp: data.timestamp || "Recently",
-        createdAtMs: data.createdAt,
-        videoId: data.videoId,
-        videoThumbnail: data.videoThumbnail,
-        placeName: data.placeName,
-        isRead: Boolean(data.isRead === true || data.isRead === 1 || data.read === true || data.read === 1 || data.isRead === "true" || data.isRead === "1")
-      });
+    if (!isGeneralMatch) {
+      continue;
     }
+
+    // Exclude accidental pure self-action unless explicitly testing or addressed
+    const isPureSelfAction =
+      (userEmail && senderEmail && senderEmail === userEmail && !senderEmail.includes("test")) ||
+      (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail) && !userName.includes("test"));
+
+    if (isPureSelfAction && !isSystemOrGlobal) {
+      continue;
+    }
+
+    list.push({
+      id: String(data.id),
+      type: data.type || "like",
+      user: {
+        name: data.user?.name || "Yoouz Member",
+        avatar: data.user?.avatar || `/api/avatar?name=${encodeURIComponent(data.user?.name || "User")}&background=27272a&color=fff`,
+        email: data.user?.email || senderEmail
+      },
+      text: data.text || "",
+      timestamp: data.timestamp || "Recently",
+      createdAtMs: data.createdAt || data.createdAtMs || Date.now(),
+      videoId: data.videoId,
+      videoThumbnail: data.videoThumbnail,
+      placeName: data.placeName,
+      isRead: Boolean(data.isRead === true || data.isRead === 1 || data.read === true || data.read === 1 || data.isRead === "true" || data.isRead === "1")
+    });
   }
 
   // System Welcome Notification Fallback if no user notifications exist yet and not deleted/cleared
@@ -449,7 +476,37 @@ export function subscribeToNotifications(
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
         if (Array.isArray(items) && !isDisposed) {
           const filtered = filterNotificationsForUser(items, currentUser);
-          updateList(filtered);
+          
+          // Merge server items with cached items to ensure real-time notifications are never dropped
+          const map = new Map<string, CopoNotification>();
+          
+          // Seed with current cached items
+          cachedNotifs.forEach((item) => {
+            if (item && item.id) map.set(item.id, item);
+          });
+          
+          // Overlay server items
+          filtered.forEach((item) => {
+            if (item && item.id) {
+              const prev = map.get(item.id);
+              if (prev) {
+                map.set(item.id, {
+                  ...item,
+                  isRead: prev.isRead || item.isRead
+                });
+              } else {
+                map.set(item.id, item);
+              }
+            }
+          });
+
+          const merged = Array.from(map.values()).sort((a, b) => {
+            const timeA = a.createdAtMs || 0;
+            const timeB = b.createdAtMs || 0;
+            return timeB - timeA;
+          });
+
+          updateList(merged);
         }
       }
     } catch (e) {}

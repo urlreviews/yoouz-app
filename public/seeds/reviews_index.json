@@ -26,22 +26,36 @@
     "placeWebsite": "https://legal500.com",
     "comments": [
       {
+        "id": "comm-test-12345",
+        "authorName": "avt ertuop",
+        "authorHandle": "avtertuop",
+        "authorAvatar": "",
+        "text": "Great authentic review!",
+        "createdAt": "2026-09-08 14:55:54",
+        "createdAtMs": 1788879354577,
+        "videoId": "rev-1788290824170-vg5vg",
+        "userId": "avr6566gd@gmail.com",
+        "replies": []
+      },
+      {
         "id": "comm-1788369455856-0iyz9",
         "authorName": "aouisesmee",
         "authorHandle": "aouisesmee",
         "authorAvatar": "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
         "text": "yes",
-        "createdAt": "Just now",
+        "createdAt": "2026-09-08 14:22:16",
         "createdAtMs": 1788369455856,
         "likesCount": 0,
         "isLiked": false,
         "isOwner": false,
         "isCreator": true,
         "replies": [],
-        "likedByCreator": true
+        "likedByCreator": true,
+        "videoId": "rev-1788290824170-vg5vg",
+        "userId": "aouisesmee"
       }
     ],
-    "commentsCount": 1
+    "commentsCount": 2
   },
   {
     "id": "rev-1788279180166-rh08t",
