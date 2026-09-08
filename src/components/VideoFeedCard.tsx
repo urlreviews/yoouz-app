@@ -73,7 +73,9 @@ interface VideoFeedCardProps {
   onUnlockAudio?: () => void;
   onRecordView?: (videoId: string) => void;
   unreadCount?: number;
+  onScrubStart?: () => void;
   onSeekToPercent?: (percent: number) => void;
+  onScrubEnd?: (percent: number) => void;
 }
 
 export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
@@ -116,7 +118,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onUnlockAudio,
   onRecordView,
   unreadCount = 0,
-  onSeekToPercent
+  onScrubStart,
+  onSeekToPercent,
+  onScrubEnd
 }) => {
   const { t } = useLanguage();
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
@@ -125,64 +129,164 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const lastMuteTapTimeRef = useRef<number>(0);
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Video Scrubbing state
+  // Video Scrubbing state (supports live seeking, desktop hover preview, and unified mobile touch)
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
   const [scrubPercent, setScrubPercent] = useState<number | null>(null);
+  const [isHovering, setIsHovering] = useState<boolean>(false);
+  const [hoverPercent, setHoverPercent] = useState<number | null>(null);
   const scrubberRef = useRef<HTMLDivElement | null>(null);
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
+  const seekRafRef = useRef<number | null>(null);
 
-  const calculatePctFromClientX = (clientX: number) => {
+  const effectiveDuration = React.useMemo(() => {
+    if (videoDuration && !isNaN(videoDuration) && videoDuration > 0) {
+      return videoDuration;
+    }
+    if (video?.durationSeconds && !isNaN(video.durationSeconds) && video.durationSeconds > 0) {
+      return video.durationSeconds;
+    }
+    return 60;
+  }, [videoDuration, video?.durationSeconds]);
+
+  const playableSrc = React.useMemo(() => {
+    return resolvePlayableVideoSource(video);
+  }, [video]);
+
+  const calculatePctFromClientX = useCallback((clientX: number) => {
     if (!scrubberRef.current) return 0;
     const rect = scrubberRef.current.getBoundingClientRect();
     if (rect.width <= 0) return 0;
     const offsetX = Math.max(0, Math.min(clientX - rect.left, rect.width));
     return (offsetX / rect.width) * 100;
-  };
+  }, []);
 
-  const getScrubTimeText = (pct: number) => {
-    const dur = videoDuration > 0 ? videoDuration : 60; // Fallback to 60s
-    const current = Math.round((pct / 100) * dur);
-    const m = Math.floor(current / 60);
-    const s = Math.floor(current % 60);
+  const formatTimeText = useCallback((totalSeconds: number) => {
+    const rounded = Math.max(0, Math.round(totalSeconds));
+    const m = Math.floor(rounded / 60);
+    const s = Math.floor(rounded % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
-  };
+  }, []);
 
-  const handleScrubberSeek = (clientX: number) => {
-    const pct = calculatePctFromClientX(clientX);
-    setScrubPercent(pct);
-    if (onSeekToPercent) {
-      onSeekToPercent(pct);
+  const updateSeekPosition = useCallback((pct: number, isFinal: boolean = false) => {
+    const clampedPct = Math.max(0, Math.min(100, pct));
+    const targetSeconds = (clampedPct / 100) * effectiveDuration;
+
+    setScrubPercent(clampedPct);
+
+    // Synchronize preview thumbnail video frame to the exact target time
+    if (previewVideoRef.current) {
+      try {
+        if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.04) {
+          previewVideoRef.current.currentTime = targetSeconds;
+        }
+      } catch (e) {}
     }
-  };
 
-  const handleScrubberPointerDown = (e: React.PointerEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    // Move main video playback smoothly
+    if (isFinal) {
+      if (seekRafRef.current) {
+        cancelAnimationFrame(seekRafRef.current);
+        seekRafRef.current = null;
+      }
+      onSeekToPercent?.(clampedPct);
+    } else {
+      if (!seekRafRef.current) {
+        seekRafRef.current = requestAnimationFrame(() => {
+          seekRafRef.current = null;
+          onSeekToPercent?.(clampedPct);
+        });
+      }
+    }
+  }, [effectiveDuration, onSeekToPercent]);
+
+  const handleScrubberPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
     setIsScrubbing(true);
+    triggerHaptic("selection");
+    onScrubStart?.();
+
     if ('pointerId' in e) {
       try {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       } catch (err) {}
-      handleScrubberSeek(e.clientX);
-    } else if (e.touches && e.touches[0]) {
-      handleScrubberSeek(e.touches[0].clientX);
+    }
+
+    const pct = calculatePctFromClientX(e.clientX);
+    updateSeekPosition(pct, false);
+  };
+
+  const handleScrubberPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isScrubbing) {
+      e.stopPropagation();
+      const pct = calculatePctFromClientX(e.clientX);
+      updateSeekPosition(pct, false);
+    } else if (e.pointerType === "mouse") {
+      // Desktop hover preview thumbnail
+      const pct = calculatePctFromClientX(e.clientX);
+      setHoverPercent(pct);
+      setIsHovering(true);
+      if (previewVideoRef.current) {
+        const targetSeconds = (pct / 100) * effectiveDuration;
+        try {
+          if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.04) {
+            previewVideoRef.current.currentTime = targetSeconds;
+          }
+        } catch (e) {}
+      }
     }
   };
 
-  const handleScrubberPointerMove = (e: React.PointerEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+  const handleScrubberPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isScrubbing) return;
     e.stopPropagation();
-    if ('clientX' in e) {
-      handleScrubberSeek(e.clientX);
-    } else if (e.touches && e.touches[0]) {
-      handleScrubberSeek(e.touches[0].clientX);
+    if ('pointerId' in e) {
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch (err) {}
     }
-  };
-
-  const handleScrubberPointerUp = (e: React.PointerEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-    if (!isScrubbing) return;
-    e.stopPropagation();
+    const pct = calculatePctFromClientX(e.clientX);
+    updateSeekPosition(pct, true);
+    onScrubEnd?.(pct);
     setIsScrubbing(false);
     setScrubPercent(null);
+    triggerHaptic("selection");
   };
+
+  const handleScrubberPointerLeave = () => {
+    if (!isScrubbing) {
+      setIsHovering(false);
+      setHoverPercent(null);
+    }
+  };
+
+  // Global window listeners when scrubbing ensures dragging never drops even when user thumb/mouse moves outside the bar
+  useEffect(() => {
+    if (!isScrubbing) return;
+
+    const onGlobalMove = (e: PointerEvent) => {
+      const pct = calculatePctFromClientX(e.clientX);
+      updateSeekPosition(pct, false);
+    };
+
+    const onGlobalUp = (e: PointerEvent) => {
+      const pct = calculatePctFromClientX(e.clientX);
+      updateSeekPosition(pct, true);
+      onScrubEnd?.(pct);
+      setIsScrubbing(false);
+      setScrubPercent(null);
+      triggerHaptic("selection");
+    };
+
+    window.addEventListener("pointermove", onGlobalMove, { passive: false });
+    window.addEventListener("pointerup", onGlobalUp);
+    window.addEventListener("pointercancel", onGlobalUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onGlobalMove);
+      window.removeEventListener("pointerup", onGlobalUp);
+      window.removeEventListener("pointercancel", onGlobalUp);
+    };
+  }, [isScrubbing, calculatePctFromClientX, updateSeekPosition, onScrubEnd]);
 
   // High-fidelity poster URL
   const posterUrl = React.useMemo(() => {
@@ -351,8 +455,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const isExplicitVideoUrl = window.location.pathname.includes('/video/') || window.location.pathname.startsWith('/v/');
 
   const currentScrubPct = Math.min(100, Math.max(0, isScrubbing && scrubPercent !== null ? scrubPercent : (progressPercent || 0)));
-  const safeTooltipPct = Math.min(85, Math.max(15, currentScrubPct));
-  const scrubTimeText = isScrubbing ? getScrubTimeText(currentScrubPct) : "0:00";
+  const previewPct = isScrubbing && scrubPercent !== null ? scrubPercent : (isHovering && hoverPercent !== null ? hoverPercent : currentScrubPct);
+  const clampedPreviewLeftPct = Math.min(86, Math.max(14, previewPct));
+  const activeSeconds = Math.max(0, Math.min(effectiveDuration, (previewPct / 100) * effectiveDuration));
+  const scrubTimeText = formatTimeText(activeSeconds);
 
   return (
     <>
@@ -571,11 +677,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </div>
 
           <button
-            id={`pill-place-${video.placeId}`}
+            id={`pill-place-${video.placeId || video.id}`}
             onClick={(e) => {
               e.stopPropagation();
               onPauseVideo?.();
-              onOpenPlace(video.placeId);
+              const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
+              onOpenPlace(targetPlaceId);
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              onPauseVideo?.();
+              const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
+              onOpenPlace(targetPlaceId);
             }}
             className="self-start flex items-center gap-2.5 sm:gap-3 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/85 hover:bg-black/95 backdrop-blur-2xl border border-white/35 hover:border-white/60 text-white transition-all w-fit max-w-[calc(100%-8px)] sm:max-w-[280px] md:max-w-[320px] text-left group cursor-pointer shadow-2xl active:scale-[0.98]"
           >
@@ -727,7 +841,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </aside>
       </div>
 
-      {/* Interactive Video Progress Bar (Sleek ultra-thin white reel style) */}
+      {/* Interactive Video Progress Bar (Sleek ultra-thin white reel style with floating thumbnail frame preview) */}
       {isActive && (
         <div
           ref={scrubberRef}
@@ -735,34 +849,52 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onPointerMove={handleScrubberPointerMove}
           onPointerUp={handleScrubberPointerUp}
           onPointerCancel={handleScrubberPointerUp}
-          onTouchStart={handleScrubberPointerDown}
-          onTouchMove={handleScrubberPointerMove}
-          onTouchEnd={handleScrubberPointerUp}
-          onTouchCancel={handleScrubberPointerUp}
+          onPointerLeave={handleScrubberPointerLeave}
           onClick={(e) => e.stopPropagation()}
           className="absolute bottom-0 left-0 right-0 z-50 h-8 flex items-center cursor-pointer group pointer-events-auto select-none px-0"
-          style={{ touchAction: 'pan-x' }}
+          style={{ touchAction: 'none' }}
           title={t("video.scrubVideo", "Drag or tap to seek video")}
           aria-label={t("video.scrubVideo", "Drag or tap to seek video")}
         >
+          {/* YouTube Shorts / TikTok Style Floating Thumbnail Frame Preview */}
+          {(isScrubbing || isHovering) && (
+            <div 
+              className="absolute bottom-7 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-90 duration-150"
+              style={{ 
+                left: `${clampedPreviewLeftPct}%`,
+                transform: 'translateX(-50%)'
+              }}
+            >
+              {/* 9:16 Vertical Miniature Video Frame Preview Card */}
+              <div className="w-[78px] h-[138px] sm:w-[86px] sm:h-[152px] rounded-2xl bg-black border-2 border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.9)] overflow-hidden relative ring-1 ring-black/50 flex items-center justify-center">
+                {/* Fallback Poster Image */}
+                <img
+                  src={posterUrl}
+                  alt="Preview frame"
+                  className="w-full h-full object-cover absolute inset-0 pointer-events-none"
+                />
+                {/* Live Frame Preview Video Element */}
+                <video
+                  ref={previewVideoRef}
+                  src={playableSrc}
+                  preload="auto"
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover absolute inset-0 pointer-events-none"
+                />
+                {/* Subtle glass gloss sheen */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/10 pointer-events-none" />
+              </div>
+
+              {/* Floating High-Contrast Time Pill */}
+              <div className="mt-1.5 px-3 py-0.5 rounded-full bg-black/90 backdrop-blur-md text-white text-[11px] sm:text-xs font-bold font-mono tracking-wider shadow-lg border border-white/20">
+                {scrubTimeText}
+              </div>
+            </div>
+          )}
+
           {/* Background Track - 3px for better visibility */}
           <div className="w-full h-[3px] group-hover:h-[5px] group-active:h-[5px] bg-white/30 transition-all duration-150 relative">
-            
-            {/* Premium Scrubbing Tooltip (Live Timestamp Only - relies on main video live preview) */}
-            {isScrubbing && (
-              <div 
-                className="absolute bottom-6 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
-                style={{ 
-                  left: `${safeTooltipPct}%`,
-                  transform: 'translateX(-50%)'
-                }}
-              >
-                <div className="px-4 py-2 rounded-full bg-black/90 backdrop-blur-md text-white text-sm font-bold font-mono tracking-wider shadow-lg border border-white/15">
-                  {scrubTimeText}
-                </div>
-              </div>
-            )}
-
             {/* Filled Progress Track (Pure White with subtle glow) */}
             <div
               className="h-full bg-white transition-[width] duration-75 ease-out relative shadow-[0_0_8px_rgba(255,255,255,0.8)]"
@@ -772,7 +904,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               <div
                 className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-white shadow-md transition-all duration-150 ${
                   isScrubbing
-                    ? "w-3 h-3 ring-2 ring-black/40 scale-110 opacity-100"
+                    ? "w-3.5 h-3.5 ring-2 ring-black/40 scale-110 opacity-100 shadow-[0_0_10px_rgba(255,255,255,1)]"
                     : "w-2.5 h-2.5 opacity-0 group-hover:opacity-100 group-hover:scale-100"
                 }`}
               />

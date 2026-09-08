@@ -367,6 +367,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       setFirstFrameRenderedId(null);
       setIsPlaying(false);
       setProgressPercent(0);
+      if (activeVideo?.durationSeconds && activeVideo.durationSeconds > 0) {
+        setVideoDuration(activeVideo.durationSeconds);
+      }
       try {
         activeVid.currentTime = 0;
       } catch (e) {}
@@ -525,17 +528,59 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [currentIndex, videos, onRecordView, isPaused, contextKey]);
 
-  // Handle Seek To Percent for scrubbable progress bar
+  // Scrubbing & High-Precision Seeking Handlers
+  const wasPlayingBeforeScrubRef = useRef<boolean>(false);
+
+  const handleScrubStart = useCallback(() => {
+    const vid = feedVideoRef.current;
+    if (!vid) return;
+    wasPlayingBeforeScrubRef.current = !vid.paused;
+    try {
+      vid.pause();
+    } catch (e) {}
+    setIsPlaying(false);
+  }, []);
+
   const handleSeekToPercent = useCallback((pct: number) => {
     const vid = feedVideoRef.current;
-    if (!vid || !vid.duration || isNaN(vid.duration) || vid.duration <= 0) return;
+    if (!vid) return;
+    const dur = (vid.duration && !isNaN(vid.duration) && vid.duration > 0)
+      ? vid.duration
+      : (videoDuration > 0 ? videoDuration : (videos[currentIndex]?.durationSeconds || 60));
     const clampedPct = Math.max(0, Math.min(100, pct));
-    const targetTime = (clampedPct / 100) * vid.duration;
+    const targetTime = Math.max(0, Math.min(dur, (clampedPct / 100) * dur));
+    try {
+      if ("fastSeek" in vid && typeof (vid as any).fastSeek === "function") {
+        (vid as any).fastSeek(targetTime);
+      } else {
+        vid.currentTime = targetTime;
+      }
+      setProgressPercent(clampedPct);
+    } catch (e) {}
+  }, [currentIndex, videos, videoDuration]);
+
+  const handleScrubEnd = useCallback((finalPct: number) => {
+    const vid = feedVideoRef.current;
+    if (!vid) return;
+    const dur = (vid.duration && !isNaN(vid.duration) && vid.duration > 0)
+      ? vid.duration
+      : (videoDuration > 0 ? videoDuration : (videos[currentIndex]?.durationSeconds || 60));
+    const clampedPct = Math.max(0, Math.min(100, finalPct));
+    const targetTime = Math.max(0, Math.min(dur, (clampedPct / 100) * dur));
     try {
       vid.currentTime = targetTime;
       setProgressPercent(clampedPct);
     } catch (e) {}
-  }, []);
+
+    if (wasPlayingBeforeScrubRef.current && !isPaused && !isManuallyPausedRef.current) {
+      const p = vid.play();
+      if (p !== undefined) {
+        p.then(() => {
+          setIsPlaying(true);
+        }).catch(() => {});
+      }
+    }
+  }, [currentIndex, videos, videoDuration, isPaused]);
 
   // Context switch watcher: Immediately pause any active playback and sound when switching contexts
   const previousContextKeyRef = useRef<string | undefined>(contextKey);
@@ -1245,7 +1290,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isBuffering={isCardActive ? isBuffering : false}
                 progressPercent={isCardActive ? progressPercent : 0}
                 videoDuration={videoDuration}
+                onScrubStart={isCardActive ? handleScrubStart : undefined}
                 onSeekToPercent={isCardActive ? handleSeekToPercent : undefined}
+                onScrubEnd={isCardActive ? handleScrubEnd : undefined}
                 isActualMuted={isActualMuted}
                 isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}
                 hasRenderedFirstFrame={firstFrameRenderedId === vid.id}
