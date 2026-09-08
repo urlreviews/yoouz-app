@@ -1098,37 +1098,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
               )}
 
-              {/* Share & Copy Business Link Line */}
-              <div
-                onClick={() => {
-                  triggerHaptic("light");
-                  handleShare();
-                }}
-                className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <Share2 className="w-5 h-5 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
-                  <div className="truncate text-left">
-                    <p className="text-xs text-white font-medium group-hover:text-white transition-colors">{t("place.shareOrCopyLink", "Share or copy business link")}</p>
-                    <p className="text-[11px] text-zinc-400 truncate font-mono">yoouz.com/place/{getPlaceSlug(place)}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    triggerHaptic("medium");
-                    const shareUrl = `${window.location.origin}/place/${getPlaceSlug(place)}`;
-                    navigator.clipboard?.writeText(shareUrl);
-                    setCopiedNotification(t("common.linkCopied", "Link copied to clipboard!"));
-                    setTimeout(() => setCopiedNotification(""), 3000);
-                  }}
-                  className="px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-semibold border border-zinc-700 shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>{t("common.copy", "Copy")}</span>
-                </button>
-              </div>
+
 
               {/* Claim / Edit Business CTA Inline Row */}
               {!place.isClaimed ? (
