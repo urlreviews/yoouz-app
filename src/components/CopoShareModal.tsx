@@ -78,15 +78,24 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     }
   }, [isOpen, explicitShareUrl, video?.id]);
 
-  // Lock background body scroll cleanly whenever modal is active
+  // Lock background body scroll cleanly and handle Escape key whenever modal is active
   useEffect(() => {
     if (!isOpen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
       document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -486,11 +495,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="yoouz-share-modal-title"
-      className="fixed inset-0 z-[99999] flex flex-col justify-end sm:justify-center sm:items-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200 text-white overscroll-contain select-none"
+      className="fixed inset-0 z-[99999] flex flex-col justify-end sm:justify-center sm:items-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200 text-white overscroll-contain select-none p-0 sm:p-4"
       onClick={onClose}
-      onWheel={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
     >
       {/* Background click to dismiss */}
       <div className="absolute inset-0 cursor-pointer" />
@@ -498,15 +504,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       {/* Main Dialog Card: Mobile Full Screen Sheet + Desktop Floating Dialog */}
       <div 
         id="yoouz-share-modal-dialog"
-        className="relative z-10 w-full sm:max-w-[490px] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[85vh] bg-zinc-950 sm:bg-zinc-950/98 backdrop-blur-2xl rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-zinc-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 text-white pb-safe select-text overscroll-contain"
+        className="relative z-10 w-full sm:max-w-[480px] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] bg-zinc-950 sm:bg-zinc-950/98 backdrop-blur-2xl rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-zinc-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 text-white pb-safe select-text overscroll-contain"
         style={{
-          paddingTop: "env(safe-area-inset-top, 0px)", transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
         }}
         onClick={(e) => e.stopPropagation()}
-        onWheel={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
       >
         {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
         <div 
@@ -536,7 +540,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <h3 id="yoouz-share-modal-title" className="font-bold text-white text-base leading-tight">
                 {isVideoMode ? t("shareModal.shareReview", "Share Review") : t("shareModal.share", "Share")}
               </h3>
-              <p className="text-[11px] text-zinc-200 font-medium truncate max-w-[240px] sm:max-w-[300px]">
+              <p className="text-[11px] text-zinc-400 font-medium truncate max-w-[240px] sm:max-w-[300px]">
                 {title}
               </p>
             </div>
@@ -545,7 +549,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <button
             id="btn-close-share-desktop"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 hover:border-zinc-500 transition-all cursor-pointer shadow-sm shrink-0 active:scale-95"
+            className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-zinc-300 hover:text-white bg-zinc-850 hover:bg-zinc-700 border border-zinc-700/80 hover:border-zinc-500 transition-all cursor-pointer shadow-xs shrink-0 active:scale-95"
             title="Close share dialog (Esc)"
             aria-label="Close"
           >
@@ -560,8 +564,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               onClick={() => setActiveTab("share")}
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === "share"
-                  ? "bg-zinc-800 text-white shadow-sm"
-                  : "text-zinc-200 hover:text-zinc-200"
+                  ? "bg-zinc-800 text-white shadow-xs"
+                  : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
               <Share2 className="w-3.5 h-3.5" />
@@ -571,8 +575,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               onClick={() => setActiveTab("embed")}
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === "embed"
-                  ? "bg-zinc-800 text-white shadow-sm"
-                  : "text-zinc-200 hover:text-zinc-200"
+                  ? "bg-zinc-800 text-white shadow-xs"
+                  : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
               <Code className="w-3.5 h-3.5" />
@@ -582,8 +586,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               onClick={() => setActiveTab("preview")}
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === "preview"
-                  ? "bg-zinc-800 text-white shadow-sm"
-                  : "text-zinc-200 hover:text-zinc-200"
+                  ? "bg-zinc-800 text-white shadow-xs"
+                  : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -600,18 +604,16 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           </div>
         )}
 
-        {/* Main Tab Body (Smoothly scrollable, isolated from background events) */}
+        {/* Main Tab Body (Smoothly scrollable on desktop and mobile) */}
         <div 
-          className="overflow-y-auto flex-1 overscroll-contain min-h-0 px-5 py-2.5 sm:py-3 space-y-3.5 sm:space-y-4 pb-4 sm:pb-6 scroll-smooth [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"
-          onWheel={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
+          className="overflow-y-auto flex-1 overscroll-contain min-h-0 px-5 py-2.5 sm:py-3 space-y-3.5 sm:space-y-4 pb-4 sm:pb-5 scroll-smooth [scrollbar-width:thin] [scrollbar-color:#3f3f46_transparent]"
         >
           {activeTab === "share" ? (
             <>
               {/* Context Summary Pill */}
               <div className="p-2.5 rounded-2xl bg-zinc-900/70 border border-zinc-800/80 flex items-center gap-3">
                 {isBusiness ? (
-                  <div className="w-10 h-10 rounded-xl border border-zinc-700/80 bg-white shadow-sm overflow-hidden flex items-center justify-center p-1 shrink-0">
+                  <div className="w-10 h-10 rounded-xl border border-zinc-700/80 bg-white shadow-2xs overflow-hidden flex items-center justify-center p-1 shrink-0">
                     <CopoBrandLogo
                       domain={resolvedDomain}
                       name={title}
@@ -639,13 +641,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 )}
                 <div className="min-w-0 flex-1">
                   <h4 className="text-xs font-bold text-white truncate">{title}</h4>
-                  <p className="text-[11px] text-zinc-200 truncate mt-0.5">{subtitle}</p>
+                  <p className="text-[11px] text-zinc-400 truncate mt-0.5">{subtitle}</p>
                 </div>
               </div>
 
               {/* Direct Link Copy Input Bar */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider block">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   {t("shareModal.directLink", "Direct Link")}
                 </label>
                 <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-1.5 shadow-inner">
@@ -670,7 +672,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     <button
                       onClick={handleCopy}
                       type="button"
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
                         copied
                           ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600 active:scale-95"
                           : "bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95"
@@ -692,26 +694,24 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Desktop 3-Column Dark Mode Grid Layout */}
-              <div className="hidden sm:block space-y-2 pt-1">
-                <label className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider block">
+              {/* Desktop 4-Column Compact, Premium Dark Grid */}
+              <div className="hidden sm:block space-y-2 pt-0.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   {t("shareModal.shareToPlatform", "Share to Platform")}
                 </label>
-                <div 
-                  className="grid grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto pr-1 no-scrollbar overscroll-contain"
-                  onWheel={(e) => e.stopPropagation()}
-                >
+                <div className="grid grid-cols-4 gap-2">
                   {allSharePlatforms.map((platform) => (
                     <button
                       key={platform.id}
                       onClick={platform.onClick}
                       type="button"
-                      className="group flex flex-col items-center justify-center py-3 px-2 rounded-2xl bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 text-center transition cursor-pointer active:scale-98 shadow-sm"
+                      className="group flex flex-col items-center justify-center py-2.5 px-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800/90 border border-zinc-800/90 hover:border-zinc-700 text-center transition-all cursor-pointer active:scale-95 shadow-2xs hover:shadow-xs"
+                      title={platform.name}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800/90 flex items-center justify-center text-zinc-200 group-hover:text-white group-hover:border-zinc-600 group-hover:bg-zinc-800 transition mb-1.5 shadow-sm">
+                      <div className="w-8.5 h-8.5 rounded-lg bg-zinc-900 border border-zinc-800/90 flex items-center justify-center text-zinc-300 group-hover:text-white group-hover:border-zinc-600 group-hover:bg-zinc-800 transition mb-1 shadow-2xs">
                         {platform.icon}
                       </div>
-                      <span className="text-[11px] font-medium text-zinc-200 group-hover:text-white truncate max-w-full">
+                      <span className="text-[11px] font-medium text-zinc-300 group-hover:text-white truncate max-w-full leading-tight">
                         {platform.name}
                       </span>
                     </button>
@@ -791,12 +791,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               </div>
 
               {/* Auxiliary Actions (Open in Browser, Report) */}
-              <div className="pt-3 pb-2 mt-1 flex items-center justify-between border-t border-zinc-800/80">
+              <div className="pt-3 pb-1 mt-1 flex items-center justify-between border-t border-zinc-800/80">
                 <a
                   href={shareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-zinc-200 hover:text-zinc-200 transition font-medium"
+                  className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors font-medium cursor-pointer"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>{t("shareModal.openNewTab", "Open in new tab")}</span>
@@ -808,7 +808,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       onClose();
                       onOpenReport(video);
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs text-red-400/90 hover:text-red-300 transition font-medium cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-xs text-red-400/90 hover:text-red-300 transition-colors font-medium cursor-pointer"
                   >
                     <Flag className="w-3.5 h-3.5" />
                     <span>{t("shareModal.report", "Report")}</span>
