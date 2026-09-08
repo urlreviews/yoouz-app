@@ -684,7 +684,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Bottom Area: Metadata & Actions Container - sits cleanly above the bottom progress bar on mobile and desktop */}
       <div 
-        className="relative z-30 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none pb-4 md:pb-5"
+        className="relative z-30 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none copo-video-bottom-metadata"
       >
         
         {/* Bottom Video Metadata & Place Badge */}
@@ -910,7 +910,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onTouchEnd={handleScrubberTouchEnd}
           onTouchCancel={handleScrubberTouchEnd}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-0 left-0 right-0 z-50 h-7 sm:h-8 flex items-end pb-0 cursor-pointer select-none px-0 group touch-none"
+          className="copo-video-scrubber-position absolute left-0 right-0 z-40 h-8 sm:h-9 flex items-end pb-0 cursor-pointer select-none px-0 group touch-none"
         >
           {/* YouTube Shorts / TikTok Style Compact Floating Thumbnail Frame Preview */}
           {(isScrubbing || isHovering) && (

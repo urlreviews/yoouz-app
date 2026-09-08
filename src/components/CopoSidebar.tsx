@@ -43,6 +43,39 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
 }) => {
   const { t, currentLanguageMeta, isRTL } = useLanguage();
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const mobileNavRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    const updateNavHeight = () => {
+      if (typeof window === "undefined") return;
+      if (window.innerWidth < 768 && mobileNavRef.current) {
+        const height = mobileNavRef.current.offsetHeight || mobileNavRef.current.getBoundingClientRect().height;
+        if (height > 0) {
+          document.documentElement.style.setProperty("--mobile-nav-height", `${Math.round(height)}px`);
+          return;
+        }
+      } else if (window.innerWidth >= 768) {
+        document.documentElement.style.setProperty("--mobile-nav-height", "0px");
+      }
+    };
+
+    updateNavHeight();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && mobileNavRef.current) {
+      ro = new ResizeObserver(() => updateNavHeight());
+      ro.observe(mobileNavRef.current);
+    }
+
+    window.addEventListener("resize", updateNavHeight, { passive: true });
+    window.addEventListener("orientationchange", updateNavHeight, { passive: true });
+
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", updateNavHeight);
+      window.removeEventListener("orientationchange", updateNavHeight);
+    };
+  }, []);
  
   const navItems = [
     { id: "home" as NavSection, label: t("nav.home", "Home"), icon: Home },
@@ -253,6 +286,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
 
       {/* 3. Mobile Native 5-Tab Bottom Navigation Bar (iOS & Android Universal) */}
       <nav
+        ref={mobileNavRef}
         id="copo-mobile-bottom-nav"
         aria-label="Mobile Navigation"
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800/90 text-white shadow-[0_-8px_30px_rgba(0,0,0,0.8)]"

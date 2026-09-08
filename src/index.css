@@ -58,12 +58,29 @@ html, body, #root {
 }
 
 :root {
-  --mobile-nav-height: calc(61px + max(10px, env(safe-area-inset-bottom, 10px)));
+  --mobile-nav-height: calc(71px + max(10px, env(safe-area-inset-bottom, 10px)));
 }
 
 @media (min-width: 768px) {
   :root {
     --mobile-nav-height: 0px;
+  }
+}
+
+.copo-video-scrubber-position {
+  bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 3px);
+}
+
+.copo-video-bottom-metadata {
+  padding-bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 16px);
+}
+
+@media (min-width: 768px) {
+  .copo-video-scrubber-position {
+    bottom: 0px !important;
+  }
+  .copo-video-bottom-metadata {
+    padding-bottom: 1.25rem !important;
   }
 }
 
@@ -75,7 +92,7 @@ html, body, #root {
     padding-top: env(safe-area-inset-top, 16px);
   }
   .pb-mobile-nav {
-    padding-bottom: calc(61px + max(10px, env(safe-area-inset-bottom, 10px)));
+    padding-bottom: calc(71px + max(10px, env(safe-area-inset-bottom, 10px)));
   }
   @media (min-width: 768px) {
     .pb-mobile-nav {
@@ -83,13 +100,8 @@ html, body, #root {
     }
   }
   .h-mobile-stage {
-    height: calc(100vh - 61px - max(10px, env(safe-area-inset-bottom, 10px)));
-    height: calc(100dvh - 61px - max(10px, env(safe-area-inset-bottom, 10px)));
-  }
-  @media (min-width: 768px) {
-    .h-mobile-stage {
-      height: 100dvh !important;
-    }
+    height: 100vh;
+    height: 100dvh;
   }
 }
 

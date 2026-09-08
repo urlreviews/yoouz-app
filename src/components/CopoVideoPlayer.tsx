@@ -1340,7 +1340,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               ref={(el) => {
                 cardRefs.current[videos.length] = el;
               }}
-              className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 bg-black md:bg-zinc-950 md:rounded-3xl border-0 md:border md:border-white/10 text-center select-none relative"
+              className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 pb-[calc(var(--mobile-nav-height,calc(71px+max(10px,env(safe-area-inset-bottom,10px))))+24px)] md:pb-8 bg-black md:bg-zinc-950 md:rounded-3xl border-0 md:border md:border-white/10 text-center select-none relative"
             >
               {/* Green checkmark circle */}
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mb-5 text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)]">
