@@ -547,8 +547,30 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const clampedPct = Math.max(0, Math.min(100, pct));
     const targetTime = Math.max(0, Math.min(dur, (clampedPct / 100) * dur));
     try {
-      vid.currentTime = targetTime;
+      if (typeof (vid as any).fastSeek === "function") {
+        (vid as any).fastSeek(targetTime);
+      } else {
+        vid.currentTime = targetTime;
+      }
       setProgressPercent(clampedPct);
+    } catch (e) {}
+  }, [currentIndex, videos, videoDuration]);
+
+  const handleSeekDelta = useCallback((deltaSeconds: number) => {
+    const vid = feedVideoRef.current;
+    if (!vid) return;
+    const dur = (vid.duration && !isNaN(vid.duration) && vid.duration > 0)
+      ? vid.duration
+      : (videoDuration > 0 ? videoDuration : (videos[currentIndex]?.durationSeconds || 60));
+    const newTime = Math.max(0, Math.min(dur, vid.currentTime + deltaSeconds));
+    try {
+      if (typeof (vid as any).fastSeek === "function") {
+        (vid as any).fastSeek(newTime);
+      } else {
+        vid.currentTime = newTime;
+      }
+      const newPct = dur > 0 ? (newTime / dur) * 100 : 0;
+      setProgressPercent(newPct);
     } catch (e) {}
   }, [currentIndex, videos, videoDuration]);
 
@@ -1286,6 +1308,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 videoDuration={videoDuration}
                 onScrubStart={isCardActive ? handleScrubStart : undefined}
                 onSeekToPercent={isCardActive ? handleSeekToPercent : undefined}
+                onSeekDelta={isCardActive ? handleSeekDelta : undefined}
                 onScrubEnd={isCardActive ? handleScrubEnd : undefined}
                 isActualMuted={isActualMuted}
                 isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}

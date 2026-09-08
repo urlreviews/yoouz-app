@@ -72,7 +72,7 @@ html, body, #root {
 }
 
 .copo-video-bottom-metadata {
-  padding-bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 16px);
+  padding-bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 20px);
 }
 
 @media (min-width: 768px) {

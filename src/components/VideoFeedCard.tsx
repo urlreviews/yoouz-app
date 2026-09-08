@@ -17,7 +17,9 @@ import {
   ChevronRight,
   ChevronLeft,
   Loader2,
-  MapPin
+  MapPin,
+  RotateCcw,
+  RotateCw
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
@@ -75,6 +77,7 @@ interface VideoFeedCardProps {
   unreadCount?: number;
   onScrubStart?: () => void;
   onSeekToPercent?: (percent: number) => void;
+  onSeekDelta?: (deltaSeconds: number) => void;
   onScrubEnd?: (percent: number) => void;
 }
 
@@ -120,6 +123,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   unreadCount = 0,
   onScrubStart,
   onSeekToPercent,
+  onSeekDelta,
   onScrubEnd
 }) => {
   const { t } = useLanguage();
@@ -128,6 +132,30 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const lastTapTimeRef = useRef<number>(0);
   const lastMuteTapTimeRef = useRef<number>(0);
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Jump feedback badge (e.g. -1.5s or +1.5s)
+  const [jumpFeedback, setJumpFeedback] = useState<{ type: 'rewind' | 'forward'; text: string } | null>(null);
+  const jumpFeedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerJumpFeedback = useCallback((deltaSeconds: number) => {
+    if (jumpFeedbackTimeoutRef.current) {
+      clearTimeout(jumpFeedbackTimeoutRef.current);
+    }
+    const type = deltaSeconds < 0 ? 'rewind' : 'forward';
+    const absSec = Math.abs(deltaSeconds);
+    const text = `${deltaSeconds < 0 ? '-' : '+'}${absSec}s`;
+    setJumpFeedback({ type, text });
+    triggerHaptic("medium");
+    jumpFeedbackTimeoutRef.current = setTimeout(() => {
+      setJumpFeedback(null);
+    }, 750);
+  }, []);
+
+  // Card horizontal swipe gesture tracking
+  const cardTouchStartXRef = useRef<number>(0);
+  const cardTouchStartYRef = useRef<number>(0);
+  const cardTouchStartTimeRef = useRef<number>(0);
+  const isCardHorizontalSwipeRef = useRef<boolean>(false);
 
   // Video Scrubbing state (supports live seeking, desktop hover preview, and unified mobile touch)
   const [isScrubbing, setIsScrubbing] = useState<boolean>(false);
@@ -192,7 +220,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       }
     }
 
-    // Throttle preview video decoder using requestAnimationFrame to keep UI completely lag-free
+    // High-speed preview video seeking
     if (previewVideoRef.current) {
       if (previewVideoRafRef.current) {
         cancelAnimationFrame(previewVideoRafRef.current);
@@ -201,7 +229,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         previewVideoRafRef.current = null;
         if (previewVideoRef.current) {
           try {
-            if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.05) {
+            if (typeof (previewVideoRef.current as any).fastSeek === "function") {
+              (previewVideoRef.current as any).fastSeek(targetSeconds);
+            } else if (Math.abs(previewVideoRef.current.currentTime - targetSeconds) > 0.03) {
               previewVideoRef.current.currentTime = targetSeconds;
             }
           } catch (e) {}
@@ -209,9 +239,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       });
     }
 
-    // YouTube Shorts & TikTok standard:
-    // Only seek the main video when isFinal is true (user releases finger or mouse).
-    // While swiping left and right, the main video continues playing uninterrupted!
+    // Live update main video frame during dragging for physical app responsiveness
+    if (seekRafRef.current) {
+      cancelAnimationFrame(seekRafRef.current);
+    }
+    seekRafRef.current = requestAnimationFrame(() => {
+      seekRafRef.current = null;
+      onSeekToPercent?.(clampedPct);
+    });
+
     if (isFinal) {
       scrubberRectRef.current = null;
       lastHapticSecondRef.current = -1;
@@ -477,14 +513,30 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     const now = Date.now();
     const diff = now - lastTapTimeRef.current;
     
-    if (diff < 320 && diff > 0) {
+    if (diff < 340 && diff > 0) {
       // Detected Double Tap! Cancel pending single tap play/pause
       if (singleTapTimeoutRef.current) {
         clearTimeout(singleTapTimeoutRef.current);
         singleTapTimeoutRef.current = null;
       }
       lastTapTimeRef.current = 0;
-      triggerDoubleTapLike(e.clientX, e.clientY);
+
+      const cardEl = e.currentTarget;
+      const rect = cardEl.getBoundingClientRect();
+      const relativeX = (e.clientX - rect.left) / rect.width;
+
+      if (relativeX < 0.32) {
+        // Double tap on left third -> Rewind 1.5s
+        onSeekDelta?.(-1.5);
+        triggerJumpFeedback(-1.5);
+      } else if (relativeX > 0.68) {
+        // Double tap on right third -> Forward 1.5s
+        onSeekDelta?.(1.5);
+        triggerJumpFeedback(1.5);
+      } else {
+        // Center double tap -> Heart Like
+        triggerDoubleTapLike(e.clientX, e.clientY);
+      }
     } else {
       // Single tap: execute togglePlayPause directly and synchronously to preserve gesture token
       lastTapTimeRef.current = now;
@@ -498,7 +550,52 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       clearTimeout(singleTapTimeoutRef.current);
       singleTapTimeoutRef.current = null;
     }
-    triggerDoubleTapLike(e.clientX, e.clientY);
+    const cardEl = e.currentTarget;
+    const rect = cardEl.getBoundingClientRect();
+    const relativeX = (e.clientX - rect.left) / rect.width;
+
+    if (relativeX < 0.32) {
+      onSeekDelta?.(-1.5);
+      triggerJumpFeedback(-1.5);
+    } else if (relativeX > 0.68) {
+      onSeekDelta?.(1.5);
+      triggerJumpFeedback(1.5);
+    } else {
+      triggerDoubleTapLike(e.clientX, e.clientY);
+    }
+  };
+
+  const handleCardTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches && e.touches[0]) {
+      cardTouchStartXRef.current = e.touches[0].clientX;
+      cardTouchStartYRef.current = e.touches[0].clientY;
+      cardTouchStartTimeRef.current = Date.now();
+      isCardHorizontalSwipeRef.current = false;
+    }
+  };
+
+  const handleCardTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!e.touches || !e.touches[0]) return;
+    const dx = e.touches[0].clientX - cardTouchStartXRef.current;
+    const dy = e.touches[0].clientY - cardTouchStartYRef.current;
+    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 18) {
+      isCardHorizontalSwipeRef.current = true;
+    }
+  };
+
+  const handleCardTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (isCardHorizontalSwipeRef.current && e.changedTouches && e.changedTouches[0]) {
+      const dx = e.changedTouches[0].clientX - cardTouchStartXRef.current;
+      const elapsed = Date.now() - cardTouchStartTimeRef.current;
+      if (Math.abs(dx) > 30 && elapsed < 450) {
+        const delta = dx < 0 ? -1.5 : 1.5;
+        onSeekDelta?.(delta);
+        triggerJumpFeedback(delta);
+        isCardHorizontalSwipeRef.current = false;
+        return;
+      }
+    }
+    isCardHorizontalSwipeRef.current = false;
   };
 
   const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
@@ -600,8 +697,27 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         className="absolute inset-0 z-20 cursor-pointer"
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTapLike}
+        onTouchStart={handleCardTouchStart}
+        onTouchMove={handleCardTouchMove}
+        onTouchEnd={handleCardTouchEnd}
         aria-label="Toggle Play/Pause"
       />
+
+      {/* Visual Jump Feedback Overlay (e.g. -1.5s or +1.5s) */}
+      {jumpFeedback && (
+        <div className="absolute inset-0 z-35 flex items-center justify-center pointer-events-none animate-in fade-in zoom-in-90 duration-150">
+          <div className="px-5 py-3 rounded-full bg-black/85 backdrop-blur-2xl border border-white/40 shadow-2xl flex items-center gap-2.5 text-white">
+            {jumpFeedback.type === "rewind" ? (
+              <RotateCcw className="w-6 h-6 text-white stroke-[2.5] animate-pulse" />
+            ) : (
+              <RotateCw className="w-6 h-6 text-white stroke-[2.5] animate-pulse" />
+            )}
+            <span className="font-extrabold text-base tracking-wide font-mono">
+              {jumpFeedback.text}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Vignette Gradients for readable text */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/85 z-10 pointer-events-none" />
@@ -724,7 +840,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Bottom Area: Metadata & Actions Container - sits cleanly above the bottom progress bar on mobile and desktop */}
       <div 
-        className="relative z-30 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none copo-video-bottom-metadata"
+        className="relative z-45 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none copo-video-bottom-metadata"
       >
         
         {/* Bottom Video Metadata & Place Badge */}
@@ -814,7 +930,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         <aside
           id={`copo-video-actions-col-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-0"
+          className="relative z-50 flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-1 sm:mb-2"
         >
           {/* Creator Avatar */}
           <div className="relative group/avatar mb-0.5">
@@ -920,14 +1036,21 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </div>
 
           {/* More Options */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center relative z-50 pointer-events-auto">
             <button
               id={`btn-more-options-${video.id}`}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 triggerHaptic("light");
                 onOpenMoreMenu(video);
               }}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center hover:scale-105 transition-all active:scale-90 text-white cursor-pointer shadow-xl"
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                triggerHaptic("light");
+                onOpenMoreMenu(video);
+              }}
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/65 backdrop-blur-xl border border-white/30 hover:border-white/60 hover:bg-black/85 flex items-center justify-center hover:scale-105 transition-all active:scale-90 text-white cursor-pointer shadow-xl relative z-50 pointer-events-auto"
               title={t("video.moreOptions", "More options")}
             >
               <MoreHorizontal className="w-6 h-6 stroke-[2.5] text-white" />
@@ -955,7 +1078,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             updateSeekPosition(pct, true);
             onScrubEnd?.(pct);
           }}
-          className="copo-video-scrubber-position absolute left-0 right-0 z-40 h-11 sm:h-12 flex items-end pb-1 cursor-pointer select-none px-0 group touch-none"
+          className="copo-video-scrubber-position absolute left-0 right-0 z-40 h-9 sm:h-10 flex items-end pb-1 cursor-pointer select-none px-0 group touch-none"
         >
           {/* YouTube Shorts / TikTok Style Compact Floating Thumbnail Frame Preview */}
           {(isScrubbing || isHovering) && (
