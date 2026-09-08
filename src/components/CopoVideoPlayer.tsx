@@ -126,6 +126,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
   const [firstFrameRenderedId, setFirstFrameRenderedId] = useState<string | null>(null);
   const [progressPercent, setProgressPercent] = useState<number>(0);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
   const [isActualMuted, setIsActualMuted] = useState<boolean>(true);
   const [isManuallyPaused, setIsManuallyPaused] = useState<boolean>(false);
   const isManuallyPausedRef = useRef<boolean>(false);
@@ -187,6 +188,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             setIsBuffering(false);
           }
         });
+        vid.addEventListener("loadedmetadata", () => {
+          if (feedVideoRef.current === vid && vid.duration && !isNaN(vid.duration)) {
+            setVideoDuration(vid.duration);
+          }
+        });
         vid.addEventListener("timeupdate", () => {
           if (feedVideoRef.current === vid) {
             if (!vid.paused && vid.currentTime >= 0.05) {
@@ -197,6 +203,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               }
             }
             if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
+              setVideoDuration(vid.duration);
               setProgressPercent((vid.currentTime / vid.duration) * 100);
             }
           }
@@ -1237,6 +1244,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isPlaying={isCardActive && !isPaused ? isPlaying : false}
                 isBuffering={isCardActive ? isBuffering : false}
                 progressPercent={isCardActive ? progressPercent : 0}
+                videoDuration={videoDuration}
                 onSeekToPercent={isCardActive ? handleSeekToPercent : undefined}
                 isActualMuted={isActualMuted}
                 isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}

@@ -40,6 +40,7 @@ interface VideoFeedCardProps {
   isPlaying?: boolean;
   isBuffering?: boolean;
   progressPercent?: number;
+  videoDuration?: number;
   isActualMuted?: boolean;
   isManuallyPaused?: boolean;
   hasRenderedFirstFrame?: boolean;
@@ -84,6 +85,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   isPlaying = false,
   isBuffering = false,
   progressPercent = 0,
+  videoDuration = 0,
   isActualMuted = true,
   isManuallyPaused = false,
   hasRenderedFirstFrame = false,
@@ -137,10 +139,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   };
 
   const getScrubTimeText = (pct: number) => {
-    if (typeof document === "undefined") return "0:00";
-    const vidEl = document.querySelector(`#video-slot-${video.id} video`) as HTMLVideoElement;
-    const duration = vidEl?.duration && !isNaN(vidEl.duration) ? vidEl.duration : 60; // Fallback to 60s
-    const current = Math.round((pct / 100) * duration);
+    const dur = videoDuration > 0 ? videoDuration : 60; // Fallback to 60s
+    const current = Math.round((pct / 100) * dur);
     const m = Math.floor(current / 60);
     const s = Math.floor(current % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
@@ -154,22 +154,30 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   };
 
-  const handleScrubberPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleScrubberPointerDown = (e: React.PointerEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation();
     setIsScrubbing(true);
-    try {
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    } catch (err) {}
-    handleScrubberSeek(e.clientX);
+    if ('pointerId' in e) {
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } catch (err) {}
+      handleScrubberSeek(e.clientX);
+    } else if (e.touches && e.touches[0]) {
+      handleScrubberSeek(e.touches[0].clientX);
+    }
   };
 
-  const handleScrubberPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleScrubberPointerMove = (e: React.PointerEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!isScrubbing) return;
     e.stopPropagation();
-    handleScrubberSeek(e.clientX);
+    if ('clientX' in e) {
+      handleScrubberSeek(e.clientX);
+    } else if (e.touches && e.touches[0]) {
+      handleScrubberSeek(e.touches[0].clientX);
+    }
   };
 
-  const handleScrubberPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleScrubberPointerUp = (e: React.PointerEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!isScrubbing) return;
     e.stopPropagation();
     setIsScrubbing(false);
@@ -727,15 +735,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onPointerMove={handleScrubberPointerMove}
           onPointerUp={handleScrubberPointerUp}
           onPointerCancel={handleScrubberPointerUp}
+          onTouchStart={handleScrubberPointerDown}
+          onTouchMove={handleScrubberPointerMove}
+          onTouchEnd={handleScrubberPointerUp}
+          onTouchCancel={handleScrubberPointerUp}
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-0 left-0 right-0 z-50 h-6 flex items-center cursor-pointer group pointer-events-auto touch-none select-none px-0"
+          className="absolute bottom-0 left-0 right-0 z-50 h-8 flex items-center cursor-pointer group pointer-events-auto select-none px-0"
+          style={{ touchAction: 'pan-x' }}
           title={t("video.scrubVideo", "Drag or tap to seek video")}
           aria-label={t("video.scrubVideo", "Drag or tap to seek video")}
         >
           {/* Background Track - 3px for better visibility */}
           <div className="w-full h-[3px] group-hover:h-[5px] group-active:h-[5px] bg-white/30 transition-all duration-150 relative">
             
-            {/* Premium Scrubbing Tooltip (Thumbnail + Timestamp) */}
+            {/* Premium Scrubbing Tooltip (Live Timestamp Only - relies on main video live preview) */}
             {isScrubbing && (
               <div 
                 className="absolute bottom-6 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
@@ -744,15 +757,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   transform: 'translateX(-50%)'
                 }}
               >
-                <div className="w-[84px] h-[140px] md:w-[120px] md:h-[200px] rounded-xl overflow-hidden border-2 border-white/20 bg-black/50 shadow-2xl backdrop-blur-sm relative">
-                   <img 
-                     src={posterUrl} 
-                     alt="Scrub Preview" 
-                     className="w-full h-full object-cover opacity-90" 
-                     loading="eager"
-                   />
-                </div>
-                <div className="mt-2 px-3 py-1 rounded-md bg-black/80 backdrop-blur-md text-white text-xs font-bold font-mono tracking-wider shadow-lg">
+                <div className="px-4 py-2 rounded-full bg-black/90 backdrop-blur-md text-white text-sm font-bold font-mono tracking-wider shadow-lg border border-white/15">
                   {scrubTimeText}
                 </div>
               </div>
