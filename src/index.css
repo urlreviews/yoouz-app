@@ -65,7 +65,7 @@ html, body, #root {
     padding-top: env(safe-area-inset-top, 16px);
   }
   .pb-mobile-nav {
-    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(61px + max(10px, env(safe-area-inset-bottom, 10px)));
   }
   @media (min-width: 768px) {
     .pb-mobile-nav {
