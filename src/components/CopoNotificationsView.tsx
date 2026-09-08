@@ -266,6 +266,26 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
     return null;
   };
 
+  // Helper to open the interacting user's profile
+  const handleOpenUserProfile = (notif: CopoNotification, e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleMarkAsRead(notif.id);
+    if (!onOpenCreator || !notif.user?.name) return;
+
+    const isYoouzTeam =
+      (notif.user.name || "").toLowerCase().includes("yoouz") ||
+      (notif.user.email || "").toLowerCase().includes("yoouz") ||
+      (notif.user.email || "").toLowerCase().includes("admin");
+
+    if (isYoouzTeam) return;
+
+    onOpenCreator({
+      name: notif.user.name,
+      avatar: notif.user.avatar,
+      handle: notif.user.name.toLowerCase().replace(/\s+/g, ""),
+      isFollowed: false
+    });
+  };
 
   return (
     <div 
@@ -450,15 +470,21 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     handleMarkAsRead(notif.id);
                     if (notif.type === "message" && onNavigateToMessages) {
                       onNavigateToMessages();
+                    } else if (notif.type === "follow" && notif.user?.name && onOpenCreator) {
+                      const isYoouzTeam =
+                        (notif.user.name || "").toLowerCase().includes("yoouz") ||
+                        (notif.user.email || "").toLowerCase().includes("yoouz") ||
+                        (notif.user.email || "").toLowerCase().includes("admin");
+                      if (!isYoouzTeam) {
+                        onOpenCreator({
+                          name: notif.user.name,
+                          avatar: notif.user.avatar,
+                          handle: notif.user.name.toLowerCase().replace(/\s+/g, ""),
+                          isFollowed: false
+                        });
+                      }
                     } else if (notif.videoId) {
                       onSelectNotificationVideo(notif.videoId);
-                    } else if (notif.type === "follow" && notif.user?.name && onOpenCreator) {
-                      onOpenCreator({
-                        name: notif.user.name,
-                        avatar: notif.user.avatar,
-                        handle: notif.user.name.toLowerCase().replace(/\s+/g, ""),
-                        isFollowed: false
-                      });
                     }
                   }}
                   className={`group relative p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 hover:bg-zinc-800/60 active:bg-zinc-800 cursor-pointer transition-colors ${
@@ -466,8 +492,12 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                    {/* Avatar with Badge Overlay */}
-                    <div className="relative shrink-0 select-none">
+                    {/* Avatar with Badge Overlay - Tapping Avatar opens User Profile */}
+                    <div 
+                      onClick={(e) => handleOpenUserProfile(notif, e)}
+                      className="relative shrink-0 select-none cursor-pointer hover:opacity-90 active:scale-95 transition-transform"
+                      title={notif.user?.name ? `View ${notif.user.name}'s profile` : "View profile"}
+                    >
                       {(() => {
                         const isYoouzTeam =
                           (notif.user.name || "").toLowerCase().includes("yoouz") ||
@@ -481,7 +511,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           <img
                             src={avatarSrc}
                             alt={notif.user.name}
-                            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-zinc-800/80 shadow-2xs"
+                            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-zinc-800/80 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all"
                             referrerPolicy="no-referrer"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src = isYoouzTeam
@@ -499,7 +529,12 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     {/* Notification Text Content */}
                     <div className="min-w-0 flex-1">
                       <div className="text-xs sm:text-[13px] text-zinc-200 leading-snug break-words line-clamp-2">
-                        <span className="font-extrabold text-white hover:underline">
+                        {/* Tapping User Name specifically opens User Profile */}
+                        <span 
+                          onClick={(e) => handleOpenUserProfile(notif, e)}
+                          className="font-extrabold text-white hover:underline cursor-pointer transition-colors"
+                          title={notif.user?.name ? `View ${notif.user.name}'s profile` : "View profile"}
+                        >
                           {notif.user.name}
                         </span>{" "}
                         {details.type === "recommendation" ? (
@@ -562,7 +597,14 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   <div className="flex items-center gap-2 shrink-0 select-none">
                     {resolvedThumbnail ? (
                       <div 
-                        className="w-11 h-14 sm:w-12 sm:h-15 rounded-xl overflow-hidden bg-zinc-950 shrink-0 border border-zinc-800 shadow-md relative group-hover:scale-105 transition-transform duration-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMarkAsRead(notif.id);
+                          if (notif.videoId) {
+                            onSelectNotificationVideo(notif.videoId);
+                          }
+                        }}
+                        className="w-11 h-14 sm:w-12 sm:h-15 rounded-xl overflow-hidden bg-zinc-950 shrink-0 border border-zinc-800 shadow-md relative group-hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer"
                         title="Watch video review"
                       >
                         <img
