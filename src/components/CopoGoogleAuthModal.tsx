@@ -8,6 +8,7 @@ import { KNOWN_COMMUNITY_USERS } from "../utils/placeUtils";
 import { Country, State, City } from "country-state-city";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
+import { sendWelcomeNotificationForNewUser } from "../lib/socialSync";
 
 export type AuthIntent = 
   | 'general' 
@@ -290,6 +291,8 @@ export const CopoAuthPrompt: React.FC<{
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUser)
       });
+      // Send real one-time welcome notification for newly registered user
+      sendWelcomeNotificationForNewUser(updatedUser);
     } catch (saveErr) {
       console.warn("Profile update warning:", saveErr);
     } finally {

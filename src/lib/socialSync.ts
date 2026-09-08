@@ -408,23 +408,6 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     });
   }
 
-  // System Welcome Notification Fallback if no user notifications exist yet and not deleted/cleared
-  const welcomeId = `welcome_notif_${userHandle || "user"}`;
-  if (list.length === 0 && !deletedSet.has(welcomeId) && !deletedSet.has("all_cleared")) {
-    list.push({
-      id: welcomeId,
-      type: "follow",
-      user: {
-        name: "Yoouz Team",
-        avatar: "/yoouz-facebook-avatar.png"
-      },
-      text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review.",
-      timestamp: "Just now",
-      createdAtMs: Date.now(),
-      isRead: false
-    });
-  }
-
   // Sort newest first
   list.sort((a, b) => {
     const timeA = a.createdAtMs || (a as any).createdAt || 0;
@@ -436,17 +419,22 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
 }
 
 /**
- * Send a official welcome notification to new users on their first sign in
+ * Send an official welcome notification strictly once when a new user signs up
  */
-export async function sendWelcomeNotificationIfNeeded(currentUser: UserProfile): Promise<void> {
+export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile): Promise<void> {
   if (!currentUser) return;
   const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
   const welcomeKey = `yoouz_welcome_sent_${userKey}`;
   const deletedSet = getDeletedNotifIds(userKey);
 
-  if (!localStorage.getItem(welcomeKey) && !deletedSet.has(`welcome_notif_${userKey}`) && !deletedSet.has("all_cleared")) {
-    localStorage.setItem(welcomeKey, "true");
-    sendSocialNotification({
+  // Strictly check if already sent or deleted
+  if (localStorage.getItem(welcomeKey) || deletedSet.has(`welcome_notif_${userKey}`) || deletedSet.has("all_cleared")) {
+    return;
+  }
+
+  localStorage.setItem(welcomeKey, "true");
+  try {
+    await sendSocialNotification({
       customId: `welcome_notif_${userKey}`,
       recipientEmail: currentUser.email || userKey,
       recipientHandle: currentUser.name || userKey,
@@ -458,8 +446,8 @@ export async function sendWelcomeNotificationIfNeeded(currentUser: UserProfile):
         email: "team@yoouz.com"
       },
       text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review."
-    }).catch(() => {});
-  }
+    });
+  } catch {}
 }
 
 /**
@@ -474,9 +462,6 @@ export function subscribeToNotifications(
     onUpdate([]);
     return () => {};
   }
-
-  // Ensure first-time signups receive the official welcome notification
-  sendWelcomeNotificationIfNeeded(currentUser);
 
   let isDisposed = false;
   let cachedNotifs: CopoNotification[] = [];
@@ -498,8 +483,18 @@ export function subscribeToNotifications(
     if (rawCache) {
       const parsed = JSON.parse(rawCache);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        cachedNotifs = parsed;
-        onUpdate(parsed);
+        // Clean out any synthetic unpersisted welcome notification for existing users
+        const cleaned = parsed.filter((n: any) => {
+          if (!n || !n.id) return false;
+          // If it's a synthetic welcome without real ID or if user already has other real notifications
+          if (String(n.id).startsWith("welcome_notif_") && parsed.length > 1 && n.isRead === false) {
+            // Keep it if it has been marked as read, otherwise clean it out from initial display
+            return false;
+          }
+          return true;
+        });
+        cachedNotifs = cleaned;
+        onUpdate(cleaned);
       }
     }
   } catch (e) {}
