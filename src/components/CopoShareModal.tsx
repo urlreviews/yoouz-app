@@ -197,15 +197,39 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : `Check out ${title} on Yoouz — Authentic 60-second video reviews:`;
 
   const handleCopy = async () => {
+    let success = false;
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      triggerHaptic("success");
-      setCopied(true);
-      showToast("Link copied to clipboard");
-      setTimeout(() => setCopied(false), 2200);
+      if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+        success = true;
+      }
     } catch (err) {
-      console.warn("Failed to copy link:", err);
+      console.warn("Primary clipboard writeText failed, trying fallback:", err);
     }
+
+    if (!success) {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = shareUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        textArea.setAttribute("readonly", "");
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+        success = true;
+      } catch (fallbackErr) {
+        console.warn("Clipboard fallback copy failed:", fallbackErr);
+      }
+    }
+
+    triggerHaptic("success");
+    setCopied(true);
+    showToast("Link copied to clipboard");
+    setTimeout(() => setCopied(false), 2400);
   };
 
   const handleNativeShare = async () => {
@@ -243,41 +267,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     }
   };
 
-  const handleTikTokShare = async () => {
-    triggerHaptic("light");
-    await handleCopy();
-    showToast("Link copied! Opening TikTok...");
-    setTimeout(() => {
-      const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        window.location.href = "snssdk1233://";
-        setTimeout(() => {
-          window.open("https://www.tiktok.com", "_blank", "noopener,noreferrer");
-        }, 1200);
-      } else {
-        window.open("https://www.tiktok.com", "_blank", "noopener,noreferrer");
-      }
-    }, 400);
-  };
-
-  const handleInstagramShare = async () => {
-    triggerHaptic("light");
-    await handleCopy();
-    showToast("Link copied! Share to Instagram Stories...");
-    setTimeout(() => {
-      const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        window.location.href = "instagram://app";
-        setTimeout(() => {
-          window.open("https://www.instagram.com", "_blank", "noopener,noreferrer");
-        }, 1200);
-      } else {
-        window.open("https://www.instagram.com", "_blank", "noopener,noreferrer");
-      }
-    }, 400);
-  };
-
-  // Master list of all share channels with direct deep linking and web fallbacks
+  // Master list of all share channels with explicit URL scheme intents and web fallbacks
   const allSharePlatforms = [
     {
       id: "whatsapp",
@@ -287,73 +277,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.528 1.977 14.07 1.9 12.01 1.9c-5.44 0-9.866 4.372-9.87 9.802 0 1.714.453 3.39 1.31 4.88l-.994 3.63 3.734-.972h-.143zm11.367-7.584c-.321-.16-1.897-.938-2.185-1.043-.289-.104-.499-.158-.709.158-.21.317-.812 1.044-.995 1.254-.183.21-.366.237-.687.077-.321-.16-1.353-.499-2.577-1.59-1.002-.892-1.63-1.997-1.83-2.333-.2-.336-.022-.518.139-.677.145-.143.321-.374.482-.56.16-.187.214-.32.321-.534.107-.214.053-.4-.027-.56-.08-.16-.709-1.708-.971-2.339-.255-.612-.514-.53-.709-.54-.183-.009-.393-.011-.603-.011s-.552.079-.841.395c-.289.317-1.103 1.079-1.103 2.63s1.129 3.051 1.287 3.262c.158.21 2.22 3.391 5.377 4.754.752.325 1.339.519 1.797.665.755.24 1.443.206 1.987.125.606-.09 1.897-.775 2.16-1.485.263-.709.263-1.316.184-1.442-.079-.126-.289-.205-.61-.365z" />
         </svg>
       ),
-      onClick: () => openAppOrUrl(`whatsapp://send?text=${encodeURIComponent(shareText + " " + shareUrl)}`, `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + shareUrl)}`, "WhatsApp")
-    },
-    {
-      id: "instagram",
-      name: "Instagram",
-      icon: (
-        <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
-          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-        </svg>
-      ),
-      onClick: handleInstagramShare
-    },
-    {
-      id: "tiktok",
-      name: "TikTok",
-      icon: (
-        <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
-          <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-        </svg>
-      ),
-      onClick: handleTikTokShare
-    },
-    {
-      id: "x",
-      name: "X (Twitter)",
-      icon: (
-        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-        </svg>
-      ),
-      onClick: () => openAppOrUrl(`twitter://post?message=${encodeURIComponent(shareText + " " + shareUrl)}`, `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, "X")
-    },
-    {
-      id: "facebook",
-      name: "Facebook",
-      icon: <Facebook className="w-5.5 h-5.5" />,
-      onClick: () => openAppOrUrl(`fb://facewebmodal/f?href=${encodeURIComponent(shareUrl)}`, `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "Facebook")
-    },
-    {
-      id: "telegram",
-      name: "Telegram",
-      icon: (
-        <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
-          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.458c.538-.196 1.006.128.832.945z" />
-        </svg>
-      ),
-      onClick: () => openAppOrUrl(`tg://msg_url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, "Telegram")
-    },
-    {
-      id: "messenger",
-      name: "Messenger",
-      icon: (
-        <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
-          <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.615 4.47 8.653V24l4.088-2.244c1.077.299 2.222.464 3.442.464 6.627 0 12-4.974 12-11.109C24 4.974 18.627 0 12 0zm1.192 14.962l-3.056-3.26-5.964 3.26 6.562-6.966 3.13 3.26 5.89-3.26-6.562 6.966z" />
-        </svg>
-      ),
-      onClick: () => openAppOrUrl(`fb-messenger://share?link=${encodeURIComponent(shareUrl)}`, `https://www.facebook.com/dialog/send?link=${encodeURIComponent(shareUrl)}&app_id=291494419107518&redirect_uri=${encodeURIComponent(shareUrl)}`, "Messenger")
-    },
-    {
-      id: "line",
-      name: "Line",
-      icon: (
-        <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
-          <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
-        </svg>
-      ),
-      onClick: () => openAppOrUrl(`line://msg/text/${encodeURIComponent(shareText + " " + shareUrl)}`, `https://line.me/R/msg/text/?${encodeURIComponent(shareText + " " + shareUrl)}`, "Line")
+      onClick: () => openAppOrUrl(`whatsapp://send?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`, `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`, "WhatsApp")
     },
     {
       id: "wabusiness",
@@ -366,7 +290,53 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <span className="absolute -top-1 -right-1 text-[9px] font-black bg-zinc-200 text-zinc-950 rounded-full w-3 h-3 flex items-center justify-center leading-none">+</span>
         </div>
       ),
-      onClick: () => openAppOrUrl(`whatsapp://send?text=${encodeURIComponent(shareText + " " + shareUrl)}`, `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + shareUrl)}`, "WA Business")
+      onClick: () => openAppOrUrl(`whatsapp://send?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`, `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`, "WA Business")
+    },
+    {
+      id: "messenger",
+      name: "Messenger",
+      icon: (
+        <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
+          <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.615 4.47 8.653V24l4.088-2.244c1.077.299 2.222.464 3.442.464 6.627 0 12-4.974 12-11.109C24 4.974 18.627 0 12 0zm1.192 14.962l-3.056-3.26-5.964 3.26 6.562-6.966 3.13 3.26 5.89-3.26-6.562 6.966z" />
+        </svg>
+      ),
+      onClick: () => openAppOrUrl(`fb-messenger://share?link=${encodeURIComponent(shareUrl)}`, `https://www.facebook.com/dialog/send?link=${encodeURIComponent(shareUrl)}&app_id=291494419107518&redirect_uri=${encodeURIComponent(shareUrl)}`, "Messenger")
+    },
+    {
+      id: "telegram",
+      name: "Telegram",
+      icon: (
+        <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.458c.538-.196 1.006.128.832.945z" />
+        </svg>
+      ),
+      onClick: () => openAppOrUrl(`tg://msg_url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, "Telegram")
+    },
+    {
+      id: "line",
+      name: "Line",
+      icon: (
+        <svg className="w-5.5 h-5.5 fill-current" viewBox="0 0 24 24">
+          <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+        </svg>
+      ),
+      onClick: () => openAppOrUrl(`line://msg/text/${encodeURIComponent(shareText + "\n" + shareUrl)}`, `https://line.me/R/msg/text/?${encodeURIComponent(shareText + "\n" + shareUrl)}`, "Line")
+    },
+    {
+      id: "x",
+      name: "X (Twitter)",
+      icon: (
+        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      ),
+      onClick: () => openAppOrUrl(`twitter://post?message=${encodeURIComponent(shareText + "\n" + shareUrl)}`, `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, "X")
+    },
+    {
+      id: "facebook",
+      name: "Facebook",
+      icon: <Facebook className="w-5.5 h-5.5" />,
+      onClick: () => openAppOrUrl(`fb://facewebmodal/f?href=${encodeURIComponent(shareUrl)}`, `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`, "Facebook")
     },
     {
       id: "reddit",
@@ -376,7 +346,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.703zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.688-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
         </svg>
       ),
-      onClick: () => window.open(`https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(title || "Yoouz Video Review")}`, "_blank", "noopener,noreferrer")
+      onClick: () => window.open(`https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(title || shareText)}`, "_blank", "noopener,noreferrer")
     },
     {
       id: "sms",
@@ -384,7 +354,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       icon: <MessageSquare className="w-5.5 h-5.5" />,
       onClick: () => {
         triggerHaptic("medium");
-        window.location.href = `sms:?&body=${encodeURIComponent(shareText + " " + shareUrl)}`;
+        window.location.href = `sms:?&body=${encodeURIComponent(shareText + "\n" + shareUrl)}`;
       }
     },
     {
@@ -392,7 +362,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       name: "Email",
       icon: <Mail className="w-5.5 h-5.5" />,
       onClick: () => {
-        window.location.href = `mailto:?subject=${encodeURIComponent(title || "Yoouz")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(title || "Yoouz Video Review")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`;
       }
     }
   ];
@@ -443,20 +413,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     }
   ];
 
-  // Mobile Shelf 2: Social Networks & Ecosystems (100% Dark Mode)
+  // Mobile Shelf 2: Social Networks & Broadcast Channels (100% Dark Mode)
   const mobileSocialPlatforms = [
-    {
-      id: "tiktok",
-      name: "TikTok",
-      icon: allSharePlatforms.find((p) => p.id === "tiktok")?.icon,
-      onClick: handleTikTokShare
-    },
-    {
-      id: "instagram",
-      name: "Instagram",
-      icon: allSharePlatforms.find((p) => p.id === "instagram")?.icon,
-      onClick: handleInstagramShare
-    },
     {
       id: "x",
       name: "X (Twitter)",
@@ -480,12 +438,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       name: "Email",
       icon: allSharePlatforms.find((p) => p.id === "email")?.icon,
       onClick: allSharePlatforms.find((p) => p.id === "email")?.onClick
-    },
-    {
-      id: "native",
-      name: "More...",
-      icon: <Smartphone className="w-5 h-5" />,
-      onClick: handleNativeShare
     }
   ];
 
@@ -694,12 +646,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              {/* Desktop 4-Column Compact, Premium Dark Grid */}
+              {/* Desktop 5-Column Compact, Premium Dark Grid */}
               <div className="hidden sm:block space-y-2 pt-0.5">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   {t("shareModal.shareToPlatform", "Share to Platform")}
                 </label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   {allSharePlatforms.map((platform) => (
                     <button
                       key={platform.id}
