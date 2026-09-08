@@ -1253,15 +1253,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       ref={mainRef}
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
-      className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]"
+      className="flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]"
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      <div className="w-full h-full md:h-auto md:w-auto flex items-center md:justify-center gap-4 relative md:max-h-[95vh] md:p-3">
+      <div className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto flex items-center md:justify-center gap-4 relative md:max-h-[95vh] md:p-3">
         {/* Scroll Snap Feed Container */}
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className="w-full h-full md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
+          className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollSnapType: "y mandatory",
@@ -1340,7 +1340,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               ref={(el) => {
                 cardRefs.current[videos.length] = el;
               }}
-              className="w-full h-full md:h-[min(88vh,780px)] md:w-auto aspect-[9/16] md:max-w-[440px] snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 bg-black md:bg-zinc-950 md:rounded-3xl border-0 md:border md:border-white/10 text-center select-none relative"
+              className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 bg-black md:bg-zinc-950 md:rounded-3xl border-0 md:border md:border-white/10 text-center select-none relative"
             >
               {/* Green checkmark circle */}
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mb-5 text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)]">

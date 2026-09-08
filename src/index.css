@@ -57,6 +57,16 @@ html, body, #root {
   -webkit-appearance: none !important;
 }
 
+:root {
+  --mobile-nav-height: calc(61px + max(10px, env(safe-area-inset-bottom, 10px)));
+}
+
+@media (min-width: 768px) {
+  :root {
+    --mobile-nav-height: 0px;
+  }
+}
+
 @layer utilities {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 16px);
@@ -70,6 +80,15 @@ html, body, #root {
   @media (min-width: 768px) {
     .pb-mobile-nav {
       padding-bottom: 0px !important;
+    }
+  }
+  .h-mobile-stage {
+    height: calc(100vh - 61px - max(10px, env(safe-area-inset-bottom, 10px)));
+    height: calc(100dvh - 61px - max(10px, env(safe-area-inset-bottom, 10px)));
+  }
+  @media (min-width: 768px) {
+    .h-mobile-stage {
+      height: 100dvh !important;
     }
   }
 }

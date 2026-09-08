@@ -530,7 +530,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       ref={cardRef}
       data-video-index={index}
       id={`copo-video-card-${video.id}`}
-      className="snap-start snap-always shrink-0 relative w-full h-full md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-end group"
+      className="snap-start snap-always shrink-0 relative w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-end group"
     >
       {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
       <div
