@@ -197,6 +197,19 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     }, 250); // wait for animation
   };
 
+  const handleBack = () => {
+    if (submittedQuery) {
+      setSubmittedQuery("");
+      setQuery("");
+      setValidationError("");
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    } else {
+      handleClose();
+    }
+  };
+
   const handleSearch = (e: React.FormEvent | string) => {
     if (typeof e !== 'string') e.preventDefault();
     const raw = typeof e === 'string' ? e : query;
@@ -223,6 +236,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
     } catch {}
     
+    setQuery(cleanUrl);
     setSubmittedQuery(cleanUrl);
   };
   
@@ -257,9 +271,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       <div className="w-full flex flex-col p-3 pt-[max(12px,env(safe-area-inset-top))] sticky top-0 z-50 bg-zinc-950 border-b border-zinc-800 gap-2">
         <div className="w-full flex items-center gap-3">
           <button 
-             onClick={handleClose}
+             onClick={handleBack}
              className="text-white p-1 hover:bg-zinc-800 rounded-full transition-colors cursor-pointer"
-             aria-label="Close"
+             aria-label="Back"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>

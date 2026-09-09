@@ -100,6 +100,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   onSelectThreadId,
   onSuccessAuth
 }) => {
+  const { t } = useLanguage();
   const [localSelectedThreadId, setLocalSelectedThreadId] = useState<string>("");
   const [isMobileThreadViewOpen, setIsMobileThreadViewOpen] = useState(false);
   const [draftThread, setDraftThread] = useState<CopoMessage | null>(null);
@@ -877,60 +878,68 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
       <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col md:space-y-6 h-full">
         
-        {/* Header section matching Google Maps & TikTok Vibe with Sub-Tabs (Hidden on mobile when inside active thread) */}
-        <div className={`flex flex-col gap-3 bg-zinc-900 p-3 sm:p-5 rounded-none sm:rounded-3xl border-b sm:border border-zinc-800 shadow-xs shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
+        {/* Header section (Native mobile & desktop layout) */}
+        <div className={`flex flex-col gap-3 bg-zinc-950 sm:bg-zinc-900 px-3.5 py-3 sm:p-5 rounded-none sm:rounded-3xl border-b sm:border border-zinc-800 shadow-xs shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
+          <div className="flex items-center justify-between gap-3">
+            {/* Left: Back Button + Title & Counter */}
+            <div className="flex items-center gap-3 min-w-0">
               {onNavigateHome && (
                 <button
                   onClick={onNavigateHome}
-                  className="w-9 h-9 rounded-full bg-zinc-950 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
+                  className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
                   title="Back to Feed"
+                  aria-label="Back to Feed"
                 >
                   <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
                 </button>
               )}
-              <div className="inline-flex items-center p-1 bg-zinc-950 rounded-2xl border border-zinc-800">
-                <button
-                  id="tab-inbox-messages"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-zinc-800 text-white shadow-xs cursor-pointer transition-all"
-                >
-                  <Mail className="w-4 h-4 text-white" />
-                  <span>Messages</span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
+                    {t("nav.messages", "Messages")}
+                  </h1>
                   {unreadCount > 0 && (
-                    <span className="min-w-[18px] h-[18px] px-1 text-[10px] rounded-full bg-zinc-950 text-white flex items-center justify-center font-bold">
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black bg-white text-zinc-950 flex items-center justify-center shadow-xs">
                       {unreadCount}
                     </span>
                   )}
-                </button>
-
-                {onNavigateToNotifications && (
-                  <button
-                    id="tab-inbox-notifications"
-                    onClick={onNavigateToNotifications}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-200 hover:text-white hover:bg-zinc-800 cursor-pointer transition-all"
-                  >
-                    <Sparkles className="w-4 h-4 text-zinc-200" />
-                    <span>Activity</span>
-                    {unreadNotifsCount > 0 && (
-                      <span className="min-w-[18px] h-[18px] px-1 text-[10px] rounded-full bg-red-500 text-white flex items-center justify-center font-bold">
-                        {unreadNotifsCount}
-                      </span>
-                    )}
-                  </button>
-                )}
+                </div>
+                <p className="text-xs text-zinc-400 font-medium truncate">
+                  {unreadCount > 0
+                    ? `${unreadCount} unread message${unreadCount > 1 ? "s" : ""}`
+                    : messages.length > 0
+                    ? `${messages.length} conversation${messages.length > 1 ? "s" : ""}`
+                    : "No conversations yet"}
+                </p>
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-4 bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 shrink-0">
-              <div className="text-center border-r border-zinc-800 pr-4">
-                <p className="text-[10px] text-zinc-200 font-bold uppercase tracking-wider">Unread</p>
-                <p className="text-sm font-black text-white">{unreadCount}</p>
+            {/* Right: New Chat compose button + Desktop stats */}
+            <div className="flex items-center gap-2.5 shrink-0">
+              <div className="hidden sm:flex items-center gap-4 bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 shrink-0">
+                <div className="text-center border-r border-zinc-800 pr-4">
+                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Unread</p>
+                  <p className="text-sm font-black text-white">{unreadCount}</p>
+                </div>
+                <div className="text-center pl-1">
+                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total Chats</p>
+                  <p className="text-sm font-black text-white">{messages.length}</p>
+                </div>
               </div>
-              <div className="text-center pl-1">
-                <p className="text-[10px] text-zinc-200 font-bold uppercase tracking-wider">Total Chats</p>
-                <p className="text-sm font-black text-white">{messages.length}</p>
-              </div>
+
+              <button
+                type="button"
+                id="btn-new-chat"
+                onClick={() => {
+                  setNewChatSearch("");
+                  setShowNewChatModal(true);
+                }}
+                className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
+                title="New Conversation"
+                aria-label="New Conversation"
+              >
+                <Plus className="w-5 h-5 stroke-[2.5]" />
+              </button>
             </div>
           </div>
         </div>
@@ -940,29 +949,27 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
           
           {/* Threads Column (Hidden on mobile if viewing active thread) */}
           <div className={`w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-950 shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
-            {/* Search thread input and New Chat button */}
-            <div className="p-3 sm:p-4 border-b border-zinc-800 flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-200" />
+            {/* Search thread input */}
+            <div className="p-3 sm:p-4 border-b border-zinc-800/80 bg-zinc-950">
+              <div className="relative flex items-center">
+                <Search className="absolute left-3.5 w-4 h-4 text-zinc-400 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search chats..."
+                  placeholder="Search chats or reviewers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-zinc-900 text-xs text-white placeholder-zinc-500 pl-9 pr-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-white focus:bg-zinc-800 transition-all font-medium"
+                  className="w-full bg-zinc-900/90 text-xs text-white placeholder-zinc-500 pl-10 pr-9 py-2.5 rounded-xl border border-zinc-800 focus:outline-none focus:border-zinc-500 focus:bg-zinc-900 transition-all font-medium shadow-inner"
                 />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-2.5 p-1 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setNewChatSearch("");
-                  setShowNewChatModal(true);
-                }}
-                className="w-9 h-9 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center shadow-sm shrink-0 transition-colors cursor-pointer"
-                title="Start new message"
-              >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
-              </button>
             </div>
 
             {/* List of active threads */}

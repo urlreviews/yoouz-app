@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import {
   Bookmark,
-  BookmarkMinus,
   Star,
   Play,
-  LayoutGrid,
-  List,
   Trash2,
   Compass,
   MapPin,
@@ -37,7 +34,6 @@ interface CopoBookmarksViewProps {
   onRemoveCreator?: (author: any) => void;
 }
 
-type ViewMode = "grid" | "list";
 type TabType = "videos" | "places" | "creators";
 
 export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
@@ -58,7 +54,6 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
   onRemoveCreator
 }) => {
   const { t } = useLanguage();
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [activeTab, setActiveTab] = useState<TabType>("videos");
 
   // Unauthenticated Gating View
@@ -115,19 +110,12 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
     }
   };
 
-  // Count items depending on active tab
-  const getActiveItemsCount = () => {
-    if (activeTab === "videos") return bookmarkedVideos.length;
-    if (activeTab === "places") return savedPlaces.length;
-    return savedCreators.length;
-  };
-
   return (
     <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-950 text-white md:text-white p-4 md:p-8 select-none" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800 md:border-zinc-800">
+        <div className="flex items-center justify-between gap-4 pb-4 border-b border-zinc-800 md:border-zinc-800">
           <div className="flex items-center gap-3">
             {onNavigateHome && (
               <button
@@ -148,36 +136,6 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               </p>
             </div>
           </div>
-
-          {/* Grid/List View Toggles */}
-          {getActiveItemsCount() > 0 && (
-            <div className="flex items-center gap-2.5">
-              <div className="bg-zinc-900 p-1 rounded-lg flex items-center border border-zinc-800">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-1.5 rounded-md cursor-pointer transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-zinc-800 text-white shadow-xs"
-                      : "text-zinc-200 hover:text-white"
-                  }`}
-                  title="Grid View"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-1.5 rounded-md cursor-pointer transition-colors ${
-                    viewMode === "list"
-                      ? "bg-zinc-800 text-white shadow-xs"
-                      : "text-zinc-200 hover:text-white"
-                  }`}
-                  title="List View"
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Tab Selection */}
@@ -231,105 +189,67 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
         {/* 1. VIDEOS TAB */}
         {activeTab === "videos" && (
           bookmarkedVideos.length > 0 ? (
-            viewMode === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {bookmarkedVideos.map((video) => (
-                  <div
-                    key={`saved-grid-${video.id}`}
-                    onClick={() => onSelectVideo(video.id)}
-                    className="group relative aspect-[9/15] rounded-2xl overflow-hidden bg-black border border-zinc-800 md:border-zinc-800 cursor-pointer shadow-sm hover:shadow-lg hover:scale-[1.01] transition-all"
-                  >
-                    <CopoVideoThumbnail
-                      video={video}
-                      alt={video.caption}
-                      className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-300 pointer-events-none"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30" />
-                    <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-xs text-[10px] font-bold text-amber-300 flex items-center gap-1">
-                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                      <span>{typeof video.rating === "number" && !isNaN(video.rating) ? video.rating.toFixed(1) : (Number(video.rating) || 5.0).toFixed(1)}</span>
+            <div className="space-y-3">
+              {bookmarkedVideos.map((video) => (
+                <div
+                  key={`saved-list-${video.id}`}
+                  onClick={() => onSelectVideo(video.id)}
+                  className="group bg-zinc-900 md:bg-zinc-900 rounded-2xl border border-zinc-800 md:border-zinc-800 p-4 hover:bg-zinc-800/80 md:hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="relative w-12 h-16 rounded-xl overflow-hidden bg-black border border-zinc-800 md:border-zinc-800 shrink-0 shadow-xs">
+                      <CopoVideoThumbnail
+                        video={video}
+                        alt={video.caption}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                      />
+                      <div className="absolute inset-0 bg-black/15 pointer-events-none" />
                     </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-white text-sm truncate leading-snug">
+                          {getDisplayUrlAsDomain(video)}
+                        </h4>
+                        <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
+                          {video.placeCategory}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-200 mt-1">
+                        <div className="flex items-center text-amber-400 font-bold shrink-0">
+                          <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
+                          <span>{typeof video.rating === "number" && !isNaN(video.rating) ? video.rating.toFixed(1) : (Number(video.rating) || 5.0).toFixed(1)}</span>
+                        </div>
+                        <span className="text-zinc-650">|</span>
+                        <div className="flex items-center gap-0.5 truncate text-[11px] font-medium">
+                          <MapPin className="w-3 h-3 text-zinc-400" />
+                          <span className="truncate">{cleanDisplayAddress(video.placeAddress || video.placeCity)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <img
+                          src={video.author.avatar || `/api/avatar?name=${encodeURIComponent(video.author.name || "User")}&background=1a73e8&color=fff`}
+                          alt={video.author.name}
+                          className="w-4.5 h-4.5 rounded-full border border-zinc-800"
+                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
+                        /> 
+                        <span className="text-[10px] text-zinc-400 font-semibold">
+                          {t("video.recommendedBy", "Recommended by")} <span className="text-zinc-200 hover:underline">{video.author.name}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={(e) => handleUnsaveVideo(video.id, e)}
-                      className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/60 hover:bg-red-600/90 hover:scale-105 text-white flex items-center justify-center transition-all cursor-pointer opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                      title="Remove from saved"
+                      className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
+                      title="Unsave"
                     >
-                      <BookmarkMinus className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
-                    <div className="absolute bottom-3 left-3 right-3 text-white">
-                      <p className="font-bold text-xs truncate leading-snug">{getDisplayUrlAsDomain(video)}</p>
-                      <div className="flex items-center gap-1.5 text-[10px] text-zinc-200 mt-1">
-                        <span className="truncate">{video.author.name}</span>
-                        <span className="w-1 h-1 rounded-full bg-zinc-400 shrink-0" />
-                        <span className="shrink-0">{video.placeCategory}</span>
-                      </div>
-                    </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {bookmarkedVideos.map((video) => (
-                  <div
-                    key={`saved-list-${video.id}`}
-                    onClick={() => onSelectVideo(video.id)}
-                    className="group bg-zinc-900 md:bg-zinc-900 rounded-2xl border border-zinc-800 md:border-zinc-800 p-4 hover:bg-zinc-800/80 md:hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="relative w-12 h-16 rounded-xl overflow-hidden bg-black border border-zinc-800 md:border-zinc-800 shrink-0 shadow-xs">
-                        <CopoVideoThumbnail
-                          video={video}
-                          alt={video.caption}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                        />
-                        <div className="absolute inset-0 bg-black/15 pointer-events-none" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-white text-sm truncate leading-snug">
-                            {getDisplayUrlAsDomain(video)}
-                          </h4>
-                          <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
-                            {video.placeCategory}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-200 mt-1">
-                          <div className="flex items-center text-amber-400 font-bold shrink-0">
-                            <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
-                            <span>{typeof video.rating === "number" && !isNaN(video.rating) ? video.rating.toFixed(1) : (Number(video.rating) || 5.0).toFixed(1)}</span>
-                          </div>
-                          <span className="text-zinc-650">|</span>
-                          <div className="flex items-center gap-0.5 truncate text-[11px] font-medium">
-                            <MapPin className="w-3 h-3 text-zinc-400" />
-                            <span className="truncate">{cleanDisplayAddress(video.placeAddress || video.placeCity)}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          <img
-                            src={video.author.avatar || `/api/avatar?name=${encodeURIComponent(video.author.name || "User")}&background=1a73e8&color=fff`}
-                            alt={video.author.name}
-                            className="w-4.5 h-4.5 rounded-full border border-zinc-800"
-                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
-                          /> 
-                          <span className="text-[10px] text-zinc-400 font-semibold">
-                            {t("video.recommendedBy", "Recommended by")} <span className="text-zinc-200 hover:underline">{video.author.name}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={(e) => handleUnsaveVideo(video.id, e)}
-                        className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
-                        title="Unsave"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">
               <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-4">
@@ -357,90 +277,50 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
         {/* 2. PLACES TAB */}
         {activeTab === "places" && (
           savedPlaces.length > 0 ? (
-            viewMode === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {savedPlaces.map((place) => (
-                  <div
-                    key={`saved-place-grid-${place.id}`}
-                    onClick={() => onSelectPlace && onSelectPlace(place.id)}
-                    className="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 cursor-pointer hover:border-zinc-700 transition-all"
-                  >
-                    <img
-                      src={place.photos?.[0] || place.bannerUrl || `/api/placeholder?w=400&h=400&text=${encodeURIComponent(place.name)}`}
-                      alt={place.name}
-                      className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/20" />
+            <div className="space-y-3">
+              {savedPlaces.map((place) => (
+                <div
+                  key={`saved-place-list-${place.id}`}
+                  onClick={() => onSelectPlace && onSelectPlace(place.id)}
+                  className="group bg-zinc-900 rounded-2xl border border-zinc-800 p-4 hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-zinc-800">
+                      <img
+                        src={place.photos?.[0] || place.bannerUrl || place.avatarUrl || `/api/placeholder?w=100&h=100&text=${encodeURIComponent(place.name)}`}
+                        alt={place.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-white text-sm truncate leading-snug">{place.name}</h4>
+                        <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
+                          {place.category}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
+                        <div className="flex items-center text-amber-400 font-bold shrink-0">
+                          <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
+                          <span>{place.rating?.toFixed(1) || "5.0"} ({place.totalReviews || 0})</span>
+                        </div>
+                        <span className="text-zinc-750">|</span>
+                        <span className="truncate">{place.address || place.city}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={(e) => handleUnsavePlace(place, e)}
-                      className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/60 hover:bg-red-600/90 hover:scale-105 text-white flex items-center justify-center transition-all cursor-pointer"
-                      title="Remove from saved"
+                      className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
+                      title="Unsave Place"
                     >
-                      <BookmarkMinus className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
-                    <div className="absolute bottom-3 left-3 right-3 text-white">
-                      <span className="px-1.5 py-0.5 rounded-md bg-zinc-800/80 backdrop-blur-xs text-[9px] font-bold text-zinc-300">
-                        {place.category}
-                      </span>
-                      <h4 className="font-bold text-xs mt-1.5 truncate">{place.name}</h4>
-                      <div className="flex items-center gap-1.5 text-[10px] text-zinc-300 mt-1">
-                        <div className="flex items-center text-amber-400 font-bold shrink-0">
-                          <Star className="w-2.5 h-2.5 fill-current mr-0.5" />
-                          <span>{place.rating?.toFixed(1) || "5.0"}</span>
-                        </div>
-                        <span>•</span>
-                        <span className="truncate">{place.city}</span>
-                      </div>
-                    </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {savedPlaces.map((place) => (
-                  <div
-                    key={`saved-place-list-${place.id}`}
-                    onClick={() => onSelectPlace && onSelectPlace(place.id)}
-                    className="group bg-zinc-900 rounded-2xl border border-zinc-800 p-4 hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-zinc-800">
-                        <img
-                          src={place.photos?.[0] || place.bannerUrl || place.avatarUrl || `/api/placeholder?w=100&h=100&text=${encodeURIComponent(place.name)}`}
-                          alt={place.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-white text-sm truncate leading-snug">{place.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
-                            {place.category}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
-                          <div className="flex items-center text-amber-400 font-bold shrink-0">
-                            <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
-                            <span>{place.rating?.toFixed(1) || "5.0"} ({place.totalReviews || 0})</span>
-                          </div>
-                          <span className="text-zinc-750">|</span>
-                          <span className="truncate">{place.address || place.city}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={(e) => handleUnsavePlace(place, e)}
-                        className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
-                        title="Unsave Place"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">
               <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-4">
@@ -468,68 +348,37 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
         {/* 3. CREATORS TAB */}
         {activeTab === "creators" && (
           savedCreators.length > 0 ? (
-            viewMode === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {savedCreators.map((creator) => (
-                  <div
-                    key={`saved-creator-grid-${creator.name}`}
-                    onClick={() => onSelectCreator && onSelectCreator(creator)}
-                    className="group relative rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 flex flex-col items-center text-center cursor-pointer hover:border-zinc-750 hover:bg-zinc-900/80 transition-all"
-                  >
-                    <button
-                      onClick={(e) => handleUnsaveCreator(creator, e)}
-                      className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-zinc-800 hover:bg-red-600/90 text-zinc-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
-                      title="Unsave Reviewer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+            <div className="space-y-3">
+              {savedCreators.map((creator) => (
+                <div
+                  key={`saved-creator-list-${creator.name}`}
+                  onClick={() => onSelectCreator && onSelectCreator(creator)}
+                  className="group bg-zinc-900 rounded-2xl border border-zinc-800 p-4 hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
                     <img
                       src={creator.avatar || `/api/avatar?name=${encodeURIComponent(creator.name)}&background=27272a&color=fff`}
                       alt={creator.name}
-                      className="w-16 h-16 rounded-full border border-zinc-800 mb-3 shadow-xs object-cover"
+                      className="w-11 h-11 rounded-full border border-zinc-800 shrink-0 object-cover"
                       onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
                     />
-                    <h4 className="font-bold text-white text-xs truncate w-full">{creator.name}</h4>
-                    <p className="text-[10px] text-zinc-400 truncate w-full mt-0.5">{creator.handle || `@${creator.name.toLowerCase().replace(/\s+/g, "")}`}</p>
-                    <div className="mt-3.5 py-1 px-3 rounded-full bg-zinc-850 border border-zinc-800 text-[9px] text-zinc-300 font-bold">
-                      {t("profile.savedReviewerStatus", "Saved Reviewer")}
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-white text-sm truncate leading-snug">{creator.name}</h4>
+                      <p className="text-xs text-zinc-400 mt-0.5">{creator.handle || `@${creator.name.toLowerCase().replace(/\s+/g, "")}`}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {savedCreators.map((creator) => (
-                  <div
-                    key={`saved-creator-list-${creator.name}`}
-                    onClick={() => onSelectCreator && onSelectCreator(creator)}
-                    className="group bg-zinc-900 rounded-2xl border border-zinc-800 p-4 hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <img
-                        src={creator.avatar || `/api/avatar?name=${encodeURIComponent(creator.name)}&background=27272a&color=fff`}
-                        alt={creator.name}
-                        className="w-11 h-11 rounded-full border border-zinc-800 shrink-0 object-cover"
-                        onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
-                      />
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-white text-sm truncate leading-snug">{creator.name}</h4>
-                        <p className="text-xs text-zinc-400 mt-0.5">{creator.handle || `@${creator.name.toLowerCase().replace(/\s+/g, "")}`}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={(e) => handleUnsaveCreator(creator, e)}
-                        className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
-                        title="Unsave Reviewer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={(e) => handleUnsaveCreator(creator, e)}
+                      className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
+                      title="Unsave Reviewer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                ))}
-              </div>
-            )
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">
               <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-4">

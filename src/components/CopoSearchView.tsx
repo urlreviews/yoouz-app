@@ -335,12 +335,14 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         </div>
       ) : (
         <div className="w-full max-w-4xl flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500">
-          <button 
-            onClick={() => { setSearchedPlace(null); setQuery(""); }}
-            className="mb-8 text-zinc-200 hover:text-white flex items-center gap-2 font-medium transition-colors self-start cursor-pointer"
-          >
-            {t("search.backSearch", "← Search another business or website")}
-          </button>
+          {!isMobileModal && !hideSearchBar && (
+            <button 
+              onClick={() => { setSearchedPlace(null); setQuery(""); }}
+              className="mb-8 text-zinc-400 hover:text-white flex items-center gap-2 font-medium transition-colors self-start cursor-pointer"
+            >
+              {t("search.backSearch", "← Search another business or website")}
+            </button>
+          )}
 
           <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 shadow-xl overflow-hidden mb-8">
             {/* Top Hero Banner Canvas */}

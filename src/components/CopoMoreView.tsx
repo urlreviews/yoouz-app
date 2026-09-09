@@ -41,7 +41,6 @@ import {
 } from "lucide-react";
 import { UserProfile, NavSection } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
-import { LanguageSelectorModal } from "./LanguageSelectorModal";
 import { SupportedLanguage } from "../i18n/translations";
 
 interface CopoMoreViewProps {
@@ -75,7 +74,6 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState<"about" | "faq" | "business" | "security" | "contact" | "language">("about");
-  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [langSearchFilter, setLangSearchFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [faqCategoryFilter, setFaqCategoryFilter] = useState<"all" | "reviewers" | "business" | "trust" | "technical">("all");
@@ -1283,24 +1281,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           )}
         </section>
 
-        {/* 4. Google-Standard Footer with Language Selector */}
+        {/* 4. Google-Standard Footer */}
         <footer className="pt-8 pb-14 border-t border-zinc-800 text-center space-y-4 text-xs text-zinc-200">
-          {/* Centered Clean Language Selector */}
-          <div className="flex items-center justify-center">
-            <button
-              type="button"
-              onClick={() => setIsLangModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 transition-all cursor-pointer text-xs font-semibold shadow-xs group"
-            >
-              <Globe className="w-3.5 h-3.5 text-zinc-200 group-hover:text-white" />
-              <span>{currentLanguageMeta.flag}</span>
-              <span>{currentLanguageMeta.nativeName}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 group-hover:bg-zinc-700 group-hover:text-zinc-200 uppercase font-mono">
-                {currentLanguageMeta.code}
-              </span>
-            </button>
-          </div>
-
           <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-200 flex-wrap">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : null}
@@ -1391,12 +1373,6 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           </div>
         </div>
       )}
-
-      {/* Language Selector Modal */}
-      <LanguageSelectorModal
-        isOpen={isLangModalOpen}
-        onClose={() => setIsLangModalOpen(false)}
-      />
     </div>
   );
 };

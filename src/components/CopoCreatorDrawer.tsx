@@ -785,17 +785,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </h2>
             </div>
 
-            {/* Primary Action Button (Follow or Edit) */}
-            {isOwner ? (
-              <button
-                id="btn-edit-profile-action"
-                onClick={() => setIsEditModalOpen(true)}
-                className="px-4 py-2 rounded-full font-bold text-xs bg-white text-zinc-950 hover:bg-zinc-200 flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border border-white"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>{t("profile.editProfile", "Edit Profile")}</span>
-              </button>
-            ) : (
+            {/* Primary Action Button (Follow for other users) */}
+            {!isOwner && (
               <button
                 onClick={() => onToggleFollow(author.name)}
                 className={`px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border ${
@@ -963,14 +954,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider">
                     {t("profile.aboutThisReviewer", "About This Reviewer")}
                   </h3>
-                  {isOwner && (
-                    <button 
-                      onClick={() => setIsEditModalOpen(true)}
-                      className="text-zinc-200 hover:text-white hover:underline text-xs font-bold cursor-pointer"
-                    >
-                      {t("common.edit", "Edit")}
-                    </button>
-                  )}
                 </div>
                 <p className="text-zinc-200 text-sm leading-relaxed font-normal">
                   {displayBio}
