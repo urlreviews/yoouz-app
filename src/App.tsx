@@ -4497,6 +4497,7 @@ export function App() {
               feedContextTitle={fullscreenFeedContext?.title || (isCreatorView && selectedAuthorForDrawer ? selectedAuthorForDrawer.name : isPlaceView && drawerPlace ? drawerPlace.name : undefined)}
               onGoHome={handleGoHome}
               onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
+              onOpenSearch={() => setIsSearchModalOpen(true)}
               onRecordView={handleRecordVideoView}
               unreadCount={(currentUser ? notifications.filter((n) => !n.isRead).length : 0) + (currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0)}
             />

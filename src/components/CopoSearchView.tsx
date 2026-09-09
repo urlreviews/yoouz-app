@@ -16,6 +16,7 @@ interface CopoSearchViewProps {
   onRecordForPlace?: (place: Place) => void;
   onAddPlace?: (place: Place) => void;
   onToggleGrabPlace?: (place: Place) => void;
+  isMobileModal?: boolean;
 }
 
 export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
@@ -24,7 +25,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   onSelectVideo,
   onOpenPlace,
   onRecordForPlace,
-  onAddPlace
+  onAddPlace,
+  isMobileModal = false
 }) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
@@ -198,21 +200,25 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const totalReviewsCount = placeVideos.length;
 
   return (
-    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center p-6 pt-10 pb-[calc(env(safe-area-inset-bottom,16px)+88px)] select-none">
+    <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center select-none ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))]' : 'p-6 pt-10 pb-[calc(env(safe-area-inset-bottom,16px)+88px)]'}`}>
       {!searchedPlace ? (
-        <div className="w-full max-w-2xl flex flex-col items-center animate-in fade-in zoom-in duration-500 mt-[10vh]">
+        <div className={`w-full max-w-2xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-2' : 'mt-[10vh]'}`}>
           {/* Central Logo / Icon */}
-          <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in text-zinc-200">
-            <Globe className="w-8 h-8 text-zinc-200" strokeWidth={1.5} />
-          </div>
+          {!isMobileModal && (
+            <>
+              <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in text-zinc-200">
+                <Globe className="w-8 h-8 text-zinc-200" strokeWidth={1.5} />
+              </div>
 
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
-            {t("search.title", "Review Any Business or Website")}
-          </h1>
-          
-          <p className="text-zinc-200 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
-            {t("search.subtitle", "Paste a business URL below to see short video reviews or record your own.")}
-          </p>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
+                {t("search.title", "Review Any Business or Website")}
+              </h1>
+              
+              <p className="text-zinc-200 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
+                {t("search.subtitle", "Paste a business URL below to see short video reviews or record your own.")}
+              </p>
+            </>
+          )}
 
           <form onSubmit={(e) => handleSearch(e)} className="w-full max-w-lg flex flex-col items-center">
             <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-600 focus-within:ring-2 focus-within:ring-white/10 transition-all">

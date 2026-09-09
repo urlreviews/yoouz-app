@@ -40,6 +40,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         onOpenPlace={onOpenPlace}
         onRecordForPlace={onRecordForPlace}
         onAddPlace={onAddPlace}
+        isMobileModal={true}
       />
     </div>
   );

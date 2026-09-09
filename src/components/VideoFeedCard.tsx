@@ -65,6 +65,7 @@ interface VideoFeedCardProps {
   onToggleBookmark: (videoId: string) => void;
   onToggleFollow: (name: string) => void;
   onOpenMenu?: () => void;
+  onOpenSearch?: () => void;
   onGoBack?: () => void;
   feedContextTitle?: string;
   onGoHome?: () => void;
@@ -112,6 +113,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onToggleBookmark,
   onToggleFollow,
   onOpenMenu,
+  onOpenSearch,
   onGoBack,
   feedContextTitle,
   businessLogoUrl,
@@ -723,8 +725,25 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
-        <div className="pointer-events-auto">
+        {/* Right side: Search (if provided) and Sound Toggle */}
+        <div className="pointer-events-auto flex items-center gap-2">
+          {onOpenSearch && !onGoBack && (
+            <button
+              type="button"
+              id={`btn-open-search-${video.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenSearch();
+              }}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/85 md:hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
+              title={t("nav.search", "Search")}
+              aria-label={t("nav.search", "Search")}
+            >
+              <Search className="w-5 h-5 text-white stroke-[2.2]" />
+            </button>
+          )}
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
