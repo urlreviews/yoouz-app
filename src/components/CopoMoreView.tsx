@@ -389,68 +389,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
       {/* Main Container */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* 1. Account Section: Shown if signed in */}
-        {currentUser && (
-          <section aria-label="Account Overview">
-            <div className="bg-zinc-900/50 rounded-2xl p-4 sm:p-5 border border-zinc-800/60 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-5">
-              <div className="flex items-center gap-3.5 min-w-0 w-full">
-                <div className="relative shrink-0">
-                  <img
-                    src={
-                      currentUser.avatar ||
-                      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80"
-                    }
-                    alt={currentUser.name || "User Avatar"}
-                    className="w-12 h-12 rounded-full object-cover border border-zinc-700 shadow-sm"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
-                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white text-zinc-950 rounded-full flex items-center justify-center shadow-xs">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-base font-bold text-white truncate">{currentUser.name || "Reviewer"}</h2>
-                    <span className="px-1.5 py-0.5 rounded-md bg-white/10 text-zinc-200 text-[9px] font-bold tracking-wide uppercase flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3" />
-                      Verified
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-400 font-medium truncate">{currentUser.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t border-zinc-800/50 sm:border-t-0 mt-1 sm:mt-0">
-                <button
-                  onClick={() => onNavigate("profile")}
-                  className="flex-1 sm:flex-initial py-2 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>Profile</span>
-                </button>
-                {onOpenNotificationSettings && (
-                  <button
-                    id="btn-more-notification-settings"
-                    onClick={onOpenNotificationSettings}
-                    className="flex-1 sm:flex-initial py-2 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Bell className="w-3.5 h-3.5" />
-                    <span>Alerts</span>
-                  </button>
-                )}
-                <button
-                  onClick={onSignOut}
-                  className="flex-1 sm:flex-initial py-2 px-3 rounded-lg bg-red-950/30 hover:bg-red-950/50 text-red-400 hover:text-red-300 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 2. Top-Level Tab Switcher */}
+        {/* 1. Top-Level Tab Switcher */}
         <section aria-label="Knowledge Navigation" className="-mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             <button

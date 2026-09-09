@@ -11,15 +11,12 @@ import {
   Video,
   X,
   ChevronRight,
-  User,
   LogOut,
   LogIn,
-  CheckCircle2,
   FileText,
   Lock,
   HelpCircle,
   MessageSquare,
-  Sparkles,
   Globe
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
@@ -120,77 +117,11 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
         </div>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-5 divide-y divide-zinc-800/60">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-4 divide-y divide-zinc-800/60">
           
-          {/* User Profile Card */}
-          <div className="pt-1">
-            {currentUser ? (
-              <div
-                onClick={() => handleNavClick("profile")}
-                className="p-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-md transition-all active:scale-[0.98] cursor-pointer group"
-              >
-                <div className="flex items-center gap-3">
-                  {currentUser.avatar ? (
-                    <img
-                      src={currentUser.avatar}
-                      alt={currentUser.name}
-                      className="w-12 h-12 rounded-xl object-cover ring-2 ring-zinc-700 shrink-0"
-                      referrerPolicy="no-referrer"
-                     onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0">
-                      {currentUser.name?.charAt(0).toUpperCase() || "U"}
-                    </div>
-                  )}
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="text-sm font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
-                        {currentUser.name}
-                      </h4>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-zinc-200 shrink-0 fill-zinc-800" />
-                    </div>
-                    <p className="text-[11px] text-zinc-200 truncate">
-                      {currentUser.email || ""}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-800 text-zinc-200 border border-zinc-700">
-                        <Sparkles className="w-2.5 h-2.5 text-zinc-200" />
-                        {t("profile.communityReviewer", "Community Reviewer")}
-                      </span>
-                    </div>
-                  </div>
-
-                  <ChevronRight className="w-4 h-4 text-zinc-200 group-hover:text-white transition-colors shrink-0" />
-                </div>
-
-                <div className="mt-3 pt-2.5 border-t border-zinc-800 flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-zinc-200 font-medium flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-zinc-200" />
-                    {t("profile.viewManage", "View & Manage Profile")}
-                  </span>
-                  <span className="text-[11px] font-semibold text-white group-hover:text-zinc-200">
-                    {t("common.open", "Open")} &rarr;
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  if (onOpenAuth) onOpenAuth("drawer");
-                  onClose();
-                }}
-                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-sm shadow-md transition-all cursor-pointer active:scale-95"
-              >
-                <LogIn className="w-4 h-4 text-zinc-950 stroke-[2.25]" />
-                <span>{t("auth.signIn", "Sign In")}</span>
-              </button>
-            )}
-          </div>
-
           {/* Core App Navigation */}
-          <div className="pt-4 space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-wider text-zinc-200 px-3 mb-2">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400 px-3 mb-2">
               {t("drawer.menuFeatures", "Menu & Features")}
             </p>
 
@@ -395,85 +326,97 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
           </div>
 
           {/* Account & Session Controls (Standard Bottom Placement) */}
-          {currentUser && (
-            <div className="pt-4 space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-wider text-zinc-200 px-3 mb-2">
-                {t("profile.accountSettings", "Account & Settings")}
-              </p>
+          <div className="pt-4 space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400 px-3 mb-2">
+              {t("profile.accountSettings", "Account & Settings")}
+            </p>
 
-              {/* Edit Profile Action */}
+            {currentUser ? (
+              <>
+                {/* Notification Settings Action */}
+                <button
+                  id="btn-mobile-nav-notification-settings"
+                  onClick={() => {
+                    onClose();
+                    if (onOpenNotificationSettings) onOpenNotificationSettings();
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Bell className="w-4 h-4 text-white" />
+                    <span>Notification Preferences</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-400" />
+                </button>
+
+                {/* Sign Out Button */}
+                <button
+                  onClick={() => {
+                    if (onSignOut) onSignOut();
+                    onClose();
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-zinc-200 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <LogOut className="w-4 h-4 text-zinc-200" />
+                    <span>{t("nav.logout", "Sign Out")}</span>
+                  </div>
+                </button>
+              </>
+            ) : (
               <button
                 onClick={() => {
-                  if (onOpenEditProfile) onOpenEditProfile();
-                  else handleNavClick("profile");
-                }}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-zinc-900 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <User className="w-4 h-4 text-white" />
-                  <span>{t("profile.editProfile", "Edit Profile")}</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-zinc-200" />
-              </button>
-
-              {/* Notification Settings Action */}
-              <button
-                id="btn-mobile-nav-notification-settings"
-                onClick={() => {
+                  if (onOpenAuth) onOpenAuth("drawer");
                   onClose();
-                  if (onOpenNotificationSettings) onOpenNotificationSettings();
                 }}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800"
               >
                 <div className="flex items-center gap-3">
-                  <Bell className="w-4 h-4 text-white" />
-                  <span>Notification Preferences</span>
+                  <LogIn className="w-4 h-4 text-white" />
+                  <span>{t("auth.signIn", "Sign In")}</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-zinc-200" />
+                <ChevronRight className="w-4 h-4 text-zinc-400" />
               </button>
+            )}
+          </div>
 
-              {/* Sign Out Button */}
-              <button
-                onClick={() => {
-                  if (onSignOut) onSignOut();
-                  onClose();
-                }}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-zinc-200 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <LogOut className="w-4 h-4 text-zinc-200" />
-                  <span>{t("nav.logout", "Sign Out")}</span>
-                </div>
-              </button>
-            </div>
-          )}
-
-          {/* Legal & Version Footer */}
+          {/* Legal & Copyright Footer (Matching Desktop) */}
           <div className="pt-5 pb-8 space-y-2 border-t border-zinc-800/80 mt-2">
-            <div className="flex items-center justify-center gap-3 text-xs text-zinc-200">
+            <div className="flex items-center justify-center gap-2 text-xs text-zinc-400">
               <button
                 onClick={() => {
-                  if (onOpenLegal) onOpenLegal("terms");
+                  if (onOpenLegal) onOpenLegal("privacy");
+                  else handleNavClick("more");
                   onClose();
                 }}
-                className="hover:text-zinc-200 transition-colors cursor-pointer"
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
               >
-                {t("legal.termsConditions", "Terms of Service")}
+                {t("legal.privacy", "Privacy")}
               </button>
               <span className="text-zinc-600">•</span>
               <button
                 onClick={() => {
-                  if (onOpenLegal) onOpenLegal("privacy");
+                  if (onOpenLegal) onOpenLegal("terms");
+                  else handleNavClick("more");
                   onClose();
                 }}
-                className="hover:text-zinc-200 transition-colors cursor-pointer"
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
               >
-                {t("legal.privacyPolicy", "Privacy Policy")}
+                {t("legal.terms", "Terms")}
+              </button>
+              <span className="text-zinc-600">•</span>
+              <button
+                onClick={() => {
+                  handleNavClick("more");
+                }}
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+              >
+                {t("legal.about", "About")}
               </button>
             </div>
 
-            <p className="text-[11px] text-center text-zinc-200 font-mono">
-              Yoouz Mobile PWA • v2.4.0
+            <p className="text-[11px] text-center text-zinc-400 font-normal">
+              {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
             </p>
           </div>
         </div>
