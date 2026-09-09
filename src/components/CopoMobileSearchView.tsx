@@ -3,7 +3,7 @@ import { ArrowLeft, Search, Clock, TrendingUp, X } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { useLanguage } from "../i18n/LanguageContext";
-import { getPlaceLogoUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 
 interface CopoMobileSearchViewProps {
   places: Place[];
@@ -14,6 +14,34 @@ interface CopoMobileSearchViewProps {
   onAddPlace?: (place: Place) => void;
   onClose: () => void;
 }
+
+const getNormalizedDomain = (text: string) => {
+  if (!text) return "";
+  return text.toLowerCase()
+    .replace(/^(https?:\/\/)?(www\.)?/, "")
+    .replace(/\/.*$/, "")
+    .trim();
+};
+
+const SearchItemLogo: React.FC<{ name: string; logoUrl: string | null; iconType: 'clock' | 'trending' | 'search' }> = ({ name, logoUrl, iconType }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (logoUrl && !hasError) {
+    return (
+      <img 
+        src={logoUrl} 
+        alt={name} 
+        className="w-full h-full object-cover" 
+        referrerPolicy="no-referrer"
+        onError={() => setHasError(true)} 
+      />
+    );
+  }
+
+  if (iconType === 'trending') return <TrendingUp className="w-4 h-4 text-zinc-500" />;
+  if (iconType === 'search') return <Search className="w-4 h-4 text-zinc-500" />;
+  return <Clock className="w-4 h-4 text-zinc-500" />;
+};
 
 export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   places,
@@ -44,6 +72,84 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       inputRef.current?.focus();
     }, 100);
   }, []);
+
+  // Pre-fetch metadata in the background for any recent search item not already in places
+  // so the database in BunnyDB/Firestore keeps the banner and logo immediately
+  useEffect(() => {
+    if (!onAddPlace) return;
+    recentSearches.forEach(async (term) => {
+      const norm = getNormalizedDomain(term);
+      if (!norm || !norm.includes(".")) return;
+      const alreadySaved = places.some(p => {
+        const pNorm = getNormalizedDomain(p.brandDomain || p.website || p.id);
+        return pNorm === norm;
+      });
+      if (!alreadySaved) {
+        try {
+          const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(norm)}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.title || data.domain) {
+              const fetchedLogo = data.logo || getCleanLogoUrl(null, data.domain) || "";
+              const fetchedBanner = data.image || "";
+              const newPlace: Place = {
+                id: (data.domain || norm).replace(/[^a-zA-Z0-9]/g, "-"),
+                name: data.title || data.domain || norm,
+                category: "Website",
+                categoryType: "all",
+                address: "",
+                city: "Online",
+                lat: 0,
+                lng: 0,
+                rating: 5,
+                totalReviews: 1,
+                ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+                avatarUrl: fetchedLogo,
+                logoUrl: fetchedLogo,
+                bannerUrl: fetchedBanner,
+                ogImage: fetchedBanner,
+                photos: fetchedBanner ? [fetchedBanner] : [],
+                openingHours: "Available 24/7",
+                isOpen: true,
+                phone: "",
+                website: data.url || `https://${norm}`,
+                priceRange: "N/A",
+                plusCode: "",
+                description: data.description || "",
+                popularKeywords: [],
+                amenities: [],
+                topDishes: [],
+                brandDomain: data.domain || norm
+              };
+              onAddPlace(newPlace);
+            }
+          }
+        } catch (err) {}
+      }
+    });
+  }, [recentSearches, places, onAddPlace]);
+
+  const findMatchingPlace = (term: string): Place | undefined => {
+    const target = getNormalizedDomain(term);
+    return places.find(p => {
+      const pDom = getNormalizedDomain(p.brandDomain || p.website || p.id);
+      return (target && pDom === target) ||
+             p.name.toLowerCase() === term.toLowerCase() ||
+             p.id.toLowerCase() === target.replace(/[^a-z0-9]/g, "-");
+    });
+  };
+
+  const getItemLogoUrl = (term: string, place?: Place | null): string | null => {
+    if (place) {
+      const l = getPlaceLogoUrl(place);
+      if (l) return l;
+    }
+    const cleanDomain = getNormalizedDomain(term);
+    if (cleanDomain && cleanDomain.includes(".")) {
+      return getPlaceLogoUrl({ name: term, brandDomain: cleanDomain });
+    }
+    return null;
+  };
 
   const handleClose = () => {
     setIsClosing(true);
@@ -152,24 +258,26 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {/* Autocomplete Suggestions */}
             {query.length > 0 && suggestions.length > 0 && (
               <div className="flex flex-col">
-                {suggestions.map((p) => (
-                  <button 
-                    key={p.id}
-                    onClick={() => handleSearch(p.brandDomain || p.name)}
-                    className="flex items-center gap-3 py-3 border-b border-zinc-800/50 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
-                      {(() => {
-                        const logo = getPlaceLogoUrl(p);
-                        if (logo && !logo.startsWith("data:image/svg")) {
-                          return <img src={logo} alt="" className="w-full h-full object-cover" />;
-                        }
-                        return <Search className="w-4 h-4 text-zinc-500" />;
-                      })()}
-                    </div>
-                    <span className="text-zinc-200 font-medium truncate">{p.brandDomain || p.name}</span>
-                  </button>
-                ))}
+                {suggestions.map((p) => {
+                  const logoUrl = getPlaceLogoUrl(p);
+                  const displayName = p.brandDomain || p.name;
+                  return (
+                    <button 
+                      key={p.id}
+                      onClick={() => handleSearch(displayName)}
+                      className="flex items-center gap-3 py-3 border-b border-zinc-800/50 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
+                        <SearchItemLogo 
+                          name={displayName}
+                          logoUrl={logoUrl}
+                          iconType="search"
+                        />
+                      </div>
+                      <span className="text-zinc-200 font-medium truncate">{displayName}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             
@@ -190,7 +298,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                 </div>
                 <div className="flex flex-col">
                   {recentSearches.map((s, idx) => {
-                    const place = places.find(p => p.brandDomain === s || p.name === s);
+                    const place = findMatchingPlace(s);
+                    const logoUrl = getItemLogoUrl(s, place);
                     return (
                       <button 
                         key={idx}
@@ -198,13 +307,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                         className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                       >
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
-                          {(() => {
-                            const logo = getPlaceLogoUrl(place || { name: s, brandDomain: s });
-                            if (logo && !logo.startsWith("data:image/svg")) {
-                              return <img src={logo} alt="" className="w-full h-full object-cover" />;
-                            }
-                            return <Clock className="w-4 h-4 text-zinc-500" />;
-                          })()}
+                          <SearchItemLogo 
+                            name={s}
+                            logoUrl={logoUrl}
+                            iconType="clock"
+                          />
                         </div>
                         <span className="text-zinc-200 font-medium truncate">{s}</span>
                       </button>
@@ -220,7 +327,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                 <h3 className="text-zinc-400 text-sm font-bold">Trending Searches</h3>
                 <div className="flex flex-col">
                   {trending.map((s, idx) => {
-                    const place = places.find(p => p.brandDomain === s || p.name === s);
+                    const place = findMatchingPlace(s);
+                    const logoUrl = getItemLogoUrl(s, place);
                     return (
                       <button 
                         key={idx}
@@ -228,13 +336,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                         className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                       >
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
-                          {(() => {
-                            const logo = getPlaceLogoUrl(place || { name: s, brandDomain: s });
-                            if (logo && !logo.startsWith("data:image/svg")) {
-                              return <img src={logo} alt="" className="w-full h-full object-cover" />;
-                            }
-                            return <TrendingUp className="w-4 h-4 text-zinc-500" />;
-                          })()}
+                          <SearchItemLogo 
+                            name={s}
+                            logoUrl={logoUrl}
+                            iconType="trending"
+                          />
                         </div>
                         <span className="text-zinc-200 font-medium truncate">{s}</span>
                       </button>

@@ -2,6 +2,62 @@ import { Place } from "../types";
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "reddit.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <circle cx="50" cy="50" r="50" fill="#FF4500"/>
+      <circle cx="50" cy="56" r="23" fill="#FFFFFF"/>
+      <circle cx="41" cy="54" r="4.5" fill="#FF4500"/>
+      <circle cx="59" cy="54" r="4.5" fill="#FF4500"/>
+      <path d="M 42 65 Q 50 71 58 65" stroke="#FF4500" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="25" cy="54" r="5.5" fill="#FFFFFF"/>
+      <circle cx="75" cy="54" r="5.5" fill="#FFFFFF"/>
+      <circle cx="67" cy="24" r="4.5" fill="#FFFFFF"/>
+      <path d="M 50 33 L 56 22 L 65 24" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>`),
+  "www.reddit.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <circle cx="50" cy="50" r="50" fill="#FF4500"/>
+      <circle cx="50" cy="56" r="23" fill="#FFFFFF"/>
+      <circle cx="41" cy="54" r="4.5" fill="#FF4500"/>
+      <circle cx="59" cy="54" r="4.5" fill="#FF4500"/>
+      <path d="M 42 65 Q 50 71 58 65" stroke="#FF4500" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="25" cy="54" r="5.5" fill="#FFFFFF"/>
+      <circle cx="75" cy="54" r="5.5" fill="#FFFFFF"/>
+      <circle cx="67" cy="24" r="4.5" fill="#FFFFFF"/>
+      <path d="M 50 33 L 56 22 L 65 24" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>`),
+  "uber.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#000000"/>
+      <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="1">UBER</text>
+    </svg>`),
+  "www.uber.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#000000"/>
+      <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="1">UBER</text>
+    </svg>`),
+  "spotify.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <circle cx="50" cy="50" r="50" fill="#1DB954"/>
+      <path d="M28 40 C44 35 62 38 74 44 M30 52 C44 47 58 50 69 55 M33 64 C43 60 54 62 64 66" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+    </svg>`),
+  "www.spotify.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <circle cx="50" cy="50" r="50" fill="#1DB954"/>
+      <path d="M28 40 C44 35 62 38 74 44 M30 52 C44 47 58 50 69 55 M33 64 C43 60 54 62 64 66" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+    </svg>`),
+  "usa.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#0A2540"/>
+      <circle cx="50" cy="50" r="38" fill="none" stroke="#E63946" stroke-width="3"/>
+      <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">USA</text>
+    </svg>`),
+  "www.usa.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#0A2540"/>
+      <circle cx="50" cy="50" r="38" fill="none" stroke="#E63946" stroke-width="3"/>
+      <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">USA</text>
+    </svg>`),
   "midtownwellness.co.uk": "data:image/svg+xml;utf8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#18181b"/>
@@ -248,6 +304,14 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses
 export const KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "reddit.com": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
+  "www.reddit.com": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
+  "uber.com": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=1200&auto=format&fit=crop&q=80",
+  "www.uber.com": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=1200&auto=format&fit=crop&q=80",
+  "spotify.com": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80",
+  "www.spotify.com": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80",
+  "usa.com": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&auto=format&fit=crop&q=80",
+  "www.usa.com": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&auto=format&fit=crop&q=80",
   "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
   "www.thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
   "districtuae.com": "https://www.districtuae.com/og-default.jpeg",
@@ -356,7 +420,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
   }
 
   if (cleanDomain && cleanDomain.includes(".")) {
-    return generateBrandMonogramSvg(cleanDomain);
+    return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
   }
 
   return url || null;
@@ -387,7 +451,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   // 2. Explicit logoUrl provided (if not a broken brandfetch or stub)
-  if (place.logoUrl && place.logoUrl.trim() !== "" && !place.logoUrl.includes("brandfetch.io") && place.logoUrl !== "data:;" && !place.logoUrl.startsWith("data:;") && !place.logoUrl.includes("gstatic.com/faviconV2")) {
+  if (place.logoUrl && place.logoUrl.trim() !== "" && !place.logoUrl.includes("brandfetch.io") && place.logoUrl !== "data:;" && !place.logoUrl.startsWith("data:;")) {
     if (place.logoUrl.startsWith("/api/proxy-image")) return place.logoUrl;
     if (place.logoUrl.includes("googleusercontent.com") || place.logoUrl.includes("framerusercontent.com")) {
       return `/api/proxy-image?url=${encodeURIComponent(place.logoUrl)}`;
@@ -395,8 +459,12 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return place.logoUrl;
   }
   
-  // 3. Fallback to Brand Monogram SVG (Zero network dependency, never blocked)
-  return generateBrandMonogramSvg(cleanDomain || place.name || "Place");
+  // 3. Authentic High-Resolution Social Favicon (Google 256px resolution directly from website icon/metadata)
+  if (cleanDomain && cleanDomain.includes(".")) {
+    return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+  }
+
+  return null;
 }
 
 

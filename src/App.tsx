@@ -4536,6 +4536,13 @@ export function App() {
                   const [safeLat, safeLng] = sanitizeLatLng(newPlace.lat, newPlace.lng);
                   const cleanPlace = { ...newPlace, lat: safeLat, lng: safeLng };
                   
+                  // Mirror to BunnyDB database immediately
+                  fetch(`/api/nosql/places/${cleanPlace.id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ data: cleanPlace, merge: true })
+                  }).catch(() => {});
+
                   // Persist to Firestore immediately so it's "already saved" as per user request
                   if (db && cleanPlace.id) {
                     try {
@@ -4578,6 +4585,13 @@ export function App() {
                   if (!newPlace) return;
                   const [safeLat, safeLng] = sanitizeLatLng(newPlace.lat, newPlace.lng);
                   const cleanPlace = { ...newPlace, lat: safeLat, lng: safeLng };
+
+                  // Mirror to BunnyDB database immediately
+                  fetch(`/api/nosql/places/${cleanPlace.id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ data: cleanPlace, merge: true })
+                  }).catch(() => {});
 
                   // Persist to Firestore immediately so it's "already saved" as per user request
                   if (db && cleanPlace.id) {
@@ -5098,6 +5112,22 @@ export function App() {
             if (!newPlace) return;
             const [safeLat, safeLng] = sanitizeLatLng(newPlace.lat, newPlace.lng);
             const cleanPlace = { ...newPlace, lat: safeLat, lng: safeLng };
+
+            // Mirror to BunnyDB database immediately
+            fetch(`/api/nosql/places/${cleanPlace.id}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ data: cleanPlace, merge: true })
+            }).catch(() => {});
+
+            // Persist to Firestore immediately so it's "already saved" as per user request
+            if (db && cleanPlace.id) {
+              try {
+                setDoc(doc(db, "places", cleanPlace.id), cleanForFirestore(cleanPlace), { merge: true })
+                  .catch(err => console.warn("Auto-save place search result error:", err));
+              } catch (e) {}
+            }
+
             setPlaces((prev) => {
               const map = new Map<string, Place>();
               map.set(cleanPlace.id, cleanPlace);
@@ -5128,7 +5158,7 @@ export function App() {
           }}
           onSelectVideo={(id, source) => {
             setIsDiscoverModalOpen(false);
-            handleSelectVideoById(id, source);
+            handleSelectVideoById(id, (source as "profile" | "creator" | "place" | "general") || "general");
           }}
           onOpenAuth={() => {
             setIsDiscoverModalOpen(false);
