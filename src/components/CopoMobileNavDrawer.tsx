@@ -388,31 +388,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Shield className="w-4 h-4 text-white" />
-                <span>{t("more.trustGuidelines", "Trust Protocol & Guidelines")}</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-zinc-200" />
-            </button>
-
-            {/* Help & FAQs */}
-            <button
-              onClick={() => handleNavClick("more")}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-zinc-900 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <HelpCircle className="w-4 h-4 text-white" />
-                <span>{t("more.helpFaq", "Help & FAQs")}</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-zinc-200" />
-            </button>
-
-            {/* Contact Support */}
-            <button
-              onClick={() => handleNavClick("more")}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-zinc-900 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-4 h-4 text-white" />
-                <span>{t("more.contactSupport", "Contact Support")}</span>
+                <span>{t("more.trustGuidelines", "Knowledge & Trust Center")}</span>
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-200" />
             </button>

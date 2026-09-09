@@ -371,34 +371,29 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       className="flex-1 w-full h-full bg-zinc-950 overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+88px)] md:pb-24 select-none selection:bg-zinc-700 selection:text-white"
     >
       {/* Top Banner / Google-grade Header */}
-      <header className="bg-zinc-900/90 border-b border-zinc-800 sticky top-0 z-20 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => onNavigate("home")}
-                className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm"
-                title="Back to Feed"
-              >
-                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-              </button>
-              <div>
-                <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight mt-0.5">
-                  {t("trustCenter.title", "Knowledge & Trust Center")}
-                </h1>
-              </div>
-            </div>
-          </div>
+      <header className="sticky top-0 z-40 w-full bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/50">
+        <div className="h-14 px-4 flex items-center justify-between">
+          <button
+            onClick={() => onNavigate("home")}
+            className="w-10 h-10 -ml-2 rounded-full hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm"
+            title="Back to Feed"
+          >
+            <ChevronLeft className="w-6 h-6 stroke-[2]" />
+          </button>
+          <h1 className="text-base font-bold text-white tracking-tight absolute left-1/2 -translate-x-1/2">
+            {t("trustCenter.title", "Knowledge & Trust Center")}
+          </h1>
+          <div className="w-10 h-10" /> {/* Spacer */}
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* 1. Account Section: Shown if signed in */}
         {currentUser && (
           <section aria-label="Account Overview">
-            <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-              <div className="flex items-center gap-4 min-w-0">
+            <div className="bg-zinc-900/50 rounded-2xl p-4 sm:p-5 border border-zinc-800/60 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-5">
+              <div className="flex items-center gap-3.5 min-w-0 w-full">
                 <div className="relative shrink-0">
                   <img
                     src={
@@ -406,49 +401,46 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80"
                     }
                     alt={currentUser.name || "User Avatar"}
-                    className="w-14 h-14 rounded-2xl object-cover border border-zinc-700 shadow-xs"
+                    className="w-12 h-12 rounded-full object-cover border border-zinc-700 shadow-sm"
                     referrerPolicy="no-referrer"
-                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white text-zinc-950 rounded-full flex items-center justify-center shadow-xs">
-                    <Check className="w-3 h-3 stroke-[3]" />
+                    onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white text-zinc-950 rounded-full flex items-center justify-center shadow-xs">
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                 </div>
-                <div className="min-w-0 space-y-1">
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-lg font-black text-white truncate">{currentUser.name || "Reviewer"}</h2>
-                    <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-black tracking-wide uppercase flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-zinc-200" />
+                    <h2 className="text-base font-bold text-white truncate">{currentUser.name || "Reviewer"}</h2>
+                    <span className="px-1.5 py-0.5 rounded-md bg-white/10 text-zinc-200 text-[9px] font-bold tracking-wide uppercase flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" />
                       Verified
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-200 font-medium truncate">{currentUser.email}</p>
-                  <p className="text-[11px] text-zinc-200 font-medium">
-                    Verified Member • Active Contributor
-                  </p>
+                  <p className="text-xs text-zinc-400 font-medium truncate">{currentUser.email}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-wrap">
+              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t border-zinc-800/50 sm:border-t-0 mt-1 sm:mt-0">
                 <button
                   onClick={() => onNavigate("profile")}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 sm:flex-initial py-2 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <User className="w-3.5 h-3.5 text-zinc-200" />
-                  <span>Edit Profile</span>
+                  <User className="w-3.5 h-3.5" />
+                  <span>Profile</span>
                 </button>
                 {onOpenNotificationSettings && (
                   <button
                     id="btn-more-notification-settings"
                     onClick={onOpenNotificationSettings}
-                    className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="flex-1 sm:flex-initial py-2 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <Bell className="w-3.5 h-3.5 text-zinc-200" />
-                    <span>Notification Settings</span>
+                    <Bell className="w-3.5 h-3.5" />
+                    <span>Alerts</span>
                   </button>
                 )}
                 <button
                   onClick={onSignOut}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-zinc-800 hover:bg-red-950/40 hover:border-red-800 text-red-400 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 sm:flex-initial py-2 px-3 rounded-lg bg-red-950/30 hover:bg-red-950/50 text-red-400 hover:text-red-300 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
@@ -458,15 +450,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           </section>
         )}
 
-        {/* 2. Top-Level Tab Switcher (Google Material Design Style) */}
-        <section aria-label="Knowledge Navigation">
-          <div className="bg-zinc-900 rounded-2xl p-1.5 border border-zinc-800 shadow-2xs flex items-center gap-1 overflow-x-auto no-scrollbar">
+        {/* 2. Top-Level Tab Switcher */}
+        <section aria-label="Knowledge Navigation" className="-mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             <button
               onClick={() => setActiveTab("about")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`shrink-0 py-2 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "about"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
+                  : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Info className="w-4 h-4" />
@@ -475,10 +467,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <button
               onClick={() => setActiveTab("faq")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`shrink-0 py-2 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "faq"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
+                  : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <HelpCircle className="w-4 h-4" />
@@ -487,10 +479,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <button
               onClick={() => setActiveTab("business")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`shrink-0 py-2 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "business"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
+                  : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Building2 className="w-4 h-4" />
@@ -499,10 +491,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <button
               onClick={() => setActiveTab("security")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`shrink-0 py-2 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "security"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
+                  : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Shield className="w-4 h-4" />
@@ -511,10 +503,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <button
               onClick={() => setActiveTab("language")}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`shrink-0 py-2 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "language"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
+                  : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Globe className="w-4 h-4" />
@@ -527,10 +519,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 setSubmitSuccess(false);
                 setSubmitError("");
               }}
-              className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`shrink-0 py-2 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === "contact"
                   ? "bg-white text-black shadow-sm"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-800"
+                  : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800"
               }`}
             >
               <Mail className="w-4 h-4" />
