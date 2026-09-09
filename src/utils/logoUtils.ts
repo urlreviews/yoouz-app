@@ -406,9 +406,26 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
   const textColor = isGold ? "#eab308" : "#ffffff";
   const fontSize = letters.length > 3 ? Math.round(size * 0.28) : letters.length > 2 ? Math.round(size * 0.34) : Math.round(size * 0.44);
 
+  // Modern brand palettes for dark mode contrast
+  const PALETTES = [
+    "#2563eb", // blue
+    "#7c3aed", // violet
+    "#059669", // emerald
+    "#d97706", // amber
+    "#dc2626", // red
+    "#0891b2", // cyan
+    "#4f46e5", // indigo
+    "#c026d3", // fuchsia
+  ];
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = (hash << 5) - hash + clean.charCodeAt(i);
+    hash |= 0;
+  }
+  const bgColor = isGold ? "#09090b" : PALETTES[Math.abs(hash) % PALETTES.length];
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="#18181b"/>
-    <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="#27272a" stroke-width="2"/>
+    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="${bgColor}"/>
     <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${letters}</text>
   </svg>`;
 

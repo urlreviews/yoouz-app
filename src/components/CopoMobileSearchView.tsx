@@ -30,23 +30,23 @@ const SearchBusinessBadge: React.FC<{
   if (isBusinessOrDomain) {
     const domain = cleanDomain || term;
     return (
-      <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
+      <div className="w-8 h-8 rounded-lg bg-white shadow-sm ring-1 ring-white/15 border border-black/10 flex items-center justify-center shrink-0 p-1 overflow-hidden">
         <CopoBrandLogo
           domain={domain}
           name={domain}
           website={place?.website || (domain.includes(".") ? `https://${domain}` : undefined)}
           logoUrl={logoUrl || place?.logoUrl || place?.avatarUrl}
           bannerUrl={place?.bannerUrl || place?.ogImage}
-          className="w-full h-full rounded-full overflow-hidden flex items-center justify-center p-0"
-          imageClassName="w-full h-full object-cover rounded-full"
-          fallbackTextClassName="font-medium text-xs text-zinc-300 uppercase"
+          className="w-full h-full flex items-center justify-center p-0 overflow-hidden"
+          imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
+          fallbackTextClassName="font-black text-xs text-zinc-900 uppercase"
         />
       </div>
     );
   }
 
   return (
-    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
+    <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
       {iconType === 'trending' ? (
         <TrendingUp className="w-4 h-4 text-zinc-500 opacity-50" />
       ) : iconType === 'search' ? (
