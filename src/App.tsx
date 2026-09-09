@@ -4176,32 +4176,68 @@ export function App() {
     const authorMap = new Map<string, VideoAuthor>();
     videos.forEach((v) => {
       if (v.author && v.author.name) {
-        authorMap.set(v.author.name.toLowerCase(), v.author);
+        const key = v.author.name.toLowerCase().replace(/^@+/, '').trim();
+        authorMap.set(key, {
+          ...v.author,
+          location: v.author.location || (v.placeCity && v.placeCity.toLowerCase() !== 'online' ? v.placeCity : undefined)
+        });
       }
     });
     allRegisteredUsers.forEach((u) => {
       if (u.name) {
-        authorMap.set(u.name.toLowerCase(), {
+        const uLower = u.name.toLowerCase().replace(/^@+/, '').trim();
+        const uLoc = u.location || (u.city && u.country ? `${u.city}, ${u.country}` : (u.city || u.country || ''));
+        const existing = authorMap.get(uLower);
+        authorMap.set(uLower, {
           name: u.name,
           handle: u.handle || `@${u.name.toLowerCase().replace(/\s+/g, '')}`,
-          avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(u.name)}&background=27272a&color=fff`,
-          bio: u.bio,
-          followersCount: u.followersCount || 0,
+          avatar: u.avatar || existing?.avatar || `/api/avatar?name=${encodeURIComponent(u.name)}&background=27272a&color=fff`,
+          bio: u.bio || existing?.bio,
+          location: uLoc || existing?.location,
+          city: u.city || existing?.city,
+          country: u.country || existing?.country,
+          isVerified: u.isVerified ?? existing?.isVerified,
+          videoReviewCount: existing?.videoReviewCount,
+          followersCount: u.followersCount || existing?.followersCount || 0,
           isFollowed: currentUser?.followedAuthors?.includes(u.name) || false
         });
       }
     });
 
     return savedCreators.map((name) => {
-      const lower = name.toLowerCase();
-      if (authorMap.has(lower)) {
-        return authorMap.get(lower)!;
-      }
+      const lower = name.toLowerCase().replace(/^@+/, '').trim();
+      const existing = authorMap.get(lower) || authorMap.get(name.toLowerCase());
+      const regUser = allRegisteredUsers.find((u: any) => {
+        const uName = (u.name || '').trim().toLowerCase();
+        const uHandle = (u.handle || '').replace(/^@+/, '').trim().toLowerCase();
+        const uEmail = (u.email || '').split('@')[0].toLowerCase();
+        return uName === lower || uHandle === lower || uEmail === lower;
+      });
+      const known = KNOWN_COMMUNITY_USERS[lower] || KNOWN_COMMUNITY_USERS[name.toLowerCase()];
+      const isCurrent = currentUser && (
+        (currentUser.name || '').trim().toLowerCase() === lower ||
+        (currentUser.email || '').split('@')[0].toLowerCase() === lower
+      );
+      const currentLoc = currentUser?.location || (currentUser?.city && currentUser?.country ? `${currentUser.city}, ${currentUser.country}` : (currentUser?.city || currentUser?.country || ''));
+      const currentCity = currentUser?.city;
+      const currentCountry = currentUser?.country;
+
+      const loc = existing?.location || regUser?.location || known?.location || (isCurrent ? currentLoc : '') || '';
+      const city = existing?.city || regUser?.city || (isCurrent ? currentCity : '') || '';
+      const country = existing?.country || regUser?.country || (isCurrent ? currentCountry : '') || '';
+      const avatar = (isCurrent ? currentUser?.avatar : undefined) || regUser?.avatar || existing?.avatar || known?.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`;
+      const isVerified = (isCurrent ? currentUser?.isVerified : undefined) ?? regUser?.isVerified ?? existing?.isVerified ?? (known as any)?.isVerified;
+
       return {
-        name: name,
-        handle: `@${name.toLowerCase().replace(/\s+/g, '')}`,
-        avatar: `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
-        isFollowed: currentUser?.followedAuthors?.includes(name) || false
+        ...(existing || {}),
+        name: existing?.name || regUser?.name || known?.name || name,
+        handle: existing?.handle || regUser?.handle || known?.handle || `@${name.toLowerCase().replace(/\s+/g, '')}`,
+        avatar,
+        location: loc,
+        city,
+        country,
+        isVerified,
+        isFollowed: currentUser?.followedAuthors?.includes(name) || existing?.isFollowed || false
       };
     });
   }, [videos, allRegisteredUsers, savedCreators, currentUser]);

@@ -1239,7 +1239,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return (
       <CopoBusinessAuthLanding
         onNavigate={onNavigate}
-        places={places}
+        places={places || []}
+        videos={videos || []}
+        currentUser={currentUser || null}
         initialPlace={initialPlace}
         initialMode={initialMode}
         onCancelSelectedPlace={() => {

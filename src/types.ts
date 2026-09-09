@@ -93,6 +93,7 @@ export interface UserProfile {
   bio?: string;
   banner?: string;
   location?: string;
+  isVerified?: boolean;
   memberSince?: string;
   followersCount?: number;
   followingCount?: number;
@@ -131,6 +132,8 @@ export interface VideoReview {
     bio?: string;
     banner?: string;
     location?: string;
+    city?: string;
+    country?: string;
     isLocalGuide?: boolean;
     localGuideLevel?: number;
     videoReviewCount?: number;

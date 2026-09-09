@@ -8744,6 +8744,74 @@ app.post("/api/videos/save-review", async (req, res) => {
   // BUSINESS VERIFICATION & RESEND API ROUTES
   // ==========================================
 
+  // Helper: Verify if an email is registered as a customer/reviewer or has published video reviews
+  async function checkIsCustomerReviewerAccount(rawEmail: string): Promise<{ isCustomerReviewer: boolean; reason?: string }> {
+    if (!rawEmail || typeof rawEmail !== 'string') {
+      return { isCustomerReviewer: false };
+    }
+    const cleanEmail = rawEmail.trim().toLowerCase();
+    const emailPrefix = cleanEmail.split('@')[0];
+
+    // 1. Check if email has authored any video reviews in local index
+    try {
+      const localReviews = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+      const hasLocalReview = localReviews.some((vr: any) => {
+        const vrEmail = (vr.userEmail || vr.userId || "").toLowerCase().trim();
+        const a = vr.author || {};
+        const aEmail = (a.email || "").toLowerCase().trim();
+        const aName = (a.name || vr.authorName || "").toLowerCase().trim();
+        const aHandle = (a.handle || vr.authorHandle || "").toLowerCase().trim().replace(/^@+/, "");
+
+        return (
+          vrEmail === cleanEmail ||
+          (vrEmail.includes('@') && vrEmail === cleanEmail) ||
+          aEmail === cleanEmail ||
+          aHandle === emailPrefix ||
+          (emailPrefix.length >= 3 && aName.replace(/[^a-z0-9]/g, '') === emailPrefix.replace(/[^a-z0-9]/g, ''))
+        );
+      });
+
+      if (hasLocalReview) {
+        return {
+          isCustomerReviewer: true,
+          reason: "This email address is already associated with reviewer accounts or video reviews on Yoouz. Business accounts cannot use a customer reviewer email to prevent conflicts of interest and protect authentic reviews."
+        };
+      }
+    } catch (e) {}
+
+    // 2. Check resolveUserProfileFromAnySource for consumer reviewer status
+    try {
+      const profile = await resolveUserProfileFromAnySource(cleanEmail);
+      if (profile) {
+        const hasReviews = (profile.videoReviewCount && profile.videoReviewCount > 0) || (profile.reviewCount && profile.reviewCount > 0);
+        const isConsumerRole = profile.role === 'user' || profile.role === 'reviewer' || profile.isLocalGuide;
+        const isKnownCommunity = Boolean(KNOWN_COMMUNITY_USERS_SERVER[cleanEmail] || KNOWN_COMMUNITY_USERS_SERVER[emailPrefix]);
+
+        if (hasReviews || isConsumerRole || isKnownCommunity) {
+          return {
+            isCustomerReviewer: true,
+            reason: "This email address is registered as a customer/reviewer account on Yoouz. Business accounts must use a dedicated official work email and cannot share credentials with reviewer accounts to maintain review integrity."
+          };
+        }
+      }
+    } catch (e) {}
+
+    // 3. Check SQL database reviews table
+    try {
+      if (db && reviews) {
+        const sqlRev = await db.select().from(reviews).where(eq(reviews.userId, cleanEmail)).limit(1);
+        if (sqlRev && sqlRev.length > 0) {
+          return {
+            isCustomerReviewer: true,
+            reason: "This email has posted customer reviews on Yoouz. Business accounts must use a dedicated work email to maintain review authenticity."
+          };
+        }
+      }
+    } catch (e) {}
+
+    return { isCustomerReviewer: false };
+  }
+
   // 1. Send Magic Link & 6-Digit Verification Code to Business Email via Resend
   app.post("/api/business/send-magic-link", async (req, res) => {
     try {
@@ -8753,6 +8821,16 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
 
       const cleanEmail = email.trim().toLowerCase();
+
+      // Conflict of interest enforcement: reviewer accounts cannot sign in to business portal
+      const reviewerCheck = await checkIsCustomerReviewerAccount(cleanEmail);
+      if (reviewerCheck.isCustomerReviewer) {
+        return res.status(403).json({
+          success: false,
+          error: reviewerCheck.reason || "This email is registered to a customer/reviewer account. Business accounts must use a dedicated work email and cannot share credentials with personal reviewer accounts to maintain review authenticity."
+        });
+      }
+
       const cleanPlaceId = placeId || 'place-custom';
       const cleanPlaceName = placeName || 'Your Business Listing';
       const cleanWebsite = website || '';
@@ -8876,6 +8954,15 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
 
       const cleanEmail = email.trim().toLowerCase();
+
+      // Conflict of interest enforcement: reviewer accounts cannot verify as a business
+      const reviewerCheck = await checkIsCustomerReviewerAccount(cleanEmail);
+      if (reviewerCheck.isCustomerReviewer) {
+        return res.status(403).json({
+          error: reviewerCheck.reason || "This email is registered to a customer/reviewer account."
+        });
+      }
+
       const record = businessVerificationStore.get(cleanEmail);
 
       let isValid = false;

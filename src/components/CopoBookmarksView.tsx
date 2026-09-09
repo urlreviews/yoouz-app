@@ -8,10 +8,11 @@ import {
   MapPin,
   ChevronLeft,
   Store,
-  User
+  User,
+  CheckCircle2
 } from "lucide-react";
 import { VideoReview, UserProfile, Place } from "../types";
-import { getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { getDisplayUrlAsDomain, formatCityCountry } from "../utils/placeUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -363,8 +364,20 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
                     />
                     <div className="min-w-0">
-                      <h4 className="font-bold text-white text-sm truncate leading-snug">{creator.name}</h4>
-                      <p className="text-xs text-zinc-400 mt-0.5">{creator.handle || `@${creator.name.toLowerCase().replace(/\s+/g, "")}`}</p>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-bold text-white text-sm truncate leading-snug">{creator.name}</h4>
+                        {creator.isVerified && (
+                          <span title="Verified Reviewer" className="inline-flex items-center">
+                            <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-0.5 min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                        <span className="truncate">
+                          {formatCityCountry(creator) || (creator.videoReviewCount ? `${creator.videoReviewCount} ${creator.videoReviewCount === 1 ? t("common.videoReview", "video review") : t("common.videoReviews", "video reviews")}` : t("profile.communityReviewer", "Community Reviewer"))}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">

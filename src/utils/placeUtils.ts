@@ -589,19 +589,22 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
     name: "avt ertuop",
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "avr6566gd": {
     name: "avt ertuop",
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   },
   "avr6566gd@gmail.com": {
     name: "avt ertuop",
     handle: "@avr6566gd",
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz."
+    bio: "Community reviewer on Yoouz.",
+    location: "Los Angeles, California, United States"
   }
 };
 
@@ -812,4 +815,55 @@ export function resolveSafeAuthor(
     banner: finalBanner,
     location: finalLocation
   };
+}
+
+/**
+ * Formats a clean City, Country display string for a user/reviewer.
+ * Never exposes @handles or usernames.
+ * E.g., "Los Angeles, California, United States" -> "Los Angeles, United States"
+ *       "Paris, France" -> "Paris, France"
+ */
+export function formatCityCountry(creator?: {
+  city?: string;
+  country?: string;
+  location?: string;
+} | any): string {
+  if (!creator) return "";
+  const cleanCity = (creator.city || "").trim();
+  const cleanCountry = (creator.country || "").trim();
+  if (
+    cleanCity &&
+    cleanCountry &&
+    cleanCity.toLowerCase() !== "online" &&
+    cleanCity.toLowerCase() !== "verified location" &&
+    cleanCountry.toLowerCase() !== "online"
+  ) {
+    return `${cleanCity}, ${cleanCountry}`;
+  }
+
+  if (creator.location) {
+    const parts = String(creator.location)
+      .split(",")
+      .map((p: string) => p.trim())
+      .filter((p: string) => Boolean(p) && p.toLowerCase() !== "online" && p.toLowerCase() !== "verified location");
+
+    if (parts.length >= 3) {
+      return `${parts[0]}, ${parts[parts.length - 1]}`;
+    }
+    if (parts.length === 2) {
+      return `${parts[0]}, ${parts[1]}`;
+    }
+    if (parts.length === 1) {
+      return parts[0];
+    }
+  }
+
+  if (cleanCity && cleanCity.toLowerCase() !== "online" && cleanCity.toLowerCase() !== "verified location") {
+    return cleanCity;
+  }
+  if (cleanCountry && cleanCountry.toLowerCase() !== "online") {
+    return cleanCountry;
+  }
+
+  return "";
 }
