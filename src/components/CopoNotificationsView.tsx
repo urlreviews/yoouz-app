@@ -295,70 +295,48 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
         
         {/* Top Header & Navigation Bar */}
-        <div className="flex items-center justify-between gap-2 pt-1 pb-1">
+        <div className="flex items-center justify-between gap-3 pt-1 pb-2">
           {/* Left: Back Button + Title */}
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
+                className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
                 title="Back to Feed"
+                aria-label="Back to Feed"
               >
-                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
               </button>
             )}
             <div className="min-w-0">
-              <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight leading-tight truncate">
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
                 {t("nav.notifications", "Notifications")}
               </h1>
-              <p className="text-[11px] sm:text-xs text-zinc-400 font-medium truncate">
+              <p className="text-xs text-zinc-400 font-medium truncate">
                 {unreadCount > 0
-                  ? `${unreadCount} ${t("common.just_now", "new updates")}`
-                  : t("common.success", "All caught up")}
+                  ? `${unreadCount} ${t("notifications.newUpdates", "new updates")}`
+                  : t("notifications.allCaughtUp", "All caught up")}
               </p>
             </div>
           </div>
 
-          {/* Right: Sub-tab Switcher & Header Controls */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {onNavigateToMessages && (
-              <div className="inline-flex items-center p-0.5 bg-zinc-900/90 rounded-full border border-zinc-800 shadow-3xs">
-                <button
-                  id="tab-notifs-messages"
-                  onClick={onNavigateToMessages}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-bold text-zinc-400 hover:text-white cursor-pointer transition-all active:scale-95"
-                >
-                  Messages
-                </button>
-                <button
-                  id="tab-notifs-activity"
-                  className="px-2.5 py-1 rounded-full text-[11px] font-black bg-white text-zinc-950 shadow-xs cursor-pointer flex items-center gap-1"
-                >
-                  <span>Activity</span>
-                  {unreadCount > 0 && (
-                    <span className="min-w-[15px] h-[15px] px-1 text-[9px] rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-            )}
-
+          {/* Right: Actions & Settings */}
+          <div className="flex items-center gap-2 shrink-0">
             {notifications.length > 0 && unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="px-2.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold text-white bg-zinc-800/80 hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-700/80 active:scale-95"
+                className="px-3 py-1.5 rounded-full text-xs font-bold text-white bg-zinc-800/90 hover:bg-zinc-700 transition-all cursor-pointer border border-zinc-700/80 active:scale-95 shadow-xs whitespace-nowrap"
               >
-                Mark read
+                {t("notifications.markRead", "Mark read")}
               </button>
             )}
 
             {notifications.length > 0 && (
               <button
                 onClick={handleClearAll}
-                className="px-2.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
+                className="px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-all cursor-pointer border border-zinc-800 active:scale-95 shadow-xs whitespace-nowrap"
               >
-                Clear all
+                {t("notifications.clearAll", "Clear all")}
               </button>
             )}
 
@@ -366,11 +344,11 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <button
                 id="btn-notifications-settings"
                 onClick={onOpenSettings}
-                className="p-1.5 sm:p-2 rounded-full text-zinc-400 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-colors cursor-pointer border border-zinc-800 active:scale-95"
-                title="Notification Preferences"
-                aria-label="Notification Preferences"
+                className="w-10 h-10 rounded-full text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-all cursor-pointer border border-zinc-800 active:scale-95 shadow-xs flex items-center justify-center shrink-0"
+                title={t("notifications.preferences", "Notification Preferences")}
+                aria-label={t("notifications.preferences", "Notification Preferences")}
               >
-                <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Settings className="w-5 h-5" />
               </button>
             )}
           </div>
