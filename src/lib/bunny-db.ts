@@ -86,6 +86,9 @@ export async function initBunnyDbSchema() {
       thumbnailUrl TEXT,
       duration REAL,
       likesCount INTEGER DEFAULT 0,
+      bookmarksCount INTEGER DEFAULT 0,
+      sharesCount INTEGER DEFAULT 0,
+      commentsCount INTEGER DEFAULT 0,
       viewsCount INTEGER DEFAULT 0,
       data TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -174,6 +177,7 @@ export async function initBunnyDbSchema() {
     }
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN bookmarksCount INTEGER DEFAULT 0"); } catch (e) {}
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN sharesCount INTEGER DEFAULT 0"); } catch (e) {}
+    try { await client.execute("ALTER TABLE videoReviews ADD COLUMN commentsCount INTEGER DEFAULT 0"); } catch (e) {}
     isInitialized = true;
   } catch (err: any) {
     console.error("⚠️ [BunnyDB] Schema migration warning:", err?.message || err);

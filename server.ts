@@ -5419,6 +5419,164 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     return { comments: topLevel, count: totalCount };
   }
 
+  // Authoritative Feed Synchronizer: Syncs directly from Bunny Cloud Database with exact live interaction counts
+  async function syncAndWarmFeedFromBunnyDb() {
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return;
+    try {
+      console.log("🐰 [BunnyDB] Authoritative sync: Querying video reviews, bookmarks, comments, and likes...");
+      const [bunnyRows, bmCountsRes, commCountsRes, likeCountsRes, allCommentsRes] = await Promise.all([
+        bunnyDb.execute("SELECT * FROM videoReviews ORDER BY createdAt DESC LIMIT 100").catch(() => ({ rows: [] })),
+        bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM bookmarks GROUP BY videoId").catch(() => ({ rows: [] })),
+        bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM comments GROUP BY videoId").catch(() => ({ rows: [] })),
+        bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM likes GROUP BY videoId").catch(() => ({ rows: [] })),
+        bunnyDb.execute("SELECT videoId, data FROM comments ORDER BY createdAt ASC").catch(() => ({ rows: [] }))
+      ]);
+
+      if (!bunnyRows || !bunnyRows.rows || bunnyRows.rows.length === 0) return;
+
+      const bmMap = new Map<string, number>();
+      (bmCountsRes.rows || []).forEach((row: any) => {
+        if (row.videoId) bmMap.set(String(row.videoId), Number(row.total) || 0);
+      });
+
+      const commCountMap = new Map<string, number>();
+      (commCountsRes.rows || []).forEach((row: any) => {
+        if (row.videoId) commCountMap.set(String(row.videoId), Number(row.total) || 0);
+      });
+
+      const likeMap = new Map<string, number>();
+      (likeCountsRes.rows || []).forEach((row: any) => {
+        if (row.videoId) likeMap.set(String(row.videoId), Number(row.total) || 0);
+      });
+
+      const videoCommentsMap = new Map<string, any[]>();
+      (allCommentsRes.rows || []).forEach((row: any) => {
+        if (row.videoId) {
+          let parsed: any = {};
+          try { parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+          if (parsed && parsed.id) {
+            const list = videoCommentsMap.get(String(row.videoId)) || [];
+            if (!list.some((c: any) => c.id === parsed.id)) list.push(parsed);
+            videoCommentsMap.set(String(row.videoId), list);
+          }
+        }
+      });
+
+      const localList = readReviewsIndex();
+      const localMap = new Map<string, any>();
+      localList.forEach((r: any) => { if (r && r.id) localMap.set(r.id, r); });
+
+      const syncedVideos: any[] = [];
+      const syncedIds = new Set<string>();
+
+      bunnyRows.rows.forEach((r: any) => {
+        if (!r || !r.id) return;
+        syncedIds.add(String(r.id));
+        const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+        const existing = localMap.get(r.id) || {};
+        
+        const rawDbComments = videoCommentsMap.get(String(r.id)) || [];
+        const existingComments = Array.isArray(existing.comments) ? existing.comments : (Array.isArray(parsedData.comments) ? parsedData.comments : []);
+        const commentMap = new Map<string, any>();
+        existingComments.forEach((c: any) => { if (c && c.id) commentMap.set(c.id, c); });
+        rawDbComments.forEach((c: any) => { if (c && c.id) commentMap.set(c.id, c); });
+        const tree = buildCommentTree(Array.from(commentMap.values()));
+        const dbCommCount = commCountMap.get(String(r.id));
+        const realCommentsCount = typeof dbCommCount === 'number'
+          ? Math.max(dbCommCount, tree.count)
+          : Math.max(tree.count, typeof r.commentsCount === 'number' ? r.commentsCount : (existing.commentsCount || 0));
+
+        const dbBookmarks = bmMap.get(String(r.id));
+        const realBookmarks = typeof dbBookmarks === 'number'
+          ? Math.max(dbBookmarks, typeof r.bookmarksCount === 'number' ? r.bookmarksCount : 0)
+          : (typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof parsedData.bookmarksCount === 'number' ? parsedData.bookmarksCount : (existing.bookmarksCount || 0)));
+
+        const dbLikes = likeMap.get(String(r.id));
+        const realLikes = typeof dbLikes === 'number'
+          ? Math.max(dbLikes, typeof r.likesCount === 'number' ? r.likesCount : 0)
+          : (typeof r.likesCount === 'number' ? r.likesCount : (typeof parsedData.likesCount === 'number' ? parsedData.likesCount : (existing.likesCount || 0)));
+
+        const realShares = typeof r.sharesCount === 'number'
+          ? r.sharesCount
+          : (typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : (existing.sharesCount || 0));
+
+        const mergedAuthor = {
+          ...(typeof existing.author === 'object' ? existing.author : {}),
+          ...(typeof parsedData.author === 'object' ? parsedData.author : {}),
+          name: r.authorName || parsedData.authorName || (parsedData.author && parsedData.author.name) || (existing.author && existing.author.name) || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId) || 'Reviewer',
+          avatar: r.authorAvatar || parsedData.authorAvatar || (parsedData.author && parsedData.author.avatar) || (existing.author && existing.author.avatar) || ''
+        };
+
+        const vidObj = {
+          ...existing,
+          ...parsedData,
+          id: r.id,
+          placeId: r.placeId || parsedData.placeId || existing.placeId,
+          placeName: r.placeName || parsedData.placeName || existing.placeName,
+          authorName: mergedAuthor.name,
+          authorAvatar: mergedAuthor.avatar,
+          rating: r.rating || parsedData.rating || existing.rating || 5,
+          videoUrl: r.videoUrl || parsedData.videoUrl || existing.videoUrl,
+          thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl || existing.thumbnailUrl,
+          duration: r.duration || parsedData.duration || existing.duration || 60,
+          likesCount: realLikes,
+          likes: realLikes,
+          bookmarksCount: realBookmarks,
+          bookmarks: realBookmarks,
+          sharesCount: realShares,
+          shares: realShares,
+          viewsCount: typeof r.viewsCount === 'number' ? r.viewsCount : (existing.viewsCount || 1),
+          views: typeof r.viewsCount === 'number' ? r.viewsCount : (existing.views || 1),
+          comments: tree.comments,
+          commentsCount: realCommentsCount,
+          author: mergedAuthor
+        };
+        syncedVideos.push(enrichReviewPlaceAssets(vidObj));
+      });
+
+      // Also merge any local videos not present in BunnyDB results
+      localList.forEach((existing: any) => {
+        if (!existing || !existing.id || syncedIds.has(String(existing.id))) return;
+        
+        const rawDbComments = videoCommentsMap.get(String(existing.id)) || [];
+        const existingComments = Array.isArray(existing.comments) ? existing.comments : [];
+        const commentMap = new Map<string, any>();
+        existingComments.forEach((c: any) => { if (c && c.id) commentMap.set(c.id, c); });
+        rawDbComments.forEach((c: any) => { if (c && c.id) commentMap.set(c.id, c); });
+        const tree = buildCommentTree(Array.from(commentMap.values()));
+        const dbCommCount = commCountMap.get(String(existing.id));
+        const realCommentsCount = typeof dbCommCount === 'number' ? Math.max(dbCommCount, tree.count) : Math.max(tree.count, existing.commentsCount || 0);
+
+        const dbBookmarks = bmMap.get(String(existing.id));
+        const realBookmarks = typeof dbBookmarks === 'number' ? Math.max(dbBookmarks, existing.bookmarksCount || 0) : (existing.bookmarksCount || 0);
+
+        const dbLikes = likeMap.get(String(existing.id));
+        const realLikes = typeof dbLikes === 'number' ? Math.max(dbLikes, existing.likesCount || 0) : (existing.likesCount || 0);
+
+        const vidObj = {
+          ...existing,
+          likesCount: realLikes,
+          likes: realLikes,
+          bookmarksCount: realBookmarks,
+          bookmarks: realBookmarks,
+          comments: tree.comments,
+          commentsCount: realCommentsCount
+        };
+        syncedVideos.push(enrichReviewPlaceAssets(vidObj));
+      });
+
+      if (syncedVideos.length > 0) {
+        feedCache.videos = syncedVideos;
+        feedCache.lastFetched = Date.now();
+        writeReviewsIndex(syncedVideos);
+        console.log(`✅ [BunnyDB] Authoritative sync complete: ${syncedVideos.length} reviews synchronized from Bunny Cloud Database!`);
+      }
+    } catch (err: any) {
+      console.warn("Notice syncing feed from Bunny Cloud Database:", err?.message || err);
+    }
+  }
+
   // Real-Time Server-Sent Events (SSE) Stream for Instant Global Video Updates, Deletions, Chats & Notifications
   app.get(["/api/videos/stream", "/api/realtime/stream"], (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
@@ -5474,14 +5632,28 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const isCacheValid = (now - feedCache.lastFetched < CACHE_TTL_MS) && feedCache.videos.length > 0;
       
       if (isCacheValid) {
-        // Merge memory cache with localList (in case any brand-new reviews were just saved to the local file)
+        // Overlay active cache from Bunny DB on top of local baseline (ensuring live counts and comments win!)
         const map = new Map<string, any>();
-        feedCache.videos.forEach((r: any) => {
-          if (r && r.id && !deletedSet.has(String(r.id))) map.set(r.id, r);
-        });
         localList.forEach((r: any) => {
           if (r && r.id && r.videoUrl && !deletedSet.has(String(r.id))) {
-            map.set(r.id, { ...(map.get(r.id) || {}), ...r });
+            map.set(r.id, r);
+          }
+        });
+        feedCache.videos.forEach((r: any) => {
+          if (r && r.id && !deletedSet.has(String(r.id))) {
+            const existing = map.get(r.id) || {};
+            map.set(r.id, {
+              ...existing,
+              ...r,
+              bookmarksCount: Math.max(Number(existing.bookmarksCount) || 0, Number(r.bookmarksCount) || 0),
+              bookmarks: Math.max(Number(existing.bookmarks) || 0, Number(r.bookmarks) || 0),
+              likesCount: Math.max(Number(existing.likesCount) || 0, Number(r.likesCount) || 0),
+              likes: Math.max(Number(existing.likes) || 0, Number(r.likes) || 0),
+              sharesCount: Math.max(Number(existing.sharesCount) || 0, Number(r.sharesCount) || 0),
+              shares: Math.max(Number(existing.shares) || 0, Number(r.shares) || 0),
+              commentsCount: Math.max(Number(existing.commentsCount) || 0, Number(r.commentsCount) || 0),
+              comments: (Array.isArray(r.comments) && r.comments.length > 0) ? r.comments : (existing.comments || [])
+            });
           }
         });
         const merged = Array.from(map.values());
@@ -5596,12 +5768,26 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           // If Firestore is exhausted but we have previous cached videos in memory, fallback to cache
           if (feedCache.videos.length > 0) {
             const cachedMap = new Map<string, any>();
-            feedCache.videos.forEach((r: any) => {
-              if (r && r.id && !deletedSet.has(String(r.id))) cachedMap.set(r.id, r);
-            });
             localList.forEach((r: any) => {
               if (r && r.id && r.videoUrl && !deletedSet.has(String(r.id))) {
-                cachedMap.set(r.id, { ...(cachedMap.get(r.id) || {}), ...r });
+                cachedMap.set(r.id, r);
+              }
+            });
+            feedCache.videos.forEach((r: any) => {
+              if (r && r.id && !deletedSet.has(String(r.id))) {
+                const existing = cachedMap.get(r.id) || {};
+                cachedMap.set(r.id, {
+                  ...existing,
+                  ...r,
+                  bookmarksCount: Math.max(Number(existing.bookmarksCount) || 0, Number(r.bookmarksCount) || 0),
+                  bookmarks: Math.max(Number(existing.bookmarks) || 0, Number(r.bookmarks) || 0),
+                  likesCount: Math.max(Number(existing.likesCount) || 0, Number(r.likesCount) || 0),
+                  likes: Math.max(Number(existing.likes) || 0, Number(r.likes) || 0),
+                  sharesCount: Math.max(Number(existing.sharesCount) || 0, Number(r.sharesCount) || 0),
+                  shares: Math.max(Number(existing.shares) || 0, Number(r.shares) || 0),
+                  commentsCount: Math.max(Number(existing.commentsCount) || 0, Number(r.commentsCount) || 0),
+                  comments: (Array.isArray(r.comments) && r.comments.length > 0) ? r.comments : (existing.comments || [])
+                });
               }
             });
             const mergedCached = Array.from(cachedMap.values());
@@ -6034,7 +6220,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const videoId = typeof req.query.videoId === 'string' ? req.query.videoId : '';
       if (!videoId) return res.json({ comments: [], count: 0, commentsCount: 0 });
       const bunnyDb = getBunnyDb();
-      let rawComments: any[] = [];
+      const commentMap = new Map<string, any>();
+
       if (bunnyDb) {
         try {
           const result = await bunnyDb.execute({
@@ -6042,10 +6229,10 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
             args: [videoId]
           });
           if (result && result.rows && result.rows.length > 0) {
-            rawComments = result.rows.map((row: any) => {
+            result.rows.forEach((row: any) => {
               let parsed: any = {};
               try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
-              return {
+              const cObj = {
                 ...parsed,
                 id: String(row.id),
                 videoId: String(row.videoId),
@@ -6055,16 +6242,24 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
                 text: row.text || parsed.text || '',
                 createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
               };
+              if (cObj.id) commentMap.set(cObj.id, cObj);
             });
-          } else {
-            // Check videoReviews table row in BunnyDB
-            const vidRow = await bunnyDb.execute({
-              sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
-              args: [videoId]
-            });
-            if (vidRow && vidRow.rows && vidRow.rows.length > 0) {
-              const d = JSON.parse((vidRow.rows[0] as any).data || '{}');
-              if (Array.isArray(d.comments)) rawComments = d.comments;
+          }
+
+          // Also check videoReviews table row in BunnyDB
+          const vidRow = await bunnyDb.execute({
+            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          if (vidRow && vidRow.rows && vidRow.rows.length > 0) {
+            const d = JSON.parse((vidRow.rows[0] as any).data || '{}');
+            if (Array.isArray(d.comments)) {
+              d.comments.forEach((c: any) => {
+                if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
+                if (c && Array.isArray(c.replies)) {
+                  c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
+                }
+              });
             }
           }
         } catch (dbErr) {
@@ -6072,16 +6267,31 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      // If still empty, check local reviews index
-      if (rawComments.length === 0) {
-        const localList = readReviewsIndex();
-        const localVid = localList.find((v: any) => v.id === videoId);
-        if (localVid && Array.isArray(localVid.comments)) {
-          rawComments = localVid.comments;
-        }
+      // Merge from memory feedCache
+      const cachedVideo = feedCache.videos.find((v: any) => v && v.id === videoId);
+      if (cachedVideo && Array.isArray(cachedVideo.comments)) {
+        cachedVideo.comments.forEach((c: any) => {
+          if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
+          if (c && Array.isArray(c.replies)) {
+            c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
+          }
+        });
       }
 
-      const { comments, count } = buildCommentTree(rawComments);
+      // Merge from local reviews index
+      const localList = readReviewsIndex();
+      const localVid = localList.find((v: any) => v && v.id === videoId);
+      if (localVid && Array.isArray(localVid.comments)) {
+        localVid.comments.forEach((c: any) => {
+          if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
+          if (c && Array.isArray(c.replies)) {
+            c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
+          }
+        });
+      }
+
+      const allComments = Array.from(commentMap.values());
+      const { comments, count } = buildCommentTree(allComments);
       return res.json({ comments, count, commentsCount: count });
     } catch (err: any) {
       return res.json({ comments: [], count: 0, commentsCount: 0 });
@@ -6111,15 +6321,16 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           ]
         });
 
-        // 2. Fetch all raw comments for this video from BunnyDB
+        // 2. Fetch all comments for this video from BunnyDB
         const allCommentsRes = await bunnyDb.execute({
           sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
           args: [videoId]
         });
-        const allDbComments = (allCommentsRes.rows || []).map((row: any) => {
+        const commentMap = new Map<string, any>();
+        (allCommentsRes.rows || []).forEach((row: any) => {
           let parsed: any = {};
           try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
-          return {
+          const cObj = {
             ...parsed,
             id: String(row.id),
             videoId: String(row.videoId),
@@ -6129,15 +6340,43 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
             text: row.text || parsed.text || '',
             createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
           };
+          if (cObj.id) commentMap.set(cObj.id, cObj);
         });
 
-        // Ensure incoming comment is present in the list
-        if (!allDbComments.some(c => c.id === comment.id)) {
-          allDbComments.push(comment);
+        // Also check if videoReviews table row has previous comments
+        try {
+          const vRow = await bunnyDb.execute({
+            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          if (vRow && vRow.rows && vRow.rows.length > 0) {
+            const vData = JSON.parse((vRow.rows[0] as any).data || '{}');
+            if (Array.isArray(vData.comments)) {
+              vData.comments.forEach((c: any) => {
+                if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
+                if (c && Array.isArray(c.replies)) {
+                  c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
+                }
+              });
+            }
+          }
+        } catch (e) {}
+
+        const cachedVideo = feedCache.videos.find((v: any) => v && v.id === videoId);
+        if (cachedVideo && Array.isArray(cachedVideo.comments)) {
+          cachedVideo.comments.forEach((c: any) => {
+            if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
+            if (c && Array.isArray(c.replies)) {
+              c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
+            }
+          });
         }
 
+        // Ensure incoming comment is present in the list
+        commentMap.set(comment.id, comment);
+
         // Build canonical hierarchical tree and exact count
-        treeResult = buildCommentTree(allDbComments);
+        treeResult = buildCommentTree(Array.from(commentMap.values()));
 
         // 3. Update videoReviews table in BunnyDB
         try {
@@ -6153,9 +6392,9 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           vData.commentsCount = treeResult.count;
           const jsonStr = JSON.stringify(vData);
           await bunnyDb.execute({
-            sql: `INSERT INTO videoReviews (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [videoId, jsonStr, jsonStr]
+            sql: `INSERT INTO videoReviews (id, data, commentsCount, updatedAt) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET data = ?, commentsCount = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [videoId, jsonStr, treeResult.count, jsonStr, treeResult.count]
           });
         } catch (vErr) {
           console.warn("BunnyDB videoReviews update notice:", vErr);
@@ -6620,6 +6859,24 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
+      try {
+        const list = readReviewsIndex();
+        const vid = list.find((v: any) => v.id === videoId);
+        if (vid) {
+          vid.likes = updatedLikesCount;
+          vid.likesCount = updatedLikesCount;
+          writeReviewsIndex(list);
+        }
+        const cachedIdx = feedCache.videos.findIndex((v: any) => v.id === videoId);
+        if (cachedIdx !== -1) {
+          feedCache.videos[cachedIdx] = {
+            ...feedCache.videos[cachedIdx],
+            likes: updatedLikesCount,
+            likesCount: updatedLikesCount
+          };
+        }
+      } catch (e) {}
+
       broadcastSseEvent({
         type: "video_liked",
         videoId,
@@ -6729,7 +6986,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      // Also sync to local review index
+      // Also sync to local review index and memory feedCache
       try {
         const list = readReviewsIndex();
         const vid = list.find((v: any) => v.id === videoId);
@@ -6738,6 +6995,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           vid.bookmarks = updatedBookmarksCount;
           vid.bookmarksCount = updatedBookmarksCount;
           writeReviewsIndex(list);
+        }
+        const cachedIdx = feedCache.videos.findIndex((v: any) => v.id === videoId);
+        if (cachedIdx !== -1) {
+          feedCache.videos[cachedIdx] = {
+            ...feedCache.videos[cachedIdx],
+            bookmarks: updatedBookmarksCount,
+            bookmarksCount: updatedBookmarksCount
+          };
         }
       } catch (e) {}
 
@@ -6839,6 +7104,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           vid.shares = nextShares;
           vid.sharesCount = nextShares;
           writeReviewsIndex(list);
+        }
+        const cachedIdx = feedCache.videos.findIndex((v: any) => v.id === videoId);
+        if (cachedIdx !== -1) {
+          feedCache.videos[cachedIdx] = {
+            ...feedCache.videos[cachedIdx],
+            shares: nextShares,
+            sharesCount: nextShares
+          };
         }
       } catch(e) {}
 
@@ -14011,6 +14284,7 @@ function injectOpenGraphTags(html: string, meta: any) {
   }
 
   await initBunnyDbSchema().catch(() => {});
+  await syncAndWarmFeedFromBunnyDb().catch(() => {});
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://localhost:${PORT}`);
