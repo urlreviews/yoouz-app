@@ -161,26 +161,47 @@ export function formatBusinessName(name?: string | null): string {
     }
   }
 
-  // 4. If it is an explicit URL or domain (e.g. "https://...", "www.domain.com", "domain.com", "tajhotels-com")
+  // 4. If it is an explicit URL, domain, or domain-like string (e.g. "https://...", "www.domain.com", "domain.com", "tajhotels-com", "bhol.co.il", "digitalpark.ae")
   if (
     trimmed.includes("://") || 
-    trimmed.startsWith("www.") || 
-    trimmed.startsWith("www-") ||
-    /^[a-z0-9-]+(?:\.[a-z]{2,})+$/i.test(trimmed) ||
+    trimmed.toLowerCase().startsWith("www.") || 
+    trimmed.toLowerCase().startsWith("www-") ||
+    trimmed.toLowerCase().startsWith("http:") ||
+    trimmed.toLowerCase().startsWith("https:") ||
+    /\.[a-z]{2,}(?:\/|$|\?|#)/i.test(trimmed) ||
+    /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
     /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed)
   ) {
     const domain = extractCleanDomain(trimmed);
     const namePart = domain.split('.')[0];
     
     if (namePart) {
-      const words = namePart
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
+      const commonSuffixes = /(law|group|firm|media|news|park|tech|studios?|travel|cafe|coffee|bar|hotel|suites|dentist|dental|clinic|hospital|store|shop|market|club|fitness|gym|app|avocats?)$/i;
+      let spaced = namePart
+        .replace(/([a-zA-Z])([0-9])/g, "$1 $2")
+        .replace(/([0-9])([a-zA-Z])/g, "$1 $2")
+        .replace(/([a-z])([A-Z])/g, "$1 $2");
+
+      if (commonSuffixes.test(spaced) && !spaced.includes(" ") && !spaced.includes("-")) {
+        spaced = spaced.replace(commonSuffixes, " $1");
+      }
+      if (/^jb(?=[a-z])/i.test(spaced)) {
+        spaced = spaced.replace(/^jb/i, "JB ");
+      }
+      if (/^brettlevy$/i.test(spaced)) {
+        spaced = "Brett Levy";
+      }
+
+      const acronyms = new Set(["usa", "nyc", "la", "uk", "us", "ai", "api", "ibm", "bbc", "cnn", "cbs", "nbc", "hbo", "eu"]);
+      const lowerCaseWords = new Set(["of", "the", "and", "in", "at"]);
+
+      const words = spaced
         .split(/[-_ ]+/)
         .map(word => {
           if (!word) return "";
-          const lowerCaseWords = ["of", "the", "and", "in", "at"];
-          const lowerWord = word.toLowerCase();
-          if (lowerCaseWords.includes(lowerWord)) return lowerWord;
+          const lower = word.toLowerCase();
+          if (acronyms.has(lower)) return lower.toUpperCase();
+          if (lowerCaseWords.has(lower)) return lower;
           return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
         })
         .filter(Boolean);
@@ -190,12 +211,17 @@ export function formatBusinessName(name?: string | null): string {
     return domain;
   }
 
-  // 5. If it's a single word without spaces, capitalize first letter
-  if (!trimmed.includes(" ") && trimmed.length > 1) {
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  // 5. Final fallback cleanup - absolutely strip any remaining protocol, www, or TLD suffixes
+  let cleanName = trimmed
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www[\.\-\/]/i, '')
+    .replace(/\.(?:com|net|org|io|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
+
+  if (!cleanName.includes(" ") && cleanName.length > 1) {
+    return cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
   }
   
-  return trimmed;
+  return cleanName;
 }
 
 /**

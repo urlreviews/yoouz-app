@@ -2,6 +2,16 @@ import { Place } from "../types";
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "facebook.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#1877f2"/>
+      <path d="M62 50 H52 V42 C52 38 54 36 58 36 H63 V24 H52 C41 24 37 31 37 41 V50 H28 V62 H37 V96 H52 V62 H61 L62 50 Z" fill="#ffffff"/>
+    </svg>`),
+  "www.facebook.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#1877f2"/>
+      <path d="M62 50 H52 V42 C52 38 54 36 58 36 H63 V24 H52 C41 24 37 31 37 41 V50 H28 V62 H37 V96 H52 V62 H61 L62 50 Z" fill="#ffffff"/>
+    </svg>`),
   "reddit.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <circle cx="50" cy="50" r="50" fill="#FF4500"/>
@@ -304,6 +314,8 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses
 export const KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "facebook.com": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80",
+  "www.facebook.com": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80",
   "reddit.com": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
   "www.reddit.com": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
   "uber.com": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=1200&auto=format&fit=crop&q=80",

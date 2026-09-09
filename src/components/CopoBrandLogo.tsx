@@ -56,7 +56,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     if (
       logoUrl &&
       !logoUrl.includes("brandfetch.io") &&
-      !logoUrl.includes("gstatic.com/faviconV2") &&
       logoUrl !== "data:;" &&
       !logoUrl.startsWith("data:;") &&
       (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image"))
@@ -75,6 +74,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     const cleanName = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     if (KNOWN_BRAND_LOGOS[cleanName]) {
       return KNOWN_BRAND_LOGOS[cleanName];
+    }
+
+    // 4. High-resolution authentic 256px favicon if domain is known
+    if (resolvedDomain && resolvedDomain.includes(".")) {
+      return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`;
     }
 
     return null;

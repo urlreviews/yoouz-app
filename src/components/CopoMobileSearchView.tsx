@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Search, Clock, TrendingUp, X } from "lucide-react";
+import { ArrowLeft, Search, Clock, TrendingUp, X, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
+import { formatBusinessName } from "../utils/placeUtils";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 
 interface CopoMobileSearchViewProps {
   places: Place[];
@@ -23,24 +25,43 @@ const getNormalizedDomain = (text: string) => {
     .trim();
 };
 
-const SearchItemLogo: React.FC<{ name: string; logoUrl: string | null; iconType: 'clock' | 'trending' | 'search' }> = ({ name, logoUrl, iconType }) => {
-  const [hasError, setHasError] = useState(false);
+const SearchBusinessBadge: React.FC<{
+  term: string;
+  place?: Place | null;
+  iconType: 'clock' | 'trending' | 'search';
+  getItemLogoUrl: (term: string, place?: Place | null) => string | null;
+}> = ({ term, place, iconType, getItemLogoUrl }) => {
+  const normDomain = getNormalizedDomain(place?.brandDomain || place?.website || term);
+  const isBusinessOrDomain = Boolean((normDomain && normDomain.includes(".")) || place);
+  const logoUrl = getItemLogoUrl(term, place);
 
-  if (logoUrl && !hasError) {
+  if (isBusinessOrDomain) {
+    const domain = normDomain || term;
     return (
-      <img 
-        src={logoUrl} 
-        alt={name} 
-        className="w-full h-full object-cover" 
-        referrerPolicy="no-referrer"
-        onError={() => setHasError(true)} 
+      <CopoBrandLogo
+        domain={domain}
+        name={formatBusinessName(place?.name || term)}
+        website={place?.website || (domain.includes(".") ? `https://${domain}` : undefined)}
+        logoUrl={logoUrl || place?.logoUrl || place?.avatarUrl}
+        bannerUrl={place?.bannerUrl || place?.ogImage}
+        className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white border border-black/10 overflow-hidden flex items-center justify-center shrink-0 p-1 sm:p-1.5 shadow-md ring-1 ring-white/20 transition-transform group-hover:scale-105"
+        imageClassName="w-full h-full object-contain rounded-lg [image-rendering:-webkit-optimize-contrast]"
+        fallbackTextClassName="font-extrabold text-xs text-zinc-900"
       />
     );
   }
 
-  if (iconType === 'trending') return <TrendingUp className="w-4 h-4 text-zinc-500" />;
-  if (iconType === 'search') return <Search className="w-4 h-4 text-zinc-500" />;
-  return <Clock className="w-4 h-4 text-zinc-500" />;
+  return (
+    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 shadow-md group-hover:border-zinc-700 transition-colors">
+      {iconType === 'trending' ? (
+        <TrendingUp className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+      ) : iconType === 'search' ? (
+        <Search className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+      ) : (
+        <Clock className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+      )}
+    </div>
+  );
 };
 
 export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
@@ -257,24 +278,29 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             
             {/* Autocomplete Suggestions */}
             {query.length > 0 && suggestions.length > 0 && (
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-1">
                 {suggestions.map((p) => {
-                  const logoUrl = getPlaceLogoUrl(p);
                   const displayName = p.brandDomain || p.name;
+                  const normDomain = getNormalizedDomain(p.brandDomain || p.website || p.id);
                   return (
                     <button 
                       key={p.id}
                       onClick={() => handleSearch(displayName)}
-                      className="flex items-center gap-3 py-3 border-b border-zinc-800/50 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                      className="flex items-center gap-3.5 py-2.5 px-2.5 rounded-xl border border-transparent hover:border-zinc-800/80 hover:bg-zinc-900/90 active:bg-zinc-900 text-left cursor-pointer transition-all group"
                     >
-                      <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
-                        <SearchItemLogo 
-                          name={displayName}
-                          logoUrl={logoUrl}
-                          iconType="search"
-                        />
+                      <SearchBusinessBadge 
+                        term={displayName}
+                        place={p}
+                        iconType="search"
+                        getItemLogoUrl={getItemLogoUrl}
+                      />
+                      <div className="flex items-center min-w-0 flex-1 gap-1.5">
+                        <span className="text-white font-bold text-[14.5px] sm:text-[15px] truncate group-hover:text-white transition-colors">
+                          {formatBusinessName(p.name || displayName)}
+                        </span>
+                        <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 relative -top-[0.5px]" />
                       </div>
-                      <span className="text-zinc-200 font-medium truncate">{displayName}</span>
+                      <Search className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0 ml-auto transition-colors" />
                     </button>
                   );
                 })}
@@ -284,36 +310,44 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {/* Recent Searches */}
             {query.length === 0 && recentSearches.length > 0 && (
               <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-zinc-400 text-sm font-bold">Recent</h3>
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-zinc-400 text-xs font-bold uppercase tracking-wider">Recent</h3>
                   <button 
                     onClick={() => {
                       setRecentSearches([]);
                       localStorage.removeItem("yoouz_recent_searches");
                     }}
-                    className="text-zinc-500 text-xs font-medium uppercase hover:text-zinc-300 cursor-pointer transition-colors"
+                    className="text-zinc-500 text-xs font-semibold uppercase hover:text-zinc-300 cursor-pointer transition-colors"
                   >
                     Clear All
                   </button>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col gap-1">
                   {recentSearches.map((s, idx) => {
                     const place = findMatchingPlace(s);
-                    const logoUrl = getItemLogoUrl(s, place);
+                    const normDomain = getNormalizedDomain(place?.brandDomain || place?.website || s);
+                    const cleanName = formatBusinessName(place?.name || s);
                     return (
                       <button 
                         key={idx}
                         onClick={() => handleSearch(s)}
-                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                        className="flex items-center gap-3.5 py-2.5 px-2.5 rounded-xl border border-transparent hover:border-zinc-800/80 hover:bg-zinc-900/90 active:bg-zinc-900 text-left cursor-pointer transition-all group"
                       >
-                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
-                          <SearchItemLogo 
-                            name={s}
-                            logoUrl={logoUrl}
-                            iconType="clock"
-                          />
+                        <SearchBusinessBadge 
+                          term={s}
+                          place={place}
+                          iconType="clock"
+                          getItemLogoUrl={getItemLogoUrl}
+                        />
+                        <div className="flex items-center min-w-0 flex-1 gap-1.5">
+                          <span className="text-white font-bold text-[14.5px] sm:text-[15px] truncate group-hover:text-white transition-colors">
+                            {cleanName}
+                          </span>
+                          {((normDomain && normDomain.includes(".")) || Boolean(place)) && (
+                            <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 relative -top-[0.5px]" />
+                          )}
                         </div>
-                        <span className="text-zinc-200 font-medium truncate">{s}</span>
+                        <Clock className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0 ml-auto transition-colors" />
                       </button>
                     );
                   })}
@@ -324,25 +358,33 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {/* Trending */}
             {query.length === 0 && (
               <div className="flex flex-col gap-3">
-                <h3 className="text-zinc-400 text-sm font-bold">Trending Searches</h3>
-                <div className="flex flex-col">
+                <h3 className="text-zinc-400 text-xs font-bold uppercase tracking-wider px-1">Trending Searches</h3>
+                <div className="flex flex-col gap-1">
                   {trending.map((s, idx) => {
                     const place = findMatchingPlace(s);
-                    const logoUrl = getItemLogoUrl(s, place);
+                    const normDomain = getNormalizedDomain(place?.brandDomain || place?.website || s);
+                    const cleanName = formatBusinessName(place?.name || s);
                     return (
                       <button 
                         key={idx}
                         onClick={() => handleSearch(s)}
-                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                        className="flex items-center gap-3.5 py-2.5 px-2.5 rounded-xl border border-transparent hover:border-zinc-800/80 hover:bg-zinc-900/90 active:bg-zinc-900 text-left cursor-pointer transition-all group"
                       >
-                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
-                          <SearchItemLogo 
-                            name={s}
-                            logoUrl={logoUrl}
-                            iconType="trending"
-                          />
+                        <SearchBusinessBadge 
+                          term={s}
+                          place={place}
+                          iconType="trending"
+                          getItemLogoUrl={getItemLogoUrl}
+                        />
+                        <div className="flex items-center min-w-0 flex-1 gap-1.5">
+                          <span className="text-white font-bold text-[14.5px] sm:text-[15px] truncate group-hover:text-white transition-colors">
+                            {cleanName}
+                          </span>
+                          {((normDomain && normDomain.includes(".")) || Boolean(place)) && (
+                            <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 relative -top-[0.5px]" />
+                          )}
                         </div>
-                        <span className="text-zinc-200 font-medium truncate">{s}</span>
+                        <TrendingUp className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0 ml-auto transition-colors" />
                       </button>
                     );
                   })}

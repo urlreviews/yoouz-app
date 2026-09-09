@@ -5625,6 +5625,12 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         banner: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&auto=format&fit=crop&q=80"
       },
       {
+        domain: "facebook.com",
+        title: "Facebook",
+        description: "Connect with friends and the world around you on Facebook.",
+        banner: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80"
+      },
+      {
         domain: "meta.com",
         title: "Meta",
         description: "Meta builds technologies that help people connect, find communities, and grow businesses.",

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -67,32 +67,92 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
   const handleSearch = async (e?: React.FormEvent, overrideQuery?: string) => {
     if (e) e.preventDefault();
-    const activeQuery = overrideQuery || query;
-    if (!activeQuery.trim()) return;
+    const rawQuery = (overrideQuery || query).trim();
+    if (!rawQuery) return;
 
-    if (!isValidUrl(activeQuery.trim())) {
+    // Resolve clean names (e.g. "Bhol", "Spotify", "Alaris Law") to their place or domain
+    let urlString = rawQuery;
+    const matchingLocal = places.find(p => 
+      p.name.toLowerCase() === rawQuery.toLowerCase() ||
+      p.id.toLowerCase() === rawQuery.toLowerCase() ||
+      p.brandDomain?.toLowerCase() === rawQuery.toLowerCase() ||
+      formatBusinessName(p.name).toLowerCase() === rawQuery.toLowerCase()
+    );
+
+    if (matchingLocal && (matchingLocal.brandDomain || matchingLocal.website)) {
+      urlString = matchingLocal.brandDomain || matchingLocal.website || urlString;
+    } else if (!urlString.includes(".") && !urlString.includes("://")) {
+      urlString = `${urlString.toLowerCase().replace(/[^a-z0-9-]/g, "")}.com`;
+    }
+
+    if (!isValidUrl(urlString)) {
       setErrorMsg("Please enter a valid website address.");
+      setIsSearching(false);
       return;
     }
 
-    if (isDeepUrl(activeQuery.trim())) {
+    if (isDeepUrl(urlString)) {
       setErrorMsg("Only base website addresses are allowed (e.g., example.com). Do not include subpages or articles.");
+      setIsSearching(false);
       return;
     }
 
     setErrorMsg("");
     setIsSearching(true);
-    setSearchedPlace(null);
 
     try {
-      const urlString = activeQuery.trim();
-      const parsedUrl = new URL(urlString.startsWith("http") ? urlString : "https://" + urlString);
-      const domain = parsedUrl.hostname;
+      let domain = "";
+      try {
+        const parsedUrl = new URL(urlString.startsWith("http") ? urlString : "https://" + urlString);
+        domain = parsedUrl.hostname.toLowerCase().replace(/^www\./, "");
+      } catch {
+        domain = urlString.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "").trim();
+      }
 
       // 1. Check local places first
-      let foundPlace = places.find(p => p.id === domain || p.brandDomain === domain);
+      let foundPlace = places.find(p => {
+        const pDom = (p.brandDomain || p.website || p.id || "").toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "");
+        return pDom === domain || p.id === domain || p.id === domain.replace(/[^a-zA-Z0-9]/g, "-");
+      });
+
+      // 2. Set instant optimistic place so there is ZERO delay, NO blank white state, and instant logo
+      const instantLogo = foundPlace?.logoUrl || getCleanLogoUrl(null, domain) || "";
+      const instantBanner = foundPlace?.bannerUrl || KNOWN_BRAND_BANNERS[domain] || "";
+      const instantName = foundPlace?.name || formatBusinessName(domain) || domain;
+
+      const instantPlace: Place = foundPlace || {
+        id: domain.replace(/[^a-zA-Z0-9]/g, "-"),
+        name: instantName,
+        category: "Website",
+        categoryType: "all",
+        address: "",
+        city: "Online",
+        lat: 0,
+        lng: 0,
+        rating: 5,
+        totalReviews: 1,
+        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: instantLogo,
+        logoUrl: instantLogo,
+        bannerUrl: instantBanner,
+        ogImage: instantBanner,
+        photos: instantBanner ? [instantBanner] : [],
+        openingHours: "Available 24/7",
+        isOpen: true,
+        phone: "",
+        website: urlString.startsWith("http") ? urlString : `https://${domain}`,
+        priceRange: "N/A",
+        plusCode: "",
+        description: "",
+        popularKeywords: [],
+        amenities: [],
+        topDishes: [],
+        brandDomain: domain
+      };
+
+      setSearchedPlace(instantPlace);
       
-      // 2. Always fetch from backend /api/url-metadata to ensure fresh logo/banner
+      // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta
       try {
          const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(urlString)}`);
          if (resp.ok) {
@@ -119,13 +179,14 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  photos: (foundPlace.photos && foundPlace.photos.length > 0) ? foundPlace.photos : (fetchedBanner ? [fetchedBanner] : []),
                  description: foundPlace.description || data.description || "",
                };
+               setSearchedPlace(foundPlace);
                if (onAddPlace) {
                  onAddPlace(foundPlace);
                }
              } else {
                const newPlace: Place = {
-                 id: (data.domain || "website").replace(/[^a-zA-Z0-9]/g, "-"),
-                 name: data.title || data.domain,
+                 id: (data.domain || domain || "website").replace(/[^a-zA-Z0-9]/g, "-"),
+                 name: data.title || data.domain || instantName,
                  category: "Website",
                  categoryType: "all",
                  address: "",
@@ -135,24 +196,25 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  rating: 5,
                  totalReviews: 1,
                  ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-                 avatarUrl: fetchedLogo,
-                 logoUrl: fetchedLogo,
-                 bannerUrl: fetchedBanner,
-                 ogImage: fetchedBanner,
-                 photos: fetchedBanner ? [fetchedBanner] : [],
+                 avatarUrl: fetchedLogo || instantLogo,
+                 logoUrl: fetchedLogo || instantLogo,
+                 bannerUrl: fetchedBanner || instantBanner,
+                 ogImage: fetchedBanner || instantBanner,
+                 photos: (fetchedBanner || instantBanner) ? [fetchedBanner || instantBanner] : [],
                  openingHours: "Available 24/7",
                  isOpen: true,
                  phone: "",
-                 website: data.url || urlString,
+                 website: data.url || (urlString.startsWith("http") ? urlString : `https://${domain}`),
                  priceRange: "N/A",
                  plusCode: "",
                  description: data.description || "",
                  popularKeywords: [],
                  amenities: [],
                  topDishes: [],
-                 brandDomain: data.domain
+                 brandDomain: data.domain || domain
                };
                foundPlace = newPlace;
+               setSearchedPlace(newPlace);
                if (onAddPlace) {
                  onAddPlace(newPlace);
                }
@@ -343,7 +405,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 website={searchedPlace.website}
                 logoUrl={searchedPlace.logoUrl}
                 bannerUrl={searchedPlace.bannerUrl || searchedPlace.ogImage}
-                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 bg-white shadow-xl overflow-hidden flex items-center justify-center p-0.5 z-30 ring-1 ring-white/10"
+                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 bg-white shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-2.5 z-30 ring-1 ring-white/20"
+                imageClassName="w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]"
+                fallbackTextClassName="font-extrabold text-2xl sm:text-3xl text-zinc-900"
               />
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
