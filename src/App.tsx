@@ -10,6 +10,7 @@ import { CopoVideoPlayer } from "./components/CopoVideoPlayer";
 // QR Widget intentionally removed per user request
 import { CopoSearchView } from "./components/CopoSearchView";
 import { CopoMobileSearchView } from "./components/CopoMobileSearchView";
+import { CopoMobileDiscoverView } from "./components/CopoMobileDiscoverView";
 import { GlobalUploadToast } from "./components/GlobalUploadToast";
 import { CopoMapView } from "./components/CopoMapView";
 import { CopoPlaceDrawer } from "./components/CopoPlaceDrawer";
@@ -191,6 +192,7 @@ export function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [activeReportTarget, setActiveReportTarget] = useState<ReportTarget | null>(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
+  const [isDiscoverModalOpen, setIsDiscoverModalOpen] = useState<boolean>(false);
   const [isMobileNavDrawerOpen, setIsMobileNavDrawerOpen] = useState<boolean>(false);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>(() => {
     try {
@@ -4389,9 +4391,13 @@ export function App() {
               }
             }
             if (section === "discover") {
-              setSelectedPlaceIdForDrawer(null);
-              setSelectedAuthorForDrawer(null);
-              setActiveSection("discover");
+              if (window.innerWidth < 768) {
+                setIsDiscoverModalOpen(true);
+              } else {
+                setSelectedPlaceIdForDrawer(null);
+                setSelectedAuthorForDrawer(null);
+                setActiveSection("discover");
+              }
               return;
             }
             if (section === "profile") {
@@ -4916,9 +4922,13 @@ export function App() {
                     setActiveSubTab("discover");
                     setActiveSection("home");
                   } else if (section === "discover") {
-                    setSelectedPlaceIdForDrawer(null);
-                    setSelectedAuthorForDrawer(null);
-                    setActiveSection("discover");
+                    if (window.innerWidth < 768) {
+                      setIsDiscoverModalOpen(true);
+                    } else {
+                      setSelectedPlaceIdForDrawer(null);
+                      setSelectedAuthorForDrawer(null);
+                      setActiveSection("discover");
+                    }
                   } else if (section === "profile") {
                     handleGoToProfile();
                   } else {
@@ -5000,9 +5010,7 @@ export function App() {
             return;
           }
           if (section === "discover") {
-            setSelectedPlaceIdForDrawer(null);
-            setSelectedAuthorForDrawer(null);
-            setActiveSection("discover");
+            setIsDiscoverModalOpen(true);
             return;
           }
           if (section === "profile") {
@@ -5100,6 +5108,35 @@ export function App() {
             });
           }}
           onClose={() => setIsSearchModalOpen(false)}
+        />
+      )}
+
+      {/* Mobile Discover Overlay */}
+      {isDiscoverModalOpen && (
+        <CopoMobileDiscoverView
+          videos={videos}
+          allUsers={allRegisteredUsers}
+          currentUser={currentUser}
+          onOpenCreator={(author) => {
+            setIsDiscoverModalOpen(false);
+            handleOpenCreatorDrawer(author);
+          }}
+          onToggleFollow={handleToggleFollow}
+          onStartChat={(id, name, avatar) => {
+            setIsDiscoverModalOpen(false);
+            handleStartChat(id, name, avatar);
+          }}
+          onSelectVideo={(id, source) => {
+            setIsDiscoverModalOpen(false);
+            handleSelectVideoById(id, source);
+          }}
+          onOpenAuth={() => {
+            setIsDiscoverModalOpen(false);
+            setAuthIntent('general');
+            setIsAuthModalOpen(true);
+          }}
+          onNavigateHome={() => setIsDiscoverModalOpen(false)}
+          onClose={() => setIsDiscoverModalOpen(false)}
         />
       )}
 

@@ -23,6 +23,9 @@ interface CopoDiscoverViewProps {
   onSelectVideo?: (videoId: string, source?: string) => void;
   onOpenAuth?: () => void;
   onNavigateHome?: () => void;
+  isMobileModal?: boolean;
+  initialQuery?: string;
+  hideSearchBar?: boolean;
 }
 
 interface ReviewerData {
@@ -38,10 +41,13 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
   allUsers = [],
   currentUser,
   onOpenCreator,
-  onNavigateHome
+  onNavigateHome,
+  isMobileModal = false,
+  initialQuery = "",
+  hideSearchBar = false
 }) => {
   const { t } = useLanguage();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [fetchedDbUsers, setFetchedDbUsers] = useState<any[]>([]);
   const [profileSyncTick, setProfileSyncTick] = useState<number>(0);
 
@@ -498,54 +504,60 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         </div>
       )}
 
-      <div className="w-full max-w-3xl flex flex-col items-center animate-in fade-in zoom-in duration-500 mt-[2vh] sm:mt-[4vh]">
+      <div className={`w-full max-w-3xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-0' : 'mt-[2vh] sm:mt-[4vh]'}`}>
         
-        {/* Central Logo / Icon */}
-        <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in shrink-0">
-          <Users className="w-8 h-8 text-white" strokeWidth={1.5} />
-        </div>
-        
-        <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-6">
-          {t("discover.title", "Discover Reviewers")}
-        </h1>
+        {!hideSearchBar && !isMobileModal && (
+          <>
+            {/* Central Logo / Icon */}
+            <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in shrink-0">
+              <Users className="w-8 h-8 text-white" strokeWidth={1.5} />
+            </div>
+            
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-6">
+              {t("discover.title", "Discover Reviewers")}
+            </h1>
+          </>
+        )}
 
         {/* Search Bar - styled exactly like the Search page */}
-        <div className="w-full max-w-xl mb-12">
-          <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-500/20 transition-all">
-            <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-zinc-200 group-focus-within:text-white transition-colors" />
-            </div>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("discover.searchPlaceholder", "Search reviewer by name...")}
-              className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
-              autoFocus
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="absolute inset-y-0 right-24 flex items-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
-                title="Clear search query"
-              >
-                <span className="text-xl font-medium leading-none">×</span>
-              </button>
-            )}
-            <div className="absolute inset-y-0 right-1.5 flex items-center">
-              <button
-                type="button"
-                className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
-              >
-                {t("common.search", "Search")}
-              </button>
+        {!hideSearchBar && (
+          <div className="w-full max-w-xl mb-12">
+            <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-500/20 transition-all">
+              <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-zinc-200 group-focus-within:text-white transition-colors" />
+              </div>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("discover.searchPlaceholder", "Search reviewer by name...")}
+                className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
+                autoFocus
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute inset-y-0 right-24 flex items-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                  title="Clear search query"
+                >
+                  <span className="text-xl font-medium leading-none">×</span>
+                </button>
+              )}
+              <div className="absolute inset-y-0 right-1.5 flex items-center">
+                <button
+                  type="button"
+                  className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
+                >
+                  {t("common.search", "Search")}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Reviewers List */}
-        {query.trim().length > 0 && (
+        {(query.trim().length > 0 || hideSearchBar) && (
           <div className="w-full text-left animate-in fade-in slide-in-from-bottom-3 duration-300">
             <div className="flex items-center justify-between text-xs font-bold text-zinc-200 uppercase tracking-wider mb-4 px-2">
               <span className="flex items-center gap-1.5">

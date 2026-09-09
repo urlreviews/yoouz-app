@@ -1,26 +1,32 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Search, Clock, TrendingUp, X } from "lucide-react";
-import { Place, VideoReview } from "../types";
-import { CopoSearchView } from "./CopoSearchView";
+import { VideoReview, UserProfile, VideoAuthor } from "../types";
+import { CopoDiscoverView } from "./CopoDiscoverView";
 import { useLanguage } from "../i18n/LanguageContext";
 
-interface CopoMobileSearchViewProps {
-  places: Place[];
+interface CopoMobileDiscoverViewProps {
   videos: VideoReview[];
-  onSelectVideo: (videoId: string) => void;
-  onOpenPlace: (placeId: string) => void;
-  onRecordForPlace?: (place: Place) => void;
-  onAddPlace?: (place: Place) => void;
+  allUsers?: any[];
+  currentUser?: UserProfile | null;
+  onOpenCreator: (author: VideoAuthor) => void;
+  onToggleFollow?: (name: string) => void;
+  onStartChat?: (senderId: string, senderName: string, senderAvatar: string) => void;
+  onSelectVideo?: (videoId: string, source?: string) => void;
+  onOpenAuth?: () => void;
+  onNavigateHome?: () => void;
   onClose: () => void;
 }
 
-export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
-  places,
+export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
   videos,
+  allUsers = [],
+  currentUser,
+  onOpenCreator,
+  onToggleFollow,
+  onStartChat,
   onSelectVideo,
-  onOpenPlace,
-  onRecordForPlace,
-  onAddPlace,
+  onOpenAuth,
+  onNavigateHome,
   onClose
 }) => {
   const { t } = useLanguage();
@@ -34,7 +40,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem("yoouz_recent_searches") || "[]");
+      const saved = JSON.parse(localStorage.getItem("yoouz_recent_discover_searches") || "[]");
       setRecentSearches(saved);
     } catch {}
     
@@ -58,25 +64,25 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     
     const newRecent = [q, ...recentSearches.filter(s => s !== q)].slice(0, 10);
     setRecentSearches(newRecent);
-    localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+    localStorage.setItem("yoouz_recent_discover_searches", JSON.stringify(newRecent));
     
     setSubmittedQuery(q);
   };
   
-  // Calculate real trending places based on the number of associated videos
-  const trending = [...places]
-    .map(p => {
-      const count = videos.filter(v => v.placeId === p.id || v.placeName === p.name || (p.brandDomain && v.dishOrItem === p.brandDomain)).length;
-      return { ...p, count };
+  // Calculate real trending creators based on the number of associated videos
+  const trending = [...allUsers]
+    .map(u => {
+      const count = videos.filter(v => v.userId === u.id || v.author?.name === u.name).length;
+      return { ...u, count };
     })
     .sort((a, b) => b.count - a.count)
     .slice(0, 4)
-    .map(p => p.brandDomain || p.name)
-    .filter(name => name.length > 0);
+    .map(u => u.name || u.handle)
+    .filter(name => name && name.length > 0);
   
-  // Autocomplete matching from places
+  // Autocomplete matching from users
   const suggestions = query.length > 1 
-    ? places.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.brandDomain?.toLowerCase().includes(query.toLowerCase())).slice(0, 5)
+    ? allUsers.filter(u => (u.name || "").toLowerCase().includes(query.toLowerCase()) || (u.handle || "").toLowerCase().includes(query.toLowerCase())).slice(0, 5)
     : [];
 
   return (
@@ -100,7 +106,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             ref={inputRef}
             type="text"
             className="w-full bg-zinc-900 border border-zinc-800 text-white text-[15px] rounded-lg py-2.5 pl-9 pr-9 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-all placeholder:text-zinc-500"
-            placeholder={t("search.placeholder", "example.com")}
+            placeholder={t("discover.searchPlaceholder", "Search reviewer by name...")}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -123,7 +129,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             </div>
           )}
         </form>
-
+        
         <button 
           onClick={handleSearch}
           className="text-white font-bold text-[14px] px-1 active:opacity-70 transition-opacity whitespace-nowrap cursor-pointer"
@@ -134,13 +140,16 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       
       <div className="flex-1 overflow-y-auto w-full relative">
         {submittedQuery ? (
-          <CopoSearchView
-            places={places}
+          <CopoDiscoverView
             videos={videos}
+            allUsers={allUsers}
+            currentUser={currentUser}
+            onOpenCreator={onOpenCreator}
+            onToggleFollow={onToggleFollow}
+            onStartChat={onStartChat}
             onSelectVideo={onSelectVideo}
-            onOpenPlace={onOpenPlace}
-            onRecordForPlace={onRecordForPlace}
-            onAddPlace={onAddPlace}
+            onOpenAuth={onOpenAuth}
+            onNavigateHome={onNavigateHome}
             isMobileModal={true}
             initialQuery={submittedQuery}
             hideSearchBar={true}
@@ -151,14 +160,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {/* Autocomplete Suggestions */}
             {query.length > 0 && suggestions.length > 0 && (
               <div className="flex flex-col">
-                {suggestions.map((p) => (
+                {suggestions.map((u) => (
                   <button 
-                    key={p.id}
-                    onClick={() => handleSearch(p.brandDomain || p.name)}
+                    key={u.id || u.handle}
+                    onClick={() => handleSearch(u.name || u.handle)}
                     className="flex items-center gap-3 py-3 border-b border-zinc-800/50 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                   >
                     <Search className="w-4 h-4 text-zinc-500 shrink-0" />
-                    <span className="text-zinc-200 font-medium truncate">{p.brandDomain || p.name}</span>
+                    <span className="text-zinc-200 font-medium truncate">{u.name || u.handle}</span>
                   </button>
                 ))}
               </div>
@@ -172,7 +181,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   <button 
                     onClick={() => {
                       setRecentSearches([]);
-                      localStorage.removeItem("yoouz_recent_searches");
+                      localStorage.removeItem("yoouz_recent_discover_searches");
                     }}
                     className="text-zinc-500 text-xs font-medium uppercase hover:text-zinc-300 cursor-pointer transition-colors"
                   >
@@ -195,9 +204,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             )}
             
             {/* Trending */}
-            {query.length === 0 && (
+            {query.length === 0 && trending.length > 0 && (
               <div className="flex flex-col gap-3">
-                <h3 className="text-zinc-400 text-sm font-bold">Trending Searches</h3>
+                <h3 className="text-zinc-400 text-sm font-bold">Trending Creators</h3>
                 <div className="flex flex-col">
                   {trending.map((s, idx) => (
                     <button 
