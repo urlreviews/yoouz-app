@@ -166,7 +166,15 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
                     onClick={() => handleSearch(u.name || u.handle)}
                     className="flex items-center gap-3 py-3 border-b border-zinc-800/50 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                   >
-                    <Search className="w-4 h-4 text-zinc-500 shrink-0" />
+                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
+                      {u.avatar ? (
+                        <img src={u.avatar} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold">
+                          {(u.name || u.handle || "?")[0].toUpperCase()}
+                        </div>
+                      )}
+                    </div>
                     <span className="text-zinc-200 font-medium truncate">{u.name || u.handle}</span>
                   </button>
                 ))}
@@ -189,16 +197,28 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
                   </button>
                 </div>
                 <div className="flex flex-col">
-                  {recentSearches.map((s, idx) => (
-                    <button 
-                      key={idx}
-                      onClick={() => handleSearch(s)}
-                      className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
-                    >
-                      <Clock className="w-4 h-4 text-zinc-500 shrink-0" />
-                      <span className="text-zinc-200 font-medium truncate">{s}</span>
-                    </button>
-                  ))}
+                  {recentSearches.map((s, idx) => {
+                    const user = allUsers.find(u => u.name === s || u.handle === s);
+                    return (
+                      <button 
+                        key={idx}
+                        onClick={() => handleSearch(s)}
+                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
+                          {user?.avatar ? (
+                            <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold">
+                              {(s || "?")[0].toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-zinc-200 font-medium truncate">{s}</span>
+                        <Clock className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -208,16 +228,28 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
               <div className="flex flex-col gap-3">
                 <h3 className="text-zinc-400 text-sm font-bold">Trending Creators</h3>
                 <div className="flex flex-col">
-                  {trending.map((s, idx) => (
-                    <button 
-                      key={idx}
-                      onClick={() => handleSearch(s)}
-                      className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
-                    >
-                      <TrendingUp className="w-4 h-4 text-zinc-300 shrink-0" />
-                      <span className="text-zinc-200 font-medium truncate">{s}</span>
-                    </button>
-                  ))}
+                  {trending.map((s, idx) => {
+                    const user = allUsers.find(u => u.name === s || u.handle === s);
+                    return (
+                      <button 
+                        key={idx}
+                        onClick={() => handleSearch(s)}
+                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
+                          {user?.avatar ? (
+                            <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold">
+                              {(s || "?")[0].toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-zinc-200 font-medium truncate">{s}</span>
+                        <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
