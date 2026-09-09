@@ -88,14 +88,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           <ArrowLeft className="w-6 h-6" />
         </button>
         
-        <form onSubmit={handleSearch} className="flex-1 relative flex items-center">
-          <div className="absolute left-3 text-zinc-400">
+        <form onSubmit={handleSearch} className="flex-1 relative flex items-center group">
+          <div className="absolute left-3 text-zinc-400 group-focus-within:text-white transition-colors">
             <Search className="w-4 h-4" />
           </div>
           <input
             ref={inputRef}
             type="text"
-            className="w-full bg-zinc-900 border border-zinc-800 text-white text-[15px] rounded-lg py-2 pl-9 pr-9 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-all placeholder:text-zinc-500"
+            className="w-full bg-zinc-900 border border-zinc-800 text-white text-[15px] rounded-lg py-2.5 pl-9 pr-[84px] focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-all placeholder:text-zinc-500"
             placeholder={t("search.placeholder", "example.com")}
             value={query}
             onChange={(e) => {
@@ -103,27 +103,28 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               setSubmittedQuery("");
             }}
           />
-          {query && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                setSubmittedQuery("");
-                inputRef.current?.focus();
-              }}
-              className="absolute right-3 text-zinc-400 hover:text-white"
+          <div className="absolute right-1 flex items-center gap-1">
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setSubmittedQuery("");
+                  inputRef.current?.focus();
+                }}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            <button 
+              type="submit"
+              className="text-white font-bold text-[13px] px-2 py-1 hover:bg-zinc-800 rounded-md transition-colors whitespace-nowrap cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              {t("common.search", "Search")}
             </button>
-          )}
+          </div>
         </form>
-        
-        <button 
-          onClick={handleSearch}
-          className="text-pink-500 font-bold text-[14px] px-1 active:opacity-70 transition-opacity whitespace-nowrap"
-        >
-          {t("common.search", "Search")}
-        </button>
       </div>
       
       <div className="flex-1 overflow-y-auto w-full relative">
@@ -199,7 +200,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       onClick={() => handleSearch(s)}
                       className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                     >
-                      <TrendingUp className="w-4 h-4 text-pink-500/80 shrink-0" />
+                      <TrendingUp className="w-4 h-4 text-zinc-300 shrink-0" />
                       <span className="text-zinc-200 font-medium truncate">{s}</span>
                     </button>
                   ))}
