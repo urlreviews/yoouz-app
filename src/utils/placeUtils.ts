@@ -44,6 +44,52 @@ export function extractCleanDomain(input?: string | null): string {
 }
 
 /**
+ * Strict validator for whether an input is a valid domain/URL search.
+ * Rejects single letters (e.g. "k", "n"), words without dots, or invalid URLs.
+ */
+export function isValidDomainUrl(input?: string | null): boolean {
+  if (!input || typeof input !== "string") return false;
+  const clean = extractCleanDomain(input);
+  if (!clean || clean.length < 3) return false;
+  // Must contain at least one dot separating domain label and TLD (e.g. uber.com, bhol.co.il)
+  if (!clean.includes(".")) return false;
+  const parts = clean.split(".");
+  if (parts.length < 2) return false;
+  const tld = parts[parts.length - 1];
+  // TLD must be at least 2 characters and letters only
+  if (!/^[a-z]{2,}$/i.test(tld)) return false;
+  // Valid domain characters: alphanumeric and hyphens, not starting or ending with hyphen
+  return /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i.test(clean);
+}
+
+/**
+ * Normalizes any place or raw query string into a strictly CLEAN URL:
+ * e.g. "https://www.uber.com/path" -> "uber.com"
+ * "www.bhol.co.il" -> "bhol.co.il"
+ * "alaris-law.com" -> "alaris-law.com"
+ * Guaranteed NO "www.", NO "https://", NO "http://", NO trailing slashes.
+ */
+export function getCleanDomainUrl(item?: string | { brandDomain?: string; website?: string; id?: string; name?: string; placeWebsite?: string; placeName?: string } | null): string {
+  if (!item) return "";
+  if (typeof item === "string") {
+    return extractCleanDomain(item);
+  }
+  // If Place or Place-like object
+  const domainSource = item.brandDomain || item.placeWebsite || item.website || item.id || item.placeName || item.name || "";
+  const clean = extractCleanDomain(domainSource);
+  if (clean && clean.includes(".")) return clean;
+  if (item.brandDomain) {
+    const brandClean = extractCleanDomain(item.brandDomain);
+    if (brandClean && brandClean.includes(".")) return brandClean;
+  }
+  if (item.website || item.placeWebsite) {
+    const webClean = extractCleanDomain(item.website || item.placeWebsite);
+    if (webClean && webClean.includes(".")) return webClean;
+  }
+  return clean || "website.com";
+}
+
+/**
  * Gets a clean URL slug for a place (e.g. "tajhotels-com", "mastercard-com", "apple-com")
  * Guarantees no "www-" prefixes or URL protocol baggage.
  */

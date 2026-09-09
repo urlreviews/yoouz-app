@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -44,14 +44,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
   }, [initialQuery]);
 
-  // Validate URL strictly
+  // Validate URL strictly - rejects plain words, single characters like 'k', etc.
   const isValidUrl = (urlString: string) => {
-    try {
-      const parsed = new URL(urlString.startsWith("http") ? urlString : "https://" + urlString);
-      return parsed.hostname.includes(".");
-    } catch {
-      return false;
-    }
+    return isValidDomainUrl(urlString);
   };
 
   const isDeepUrl = (urlString: string) => {
@@ -70,48 +65,41 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const rawQuery = (overrideQuery || query).trim();
     if (!rawQuery) return;
 
-    // Resolve clean names (e.g. "Bhol", "Spotify", "Alaris Law") to their place or domain
-    let urlString = rawQuery;
-    const matchingLocal = places.find(p => 
-      p.name.toLowerCase() === rawQuery.toLowerCase() ||
-      p.id.toLowerCase() === rawQuery.toLowerCase() ||
-      p.brandDomain?.toLowerCase() === rawQuery.toLowerCase() ||
-      formatBusinessName(p.name).toLowerCase() === rawQuery.toLowerCase()
-    );
+    // Extract clean domain strictly (e.g. "www.uber.com" -> "uber.com", "https://bhol.co.il" -> "bhol.co.il")
+    let cleanUrl = extractCleanDomain(rawQuery);
 
-    if (matchingLocal && (matchingLocal.brandDomain || matchingLocal.website)) {
-      urlString = matchingLocal.brandDomain || matchingLocal.website || urlString;
-    } else if (!urlString.includes(".") && !urlString.includes("://")) {
-      urlString = `${urlString.toLowerCase().replace(/[^a-z0-9-]/g, "")}.com`;
+    // If matching a place by domain or place ID, resolve its clean domain
+    const matchingLocal = places.find(p => {
+      const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
+      return pDom === cleanUrl || p.id.toLowerCase() === cleanUrl.replace(/[^a-z0-9]/g, "-");
+    });
+
+    if (matchingLocal) {
+      cleanUrl = getCleanDomainUrl(matchingLocal);
     }
 
-    if (!isValidUrl(urlString)) {
-      setErrorMsg("Please enter a valid website address.");
+    if (!isValidDomainUrl(cleanUrl)) {
+      setErrorMsg("Please enter a valid website address (e.g. example.com).");
       setIsSearching(false);
       return;
     }
 
-    if (isDeepUrl(urlString)) {
+    if (isDeepUrl(rawQuery)) {
       setErrorMsg("Only base website addresses are allowed (e.g., example.com). Do not include subpages or articles.");
       setIsSearching(false);
       return;
     }
 
+    setQuery(cleanUrl);
     setErrorMsg("");
     setIsSearching(true);
 
     try {
-      let domain = "";
-      try {
-        const parsedUrl = new URL(urlString.startsWith("http") ? urlString : "https://" + urlString);
-        domain = parsedUrl.hostname.toLowerCase().replace(/^www\./, "");
-      } catch {
-        domain = urlString.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "").trim();
-      }
+      const domain = cleanUrl;
 
-      // 1. Check local places first
+      // 1. Check local places first by domain URL only
       let foundPlace = places.find(p => {
-        const pDom = (p.brandDomain || p.website || p.id || "").toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "");
+        const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
         return pDom === domain || p.id === domain || p.id === domain.replace(/[^a-zA-Z0-9]/g, "-");
       });
 
@@ -140,7 +128,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         openingHours: "Available 24/7",
         isOpen: true,
         phone: "",
-        website: urlString.startsWith("http") ? urlString : `https://${domain}`,
+        website: `https://${domain}`,
         priceRange: "N/A",
         plusCode: "",
         description: "",
@@ -154,7 +142,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       
       // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta
       try {
-         const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(urlString)}`);
+         const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(domain)}`);
          if (resp.ok) {
            const data = await resp.json();
            if (data.title || data.domain) {
@@ -204,7 +192,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  openingHours: "Available 24/7",
                  isOpen: true,
                  phone: "",
-                 website: data.url || (urlString.startsWith("http") ? urlString : `https://${domain}`),
+                 website: data.url || `https://${domain}`,
                  priceRange: "N/A",
                  plusCode: "",
                  description: data.description || "",
