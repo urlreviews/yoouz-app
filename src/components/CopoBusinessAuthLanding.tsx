@@ -10,11 +10,9 @@ import {
   ArrowRight, 
   ShieldCheck, 
   Lock,
-  Search,
   CheckCircle2,
   X,
   Sparkles,
-  ChevronDown,
   RefreshCw
 } from 'lucide-react';
 import { Place, NavSection, UserProfile, VideoReview } from '../types';
@@ -48,8 +46,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(initialPlace || null);
-  const [showPlaceSearch, setShowPlaceSearch] = useState(false);
-  const [placeSearchQuery, setPlaceSearchQuery] = useState('');
   
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -171,13 +167,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
         });
     }
   }, []);
-
-  // Filter places for search dropdown
-  const filteredPlaces = places.filter(p => {
-    if (!placeSearchQuery.trim()) return true;
-    const q = placeSearchQuery.toLowerCase();
-    return p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q);
-  }).slice(0, 6);
 
   // Handle 6-Digit OTP Changes
   const handleDigitChange = (index: number, value: string) => {
@@ -402,7 +391,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
             <form onSubmit={handleEmailSubmit} className="space-y-4" id="form-business-email-signin">
               
               {/* Selected Venue Preview Card */}
-              {selectedPlace ? (
+              {selectedPlace && (
                 <div className="p-3.5 bg-zinc-950/80 rounded-2xl border border-zinc-800/90 flex items-center justify-between gap-3 shadow-inner">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 text-zinc-300">
@@ -444,54 +433,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     {t("common.change", "Change")}
                   </button>
                 </div>
-              ) : (
-                /* Optional Venue Selector if none preselected */
-                <div className="space-y-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setShowPlaceSearch(!showPlaceSearch)}
-                    className="w-full py-2.5 px-3.5 bg-zinc-950/60 hover:bg-zinc-950 rounded-2xl border border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400 hover:text-zinc-300 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>{t("businessAuth.searchPlaceOptional", "Select business listing (optional)")}</span>
-                    </div>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showPlaceSearch ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {showPlaceSearch && (
-                    <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-2 animate-in fade-in">
-                      <div className="relative">
-                        <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="text"
-                          value={placeSearchQuery}
-                          onChange={(e) => setPlaceSearchQuery(e.target.value)}
-                          placeholder="Search place name or address..."
-                          className="w-full pl-8 pr-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:border-zinc-700"
-                        />
-                      </div>
-                      <div className="max-h-36 overflow-y-auto space-y-1 divide-y divide-zinc-900">
-                        {filteredPlaces.map(p => (
-                          <div
-                            key={p.id}
-                            onClick={() => {
-                              setSelectedPlace(p);
-                              setShowPlaceSearch(false);
-                            }}
-                            className="p-2 hover:bg-zinc-900 rounded-xl cursor-pointer text-xs transition-colors flex items-center justify-between"
-                          >
-                            <div className="min-w-0 pr-2">
-                              <p className="font-semibold text-white truncate">{p.name}</p>
-                              <p className="text-[10.5px] text-zinc-400 truncate">{p.address}</p>
-                            </div>
-                            <span className="text-[10px] text-zinc-400 shrink-0 font-medium">Select</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
               )}
 
               {/* Work Email Input */}
@@ -525,9 +466,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     }`}
                   />
                 </div>
-                <p className="text-[11px] text-zinc-400 mt-1.5 leading-relaxed">
-                  We'll send a secure one-click magic link and 6-digit confirmation code.
-                </p>
               </div>
 
               {/* Cross-Account Reviewer Conflict Alert Banner */}
