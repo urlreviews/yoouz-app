@@ -318,6 +318,39 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             </span>
           </button>
 
+          {/* 2. Search / Discover */}
+          <button
+            id="mobile-nav-search-btn"
+            onClick={() => {
+              if (onOpenSearch) onOpenSearch();
+              else onSelectSection("search");
+            }}
+            className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
+              activeSection === "search" || activeSection === "discover"
+                ? "text-white"
+                : "text-zinc-100 hover:text-white"
+            }`}
+          >
+            <div className="relative">
+              <Search
+                className={`w-[22px] h-[22px] transition-transform duration-200 ${
+                  activeSection === "search" || activeSection === "discover"
+                    ? "scale-110 stroke-[2.5] text-white"
+                    : "stroke-[2.2] text-zinc-100"
+                }`}
+              />
+            </div>
+            <span
+              className={`text-[10px] tracking-tight mt-1 ${
+                activeSection === "search" || activeSection === "discover"
+                  ? "font-bold text-white"
+                  : "font-medium text-zinc-100"
+              }`}
+            >
+              {t("nav.search", "Search")}
+            </span>
+          </button>
+
           {/* 3. CENTER ACTION: Record Review (Aligned with other items) */}
           <button
             id="mobile-nav-record-btn"

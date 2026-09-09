@@ -57,7 +57,6 @@ interface CopoVideoPlayerProps {
   feedContextTitle?: string;
   onOpenCreateModal?: () => void;
   onOpenMenu?: () => void;
-  onOpenSearch?: () => void;
   onLoadMore?: () => void;
   currentUser?: any;
   allUsers?: any[];
@@ -101,7 +100,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   feedContextTitle,
   onOpenCreateModal,
   onOpenMenu,
-  onOpenSearch,
   onLoadMore,
   currentUser,
   allUsers,
@@ -1337,7 +1335,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 onToggleBookmark={onToggleBookmark}
                 onToggleFollow={onToggleFollow}
                 onOpenMenu={onOpenMenu}
-                onOpenSearch={onOpenSearch}
                 onGoBack={onGoBack}
                 feedContextTitle={feedContextTitle}
                 onGoHome={onGoHome}
