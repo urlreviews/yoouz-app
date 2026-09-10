@@ -1368,8 +1368,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           {/* Refined Enterprise Header (Sleek Dark Theme) */}
           <header className="w-full h-14 sm:h-15 bg-zinc-950 border-b border-zinc-800/80 px-3 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 z-30 relative">
             
-            {/* Left: Mobile Exit Back Button & Venue Identity with Verified Badge */}
-            <div className="flex items-center gap-2.5 min-w-0">
+            {/* Left: Mobile Exit Back Button & Platform Scope */}
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
               {/* Mobile Exit Back Button */}
               <button
                 onClick={onClose}
@@ -1379,30 +1379,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <ArrowLeft className="w-4 h-4" />
               </button>
 
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-zinc-900 text-white border border-zinc-700/80 flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 overflow-hidden p-0.5">
-                {currentPlace.logoUrl ? (
-                  <img 
-                    src={currentPlace.logoUrl} 
-                    alt={currentPlace.name} 
-                    loading="eager" 
-                    decoding="sync" 
-                    fetchPriority="high" 
-                    className="w-full h-full object-contain rounded-lg"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = 'none';
-                    }} 
-                  />
-                ) : (
-                  <span className="font-black text-xs text-white">
-                    {currentPlace.name?.charAt(0).toUpperCase() || 'B'}
-                  </span>
-                )}
-              </div>
+              {/* Verified Workspace Scope Badge */}
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                <span className="font-extrabold text-white text-xs sm:text-sm tracking-tight truncate max-w-[130px] sm:max-w-xs">{currentPlace.name}</span>
-                <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-200 text-[9.5px] sm:text-[10.5px] font-bold border border-zinc-700/80 shrink-0">
-                  <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
-                  <span className="hidden xs:inline">{t("business.verifiedLocation", "Verified Location")}</span>
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-zinc-900 text-zinc-200 text-[10.5px] sm:text-xs font-bold border border-zinc-800 shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                  <span>{t("business.verifiedLocation", "Verified Business Portal")}</span>
                 </span>
               </div>
             </div>
@@ -1463,16 +1444,36 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 )}
               </div>
 
-              {/* Profile / Account Control */}
+              {/* Profile / Account Control with Spacious Dark-Mode Adaptive Logo */}
               <div className="relative">
                 <button 
                   id="biz-header-account-trigger"
                   onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                  className="h-8 sm:h-9 px-2 sm:px-3 flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold"
+                  className="h-9 sm:h-10 px-2 sm:px-3 flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold group shadow-xs"
                   title="Business Account Menu"
                 >
-                  <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 shrink-0" />
-                  <span className="hidden sm:inline font-medium text-xs text-zinc-300 max-w-[120px] truncate">
+                  {/* Dedicated Logo Container with Inset Padding for Any Dark/Light Logo */}
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-zinc-950 text-white border border-zinc-700/80 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden p-0.5 shadow-2xs">
+                    {currentPlace.logoUrl ? (
+                      <img 
+                        src={currentPlace.logoUrl} 
+                        alt={currentPlace.name} 
+                        loading="eager" 
+                        decoding="sync" 
+                        fetchPriority="high" 
+                        className="w-full h-full object-contain rounded-md"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }} 
+                      />
+                    ) : (
+                      <span className="font-black text-[11px] text-white">
+                        {currentPlace.name?.charAt(0).toUpperCase() || 'B'}
+                      </span>
+                    )}
+                  </div>
+
+                  <span className="font-bold text-xs text-white max-w-[110px] sm:max-w-[160px] truncate">
                     {currentPlace.name}
                   </span>
                   <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${showAccountDropdown ? 'rotate-180' : ''}`} />
@@ -1480,16 +1481,33 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                 {/* Business Account Dropdown */}
                 {showAccountDropdown && (
-                  <div className="fixed top-[60px] right-3 w-[260px] sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-2 sm:w-64 bg-zinc-900 rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="fixed top-[60px] right-3 w-[270px] sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-2 sm:w-68 bg-zinc-900 rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-3 border-b border-zinc-800 mb-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-extrabold text-white text-sm truncate">{currentPlace.name}</span>
-                        <ShieldCheck className="w-4 h-4 text-white shrink-0" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white border border-zinc-700/80 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden p-0.5">
+                          {currentPlace.logoUrl ? (
+                            <img 
+                              src={currentPlace.logoUrl} 
+                              alt={currentPlace.name} 
+                              className="w-full h-full object-contain rounded-lg"
+                            />
+                          ) : (
+                            <span className="font-black text-xs text-white">
+                              {currentPlace.name?.charAt(0).toUpperCase() || 'B'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1">
+                            <span className="font-extrabold text-white text-sm truncate">{currentPlace.name}</span>
+                            <ShieldCheck className="w-3.5 h-3.5 text-white shrink-0" />
+                          </div>
+                          <div className="text-[11px] text-zinc-400 truncate mt-0.5 font-medium">
+                            {verifiedBusinessSession?.businessEmail || (currentPlace as any).claimedByEmail || 'business@domain.com'}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-zinc-200 truncate mt-0.5 font-medium">
-                        {verifiedBusinessSession?.businessEmail || (currentPlace as any).claimedByEmail || 'business@domain.com'}
-                      </div>
-                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold">
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold">
                         <span className="w-1.5 h-1.5 rounded-full bg-white" />
                         {t("business.proTierActive", "Pro Tier Active")}
                       </div>
