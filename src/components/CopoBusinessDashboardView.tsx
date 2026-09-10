@@ -654,12 +654,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           verifiedBusinessSession.domain || verifiedBusinessSession.businessEmail,
           places
         );
-        if (verifiedBusinessSession.placeName && verifiedBusinessSession.placeName !== 'Verified Business') {
-          derived.name = verifiedBusinessSession.placeName;
+        
+        const isDynamicPlace = derived.id.startsWith('place-custom');
+        
+        if (isDynamicPlace) {
+          if (verifiedBusinessSession.placeName && verifiedBusinessSession.placeName !== 'Verified Business') {
+            derived.name = verifiedBusinessSession.placeName;
+          }
+          if (verifiedBusinessSession.logoUrl) {
+            derived.logoUrl = verifiedBusinessSession.logoUrl;
+          }
         }
-        if (verifiedBusinessSession.logoUrl) {
-          derived.logoUrl = verifiedBusinessSession.logoUrl;
-        }
+        
         return derived as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
       }
     }
@@ -734,6 +740,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profileHours, setProfileHours] = useState((currentPlace as any).hours || 'Mon-Fri: 9:00 AM - 6:00 PM');
   const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || `Official verified business profile on Yoouz.`);
   const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || '');
+  const [profileBannerUrl, setProfileBannerUrl] = useState((currentPlace as any).bannerUrl || '');
   const [isProfileSaved, setIsProfileSaved] = useState(false);
 
   // Sync profile fields whenever currentPlace changes (e.g. on business login)
@@ -786,6 +793,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setProfileWebsite((currentPlace as any).website || '');
     setProfileDesc((currentPlace as any).description || '');
     setProfileLogoUrl(currentPlace.logoUrl || '');
+    setProfileBannerUrl((currentPlace as any).bannerUrl || '');
     setBusinessCategory(currentPlace.category || 'Dining & Artisanal Food');
 
     if (currentPlace.address) {
@@ -1040,7 +1048,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       uid: verifiedBusinessSession.placeId,
       name: verifiedBusinessSession.placeName || currentPlace?.name || 'Business Manager',
       email: verifiedBusinessSession.businessEmail || (currentPlace as any)?.claimedByEmail || 'business@yoouz.com',
-      avatar: verifiedBusinessSession.logoUrl || currentPlace?.logoUrl || currentPlace?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      avatar: currentPlace?.logoUrl || currentPlace?.avatarUrl || verifiedBusinessSession.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
       handle: (verifiedBusinessSession.domain || currentPlace?.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
       isVerified: true
     } : currentUser ? { ...currentUser } : {
@@ -1349,6 +1357,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     (currentPlace as any).description = profileDesc;
     (currentPlace as any).category = businessCategory;
     currentPlace.logoUrl = profileLogoUrl;
+    (currentPlace as any).bannerUrl = profileBannerUrl;
 
     if (onUpdatePlace) {
       onUpdatePlace({ ...currentPlace });
@@ -3712,6 +3721,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             value={profileLogoUrl}
                             onChange={(e) => setProfileLogoUrl(e.target.value)}
                             placeholder="https://yourwebsite.com/logo.png"
+                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Venue Banner URL</div>
+                          <input
+                            type="url"
+                            value={profileBannerUrl}
+                            onChange={(e) => setProfileBannerUrl(e.target.value)}
+                            placeholder="https://yourwebsite.com/banner.jpg"
                             className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
                           />
                         </div>

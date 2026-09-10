@@ -9316,9 +9316,32 @@ app.post("/api/videos/save-review", async (req, res) => {
         matchedPlaceId = `place-custom-${rawDomain.replace(/[^a-z0-9]/g, '-')}`;
       }
 
-      const logoUrl = rawDomain && !rawDomain.includes('gmail.com') && !rawDomain.includes('yahoo.com') && !rawDomain.includes('hotmail.com')
+      let existingPlaceLogo = '';
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const pRows = await bunnyDb.execute({
+            sql: `SELECT data FROM places WHERE id = ? LIMIT 1`,
+            args: [matchedPlaceId]
+          });
+          if (pRows.rows && pRows.rows.length > 0) {
+            const pData = JSON.parse(pRows.rows[0].data as string);
+            if (pData.logoUrl) existingPlaceLogo = pData.logoUrl;
+          }
+        }
+        
+        if (!existingPlaceLogo && adminDb) {
+          const snap = await adminDb.collection("places").doc(matchedPlaceId).get();
+          if (snap.exists) {
+            const pData = snap.data();
+            if (pData && pData.logoUrl) existingPlaceLogo = pData.logoUrl;
+          }
+        }
+      } catch (e) {}
+
+      const logoUrl = existingPlaceLogo || (rawDomain && !rawDomain.includes('gmail.com') && !rawDomain.includes('yahoo.com') && !rawDomain.includes('hotmail.com')
         ? `https://www.google.com/s2/favicons?domain=${rawDomain}&sz=128`
-        : '';
+        : '');
 
       const session = {
         businessEmail: cleanEmail,
@@ -9395,10 +9418,37 @@ app.post("/api/videos/save-review", async (req, res) => {
         const cleanDomain = targetUrl.replace(/^https?:\/\//, '').split('/')[0];
         const bizEmail = userEmail || `owner@${cleanDomain}`;
         
+        let existingPlaceLogo = '';
+        try {
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
+            const pRows = await bunnyDb.execute({
+              sql: `SELECT data FROM places WHERE id = ? LIMIT 1`,
+              args: [cleanPlaceId]
+            });
+            if (pRows.rows && pRows.rows.length > 0) {
+              const pData = JSON.parse(pRows.rows[0].data as string);
+              if (pData.logoUrl) existingPlaceLogo = pData.logoUrl;
+            }
+          }
+          
+          if (!existingPlaceLogo && adminDb) {
+            const snap = await adminDb.collection("places").doc(cleanPlaceId).get();
+            if (snap.exists) {
+              const pData = snap.data();
+              if (pData && pData.logoUrl) existingPlaceLogo = pData.logoUrl;
+            }
+          }
+        } catch (e) {}
+        
         session = {
           businessEmail: bizEmail,
           placeId: cleanPlaceId,
           placeName: cleanPlaceName,
+          domain: cleanDomain,
+          logoUrl: existingPlaceLogo || (cleanDomain && !cleanDomain.includes('gmail.com') && !cleanDomain.includes('yahoo.com') && !cleanDomain.includes('hotmail.com')
+            ? `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`
+            : ''),
           verifiedAt: new Date().toISOString(),
           role: 'business_owner',
           verificationMethod: 'website_meta_tag',

@@ -5056,12 +5056,13 @@ export function App() {
                     if (saved) {
                       const session = JSON.parse(saved);
                       if (session && session.placeId) {
+                        const matchingPlace = places.find(p => p.id === session.placeId);
                         effectiveSender = {
                           id: session.placeId,
                           uid: session.placeId,
-                          name: session.placeName || 'Business Manager',
+                          name: session.placeName || matchingPlace?.name || 'Business Manager',
                           email: session.businessEmail || 'business@yoouz.com',
-                          avatar: session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+                          avatar: matchingPlace?.logoUrl || session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
                           handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
                           isVerified: true
                         };
