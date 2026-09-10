@@ -844,6 +844,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   };
 
   const handleOpenAuthorProfile = (name?: string, id?: string, avatar?: string) => {
+    if (id && onSelectPlace && places.find(p => p.id === id || p.domain === id)) {
+      onSelectPlace(id);
+      return;
+    }
     const author = resolveAuthor(name, id, avatar);
     if (onOpenCreator) {
       onOpenCreator(author);
@@ -1306,8 +1310,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                         >
                           <img
-                            src={msg.senderAvatar || `/api/avatar?name=${encodeURIComponent(msg.senderName || "User")}&background=27272a&color=fff`}
-                            alt={msg.senderName}
+                            src={msg.isMe ? (currentUser?.avatar || msg.senderAvatar) : (msg.senderAvatar || `/api/avatar?name=${encodeURIComponent(msg.senderName || "User")}&background=27272a&color=fff`)}
+                            alt={msg.isMe ? (currentUser?.name || msg.senderName) : msg.senderName}
                             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                         </button>

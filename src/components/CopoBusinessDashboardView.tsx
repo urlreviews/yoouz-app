@@ -731,6 +731,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profileWebsite, setProfileWebsite] = useState((currentPlace as any).website || '');
   const [profileHours, setProfileHours] = useState((currentPlace as any).hours || 'Mon-Fri: 9:00 AM - 6:00 PM');
   const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || `Official verified business profile on Yoouz.`);
+  const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || '');
   const [isProfileSaved, setIsProfileSaved] = useState(false);
 
   // Sync profile fields whenever currentPlace changes (e.g. on business login)
@@ -782,6 +783,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setProfileName(currentPlace.name || '');
     setProfileWebsite((currentPlace as any).website || '');
     setProfileDesc((currentPlace as any).description || '');
+    setProfileLogoUrl(currentPlace.logoUrl || '');
     setBusinessCategory(currentPlace.category || 'Dining & Artisanal Food');
 
     if (currentPlace.address) {
@@ -1344,6 +1346,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     (currentPlace as any).hours = profileHours;
     (currentPlace as any).description = profileDesc;
     (currentPlace as any).category = businessCategory;
+    currentPlace.logoUrl = profileLogoUrl;
+
+    if (verifiedBusinessSession) {
+      const updatedSession = { ...verifiedBusinessSession, logoUrl: profileLogoUrl, placeName: profileName };
+      setVerifiedBusinessSession(updatedSession);
+      try {
+        localStorage.setItem('copo_business_verified_session', JSON.stringify(updatedSession));
+      } catch (e) {}
+    }
 
     try {
       localStorage.setItem(`copo_business_profile_${selectedPlaceId}`, JSON.stringify({
@@ -3688,6 +3699,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </h3>
                       <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
                         
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Venue Logo URL</div>
+                          <input
+                            type="url"
+                            value={profileLogoUrl}
+                            onChange={(e) => setProfileLogoUrl(e.target.value)}
+                            placeholder="https://yourwebsite.com/logo.png"
+                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
+                          />
+                        </div>
+
                         <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
                           <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Venue Name</div>
                           <input
