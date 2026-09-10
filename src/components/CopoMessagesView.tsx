@@ -1261,37 +1261,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           Reviewer on Yoouz
                         </p>
                       </div>
-
-                      <div className="flex flex-wrap items-center justify-center gap-2 pt-2 max-w-sm">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setReplyText("👋 Hey! Loved your video reviews!");
-                            inputRef.current?.focus();
-                          }}
-                          className="px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 hover:text-white transition-all active:scale-95 cursor-pointer shadow-xs"
-                        >
-                          👋 Say hello
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setReplyText("What are your favorite local spots around here?");
-                            inputRef.current?.focus();
-                          }}
-                          className="px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 hover:text-white transition-all active:scale-95 cursor-pointer shadow-xs"
-                        >
-                          ⭐️ Ask for spots
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowQuickRecommend(true)}
-                          className="px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center gap-1 shadow-xs"
-                        >
-                          <MapPin className="w-3.5 h-3.5 text-white" />
-                          <span>Recommend a place</span>
-                        </button>
-                      </div>
                     </div>
                   ) : (!activeThread.history || activeThread.history.length === 0) ? (
                     <div className="flex items-start gap-3 animate-in fade-in">
