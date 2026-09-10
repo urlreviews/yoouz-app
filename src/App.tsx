@@ -5043,6 +5043,7 @@ export function App() {
                   clearAllNotifications(notifications.map(n => n.id), currentUser);
                   setNotifications([]);
                 }}
+                onSaveNotificationSettings={handleSaveNotificationSettings}
               />
             )}
             {activeSection === "more" && (

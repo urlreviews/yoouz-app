@@ -1,6 +1,7 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { NavSection, Place, VideoReview, UserProfile, VideoAuthor, CopoMessage, CopoNotification } from '../types';
+import { NavSection, Place, VideoReview, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from '../types';
+import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
 import { getDisplayViews } from '../utils/placeUtils';
 import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
 import { CopoBusinessAuthLanding } from './CopoBusinessAuthLanding';
@@ -125,6 +126,7 @@ interface CopoBusinessDashboardViewProps {
   onToggleFollowPlace?: (placeId: string) => void;
   onMarkNotificationRead?: (id: string) => void;
   onClearAllNotifications?: () => void;
+  onSaveNotificationSettings?: (newSettings: NotificationPreferences) => Promise<void> | void;
 }
 
 type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'billing';
@@ -611,7 +613,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onToggleFollow,
   onToggleFollowPlace,
   onMarkNotificationRead,
-  onClearAllNotifications
+  onClearAllNotifications,
+  onSaveNotificationSettings
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   // Navigation tab state
@@ -985,6 +988,36 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
+
+  // Business Notification Preferences (Persisted across local storage, component state, and Firestore)
+  const [businessNotificationSettings, setBusinessNotificationSettings] = useState<NotificationPreferences>(() => {
+    if (currentUser?.notificationSettings) {
+      return currentUser.notificationSettings;
+    }
+    try {
+      const saved = localStorage.getItem("copo_business_notification_settings") || localStorage.getItem("copo_notification_settings");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return DEFAULT_NOTIFICATION_PREFERENCES;
+  });
+
+  useEffect(() => {
+    if (currentUser?.notificationSettings) {
+      setBusinessNotificationSettings(currentUser.notificationSettings);
+    }
+  }, [currentUser?.notificationSettings]);
+
+  const handleSaveBusinessNotificationSettings = async (newSettings: NotificationPreferences) => {
+    setBusinessNotificationSettings(newSettings);
+    try {
+      localStorage.setItem("copo_business_notification_settings", JSON.stringify(newSettings));
+      localStorage.setItem("copo_notification_settings", JSON.stringify(newSettings));
+    } catch (e) {}
+    if (onSaveNotificationSettings) {
+      await onSaveNotificationSettings(newSettings);
+    }
+  };
 
   // Buffer rendering until the logo and banner are ready
   const criticalImagesLoaded = useCriticalImagesLoaded([currentPlace?.logoUrl, currentPlace?.bannerUrl], 1500);
@@ -996,19 +1029,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Effective Business User Profile for Messaging & Collaboration
   const effectiveUser: UserProfile = useMemo(() => {
-    if (currentUser) return currentUser;
-    if (verifiedBusinessSession) {
-      return {
-        id: verifiedBusinessSession.placeId,
-        uid: verifiedBusinessSession.placeId,
-        name: verifiedBusinessSession.placeName || currentPlace.name || 'Business Manager',
-        email: verifiedBusinessSession.businessEmail || (currentPlace as any).claimedByEmail || 'business@yoouz.com',
-        avatar: verifiedBusinessSession.logoUrl || currentPlace.logoUrl || currentPlace.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-        handle: (verifiedBusinessSession.domain || currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
-        isVerified: true
-      };
-    }
-    return {
+    const base = currentUser ? { ...currentUser } : (verifiedBusinessSession ? {
+      id: verifiedBusinessSession.placeId,
+      uid: verifiedBusinessSession.placeId,
+      name: verifiedBusinessSession.placeName || currentPlace.name || 'Business Manager',
+      email: verifiedBusinessSession.businessEmail || (currentPlace as any).claimedByEmail || 'business@yoouz.com',
+      avatar: verifiedBusinessSession.logoUrl || currentPlace.logoUrl || currentPlace.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      handle: (verifiedBusinessSession.domain || currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
+      isVerified: true
+    } : {
       id: currentPlace.id,
       uid: currentPlace.id,
       name: currentPlace.name || 'Business Portal',
@@ -1016,8 +1045,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       avatar: currentPlace.logoUrl || currentPlace.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
       handle: (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
       isVerified: true
+    });
+
+    return {
+      ...base,
+      notificationSettings: businessNotificationSettings
     };
-  }, [currentUser, verifiedBusinessSession, currentPlace]);
+  }, [currentUser, verifiedBusinessSession, currentPlace, businessNotificationSettings]);
 
   // Keyboard shortcut listener for ⌘K / Ctrl+K
   useEffect(() => {
@@ -1176,18 +1210,29 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     ).length;
   }, [placeVideos, ownerReplies]);
 
-  // Business Notifications computed from props
+  // Business Notifications computed from props and active notification preferences
   const businessNotifications = useMemo(() => {
     if (!notifications || notifications.length === 0) return [];
     const pName = (currentPlace.name || '').toLowerCase();
     const placeVideoIds = new Set(placeVideos.map(v => v.id));
 
     return notifications.filter(n => {
+      // 1. Master toggle: If disabled in settings, pause all notifications
+      if (!businessNotificationSettings.enabled) return false;
+
+      // 2. Granular category filters based on user settings
+      if (n.type === 'like' && !businessNotificationSettings.likes) return false;
+      if (n.type === 'comment' && !businessNotificationSettings.comments) return false;
+      if (n.type === 'message' && !businessNotificationSettings.messages) return false;
+      if (n.type === 'follow' && !businessNotificationSettings.follows) return false;
+      if ((n.type === 'bookmark' || n.type === 'repost') && !businessNotificationSettings.bookmarks) return false;
+
+      // 3. Relevance to this business venue
       if (n.placeName && n.placeName.toLowerCase() === pName) return true;
       if (n.videoId && placeVideoIds.has(n.videoId)) return true;
       return true;
     });
-  }, [notifications, currentPlace, placeVideos]);
+  }, [notifications, currentPlace, placeVideos, businessNotificationSettings]);
 
   const unreadBusinessNotifsCount = useMemo(() => {
     const unread = businessNotifications.filter(n => !n.isRead).length;
@@ -2663,6 +2708,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   onMarkRead={(id) => onMarkNotificationRead?.(id)}
                   onClearAll={onClearAllNotifications}
                   onOpenCreator={onOpenCreator}
+                  onOpenSettings={() => setIsNotificationSettingsOpen(true)}
                 />
               </div>
             )}
@@ -3910,6 +3956,41 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </div>
                     </div>
 
+                    {/* SECTION 6: Alerts & Notification Preferences */}
+                    <div>
+                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Bell className="w-3.5 h-3.5" /> Alerts & Notification Preferences
+                      </h3>
+                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-[13px] font-bold text-white">Business Notification Preferences</h4>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              businessNotificationSettings.enabled
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            }`}>
+                              {businessNotificationSettings.enabled ? 'Active' : 'Paused'}
+                            </span>
+                          </div>
+                          <p className="text-[12px] text-zinc-400 font-medium">
+                            {businessNotificationSettings.enabled 
+                              ? 'Manage customer reviews, direct messages, followers, and interaction alerts.' 
+                              : 'In-app notifications are currently paused. Enable them to stay updated in real time.'}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          id="btn-open-business-notif-settings"
+                          onClick={() => setIsNotificationSettingsOpen(true)}
+                          className="px-4 py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-[12px] font-bold border border-zinc-700/80 transition-all active:scale-95 shadow-xs flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
+                        >
+                          <Settings className="w-4 h-4 text-zinc-300" />
+                          <span>Customize Settings</span>
+                        </button>
+                      </div>
+                    </div>
+
                   </div>
 
                   {/* Right Column: Premium Live Mobile Preview Widget (5 cols) */}
@@ -4605,6 +4686,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           </div>
         </div>
       )}
+
+      {/* Business Notification Preferences Modal (Identical Layout, Functionality & Live Cloud Sync as User Account) */}
+      <CopoNotificationSettingsModal
+        isOpen={isNotificationSettingsOpen}
+        onClose={() => setIsNotificationSettingsOpen(false)}
+        settings={businessNotificationSettings}
+        onSave={handleSaveBusinessNotificationSettings}
+      />
 
       </div>
     </div>
