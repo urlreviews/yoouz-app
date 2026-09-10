@@ -1551,75 +1551,83 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   return (
     <div className="w-screen h-[100dvh] flex bg-zinc-950 select-none antialiased overflow-hidden font-sans text-white copo-business-dashboard">
       <div className="w-full h-full flex">
-      {/* Left Google Enterprise Navigation Sidebar */}
-      <aside className="w-64 lg:w-72 bg-zinc-950 border-r border-zinc-800/80 flex flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar h-[100dvh]">
+      {/* Left Google Enterprise Navigation Sidebar (Matching CopoSidebar exactly) */}
+      <aside className="w-64 h-[100dvh] bg-zinc-950 border-r border-zinc-800/80 px-4 py-6 flex flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar text-white shadow-none">
         {/* Scrollable Upper Area */}
         <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar min-h-0">
-          <div className="h-18 lg:h-20 px-5 lg:px-6 flex items-center shrink-0">
+          <div className="flex flex-col gap-6">
+            {/* Official Yoouz Brand Logo */}
             <div 
-              className="flex items-center gap-3 cursor-pointer group"
+              id="biz-brand-logo"
+              className="flex items-center gap-3 px-3 py-2 cursor-pointer group"
               onClick={() => onNavigate('home')}
             >
-              <div className="relative flex items-center justify-center w-[40px] h-[40px] rounded-[14px] bg-white text-zinc-950 shadow-md group-hover:scale-105 transition-all duration-300 shrink-0 border border-zinc-800">
+              <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white shadow-[0_4px_16px_rgba(255,255,255,0.15)] group-hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-white/20">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
               </div>
-              <div className="flex flex-col justify-center pt-0.5 min-w-0 hidden sm:flex">
+              <div className="flex flex-col justify-center pt-0.5 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-white text-[22px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+                  <span className="text-white text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
                     Yoouz
                   </span>
                   <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-200 font-black uppercase tracking-wider scale-90 origin-left">
                     {t("business.badge", "BUSINESS")}
                   </span>
                 </div>
-                <span className="text-[11px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap">
+                <span className="text-[11.5px] text-zinc-200 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
                   {t("business.tagline", "Real People. Real Reviews.")}
                 </span>
               </div>
             </div>
-          </div>
 
-          <div className="p-3 space-y-1">
-            <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
-              {t("business.managementSuite", "Management Suite")}
+            {/* Navigation items list */}
+            <div>
+              <div className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 mb-1">
+                {t("business.managementSuite", "Management Suite")}
+              </div>
+
+              <nav className="flex flex-col gap-1.5 mt-1">
+                {suiteNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      id={`biz-nav-btn-${item.id}`}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                        isActive 
+                          ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
+                          : 'text-white hover:bg-zinc-900/90 font-medium'
+                      }`}
+                    >
+                      <div className="relative flex items-center justify-center">
+                        <Icon className="w-5 h-5 shrink-0 transition-colors text-white" />
+                      </div>
+                      <span className="truncate flex-1">{item.label}</span>
+                      {item.badge !== undefined && (
+                        <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
+                          {item.badge}
+                        </span>
+                      )}
+                      {item.isProBadge && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-200 border border-zinc-700">
+                          {t("business.active", "Active")}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
             </div>
-
-            {suiteNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-full font-medium text-[14px] transition-all text-left cursor-pointer group ${
-                    isActive 
-                      ? 'bg-zinc-800 text-white font-semibold' 
-                      : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
-                  }`}
-                >
-                  <Icon className={`w-4.5 h-4.5 shrink-0 transition-colors ${isActive ? 'text-white' : 'text-zinc-400'}`} />
-                  <span className="truncate flex-1">{item.label}</span>
-                  {item.badge !== undefined && (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 bg-white text-zinc-950">
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.isProBadge && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-300 border border-zinc-700">
-                      {t("business.active", "Active")}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
           </div>
         </div>
 
         {/* Pinned Desktop Footer & Legal Links (Matching user account CopoSidebar exactly) */}
-        <div className="px-5 py-4 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
-          <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400">
+        <div className="pt-4 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
+          <div className="flex items-center gap-2 text-xs text-zinc-200 font-medium">
             <button
               type="button"
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate('home')}
@@ -1627,7 +1635,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             >
               {t("legal.privacy", "Privacy")}
             </button>
-            <span className="text-zinc-600">•</span>
+            <span>•</span>
             <button
               type="button"
               onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate('home')}
@@ -1635,7 +1643,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             >
               {t("legal.terms", "Terms")}
             </button>
-            <span className="text-zinc-600">•</span>
+            <span>•</span>
             <button
               type="button"
               onClick={() => onNavigate('more')}
@@ -1644,7 +1652,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               {t("legal.about", "About")}
             </button>
           </div>
-          <p className="text-[11px] text-zinc-400 font-normal">
+          <p className="text-xs text-zinc-200 font-normal">
             {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
           </p>
         </div>
@@ -1771,6 +1779,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </button>
                     <button 
                       onClick={() => {
+                        setShowAccountDropdown(false);
+                        setIsNotificationSettingsOpen(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
+                    >
+                      <Bell className="w-4 h-4 text-zinc-200" />
+                      <span>{t("nav.notifications", "Notifications")}</span>
+                    </button>
+                    <button 
+                      onClick={() => {
                         setActiveTab('billing');
                         setShowAccountDropdown(false);
                       }}
@@ -1832,8 +1850,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             </div>
           </header>
 
-          {/* Top Mobile Pill Scroller (Clean, High-Contrast & Non-Overlapping) */}
-          <div className="md:hidden w-full bg-zinc-950 border-b border-zinc-800/80 px-2 py-2 shrink-0 z-20">
+          {/* Top Mobile Pill Scroller (Clean, High-Contrast Dark Mode) */}
+          <div className="md:hidden w-full bg-zinc-950 border-b border-zinc-800/80 px-2 py-2.5 shrink-0 z-20">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth px-1">
               {suiteNavItems.map(item => {
                 const Icon = item.icon;
@@ -1842,16 +1860,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 ${
+                    className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-2 shrink-0 transition-all cursor-pointer active:scale-95 ${
                       isActive 
-                        ? 'bg-white text-zinc-950 shadow-md font-extrabold' 
-                        : 'bg-zinc-900 text-zinc-300 hover:text-white border border-zinc-800'
+                        ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
+                        : 'bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800 font-medium'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-zinc-950' : 'text-zinc-400'}`} />
+                    <Icon className="w-4 h-4 text-white shrink-0" />
                     <span>{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="w-4 h-4 rounded-full bg-zinc-800 text-white text-[10px] flex items-center justify-center font-bold">
+                      <span className="w-4 h-4 rounded-full bg-zinc-800 text-white text-[10px] flex items-center justify-center font-bold border border-zinc-700">
                         {item.badge}
                       </span>
                     )}
@@ -1874,25 +1892,25 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 mb-1.5 w-full">
                       <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-none break-words">{currentPlace.name}</h1>
-                      <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider self-start sm:self-auto shrink-0 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:py-1 rounded-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider self-start sm:self-auto shrink-0 whitespace-nowrap">
                         <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         {t("business.claimedVerified", "CLAIMED & VERIFIED")}
                       </div>
                     </div>
-                    <p className="text-xs sm:text-sm text-zinc-300 font-medium">
+                    <p className="text-xs sm:text-sm text-zinc-200 font-medium">
                       {t("business.overviewSubtitle", "Real-time performance metrics driven by customer video reviews across the Yoouz network.")}
                     </p>
                   </div>
                   {/* Date Filter Pills */}
-                  <div className="flex items-center bg-zinc-900 p-1 rounded-xl border border-zinc-800 w-full sm:w-auto justify-between sm:justify-start">
+                  <div className="flex items-center bg-zinc-950 p-1 rounded-full border border-zinc-800 w-full sm:w-auto justify-between sm:justify-start">
                     {(['7d', '30d', '90d', 'ytd'] as const).map(range => (
                       <button
                         key={range}
                         onClick={() => setAnalyticsDateRange(range)}
-                        className={`flex-1 sm:flex-initial px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer text-center ${
+                        className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all cursor-pointer text-center ${
                           analyticsDateRange === range 
-                            ? 'bg-white text-zinc-950 shadow-md font-bold' 
-                            : 'text-zinc-300 hover:text-white'
+                            ? 'bg-zinc-800 text-white border border-zinc-700/80 shadow-xs font-bold' 
+                            : 'text-zinc-300 hover:text-white font-medium'
                         }`}
                       >
                         {range === '7d' ? t("business.range7d", "7 Days") : range === '30d' ? t("business.range30d", "30 Days") : range === '90d' ? t("business.range90d", "90 Days") : t("business.rangeAllTime", "All Time")}
@@ -1913,17 +1931,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <div 
                          key={i} 
                          onClick={() => handleSelectMetric(stat.key)}
-                        className={`bg-zinc-900 rounded-[20px] sm:rounded-[24px] border p-4 sm:p-5 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group active:scale-[0.99] ${
+                        className={`bg-zinc-900/90 rounded-[20px] sm:rounded-[24px] border p-4 sm:p-5 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group active:scale-[0.99] ${
                           isSelected 
-                             ? 'border-white ring-1 ring-white/30 bg-zinc-800/80' 
-                             : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/50'
+                             ? 'border-zinc-700 ring-1 ring-zinc-700/60 bg-zinc-850' 
+                             : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-850/50'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-3 sm:mb-4 relative z-10">
                           <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center border border-zinc-700`}>
                             <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </div>
-                          <span className={`flex items-center gap-1 text-[9px] sm:text-[10px] font-extrabold text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700 shrink-0 whitespace-nowrap`}>
+                          <span className={`flex items-center gap-1 text-[9px] sm:text-[10px] font-extrabold text-white bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700 shrink-0 whitespace-nowrap`}>
                             <TrendingUp className="w-2.5 h-2.5" /> {stat.change}
                           </span>
                         </div>
@@ -1947,7 +1965,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               />
                             </svg>
                           </div>
-                          <div className="text-[10.5px] sm:text-[11px] font-medium text-zinc-300 mt-1">{stat.label}</div>
+                          <div className="text-[10.5px] sm:text-[11px] font-medium text-zinc-200 mt-1">{stat.label}</div>
                         </div>
                       </div>
                     );
@@ -1955,34 +1973,34 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 </div>
 
                 {/* Interactive Performance Graph */}
-                <div ref={chartSectionRef} className="bg-[#0a0a0c] md:bg-zinc-900 rounded-2xl sm:rounded-3xl border border-white/[0.06] md:border-zinc-800 text-white md:text-white p-3.5 sm:p-5 md:p-6 shadow-inner shadow-white/[0.02] flex flex-col justify-between scroll-mt-4">
+                <div ref={chartSectionRef} className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-3.5 sm:p-5 md:p-6 shadow-xs flex flex-col justify-between scroll-mt-4">
                   <div>
                     {/* Metric Selector Tabs */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-xs sm:text-sm md:text-base font-bold text-white md:text-white">
+                          <h3 className="text-xs sm:text-sm md:text-base font-bold text-white">
                             {selectedChartMetric === 'views' && 'Customer Video Reviews Impressions'}
                             {selectedChartMetric === 'reviews' && 'Verified Video Reviews'}
                             {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
                           </h3>
-                          <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 md:text-emerald-700 bg-emerald-500/10 md:bg-emerald-50 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-emerald-500/20 md:border-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.1)] md:shadow-none flex items-center gap-1">
+                          <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1">
                             <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Real Video Impressions Live
                           </span>
                         </div>
-                        <p className="text-[11px] sm:text-xs text-zinc-300 md:text-zinc-200 mt-0.5">
+                        <p className="text-[11px] sm:text-xs text-zinc-200 mt-0.5 font-medium">
                           Total {chartData.total} {chartData.unit} recorded during this period
                         </p>
                       </div>
 
                       {/* Metric Selector Pills */}
-                      <div className="flex items-center gap-1 bg-zinc-950 md:bg-zinc-900 p-1 rounded-xl border border-zinc-800 md:border-zinc-800 self-stretch sm:self-auto w-full sm:w-auto">
+                      <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-full border border-zinc-800 self-stretch sm:self-auto w-full sm:w-auto">
                         {(['views', 'reviews', 'rating'] as const).map(m => (
                           <button
                             key={m}
                             onClick={() => handleSelectMetric(m)}
-                            className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold capitalize transition-all cursor-pointer text-center ${
-                              selectedChartMetric === m ? 'bg-zinc-800 md:bg-zinc-900 text-white md:text-white shadow-md font-bold' : 'text-zinc-300 md:text-zinc-200 hover:text-white md:hover:text-zinc-900'
+                            className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold capitalize transition-all cursor-pointer text-center ${
+                              selectedChartMetric === m ? 'bg-zinc-800 text-white border border-zinc-700/80 shadow-xs font-bold' : 'text-zinc-300 hover:text-white font-medium'
                             }`}
                           >
                             {m === 'views' ? 'Impressions' : m === 'reviews' ? 'Reviews' : 'Rating'}
@@ -2042,10 +2060,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </defs>
 
                         {/* Grid Lines */}
-                        <line x1="0" y1="40" x2="700" y2="40" stroke="currentColor" className="text-zinc-800/80 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="90" x2="700" y2="90" stroke="currentColor" className="text-zinc-800/80 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="140" x2="700" y2="140" stroke="currentColor" className="text-zinc-800/80 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="190" x2="700" y2="190" stroke="currentColor" className="text-zinc-700 md:text-zinc-200" strokeWidth="1.5" />
+                        <line x1="0" y1="40" x2="700" y2="40" stroke="currentColor" className="text-zinc-800/80" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="90" x2="700" y2="90" stroke="currentColor" className="text-zinc-800/80" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="140" x2="700" y2="140" stroke="currentColor" className="text-zinc-800/80" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="190" x2="700" y2="190" stroke="currentColor" className="text-zinc-800" strokeWidth="1" />
 
                         {/* Generate Smooth Path */}
                         {(() => {
@@ -2083,7 +2101,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 d={pathD} 
                                 fill="none" 
                                 stroke={chartData.color} 
-                                strokeWidth="3.5" 
+                                strokeWidth="3" 
                                 strokeLinecap="round" 
                                 strokeLinejoin="round" 
                               />
@@ -2094,10 +2112,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   <circle
                                     cx={coord.x}
                                     cy={coord.y}
-                                    r={hoveredChartPoint === idx ? 6 : 3.5}
+                                    r={hoveredChartPoint === idx ? 5 : 3}
                                     fill="#18181b"
                                     stroke={chartData.color}
-                                    strokeWidth={hoveredChartPoint === idx ? 3.5 : 2}
+                                    strokeWidth={hoveredChartPoint === idx ? 3 : 2}
                                     className="transition-all duration-150"
                                     onMouseEnter={() => setHoveredChartPoint(idx)}
                                     onMouseLeave={() => setHoveredChartPoint(null)}
@@ -2120,7 +2138,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </div>
 
                     {/* X-Axis Labels */}
-                    <div className="flex justify-between text-[10px] sm:text-[11px] font-medium text-zinc-300 md:text-zinc-200 mt-2 px-1 sm:px-2 border-t border-zinc-800 md:border-zinc-800 pt-2">
+                    <div className="flex justify-between text-[10px] sm:text-[11px] font-medium text-zinc-300 mt-2 px-1 sm:px-2 border-t border-zinc-800 pt-2">
                       <span>Day 1</span>
                       <span>Day 7</span>
                       <span>Day 15</span>
@@ -2150,14 +2168,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   </div>
                 )}
 
-                <div className="bg-zinc-950 md:bg-zinc-900 rounded-3xl border border-zinc-800 md:border-zinc-800 text-white md:text-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-bold text-white md:text-white">Customer Video Reviews</h2>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-zinc-200 md:text-zinc-200">
+                    <h2 className="text-xl font-bold text-white">Customer Video Reviews</h2>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-zinc-200">
                       <span>Curate customer videos and pin your favorites to your website widget.</span>
-                      <span className="text-zinc-600 md:text-zinc-200">•</span>
-                      <span className="font-semibold text-amber-400 md:text-amber-800 bg-amber-900/30 md:bg-amber-50 px-2 py-0.5 rounded-full border border-amber-800/40 md:border-amber-200 text-[11px] flex items-center gap-1">
-                        <Pin className="w-2.5 h-2.5 fill-current text-amber-400 md:text-amber-600" /> {pinnedVideoIds.length}/3 Pinned
+                      <span className="text-zinc-600">•</span>
+                      <span className="font-semibold text-amber-400 bg-amber-900/30 px-2.5 py-0.5 rounded-full border border-amber-800/40 text-[11px] flex items-center gap-1">
+                        <Pin className="w-2.5 h-2.5 fill-current text-amber-400" /> {pinnedVideoIds.length}/3 Pinned
                       </span>
                     </div>
                   </div>
@@ -2166,18 +2184,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                     {/* Search Reviews Input */}
                     <div className="relative flex-1 min-w-[180px]">
-                      <Search className="w-3.5 h-3.5 text-zinc-200 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <Search className="w-3.5 h-3.5 text-zinc-300 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
                         value={reviewsSearchQuery}
                         onChange={(e) => setReviewsSearchQuery(e.target.value)}
                         placeholder="Search reviews..."
-                        className="w-full pl-8 pr-7 py-1.5 bg-zinc-900 focus:bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-zinc-700 focus:border-zinc-700 transition-all font-medium"
+                        className="w-full pl-8 pr-7 py-1.5 bg-zinc-950 focus:bg-zinc-900 border border-zinc-800 rounded-full text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-zinc-700 focus:border-zinc-700 transition-all font-medium"
                       />
                       {reviewsSearchQuery && (
                         <button
                           onClick={() => setReviewsSearchQuery('')}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white text-xs font-bold"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-white text-xs font-bold"
                         >
                           ✕
                         </button>
@@ -2185,13 +2203,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </div>
 
                     {/* Filter Pills */}
-                    <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800 shrink-0">
+                    <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-full border border-zinc-800 shrink-0">
                       {(['all', '5', '4'] as const).map(f => (
                         <button
                           key={f}
                           onClick={() => setReviewsFilter(f)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            reviewsFilter === f ? 'bg-white text-zinc-950 shadow-xs font-extrabold' : 'text-zinc-200 hover:text-white'
+                          className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                            reviewsFilter === f ? 'bg-zinc-800 text-white border border-zinc-700/80 shadow-xs font-bold' : 'text-zinc-300 hover:text-white font-medium'
                           }`}
                         >
                           {f === 'all' ? 'All' : `${f} Stars`}
@@ -2328,12 +2346,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     onClick={() => togglePinVideo(video.id)}
                                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
                                       isPinned
-                                        ? 'bg-white text-zinc-950 border-white shadow-2xs font-bold'
-                                        : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800'
+                                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-2xs font-bold'
+                                        : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
                                     }`}
                                     title={isPinned ? 'Unpin from website widget' : 'Pin to top of website widget (Max 3)'}
                                   >
-                                    <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current text-zinc-950' : 'text-zinc-200'}`} />
+                                    <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current text-amber-400' : 'text-zinc-300'}`} />
                                     <span>{isPinned ? 'Pinned' : 'Pin to Widget'}</span>
                                   </button>
 
@@ -2785,8 +2803,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 onClick={() => setEmbedLayout(l.id as any)}
                                 className={`py-2 px-1 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer ${
                                   embedLayout === l.id 
-                                    ? 'bg-white text-zinc-950 border-white shadow-xs font-extrabold' 
-                                    : 'bg-zinc-900 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:text-white'
+                                    ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs font-bold' 
+                                    : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:text-white font-medium'
                                 }`}
                               >
                                 {l.label}
@@ -2809,8 +2827,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 onClick={() => setEmbedTheme(t.id as any)}
                                 className={`py-2 px-1 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer ${
                                   embedTheme === t.id 
-                                    ? 'bg-white text-zinc-950 border-white shadow-xs font-extrabold' 
-                                    : 'bg-zinc-900 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:text-white'
+                                    ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs font-bold' 
+                                    : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:text-white font-medium'
                                 }`}
                               >
                                 {t.label}
@@ -2950,8 +2968,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       onClick={() => togglePinVideo(v.id)}
                                       className={`p-1 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
                                         isPinned
-                                          ? 'bg-white text-zinc-950'
-                                          : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200'
+                                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                          : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800'
                                       }`}
                                       title={isPinned ? 'Unpin video' : 'Pin video (Max 3)'}
                                     >
@@ -2984,8 +3002,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <button
                               type="button"
                               onClick={() => setEmbedFormat('script')}
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-sans font-bold cursor-pointer ${
-                                embedFormat === 'script' ? 'bg-white text-zinc-950' : 'bg-zinc-800 text-zinc-200'
+                              className={`px-3 py-1 rounded-full text-xs font-sans font-bold cursor-pointer border transition-all ${
+                                embedFormat === 'script' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:text-white'
                               }`}
                             >
                               JS Script Tag
@@ -2993,8 +3011,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <button
                               type="button"
                               onClick={() => setEmbedFormat('iframe')}
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-sans font-bold cursor-pointer ${
-                                embedFormat === 'iframe' ? 'bg-white text-zinc-950' : 'bg-zinc-800 text-zinc-200'
+                              className={`px-3 py-1 rounded-full text-xs font-sans font-bold cursor-pointer border transition-all ${
+                                embedFormat === 'iframe' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:text-white'
                               }`}
                             >
                               iFrame Tag
@@ -3326,8 +3344,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 onClick={() => setQrStandeeStyle(s.id as any)}
                                 className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
                                   qrStandeeStyle === s.id
-                                    ? 'bg-white text-zinc-950 border-white shadow-xs font-extrabold'
-                                    : 'bg-zinc-950 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:text-white'
+                                    ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs font-bold'
+                                    : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:text-white'
                                 }`}
                               >
                                 <span>{s.icon}</span>
@@ -3665,52 +3683,52 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     
                     {/* SECTION 1: Business Identity */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Building2 className="w-3.5 h-3.5" /> Business Identity
+                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Building2 className="w-3.5 h-3.5 text-zinc-400" /> Business Identity
                       </h3>
-                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm">
+                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
                         
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group focus-within:bg-white/[0.02]">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Venue Name</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Venue Name</div>
                           <input
                             type="text"
                             value={profileName}
                             onChange={(e) => setProfileName(e.target.value)}
                             placeholder="e.g. The Rustic Spoon"
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
+                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
                           />
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Category</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Category</div>
                           <div className="flex-1 w-full relative">
                             <select
                               value={businessCategory}
                               onChange={(e) => setBusinessCategory(e.target.value)}
                               className="bg-transparent text-[13px] font-semibold text-white appearance-none cursor-pointer focus:outline-none w-full"
                             >
-                              <option value="Dining & Artisanal Food">Dining & Artisanal Food</option>
-                              <option value="Hospitality & Hotels">Hospitality & Hotels</option>
-                              <option value="Services & Home Trades">Services & Home Trades</option>
-                              <option value="Health, Beauty & Wellness">Health, Beauty & Wellness</option>
-                              <option value="Retail & Local Boutique">Retail & Local Boutique</option>
-                              <option value="Professional, Legal & Finance">Professional, Legal & Finance</option>
-                              <option value="Digital Platform & E-Commerce">Digital Platform & E-Commerce</option>
-                              <option value="Automotive & Transportation">Automotive & Transportation</option>
-                              <option value="Entertainment & Venues">Entertainment & Venues</option>
+                              <option value="Dining & Artisanal Food" className="bg-zinc-900 text-white">Dining & Artisanal Food</option>
+                              <option value="Hospitality & Hotels" className="bg-zinc-900 text-white">Hospitality & Hotels</option>
+                              <option value="Services & Home Trades" className="bg-zinc-900 text-white">Services & Home Trades</option>
+                              <option value="Health, Beauty & Wellness" className="bg-zinc-900 text-white">Health, Beauty & Wellness</option>
+                              <option value="Retail & Local Boutique" className="bg-zinc-900 text-white">Retail & Local Boutique</option>
+                              <option value="Professional, Legal & Finance" className="bg-zinc-900 text-white">Professional, Legal & Finance</option>
+                              <option value="Digital Platform & E-Commerce" className="bg-zinc-900 text-white">Digital Platform & E-Commerce</option>
+                              <option value="Automotive & Transportation" className="bg-zinc-900 text-white">Automotive & Transportation</option>
+                              <option value="Entertainment & Venues" className="bg-zinc-900 text-white">Entertainment & Venues</option>
                             </select>
-                            <ChevronDown className="w-4 h-4 text-zinc-600 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group focus-within:bg-white/[0.02]">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Website URL</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Website URL</div>
                           <input
                             type="url"
                             value={profileWebsite}
                             onChange={(e) => setProfileWebsite(e.target.value)}
                             placeholder="https://yourwebsite.com"
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
+                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
                           />
                         </div>
 
@@ -3719,13 +3737,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* SECTION 2: Physical Address */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5" /> Physical Address
+                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <MapPin className="w-3.5 h-3.5 text-zinc-400" /> Physical Address
                       </h3>
-                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm">
+                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
                         
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Country / Region</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Country / Region</div>
                           <div className="flex-1 w-full relative">
                             <CountrySelector
                               value={selectedCountry}
@@ -3734,20 +3752,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group focus-within:bg-white/[0.02]">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">Street Address</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Street Address</div>
                           <input
                             type="text"
                             value={streetAddress}
                             onChange={(e) => setStreetAddress(e.target.value)}
                             placeholder="e.g. 123 Main St, Suite 400"
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
+                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
                           />
                         </div>
 
                         {hasStates && (
-                          <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors relative">
-                            <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">{stateLabel}</div>
+                          <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
+                            <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">{stateLabel}</div>
                             <div className="flex-1 w-full relative">
                               <SearchableComboSelector
                                 value={stateRegion}
@@ -3762,8 +3780,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                         )}
 
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">City</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">City</div>
                           <div className="flex-1 w-full relative">
                             <SearchableComboSelector
                               value={city}
@@ -3780,14 +3798,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group focus-within:bg-white/[0.02]">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 mb-2 sm:mb-0 shrink-0">{activeCountryDialInfo.postalLabel || "ZIP Code"}</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">{activeCountryDialInfo.postalLabel || "ZIP Code"}</div>
                           <input
                             type="text"
                             value={zipCode}
                             onChange={(e) => setZipCode(e.target.value)}
                             placeholder={activeCountryDialInfo.postalPlaceholder || "e.g. 10001"}
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
+                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
                           />
                         </div>
 
@@ -3796,37 +3814,37 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* SECTION 3: Phone Contact */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5" /> Contact Information
+                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-zinc-400" /> Contact Information
                       </h3>
-                      <div className="bg-zinc-950 md:bg-zinc-900 rounded-[24px] border border-zinc-800 md:border-zinc-800 overflow-hidden divide-y divide-zinc-800 md:divide-zinc-800 shadow-sm">
+                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
                         
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-900 md:hover:bg-zinc-800 transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 md:text-zinc-200 mb-2 sm:mb-0 shrink-0">Dialing Code</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Dialing Code</div>
                           <div className="flex-1 w-full relative">
                             <select
                               value={phoneDialCode}
                               onChange={(e) => setPhoneDialCode(e.target.value)}
-                              className="bg-transparent text-[13px] font-semibold text-white md:text-white appearance-none cursor-pointer focus:outline-hidden w-full"
+                              className="bg-transparent text-[13px] font-semibold text-white appearance-none cursor-pointer focus:outline-hidden w-full"
                             >
                               {countryDialData.map((item) => (
-                                <option key={`${item.code}-${item.dialCode}-${item.name}`} value={item.dialCode} className="bg-zinc-900 md:bg-zinc-900 text-white md:text-white">
+                                <option key={`${item.code}-${item.dialCode}-${item.name}`} value={item.dialCode} className="bg-zinc-900 text-white">
                                   {item.flag} {item.dialCode} ({item.name})
                                 </option>
                               ))}
                             </select>
-                            <ChevronDown className="w-4 h-4 text-zinc-600 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-900 md:hover:bg-zinc-800 transition-colors group focus-within:bg-zinc-900 md:focus-within:bg-zinc-50">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-200 md:text-zinc-200 mb-2 sm:mb-0 shrink-0">Direct Number</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
+                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Direct Number</div>
                           <input
                             type="tel"
                             value={localPhone}
                             onChange={(e) => setLocalPhone(e.target.value)}
                             placeholder={activeCountryDialInfo.phonePlaceholder || "e.g. 555-0198"}
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white md:text-white placeholder-zinc-600 focus:outline-hidden"
+                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-hidden"
                           />
                         </div>
 
@@ -3836,41 +3854,41 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     {/* SECTION 4: Operating Hours */}
                     <div>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 px-1 gap-2">
-                         <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest flex items-center gap-2">
-                           <Clock className="w-3.5 h-3.5" /> Operating Hours
+                         <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-2">
+                           <Clock className="w-3.5 h-3.5 text-zinc-400" /> Operating Hours
                          </h3>
                          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
                             <button
                               onClick={() => setWeeklySchedule(prev => prev.map((d, i) => i < 5 ? { ...d, status: 'open', openTime: '08:00 AM', closeTime: '06:00 PM' } : { ...d, status: 'closed' }))}
-                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+                              className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
                             >
                               Mon-Fri
                             </button>
                             <button
                               onClick={() => setWeeklySchedule(prev => prev.map(d => ({ ...d, status: 'open', openTime: '11:00 AM', closeTime: '11:00 PM' })))}
-                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+                              className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
                             >
                               Everyday
                             </button>
                             <button
                               onClick={() => setWeeklySchedule(prev => prev.map(d => ({ ...d, status: '24h' })))}
-                              className="px-3 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 border border-zinc-700 md:border-zinc-800 hover:bg-zinc-800 md:hover:bg-zinc-200 text-zinc-200 md:text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+                              className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
                             >
                               24/7
                             </button>
                          </div>
                       </div>
 
-                      <div className="bg-zinc-950 md:bg-zinc-900 rounded-[24px] border border-zinc-800 md:border-zinc-800 overflow-hidden divide-y divide-zinc-800 md:divide-zinc-800 shadow-sm">
+                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
                         {weeklySchedule.map((item, idx) => (
-                          <div key={item.day} className="flex flex-col lg:flex-row lg:items-center p-4 hover:bg-white/[0.02] transition-colors gap-4">
+                          <div key={item.day} className="flex flex-col lg:flex-row lg:items-center p-4 hover:bg-zinc-800/40 transition-colors gap-4">
                              <div className="w-32 text-[13px] font-semibold text-white shrink-0 flex items-center gap-2">
                                <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'open' ? 'bg-white' : item.status === '24h' ? 'bg-zinc-300' : 'bg-zinc-700'}`} />
                                {item.day}
                              </div>
                              
                              <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 lg:gap-3">
-                               <div className="flex items-center bg-[#18181b] rounded-lg p-0.5 border border-white/[0.06]">
+                               <div className="flex items-center bg-zinc-950 rounded-full p-1 border border-zinc-800">
                                  {(['open', '24h', 'closed'] as const).map(status => (
                                    <button
                                      key={status}
@@ -3879,10 +3897,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                        copy[idx].status = status;
                                        setWeeklySchedule(copy);
                                      }}
-                                     className={`px-3 py-1.5 rounded-md text-[11px] font-bold capitalize transition-all cursor-pointer ${
+                                     className={`px-3 py-1.5 rounded-full text-[11px] font-bold capitalize transition-all cursor-pointer ${
                                        item.status === status 
-                                         ? 'bg-white text-black shadow-sm'
-                                         : 'text-zinc-200 hover:text-white'
+                                         ? 'bg-zinc-800 text-white border border-zinc-700 shadow-xs font-bold'
+                                         : 'text-zinc-300 hover:text-white'
                                      }`}
                                    >
                                      {status === '24h' ? '24 Hrs' : status}
@@ -3900,13 +3918,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                          copy[idx].openTime = e.target.value;
                                          setWeeklySchedule(copy);
                                        }}
-                                       className="bg-[#18181b] border border-white/[0.08] text-white rounded-lg pl-3 pr-7 py-2 text-[12px] font-semibold appearance-none focus:outline-none focus:border-white/50"
+                                       className="bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-3 pr-7 py-2 text-[12px] font-semibold appearance-none focus:outline-none focus:border-zinc-600"
                                      >
-                                       {['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM'].map(t => <option key={t} value={t}>{t}</option>)}
+                                       {['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM'].map(t => <option key={t} value={t} className="bg-zinc-900 text-white">{t}</option>)}
                                      </select>
-                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-200 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                                    </div>
-                                   <span className="text-zinc-200 text-[11px] font-bold">to</span>
+                                   <span className="text-zinc-400 text-[11px] font-bold">to</span>
                                    <div className="relative">
                                      <select
                                        value={item.closeTime}
@@ -3915,11 +3933,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                          copy[idx].closeTime = e.target.value;
                                          setWeeklySchedule(copy);
                                        }}
-                                       className="bg-[#18181b] border border-white/[0.08] text-white rounded-lg pl-3 pr-7 py-2 text-[12px] font-semibold appearance-none focus:outline-none focus:border-white/50"
+                                       className="bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-3 pr-7 py-2 text-[12px] font-semibold appearance-none focus:outline-none focus:border-zinc-600"
                                      >
-                                       {['05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM', '11:59 PM'].map(t => <option key={t} value={t}>{t}</option>)}
+                                       {['05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM', '11:59 PM'].map(t => <option key={t} value={t} className="bg-zinc-900 text-white">{t}</option>)}
                                      </select>
-                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-200 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                                    </div>
                                  </div>
                                )}
@@ -3931,27 +3949,27 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* SECTION 5: About & Amenities */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Info className="w-3.5 h-3.5" /> About & Amenities
+                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Info className="w-3.5 h-3.5 text-zinc-400" /> About & Amenities
                       </h3>
-                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm">
+                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
                         
-                        <div className="p-4 sm:p-5 hover:bg-white/[0.02] transition-colors focus-within:bg-white/[0.02]">
+                        <div className="p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors focus-within:bg-zinc-800/40">
                           <div className="flex items-center justify-between mb-3">
-                             <div className="text-[13px] font-semibold text-zinc-200">Public Story & Description</div>
-                             <span className="text-[10px] text-zinc-200 font-mono">{profileDesc.length} / 500</span>
+                             <div className="text-[13px] font-semibold text-zinc-300">Public Story & Description</div>
+                             <span className="text-[10px] text-zinc-400 font-mono">{profileDesc.length} / 500</span>
                           </div>
                           <textarea
                             value={profileDesc}
                             onChange={(e) => setProfileDesc(e.target.value)}
                             maxLength={500}
                             placeholder="Tell visitors what makes your venue special..."
-                            className="w-full bg-[#18181b] border border-white/[0.06] rounded-xl p-4 text-[13px] text-white placeholder-zinc-600 focus:outline-none focus:border-white/50 resize-none h-28 leading-relaxed font-medium"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-[13px] text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 resize-none h-28 leading-relaxed font-medium"
                           />
                         </div>
 
                         <div className="p-4 sm:p-5">
-                          <div className="text-[13px] font-semibold text-zinc-200 mb-4">Venue Amenities</div>
+                          <div className="text-[13px] font-semibold text-zinc-300 mb-4">Venue Amenities</div>
                           <div className="flex flex-wrap gap-2">
                             {['Free Wi-Fi', 'Outdoor Seating', 'Onsite Parking', 'Wheelchair Accessible', 'Pet Friendly', 'Live Music', 'Full Bar', 'Accepts Credit Cards'].map(amenity => {
                               const isSelected = selectedAmenities.includes(amenity);
@@ -3967,8 +3985,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   }}
                                   className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer border ${
                                     isSelected
-                                      ? 'bg-white text-black border-white shadow-sm'
-                                      : 'bg-[#18181b] md:bg-zinc-900 border-white/[0.06] md:border-zinc-800 text-zinc-200 md:text-zinc-200 hover:bg-white/[0.04] md:hover:bg-zinc-800'
+                                      ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs'
+                                      : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-900'
                                   }`}
                                 >
                                   {isSelected && <Check className="w-3 h-3 inline-block mr-1 -mt-0.5" />}
@@ -3982,12 +4000,38 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </div>
                     </div>
 
-                    {/* SECTION 6: Alerts & Notification Preferences */}
+                    {/* SECTION 6: Pro Merchant Support & Documentation (Moved above alerts for clean hierarchy) */}
                     <div>
-                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Bell className="w-3.5 h-3.5" /> Alerts & Notification Preferences
+                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t("business.proMerchantSupport", "Pro Merchant Support & Documentation")}
                       </h3>
-                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                        <div className="space-y-1">
+                          <h4 className="text-[13px] font-bold text-white">
+                            {t("business.proMerchantSupport", "Pro Merchant Support & Knowledge Base")}
+                          </h4>
+                          <p className="text-[12px] text-zinc-400 leading-relaxed max-w-lg">
+                            {t("business.proSupportDesc", "Need assistance setting up website widgets, table QR stands, or video review moderation? Access complete step-by-step documentation and live support.")}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          id="btn-profile-open-support-docs"
+                          onClick={() => setShowHelpModal(true)}
+                          className="px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-[12px] font-bold transition-all active:scale-95 shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
+                        >
+                          <FileText className="w-4 h-4 text-zinc-950" />
+                          <span>{t("business.openGuideDocs", "Open Guide & Docs")}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* SECTION 7: Alerts & Notification Preferences */}
+                    <div>
+                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Bell className="w-3.5 h-3.5 text-zinc-400" /> Alerts & Notification Preferences
+                      </h3>
+                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <h4 className="text-[13px] font-bold text-white">Business Notification Preferences</h4>
@@ -4017,58 +4061,32 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </div>
                     </div>
 
-                    {/* SECTION 7: Pro Merchant Support & Documentation */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t("business.proMerchantSupport", "Pro Merchant Support & Documentation")}
-                      </h3>
-                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <h4 className="text-[13px] font-bold text-white">
-                            {t("business.proMerchantSupport", "Pro Merchant Support & Knowledge Base")}
-                          </h4>
-                          <p className="text-[12px] text-zinc-400 leading-relaxed max-w-lg">
-                            {t("business.proSupportDesc", "Need assistance setting up website widgets, table QR stands, or video review moderation? Access complete step-by-step documentation and live support.")}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          id="btn-profile-open-support-docs"
-                          onClick={() => setShowHelpModal(true)}
-                          className="px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black text-[12px] font-bold transition-all active:scale-95 shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
-                        >
-                          <FileText className="w-4 h-4 text-black" />
-                          <span>{t("business.openGuideDocs", "Open Guide & Docs")}</span>
-                        </button>
-                      </div>
-                    </div>
-
                   </div>
 
                   {/* Right Column: Premium Live Mobile Preview Widget (5 cols) */}
                   <div className="lg:col-span-5 relative">
                     <div className="sticky top-24">
                       
-                      <div className="bg-[#111113] rounded-[36px] border border-white/[0.08] shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden relative">
+                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden relative">
                          {/* Subtle Glow */}
                          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-40 bg-white/5 blur-[60px] rounded-full pointer-events-none" />
                          
                          {/* Header */}
-                         <div className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between relative z-10 bg-[#111113]/80 backdrop-blur-xl">
+                         <div className="px-6 py-5 border-b border-zinc-800 flex items-center justify-between relative z-10 bg-zinc-900/80 backdrop-blur-xl">
                            <div className="flex items-center gap-2">
-                             <Eye className="w-4 h-4 text-zinc-200" />
-                             <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-200">Live Preview</span>
+                             <Eye className="w-4 h-4 text-zinc-300" />
+                             <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-300">Live Preview</span>
                            </div>
                            <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white text-[10px] font-bold border border-white/20">Yoouz App</span>
                          </div>
 
                          {/* Mobile Card Replica */}
-                         <div className="p-6 bg-[#000000] min-h-[500px]">
-                           <div className="bg-[#111113] rounded-[28px] border border-white/[0.08] p-5 shadow-2xl relative overflow-hidden ring-1 ring-white/[0.02]">
+                         <div className="p-6 bg-zinc-950 min-h-[500px]">
+                           <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-5 shadow-2xl relative overflow-hidden ring-1 ring-white/[0.04]">
                               
                               {/* Preview Head */}
                               <div className="flex items-center gap-4 mb-6">
-                                <div className="w-14 h-14 rounded-[18px] bg-[#18181b] border border-white/[0.1] flex items-center justify-center text-2xl font-black text-white shrink-0 overflow-hidden shadow-inner">
+                                <div className="w-14 h-14 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-2xl font-black text-white shrink-0 overflow-hidden shadow-inner">
                                   {currentPlace.logoUrl ? (
                                     <img src={currentPlace.logoUrl} loading="eager" decoding="sync" fetchPriority="high" className="w-full h-full object-cover" />
                                   ) : (
@@ -4080,19 +4098,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     <h4 className="font-bold text-white text-lg truncate tracking-tight">{profileName || 'Venue Name'}</h4>
                                     <BadgeCheck className="w-4.5 h-4.5 text-white shrink-0" />
                                   </div>
-                                  <div className="text-[11px] text-zinc-200 font-semibold mt-0.5 uppercase tracking-widest">{businessCategory || 'Category'}</div>
+                                  <div className="text-[11px] text-zinc-400 font-semibold mt-0.5 uppercase tracking-widest">{businessCategory || 'Category'}</div>
                                 </div>
                               </div>
 
                               <div className="space-y-3">
                                 {/* Map Preview */}
-                                <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm">
+                                <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm">
                                   <div className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                                      <MapPin className="w-3.5 h-3.5 text-zinc-200" />
+                                      <MapPin className="w-3.5 h-3.5 text-zinc-300" />
                                     </div>
                                     <div>
-                                      <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-1">Physical Location</div>
+                                      <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Physical Location</div>
                                       <div className="text-[13px] font-semibold text-zinc-200 leading-snug">{profileAddress || 'Address will appear here'}</div>
                                     </div>
                                   </div>
@@ -4100,29 +4118,29 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                                 {/* Status & Phone Grid */}
                                 <div className="grid grid-cols-2 gap-3">
-                                  <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm">
-                                    <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-1.5">Status</div>
+                                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm">
+                                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Status</div>
                                     <div className="text-[12px] font-bold text-white flex items-center gap-1.5">
-                                      <span className="w-2 h-2 rounded-full bg-white" /> Open Now
+                                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Open Now
                                     </div>
                                   </div>
-                                  <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm overflow-hidden">
-                                    <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-1.5">Direct Line</div>
+                                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm overflow-hidden">
+                                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Direct Line</div>
                                     <div className="text-[12px] font-bold text-white truncate">{profilePhone || 'Not set'}</div>
                                   </div>
                                 </div>
 
                                 {/* Hours */}
-                                <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm">
-                                  <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-2">Schedule</div>
-                                  <div className="text-[12px] text-zinc-200 leading-relaxed font-mono font-medium">{profileHours || 'Schedule not configured'}</div>
+                                <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm">
+                                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Schedule</div>
+                                  <div className="text-[12px] text-zinc-300 leading-relaxed font-mono font-medium">{profileHours || 'Schedule not configured'}</div>
                                 </div>
 
                                 {/* About */}
                                 {profileDesc && (
-                                  <div className="bg-[#18181b] p-4 rounded-[20px] border border-white/[0.04] shadow-sm">
-                                    <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest mb-1.5">Story</div>
-                                    <div className="text-[12.5px] text-zinc-200 leading-relaxed font-medium line-clamp-4">{profileDesc}</div>
+                                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm">
+                                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Story</div>
+                                    <div className="text-[12.5px] text-zinc-300 leading-relaxed font-medium line-clamp-4">{profileDesc}</div>
                                   </div>
                                 )}
                               </div>
@@ -4323,38 +4341,55 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
             )}
 
-            {/* Mobile Bottom Footer & Legal Links (Matching user account mobile layout) */}
-            <div className="md:hidden pt-8 pb-6 mt-6 border-t border-zinc-800/80 flex flex-col items-center justify-center gap-2 text-center select-none">
-              <div className="flex items-center justify-center gap-3 text-xs font-medium text-zinc-400">
+            {/* Bottom Footer & Legal Links (Matching user account layout on both desktop & mobile) */}
+            <footer className="pt-12 pb-8 mt-10 border-t border-zinc-800/80 text-center text-xs text-zinc-400 space-y-4 select-none">
+              <div className="flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
-                  onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate('home')}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-                >
-                  {t("legal.privacy", "Privacy")}
-                </button>
-                <span className="text-zinc-600">•</span>
-                <button
-                  type="button"
+                  id="business-footer-terms-btn"
                   onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate('home')}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                  className="hover:text-white underline cursor-pointer bg-transparent border-none p-0 transition-colors"
                 >
-                  {t("legal.terms", "Terms")}
+                  {t("legal.termsConditions", "Terms & Conditions")}
                 </button>
                 <span className="text-zinc-600">•</span>
                 <button
                   type="button"
+                  id="business-footer-privacy-btn"
+                  onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate('home')}
+                  className="hover:text-white underline cursor-pointer bg-transparent border-none p-0 transition-colors"
+                >
+                  {t("legal.privacyPolicy", "Privacy Policy")}
+                </button>
+                <span className="text-zinc-600">•</span>
+                <button
+                  type="button"
+                  id="business-footer-support-btn"
+                  onClick={() => setShowHelpModal(true)}
+                  className="hover:text-white underline cursor-pointer bg-transparent border-none p-0 transition-colors"
+                >
+                  {t("legal.supportDesk", "Support Desk")}
+                </button>
+                <span className="text-zinc-600">•</span>
+                <button
+                  type="button"
+                  id="business-footer-about-btn"
                   onClick={() => onNavigate('more')}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                  className="hover:text-white underline cursor-pointer bg-transparent border-none p-0 transition-colors"
                 >
                   {t("legal.about", "About")}
                 </button>
               </div>
 
-              <p className="text-[11px] text-zinc-400 font-normal">
-                {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
-              </p>
-            </div>
+              <div className="space-y-1 text-center font-medium">
+                <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                  {t("legal.networkLocation", "Yoouz Trust Network • San Francisco, CA")}
+                </p>
+                <p className="text-[11px] text-zinc-400">
+                  {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews.")}
+                </p>
+              </div>
+            </footer>
 
           </div>
         </main>
