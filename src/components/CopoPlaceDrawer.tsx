@@ -715,7 +715,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               : "border-transparent hover:text-zinc-200"
           }`}
         >
-          <span>{t("place.reviews", "Reviews")}</span>
+          <span>{t("place.reviews", "Video Reviews")}</span>
           <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-700">
             {rawPlaceVideos.length}
           </span>

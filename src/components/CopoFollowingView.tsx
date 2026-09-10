@@ -461,47 +461,49 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
   return (
     <div id="following-directory-container" className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white p-3.5 sm:p-6 select-none">
-      <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 pb-32 md:pb-12">
-        {/* Header Card */}
-        <div id="following-header-card" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900/90 p-4.5 sm:p-6 rounded-3xl border border-zinc-800 shadow-sm">
-          <div className="flex items-center gap-3">
-            {onNavigateHome && (
-              <button
-                id="following-back-button"
-                onClick={onNavigateHome}
-                className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-700/80"
-                title="Back to Feed"
-              >
-                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-              </button>
-            )}
-            <div className="space-y-0.5">
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-200" />
-                <span>Following & Followers</span>
-              </h1>
-              <p className="text-xs text-zinc-200 font-medium leading-relaxed">
-                Manage businesses and reviewers you follow on Yoouz.
-              </p>
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5 pb-32 md:pb-12">
+        {/* Sleek Native-Style Header */}
+        <div id="following-header-card" className="space-y-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {onNavigateHome && (
+                <button
+                  id="following-back-button"
+                  onClick={onNavigateHome}
+                  className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
+                  title="Back to Feed"
+                >
+                  <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                </button>
+              )}
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2 truncate">
+                  <Users className="w-5 h-5 text-zinc-300 shrink-0" />
+                  <span className="truncate">Following & Followers</span>
+                </h1>
+                <p className="text-xs text-zinc-300 font-medium truncate mt-0.5">
+                  Manage businesses and reviewers you follow on Yoouz
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Clean Segmented Tab Switcher */}
-          <div id="following-segmented-tabs" className="grid grid-cols-2 gap-1 bg-zinc-950 p-1.5 rounded-2xl border border-zinc-800 shrink-0 self-stretch sm:self-auto sm:w-64">
+          <div id="following-segmented-tabs" className="grid grid-cols-2 p-1 bg-zinc-900/90 rounded-2xl border border-zinc-800 shadow-inner">
             <button
               id="tab-btn-following"
               onClick={() => {
                 setActiveTab("following");
                 setSearchQuery("");
               }}
-              className={`py-2 px-3 text-center text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              className={`py-2 px-3 text-center text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 activeTab === "following"
                   ? "bg-white text-zinc-950 shadow-sm"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  : "text-zinc-300 hover:text-white"
               }`}
             >
               <span>Following</span>
-              <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${activeTab === "following" ? "bg-zinc-200 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-200"}`}>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${activeTab === "following" ? "bg-zinc-200 text-zinc-950" : "bg-zinc-800 text-zinc-300"}`}>
                 {totalFollowingCount}
               </span>
             </button>
@@ -511,97 +513,99 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 setActiveTab("followers");
                 setSearchQuery("");
               }}
-              className={`py-2 px-3 text-center text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              className={`py-2 px-3 text-center text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 activeTab === "followers"
                   ? "bg-white text-zinc-950 shadow-sm"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  : "text-zinc-300 hover:text-white"
               }`}
             >
               <span>Followers</span>
-              <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${activeTab === "followers" ? "bg-zinc-200 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-200"}`}>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${activeTab === "followers" ? "bg-zinc-200 text-zinc-950" : "bg-zinc-800 text-zinc-300"}`}>
                 {myFollowers.length}
               </span>
             </button>
           </div>
         </div>
 
-        {/* Sub-Filters inside Following: All, Reviewers, Businesses */}
-        {activeTab === "following" && totalFollowingCount > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-            <button
-              onClick={() => setFollowingFilter("all")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
-                followingFilter === "all"
-                  ? "bg-white text-zinc-950 border-white shadow-xs"
-                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border-zinc-800"
-              }`}
-            >
-              All ({totalFollowingCount})
-            </button>
-            <button
-              onClick={() => setFollowingFilter("businesses")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
-                followingFilter === "businesses"
-                  ? "bg-white text-zinc-950 border-white shadow-xs"
-                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border-zinc-800"
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Businesses ({followedPlacesList.length})</span>
-            </button>
-            <button
-              onClick={() => setFollowingFilter("reviewers")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
-                followingFilter === "reviewers"
-                  ? "bg-white text-zinc-950 border-white shadow-xs"
-                  : "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border-zinc-800"
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Reviewers ({followedAuthors.length})</span>
-            </button>
-          </div>
-        )}
+        {/* Search & Filter Row */}
+        <div className="space-y-2.5">
+          {(totalFollowingCount > 0 || myFollowers.length > 0 || searchQuery) && (
+            <div className="relative">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={
+                  activeTab === "following"
+                    ? "Search followed businesses or reviewers..."
+                    : "Search followers by name..."
+                }
+                className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:border-zinc-600 focus:bg-zinc-900 transition-all shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer p-1 rounded-full hover:bg-zinc-800 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
 
-        {/* Search / Filter Input */}
-        {(totalFollowingCount > 0 || myFollowers.length > 0 || searchQuery) && (
-          <div className="relative">
-            <Search className="w-4 h-4 text-zinc-200 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={
-                activeTab === "following"
-                  ? "Search followed businesses or reviewers..."
-                  : "Search followers by name..."
-              }
-              className="w-full bg-zinc-900/80 border border-zinc-800/80 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-colors"
-            />
-            {searchQuery && (
+          {/* Sub-Filters inside Following: All, Reviewers, Businesses */}
+          {activeTab === "following" && totalFollowingCount > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
               <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white cursor-pointer p-0.5 rounded-full hover:bg-zinc-800 transition-colors"
+                onClick={() => setFollowingFilter("all")}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border ${
+                  followingFilter === "all"
+                    ? "bg-white text-zinc-950 border-white shadow-xs font-bold"
+                    : "bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800"
+                }`}
               >
-                <X className="w-3.5 h-3.5" />
+                All ({totalFollowingCount})
               </button>
-            )}
-          </div>
-        )}
+              <button
+                onClick={() => setFollowingFilter("businesses")}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                  followingFilter === "businesses"
+                    ? "bg-white text-zinc-950 border-white shadow-xs font-bold"
+                    : "bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800"
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Businesses ({followedPlacesList.length})</span>
+              </button>
+              <button
+                onClick={() => setFollowingFilter("reviewers")}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                  followingFilter === "reviewers"
+                    ? "bg-white text-zinc-950 border-white shadow-xs font-bold"
+                    : "bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800"
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Reviewers ({followedAuthors.length})</span>
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Tab 1: Following Content */}
         {activeTab === "following" && (
-          <div id="tab-following-content" className="space-y-3 animate-in fade-in duration-150">
+          <div id="tab-following-content" className="space-y-2 animate-in fade-in duration-150">
             {totalFollowingCount === 0 ? (
-              <div id="following-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/90 border border-zinc-800 text-center text-zinc-200 space-y-3 shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-200 flex items-center justify-center mx-auto">
+              <div id="following-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-300 space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-850 text-white flex items-center justify-center mx-auto">
                   <User className="w-6 h-6" />
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
                     {searchQuery ? "No matching results found" : "You aren't following anyone yet"}
                   </p>
-                  <p className="text-xs text-zinc-200 leading-relaxed">
+                  <p className="text-xs text-zinc-300 leading-relaxed">
                     {searchQuery
                       ? `No business or reviewer matches "${searchQuery}". Try a different name.`
                       : "When you follow businesses or authentic local reviewers on Yoouz, they will appear here."}
@@ -610,14 +614,14 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold cursor-pointer transition-colors"
+                    className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold cursor-pointer transition-colors"
                   >
                     Clear search
                   </button>
                 )}
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {/* 1. Businesses Section */}
                 {(followingFilter === "all" || followingFilter === "businesses") &&
                   filteredPlaces.map((place) => {
@@ -635,11 +639,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         key={`following-place-${place.id}`}
                         id={`card-following-place-${place.id.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                         onClick={() => onOpenPlace(place.id)}
-                        className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group cursor-pointer"
+                        className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                       >
-                        <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
-                          {/* Square/Rounded-XL Business Logo */}
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white p-1.5 border border-zinc-700/80 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                          {/* Modern Squircle Business Logo */}
+                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white p-1 border border-zinc-800 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
                             {resolvedLogo ? (
                               <img
                                 src={resolvedLogo}
@@ -657,58 +661,44 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                               style={{ display: resolvedLogo ? "none" : "flex" }}
                               className="w-full h-full items-center justify-center bg-zinc-950 text-white rounded-lg"
                             >
-                              <Building2 className="w-6 h-6 text-zinc-200" />
+                              <Building2 className="w-5 h-5 text-white" />
                             </div>
                           </div>
 
-                          {/* Business Info */}
-                          <div className="min-w-0 flex-1 text-left space-y-1">
+                          {/* Business Info: Streamlined 2-Line Layout */}
+                          <div className="min-w-0 flex-1 text-left">
                             {/* Row 1: Name + Badges */}
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                                 {formattedTitle}
                               </h3>
-                              <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
-                              <span className="bg-zinc-800 text-zinc-200 text-[10px] font-bold px-2 py-0.5 rounded-md border border-zinc-700/60 uppercase tracking-wider shrink-0">
+                              <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                              <span className="bg-zinc-800 text-zinc-300 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-zinc-700 uppercase tracking-wider shrink-0">
                                 Business
                               </span>
                             </div>
 
-                            {/* Row 2: Star Rating & Review Count */}
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-200">
-                              <span className="font-black text-amber-400">
+                            {/* Row 2: Star Rating + Video Review Count + Location / Website */}
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium truncate mt-0.5">
+                              <span className="text-amber-400 font-bold flex items-center gap-0.5 shrink-0">
+                                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                                 {typeof place.rating === "number" ? place.rating.toFixed(1) : "5.0"}
                               </span>
-                              <div className="flex items-center gap-0.5">
-                                {[1, 2, 3, 4, 5].map((starIdx) => (
-                                  <Star
-                                    key={starIdx}
-                                    className={`w-3.5 h-3.5 ${
-                                      starIdx <= Math.round(place.rating || 5)
-                                        ? "fill-amber-400 text-amber-400"
-                                        : "fill-zinc-800 text-zinc-700"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-zinc-200 text-[11px] font-medium">
-                                ({place.totalReviews || 1} {place.totalReviews === 1 ? "review" : "reviews"})
+                              <span className="text-zinc-600 shrink-0">·</span>
+                              <span className="shrink-0">
+                                {place.totalReviews || 1} {place.totalReviews === 1 ? "video review" : "video reviews"}
                               </span>
-                            </div>
-
-                            {/* Row 3: Website Domain & Location */}
-                            <div className="flex items-center gap-3 text-xs text-zinc-200 font-medium truncate">
-                              {cleanDomain && (
-                                <span className="flex items-center gap-1 text-zinc-200 truncate hover:text-white transition-colors">
-                                  <Globe className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                                  <span className="truncate">{cleanDomain}</span>
-                                </span>
-                              )}
                               {(place.city || place.address) && (
-                                <span className="flex items-center gap-1 text-zinc-200 truncate">
-                                  <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
+                                <>
+                                  <span className="text-zinc-600 shrink-0">·</span>
                                   <span className="truncate">{place.city || place.address}</span>
-                                </span>
+                                </>
+                              )}
+                              {!place.city && !place.address && cleanDomain && (
+                                <>
+                                  <span className="text-zinc-600 shrink-0">·</span>
+                                  <span className="truncate">{cleanDomain}</span>
+                                </>
                               )}
                             </div>
                           </div>
@@ -727,10 +717,10 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                               onToggleFollow(place.id);
                             }
                           }}
-                          className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                          className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                             isHovered
                               ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                              : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
+                              : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
                           }`}
                           title={isHovered ? "Unfollow this business" : "You are following this business"}
                         >
@@ -741,7 +731,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
                               <span>Following</span>
                             </>
                           )}
@@ -759,14 +749,14 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         key={`following-reviewer-${author.name}`}
                         id={`card-following-${author.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                         onClick={() => onOpenCreator(author)}
-                        className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group cursor-pointer"
+                        className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                       >
-                        <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                           {/* Circular Reviewer Avatar */}
                           <img
                             src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
                             alt={author.name}
-                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
                               if (!target.src.includes("/api/avatar")) {
@@ -774,31 +764,30 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                               }
                             }}
                           />
-                          <div className="min-w-0 flex-1 text-left space-y-0.5">
-                            <div className="flex items-center gap-1.5 mb-0.5">
+                          {/* Reviewer Info: Streamlined 2-Line Layout */}
+                          <div className="min-w-0 flex-1 text-left">
+                            {/* Row 1: Name + Verification */}
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                                 {author.name}
                               </h3>
-                              {author.isVerified && <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />}
+                              {author.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}
                             </div>
 
-                            {author.location ? (
-                              <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 truncate">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                                <span className="truncate">{author.location}</span>
-                              </p>
-                            ) : (
-                              <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 truncate">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                                <span>Local Reviewer</span>
-                              </p>
-                            )}
-
-                            <p className="text-[11px] font-semibold text-zinc-200 truncate">
-                              {author.videoReviewCount
-                                ? `${author.videoReviewCount} video ${author.videoReviewCount === 1 ? "review" : "reviews"}`
-                                : author.bio || "Community reviewer"}
-                            </p>
+                            {/* Row 2: Video Reviews Count + Location */}
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium truncate mt-0.5">
+                              <span className="shrink-0">
+                                {author.videoReviewCount
+                                  ? `${author.videoReviewCount} ${author.videoReviewCount === 1 ? "video review" : "video reviews"}`
+                                  : author.bio || "Community reviewer"}
+                              </span>
+                              {author.location && (
+                                <>
+                                  <span className="text-zinc-600 shrink-0">·</span>
+                                  <span className="truncate">{author.location}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
 
@@ -810,10 +799,10 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             e.stopPropagation();
                             onToggleFollow(author.name);
                           }}
-                          className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                          className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                             isHovered
                               ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                              : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
+                              : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
                           }`}
                           title={isHovered ? "Unfollow this reviewer" : "You are following this reviewer"}
                         >
@@ -824,7 +813,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
                               <span>Following</span>
                             </>
                           )}
@@ -839,17 +828,17 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
         {/* Tab 2: Followers List */}
         {activeTab === "followers" && (
-          <div id="tab-followers-content" className="space-y-3 animate-in fade-in duration-150">
+          <div id="tab-followers-content" className="space-y-2 animate-in fade-in duration-150">
             {filteredFollowers.length === 0 ? (
-              <div id="followers-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/90 border border-zinc-800 text-center text-zinc-200 space-y-3 shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-200 flex items-center justify-center mx-auto">
+              <div id="followers-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-300 space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-850 text-white flex items-center justify-center mx-auto">
                   <Users className="w-6 h-6" />
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
                     {searchQuery ? "No matching followers found" : "No followers yet"}
                   </p>
-                  <p className="text-xs text-zinc-200 leading-relaxed">
+                  <p className="text-xs text-zinc-300 leading-relaxed">
                     {searchQuery
                       ? `No follower matches "${searchQuery}". Try a different name.`
                       : "When other local reviewers follow your profile, they will appear here."}
@@ -858,14 +847,14 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold cursor-pointer transition-colors"
+                    className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold cursor-pointer transition-colors"
                   >
                     Clear search
                   </button>
                 )}
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {filteredFollowers.map((follower) => {
                   const isFollowingThem = followedAuthorsSet.has(follower.name.toLowerCase());
                   const isHovered = hoveredUnfollow === follower.name;
@@ -874,13 +863,13 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                       key={`follower-${follower.name}`}
                       id={`card-follower-${follower.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                       onClick={() => onOpenCreator({ name: follower.name, avatar: follower.avatar } as any)}
-                      className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group cursor-pointer"
+                      className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                     >
-                      <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
+                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                         <img
                           src={follower.avatar}
                           alt={follower.name}
-                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
                             if (!target.src.includes("/api/avatar")) {
@@ -888,28 +877,24 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             }
                           }}
                         />
-                        <div className="min-w-0 flex-1 text-left space-y-0.5">
-                          <div className="flex items-center gap-1.5 mb-0.5">
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                               {follower.name}
                             </h3>
                           </div>
 
-                          {follower.location ? (
-                            <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                              <span className="truncate">{follower.location}</span>
-                            </p>
-                          ) : (
-                            <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                              <span>Local Reviewer</span>
-                            </p>
-                          )}
-
-                          <p className="text-[11px] font-semibold text-zinc-200 truncate">
-                            {follower.bio || "Community reviewer"}
-                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium truncate mt-0.5">
+                            <span className="shrink-0">
+                              {follower.bio || "Community reviewer"}
+                            </span>
+                            {follower.location && (
+                              <>
+                                <span className="text-zinc-600 shrink-0">·</span>
+                                <span className="truncate">{follower.location}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -921,11 +906,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           e.stopPropagation();
                           onToggleFollow(follower.name);
                         }}
-                        className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                        className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                           isFollowingThem
                             ? isHovered
                               ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                              : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
+                              : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
                             : "bg-white hover:bg-zinc-200 text-zinc-950 font-black"
                         }`}
                       >
@@ -937,7 +922,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
                               <span>Following</span>
                             </>
                           )

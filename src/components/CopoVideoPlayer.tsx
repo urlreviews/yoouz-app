@@ -1409,7 +1409,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     className="mt-2 text-xs font-medium text-zinc-200 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer py-2"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{t("video.recordYourOwnReview", "Record your own review")}</span>
+                    <span>{t("video.recordYourOwnReview", "Record your own video review")}</span>
                   </button>
                 )}
               </div>

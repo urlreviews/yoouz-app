@@ -371,20 +371,20 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
         
         {/* Emblem & Hero Headings */}
         <div className="flex flex-col items-center text-center w-full mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800/90 flex items-center justify-center mb-4 shadow-sm text-zinc-200">
+          <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 shadow-sm text-white">
             <Building2 className="w-6 h-6 text-white" />
           </div>
 
           <h1 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug">
             {t("businessAuth.title", "Sign in to Yoouz Business")}
           </h1>
-          <p className="text-zinc-400 text-xs sm:text-sm mt-2 leading-relaxed max-w-sm">
+          <p className="text-zinc-200 text-xs sm:text-sm mt-2 leading-relaxed max-w-sm font-normal">
             {t("businessAuth.subtitle", "Claim your business, respond to authentic video reviews, and connect with customers as the verified owner.")}
           </p>
         </div>
 
         {/* Premium Authentication Card */}
-        <div className="w-full bg-zinc-900/90 backdrop-blur-xl rounded-3xl border border-zinc-800/90 shadow-2xl shadow-black/80 p-6 sm:p-7 transition-all">
+        <div className="w-full bg-zinc-900/95 backdrop-blur-xl rounded-3xl border border-zinc-800 shadow-2xl shadow-black/80 p-6 sm:p-7 transition-all">
           
           {/* STEP 1: EMAIL SIGN-IN */}
           {step === 'email' && (
@@ -392,19 +392,19 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               
               {/* Selected Venue Preview Card */}
               {selectedPlace && (
-                <div className="p-3.5 bg-zinc-950/80 rounded-2xl border border-zinc-800/90 flex items-center justify-between gap-3 shadow-inner">
+                <div className="p-3.5 bg-zinc-950/90 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3 shadow-inner">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 text-zinc-300">
-                      <Building2 className="w-4 h-4 text-zinc-200" />
+                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 text-white">
+                      <Building2 className="w-4 h-4 text-white" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-white text-xs sm:text-sm truncate block">
+                        <span className="font-bold text-white text-xs sm:text-sm truncate block">
                           {selectedPlace.name}
                         </span>
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       </div>
-                      <span className="text-[11px] text-zinc-400 block truncate mt-0.5">
+                      <span className="text-[11px] text-zinc-300 block truncate mt-0.5 font-normal">
                         {selectedPlace.address}
                       </span>
                     </div>
@@ -428,7 +428,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         onCancelSelectedPlace();
                       }
                     }}
-                    className="text-zinc-400 text-xs font-semibold shrink-0 hover:text-white px-2 py-1 rounded-lg hover:bg-zinc-800/80 transition-colors cursor-pointer"
+                    className="text-zinc-300 text-xs font-semibold shrink-0 hover:text-white px-2 py-1 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
                     {t("common.change", "Change")}
                   </button>
@@ -437,14 +437,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
 
               {/* Work Email Input */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="input-business-work-email" className="block text-xs font-semibold text-zinc-300">
-                    {t("businessAuth.workEmail", "Work Email")}
-                  </label>
-                  <span className="text-[10.5px] text-zinc-400 font-medium">
-                    Company domain required
-                  </span>
-                </div>
+                <label htmlFor="input-business-work-email" className="block text-xs font-bold text-white mb-2">
+                  {t("businessAuth.workEmail", "Work Email")}
+                </label>
 
                 <div className="relative">
                   <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -459,7 +454,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={t("businessAuth.emailPlaceholder", "name@yourcompany.com")}
-                    className={`w-full pl-10 pr-4 py-3 bg-zinc-950 focus:bg-zinc-950/90 border rounded-xl text-sm text-white placeholder-zinc-400 focus:outline-hidden transition-all ${
+                    className={`w-full pl-10 pr-4 py-3 bg-zinc-950 focus:bg-zinc-950 border rounded-xl text-sm text-white placeholder-zinc-400 focus:outline-hidden transition-all ${
                       conflictInfo.isConflict 
                         ? 'border-amber-600/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20' 
                         : 'border-zinc-800 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500/20'
@@ -492,7 +487,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 type="submit"
                 id="btn-business-continue-magic-link"
                 disabled={isLoading || !email || conflictInfo.isConflict}
-                className="w-full py-3.5 bg-white hover:bg-zinc-100 disabled:bg-zinc-800/80 disabled:text-zinc-600 text-zinc-950 rounded-xl text-sm font-bold shadow-lg shadow-black/40 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                className="w-full py-3.5 bg-white hover:bg-zinc-100 disabled:bg-zinc-800 disabled:text-zinc-400 disabled:border-zinc-700 text-zinc-950 rounded-xl text-sm font-bold shadow-lg shadow-black/40 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
               >
                 {isLoading ? (
                   <>
@@ -516,9 +511,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 <h2 className="text-base font-bold text-white">
                   {t("businessAuth.checkInbox", "Enter 6-Digit Code")}
                 </h2>
-                <p className="text-xs text-zinc-400 leading-relaxed">
+                <p className="text-xs text-zinc-200 leading-relaxed">
                   {t("businessAuth.codeSentTo", "We sent an official confirmation code to")}{' '}
-                  <strong className="text-white font-medium break-all">{email}</strong>
+                  <strong className="text-white font-semibold break-all">{email}</strong>
                 </p>
               </div>
 
@@ -548,9 +543,9 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 )}
 
                 {/* Resend Code Link */}
-                <div className="flex items-center justify-center text-xs text-zinc-400">
+                <div className="flex items-center justify-center text-xs text-zinc-300">
                   {resendCooldown > 0 ? (
-                    <span className="text-zinc-500 font-medium">
+                    <span className="text-zinc-400 font-medium">
                       Resend code in {resendCooldown}s
                     </span>
                   ) : (
@@ -559,7 +554,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                       id="btn-resend-business-code"
                       onClick={() => doSendMagicLink(email.trim().toLowerCase(), selectedPlace)}
                       disabled={isLoading}
-                      className="text-zinc-300 hover:text-white font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+                      className="text-zinc-200 hover:text-white font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
                     >
                       <RefreshCw className="w-3 h-3" />
                       <span>{t("businessAuth.resendCode", "Resend verification code")}</span>
@@ -573,7 +568,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     type="button"
                     id="btn-business-back-to-email"
                     onClick={() => { setStep('email'); setErrorMessage(null); }}
-                    className="px-4 py-3 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-zinc-800"
+                    className="px-4 py-3 bg-zinc-950 hover:bg-zinc-850 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-zinc-800"
                   >
                     {t("common.back", "Back")}
                   </button>
@@ -582,7 +577,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                     type="submit"
                     id="btn-business-verify-code-submit"
                     disabled={isLoading || otpDigits.some(d => !d)}
-                    className="flex-1 py-3 bg-white hover:bg-zinc-100 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 py-3 bg-white hover:bg-zinc-100 disabled:bg-zinc-800 disabled:text-zinc-400 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {isLoading ? (
                       <>
@@ -604,8 +599,8 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
         </div>
 
         {/* Reassurance Footer Badge */}
-        <div className="mt-8 flex items-center justify-center gap-2 text-zinc-400 text-xs text-center">
-          <ShieldCheck className="w-4 h-4 text-zinc-400 shrink-0" />
+        <div className="mt-8 flex items-center justify-center gap-2 text-zinc-300 text-xs font-medium text-center">
+          <ShieldCheck className="w-4 h-4 text-zinc-300 shrink-0" />
           <span>Yoouz Merchant Trust Protocol • Anti-conflict review protection</span>
         </div>
 

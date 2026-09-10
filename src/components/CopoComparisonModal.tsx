@@ -228,7 +228,7 @@ export function CopoComparisonModal({
                 }}
                 className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-white text-black font-bold text-sm hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg"
               >
-                <span>{t("comparison.recordReview", "Record a Review")}</span>
+                <span>{t("comparison.recordReview", "Record a Video Review")}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             )}

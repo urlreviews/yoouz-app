@@ -53,7 +53,6 @@ interface CopoCommentsDrawerProps {
   onSelectAuthor?: (authorHandle: string, authorName?: string, authorAvatar?: string) => void;
 }
 
-const QUICK_EMOJIS = ["❤️", "🔥", "👏", "👍", "🤤", "⭐️", "📍", "🙌"];
 const STARTER_PROMPTS = [
   "Loved the recommendation! 👏",
   "How were the prices? 💰",
@@ -345,17 +344,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
   const handleCancelReply = () => {
     setReplyingTo(null);
-  };
-
-  const handleInsertEmoji = (emoji: string) => {
-    if (!currentUser) {
-      onRequireAuth?.();
-      return;
-    }
-    setCommentText((prev) => (prev + emoji).slice(0, 300));
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1009,20 +997,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 </div>
               )}
 
-              {/* Quick Emoji Bar */}
-              <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5">
-                {QUICK_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => handleInsertEmoji(emoji)}
-                    className="w-8 h-8 rounded-full hover:bg-zinc-850 flex items-center justify-center text-base transition-transform hover:scale-125 shrink-0 cursor-pointer text-white"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-
               {/* Verified Business Owner Toggle (When user has claimed the business) */}
               {isUserOwner && (
                 <div className="flex items-center justify-between bg-amber-950/40 border border-amber-800/60 rounded-xl px-3 py-2">
@@ -1046,14 +1020,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     />
                     <span className="text-[11px] font-extrabold text-amber-300">{t("comments.replyAsOwner", "Reply as Owner")}</span>
                   </label>
-                </div>
-              )}
-
-              {/* Posting as Reviewer Badge if logged in user is creator */}
-              {isUserCreator && !isUserOwner && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-800/80 border border-zinc-700 rounded-lg text-[11px] text-zinc-200 font-semibold">
-                  <Camera className="w-3.5 h-3.5 text-white" />
-                  <span>{t("comments.postingAsReviewer", "You are posting as the verified video reviewer")}</span>
                 </div>
               )}
 
@@ -1084,7 +1050,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         ? t("comments.addOwnerResponsePlaceholder", "Add official response from business owner...")
                         : isUserCreator
                         ? t("comments.addReviewerCommentPlaceholder", "Add comment as the video reviewer...")
-                        : t("comments.addCommentPlaceholder", "Add a friendly comment...")
+                        : t("comments.addCommentPlaceholder", "Add a comment...")
                     }
                     className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-xs sm:text-sm px-4 py-2.5 rounded-full border transition-all ${
                       postAsOwner

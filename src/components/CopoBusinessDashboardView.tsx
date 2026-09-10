@@ -2996,7 +2996,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       className="px-4 py-2.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shrink-0"
                     >
                       {qrLinkCopied ? <Check className="w-4 h-4 text-zinc-200" /> : <Copy className="w-4 h-4 text-zinc-200" />}
-                      <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Review Link'}</span>
+                      <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Video Review Link'}</span>
                     </button>
                   </div>
                 </div>
@@ -4253,7 +4253,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     {/* SECTION 6: Language & Localization Settings */}
                     <div>
                       <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Globe className="w-3.5 h-3.5" /> Language & Regional Settings (16 Languages)
+                        <Globe className="w-3.5 h-3.5" /> Language & Regional Settings
                       </h3>
                       <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm p-4 sm:p-5 space-y-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

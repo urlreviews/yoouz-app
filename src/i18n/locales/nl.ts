@@ -12,7 +12,7 @@ export const nl: TranslationSchema = {
     business: "Voor Bedrijven",
     profile: "Profiel",
     more: "Meer",
-    record_review: "Review",
+    record_review: "Videoreview",
     language: "Taal"
   },
   common: {

@@ -88,7 +88,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
     { id: "business" as NavSection, label: t("nav.business", "For Businesses"), icon: Shield },
     { id: "profile" as NavSection, label: t("nav.profile", "Profile"), icon: User },
     { id: "more" as NavSection, label: t("nav.more", "More"), icon: Menu },
-    { id: "record_review" as NavSection, label: t("nav.record_review", "Record Review"), icon: Video, isDarkBlue: true }
+    { id: "record_review" as NavSection, label: t("nav.record_review", "Video Review"), icon: Video, isDarkBlue: true }
   ];
 
   return (
@@ -367,8 +367,8 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             <div className="flex items-center justify-center w-[32px] h-[32px] rounded-full bg-white text-zinc-950 shadow-sm border border-zinc-950 hover:bg-zinc-200">
               <Video className="w-[16px] h-[16px] stroke-[2.5]" />
             </div>
-            <span className="text-[10px] tracking-tight mt-1 font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[64px]">
-              {t("nav.record_review", "Review")}
+            <span className="text-[10px] tracking-tight mt-1 font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[76px]">
+              {t("nav.record_review", "Video Review")}
             </span>
           </button>
 
