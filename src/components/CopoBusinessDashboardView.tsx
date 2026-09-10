@@ -662,6 +662,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [analyticsDateRange, setAnalyticsDateRange] = useState<'7d' | '30d' | '90d' | 'ytd'>('30d');
   const [selectedChartMetric, setSelectedChartMetric] = useState<'views' | 'reviews' | 'rating'>('views');
   const [hoveredChartPoint, setHoveredChartPoint] = useState<number | null>(null);
+  const chartSectionRef = useRef<HTMLDivElement | null>(null);
+  const mainScrollRef = useRef<HTMLElement | null>(null);
+
+  const handleSelectMetric = (metric: 'views' | 'reviews' | 'rating') => {
+    setSelectedChartMetric(metric);
+    // On mobile devices, smoothly align chart into full view so user doesn't have to manually scroll
+    if (chartSectionRef.current) {
+      chartSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   // CTA Setup state
   const [ctaType, setCtaType] = useState(() => localStorage.getItem('demo_cta_type') || 'book_service');
@@ -1588,7 +1598,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           </div>
 
           {/* Center/Right Workspace (Dark Theme) */}
-          <main className="flex-1 overflow-y-auto overscroll-y-contain bg-zinc-950 p-3 sm:p-6 lg:p-8 pb-32 sm:pb-12 no-scrollbar">
+          <main ref={mainScrollRef} className="flex-1 overflow-y-auto overscroll-y-contain bg-zinc-950 p-3 sm:p-6 lg:p-8 pb-32 sm:pb-12 no-scrollbar scroll-smooth">
             <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
 
             {/* TAB 1: OVERVIEW & INSIGHTS */}
@@ -1638,7 +1648,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     return (
                       <div 
                          key={i} 
-                         onClick={() => setSelectedChartMetric(stat.key)}
+                         onClick={() => handleSelectMetric(stat.key)}
                         className={`bg-zinc-900 rounded-[20px] sm:rounded-[24px] border p-4 sm:p-5 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group active:scale-[0.99] ${
                           isSelected 
                              ? 'border-white ring-1 ring-white/30 bg-zinc-800/80' 
@@ -1681,7 +1691,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 </div>
 
                 {/* Interactive Performance Graph */}
-                <div className="bg-[#0a0a0c] md:bg-zinc-900 rounded-2xl sm:rounded-3xl border border-white/[0.06] md:border-zinc-800 text-white md:text-white p-3.5 sm:p-5 md:p-6 shadow-inner shadow-white/[0.02] flex flex-col justify-between">
+                <div ref={chartSectionRef} className="bg-[#0a0a0c] md:bg-zinc-900 rounded-2xl sm:rounded-3xl border border-white/[0.06] md:border-zinc-800 text-white md:text-white p-3.5 sm:p-5 md:p-6 shadow-inner shadow-white/[0.02] flex flex-col justify-between scroll-mt-4">
                   <div>
                     {/* Metric Selector Tabs */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
@@ -1706,7 +1716,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         {(['views', 'reviews', 'rating'] as const).map(m => (
                           <button
                             key={m}
-                            onClick={() => setSelectedChartMetric(m)}
+                            onClick={() => handleSelectMetric(m)}
                             className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold capitalize transition-all cursor-pointer text-center ${
                               selectedChartMetric === m ? 'bg-zinc-800 md:bg-zinc-900 text-white md:text-white shadow-md font-bold' : 'text-zinc-300 md:text-zinc-200 hover:text-white md:hover:text-zinc-900'
                             }`}
