@@ -1489,7 +1489,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Nav Items array with clean Google Material icons
   const suiteNavItems = [
-    { id: 'overview' as BusinessTab, label: t('business.overviewInsights', 'Overview & Insights'), icon: BarChart3 },
+    { id: 'overview' as BusinessTab, label: t('business.overview', 'Overview'), icon: BarChart3 },
     { 
       id: 'reviews' as BusinessTab, 
       label: t('business.videoReviews', 'Video Reviews'), 
@@ -1498,13 +1498,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     },
     { 
       id: 'inbox' as BusinessTab, 
-      label: t('business.messagesInbox', 'Messages & Inbox'), 
+      label: t('nav.messages', 'Messages'), 
       icon: MessageSquare,
       badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined
     },
     { 
       id: 'followers' as BusinessTab, 
-      label: t('business.followersDirectory', 'Followers Directory'), 
+      label: t('business.followers', 'Followers'), 
       icon: Users,
       badge: businessFollowers.length > 0 ? businessFollowers.length : undefined
     },
@@ -1514,10 +1514,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       icon: Bell,
       badge: unreadBusinessNotifsCount > 0 ? unreadBusinessNotifsCount : undefined
     },
-    { id: 'embed' as BusinessTab, label: t('business.websiteEmbed', 'Website Embed Widget'), icon: Code },
-    { id: 'qr_invites' as BusinessTab, label: t('business.qrInvites', 'QR Codes & Invites'), icon: QrCode },
-    { id: 'profile' as BusinessTab, label: t('business.profileInfo', 'Business Profile & Info'), icon: Building2 },
-    { id: 'billing' as BusinessTab, label: t('business.subscriptionBilling', 'Subscription & Billing'), icon: CreditCard, isProBadge: currentPlan === 'pro' || currentPlan === 'premium' },
+    { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
+    { id: 'qr_invites' as BusinessTab, label: t('business.invites', 'Invites'), icon: QrCode },
+    { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
+    { id: 'billing' as BusinessTab, label: t('business.billing', 'Billing'), icon: CreditCard, isProBadge: currentPlan === 'pro' || currentPlan === 'premium' },
   ];
 
   // If user hasn't signed in / claimed a business or is currently claiming
@@ -1741,7 +1741,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
                       <Settings className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.venueProfileSettings", "Venue Profile & Settings")}</span>
+                      <span>{t("business.profile", "Profile")}</span>
                     </button>
                     <button 
                       onClick={() => {
@@ -1751,7 +1751,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
                       <CreditCard className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.subscriptionBilling", "Subscription & Billing")}</span>
+                      <span>{t("business.billing", "Billing")}</span>
                     </button>
                     <button 
                       onClick={() => {
@@ -4465,15 +4465,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 </div>
                 <div className="space-y-0.5 mt-1">
                   {[
-                    { id: 'overview', label: 'Overview & Insights', icon: LayoutDashboard, desc: 'Analytics, impression trends & booking stats' },
+                    { id: 'overview', label: 'Overview', icon: LayoutDashboard, desc: 'Analytics, impression trends & booking stats' },
                     { id: 'reviews', label: 'Video Reviews', icon: Video, desc: 'View customer video reviews & owner replies' },
-                    { id: 'inbox', label: 'Messages & Inbox', icon: MessageSquare, desc: 'View and respond to direct messages' },
-                    { id: 'followers', label: 'Followers Directory', icon: Users, desc: 'View your business followers' },
-                    { id: 'embed', label: 'Website Embed Widget', icon: Code, desc: 'Embed video review carousel on website' },
-                    { id: 'qr_invites', label: 'QR Codes & Invites', icon: QrCode, desc: 'Download table standees & send email invites' },
-                    { id: 'cta', label: 'Video Call-To-Action', icon: MousePointerClick, desc: 'Configure instant booking CTA buttons' },
-                    { id: 'profile', label: 'Business Profile & Info', icon: Building2, desc: 'Manage operating hours, address & phone' },
-                    { id: 'billing', label: 'Subscription & Billing', icon: CreditCard, desc: 'Manage plan, receipts & merchant tier' },
+                    { id: 'inbox', label: 'Messages', icon: MessageSquare, desc: 'View and respond to direct messages' },
+                    { id: 'followers', label: 'Followers', icon: Users, desc: 'View your business followers' },
+                    { id: 'notifications', label: 'Notifications', icon: Bell, desc: 'View business alerts and mentions' },
+                    { id: 'embed', label: 'Embed', icon: Code, desc: 'Embed video review carousel on website' },
+                    { id: 'qr_invites', label: 'Invites', icon: QrCode, desc: 'Download table standees & send email invites' },
+                    { id: 'profile', label: 'Profile', icon: Building2, desc: 'Manage operating hours, address & phone' },
+                    { id: 'billing', label: 'Billing', icon: CreditCard, desc: 'Manage plan, receipts & merchant tier' },
                   ]
                     .filter(item => !commandQuery || item.label.toLowerCase().includes(commandQuery.toLowerCase()) || item.desc.toLowerCase().includes(commandQuery.toLowerCase()))
                     .map(item => (
