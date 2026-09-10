@@ -194,7 +194,9 @@ export function useFeedPagination() {
                   const rawLocalBm = typeof local.bookmarksCount === 'number' ? local.bookmarksCount : 0;
                   const effBookmarks = isBm ? Math.max(1, rawServerBm, rawLocalBm) : Math.max(0, rawServerBm);
 
-                  const effShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof local.sharesCount === 'number' ? local.sharesCount : 0);
+                  const rawServerShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
+                  const rawLocalShares = typeof local.sharesCount === 'number' ? local.sharesCount : 0;
+                  const effShares = Math.max(rawServerShares, rawLocalShares);
 
                   return {
                     ...v,
@@ -319,8 +321,8 @@ export function useFeedPagination() {
               const vidId = String(payload.videoId);
               setVideos((prev) => prev.map((v) => v.id === vidId ? {
                 ...v,
-                shares: typeof payload.sharesCount === 'number' ? payload.sharesCount : v.shares,
-                sharesCount: typeof payload.sharesCount === 'number' ? payload.sharesCount : v.sharesCount
+                shares: typeof payload.sharesCount === 'number' ? Math.max(v.shares || 0, payload.sharesCount) : v.shares,
+                sharesCount: typeof payload.sharesCount === 'number' ? Math.max(v.sharesCount || 0, payload.sharesCount) : v.sharesCount
               } : v));
             } else if (payload.type === "purge_all_videos") {
               setVideos([]);

@@ -1137,26 +1137,39 @@ export function App() {
                   };
                 }));
 
-                // Also sync bookmarks from BunnyDB
+                // Also sync interactions (bookmarks + likes) from BunnyDB
                 const uIdentifier = user.email || user.uid;
                 if (uIdentifier) {
-                  fetch(`/api/interactions/user-bookmarks?userId=${encodeURIComponent(uIdentifier)}`)
+                  fetch(`/api/interactions/user-interactions?userId=${encodeURIComponent(uIdentifier)}`)
                     .then(r => r.json())
                     .then(bRes => {
-                      if (bRes && bRes.success && Array.isArray(bRes.savedVideoIds)) {
-                        const mergedSavedIds = Array.from(new Set([...sIds, ...bRes.savedVideoIds]));
-                        localStorage.setItem("copo_saved_video_ids", JSON.stringify(mergedSavedIds));
+                      if (bRes && bRes.success) {
+                        let updatedSaved = sIds;
+                        let updatedLiked = lIds;
+                        if (Array.isArray(bRes.savedVideoIds)) {
+                          updatedSaved = Array.from(new Set([...sIds, ...bRes.savedVideoIds]));
+                          localStorage.setItem("copo_saved_video_ids", JSON.stringify(updatedSaved));
+                        }
                         if (Array.isArray(bRes.savedPlaceIds) && bRes.savedPlaceIds.length > 0) {
                           setSavedPlaceIds(prev => Array.from(new Set([...prev, ...bRes.savedPlaceIds])));
                         }
+                        if (Array.isArray(bRes.likedVideoIds)) {
+                          updatedLiked = Array.from(new Set([...lIds, ...bRes.likedVideoIds]));
+                          localStorage.setItem("copo_liked_video_ids", JSON.stringify(updatedLiked));
+                        }
                         setVideos(prev => prev.map(v => {
-                          const isBm = mergedSavedIds.includes(v.id);
+                          const isBm = updatedSaved.includes(v.id);
+                          const isLk = updatedLiked.includes(v.id);
                           const curBm = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof (v as any).bookmarks === 'number' ? (v as any).bookmarks : 0);
+                          const curLk = typeof v.likesCount === 'number' ? v.likesCount : (typeof (v as any).likes === 'number' ? (v as any).likes : 0);
                           return {
                             ...v,
                             isBookmarked: isBm,
                             bookmarksCount: isBm ? Math.max(1, curBm) : curBm,
-                            bookmarks: isBm ? Math.max(1, curBm) : curBm
+                            bookmarks: isBm ? Math.max(1, curBm) : curBm,
+                            isLiked: isLk,
+                            likesCount: isLk ? Math.max(1, curLk) : curLk,
+                            likes: isLk ? Math.max(1, curLk) : curLk
                           };
                         }));
                       }
@@ -2764,11 +2777,20 @@ export function App() {
 
     // Persist to Server and Firestore database
     try {
+      const effectiveUserId = currentUser?.email || auth.currentUser?.uid || "community_user";
       fetch("/api/interactions/like", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId, isLiked: nextIsLiked, likesCount: nextLikes, userId: currentUser?.email || auth.currentUser?.uid })
-      }).catch(() => {});
+        body: JSON.stringify({ videoId, isLiked: nextIsLiked, likesCount: nextLikes, userId: effectiveUserId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.likesCount === 'number') {
+          const authLikes = nextIsLiked ? Math.max(1, data.likesCount) : data.likesCount;
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, likesCount: authLikes, likes: authLikes } : v));
+        }
+      })
+      .catch(() => {});
     } catch (e) {}
 
     try {

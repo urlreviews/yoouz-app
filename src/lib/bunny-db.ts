@@ -159,6 +159,15 @@ export async function initBunnyDbSchema() {
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
+    `CREATE TABLE IF NOT EXISTS shares (
+      id TEXT PRIMARY KEY,
+      userId TEXT,
+      videoId TEXT,
+      platform TEXT,
+      data TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
     `CREATE TABLE IF NOT EXISTS contact_requests (
       id TEXT PRIMARY KEY,
       name TEXT,

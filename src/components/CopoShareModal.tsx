@@ -190,9 +190,24 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     ? `<iframe src="${embedUrl}?layout=card" width="400" height="260" frameborder="0" allow="autoplay; encrypted-media" style="border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></iframe>`
     : `<iframe src="${embedUrl}?layout=widget" width="100%" height="450" frameborder="0" allow="autoplay; encrypted-media" style="border-radius:16px;max-width:800px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></iframe>`;
 
+  // Record share interaction to Bunny.net backend storage
+  const recordShareAction = (platform: string = "general") => {
+    const targetVideoId = video?.id;
+    if (targetVideoId) {
+      try {
+        fetch("/api/interactions/share", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: targetVideoId, platform })
+        }).catch(() => {});
+      } catch (e) {}
+    }
+  };
+
   // Copy Link Handler
   const handleCopy = async () => {
     triggerHaptic("success");
+    recordShareAction("copy_link");
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareUrl);
@@ -220,6 +235,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Copy Embed Code Handler
   const handleCopyEmbed = async () => {
     triggerHaptic("success");
+    recordShareAction("embed");
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(iframeEmbedCode);
@@ -247,6 +263,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Native OS System Share Trigger (Official Apple AirDrop / Android System Sheet)
   const handleNativeShare = async () => {
     triggerHaptic("medium");
+    recordShareAction("native_share");
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
         await navigator.share({
@@ -268,6 +285,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Safe App Scheme Opener with Web Fallback
   const openAppOrUrl = (appScheme: string, webFallback: string, appName: string) => {
     triggerHaptic("medium");
+    recordShareAction(appName || "social_app");
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
       window.location.href = appScheme;

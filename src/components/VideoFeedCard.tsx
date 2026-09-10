@@ -950,7 +950,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               />
             </button>
             <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-              {typeof video.likes === 'number' ? video.likes : (video.likesCount || 0)}
+              {Math.max(
+                typeof video.likes === 'number' ? video.likes : (video.likesCount || 0),
+                video.isLiked ? 1 : 0
+              )}
             </span>
           </div>
 
