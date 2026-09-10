@@ -1167,13 +1167,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               {/* Active Language Overview Banner */}
               <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
+                  <div>
                     <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                       {t("settings.language_preference", "Language")}
                     </h2>
-                    <p className="text-xs sm:text-sm text-zinc-400 font-normal">
-                      {t("settings.language_subtitle", "Choose your preferred display language.")}
-                    </p>
                   </div>
 
                   <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800 px-4 py-2.5 rounded-2xl shrink-0">

@@ -906,9 +906,9 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       copyright: "© 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews."
     },
     settings: {
-      language_preference: "Language & Regional Settings",
-      language_subtitle: "Switch instantly between 64 supported languages with full translation, RTL bidirectional rendering, and localized formatting.",
-      search_languages_placeholder: "Search from 64 languages..."
+      language_preference: "Language",
+      language_subtitle: "",
+      search_languages_placeholder: "Search language..."
     }
   },
   ar,
