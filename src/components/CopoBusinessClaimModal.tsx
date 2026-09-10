@@ -19,11 +19,15 @@ import {
 import { Place } from "../types";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
+import { derivePlaceFromEmailOrDomain } from "../utils/businessDomainUtils";
 
 export interface BusinessSession {
   businessEmail: string;
   placeId: string;
   placeName: string;
+  domain?: string;
+  logoUrl?: string;
+  website?: string;
   verifiedAt: string;
   role: 'business_owner';
   verificationMethod: 'business_email_code' | 'resend_email_magic_link' | 'website_meta_tag';
@@ -52,12 +56,7 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
   const [targetPlace, setTargetPlace] = useState<Partial<Place>>(() => {
     if (selectedPlace) return selectedPlace;
     if (places.length > 0) return places[0];
-    return {
-      id: 'place-rustic-spoon',
-      name: 'The Rustic Spoon',
-      address: '123 Main St, New York, NY 10001',
-      website: 'https://therusticspoon-nyc.com'
-    };
+    return derivePlaceFromEmailOrDomain('yoouz.com', places);
   });
 
   const [searchQuery, setSearchQuery] = useState('');

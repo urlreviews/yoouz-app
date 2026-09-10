@@ -8877,9 +8877,18 @@ app.post("/api/videos/save-review", async (req, res) => {
         });
       }
 
-      const cleanPlaceId = placeId || 'place-custom';
-      const cleanPlaceName = placeName || 'Your Business Listing';
-      const cleanWebsite = website || '';
+      const rawDomain = cleanEmail.split('@')[1]?.toLowerCase().trim().replace(/^www\./, '') || '';
+      const domainNameClean = rawDomain.replace(/\.(co\.[a-z]{2}|[a-z]{2,8})$/i, '').split('.')[0] || rawDomain;
+      const derivedBrand = domainNameClean
+        ? domainNameClean.split(/[-_.]+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+        : 'Verified Business';
+
+      let cleanPlaceName = placeName;
+      if (!cleanPlaceName || cleanPlaceName === 'Your Business' || cleanPlaceName === 'Your Business Listing' || cleanPlaceName === 'Verified Business') {
+        cleanPlaceName = derivedBrand;
+      }
+      const cleanPlaceId = (placeId && placeId !== 'place-custom') ? placeId : (rawDomain ? `place-custom-${rawDomain.replace(/[^a-z0-9]/g, '-')}` : 'place-custom');
+      const cleanWebsite = website || (rawDomain ? `https://${rawDomain}` : '');
 
       // Generate 6-digit numeric OTP code and UUID token
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -9035,10 +9044,31 @@ app.post("/api/videos/save-review", async (req, res) => {
       // Successful verification
       businessVerificationStore.delete(cleanEmail);
 
+      const rawDomain = cleanEmail.split('@')[1]?.toLowerCase().trim().replace(/^www\./, '') || '';
+      const domainNameClean = rawDomain.replace(/\.(co\.[a-z]{2}|[a-z]{2,8})$/i, '').split('.')[0] || rawDomain;
+      const derivedBrand = domainNameClean
+        ? domainNameClean.split(/[-_.]+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+        : 'Verified Business';
+
+      if (!matchedPlaceName || matchedPlaceName === 'Verified Business' || matchedPlaceName === 'Your Business' || matchedPlaceName === 'Your Business Listing') {
+        matchedPlaceName = derivedBrand;
+      }
+
+      if (matchedPlaceId === 'place-custom' && rawDomain) {
+        matchedPlaceId = `place-custom-${rawDomain.replace(/[^a-z0-9]/g, '-')}`;
+      }
+
+      const logoUrl = rawDomain && !rawDomain.includes('gmail.com') && !rawDomain.includes('yahoo.com') && !rawDomain.includes('hotmail.com')
+        ? `https://www.google.com/s2/favicons?domain=${rawDomain}&sz=128`
+        : '';
+
       const session = {
         businessEmail: cleanEmail,
         placeId: matchedPlaceId,
         placeName: matchedPlaceName,
+        domain: rawDomain,
+        logoUrl: logoUrl,
+        website: rawDomain ? `https://${rawDomain}` : '',
         verifiedAt: new Date().toISOString(),
         role: 'business_owner',
         verificationMethod: 'resend_email_magic_link',

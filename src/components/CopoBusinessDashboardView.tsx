@@ -85,7 +85,7 @@ import { locationData } from "../utils/locationData";
 import { Country, State, City } from "country-state-city";
 import { countryDialData, getDialCodeByCountry, getCountryDialInfo } from '../utils/countries';
 import { useLanguage } from '../i18n/LanguageContext';
-import { LanguageSelectorModal } from './LanguageSelectorModal';
+import { derivePlaceFromEmailOrDomain } from '../utils/businessDomainUtils';
 
 interface CopoBusinessDashboardViewProps {
   onNavigate: (section: NavSection) => void;
@@ -578,7 +578,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onClose = () => onNavigate('home')
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
-  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
 
@@ -597,33 +596,37 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       return verifiedBusinessSession.placeId;
     }
     if (initialPlace) return initialPlace.id;
-    return places.length > 0 ? places[0].id : 'place-rustic-spoon';
+    return places.length > 0 ? places[0].id : 'place-custom';
   });
 
   // Current selected place
   const currentPlace = useMemo(() => {
+    // 1. If we have a verified session with place or domain
+    if (verifiedBusinessSession) {
+      const found = places.find(p => p.id === verifiedBusinessSession.placeId);
+      if (found) return found;
+
+      if (verifiedBusinessSession.domain || verifiedBusinessSession.businessEmail) {
+        const derived = derivePlaceFromEmailOrDomain(
+          verifiedBusinessSession.domain || verifiedBusinessSession.businessEmail,
+          places
+        );
+        if (verifiedBusinessSession.placeName && verifiedBusinessSession.placeName !== 'Verified Business') {
+          derived.name = verifiedBusinessSession.placeName;
+        }
+        if (verifiedBusinessSession.logoUrl) {
+          derived.logoUrl = verifiedBusinessSession.logoUrl;
+        }
+        return derived as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
+      }
+    }
+
     const found = places.find(p => p.id === selectedPlaceId);
     if (found) return found;
     if (initialPlace && initialPlace.id === selectedPlaceId) return initialPlace;
-    return {
-      id: 'place-rustic-spoon',
-      name: 'The Rustic Spoon',
-      address: '123 Main St, New York, NY 10001',
-      category: 'Italian & Artisanal Bakery',
-      categoryType: 'restaurants',
-      city: 'New York',
-      rating: 4.9,
-      reviewCount: 42,
-      lat: 40.7128,
-      lng: -74.0060,
-      phone: '+1 (212) 555-0198',
-      website: 'https://therusticspoon-nyc.com',
-      hours: 'Mon-Fri: 8am - 10pm • Sat-Sun: 9am - 11pm',
-      description: 'Handcrafted sourdough pizzas, fresh pasta, and farm-to-table Italian specialties in downtown Manhattan.',
-      coverImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
-      claimedByEmail: 'owner@therusticspoon.com'
-    } as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
-  }, [places, selectedPlaceId, initialPlace]);
+    if (places.length > 0) return places[0];
+    return derivePlaceFromEmailOrDomain('yoouz.com', places) as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
+  }, [places, selectedPlaceId, initialPlace, verifiedBusinessSession]);
 
   // Plan & Pricing State (default to Pro for rich enterprise demo)
   const [currentPlan, setCurrentPlan] = useState<'none' | 'basic' | 'pro' | 'premium'>('pro');
@@ -671,13 +674,26 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [ctaTestClicked, setCtaTestClicked] = useState(false);
 
   // Profile Setup state
-  const [profileName, setProfileName] = useState(currentPlace.name || 'The Rustic Spoon');
-  const [profileAddress, setProfileAddress] = useState(currentPlace.address || '123 Main St, New York, NY 10001');
-  const [profilePhone, setProfilePhone] = useState((currentPlace as any).phone || '+1 (212) 555-0198');
-  const [profileWebsite, setProfileWebsite] = useState((currentPlace as any).website || 'https://therusticspoon-nyc.com');
-  const [profileHours, setProfileHours] = useState((currentPlace as any).hours || 'Mon-Fri: 8am - 10pm • Sat-Sun: 9am - 11pm');
-  const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || 'Handcrafted sourdough pizzas, fresh pasta, and farm-to-table Italian specialties.');
+  const [profileName, setProfileName] = useState(currentPlace.name || 'Verified Business');
+  const [profileAddress, setProfileAddress] = useState(currentPlace.address || '');
+  const [profilePhone, setProfilePhone] = useState((currentPlace as any).phone || '');
+  const [profileWebsite, setProfileWebsite] = useState((currentPlace as any).website || '');
+  const [profileHours, setProfileHours] = useState((currentPlace as any).hours || 'Mon-Fri: 9:00 AM - 6:00 PM');
+  const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || `Official verified business profile on Yoouz.`);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
+
+  // Sync profile fields whenever currentPlace changes (e.g. on business login)
+  useEffect(() => {
+    if (currentPlace) {
+      setProfileName(currentPlace.name || 'Verified Business');
+      setProfileAddress(currentPlace.address || '');
+      setProfilePhone((currentPlace as any).phone || '');
+      setProfileWebsite((currentPlace as any).website || '');
+      setProfileHours((currentPlace as any).hours || 'Mon-Fri: 9:00 AM - 6:00 PM');
+      setProfileDesc((currentPlace as any).description || `Official verified business profile on Yoouz.`);
+      if (currentPlace.city) setCity(currentPlace.city);
+    }
+  }, [currentPlace]);
 
   // Structured Physical Address State
   const [streetAddress, setStreetAddress] = useState('123 Main St, Suite 400');
@@ -862,7 +878,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Creem Checkout & Subscription Billing State
   const [showCreemCheckout, setShowCreemCheckout] = useState(false);
   const [creemPlan, setCreemPlan] = useState<'pro' | 'premium'>('pro');
-  const [billingEmail, setBillingEmail] = useState('owner@therusticspoon.com');
+  const [billingEmail, setBillingEmail] = useState(() => verifiedBusinessSession?.businessEmail || (currentPlace as any).claimedByEmail || 'business@domain.com');
   const [paymentMethodDisplay, setPaymentMethodDisplay] = useState('Visa ending in 4242');
   const [isAutoRenew, setIsAutoRenew] = useState(true);
   const [renewalDate] = useState(() => {
@@ -1367,16 +1383,28 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <ArrowLeft className="w-4 h-4" />
               </button>
 
-              <div className="w-8 h-8 rounded-xl bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 overflow-hidden">
+              <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white border border-zinc-700/80 flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 overflow-hidden p-0.5">
                 {currentPlace.logoUrl ? (
-                  <img src={currentPlace.logoUrl} loading="eager" decoding="sync" fetchPriority="high" className="w-full h-full object-cover" />
+                  <img 
+                    src={currentPlace.logoUrl} 
+                    alt={currentPlace.name} 
+                    loading="eager" 
+                    decoding="sync" 
+                    fetchPriority="high" 
+                    className="w-full h-full object-contain rounded-lg"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }} 
+                  />
                 ) : (
-                  (currentPlace.name?.charAt(0).toUpperCase() || 'B')
+                  <span className="font-black text-xs text-white">
+                    {currentPlace.name?.charAt(0).toUpperCase() || 'B'}
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-2 min-w-0">
-                <span className="font-extrabold text-white text-sm tracking-tight truncate max-w-[130px] sm:max-w-xs">{currentPlace.name}</span>
-                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10.5px] font-bold border border-zinc-700 shrink-0">
+                <span className="font-extrabold text-white text-sm tracking-tight truncate max-w-[140px] sm:max-w-xs">{currentPlace.name}</span>
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-200 text-[10.5px] font-bold border border-zinc-700/80 shrink-0">
                   <ShieldCheck className="w-3 h-3 text-white" />
                   <span>{t("business.verifiedLocation", "Verified Location")}</span>
                 </span>
@@ -1385,20 +1413,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
             {/* Right: Clean, Uncluttered Utility Bar */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-
-              {/* Language Switcher Quick Button */}
-              <button
-                id="biz-header-language-btn"
-                onClick={() => setIsLangModalOpen(true)}
-                className="h-9 px-2.5 flex items-center gap-1.5 text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all text-xs font-bold shrink-0 cursor-pointer"
-                title={t("business.changePlatformLanguage", "Change Platform Language")}
-              >
-                <span className="text-sm select-none">{currentLanguageMeta.flag}</span>
-                <span className="hidden sm:inline text-xs font-mono uppercase font-bold text-zinc-200">
-                  {currentLanguageMeta.code}
-                </span>
-                <Globe className="w-3.5 h-3.5 text-zinc-200" />
-              </button>
 
               {/* Notification Bell */}
               <div className="relative">
@@ -1456,17 +1470,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               {/* Profile / Account Control */}
               <div className="relative">
                 <button 
+                  id="biz-header-account-trigger"
                   onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                  className="flex items-center gap-2 pl-2 pr-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer"
+                  className="h-9 px-2.5 sm:px-3 flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold"
+                  title="Business Account Menu"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-zinc-800 text-white flex items-center justify-center text-[10.5px] font-black overflow-hidden shrink-0">
-                    {currentPlace.logoUrl ? (
-                      <img src={currentPlace.logoUrl} loading="eager" decoding="sync" fetchPriority="high" className="w-full h-full object-cover" />
-                    ) : (
-                      (currentPlace.name?.charAt(0).toUpperCase() || 'B')
-                    )}
-                  </div>
-                  <ChevronDown className={`w-3.5 h-3.5 text-zinc-200 shrink-0 transition-transform ${showAccountDropdown ? 'rotate-180' : ''}`} />
+                  <Building2 className="w-4 h-4 text-zinc-400 shrink-0" />
+                  <span className="hidden sm:inline font-medium text-xs text-zinc-300 max-w-[120px] truncate">
+                    {currentPlace.name}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${showAccountDropdown ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Business Account Dropdown */}
@@ -1478,7 +1491,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <ShieldCheck className="w-4 h-4 text-white shrink-0" />
                       </div>
                       <div className="text-xs text-zinc-200 truncate mt-0.5 font-medium">
-                        {verifiedBusinessSession?.businessEmail || 'owner@therusticspoon.com'}
+                        {verifiedBusinessSession?.businessEmail || (currentPlace as any).claimedByEmail || 'business@domain.com'}
                       </div>
                       <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold">
                         <span className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -1525,23 +1538,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     >
                       <Building2 className="w-4 h-4 text-zinc-200" />
                       <span>{t("business.switchClaimVenue", "Switch or Claim Venue")}</span>
-                    </button>
-                    
-                    <button 
-                      id="biz-dropdown-language-btn"
-                      onClick={() => {
-                        setShowAccountDropdown(false);
-                        setIsLangModalOpen(true);
-                      }}
-                      className="w-full flex items-center justify-between px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Globe className="w-4 h-4 text-zinc-200" />
-                        <span>{t("business.languageLocalization", "Language / Localization")}</span>
-                      </div>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 font-mono text-zinc-200">
-                        {currentLanguageMeta.flag} {currentLanguageMeta.code.toUpperCase()}
-                      </span>
                     </button>
                     
                     <button 
@@ -4250,53 +4246,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </div>
                     </div>
 
-                    {/* SECTION 6: Language & Localization Settings */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Globe className="w-3.5 h-3.5" /> Language & Regional Settings
-                      </h3>
-                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm p-4 sm:p-5 space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div>
-                            <div className="text-[13px] font-semibold text-white">Merchant Dashboard Language</div>
-                            <p className="text-xs text-zinc-200 mt-0.5">
-                              Currently active: <strong className="text-white">{currentLanguageMeta.flag} {currentLanguageMeta.name} ({currentLanguageMeta.nativeName})</strong>
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setIsLangModalOpen(true)}
-                            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer shrink-0"
-                          >
-                            <Globe className="w-3.5 h-3.5 text-zinc-200" />
-                            <span>Switch Language</span>
-                          </button>
-                        </div>
-
-                        {/* Quick 1-tap language chips */}
-                        <div className="pt-2">
-                          <label className="text-[11px] font-bold text-zinc-200 block mb-2">Quick Switch (Popular Languages):</label>
-                          <div className="flex flex-wrap gap-1.5">
-                            {languages.slice(0, 8).map((lang) => (
-                              <button
-                                key={lang.code}
-                                type="button"
-                                onClick={() => setLanguage(lang.code)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                                  language === lang.code
-                                    ? "bg-white text-zinc-950 border-white font-black"
-                                    : "bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800"
-                                }`}
-                              >
-                                <span>{lang.flag}</span>
-                                <span>{lang.nativeName}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
                   </div>
 
                   {/* Right Column: Premium Live Mobile Preview Widget (5 cols) */}
@@ -4992,12 +4941,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           </div>
         </div>
       )}
-
-      {/* Language Selector Modal */}
-      <LanguageSelectorModal
-        isOpen={isLangModalOpen}
-        onClose={() => setIsLangModalOpen(false)}
-      />
 
       </div>
     </div>

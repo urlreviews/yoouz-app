@@ -18,6 +18,7 @@ import {
 import { Place, NavSection, UserProfile, VideoReview } from '../types';
 import { BusinessSession } from './CopoBusinessClaimModal';
 import { useLanguage } from '../i18n/LanguageContext';
+import { derivePlaceFromEmailOrDomain } from '../utils/businessDomainUtils';
 
 interface CopoBusinessAuthLandingProps {
   onNavigate: (section: NavSection) => void;
@@ -70,22 +71,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
 
   // Auto-detect matching place by email domain
   const findMatchingPlaceForEmail = (emailStr: string): Place | null => {
-    const domain = emailStr.split('@')[1]?.toLowerCase().trim();
-    if (!domain) return null;
-
-    const cleanDomain = domain.replace(/^www\./, '');
-    const found = places.find(p => {
-      if (p.website) {
-        const pDom = p.website.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].toLowerCase();
-        if (pDom.includes(cleanDomain) || cleanDomain.includes(pDom)) return true;
-      }
-      const pNameSlug = p.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const domSlug = cleanDomain.split('.')[0];
-      if (pNameSlug && domSlug && (pNameSlug.includes(domSlug) || domSlug.includes(pNameSlug))) return true;
-      return false;
-    });
-
-    return found || null;
+    return derivePlaceFromEmailOrDomain(emailStr, places);
   };
 
   // Cross-account conflict validation: Reviewer/Customer vs Business
@@ -394,8 +380,19 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
               {selectedPlace && (
                 <div className="p-3.5 bg-zinc-950/90 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3 shadow-inner">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 text-white">
-                      <Building2 className="w-4 h-4 text-white" />
+                    <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 text-white overflow-hidden p-0.5">
+                      {selectedPlace.logoUrl ? (
+                        <img 
+                          src={selectedPlace.logoUrl} 
+                          alt={selectedPlace.name} 
+                          className="w-full h-full object-contain rounded-lg"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                          }} 
+                        />
+                      ) : (
+                        <Building2 className="w-4 h-4 text-white" />
+                      )}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -405,7 +402,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       </div>
                       <span className="text-[11px] text-zinc-300 block truncate mt-0.5 font-normal">
-                        {selectedPlace.address}
+                        {selectedPlace.address || selectedPlace.website}
                       </span>
                     </div>
                   </div>
