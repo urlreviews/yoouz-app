@@ -413,6 +413,28 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     });
     
+    // Include businesses
+    (places || []).forEach(p => {
+       const isBizClaimed = p.isClaimed || Boolean(p.claimedByEmail) || Boolean(p.website);
+       if (isBizClaimed) {
+          const bizEmail = p.claimedByEmail || `business_${p.id}@yoouz.com`;
+          if (isKeyDeleted(bizEmail) || isKeyDeleted(p.id)) return;
+          mergedList.push({
+            id: p.id,
+            uid: p.id,
+            name: p.name || "Business Owner",
+            email: bizEmail,
+            handle: p.id,
+            avatar: p.logoUrl || `/api/avatar?name=${encodeURIComponent(p.name || "Business")}&background=27272a&color=fff&bold=true&size=128`,
+            isVerified: Boolean(p.isClaimed || p.claimedByEmail),
+            isRegisteredAccount: true,
+            role: "Business",
+            website: p.website || '',
+            memberSince: "Active"
+          });
+       }
+    });
+
     // Final deduplication loop to aggressively merge records by Email or Name
     const finalList: any[] = [];
     mergedList.forEach(u => {
@@ -454,7 +476,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
        
        return !isIncomplete;
     });
-  }, [allUsers, videos, deletedUserKeys]);
+  }, [allUsers, videos, deletedUserKeys, places]);
 
   // All Comments aggregation for Moderation
   const allComments = useMemo(() => {
@@ -546,7 +568,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const matchType =
         userTypeFilter === "all" ||
         (userTypeFilter === "registered" && u.isRegisteredAccount) ||
-        (userTypeFilter === "creators" && u.role === "Creator");
+        (userTypeFilter === "creators" && u.role === "Creator") ||
+        (userTypeFilter === "business" && u.role === "Business");
 
       return matchQuery && matchType;
     });
@@ -2087,6 +2110,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <option value="all">All User Accounts ({uniqueUsers.length})</option>
                     <option value="registered">Registered Firestore Accounts</option>
                     <option value="creators">Video Creators Only</option>
+                    <option value="business">Business Owners</option>
                   </select>
                 </div>
                 <div className="text-xs text-zinc-200 font-semibold">
@@ -2121,6 +2145,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </div>
                           
                           {user.email && <p className="text-xs text-zinc-200 truncate">{user.email}</p>}
+                          {user.website && (
+                            <div className="flex items-center gap-1 mt-1 text-xs text-zinc-300">
+                              <Globe className="w-3 h-3 shrink-0" />
+                              <a href={user.website} target="_blank" rel="noreferrer" className="hover:underline truncate">
+                                {user.website.replace(/^https?:\/\//, "")}
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </div>
 

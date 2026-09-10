@@ -706,6 +706,11 @@ export function App() {
       } catch (e) {}
       return updated;
     });
+
+    fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+    if (db) {
+      deleteDoc(doc(db, "places", id)).catch(() => {});
+    }
   };
 
   const handleAdminBulkDeletePlaces = async (ids: string[]) => {
@@ -725,6 +730,10 @@ export function App() {
       return updated;
     });
     
+    try {
+      await Promise.all(ids.map(id => fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {})));
+    } catch (e) {}
+
     try {
       if (db) {
         await Promise.all(ids.map(id => deleteDoc(doc(db, "places", id))));
@@ -778,6 +787,9 @@ export function App() {
 
     // 2. Call backend admin API
     try {
+      if (userToDelete.role === "Business" && (userToDelete.id || userToDelete.uid)) {
+        handleAdminDeletePlace(userToDelete.id || userToDelete.uid);
+      }
       fetch("/api/admin/users/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4814,15 +4826,6 @@ export function App() {
                 onBulkDeletePlaces={handleAdminBulkDeletePlaces}
                 onUpdatePlace={(updatedPlace) => {
                   handleUpdatePlace(updatedPlace);
-                  // Mirror to BunnyDB
-                  fetch(`/api/nosql/places/${updatedPlace.id}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ data: updatedPlace, merge: true })
-                  }).catch(() => {});
-                  if (db) {
-                    setDoc(doc(db, "places", updatedPlace.id), cleanForFirestore(updatedPlace), { merge: true }).catch(() => {});
-                  }
                 }}
                 onAddPlace={(newPlace) => {
                   setPlaces((prev) => [newPlace, ...prev.filter((p) => p.id !== newPlace.id)]);

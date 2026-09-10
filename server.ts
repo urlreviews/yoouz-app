@@ -2652,7 +2652,7 @@ function isQuotaError(err: any): boolean {
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 8080;
+  const PORT = 3000;
   const isProd = process.env.NODE_ENV === "production";
 
   // Global Cross-Origin Resource Sharing (CORS) Middleware

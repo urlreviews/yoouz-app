@@ -734,6 +734,22 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Profile Setup state
   const [profileName, setProfileName] = useState(currentPlace.name || 'Verified Business');
+
+  // Sync verified session with database if it goes stale
+  useEffect(() => {
+    if (verifiedBusinessSession && currentPlace && currentPlace.logoUrl) {
+      if (currentPlace.logoUrl !== verifiedBusinessSession.logoUrl) {
+        // If it's a dynamic place and the DB hasn't been saved yet, we shouldn't overwrite unless the user explicitly hit save.
+        // But if the DB *has* the custom logo, we want to update the local session so it doesn't flash stale on reload.
+        // We can safely do this since verifiedBusinessSession is mostly just for caching the UI state.
+        const updatedSession = { ...verifiedBusinessSession, logoUrl: currentPlace.logoUrl };
+        setVerifiedBusinessSession(updatedSession);
+        try {
+          localStorage.setItem('copo_business_verified_session', JSON.stringify(updatedSession));
+        } catch(e) {}
+      }
+    }
+  }, [currentPlace, verifiedBusinessSession]);
   const [profileAddress, setProfileAddress] = useState(currentPlace.address || '');
   const [profilePhone, setProfilePhone] = useState((currentPlace as any).phone || '');
   const [profileWebsite, setProfileWebsite] = useState((currentPlace as any).website || '');
