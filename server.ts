@@ -2674,6 +2674,14 @@ async function startServer() {
     if (!req.url.startsWith("/src/")) {
       console.log("🔥 [Server] Incoming request:", req.method, req.url);
     }
+    
+    // Prevent aggressive mobile browser caching for all API responses
+    if (req.path.startsWith('/api/')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+    
     next();
   });
 

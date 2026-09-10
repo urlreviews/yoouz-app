@@ -111,6 +111,7 @@ interface CopoBusinessDashboardViewProps {
   onSaveOwnerResponse?: (videoId: string, text: string) => void;
   onDeleteOwnerResponse?: (videoId: string) => void;
   onClose?: () => void;
+  onUpdatePlace?: (place: Place) => void;
   onSendMessage?: (
     threadId: string,
     text: string,
@@ -606,6 +607,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onSaveOwnerResponse,
   onDeleteOwnerResponse,
   onClose = () => onNavigate('home'),
+  onUpdatePlace,
   onSendMessage,
   onDeleteThread,
   onMarkThreadRead,
@@ -1347,6 +1349,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     (currentPlace as any).description = profileDesc;
     (currentPlace as any).category = businessCategory;
     currentPlace.logoUrl = profileLogoUrl;
+
+    if (onUpdatePlace) {
+      onUpdatePlace({ ...currentPlace });
+    }
 
     if (verifiedBusinessSession) {
       const updatedSession = { ...verifiedBusinessSession, logoUrl: profileLogoUrl, placeName: profileName };

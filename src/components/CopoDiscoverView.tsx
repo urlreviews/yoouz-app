@@ -69,7 +69,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
     let isMounted = true;
     const fetchUsers = async () => {
       try {
-        const res = await fetch("/api/nosql/users");
+        const res = await fetch(`/api/nosql/users?_t=${Date.now()}`);
         if (res.ok) {
           const data = await res.json();
           if (isMounted && Array.isArray(data)) {

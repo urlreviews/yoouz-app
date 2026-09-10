@@ -844,7 +844,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   };
 
   const handleOpenAuthorProfile = (name?: string, id?: string, avatar?: string) => {
-    if (id && onSelectPlace && places.find(p => p.id === id || p.domain === id)) {
+    if (id && onSelectPlace && places.find(p => p.id === id || (p as any).brandDomain === id)) {
       onSelectPlace(id);
       return;
     }

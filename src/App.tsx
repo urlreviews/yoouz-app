@@ -1524,7 +1524,7 @@ export function App() {
 
     const fetchAllUsers = async () => {
       try {
-        const res = await fetch("/api/nosql/users");
+        const res = await fetch(`/api/nosql/users?_t=${Date.now()}`);
         if (res.ok) {
           const list = await res.json();
           if (!isCancelled && Array.isArray(list)) {
@@ -2113,7 +2113,7 @@ export function App() {
       // 1. Fetch from BunnyDB / Server NoSQL
       const fetchServerPlaces = async () => {
         try {
-          const res = await fetch("/api/nosql/places");
+          const res = await fetch(`/api/nosql/places?_t=${Date.now()}`);
           if (res.ok) {
             const serverList = await res.json();
             if (Array.isArray(serverList) && serverList.length > 0) {
@@ -5048,6 +5048,7 @@ export function App() {
                 }}
                 onSaveOwnerResponse={handleSaveOwnerResponse}
                 onDeleteOwnerResponse={handleDeleteOwnerResponse}
+                onUpdatePlace={handleUpdatePlace}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId) => {
                   let effectiveSender = currentUser as any;
                   try {

@@ -502,7 +502,7 @@ export function subscribeToNotifications(
   // 1. Initial immediate fetch from Bunny Cloud Database
   const fetchFromBunny = async () => {
     try {
-      const res = await fetch("/api/nosql/notifications");
+      const res = await fetch(`/api/nosql/notifications?_t=${Date.now()}`);
       if (res.ok) {
         const json = await res.json();
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
@@ -1011,7 +1011,7 @@ export function subscribeToChats(
   // 1. Initial immediate fetch from Bunny Cloud Database
   const fetchFromBunny = async () => {
     try {
-      const res = await fetch("/api/nosql/chats");
+      const res = await fetch(`/api/nosql/chats?_t=${Date.now()}`);
       if (res.ok) {
         const json = await res.json();
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
