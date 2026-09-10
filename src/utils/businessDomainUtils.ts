@@ -1,4 +1,5 @@
 import { Place } from '../types';
+import { KNOWN_BRAND_LOGOS } from './logoUtils';
 
 /**
  * Extracts a clean domain from an email, URL or raw domain string
@@ -59,6 +60,9 @@ export function getDomainLogoUrl(domain: string): string {
   const clean = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').toLowerCase().split('/')[0];
   if (!clean || clean.includes('gmail.com') || clean.includes('yahoo.com') || clean.includes('hotmail.com')) {
     return '';
+  }
+  if (KNOWN_BRAND_LOGOS[clean]) {
+    return KNOWN_BRAND_LOGOS[clean];
   }
   return `https://www.google.com/s2/favicons?domain=${clean}&sz=128`;
 }
