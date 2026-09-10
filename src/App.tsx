@@ -5044,6 +5044,7 @@ export function App() {
                   setNotifications([]);
                 }}
                 onSaveNotificationSettings={handleSaveNotificationSettings}
+                onOpenLegal={handleOpenLegal}
               />
             )}
             {activeSection === "more" && (

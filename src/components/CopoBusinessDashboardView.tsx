@@ -127,6 +127,7 @@ interface CopoBusinessDashboardViewProps {
   onMarkNotificationRead?: (id: string) => void;
   onClearAllNotifications?: () => void;
   onSaveNotificationSettings?: (newSettings: NotificationPreferences) => Promise<void> | void;
+  onOpenLegal?: (tab: 'terms' | 'privacy') => void;
 }
 
 type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'billing';
@@ -614,7 +615,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onToggleFollowPlace,
   onMarkNotificationRead,
   onClearAllNotifications,
-  onSaveNotificationSettings
+  onSaveNotificationSettings,
+  onOpenLegal
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   // Navigation tab state
@@ -1550,37 +1552,37 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     <div className="w-screen h-[100dvh] flex bg-zinc-950 select-none antialiased overflow-hidden font-sans text-white copo-business-dashboard">
       <div className="w-full h-full flex">
       {/* Left Google Enterprise Navigation Sidebar */}
-      <aside className="w-64 lg:w-72 bg-zinc-950 border-r border-zinc-800/80 flex flex-col justify-between shrink-0 select-none overflow-y-auto hidden md:flex z-50 copo-business-sidebar">
-        <div className="flex flex-col">
-
-          <div className="h-20 px-6 flex items-center shrink-0">
+      <aside className="w-64 lg:w-72 bg-zinc-950 border-r border-zinc-800/80 flex flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar h-[100dvh]">
+        {/* Scrollable Upper Area */}
+        <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar min-h-0">
+          <div className="h-18 lg:h-20 px-5 lg:px-6 flex items-center shrink-0">
             <div 
               className="flex items-center gap-3 cursor-pointer group"
               onClick={() => onNavigate('home')}
             >
-              <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white text-zinc-950 shadow-md group-hover:scale-105 transition-all duration-300 shrink-0 border border-zinc-800">
+              <div className="relative flex items-center justify-center w-[40px] h-[40px] rounded-[14px] bg-white text-zinc-950 shadow-md group-hover:scale-105 transition-all duration-300 shrink-0 border border-zinc-800">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
               </div>
               <div className="flex flex-col justify-center pt-0.5 min-w-0 hidden sm:flex">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-white text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+                  <span className="text-white text-[22px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
                     Yoouz
                   </span>
                   <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-200 font-black uppercase tracking-wider scale-90 origin-left">
                     {t("business.badge", "BUSINESS")}
                   </span>
                 </div>
-                <span className="text-[11px] text-zinc-200 font-medium tracking-tight mt-1 whitespace-nowrap">
+                <span className="text-[11px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap">
                   {t("business.tagline", "Real People. Real Reviews.")}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="p-3 space-y-1 mt-2">
-            <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-200 mb-2">
+          <div className="p-3 space-y-1">
+            <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
               {t("business.managementSuite", "Management Suite")}
             </div>
 
@@ -1591,13 +1593,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-full font-medium text-[15px] transition-all text-left cursor-pointer group ${
+                  className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-full font-medium text-[14px] transition-all text-left cursor-pointer group ${
                     isActive 
                       ? 'bg-zinc-800 text-white font-semibold' 
-                      : 'text-zinc-200 hover:bg-zinc-900 hover:text-white'
+                      : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-white' : 'text-zinc-200'}`} />
+                  <Icon className={`w-4.5 h-4.5 shrink-0 transition-colors ${isActive ? 'text-white' : 'text-zinc-400'}`} />
                   <span className="truncate flex-1">{item.label}</span>
                   {item.badge !== undefined && (
                     <span className="px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 bg-white text-zinc-950">
@@ -1605,7 +1607,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </span>
                   )}
                   {item.isProBadge && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-200 border border-zinc-700">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-300 border border-zinc-700">
                       {t("business.active", "Active")}
                     </span>
                   )}
@@ -1613,28 +1615,40 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               );
             })}
           </div>
+        </div>
 
-          {/* Bottom Sidebar Box: Support & Help */}
-          <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-4 mt-6">
-            <div className="flex items-center gap-2 text-xs font-bold text-white mb-1.5">
-              <div className="w-5 h-5 rounded-md bg-zinc-800 text-white flex items-center justify-center">
-                <Sparkles className="w-3 h-3" />
-              </div>
-              <span>{t("business.proMerchantSupport", "Pro Merchant Support")}</span>
-            </div>
-            <p className="text-[11px] text-zinc-200 mb-3 leading-relaxed">
-              {t("business.proSupportDesc", "Need assistance setting up website widgets or table QR tents?")}
-            </p>
+        {/* Pinned Desktop Footer & Legal Links (Matching user account CopoSidebar exactly) */}
+        <div className="px-5 py-4 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
+          <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400">
             <button
-              onClick={() => setShowHelpModal(true)}
-              className="w-full py-2.5 px-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 rounded-xl text-xs font-bold shadow-2xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              type="button"
+              onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate('home')}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
             >
-              <FileText className="w-3.5 h-3.5 text-zinc-200" />
-              <span>{t("business.openGuideDocs", "Open Guide & Docs")}</span>
+              {t("legal.privacy", "Privacy")}
+            </button>
+            <span className="text-zinc-600">•</span>
+            <button
+              type="button"
+              onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate('home')}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+            >
+              {t("legal.terms", "Terms")}
+            </button>
+            <span className="text-zinc-600">•</span>
+            <button
+              type="button"
+              onClick={() => onNavigate('more')}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+            >
+              {t("legal.about", "About")}
             </button>
           </div>
-          </div>
-        </aside>
+          <p className="text-[11px] text-zinc-400 font-normal">
+            {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
+          </p>
+        </div>
+      </aside>
         
         {/* Right side content wrapper */}
         <div className="flex-1 flex flex-col overflow-hidden relative bg-zinc-950">
@@ -1663,7 +1677,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             </div>
 
             {/* Right: Clean, Uncluttered Utility Bar */}
-            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+              {/* Quick Merchant Support / Docs Button */}
+              <button
+                type="button"
+                id="biz-header-help-trigger"
+                onClick={() => setShowHelpModal(true)}
+                className="h-9 sm:h-10 px-2.5 sm:px-3 flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold shadow-xs"
+                title={t("business.openGuideDocs", "Open Guide & Docs")}
+              >
+                <HelpCircle className="w-4 h-4 text-zinc-400" />
+                <span className="hidden sm:inline">{t("business.support", "Support")}</span>
+              </button>
+
               {/* Profile / Account Control with Spacious Dark-Mode Adaptive Logo */}
               <div className="relative">
                 <button 
@@ -3991,6 +4017,32 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </div>
                     </div>
 
+                    {/* SECTION 7: Pro Merchant Support & Documentation */}
+                    <div>
+                      <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t("business.proMerchantSupport", "Pro Merchant Support & Documentation")}
+                      </h3>
+                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <h4 className="text-[13px] font-bold text-white">
+                            {t("business.proMerchantSupport", "Pro Merchant Support & Knowledge Base")}
+                          </h4>
+                          <p className="text-[12px] text-zinc-400 leading-relaxed max-w-lg">
+                            {t("business.proSupportDesc", "Need assistance setting up website widgets, table QR stands, or video review moderation? Access complete step-by-step documentation and live support.")}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          id="btn-profile-open-support-docs"
+                          onClick={() => setShowHelpModal(true)}
+                          className="px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black text-[12px] font-bold transition-all active:scale-95 shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
+                        >
+                          <FileText className="w-4 h-4 text-black" />
+                          <span>{t("business.openGuideDocs", "Open Guide & Docs")}</span>
+                        </button>
+                      </div>
+                    </div>
+
                   </div>
 
                   {/* Right Column: Premium Live Mobile Preview Widget (5 cols) */}
@@ -4270,6 +4322,39 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 </div>
               </div>
             )}
+
+            {/* Mobile Bottom Footer & Legal Links (Matching user account mobile layout) */}
+            <div className="md:hidden pt-8 pb-6 mt-6 border-t border-zinc-800/80 flex flex-col items-center justify-center gap-2 text-center select-none">
+              <div className="flex items-center justify-center gap-3 text-xs font-medium text-zinc-400">
+                <button
+                  type="button"
+                  onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate('home')}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                >
+                  {t("legal.privacy", "Privacy")}
+                </button>
+                <span className="text-zinc-600">•</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate('home')}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                >
+                  {t("legal.terms", "Terms")}
+                </button>
+                <span className="text-zinc-600">•</span>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('more')}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                >
+                  {t("legal.about", "About")}
+                </button>
+              </div>
+
+              <p className="text-[11px] text-zinc-400 font-normal">
+                {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
+              </p>
+            </div>
 
           </div>
         </main>
