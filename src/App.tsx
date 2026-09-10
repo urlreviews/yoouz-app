@@ -4985,6 +4985,9 @@ export function App() {
                 places={places}
                 videos={videos}
                 currentUser={currentUser}
+                allUsers={allRegisteredUsers}
+                messages={messages}
+                notifications={notifications}
                 onOpenPlaceDrawer={handleOpenPlaceDrawer}
                 onOpenCreator={(author) => {
                   handleOpenCreatorDrawer(author);
@@ -4998,6 +5001,48 @@ export function App() {
                 }}
                 onSaveOwnerResponse={handleSaveOwnerResponse}
                 onDeleteOwnerResponse={handleDeleteOwnerResponse}
+                onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId) => {
+                  const effectiveSender = currentUser || {
+                    id: 'business_owner',
+                    uid: 'business_owner',
+                    name: 'Business Manager',
+                    email: 'business@yoouz.com',
+                    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+                    handle: 'business',
+                    isVerified: true
+                  };
+                  await sendChatMessageToFirestore(
+                    threadId,
+                    text,
+                    effectiveSender as any,
+                    recipient,
+                    videoUrl,
+                    customVideoId
+                  );
+                }}
+                onDeleteThread={(threadId) => {
+                  deleteChatThreadFromFirestore(threadId);
+                  setMessages((prev) => prev.filter((m) => m.id !== threadId));
+                }}
+                onMarkThreadRead={(threadId) => {
+                  if (currentUser) {
+                    markChatThreadAsRead(threadId, currentUser);
+                  }
+                }}
+                onUpdateMessages={async (updated) => {
+                  setMessages(updated);
+                }}
+                onSelectVideo={handleSelectVideoById}
+                onToggleFollow={handleToggleFollow}
+                onToggleFollowPlace={handleToggleFollowPlace}
+                onMarkNotificationRead={(id) => {
+                  markNotificationAsRead(id, currentUser);
+                  setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+                }}
+                onClearAllNotifications={() => {
+                  clearAllNotifications(notifications.map(n => n.id), currentUser);
+                  setNotifications([]);
+                }}
               />
             )}
             {activeSection === "more" && (

@@ -1,9 +1,11 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { NavSection, Place, VideoReview, UserProfile, VideoAuthor } from '../types';
+import { NavSection, Place, VideoReview, UserProfile, VideoAuthor, CopoMessage, CopoNotification } from '../types';
 import { getDisplayViews } from '../utils/placeUtils';
 import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
 import { CopoBusinessAuthLanding } from './CopoBusinessAuthLanding';
+import { CopoMessagesView } from './CopoMessagesView';
+import { CopoNotificationsView } from './CopoNotificationsView';
 import { 
   Shield, 
   Eye, 
@@ -18,6 +20,7 @@ import {
   Mail, 
   Check, 
   ArrowLeft, 
+  ChevronLeft, 
   Lock, 
   QrCode, 
   Download, 
@@ -69,6 +72,9 @@ import {
   Utensils,
   FileText,
   Users,
+  UserPlus,
+  UserCheck,
+  UserMinus,
   Package,
   Truck
 } from 'lucide-react';
@@ -93,6 +99,9 @@ interface CopoBusinessDashboardViewProps {
   places?: Place[];
   videos?: VideoReview[];
   currentUser?: UserProfile | null;
+  allUsers?: any[];
+  messages?: CopoMessage[];
+  notifications?: CopoNotification[];
   onOpenPlaceDrawer?: (placeId: string) => void;
   onOpenCreator?: (author: VideoAuthor) => void;
   initialPlace?: Place | null;
@@ -101,9 +110,24 @@ interface CopoBusinessDashboardViewProps {
   onSaveOwnerResponse?: (videoId: string, text: string) => void;
   onDeleteOwnerResponse?: (videoId: string) => void;
   onClose?: () => void;
+  onSendMessage?: (
+    threadId: string,
+    text: string,
+    recipient: { id: string; name: string; avatar: string; email?: string },
+    videoUrl?: string,
+    customVideoId?: string
+  ) => Promise<void>;
+  onDeleteThread?: (threadId: string) => void;
+  onMarkThreadRead?: (threadId: string) => void;
+  onUpdateMessages?: (updated: CopoMessage[]) => void;
+  onSelectVideo?: (videoId: string, source?: string) => void;
+  onToggleFollow?: (authorHandle: string) => void;
+  onToggleFollowPlace?: (placeId: string) => void;
+  onMarkNotificationRead?: (id: string) => void;
+  onClearAllNotifications?: () => void;
 }
 
-type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'embed' | 'qr_invites' | 'profile' | 'billing';
+type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'billing';
 
 interface BusinessVideoPlayerModalProps {
   video: VideoReview;
@@ -568,6 +592,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   places = [],
   videos = [],
   currentUser = null,
+  allUsers = [],
+  messages = [],
+  notifications = [],
   onOpenPlaceDrawer,
   onOpenCreator,
   initialPlace = null,
@@ -575,7 +602,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onClearInitialPlace,
   onSaveOwnerResponse,
   onDeleteOwnerResponse,
-  onClose = () => onNavigate('home')
+  onClose = () => onNavigate('home'),
+  onSendMessage,
+  onDeleteThread,
+  onMarkThreadRead,
+  onUpdateMessages,
+  onSelectVideo,
+  onToggleFollow,
+  onToggleFollowPlace,
+  onMarkNotificationRead,
+  onClearAllNotifications
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   // Navigation tab state
@@ -955,6 +991,34 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const criticalImagesLoaded = useCriticalImagesLoaded([currentPlace?.logoUrl, currentPlace?.bannerUrl], 1500);
   const [commandQuery, setCommandQuery] = useState('');
   const [reviewsSearchQuery, setReviewsSearchQuery] = useState('');
+  const [followerSearchQuery, setFollowerSearchQuery] = useState('');
+  const [hoveredUnfollow, setHoveredUnfollow] = useState<string | null>(null);
+  const [targetThreadId, setTargetThreadId] = useState<string>('');
+
+  // Effective Business User Profile for Messaging & Collaboration
+  const effectiveUser: UserProfile = useMemo(() => {
+    if (currentUser) return currentUser;
+    if (verifiedBusinessSession) {
+      return {
+        id: verifiedBusinessSession.placeId,
+        uid: verifiedBusinessSession.placeId,
+        name: verifiedBusinessSession.placeName || currentPlace.name || 'Business Manager',
+        email: verifiedBusinessSession.businessEmail || (currentPlace as any).claimedByEmail || 'business@yoouz.com',
+        avatar: verifiedBusinessSession.logoUrl || currentPlace.logoUrl || currentPlace.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        handle: (verifiedBusinessSession.domain || currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
+        isVerified: true
+      };
+    }
+    return {
+      id: currentPlace.id,
+      uid: currentPlace.id,
+      name: currentPlace.name || 'Business Portal',
+      email: (currentPlace as any).claimedByEmail || 'business@yoouz.com',
+      avatar: currentPlace.logoUrl || currentPlace.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      handle: (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
+      isVerified: true
+    };
+  }, [currentUser, verifiedBusinessSession, currentPlace]);
 
   // Keyboard shortcut listener for ⌘K / Ctrl+K
   useEffect(() => {
@@ -975,6 +1039,161 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       (v.placeName && currentPlace.name && v.placeName.toLowerCase() === currentPlace.name.toLowerCase())
     );
   }, [videos, selectedPlaceId, currentPlace.name]);
+
+  // Real Business Followers List derived from all registered users and community reviewers
+  const businessFollowers = useMemo(() => {
+    if (!currentPlace) return [];
+    const placeId = currentPlace.id;
+    const placeNameLower = (currentPlace.name || '').toLowerCase().trim();
+
+    const map = new Map<string, {
+      id: string;
+      name: string;
+      handle: string;
+      avatar: string;
+      isReviewer: boolean;
+      reviewCount: number;
+      rating?: number;
+      lastReviewSnippet?: string;
+      followedAt?: string;
+      isFollowedBack?: boolean;
+    }>();
+
+    // 1. Users from allUsers who follow this place
+    (allUsers || []).forEach((u: any) => {
+      const followedPlaces = Array.isArray(u.followedPlaces) ? u.followedPlaces : [];
+      if (followedPlaces.includes(placeId)) {
+        const handle = (u.handle || u.name || '').toLowerCase().replace(/^@/, '');
+        const key = u.id || u.email || handle;
+        map.set(key, {
+          id: u.id || u.uid || key,
+          name: u.name || 'Yoouz User',
+          handle: handle || 'user',
+          avatar: u.avatar || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`,
+          isReviewer: false,
+          reviewCount: 0,
+          followedAt: 'Recent',
+          isFollowedBack: Boolean(currentUser?.followedAuthors?.some(a => a.toLowerCase().replace(/^@/, '') === handle))
+        });
+      }
+    });
+
+    // 2. Reviewers who created a video review for this place (authentic customer advocates)
+    const placeReviews = (videos || []).filter(v => 
+      v.placeId === placeId || (v.placeName && v.placeName.toLowerCase().trim() === placeNameLower)
+    );
+
+    placeReviews.forEach((rev) => {
+      const author = rev.author;
+      if (!author) return;
+      const authorName = (author.name || '').trim();
+      const authorHandle = (author.name || '').toLowerCase().replace(/^@/, '').trim();
+      const key = (rev.userId || (author as any).id || authorHandle).toLowerCase();
+
+      const existing = map.get(key);
+      if (existing) {
+        existing.isReviewer = true;
+        existing.reviewCount = (existing.reviewCount || 0) + 1;
+        if (!existing.rating && rev.rating) existing.rating = rev.rating;
+        if (!existing.lastReviewSnippet && (rev.caption || (rev as any).text)) {
+          existing.lastReviewSnippet = rev.caption || (rev as any).text;
+        }
+      } else {
+        map.set(key, {
+          id: rev.userId || (author as any).id || (author as any).uid || key,
+          name: authorName || 'Customer Reviewer',
+          handle: authorHandle || 'reviewer',
+          avatar: author.avatar || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`,
+          isReviewer: true,
+          reviewCount: 1,
+          rating: rev.rating,
+          lastReviewSnippet: rev.caption || (rev as any).text,
+          followedAt: rev.createdAt || 'Recent',
+          isFollowedBack: Boolean(currentUser?.followedAuthors?.some(a => a.toLowerCase().replace(/^@/, '') === authorHandle))
+        });
+      }
+    });
+
+    // 3. Current user if they have followed or saved this place
+    if (currentUser) {
+      const myFollowedPlaces = currentUser.followedPlaces || [];
+      let storedFollowed: string[] = [];
+      try {
+        storedFollowed = JSON.parse(localStorage.getItem('copo_saved_place_ids') || '[]');
+      } catch (e) {}
+      if (myFollowedPlaces.includes(placeId) || storedFollowed.includes(placeId)) {
+        const myKey = currentUser.id || currentUser.email || 'me';
+        if (!map.has(myKey)) {
+          const myHandle = (currentUser.handle || currentUser.name || 'me').toLowerCase().replace(/^@/, '');
+          map.set(myKey, {
+            id: myKey,
+            name: currentUser.name || 'You',
+            handle: myHandle,
+            avatar: currentUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+            isReviewer: false,
+            reviewCount: 0,
+            followedAt: 'Saved',
+            isFollowedBack: true
+          });
+        }
+      }
+    }
+
+    return Array.from(map.values());
+  }, [currentPlace, allUsers, videos, currentUser]);
+
+  const filteredFollowers = useMemo(() => {
+    if (!followerSearchQuery.trim()) return businessFollowers;
+    const q = followerSearchQuery.toLowerCase().trim();
+    return businessFollowers.filter(f => 
+      f.name.toLowerCase().includes(q) || 
+      f.handle.toLowerCase().includes(q) ||
+      (f.lastReviewSnippet && f.lastReviewSnippet.toLowerCase().includes(q))
+    );
+  }, [businessFollowers, followerSearchQuery]);
+
+  const unreadMessagesCount = useMemo(() => {
+    return (messages || []).reduce((acc, m) => acc + (m.unreadCount || 0), 0);
+  }, [messages]);
+
+  const handleMessageFollower = (follower: any) => {
+    setActiveTab('inbox');
+    const existing = (messages || []).find(m => 
+      m.senderId === follower.id || 
+      (m.senderName && m.senderName.toLowerCase() === follower.name.toLowerCase()) ||
+      (follower.handle && m.senderName && m.senderName.toLowerCase().replace(/^@/, '') === follower.handle.toLowerCase())
+    );
+    if (existing) {
+      setTargetThreadId(existing.id);
+    } else {
+      setTargetThreadId(follower.id);
+    }
+  };
+
+  // Count reviews that need owner attention (unreplied)
+  const unrepliedReviewsCount = useMemo(() => {
+    return placeVideos.filter(
+      (v) => !ownerReplies[v.id] && !v.ownerResponse?.text
+    ).length;
+  }, [placeVideos, ownerReplies]);
+
+  // Business Notifications computed from props
+  const businessNotifications = useMemo(() => {
+    if (!notifications || notifications.length === 0) return [];
+    const pName = (currentPlace.name || '').toLowerCase();
+    const placeVideoIds = new Set(placeVideos.map(v => v.id));
+
+    return notifications.filter(n => {
+      if (n.placeName && n.placeName.toLowerCase() === pName) return true;
+      if (n.videoId && placeVideoIds.has(n.videoId)) return true;
+      return true;
+    });
+  }, [notifications, currentPlace, placeVideos]);
+
+  const unreadBusinessNotifsCount = useMemo(() => {
+    const unread = businessNotifications.filter(n => !n.isRead).length;
+    return unread + unrepliedReviewsCount;
+  }, [businessNotifications, unrepliedReviewsCount]);
 
   // Dynamic KPIs calculated strictly from real data
   const totalReviews = placeVideos.length;
@@ -1224,11 +1443,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   };
 
-  // Count reviews that need owner attention (unreplied)
-  const unrepliedReviewsCount = placeVideos.filter(
-    (v) => !ownerReplies[v.id] && !v.ownerResponse?.text
-  ).length;
-
   // Nav Items array with clean Google Material icons
   const suiteNavItems = [
     { id: 'overview' as BusinessTab, label: t('business.overviewInsights', 'Overview & Insights'), icon: BarChart3 },
@@ -1238,8 +1452,24 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       icon: Video, 
       badge: unrepliedReviewsCount > 0 ? unrepliedReviewsCount : undefined 
     },
-    { id: 'inbox' as BusinessTab, label: t('business.messagesInbox', 'Messages & Inbox'), icon: MessageSquare },
-    { id: 'followers' as BusinessTab, label: t('business.followersDirectory', 'Followers Directory'), icon: Users },
+    { 
+      id: 'inbox' as BusinessTab, 
+      label: t('business.messagesInbox', 'Messages & Inbox'), 
+      icon: MessageSquare,
+      badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined
+    },
+    { 
+      id: 'followers' as BusinessTab, 
+      label: t('business.followersDirectory', 'Followers Directory'), 
+      icon: Users,
+      badge: businessFollowers.length > 0 ? businessFollowers.length : undefined
+    },
+    { 
+      id: 'notifications' as BusinessTab, 
+      label: t('nav.notifications', 'Notifications'), 
+      icon: Bell,
+      badge: unreadBusinessNotifsCount > 0 ? unreadBusinessNotifsCount : undefined
+    },
     { id: 'embed' as BusinessTab, label: t('business.websiteEmbed', 'Website Embed Widget'), icon: Code },
     { id: 'qr_invites' as BusinessTab, label: t('business.qrInvites', 'QR Codes & Invites'), icon: QrCode },
     { id: 'profile' as BusinessTab, label: t('business.profileInfo', 'Business Profile & Info'), icon: Building2 },
@@ -1399,46 +1629,132 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   title={t("nav.notifications", "Notifications")}
                 >
                   <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  {unrepliedReviewsCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full ring-2 ring-zinc-950" />
+                  {unreadBusinessNotifsCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-zinc-950 animate-pulse" />
                   )}
                 </button>
 
                 {showNotificationsDropdown && (
-                  <div className="fixed top-[60px] left-3 right-3 sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-80 bg-zinc-900 rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="fixed top-[60px] left-3 right-3 sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-88 bg-zinc-900 rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-                      <span className="font-bold text-white text-[13px]">{t("nav.notifications", "Notifications")}</span>
-                      {unrepliedReviewsCount > 0 && (
-                        <span className="text-[10px] bg-zinc-800 text-white font-bold px-2 py-0.5 rounded-full">{unrepliedReviewsCount} {t("common.new", "New")}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white text-[13px]">{t("nav.notifications", "Notifications")}</span>
+                        {unreadBusinessNotifsCount > 0 && (
+                          <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold px-2 py-0.5 rounded-full">
+                            {unreadBusinessNotifsCount} {t("common.new", "New")}
+                          </span>
+                        )}
+                      </div>
+                      {businessNotifications.length > 0 && onClearAllNotifications && (
+                        <button
+                          onClick={() => {
+                            onClearAllNotifications();
+                          }}
+                          className="text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                        >
+                          {t("notifications.clearAll", "Clear all")}
+                        </button>
                       )}
                     </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {unrepliedReviewsCount > 0 ? (
+
+                    <div className="max-h-84 overflow-y-auto divide-y divide-zinc-850">
+                      {/* Unreplied Reviews Banner */}
+                      {unrepliedReviewsCount > 0 && (
                         <div 
                           onClick={() => {
                             setActiveTab('reviews');
                             setShowNotificationsDropdown(false);
                           }}
-                          className="p-4 flex gap-3 hover:bg-zinc-800/50 cursor-pointer border-b border-zinc-800 transition-colors"
+                          className="p-3.5 flex gap-3 bg-amber-500/10 hover:bg-amber-500/15 cursor-pointer border-b border-zinc-800 transition-colors"
                         >
-                          <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
-                            <MessageSquare className="w-4 h-4 text-white" />
+                          <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30">
+                            <MessageSquare className="w-4 h-4 text-amber-300" />
                           </div>
-                          <div>
-                            <div className="text-sm font-bold text-white">{t("business.newVideoReviews", "New Video Reviews")}</div>
-                            <div className="text-xs text-zinc-200 mt-0.5 leading-relaxed">{t("business.unrepliedNotice", `You have ${unrepliedReviewsCount} unreplied review${unrepliedReviewsCount !== 1 ? 's' : ''}. Reply now to boost engagement.`)}</div>
-                            <div className="text-[10px] font-bold text-white mt-2 uppercase tracking-wider">{t("business.openReviewDashboard", "Open Review Dashboard")}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-bold text-amber-200">{t("business.newVideoReviews", "Unreplied Video Reviews")}</div>
+                            <div className="text-[11px] text-zinc-300 mt-0.5 leading-snug">
+                              {t("business.unrepliedNotice", `You have ${unrepliedReviewsCount} unreplied review${unrepliedReviewsCount !== 1 ? 's' : ''}. Reply now to build customer trust.`)}
+                            </div>
+                            <div className="text-[10px] font-bold text-amber-400 mt-1.5 uppercase tracking-wider flex items-center gap-1">
+                              <span>{t("business.openReviewDashboard", "Reply in Dashboard")}</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="p-8 text-center">
-                          <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Bell className="w-5 h-5 text-zinc-200" />
-                          </div>
-                          <div className="text-sm font-bold text-white">{t("business.allCaughtUp", "You're all caught up!")}</div>
-                          <div className="text-xs text-zinc-200 mt-1">{t("business.noNewNotifications", "No new notifications right now.")}</div>
                         </div>
                       )}
+
+                      {/* Real Notifications List */}
+                      {businessNotifications.length > 0 ? (
+                        businessNotifications.slice(0, 10).map((n) => (
+                          <div 
+                            key={n.id}
+                            onClick={() => {
+                              if (onMarkNotificationRead) onMarkNotificationRead(n.id);
+                              if (n.videoId && onSelectVideo) {
+                                onSelectVideo(n.videoId);
+                              } else if (n.type === "follow") {
+                                setActiveTab('followers');
+                              } else if (n.type === "message") {
+                                setActiveTab('inbox');
+                              }
+                              setShowNotificationsDropdown(false);
+                            }}
+                            className={`p-3.5 flex gap-3 hover:bg-zinc-800/60 cursor-pointer transition-colors ${!n.isRead ? "bg-zinc-850/40" : ""}`}
+                          >
+                            <div className="relative shrink-0 mt-0.5">
+                              {n.user?.avatar ? (
+                                <img src={n.user.avatar} alt="" className="w-8 h-8 rounded-full object-cover border border-zinc-700" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700">
+                                  <Bell className="w-4 h-4 text-zinc-400" />
+                                </div>
+                              )}
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 text-zinc-300">
+                                {n.type === "comment" ? (
+                                  <MessageSquare className="w-2.5 h-2.5 text-blue-400" />
+                                ) : n.type === "follow" ? (
+                                  <UserPlus className="w-2.5 h-2.5 text-emerald-400" />
+                                ) : n.type === "like" ? (
+                                  <Heart className="w-2.5 h-2.5 text-rose-400" />
+                                ) : (
+                                  <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                                )}
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs text-white leading-snug">
+                                <span className="font-bold text-white mr-1">{n.user?.name || "A customer"}</span>
+                                <span className="text-zinc-300">{n.text || "interacted with your business profile"}</span>
+                              </div>
+                              <div className="text-[10px] text-zinc-400 mt-1">{n.timestamp || "Recently"}</div>
+                            </div>
+                            {!n.isRead && (
+                              <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0 self-center" />
+                            )}
+                          </div>
+                        ))
+                      ) : unrepliedReviewsCount === 0 ? (
+                        <div className="p-8 text-center">
+                          <div className="w-12 h-12 bg-zinc-800/80 rounded-full flex items-center justify-center mx-auto mb-3 border border-zinc-700">
+                            <Bell className="w-5 h-5 text-zinc-400" />
+                          </div>
+                          <div className="text-sm font-bold text-white">{t("business.allCaughtUp", "You're all caught up!")}</div>
+                          <div className="text-xs text-zinc-400 mt-1">{t("business.noNewNotifications", "No new notifications right now.")}</div>
+                        </div>
+                      ) : null}
+                    </div>
+                    
+                    <div className="p-2 border-t border-zinc-800 bg-zinc-950/60 text-center">
+                      <button
+                        onClick={() => {
+                          setShowNotificationsDropdown(false);
+                          setActiveTab('notifications');
+                        }}
+                        className="w-full py-1.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <Bell className="w-3.5 h-3.5 text-zinc-300" />
+                        <span>{t("notifications.viewAll", "View all notifications")}</span>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -2270,59 +2586,227 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             
             {/* INBOX TAB */}
             {activeTab === 'inbox' && (
-              <div className="max-w-4xl max-h-[85vh] flex flex-col bg-zinc-950 md:bg-zinc-900 rounded-3xl border border-zinc-800 md:border-zinc-800 text-white md:text-white shadow-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="px-6 py-5 border-b border-zinc-800 md:border-zinc-800 flex items-center justify-between shrink-0">
-                  <div>
-                    <h2 className="text-xl font-black text-white md:text-white">Direct Messages</h2>
-                    <p className="text-sm text-zinc-200 md:text-zinc-200 mt-0.5">Respond to inquiries from customers</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 rounded-full bg-zinc-900 md:bg-zinc-900 text-zinc-200 md:text-zinc-200 text-xs font-bold">
-                      0 Unread
-                    </span>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center py-20 px-6 text-center">
-                  <div className="w-16 h-16 rounded-full bg-zinc-900 md:bg-zinc-950 flex items-center justify-center mb-4 border border-zinc-800 md:border-zinc-800">
-                    <MessageSquare className="w-8 h-8 text-zinc-200 md:text-zinc-200" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white md:text-white mb-1">Your inbox is empty</h3>
-                  <p className="text-sm text-zinc-200 md:text-zinc-200 max-w-sm">
-                    When customers send you direct messages from your Yoouz listing, they will appear here.
-                  </p>
-                </div>
+              <div className="w-full max-w-5xl h-[calc(100dvh-130px)] md:h-[calc(100vh-140px)] bg-zinc-950 sm:bg-zinc-900 rounded-none sm:rounded-3xl border-0 sm:border border-zinc-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+                <CopoMessagesView
+                  messages={messages}
+                  currentUser={effectiveUser}
+                  places={places}
+                  userVideos={placeVideos}
+                  allVideos={videos}
+                  allUsers={allUsers}
+                  onSendMessage={onSendMessage}
+                  onDeleteThread={onDeleteThread}
+                  onMarkThreadRead={onMarkThreadRead}
+                  onUpdateMessages={onUpdateMessages}
+                  onSelectVideo={onSelectVideo}
+                  onSelectPlace={onOpenPlaceDrawer}
+                  onOpenCreator={onOpenCreator}
+                  selectedThreadId={targetThreadId}
+                  onSelectThreadId={setTargetThreadId}
+                  onNavigateHome={() => setActiveTab('overview')}
+                  onNavigateToNotifications={() => setActiveTab('notifications')}
+                  unreadNotifsCount={unreadBusinessNotifsCount}
+                />
               </div>
             )}
 
-            {/* FOLLOWERS TAB */}
+            {/* FOLLOWERS TAB (Exact User Account Layout & Design Language) */}
             {activeTab === 'followers' && (
-              <div className="max-w-5xl bg-zinc-950 md:bg-zinc-900 rounded-3xl border border-zinc-800 md:border-zinc-800 text-white md:text-white shadow-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="px-6 py-5 border-b border-zinc-800 md:border-zinc-800 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-black text-white md:text-white">Followers Directory</h2>
-                    <p className="text-sm text-zinc-200 md:text-zinc-200 mt-0.5">Users who saved your business to their favorites</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1.5 rounded-xl bg-zinc-900 md:bg-zinc-900 text-zinc-200 md:text-zinc-200 text-sm font-bold">
-                      0 Total
-                    </span>
+              <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                {/* Top Header & Navigation Bar */}
+                <div className="flex items-center justify-between gap-3 pt-1 pb-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      onClick={() => setActiveTab('overview')}
+                      className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
+                      title="Back to Overview"
+                    >
+                      <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                    </button>
+                    <div className="min-w-0">
+                      <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight flex items-center gap-2">
+                        <Users className="w-5 h-5 text-zinc-300 shrink-0" />
+                        <span>Followers & Advocates</span>
+                      </h1>
+                      <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
+                        {businessFollowers.length} {businessFollowers.length === 1 ? 'customer follower' : 'customer followers'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="p-12 flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-zinc-900 md:bg-zinc-950 flex items-center justify-center mb-4 border border-zinc-800 md:border-zinc-800">
-                    <Users className="w-8 h-8 text-zinc-200 md:text-zinc-200" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white md:text-white mb-1">No followers yet</h3>
-                  <p className="text-sm text-zinc-200 md:text-zinc-200 max-w-sm mb-6">
-                    As your business grows on Yoouz, users who save your business will appear here. Keep your profile active to attract more followers!
-                  </p>
-                  <button onClick={() => setActiveTab('profile')} className="px-5 py-2.5 rounded-xl bg-zinc-900 md:bg-zinc-900 text-white text-sm font-bold hover:bg-black md:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer">
-                    Complete Your Profile
-                  </button>
+
+                {/* Search Bar matching CopoFollowingView */}
+                <div className="relative">
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={followerSearchQuery}
+                    onChange={(e) => setFollowerSearchQuery(e.target.value)}
+                    placeholder="Search followers by name or review..."
+                    className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:border-zinc-600 focus:bg-zinc-900 transition-all shadow-inner"
+                  />
+                  {followerSearchQuery && (
+                    <button
+                      onClick={() => setFollowerSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer p-1 rounded-full hover:bg-zinc-800 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
+
+                {/* Follower Directory List */}
+                {filteredFollowers.length === 0 ? (
+                  <div className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-300 space-y-3 shadow-xs">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-850 text-white flex items-center justify-center mx-auto">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1 max-w-sm mx-auto">
+                      <p className="font-bold text-white text-sm sm:text-base">
+                        {followerSearchQuery ? "No matching followers found" : "No followers yet"}
+                      </p>
+                      <p className="text-xs text-zinc-300 leading-relaxed">
+                        {followerSearchQuery
+                          ? `No customer follower matches "${followerSearchQuery}". Try a different name.`
+                          : "When customers and video reviewers follow your business on Yoouz, they will appear here."}
+                      </p>
+                    </div>
+                    {followerSearchQuery && (
+                      <button
+                        onClick={() => setFollowerSearchQuery("")}
+                        className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold cursor-pointer transition-colors"
+                      >
+                        Clear search
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {filteredFollowers.map((follower) => {
+                      const isHovered = hoveredUnfollow === follower.name;
+                      return (
+                        <div
+                          key={`follower-${follower.id || follower.name}`}
+                          onClick={() => onOpenCreator?.({ name: follower.name, avatar: follower.avatar, id: follower.id } as any)}
+                          className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                            <div className="relative shrink-0">
+                              <img
+                                src={follower.avatar}
+                                alt={follower.name}
+                                className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  if (!target.src.includes("/api/avatar")) {
+                                    target.src = `/api/avatar?name=${encodeURIComponent(follower.name || "User")}&background=27272a&color=fff`;
+                                  }
+                                }}
+                              />
+                              {follower.isReviewer && (
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-zinc-900 text-white" title="Verified Customer Reviewer">
+                                  <Star className="w-2.5 h-2.5 fill-white" />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1 text-left">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                                  {follower.name}
+                                </h3>
+                                {follower.isReviewer && (
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold shrink-0">
+                                    Reviewer {follower.rating ? `· ⭐ ${follower.rating.toFixed(1)}` : ""}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium truncate mt-0.5">
+                                <span className="shrink-0">
+                                  {follower.lastReviewSnippet
+                                    ? `"${follower.lastReviewSnippet}"`
+                                    : `@${follower.handle} · Customer Advocate`}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {/* Message button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMessageFollower(follower);
+                              }}
+                              className="px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5 text-zinc-300" />
+                              <span className="hidden sm:inline">Message</span>
+                            </button>
+
+                            {/* Follow back / Following toggle */}
+                            {onToggleFollow && (
+                              <button
+                                onMouseEnter={() => setHoveredUnfollow(follower.name)}
+                                onMouseLeave={() => setHoveredUnfollow(null)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onToggleFollow(follower.handle);
+                                }}
+                                className={`px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                                  follower.isFollowedBack
+                                    ? isHovered
+                                      ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                                      : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                                    : "bg-white hover:bg-zinc-200 text-zinc-950 font-black"
+                                }`}
+                              >
+                                {follower.isFollowedBack ? (
+                                  isHovered ? (
+                                    <>
+                                      <UserMinus className="w-3.5 h-3.5" />
+                                      <span>Unfollow</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                                      <span>Following</span>
+                                    </>
+                                  )
+                                ) : (
+                                  <>
+                                    <UserPlus className="w-3.5 h-3.5" />
+                                    <span>Follow</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              )}
+            )}
+
+            {/* NOTIFICATIONS TAB (Exact User Account Layout & Design Language) */}
+            {activeTab === 'notifications' && (
+              <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                <CopoNotificationsView
+                  notifications={businessNotifications}
+                  currentUser={effectiveUser}
+                  allVideos={placeVideos}
+                  onSelectNotificationVideo={(videoId) => onSelectVideo?.(videoId)}
+                  onNavigateToMessages={() => setActiveTab('inbox')}
+                  onNavigateHome={() => setActiveTab('overview')}
+                  onMarkRead={(id) => onMarkNotificationRead?.(id)}
+                  onClearAll={onClearAllNotifications}
+                  onOpenCreator={onOpenCreator}
+                />
+              </div>
+            )}
 
             {/* TAB 3: WEBSITE EMBED WIDGET */}
             {activeTab === 'embed' && (
