@@ -1312,14 +1312,14 @@ export function App() {
 
   // Real-time BunnyDB sync for Notifications
   useEffect(() => {
-    if (!currentUser) {
+    if (!effectiveMessagingUser) {
       setNotifications([]);
       prevNotifIdsRef.current.clear();
       isFirstNotifLoadRef.current = true;
       return;
     }
 
-    const unsubscribe = subscribeToNotifications(currentUser, (notifs) => {
+    const unsubscribe = subscribeToNotifications(effectiveMessagingUser, (notifs) => {
       setNotifications(notifs);
 
       if (isFirstNotifLoadRef.current) {
@@ -1429,16 +1429,40 @@ export function App() {
     };
   }, [currentUser, activeSection, allRegisteredUsers]);
 
+  const effectiveMessagingUser = useMemo(() => {
+    let effective = currentUser;
+    if (activeSection === 'business') {
+      try {
+        const saved = localStorage.getItem('copo_business_verified_session');
+        if (saved) {
+          const session = JSON.parse(saved);
+          if (session && session.placeId) {
+            effective = {
+              id: session.placeId,
+              uid: session.placeId,
+              name: session.placeName || 'Business Manager',
+              email: session.businessEmail || 'business@yoouz.com',
+              avatar: session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+              handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
+              isVerified: true
+            } as any;
+          }
+        }
+      } catch(e) {}
+    }
+    return effective;
+  }, [currentUser, activeSection]);
+
   // Real-time BunnyDB sync for Direct Messages & Chats
   useEffect(() => {
-    if (!currentUser) {
+    if (!effectiveMessagingUser) {
       setMessages([]);
       prevChatHistoryLengthRef.current.clear();
       isFirstChatLoadRef.current = true;
       return;
     }
 
-    const unsubscribe = subscribeToChats(currentUser, (threads) => {
+    const unsubscribe = subscribeToChats(effectiveMessagingUser, (threads) => {
       setMessages((prev) => {
         const serverIds = new Set(threads.map((t) => t.id));
         const pendingLocal = prev.filter(
@@ -1457,7 +1481,7 @@ export function App() {
       }
 
       // Detect new incoming message from partner
-      const userEmail = (currentUser.email || "").toLowerCase().trim();
+      const userEmail = (effectiveMessagingUser.email || "").toLowerCase().trim();
       for (const t of threads) {
         const prevCount = prevChatHistoryLengthRef.current.get(t.id) ?? 0;
         const currentCount = t.history?.length || 0;
@@ -2007,9 +2031,10 @@ export function App() {
     setActiveThreadId(newThreadId);
 
     // Persist thread container shell to Bunny DB immediately
-    const userEmail = (currentUser?.email || "").toLowerCase().trim();
-    const userHandle = (currentUser?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
-    const curName = (currentUser?.name || "").trim();
+    const effUser = effectiveMessagingUser || currentUser;
+    const userEmail = (effUser?.email || "").toLowerCase().trim();
+    const userHandle = (effUser?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+    const curName = (effUser?.name || "").trim();
 
     const participants = Array.from(
       new Set([
@@ -2017,7 +2042,7 @@ export function App() {
         userEmail ? userEmail.split("@")[0] : "",
         userHandle,
         curName.toLowerCase(),
-        currentUser?.userId || "",
+        effUser?.userId || "",
         targetEmail,
         targetEmail ? targetEmail.split("@")[0] : "",
         senderId,
@@ -5024,19 +5049,41 @@ export function App() {
                 onSaveOwnerResponse={handleSaveOwnerResponse}
                 onDeleteOwnerResponse={handleDeleteOwnerResponse}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId) => {
-                  const effectiveSender = currentUser || {
-                    id: 'business_owner',
-                    uid: 'business_owner',
-                    name: 'Business Manager',
-                    email: 'business@yoouz.com',
-                    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-                    handle: 'business',
-                    isVerified: true
-                  };
+                  let effectiveSender = currentUser as any;
+                  try {
+                    const saved = localStorage.getItem('copo_business_verified_session');
+                    if (saved) {
+                      const session = JSON.parse(saved);
+                      if (session && session.placeId) {
+                        effectiveSender = {
+                          id: session.placeId,
+                          uid: session.placeId,
+                          name: session.placeName || 'Business Manager',
+                          email: session.businessEmail || 'business@yoouz.com',
+                          avatar: session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+                          handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
+                          isVerified: true
+                        };
+                      }
+                    }
+                  } catch(e) {}
+                  
+                  if (!effectiveSender) {
+                    effectiveSender = {
+                      id: 'business_owner',
+                      uid: 'business_owner',
+                      name: 'Business Manager',
+                      email: 'business@yoouz.com',
+                      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+                      handle: 'business',
+                      isVerified: true
+                    };
+                  }
+                  
                   await sendChatMessageToFirestore(
                     threadId,
                     text,
-                    effectiveSender as any,
+                    effectiveSender,
                     recipient,
                     videoUrl,
                     customVideoId
@@ -5047,8 +5094,8 @@ export function App() {
                   setMessages((prev) => prev.filter((m) => m.id !== threadId));
                 }}
                 onMarkThreadRead={(threadId) => {
-                  if (currentUser) {
-                    markChatThreadAsRead(threadId, currentUser);
+                  if (effectiveMessagingUser) {
+                    markChatThreadAsRead(threadId, effectiveMessagingUser as any);
                   }
                 }}
                 onUpdateMessages={async (updated) => {
@@ -5058,11 +5105,15 @@ export function App() {
                 onToggleFollow={handleToggleFollow}
                 onToggleFollowPlace={handleToggleFollowPlace}
                 onMarkNotificationRead={(id) => {
-                  markNotificationAsRead(id, currentUser);
+                  if (effectiveMessagingUser) {
+                    markNotificationAsRead(id, effectiveMessagingUser as any);
+                  }
                   setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
                 }}
                 onClearAllNotifications={() => {
-                  clearAllNotifications(notifications.map(n => n.id), currentUser);
+                  if (effectiveMessagingUser) {
+                    clearAllNotifications(notifications.map(n => n.id), effectiveMessagingUser as any);
+                  }
                   setNotifications([]);
                 }}
                 onSaveNotificationSettings={handleSaveNotificationSettings}

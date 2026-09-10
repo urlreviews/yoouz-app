@@ -1031,23 +1031,23 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Effective Business User Profile for Messaging & Collaboration
   const effectiveUser: UserProfile = useMemo(() => {
-    const base = currentUser ? { ...currentUser } : (verifiedBusinessSession ? {
+    const base = verifiedBusinessSession ? {
       id: verifiedBusinessSession.placeId,
       uid: verifiedBusinessSession.placeId,
-      name: verifiedBusinessSession.placeName || currentPlace.name || 'Business Manager',
-      email: verifiedBusinessSession.businessEmail || (currentPlace as any).claimedByEmail || 'business@yoouz.com',
-      avatar: verifiedBusinessSession.logoUrl || currentPlace.logoUrl || currentPlace.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-      handle: (verifiedBusinessSession.domain || currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
+      name: verifiedBusinessSession.placeName || currentPlace?.name || 'Business Manager',
+      email: verifiedBusinessSession.businessEmail || (currentPlace as any)?.claimedByEmail || 'business@yoouz.com',
+      avatar: verifiedBusinessSession.logoUrl || currentPlace?.logoUrl || currentPlace?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      handle: (verifiedBusinessSession.domain || currentPlace?.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
       isVerified: true
-    } : {
-      id: currentPlace.id,
-      uid: currentPlace.id,
-      name: currentPlace.name || 'Business Portal',
-      email: (currentPlace as any).claimedByEmail || 'business@yoouz.com',
-      avatar: currentPlace.logoUrl || currentPlace.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-      handle: (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
+    } : currentUser ? { ...currentUser } : {
+      id: currentPlace?.id || 'unknown',
+      uid: currentPlace?.id || 'unknown',
+      name: currentPlace?.name || 'Business Portal',
+      email: (currentPlace as any)?.claimedByEmail || 'business@yoouz.com',
+      avatar: currentPlace?.logoUrl || currentPlace?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      handle: (currentPlace?.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
       isVerified: true
-    });
+    };
 
     return {
       ...base,
