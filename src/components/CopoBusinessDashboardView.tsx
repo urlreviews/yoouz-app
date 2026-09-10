@@ -103,7 +103,7 @@ interface CopoBusinessDashboardViewProps {
   onClose?: () => void;
 }
 
-type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'embed' | 'qr_invites' | 'cta' | 'profile' | 'billing';
+type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'embed' | 'qr_invites' | 'profile' | 'billing';
 
 interface BusinessVideoPlayerModalProps {
   video: VideoReview;
@@ -660,7 +660,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Time Range Filter for Analytics
   const [analyticsDateRange, setAnalyticsDateRange] = useState<'7d' | '30d' | '90d' | 'ytd'>('30d');
-  const [selectedChartMetric, setSelectedChartMetric] = useState<'views' | 'clicks' | 'reviews' | 'inquiries'>('views');
+  const [selectedChartMetric, setSelectedChartMetric] = useState<'views' | 'reviews' | 'rating'>('views');
   const [hoveredChartPoint, setHoveredChartPoint] = useState<number | null>(null);
 
   // CTA Setup state
@@ -970,8 +970,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const totalReviews = placeVideos.length;
   const avgRating = totalReviews > 0 ? (placeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalReviews).toFixed(1) : '0.0';
   const totalViews = placeVideos.reduce((acc, v) => acc + getDisplayViews(v), 0);
-  const totalClicks = 0; // Tracked accurately as 0
-  const totalInquiries = 0; // Tracked accurately as 0
 
   // Chart Time Series Data for Interactive SVG Chart (Accurate Data Only)
   const chartData = useMemo(() => {
@@ -979,9 +977,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     const labels = ['Day 14', 'Day 13', 'Day 12', 'Day 11', 'Day 10', 'Day 9', 'Day 8', 'Day 7', 'Day 6', 'Day 5', 'Day 4', 'Day 3', 'Yesterday', 'Today'];
 
     const viewsPoints = [...emptyPoints];
-    const clicksPoints = [...emptyPoints];
     const reviewsPoints = [...emptyPoints];
-    const inquiriesPoints = [...emptyPoints];
+    const ratingPoints = Array(14).fill(Number(avgRating) || 5.0);
 
     placeVideos.forEach(v => {
       const date = new Date(v.createdAtMs || v.recordedAt || Date.now());
@@ -996,7 +993,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     });
 
     const metricsMap = {
-      viewsCount: {
+      views: {
         points: viewsPoints,
         labels,
         color: '#ffffff',
@@ -1006,17 +1003,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         total: totalViews.toLocaleString(),
         change: 'New'
       },
-      clicks: {
-        points: clicksPoints,
-        labels,
-        color: '#d4d4d8',
-        gradientStart: 'rgba(212, 212, 216, 0.25)',
-        gradientEnd: 'rgba(212, 212, 216, 0.01)',
-        unit: 'clicks',
-        total: totalClicks.toLocaleString(),
-        change: 'New'
-      },
-      reviewsCount: {
+      reviews: {
         points: reviewsPoints,
         labels,
         color: '#ffffff',
@@ -1026,19 +1013,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         total: totalReviews.toLocaleString(),
         change: 'New'
       },
-      inquiries: {
-        points: inquiriesPoints,
+      rating: {
+        points: ratingPoints,
         labels,
-        color: '#a1a1aa',
-        gradientStart: 'rgba(161, 161, 170, 0.25)',
-        gradientEnd: 'rgba(161, 161, 170, 0.01)',
-        unit: 'inquiries',
-        total: totalInquiries.toLocaleString(),
+        color: '#d4d4d8',
+        gradientStart: 'rgba(212, 212, 216, 0.25)',
+        gradientEnd: 'rgba(212, 212, 216, 0.01)',
+        unit: 'stars',
+        total: avgRating,
         change: 'New'
       }
     };
-    return metricsMap[selectedChartMetric as keyof typeof metricsMap] || metricsMap.viewsCount;
-  }, [selectedChartMetric, placeVideos, totalViews, totalClicks, totalReviews, totalInquiries]);
+    return metricsMap[selectedChartMetric] || metricsMap.views;
+  }, [selectedChartMetric, placeVideos, totalViews, totalReviews, avgRating]);
 
   // Handlers
   const handleSelectPlan = (plan: 'basic' | 'pro' | 'premium') => {
@@ -1245,7 +1232,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     { id: 'followers' as BusinessTab, label: t('business.followersDirectory', 'Followers Directory'), icon: Users },
     { id: 'embed' as BusinessTab, label: t('business.websiteEmbed', 'Website Embed Widget'), icon: Code },
     { id: 'qr_invites' as BusinessTab, label: t('business.qrInvites', 'QR Codes & Invites'), icon: QrCode },
-    { id: 'cta' as BusinessTab, label: t('business.videoCTA', 'Video Call-To-Action'), icon: Sliders },
     { id: 'profile' as BusinessTab, label: t('business.profileInfo', 'Business Profile & Info'), icon: Building2 },
     { id: 'billing' as BusinessTab, label: t('business.subscriptionBilling', 'Subscription & Billing'), icon: CreditCard, isProBadge: currentPlan === 'pro' || currentPlan === 'premium' },
   ];
@@ -1643,13 +1629,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     ))}
                   </div>
                 </div>
-                {/* 4 Premium Glass KPI Cards with Micro-Sparklines */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                {/* 3 Premium Glass KPI Cards with Real Metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                   {[
-                    { key: 'views' as const, label: t('business.kpiImpressions', 'Video Profile Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-zinc-800' },
-                    { key: 'clicks' as const, label: t('business.kpiClicks', 'CTA / Booking Clicks'), value: totalClicks.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: MousePointerClick, color: 'text-zinc-200', bg: 'bg-zinc-800' },
+                    { key: 'views' as const, label: t('business.kpiImpressions', 'Video Reviews Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-zinc-800' },
                     { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Video Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Video, color: 'text-white', bg: 'bg-zinc-800' },
-                    { key: 'inquiries' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-zinc-200', bg: 'bg-zinc-800' },
+                    { key: 'rating' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-zinc-200', bg: 'bg-zinc-800' },
                   ].map((stat, i) => {
                     const isSelected = selectedChartMetric === stat.key;
                     const sparklineColor = isSelected ? '#ffffff' : '#71717a';
@@ -1675,7 +1660,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <div className="flex items-end justify-between mb-1">
                             <div className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-none flex items-center gap-1">
                               <span>{stat.value}</span>
-                              {stat.key === 'inquiries' && (
+                              {stat.key === 'rating' && (
                                 <Star className="w-5 h-5 text-white fill-white inline-block drop-shadow-xs" />
                               )}
                             </div>
@@ -1687,7 +1672,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                points={stat.key === 'views' ? '0,15 15,12 30,14 45,8 60,4' : stat.key === 'clicks' ? '0,16 20,15 40,12 60,6' : stat.key === 'reviews' ? '0,18 15,18 30,12 45,15 60,5' : '0,5 20,5 40,5 60,5'}
+                                points={stat.key === 'views' ? '0,15 15,12 30,14 45,8 60,4' : stat.key === 'reviews' ? '0,18 15,18 30,12 45,15 60,5' : '0,10 20,10 40,10 60,10'}
                               />
                             </svg>
                           </div>
@@ -1697,313 +1682,160 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     );
                   })}
                 </div>
-                {/* Interactive Performance Graph & Engagement Breakdown */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  
-                  {/* Left: Interactive SVG Area & Curve Chart (Google Search Console & Cloud Style) */}
-                  <div className="lg:col-span-2 bg-[#0a0a0c] md:bg-zinc-900 rounded-3xl border border-white/[0.06] md:border-zinc-800 text-white md:text-white p-5 md:p-6 shadow-inner  shadow-white/[0.02] flex flex-col justify-between">
-                    <div>
-                      {/* Metric Selector Tabs */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-sm md:text-base font-bold text-white md:text-white">
-                              {selectedChartMetric === 'views' && 'Customer Video Impressions'}
-                              {selectedChartMetric === 'clicks' && 'Direct Booking & CTA Clicks'}
-                              {selectedChartMetric === 'reviews' && 'New Verified Video Reviews'}
-                              {selectedChartMetric === 'inquiries' && 'Direct Inquiries & Calls'}
-                            </h3>
-                            <span className="text-[11px] font-bold text-emerald-400 md:text-emerald-700 bg-emerald-500/10 md:bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-500/20 md:border-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.1)] md:shadow-none flex items-center gap-1">
-                              <TrendingUp className="w-3 h-3" /> {chartData.change === 'New' ? 'Live Analytics' : `${chartData.change} vs prev ${analyticsDateRange}`}
-                            </span>
-                          </div>
-                          <p className="text-xs text-zinc-200 md:text-zinc-200 mt-0.5">
-                            Total {chartData.total} {chartData.unit} recorded during this period
-                          </p>
+
+                {/* Interactive Performance Graph */}
+                <div className="bg-[#0a0a0c] md:bg-zinc-900 rounded-3xl border border-white/[0.06] md:border-zinc-800 text-white md:text-white p-5 md:p-6 shadow-inner shadow-white/[0.02] flex flex-col justify-between">
+                  <div>
+                    {/* Metric Selector Tabs */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm md:text-base font-bold text-white md:text-white">
+                            {selectedChartMetric === 'views' && 'Customer Video Reviews Impressions'}
+                            {selectedChartMetric === 'reviews' && 'Verified Video Reviews'}
+                            {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
+                          </h3>
+                          <span className="text-[11px] font-bold text-emerald-400 md:text-emerald-700 bg-emerald-500/10 md:bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-500/20 md:border-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.1)] md:shadow-none flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3" /> Real Video Impressions Live
+                          </span>
                         </div>
-
-                        {/* Metric Selector Pills */}
-                        <div className="flex flex-wrap items-center gap-1 bg-zinc-950 md:bg-zinc-900 p-1 rounded-xl border border-zinc-800 md:border-zinc-800 self-start sm:self-auto w-full sm:w-auto">
-                          {(['views', 'clicks', 'reviews', 'inquiries'] as const).map(m => (
-                            <button
-                              key={m}
-                              onClick={() => setSelectedChartMetric(m)}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
-                                selectedChartMetric === m ? 'bg-zinc-800 md:bg-zinc-900 text-white md:text-white shadow-md  font-bold' : 'text-zinc-200 md:text-zinc-200 hover:text-white md:hover:text-zinc-900'
-                              }`}
-                            >
-                              {m === 'views' ? 'Impressions' : m === 'clicks' ? 'Bookings' : m === 'reviews' ? 'Reviews' : 'Inquiries'}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* SVG Area & Bézier Curve Chart */}
-                      <div className="relative w-full h-64 select-none pt-2">
-                        {/* Hover Tooltip display */}
-                        {hoveredChartPoint !== null && (
-                          <div 
-                            className="absolute top-0 transform -translate-x-1/2 bg-zinc-800 md:bg-zinc-900 text-white md:text-white rounded-xl px-3 py-1.5 shadow-xl  border border-zinc-700 md:border-zinc-800 pointer-events-none z-30 flex flex-col items-center text-xs animate-in fade-in zoom-in-95 duration-100"
-                            style={{ 
-                              left: `${(hoveredChartPoint / (chartData.points.length - 1)) * 92 + 4}%` 
-                            }}> 
- <span className="font-extrabold text-sm text-white md:text-white">
-                              {chartData.points[hoveredChartPoint].toLocaleString()} {chartData.unit}
-                            </span>
-                            <span className="text-[10px] text-zinc-200 md:text-zinc-200 font-medium">
-                              {chartData.labels[hoveredChartPoint]}
-                            </span>
-                          </div>
-                        )}
-
-                        <svg 
-                          viewBox="0 0 700 200" 
-                          className="w-full h-full overflow-visible"
-                          preserveAspectRatio="none"
-                        >
-                          <defs>
-                            <linearGradient id="metricGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" stopColor={chartData.color} stopOpacity="0.28" />
-                              <stop offset="100%" stopColor={chartData.color} stopOpacity="0.01" />
-                            </linearGradient>
-                          </defs>
-
-                          {/* Grid Lines */}
-                          <line x1="0" y1="40" x2="700" y2="40" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
-                          <line x1="0" y1="90" x2="700" y2="90" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
-                          <line x1="0" y1="140" x2="700" y2="140" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
-                          <line x1="0" y1="190" x2="700" y2="190" stroke="currentColor" className="text-zinc-700 md:text-zinc-200" strokeWidth="1.5" />
-
-                          {/* Generate Smooth Path */}
-                          {(() => {
-                            const pts = chartData.points;
-                            const maxVal = Math.max(...pts, 1);
-                            const minVal = 0;
-                            const range = maxVal - minVal;
-                            
-                            const coordinates = pts.map((val, idx) => {
-                              const x = (idx / (pts.length - 1)) * 680 + 10;
-                              const y = 180 - ((val - minVal) / range) * 140;
-                              return { x, y, val };
-                            });
-
-                            let pathD = `M ${coordinates[0].x} ${coordinates[0].y}`;
-                            for (let i = 0; i < coordinates.length - 1; i++) {
-                              const curr = coordinates[i];
-                              const next = coordinates[i + 1];
-                              const cpX1 = curr.x + (next.x - curr.x) / 2;
-                              const cpY1 = curr.y;
-                              const cpX2 = curr.x + (next.x - curr.x) / 2;
-                              const cpY2 = next.y;
-                              pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
-                            }
-
-                            const areaD = `${pathD} L ${coordinates[coordinates.length - 1].x} 190 L ${coordinates[0].x} 190 Z`;
-
-                            return (
-                              <>
-                                {/* Gradient Filled Area */}
-                                <path d={areaD} fill="url(#metricGradient)" />
-                                
-                                {/* Stroke Line */}
-                                <path 
-                                  d={pathD} 
-                                  fill="none" 
-                                  stroke={chartData.color} 
-                                  strokeWidth="3.5" 
-                                  strokeLinecap="round" 
-                                  strokeLinejoin="round" 
-                                />
-
-                                {/* Interactive Data Points */}
-                                {coordinates.map((coord, idx) => (
-                                  <g key={idx} className="cursor-pointer">
-                                    <circle
-                                      cx={coord.x}
-                                      cy={coord.y}
-                                      r={hoveredChartPoint === idx ? 7 : 4}
-                                      fill="#18181b"
-                                      stroke={chartData.color}
-                                      strokeWidth={hoveredChartPoint === idx ? 3.5 : 2.5}
-                                      className="transition-all duration-150"
-                                      onMouseEnter={() => setHoveredChartPoint(idx)}
-                                      onMouseLeave={() => setHoveredChartPoint(null)}
-                                    />
-                                    {/* Invisible larger hit area for smooth hovering */}
-                                    <circle
-                                      cx={coord.x}
-                                      cy={coord.y}
-                                      r={20}
-                                      fill="transparent"
-                                      onMouseEnter={() => setHoveredChartPoint(idx)}
-                                      onMouseLeave={() => setHoveredChartPoint(null)}
-                                    />
-                                  </g>
-                                ))}
-                              </>
-                            );
-                          })()}
-                        </svg>
-                      </div>
-
-                      {/* X-Axis Labels */}
-                      <div className="flex justify-between text-[11px] font-medium text-zinc-200 md:text-zinc-200 mt-2 px-2 border-t border-zinc-800 md:border-zinc-800 pt-2">
-                        <span>Day 1</span>
-                        <span>Day 7</span>
-                        <span>Day 15</span>
-                        <span>Day 22</span>
-                        <span>Today</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Quick Action Cards */}
-                  <div className="space-y-4">
-                    {/* QR Stand Card */}
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-white relative overflow-hidden group">
-                      <div className="relative z-10">
-                        <Sparkles className="w-6 h-6 text-white mb-3" />
-                        <h4 className="font-extrabold text-lg mb-1 text-white">Increase Video Reviews</h4>
-                        <p className="text-xs text-zinc-200 mb-5 leading-relaxed">
-                          Venues with QR standees on tables collect 4.2x more customer video reviews every week.
+                        <p className="text-xs text-zinc-200 md:text-zinc-200 mt-0.5">
+                          Total {chartData.total} {chartData.unit} recorded during this period
                         </p>
-                        <button
-                          onClick={() => setActiveTab('qr_invites')}
-                          className="w-full py-3 px-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                        >
-                          <QrCode className="w-4 h-4 text-white" />
-                          Print QR Table Stands
-                        </button>
                       </div>
-                    </div>
-                    
-                    {/* Embed Widget Card */}
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-white relative overflow-hidden group">
-                      <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-2 text-white font-bold text-sm">
-                          <Code className="w-4 h-4 text-white" />
-                          <span>Embed On Your Site</span>
-                        </div>
-                        <p className="text-xs text-zinc-200 mb-5 leading-relaxed">
-                          Add the official Yoouz video carousel to your homepage in under 60 seconds.
-                        </p>
-                        <button
-                          onClick={() => setActiveTab('embed')}
-                          className="w-full py-3 px-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-                        >
-                          <Code className="w-4 h-4 text-white" />
-                          Configure Embed Widget
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* Top Video Reviews Feed Preview */}
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-6 shadow-xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white leading-tight">Recent Customer Video Reviews</h3>
-                      <p className="text-xs text-zinc-200 mt-1">Verified diners who filmed 60-second reviews at your venue</p>
-                    </div>
-                    <button
-                      onClick={() => setActiveTab('reviews')}
-                      className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1 cursor-pointer transition-colors shrink-0 whitespace-nowrap"
-                    >
-                      Manage All ({placeVideos.length}) <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    {placeVideos.slice(0, 3).map((vid) => (
-                      <div 
-                         key={vid.id}
-                        className="border border-zinc-800 rounded-[24px] p-2 flex flex-col justify-between hover:border-zinc-700 transition-colors bg-zinc-950 shadow-xs text-white"
-                      >
-                        <div>
-                          {/* Video Poster Thumbnail Frame */}
-                          <div 
-                             onClick={() => setActiveVideoModal(vid)}
-                            className="w-full aspect-[4/5] rounded-[18px] overflow-hidden bg-[#050505] relative mb-3 cursor-pointer group"
-                          >
-                            <img
-                              src={vid.thumbnailUrl || vid.author?.avatar}
-                              alt={vid.dishOrItem || 'Video Review'}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              referrerPolicy="no-referrer"
-                             onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- <div data-video-overlay="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/40 flex flex-col justify-between p-3 text-white">
-                              <div className="flex items-center justify-between">
-                                <span className="px-2 py-1 rounded-full bg-black/60 backdrop-blur-md text-[9px] font-black text-white flex items-center gap-1 border border-white/20">
-                                  <Video className="w-2.5 h-2.5 text-zinc-200" /> VIDEO REVIEW
-                                </span>
-                                <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-mono font-medium text-white border border-white/10">
-                                  0:{vid.durationSeconds || 15}
-                                </span>
-                              </div>
-                              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:bg-white group-hover:text-zinc-950 transition-all duration-300 z-10">
-                                <Play className="w-5 h-5 fill-current ml-1" />
-                              </div>
-                              <div className="flex items-center justify-between mt-auto">
-                                <span className="text-xs font-bold text-white drop-shadow-md truncate">
-                                  {vid.dishOrItem || 'Customer Review'}
-                                </span>
-                                <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-zinc-800/80 backdrop-blur-md text-white text-[10px] font-bold shrink-0 border border-zinc-700">
-                                  ★ {vid.rating || 5}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Author Info */}
-                          <div className="flex items-center gap-2.5 mb-3 px-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (onOpenCreator && vid.author) {
-                                  onOpenCreator(vid.author);
-                                }
-                              }}
-                              className="flex items-center gap-2.5 truncate text-left group cursor-pointer hover:opacity-85 transition-opacity flex-1 min-w-0"
-                            >
-                              <img
-                                src={vid.author?.avatar}
-                                alt={vid.author?.name}
-                                className="w-8 h-8 rounded-full object-cover ring-1 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
-                                referrerPolicy="no-referrer"
-                               onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- <div className="truncate flex-1 min-w-0">
-                                <div className="text-sm font-bold text-white group-hover:text-zinc-200 transition-colors truncate">
-                                  {vid.author?.name || 'Customer Review'}
-                                </div>
-                                <div className="text-[10px] text-zinc-200 truncate">
-                                  {formatRecordedDate(vid.recordedAt, vid.createdAtMs)}
-                                </div>
-                              </div>
-                            </button>
-                          </div>
-                          
-                          {/* AI Transcript */}
-                          <div className="bg-zinc-900 p-3 rounded-2xl border border-dashed border-zinc-800 mb-1 mx-1">
-                            <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-zinc-200 uppercase tracking-wider mb-1.5">
-                              <Sparkles className="w-3 h-3 text-zinc-200" />
-                              <span>AI Video Transcript</span>
-                            </div>
-                            <p className="text-xs text-zinc-200 line-clamp-2 leading-relaxed italic font-serif">
-                              "{vid.caption}"
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between pt-4 pb-3 px-3 border-t border-zinc-800 mt-3">
-                          <span className="font-semibold text-[11px] text-zinc-200">{currentPlace.website ? new URL(currentPlace.website).hostname : 'View Link'}</span>
+
+                      {/* Metric Selector Pills */}
+                      <div className="flex flex-wrap items-center gap-1 bg-zinc-950 md:bg-zinc-900 p-1 rounded-xl border border-zinc-800 md:border-zinc-800 self-start sm:self-auto w-full sm:w-auto">
+                        {(['views', 'reviews', 'rating'] as const).map(m => (
                           <button
-                            onClick={() => setActiveVideoModal(vid)}
-                            className="text-zinc-200 text-xs font-bold hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                            key={m}
+                            onClick={() => setSelectedChartMetric(m)}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
+                              selectedChartMetric === m ? 'bg-zinc-800 md:bg-zinc-900 text-white md:text-white shadow-md font-bold' : 'text-zinc-200 md:text-zinc-200 hover:text-white md:hover:text-zinc-900'
+                            }`}
                           >
-                            <Play className="w-3.5 h-3.5 fill-current" /> Watch Video
+                            {m === 'views' ? 'Impressions' : m === 'reviews' ? 'Reviews' : 'Rating'}
                           </button>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+
+                    {/* SVG Area & Bézier Curve Chart */}
+                    <div className="relative w-full h-72 select-none pt-2">
+                      {/* Hover Tooltip display */}
+                      {hoveredChartPoint !== null && (
+                        <div 
+                          className="absolute top-0 transform -translate-x-1/2 bg-zinc-800 md:bg-zinc-900 text-white md:text-white rounded-xl px-3 py-1.5 shadow-xl border border-zinc-700 md:border-zinc-800 pointer-events-none z-30 flex flex-col items-center text-xs animate-in fade-in zoom-in-95 duration-100"
+                          style={{ 
+                            left: `${(hoveredChartPoint / (chartData.points.length - 1)) * 92 + 4}%` 
+                          }}> 
+                          <span className="font-extrabold text-sm text-white md:text-white">
+                            {chartData.points[hoveredChartPoint].toLocaleString()} {chartData.unit}
+                          </span>
+                          <span className="text-[10px] text-zinc-200 md:text-zinc-200 font-medium">
+                            {chartData.labels[hoveredChartPoint]}
+                          </span>
+                        </div>
+                      )}
+
+                      <svg 
+                        viewBox="0 0 700 200" 
+                        className="w-full h-full overflow-visible"
+                        preserveAspectRatio="none"
+                      >
+                        <defs>
+                          <linearGradient id="metricGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor={chartData.color} stopOpacity="0.28" />
+                            <stop offset="100%" stopColor={chartData.color} stopOpacity="0.01" />
+                          </linearGradient>
+                        </defs>
+
+                        {/* Grid Lines */}
+                        <line x1="0" y1="40" x2="700" y2="40" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="90" x2="700" y2="90" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="140" x2="700" y2="140" stroke="currentColor" className="text-zinc-800 md:text-zinc-200" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="190" x2="700" y2="190" stroke="currentColor" className="text-zinc-700 md:text-zinc-200" strokeWidth="1.5" />
+
+                        {/* Generate Smooth Path */}
+                        {(() => {
+                          const pts = chartData.points;
+                          const maxVal = Math.max(...pts, 1);
+                          const minVal = 0;
+                          const range = maxVal - minVal;
+                          
+                          const coordinates = pts.map((val, idx) => {
+                            const x = (idx / (pts.length - 1)) * 680 + 10;
+                            const y = 180 - ((val - minVal) / range) * 140;
+                            return { x, y, val };
+                          });
+
+                          let pathD = `M ${coordinates[0].x} ${coordinates[0].y}`;
+                          for (let i = 0; i < coordinates.length - 1; i++) {
+                            const curr = coordinates[i];
+                            const next = coordinates[i + 1];
+                            const cpX1 = curr.x + (next.x - curr.x) / 2;
+                            const cpY1 = curr.y;
+                            const cpX2 = curr.x + (next.x - curr.x) / 2;
+                            const cpY2 = next.y;
+                            pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
+                          }
+
+                          const areaD = `${pathD} L ${coordinates[coordinates.length - 1].x} 190 L ${coordinates[0].x} 190 Z`;
+
+                          return (
+                            <>
+                              {/* Gradient Filled Area */}
+                              <path d={areaD} fill="url(#metricGradient)" />
+                              
+                              {/* Stroke Line */}
+                              <path 
+                                d={pathD} 
+                                fill="none" 
+                                stroke={chartData.color} 
+                                strokeWidth="3.5" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                              />
+
+                              {/* Interactive Data Points */}
+                              {coordinates.map((coord, idx) => (
+                                <g key={idx} className="cursor-pointer">
+                                  <circle
+                                    cx={coord.x}
+                                    cy={coord.y}
+                                    r={hoveredChartPoint === idx ? 7 : 4}
+                                    fill="#18181b"
+                                    stroke={chartData.color}
+                                    strokeWidth={hoveredChartPoint === idx ? 3.5 : 2.5}
+                                    className="transition-all duration-150"
+                                    onMouseEnter={() => setHoveredChartPoint(idx)}
+                                    onMouseLeave={() => setHoveredChartPoint(null)}
+                                  />
+                                  {/* Invisible larger hit area for smooth hovering */}
+                                  <circle
+                                    cx={coord.x}
+                                    cy={coord.y}
+                                    r={20}
+                                    fill="transparent"
+                                    onMouseEnter={() => setHoveredChartPoint(idx)}
+                                    onMouseLeave={() => setHoveredChartPoint(null)}
+                                  />
+                                </g>
+                              ))}
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+
+                    {/* X-Axis Labels */}
+                    <div className="flex justify-between text-[11px] font-medium text-zinc-200 md:text-zinc-200 mt-2 px-2 border-t border-zinc-800 md:border-zinc-800 pt-2">
+                      <span>Day 1</span>
+                      <span>Day 7</span>
+                      <span>Day 15</span>
+                      <span>Day 22</span>
+                      <span>Today</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3336,562 +3168,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           )}
                         </button>
                       )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {/* TAB 5: VIDEO CALL-TO-ACTION (CTA) */}
-            {activeTab === 'cta' && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-6 sm:p-7 shadow-xs">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h2 className="text-xl font-extrabold text-white">Custom Video Call-To-Action (CTA) Studio</h2>
-                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-extrabold uppercase tracking-wider">
-                          Universal Business Suite
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-200 max-w-2xl">
-                        Overlay a high-converting, clickable action button on every video review filmed at your venue, hotel, service route, clinic, or online shop.
-                      </p>
-                    </div>
-                    {isCtaSaved && (
-                      <span className="px-3 py-1.5 rounded-full bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-700 flex items-center gap-1.5 shadow-2xs shrink-0 animate-in fade-in">
-                        <Check className="w-4 h-4 text-white" /> CTA Overlays Live Across Feed!
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    {/* Left 7 Cols: Customization Controls */}
-                    <div className="lg:col-span-7 space-y-6">
-                      
-                      {/* Industry Filter Tabs */}
-                      <div>
-                        <label className="block text-xs font-extrabold text-zinc-200 mb-2 uppercase tracking-wider">
-                          1. Select Industry Action Presets
-                        </label>
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                          {[
-                            { id: 'all', label: 'All Industries' },
-                            { id: 'services', label: '🔧 Trades & Services' },
-                            { id: 'hotel', label: '🏨 Hotel & Lodging' },
-                            { id: 'professional', label: '💇 Salons & Spas' },
-                            { id: 'health', label: '🩺 Healthcare & Clinics' },
-                            { id: 'retail', label: '🛍️ Retail & Store' },
-                            { id: 'dining', label: '🍽️ Dining & Food' },
-                            { id: 'auto', label: '🚗 Auto & Mechanics' },
-                            { id: 'legal', label: '💼 Legal & Advisory' },
-                          ].map(cat => (
-                            <button
-                              key={cat.id}
-                              type="button"
-                              onClick={() => setCtaCategoryFilter(cat.id as any)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                ctaCategoryFilter === cat.id
-                                  ? 'bg-white text-zinc-950 border-white shadow-2xs font-extrabold'
-                                  : 'bg-zinc-950 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:text-white'
-                              }`}
-                            >
-                              {cat.label}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Preset Buttons Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {[
-                            // Trades & Services
-                            { id: 'book_service', label: 'Book Service Visit', category: 'services', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/book-service' },
-                            { id: 'get_estimate', label: 'Get Free Estimate', category: 'services', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/quote' },
-                            { id: 'emergency_call', label: 'Call Technician Direct', category: 'services', url: 'tel:+18005550199' },
-                            { id: 'schedule_inspection', label: 'Schedule Inspection', category: 'services', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/inspect' },
-                            
-                            // Hotel & Lodging
-                            { id: 'book_room', label: 'Book Room / Stay', category: 'hotel', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/reserve' },
-                            { id: 'check_rates', label: 'Check Rates & Dates', category: 'hotel', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/rates' },
-                            { id: 'reserve_suite', label: 'Reserve Suite (15% Off)', category: 'hotel', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/special-offer' },
-                            
-                            // Salons & Spas
-                            { id: 'book_appointment', label: 'Book Stylist / Chair', category: 'professional', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/schedule' },
-                            { id: 'free_consult', label: 'Schedule Facial / Spa', category: 'professional', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/spa' },
-                            { id: 'treatment_menu', label: 'View Treatment Menu', category: 'professional', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/menu' },
-
-                            // Healthcare & Clinics
-                            { id: 'patient_exam', label: 'Schedule Patient Exam', category: 'health', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/appointment' },
-                            { id: 'telehealth_visit', label: 'Request Consultation', category: 'health', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/consult' },
-
-                            // Retail
-                            { id: 'shop_now', label: 'Shop Products', category: 'retail', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/shop' },
-                            { id: 'claim_discount', label: 'Claim 15% Off Code', category: 'retail', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/coupon' },
-
-                            // Dining
-                            { id: 'reserve_table', label: 'Reserve Table (1-Tap)', category: 'dining', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/reserve' },
-                            { id: 'order_delivery', label: 'Order Online Pickup', category: 'dining', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/order' },
-                            { id: 'view_menu', label: 'View Price List / Menu', category: 'dining', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/menu' },
-
-                            // Automotive
-                            { id: 'auto_service', label: 'Schedule Oil & Tire', category: 'auto', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/service' },
-                            { id: 'auto_quote', label: 'Get Repair Estimate', category: 'auto', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/estimate' },
-
-                            // Legal & Advisory
-                            { id: 'legal_consult', label: 'Book Case Evaluation', category: 'legal', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/consultation' },
-                            { id: 'advisor_meeting', label: 'Schedule Advisory Call', category: 'legal', url: 'https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com/schedule' },
-                          ]
-                            .filter(p => ctaCategoryFilter === 'all' || p.category === ctaCategoryFilter)
-                            .map(opt => (
-                              <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => {
-                                  setCtaType(opt.id);
-                                  setCtaLabelCustom(opt.label);
-                                  if (!ctaUrl || ctaUrl.includes('therusticspoon')) {
-                                    setCtaUrl(opt.url);
-                                  }
-                                }}
-                                className={`p-2.5 rounded-xl text-xs font-bold border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                                  ctaType === opt.id || ctaLabelCustom === opt.label
-                                    ? 'bg-white text-zinc-950 border-white shadow-xs font-extrabold'
-                                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border-zinc-800'
-                                }`}
-                              >
-                                <span className="line-clamp-1">{opt.label}</span>
-                                <span className={`text-[9px] font-normal capitalize mt-1 ${ctaType === opt.id || ctaLabelCustom === opt.label ? 'text-zinc-600' : 'text-zinc-200'}`}>
-                                  {opt.category} preset
-                                </span>
-                              </button>
-                            ))}
-                        </div>
-                      </div>
-
-                      {/* Manual Custom Button Text Input */}
-                      <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
-                            <span>2. Manual Button Label (Type Anything)</span>
-                            <span className="text-zinc-200 font-bold text-[10px] bg-zinc-800 px-2 py-0.5 rounded-md border border-zinc-700">Live Sync</span>
-                          </label>
-                          <span className="text-[10px] text-zinc-200 font-mono">
-                            {ctaLabelCustom.length}/35 chars
-                          </span>
-                        </div>
-                        <input
-                          type="text"
-                          maxLength={35}
-                          value={ctaLabelCustom}
-                          onChange={(e) => {
-                            setCtaLabelCustom(e.target.value);
-                            setCtaType('custom_manual');
-                          }}
-                          placeholder="e.g. Call Emergency Plumber, Book Suite 20% Off, Get Estimate..."
-                          className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-bold focus:outline-hidden focus:ring-1 focus:ring-zinc-700"
-                        />
-                        <p className="text-[10px] text-zinc-200">
-                          Type any custom wording for plumbers, hotels, consultants, or online stores. Updates smartphone preview live on the right.
-                        </p>
-                      </div>
-
-                      {/* Button Accent Color Theme */}
-                      <div>
-                        <label className="block text-xs font-extrabold text-zinc-200 mb-2 uppercase tracking-wider">
-                          3. Button Brand Style
-                        </label>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {[
-                            { name: 'Pure White', hex: '#ffffff' },
-                            { name: 'Light Zinc', hex: '#d4d4d8' },
-                            { name: 'Mid Gray', hex: '#71717a' },
-                            { name: 'Dark Charcoal', hex: '#27272a' },
-                            { name: 'Deep Black', hex: '#09090b' },
-                          ].map(c => (
-                            <button
-                              key={c.hex}
-                              type="button"
-                              onClick={() => setCtaAccentColor(c.hex)}
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
-                                ctaAccentColor.toLowerCase() === c.hex
-                                  ? 'border-white ring-2 ring-zinc-600 bg-white text-zinc-950 font-extrabold shadow-2xs'
-                                  : 'border-zinc-800 hover:bg-zinc-800 text-zinc-200'
-                              }`}
-                            >
-                              <span className="w-3.5 h-3.5 rounded-full border border-zinc-700 shadow-2xs" style={{ backgroundColor: c.hex }} />
-                              <span>{c.name}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Destination Link Input & Quick Shortcuts */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-extrabold text-zinc-200 uppercase tracking-wider">
-                            4. Destination Link (URL or Phone)
-                          </label>
-                          {ctaUrl && (
-                            <a
-                              href={ctaUrl.startsWith('tel:') ? ctaUrl : (ctaUrl.startsWith('http') ? ctaUrl : `https://${ctaUrl}`)}
-                              target={ctaUrl.startsWith('tel:') ? '_self' : '_blank'}
-                              rel="noreferrer"
-                              className="text-[10px] font-bold text-zinc-200 hover:underline flex items-center gap-1"
-                            >
-                              <span>Test Link</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={ctaUrl}
-                            onChange={(e) => setCtaUrl(e.target.value)}
-                            placeholder="https://yourbusiness.com/book or tel:+18005550199"
-                            className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-xs text-zinc-200 font-mono focus:outline-hidden focus:ring-1 focus:ring-zinc-700"
-                          />
-
-                          {/* Quick Append Route Helper Chips */}
-                          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                            <span className="text-[10px] font-bold text-zinc-200">Quick URL Paths:</span>
-                            {['/booking', '/quote', '/services', '/contact', '/rates', '/reserve', '/order', '/menu', '/shop'].map(path => (
-                              <button
-                                key={path}
-                                type="button"
-                                onClick={() => {
-                                  try {
-                                    const base = ctaUrl.split('/')[0] + '//' + (ctaUrl.split('/')[2] || (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
-                                    setCtaUrl(base + path);
-                                  } catch {
-                                    setCtaUrl('https://' + (currentPlace.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com' + path);
-                                  }
-                                }}
-                                className="px-2 py-0.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold cursor-pointer transition-colors border border-zinc-800"
-                              >
-                                + {path}
-                              </button>
-                            ))}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const cleanPhone = ((currentPlace as any).phone || '+18005550199').replace(/[^0-9+]/g, '');
-                                setCtaUrl(`tel:${cleanPhone}`);
-                              }}
-                              className="px-2 py-0.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] font-mono font-bold cursor-pointer transition-colors border border-zinc-700"
-                            >
-                              + Phone Call
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Apply Button */}
-                      <button
-                        type="button"
-                        onClick={handleSaveCta}
-                        className="w-full py-3.5 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] font-extrabold"
-                      >
-                        <Check className="w-4 h-4" />
-                        <span>Save & Apply CTA Overlay to All Video Reviews</span>
-                      </button>
-
-                    </div>
-
-                    {/* Right 5 Cols: Smartphone Overlay Viewer Simulation */}
-                    <div className="lg:col-span-5 flex flex-col items-center justify-center bg-zinc-950 rounded-3xl p-6 border border-zinc-800 shadow-inner">
-                      
-                      {/* Preview Mode Switcher */}
-                      <div className="flex items-center justify-between w-full mb-3">
-                        <div className="flex items-center gap-2">
-                          <Smartphone className="w-4 h-4 text-zinc-200" />
-                          <span className="text-xs font-extrabold text-zinc-200 uppercase tracking-wider">
-                            Interactive Feed Preview
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 bg-zinc-900 p-0.5 rounded-lg border border-zinc-800">
-                          <button
-                            type="button"
-                            onClick={() => setCtaPreviewMode('feed')}
-                            className={`px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                              ctaPreviewMode === 'feed' ? 'bg-white text-zinc-950 font-extrabold' : 'text-zinc-200 hover:text-white'
-                            }`}
-                          >
-                            Feed Video
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCtaPreviewMode('profile')}
-                            className={`px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                              ctaPreviewMode === 'profile' ? 'bg-white text-zinc-950 font-extrabold' : 'text-zinc-200 hover:text-white'
-                            }`}
-                          >
-                            Place Drawer
-                          </button>
-                        </div>
-                      </div>
-
-                      {(() => {
-                        const activePreviewVideo = placeVideos[0] || videos[0];
-                        const previewAuthorName = activePreviewVideo?.author?.name || currentUser?.name || 'Elena Rostova';
-                        const previewAuthorAvatar = activePreviewVideo?.author?.avatar || currentUser?.avatar || `/api/avatar?name=${encodeURIComponent(previewAuthorName)}&background=27272a&color=fff`;
-                        const previewRating = activePreviewVideo?.rating || 5;
-                        const previewLikes = activePreviewVideo?.likes || 12;
-                        const previewComments = (activePreviewVideo?.comments?.length || activePreviewVideo?.commentsCount || 2) + (activePreviewVideo?.ownerResponse ? 1 : 0);
-                        const previewBookmarks = activePreviewVideo?.bookmarksCount || 0;
-                        const previewShares = activePreviewVideo?.sharesCount || 4;
-
-                        return (
-                          <div data-phone-preview="true" className="w-64 h-[470px] bg-black rounded-[38px] border-4 border-zinc-800 shadow-2xl relative overflow-hidden flex flex-col justify-between p-3 text-white select-none ring-1 ring-white/10">
-                            
-                            {ctaPreviewMode === 'feed' ? (
-                              <>
-                                {/* Background Video Thumbnail */}
-                                <img
-                                  src={activePreviewVideo?.thumbnailUrl || currentPlace.bannerUrl || currentPlace.ogImage || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'}
-                                  alt="Video Feed"
-                                  className="absolute inset-0 w-full h-full object-cover opacity-85"
-                                  referrerPolicy="no-referrer"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90 pointer-events-none" />
-
-                                {/* Top Bar: Feed Logo & Audio Control */}
-                                <div className="relative z-10 flex items-center justify-between text-[11px] pt-1 px-1">
-                                  <span className="font-extrabold text-white tracking-wide drop-shadow-md flex items-center gap-1">
-                                    <span>Yoouz Feed</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                                  </span>
-                                  <div className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/20">
-                                    <Volume2 className="w-3.5 h-3.5 text-white/90" />
-                                  </div>
-                                </div>
-
-                                {/* Center Play Button Overlay */}
-                                <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                                  <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-2xl">
-                                    <Play className="w-6 h-6 text-white fill-white ml-0.5" />
-                                  </div>
-                                </div>
-
-                                {/* Public Player UI: Bottom Info & Right Sidebar */}
-                                <div className="relative z-10 flex items-end justify-between gap-2 pt-10">
-                                  
-                                  {/* Bottom Left: Speaker Info, Rating, & Business CTA */}
-                                  <div className="flex-1 min-w-0 space-y-2">
-                                    {/* Speaker / Reviewer Info */}
-                                    <div className="space-y-0.5">
-                                      <div className="flex items-center gap-1 font-bold text-white text-[12px] drop-shadow-md">
-                                        <span className="truncate">By {previewAuthorName}</span>
-                                        <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <div className="flex items-center gap-0.5">
-                                          {Array.from({ length: 5 }).map((_, i) => (
-                                            <Star
-                                              key={i}
-                                              className={`w-2.5 h-2.5 ${
-                                                i < Math.round(previewRating)
-                                                  ? "fill-white text-white drop-shadow-xs"
-                                                  : "fill-zinc-600/70 text-zinc-200/80"
-                                              }`}
-                                            />
-                                          ))}
-                                        </div>
-                                        <span className="text-[9px] font-medium text-white/80 drop-shadow-xs">Yesterday</span>
-                                      </div>
-                                    </div>
-
-                                    {/* Custom Action CTA Overlay Pill with Official Business Logo & Click Test */}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setCtaTestClicked(true);
-                                        setTimeout(() => setCtaTestClicked(false), 2200);
-                                      }}
-                                      style={{ backgroundColor: ctaAccentColor }}
-                                      className={`w-full py-2 px-2.5 rounded-xl text-[11px] font-bold flex items-center justify-between shadow-lg border border-white/20 transition-transform active:scale-95 cursor-pointer text-left ${
-                                        ctaAccentColor.toLowerCase() === '#ffffff' || ctaAccentColor.toLowerCase() === '#d4d4d8' ? 'text-zinc-950' : 'text-white'
-                                      }`}
-                                    >
-                                      <div className="flex items-center gap-1.5 truncate">
-                                        <CopoBrandLogo
-                                          domain={currentPlace.website}
-                                          name={currentPlace.name}
-                                          website={currentPlace.website}
-                                          logoUrl={(currentPlace as any).logoUrl || (currentPlace as any).icon}
-                                          className="w-5 h-5 rounded bg-white overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs border border-zinc-200/20"
-                                          imageClassName="w-full h-full object-contain rounded-[3px]"
-                                          fallbackTextClassName="font-extrabold text-[9px] text-white"
-                                        />
-                                        <span className="truncate">{ctaLabelCustom || 'Book Service / Appointment'}</span>
-                                      </div>
-                                      <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-80" />
-                                    </button>
-                                  </div>
-
-                                  {/* Right Sidebar: Social Actions */}
-                                  <div className="flex flex-col items-center gap-2.5 shrink-0 text-white text-[9px] font-bold">
-                                    {/* Reviewer Avatar + Follow */}
-                                    <div className="relative">
-                                      <div className="w-8 h-8 rounded-full border-2 border-white/80 overflow-hidden bg-zinc-900 shadow-md">
-                                        <img
-                                          src={previewAuthorAvatar}
-                                          alt={previewAuthorName}
-                                          className="w-full h-full object-cover"
-                                          referrerPolicy="no-referrer"
-                                        />
-                                      </div>
-                                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white text-zinc-950 flex items-center justify-center text-[9px] font-black border border-white">
-                                        +
-                                      </div>
-                                    </div>
-
-                                    {/* Like */}
-                                    <div className="flex flex-col items-center">
-                                      <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10">
-                                        <Heart className="w-4 h-4 text-white" />
-                                      </div>
-                                      <span>{previewLikes}</span>
-                                    </div>
-
-                                    {/* Comments */}
-                                    <div className="flex flex-col items-center">
-                                      <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10">
-                                        <MessageCircle className="w-4 h-4 text-white" />
-                                      </div>
-                                      <span>{previewComments}</span>
-                                    </div>
-
-                                    {/* Share */}
-                                    <div className="flex flex-col items-center">
-                                      <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10">
-                                        <Share2 className="w-4 h-4 text-white" />
-                                      </div>
-                                      <span>{previewShares}</span>
-                                    </div>
-                                  </div>
-
-                                </div>
-                              </>
-                            ) : (
-                              /* Place Drawer Profile Preview Mode */
-                              <div className="h-full flex flex-col justify-between bg-zinc-950 text-white rounded-[28px] p-3 -m-1">
-                                <div className="space-y-2">
-                                  <div className="h-24 rounded-xl bg-zinc-900 overflow-hidden relative border border-zinc-800">
-                                    <img
-                                      src={currentPlace.bannerUrl || currentPlace.ogImage || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'}
-                                      alt="Cover"
-                                      loading="eager"
-                                      decoding="sync"
-                                      fetchPriority="high"
-                                      className="w-full h-full object-cover"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                    <div className="absolute -bottom-2 left-3 w-10 h-10 rounded-lg bg-white border border-black/10 text-black p-0.5 shadow-sm">
-                                      <CopoBrandLogo
-                                        domain={currentPlace.website}
-                                        name={currentPlace.name}
-                                        website={currentPlace.website}
-                                        logoUrl={(currentPlace as any).logoUrl || (currentPlace as any).icon}
-                                        className="w-full h-full object-contain"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="pt-2">
-                                    <h4 className="font-extrabold text-xs text-white truncate flex items-center gap-1">
-                                      <span className="truncate">{currentPlace.name}</span>
-                                      <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
-                                    </h4>
-                                    <p className="text-[10px] text-zinc-200 truncate">{currentPlace.address}</p>
-                                    <div className="flex items-center gap-1 mt-1">
-                                      <Star className="w-3 h-3 fill-white text-white" />
-                                      <span className="text-[10px] font-bold text-zinc-200">4.9</span>
-                                      <span className="text-[9px] text-zinc-200">(24 verified videos)</span>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1 pt-4 border-t border-zinc-800">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setCtaTestClicked(true);
-                                      setTimeout(() => setCtaTestClicked(false), 2200);
-                                    }}
-                                    style={{ backgroundColor: ctaAccentColor }}
-                                    className={`w-full py-2.5 font-bold text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${
-                                      ctaAccentColor.toLowerCase() === '#ffffff' || ctaAccentColor.toLowerCase() === '#d4d4d8' ? 'text-zinc-950' : 'text-white'
-                                    }`}
-                                  >
-                                    <span>{ctaLabelCustom || 'Book Service / Appointment'}</span>
-                                    <ExternalLink className="w-3 h-3 opacity-80" />
-                                  </button>
-                                  <span className="block text-[9px] text-zinc-200 text-center font-medium">
-                                    Target: {ctaUrl.split('/')[2] || ctaUrl || 'your website'}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Simulated Action Toast Feedback */}
-                            {ctaTestClicked && (
-                              <div className="absolute inset-x-3 bottom-14 z-30 p-2.5 rounded-xl bg-zinc-900/95 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold shadow-2xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
-                                <div className="flex items-center gap-1.5 truncate">
-                                  <CheckCircle className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                                  <span className="truncate">Opening destination...</span>
-                                </div>
-                                <span className="text-[9px] font-mono text-zinc-200 shrink-0">200 OK</span>
-                              </div>
-                            )}
-
-                          </div>
-                        );
-                      })()}
-
-                      {/* Informational Guidance Box */}
-                      <div className="mt-4 p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-200 space-y-2.5 max-w-xs text-left shadow-lg">
-                        <div className="font-bold text-white flex items-center gap-2 text-xs">
-                          <div className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-200 flex items-center justify-center border border-zinc-700">
-                            <Sparkles className="w-3 h-3" />
-                          </div>
-                          <span className="tracking-wide">How Viewers Experience Videos</span>
-                        </div>
-
-                        <div className="space-y-2 text-[11px] text-zinc-200">
-                          <div className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0 mt-1.5" />
-                            <div>
-                              <strong className="text-white font-semibold">Speaker & Rating:</strong> Viewers see who filmed the review{' '}
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 font-medium text-[10px] my-0.5">
-                                By Author <CheckCircle className="w-2.5 h-2.5 text-black fill-white inline" />
-                              </span>{' '}
-                              and their 5-star score.
-                            </div>
-                          </div>
-
-                          <div className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0 mt-1.5" />
-                            <div>
-                              <strong className="text-white font-semibold">Community Discussion:</strong> Viewers tap{' '}
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800 text-white border border-zinc-700 font-medium text-[10px]">
-                                <MessageCircle className="w-2.5 h-2.5 text-zinc-200 inline" /> Comments
-                              </span>{' '}
-                              to ask questions or leave feedback.
-                            </div>
-                          </div>
-
-                          <div className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0 mt-1.5" />
-                            <div>
-                              <strong className="text-white font-semibold">Direct Action:</strong> Tapping your action button opens destination{' '}
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-200 border border-zinc-800 font-mono text-[10px] truncate max-w-[130px] align-middle">
-                                <ExternalLink className="w-2.5 h-2.5 text-zinc-200 shrink-0" />
-                                <span className="truncate">{ctaUrl || 'https://ups.com'}</span>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
