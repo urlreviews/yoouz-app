@@ -6085,13 +6085,13 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         enriched.commentsCount = tree.count;
 
         const realBookmarks = videoBookmarksCountMap.has(String(r.id))
-          ? videoBookmarksCountMap.get(String(r.id))!
+          ? Math.max(videoBookmarksCountMap.get(String(r.id))!, typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0))
           : (typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0));
         enriched.bookmarks = realBookmarks;
         enriched.bookmarksCount = realBookmarks;
 
         const realLikes = videoLikesCountMap.has(String(r.id))
-          ? videoLikesCountMap.get(String(r.id))!
+          ? Math.max(videoLikesCountMap.get(String(r.id))!, typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0))
           : (typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0));
         enriched.likes = realLikes;
         enriched.likesCount = realLikes;
@@ -7163,7 +7163,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
   });
 
-  // Toggle Video Bookmark (persisted to Bunny.net bookmarks table)
+  // Toggle Video Bookmark (persisted to Bunny.net bookmarks table and Firestore)
   app.post("/api/interactions/bookmark", async (req, res) => {
     try {
       const { videoId, placeId, userId, isBookmarked } = req.body;
@@ -7199,7 +7199,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           let vData: any = {};
           try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
           const baseBookmarks = Math.max(0, (vData.bookmarksCount || vData.bookmarks || 0));
-          updatedBookmarksCount = Math.max(dbBookmarks, isBookmarked ? baseBookmarks + 1 : Math.max(0, baseBookmarks - 1));
+          updatedBookmarksCount = isBookmarked ? Math.max(1, dbBookmarks, baseBookmarks + 1) : Math.max(0, dbBookmarks);
           vData.bookmarks = updatedBookmarksCount;
           vData.bookmarksCount = updatedBookmarksCount;
           await bunnyDb.execute({
@@ -7207,7 +7207,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
             args: [updatedBookmarksCount, JSON.stringify(vData), videoId]
           });
         } else {
-          updatedBookmarksCount = dbBookmarks || (isBookmarked ? 1 : 0);
+          updatedBookmarksCount = isBookmarked ? Math.max(1, dbBookmarks) : Math.max(0, dbBookmarks);
         }
       }
 
@@ -7216,7 +7216,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         const list = readReviewsIndex();
         const vid = list.find((v: any) => v.id === videoId);
         if (vid) {
-          updatedBookmarksCount = Math.max(updatedBookmarksCount, isBookmarked ? (vid.bookmarksCount || 0) + 1 : Math.max(0, (vid.bookmarksCount || 1) - 1));
+          const prevCount = typeof vid.bookmarksCount === 'number' ? vid.bookmarksCount : (typeof vid.bookmarks === 'number' ? vid.bookmarks : 0);
+          updatedBookmarksCount = Math.max(updatedBookmarksCount, isBookmarked ? Math.max(1, prevCount + 1) : Math.max(0, prevCount - 1));
           vid.bookmarks = updatedBookmarksCount;
           vid.bookmarksCount = updatedBookmarksCount;
           writeReviewsIndex(list);
@@ -7230,6 +7231,16 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           };
         }
       } catch (e) {}
+
+      // Sync to Firestore Admin if active
+      if (adminDb) {
+        try {
+          await adminDb.collection("videoReviews").doc(videoId).set({
+            bookmarksCount: updatedBookmarksCount,
+            bookmarks: updatedBookmarksCount
+          }, { merge: true });
+        } catch (fErr) {}
+      }
 
       broadcastSseEvent({
         type: "video_bookmarked",
@@ -7286,7 +7297,42 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      return res.json({ success: true, bookmarksCount: updatedBookmarksCount });
+      return res.json({ success: true, bookmarksCount: updatedBookmarksCount, isBookmarked: Boolean(isBookmarked) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get User Bookmarks from Bunny.net Database
+  app.get("/api/interactions/user-bookmarks", async (req, res) => {
+    try {
+      const userId = String(req.query.userId || "").trim();
+      if (!userId) return res.json({ success: true, savedVideoIds: [], savedPlaceIds: [] });
+
+      const bunnyDb = getBunnyDb();
+      const savedVideoIds: string[] = [];
+      const savedPlaceIds: string[] = [];
+
+      if (bunnyDb) {
+        try {
+          const rows = await bunnyDb.execute({
+            sql: "SELECT videoId, placeId FROM bookmarks WHERE userId = ?",
+            args: [userId]
+          });
+          if (rows && rows.rows) {
+            rows.rows.forEach((r: any) => {
+              if (r.videoId && !savedVideoIds.includes(String(r.videoId))) {
+                savedVideoIds.push(String(r.videoId));
+              }
+              if (r.placeId && !savedPlaceIds.includes(String(r.placeId))) {
+                savedPlaceIds.push(String(r.placeId));
+              }
+            });
+          }
+        } catch (dbErr) {}
+      }
+
+      return res.json({ success: true, savedVideoIds, savedPlaceIds });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

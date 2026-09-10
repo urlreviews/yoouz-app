@@ -1118,14 +1118,51 @@ export function App() {
                   try { lIds = JSON.parse(localStorage.getItem("copo_liked_video_ids") || "[]"); } catch(e){}
                 }
                 
-                // Instantly re-hydrate existing places and videos with the fresh follow state
+                // Instantly re-hydrate existing places and videos with the fresh follow and bookmark state
                 setPlaces(prev => prev.map(p => ({ ...p, isFollowed: fPlaces.includes(p.id) })));
-                setVideos(prev => prev.map(v => ({ 
-                  ...v, 
-                  isBookmarked: sIds.includes(v.id),
-                  isLiked: lIds.includes(v.id),
-                  author: { ...v.author, isFollowed: fAuthors.includes(v.author.name) } 
-                })));
+                setVideos(prev => prev.map(v => {
+                  const isBm = sIds.includes(v.id);
+                  const isLk = lIds.includes(v.id);
+                  const curBm = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof (v as any).bookmarks === 'number' ? (v as any).bookmarks : 0);
+                  const curLk = typeof v.likesCount === 'number' ? v.likesCount : (typeof (v as any).likes === 'number' ? (v as any).likes : 0);
+                  return { 
+                    ...v, 
+                    isBookmarked: isBm,
+                    bookmarksCount: isBm ? Math.max(1, curBm) : curBm,
+                    bookmarks: isBm ? Math.max(1, curBm) : curBm,
+                    isLiked: isLk,
+                    likesCount: isLk ? Math.max(1, curLk) : curLk,
+                    likes: isLk ? Math.max(1, curLk) : curLk,
+                    author: { ...v.author, isFollowed: fAuthors.includes(v.author.name) } 
+                  };
+                }));
+
+                // Also sync bookmarks from BunnyDB
+                const uIdentifier = user.email || user.uid;
+                if (uIdentifier) {
+                  fetch(`/api/interactions/user-bookmarks?userId=${encodeURIComponent(uIdentifier)}`)
+                    .then(r => r.json())
+                    .then(bRes => {
+                      if (bRes && bRes.success && Array.isArray(bRes.savedVideoIds)) {
+                        const mergedSavedIds = Array.from(new Set([...sIds, ...bRes.savedVideoIds]));
+                        localStorage.setItem("copo_saved_video_ids", JSON.stringify(mergedSavedIds));
+                        if (Array.isArray(bRes.savedPlaceIds) && bRes.savedPlaceIds.length > 0) {
+                          setSavedPlaceIds(prev => Array.from(new Set([...prev, ...bRes.savedPlaceIds])));
+                        }
+                        setVideos(prev => prev.map(v => {
+                          const isBm = mergedSavedIds.includes(v.id);
+                          const curBm = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof (v as any).bookmarks === 'number' ? (v as any).bookmarks : 0);
+                          return {
+                            ...v,
+                            isBookmarked: isBm,
+                            bookmarksCount: isBm ? Math.max(1, curBm) : curBm,
+                            bookmarks: isBm ? Math.max(1, curBm) : curBm
+                          };
+                        }));
+                      }
+                    })
+                    .catch(() => {});
+                }
               } catch (e) {}
 
               // If the existing user does not have a location set yet, backfill it via Geo-IP!
@@ -2817,7 +2854,7 @@ export function App() {
     };
   };
 
-  // Handle Bookmarks - fully synced with Server & Firestore
+  // Handle Bookmarks - fully synced with Server, BunnyDB & Firestore
   const handleToggleBookmark = async (videoId: string) => {
     if (!currentUser) {
       setAuthIntent("bookmarks");
@@ -2831,12 +2868,13 @@ export function App() {
       prev.map((v) => {
         if (v.id === videoId) {
           nextBookmarked = !v.isBookmarked;
-          const currentCount = typeof v.bookmarksCount === 'number' && !isNaN(v.bookmarksCount) ? v.bookmarksCount : 0;
-          nextCount = nextBookmarked ? currentCount + 1 : Math.max(0, currentCount - 1);
+          const currentCount = typeof v.bookmarksCount === 'number' && !isNaN(v.bookmarksCount) ? v.bookmarksCount : (typeof (v as any).bookmarks === 'number' ? (v as any).bookmarks : 0);
+          nextCount = nextBookmarked ? Math.max(1, currentCount + 1) : Math.max(0, currentCount - 1);
           return {
             ...v,
             isBookmarked: nextBookmarked,
-            bookmarksCount: nextCount
+            bookmarksCount: nextCount,
+            bookmarks: nextCount
           };
         }
         return v;
@@ -2865,19 +2903,38 @@ export function App() {
       }
     } catch (e) {}
 
-    // Persist to Server and Firestore database
+    // Persist to Server, Bunny.net Database and Firestore database
     try {
+      const targetVid =
+        videos.find((v) => v.id === videoId) ||
+        videosRef.current.find((v) => v.id === videoId) ||
+        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
+
       fetch("/api/interactions/bookmark", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId, isBookmarked: nextBookmarked, bookmarksCount: nextCount, userId: currentUser?.email || auth.currentUser?.uid })
-      }).catch(() => {});
+        body: JSON.stringify({
+          videoId,
+          placeId: (targetVid as any)?.placeId || "",
+          isBookmarked: nextBookmarked,
+          bookmarksCount: nextCount,
+          userId: currentUser?.email || auth.currentUser?.uid
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.bookmarksCount === 'number') {
+          const authCount = nextBookmarked ? Math.max(1, data.bookmarksCount) : data.bookmarksCount;
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, bookmarksCount: authCount, bookmarks: authCount } : v));
+        }
+      })
+      .catch(() => {});
     } catch (e) {}
 
     try {
       if (db) {
         const vidRef = doc(db, "videoReviews", videoId);
-        setDoc(vidRef, { bookmarksCount: nextCount }, { merge: true }).catch(() => {});
+        setDoc(vidRef, { bookmarksCount: nextCount, bookmarks: nextCount }, { merge: true }).catch(() => {});
       }
     } catch (err) {}
 

@@ -992,7 +992,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               />
             </button>
             <span className="text-[12px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-              {typeof video.bookmarksCount === 'number' ? video.bookmarksCount : (typeof (video as any).bookmarks === 'number' ? (video as any).bookmarks : (video.isBookmarked ? 1 : 0))}
+              {Math.max(
+                typeof video.bookmarksCount === 'number' ? video.bookmarksCount : 0,
+                typeof (video as any).bookmarks === 'number' ? (video as any).bookmarks : 0,
+                video.isBookmarked ? 1 : 0
+              )}
             </span>
           </div>
 
