@@ -1461,12 +1461,29 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
 }
 
 /**
- * Delete a chat thread from Bunny Cloud Database
+ * Delete a chat thread from Bunny Cloud Database and local caches
  */
 export async function deleteChatThread(threadId: string): Promise<void> {
   if (!threadId) return;
   
-  // Primary delete in BunnyDB
+  // 1. Remove from all local storage chat caches immediately so it never resurrects on refresh
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('copo_cached_chats_')) {
+        const rawCache = localStorage.getItem(key);
+        if (rawCache) {
+          const parsed = JSON.parse(rawCache);
+          if (Array.isArray(parsed)) {
+            const filtered = parsed.filter((t: any) => t.id !== threadId);
+            localStorage.setItem(key, JSON.stringify(filtered));
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  // 2. Primary delete in BunnyDB
   fetch(`/api/nosql/chats/${threadId}`, {
     method: "DELETE"
   }).catch(() => {});
