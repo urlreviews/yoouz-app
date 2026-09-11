@@ -1248,7 +1248,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             scrollSnapType: "y mandatory",
             overscrollBehaviorY: "contain",
             scrollbarWidth: "none",
-            msOverflowStyle: "none"
+            msOverflowStyle: "none",
+            overflowAnchor: "none"
           }}
         >
           {videos.map((vid, idx) => {
