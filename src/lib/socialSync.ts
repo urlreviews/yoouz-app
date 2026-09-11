@@ -777,10 +777,23 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
   const userName = (currentUser.name || "").toLowerCase().trim();
   const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
 
+  let deletedThreadsSet = new Set<string>();
+  try {
+    const storedDel = localStorage.getItem("yoouz_deleted_threads");
+    if (storedDel) {
+      const parsedDel = JSON.parse(storedDel);
+      if (Array.isArray(parsedDel)) {
+        parsedDel.forEach((id: string) => deletedThreadsSet.add(String(id).trim()));
+      }
+    }
+  } catch (e) {}
+
   const threads: CopoMessage[] = [];
 
   for (const data of rawItems) {
     if (!data) continue;
+    const threadId = String(data.id || "").trim();
+    if (threadId && deletedThreadsSet.has(threadId)) continue;
     const participants: string[] = Array.isArray(data.participants)
       ? data.participants.map((p: string) => (p || "").toLowerCase().trim().replace(/^@/, ""))
       : [];
@@ -1055,12 +1068,21 @@ export function subscribeToChats(
 
   // 0. Immediate load from LocalStorage cache so messages never disappear on refresh
   try {
+    let deletedThreadsSet = new Set<string>();
+    try {
+      const storedDel = localStorage.getItem("yoouz_deleted_threads");
+      if (storedDel) {
+        JSON.parse(storedDel).forEach((id: string) => deletedThreadsSet.add(String(id).trim()));
+      }
+    } catch (e) {}
+
     const rawCache = localStorage.getItem(cacheKey);
     if (rawCache) {
       const parsed = JSON.parse(rawCache);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        cachedThreads = parsed;
-        onUpdate(parsed);
+        const filteredParsed = parsed.filter((t: any) => !t || !deletedThreadsSet.has(String(t.id || "").trim()));
+        cachedThreads = filteredParsed;
+        onUpdate(filteredParsed);
       }
     }
   } catch (e) {}
@@ -1073,10 +1095,18 @@ export function subscribeToChats(
         const json = await res.json();
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
         if (Array.isArray(items) && !isDisposed) {
+          let deletedThreadsSet = new Set<string>();
+          try {
+            const storedDel = localStorage.getItem("yoouz_deleted_threads");
+            if (storedDel) {
+              JSON.parse(storedDel).forEach((id: string) => deletedThreadsSet.add(String(id).trim()));
+            }
+          } catch (e) {}
+
           const processed = processChatThreadsForUser(items, currentUser);
           const serverThreadIds = new Set(processed.map((t) => t.id));
-          const pendingThreads = cachedThreads.filter((t) => !serverThreadIds.has(t.id));
-          const merged = [...pendingThreads, ...processed];
+          const pendingThreads = cachedThreads.filter((t) => t && !serverThreadIds.has(t.id) && !deletedThreadsSet.has(String(t.id || "").trim()));
+          const merged = [...pendingThreads, ...processed].filter((t) => t && !deletedThreadsSet.has(String(t.id || "").trim()));
           updateThreads(merged);
         }
       }
@@ -1465,6 +1495,20 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
  */
 export async function deleteChatThread(threadId: string): Promise<void> {
   if (!threadId) return;
+
+  // 0. Add to persistent deleted threads blacklist in localStorage
+  try {
+    let deletedList: string[] = [];
+    const stored = localStorage.getItem("yoouz_deleted_threads");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) deletedList = parsed;
+    }
+    if (!deletedList.includes(threadId)) {
+      deletedList.push(threadId);
+      localStorage.setItem("yoouz_deleted_threads", JSON.stringify(deletedList));
+    }
+  } catch (e) {}
   
   // 1. Remove from all local storage chat caches immediately so it never resurrects on refresh
   try {
