@@ -941,21 +941,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     setUploadProgress(100);
 
-    // 3. Base64 backup for direct bunnydb fall-back if under 750KB
-    let base64Backup: string | undefined = undefined;
-    if (recordedVideoBlob && recordedVideoBlob.size < 750 * 1024) {
-      try {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = () => resolve("");
-          reader.readAsDataURL(recordedVideoBlob);
-        });
-        const b64 = await base64Promise;
-        if (b64) base64Backup = b64;
-      } catch (b64Err) {}
-    }
-
     const placeDomain = extractCleanDomain(selectedPlace.website || selectedPlace.name || selectedPlace.id);
     const cleanPlaceName = formatBusinessName(selectedPlace.name || placeDomain) || selectedPlace.name;
     const resolvedPlaceLogo = (selectedPlace.logoUrl && !selectedPlace.logoUrl.startsWith("data:;"))
@@ -1005,7 +990,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       durationSeconds: recordingTime > 0 ? recordingTime : (duration > 0 ? Math.round(duration) : 15),
       videoUrl: uploadedPublicUrl,
       bunnyVideoId: finalBunnyId,
-      videoData: base64Backup,
       fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean),
       thumbnailUrl: finalThumbnail,
       caption: `Video review for ${cleanPlaceName}`,

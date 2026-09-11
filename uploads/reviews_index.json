@@ -1,33 +1,27 @@
 [
   {
-    "placeId": "test-place",
-    "placeName": "Test Insert Place",
-    "authorName": "Test User",
-    "rating": 5,
-    "videoData": "data:video/mp4;base64,AAAAGGZ0eXBtcDQyAAAAAW1wNDJpc29tAAAA",
-    "videoUrl": "https://test.com/vid.mp4",
-    "createdAtMs": 1789138351350,
+    "id": "rev-test-nosql-1789144316489",
+    "placeId": "test-place-2",
+    "placeName": "Test NoSQL Place",
+    "authorName": "Test Auto Bot",
+    "videoUrl": "https://test.com/video.mp4",
     "placeBannerUrl": "",
     "bannerUrl": "",
     "ogImage": "",
     "placeLogoUrl": "",
-    "placeWebsite": "https://testplace.com",
-    "likesCount": 0,
-    "likes": 0,
-    "bookmarksCount": 0,
-    "bookmarks": 0,
-    "sharesCount": 0,
-    "shares": 0,
-    "commentsCount": 0,
-    "authorAvatar": "",
-    "duration": 60,
-    "viewsCount": 0,
-    "views": 0,
-    "comments": [],
-    "author": {
-      "name": "Test User",
-      "avatar": ""
-    }
+    "placeWebsite": "https://testplace2.com"
+  },
+  {
+    "id": "rev-test-save-1789144080184",
+    "placeId": "test-place-1",
+    "placeName": "Test Save Place",
+    "authorName": "Test Auto Bot",
+    "videoUrl": "https://test.com/video.mp4",
+    "placeBannerUrl": "",
+    "bannerUrl": "",
+    "ogImage": "",
+    "placeLogoUrl": "",
+    "placeWebsite": "https://testplace1.com"
   },
   {
     "id": "rev-1788277000192-c9ypn",
