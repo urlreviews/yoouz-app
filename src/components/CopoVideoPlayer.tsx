@@ -911,124 +911,26 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     let rafId: number | null = null;
 
-    const syncScrollIndex = () => {
-      if (isProgrammaticScrollRef.current || !container) return;
-      const containerHeight = container.clientHeight;
-      if (!containerHeight || containerHeight <= 0) return;
-
-      const settledIndex = Math.round(container.scrollTop / containerHeight);
-      const maxIdx = videos.length > 0 ? videos.length : 0;
-      if (
-        settledIndex >= 0 &&
-        settledIndex <= maxIdx &&
-        settledIndex !== currentIndexRef.current
-      ) {
-        currentIndexRef.current = settledIndex;
-        lastObserverIndexRef.current = settledIndex;
-        onSelectVideoIndex(settledIndex);
-        if (settledIndex < videos.length) {
-          prefetchUpcomingVideos(videos, settledIndex);
-        }
-      }
-    };
-
-    const handleScroll = () => {
-      if (isProgrammaticScrollRef.current) return;
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(syncScrollIndex);
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    container.addEventListener("scrollend", syncScrollIndex, { passive: true });
-
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-      container.removeEventListener("scrollend", syncScrollIndex);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
+    // Legacy syncScrollIndex removed in favor of pure IntersectionObserver.
   }, [videos, onSelectVideoIndex]);
 
-  // app.copo.st Touch Gesture Engine: 15% swipe height threshold & instant flick transition
+  // app.copo.st Touch Gesture Engine removed. Relying strictly on CSS scroll snapping for native smoothness.
+  // We retain a passive tap listener merely to authorize the AudioContext synchronously.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    let touchStartY = 0;
-    let touchStartX = 0;
-    let touchStartTime = 0;
-    let isTouchActive = false;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      const touch = e.touches[0];
-      touchStartY = touch.clientY;
-      touchStartX = touch.clientX;
-      touchStartTime = Date.now();
-      isTouchActive = true;
-
-      // Authorize audio subsystem inside active user gesture
+    const handleTouch = () => {
       if (isSessionAudioUnlocked && !isMuted) {
         ensureSharedAudioContextUnlocked();
       }
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!isTouchActive || e.changedTouches.length !== 1) return;
-      isTouchActive = false;
-
-      // Ensure audio permission is propagated during touch completion
-      if (isSessionAudioUnlocked && !isMuted) {
-        ensureSharedAudioContextUnlocked();
-      }
-
-      const touch = e.changedTouches[0];
-      const deltaY = touch.clientY - touchStartY;
-      const deltaX = touch.clientX - touchStartX;
-      const elapsed = Date.now() - touchStartTime;
-      const containerHeight = container.clientHeight || window.innerHeight;
-
-      // Only handle if movement was predominantly vertical
-      if (Math.abs(deltaY) < Math.abs(deltaX) * 1.2) return;
-
-      const swipeRatio = Math.abs(deltaY) / containerHeight;
-      // 15% distance threshold OR fast flick (>35px in <300ms) matching app.copo.st
-      const isSignificantSwipe = swipeRatio >= 0.15 || (Math.abs(deltaY) >= 35 && elapsed < 300);
-
-      if (isSignificantSwipe) {
-        const maxIdx = videos.length > 0 ? videos.length : 0;
-        let targetIdx = currentIndexRef.current;
-        if (deltaY < 0) {
-          // Swiped UP -> Next video or End Card
-          if (currentIndexRef.current < maxIdx) {
-            targetIdx = currentIndexRef.current + 1;
-          }
-        } else {
-          // Swiped DOWN -> Prev video (stops at first video, does not loop to end)
-          if (currentIndexRef.current > 0) {
-            targetIdx = currentIndexRef.current - 1;
-          }
-        }
-
-        if (targetIdx !== currentIndexRef.current) {
-          // Pre-authorize singleton player playback synchronously within the touch gesture
-          if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
-            feedVideoRef.current.muted = false;
-            safeSetVolume(feedVideoRef.current, 1);
-            feedVideoRef.current.play().catch(() => {});
-          }
-          scrollToCard(targetIdx, "smooth");
-        }
-      }
-    };
-
-    container.addEventListener("touchstart", handleTouchStart, { passive: true });
-    container.addEventListener("touchend", handleTouchEnd, { passive: true });
-
+    container.addEventListener("touchend", handleTouch, { passive: true });
     return () => {
-      container.removeEventListener("touchstart", handleTouchStart);
-      container.removeEventListener("touchend", handleTouchEnd);
+      container.removeEventListener("touchend", handleTouch);
     };
-  }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
+  }, [isSessionAudioUnlocked, isMuted]);
 
   // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {

@@ -22,6 +22,10 @@ if (typeof (window as any).__dismissAppSplash === 'function') {
 
 // Proactively purge ALL stale service workers and cache storage to completely prevent stale mobile code
 if (typeof window !== 'undefined') {
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+
   if ('caches' in window) {
     caches.keys().then((names) => {
       names.forEach((name) => {
