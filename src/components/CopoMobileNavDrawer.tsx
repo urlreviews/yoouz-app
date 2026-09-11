@@ -295,9 +295,9 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 if (onOpenCreateModal) onOpenCreateModal();
                 onClose();
               }}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-sm shadow-lg shadow-white/10 border border-white/20 transition-all cursor-pointer active:scale-95"
+              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-500 text-white font-bold text-sm shadow-lg shadow-black/40 border border-zinc-700/80 transition-all cursor-pointer active:scale-95"
             >
-              <Video className="w-4 h-4 shrink-0 text-zinc-950" />
+              <Video className="w-4 h-4 shrink-0 text-white" />
               <span>{t("nav.record_review", "Video Review")}</span>
             </button>
           </div>
