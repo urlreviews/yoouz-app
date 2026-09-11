@@ -95,6 +95,25 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
   const contentRef = useRef<HTMLDivElement | null>(null);
 
+  // Auto-redirect if this author is a business to maintain a single canonical Place page
+  useEffect(() => {
+    if (!author?.name || !onOpenPlace) return;
+    const authorLower = (author.name || "").toLowerCase().trim();
+    const associatedPlaceId =
+      authorLower === "yoouz" || authorLower === "@yoouz" || authorLower === "yoouz.com" || authorLower.includes("yoouz")
+        ? "yoouz.com"
+        : authorLower === "legal 500" || authorLower === "legal500" || authorLower.includes("legal500")
+        ? "legal500.com"
+        : authorLower.includes(".")
+        ? authorLower.replace(/^www\./, "").trim()
+        : null;
+
+    if (associatedPlaceId) {
+      onOpenPlace(associatedPlaceId);
+      if (onClose) onClose();
+    }
+  }, [author?.name, onOpenPlace, onClose]);
+
   const [localIsSaved, setLocalIsSaved] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem("yoouz_saved_creators");
@@ -834,45 +853,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </div>
             )}
           </div>
-
-          {/* Official Business Listing Link Banner */}
-          {(() => {
-            const authorLower = (author.name || "").toLowerCase().trim();
-            const associatedPlaceId = authorLower === "yoouz" || authorLower === "@yoouz" || authorLower.includes("yoouz")
-              ? "yoouz.com"
-              : authorLower === "legal 500" || authorLower === "legal500" || authorLower.includes("legal500")
-                ? "legal500.com"
-                : (authorLower.includes(".") ? authorLower.replace(/^www\./, "").trim() : null);
-
-            if (!associatedPlaceId || !onOpenPlace) return null;
-
-            return (
-              <div className="mt-3.5 p-3 rounded-2xl bg-zinc-900/90 border border-zinc-700/80 flex items-center justify-between gap-3 shadow-md">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-black border border-zinc-700 flex items-center justify-center shrink-0">
-                    <Building2 className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
-                      <span>Official Business Listing</span>
-                      <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
-                    </div>
-                    <div className="text-[11px] text-zinc-400 truncate">yoouz.com/place/{getPlaceSlug(associatedPlaceId)}</div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    triggerHaptic("light");
-                    onOpenPlace(associatedPlaceId);
-                  }}
-                  className="px-3 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-bold shrink-0 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
-                >
-                  <span>View Place</span>
-                  <ExternalLink className="w-3 h-3" />
-                </button>
-              </div>
-            );
-          })()}
         </div>
 
         {/* Google Maps Tabs: Overview | Reviews | About */}

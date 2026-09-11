@@ -970,6 +970,63 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 }
 
 /**
+ * Deduplicates chat message histories handling exact IDs and near-instantaneous optimistic duplicates
+ */
+export function deduplicateChatHistory(messages: any[]): any[] {
+  if (!Array.isArray(messages)) return [];
+  const result: any[] = [];
+  const seenIds = new Set<string>();
+
+  const sorted = [...messages].filter(Boolean).sort((a, b) => {
+    const tA = Number(a.createdAtMs || a.createdAt || (typeof a.id === "string" && a.id.startsWith("msg_") ? parseInt(a.id.split("_")[1]) : 0) || 0);
+    const tB = Number(b.createdAtMs || b.createdAt || (typeof b.id === "string" && b.id.startsWith("msg_") ? parseInt(b.id.split("_")[1]) : 0) || 0);
+    return tA - tB;
+  });
+
+  for (const m of sorted) {
+    if (!m) continue;
+    const msgId = String(m.id || "");
+    if (msgId && seenIds.has(msgId)) continue;
+
+    const mText = (m.text || "").trim();
+    const mSender = (m.senderEmail || m.senderId || m.senderName || (m.isMe ? "me" : "")).toLowerCase().trim();
+    const mTime = Number(m.createdAtMs || m.createdAt || 0);
+
+    const duplicateIndex = result.findIndex((existing) => {
+      const eText = (existing.text || "").trim();
+      const eSender = (existing.senderEmail || existing.senderId || existing.senderName || (existing.isMe ? "me" : "")).toLowerCase().trim();
+      const eTime = Number(existing.createdAtMs || existing.createdAt || 0);
+
+      if (mText && eText && mText === eText) {
+        const isSameSender = !mSender || !eSender || mSender === eSender || (m.isMe && existing.isMe);
+        if (isSameSender) {
+          if (!mTime || !eTime || Math.abs(mTime - eTime) < 45000) {
+            return true;
+          }
+        }
+      }
+      return false;
+    });
+
+    if (duplicateIndex >= 0) {
+      const existing = result[duplicateIndex];
+      const isIncomingServer = msgId.startsWith("msg_");
+      const isExistingTemp = String(existing.id || "").startsWith("user-msg-");
+
+      if (isIncomingServer || isExistingTemp) {
+        result[duplicateIndex] = { ...existing, ...m, id: isIncomingServer ? m.id : existing.id };
+        if (msgId) seenIds.add(msgId);
+      }
+    } else {
+      if (msgId) seenIds.add(msgId);
+      result.push(m);
+    }
+  }
+
+  return result;
+}
+
+/**
  * Real-time subscription to private chat threads for the current user
  * Instant SSE streaming + Bunny Cloud Database + Instant Local Cache
  */
@@ -1039,24 +1096,10 @@ export function subscribeToChats(
           let nextThreads: CopoMessage[];
           if (existingIdx >= 0) {
             const existingThread = cachedThreads[existingIdx];
-            const histMap = new Map<string, any>();
-            (existingThread.history || []).forEach((m) => {
-              if (m) {
-                const k = m.id || `${m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
-                histMap.set(k, m);
-              }
-            });
-            (freshThread.history || []).forEach((m) => {
-              if (m) {
-                const k = m.id || `${m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
-                histMap.set(k, m);
-              }
-            });
-            const mergedHist = Array.from(histMap.values()).sort((a, b) => {
-              const tA = Number(a.createdAtMs || 0);
-              const tB = Number(b.createdAtMs || 0);
-              return tA - tB;
-            });
+            const mergedHist = deduplicateChatHistory([
+              ...(existingThread.history || []),
+              ...(freshThread.history || [])
+            ]);
             const mergedThread: CopoMessage = {
               ...existingThread,
               ...freshThread,
@@ -1094,7 +1137,9 @@ export async function sendChatMessage(
   currentUser: UserProfile,
   recipient: { id: string; name: string; avatar: string; email?: string },
   videoUrl?: string,
-  customVideoId?: string
+  customVideoId?: string,
+  customMessageId?: string,
+  customCreatedAt?: number
 ): Promise<CopoMessage> {
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const userName = (currentUser.name || "").trim();
@@ -1126,15 +1171,19 @@ export async function sendChatMessage(
     sanitizedThumbnail = currentUser.avatar || "";
   }
 
+  const msgTime = customCreatedAt || Date.now();
+  const msgId = customMessageId || `msg_${msgTime}_${Math.random().toString(36).substring(2, 6)}`;
+
   const newMessage = {
-    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    id: msgId,
     senderId: userEmail || currentUser.name,
     senderEmail: userEmail,
     senderName: currentUser.name || "Reviewer",
     senderAvatar: currentUser.avatar || `/api/avatar?name=${encodeURIComponent(currentUser.name || "User")}&background=27272a&color=fff`,
     text: messageText.trim(),
     timestamp: "Just now",
-    createdAt: Date.now(),
+    createdAt: msgTime,
+    createdAtMs: msgTime,
     isMe: true,
     videoThumbnail: sanitizedThumbnail,
     videoId: customVideoId
@@ -1165,24 +1214,7 @@ export async function sendChatMessage(
     if (res.ok) {
       const d = await res.json();
       if (Array.isArray(d.history) && d.history.length > 0) {
-        const histMap = new Map<string, any>();
-        existingHistory.forEach((m) => {
-          if (m) {
-            const k = m.id || `${m.createdAt || m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
-            histMap.set(k, m);
-          }
-        });
-        d.history.forEach((m: any) => {
-          if (m) {
-            const k = m.id || `${m.createdAt || m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
-            histMap.set(k, m);
-          }
-        });
-        existingHistory = Array.from(histMap.values()).sort((a, b) => {
-          const tA = Number(a.createdAt || a.createdAtMs || 0);
-          const tB = Number(b.createdAt || b.createdAtMs || 0);
-          return tA - tB;
-        });
+        existingHistory = deduplicateChatHistory([...existingHistory, ...d.history]);
       }
       if (d.unreadCounts && typeof d.unreadCounts === "object") {
         prevRecipientUnread =
@@ -1195,19 +1227,7 @@ export async function sendChatMessage(
     }
   } catch (e) {}
 
-  const fullHistMap = new Map<string, any>();
-  existingHistory.forEach((m) => {
-    if (m) {
-      const k = m.id || `${m.createdAt || m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
-      fullHistMap.set(k, m);
-    }
-  });
-  fullHistMap.set(newMessage.id, newMessage);
-  const fullHistory = Array.from(fullHistMap.values()).sort((a, b) => {
-    const tA = Number(a.createdAt || a.createdAtMs || 0);
-    const tB = Number(b.createdAt || b.createdAtMs || 0);
-    return tA - tB;
-  });
+  const fullHistory = deduplicateChatHistory([...existingHistory, newMessage]);
 
   const canonicalAliases: string[] = [];
   if (recipientName.toLowerCase() === "avt ertuop" || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientId.includes("avt")) {

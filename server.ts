@@ -8158,32 +8158,47 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
         const existingHist = Array.isArray(existingData.history) ? existingData.history : [];
         const incomingHist = Array.isArray(threadData.history) ? threadData.history : [];
-        const msgMap = new Map<string, any>();
-
-        existingHist.forEach((m: any) => {
-          if (m) {
-            const key = m.id || `${m.createdAt || m.timestamp || ''}_${m.senderEmail || m.senderName || ''}_${m.text || ''}`;
-            msgMap.set(key, m);
-          }
-        });
-
-        incomingHist.forEach((m: any) => {
-          if (m) {
-            const key = m.id || `${m.createdAt || m.timestamp || ''}_${m.senderEmail || m.senderName || ''}_${m.text || ''}`;
-            msgMap.set(key, m);
-          }
-        });
-
+        const allCandidates = [...existingHist, ...incomingHist];
         if (message && (message.text || message.videoThumbnail || message.videoId)) {
-          const key = message.id || `${message.createdAt || message.timestamp || ''}_${message.senderEmail || message.senderName || ''}_${message.text || ''}`;
-          msgMap.set(key, message);
+          allCandidates.push(message);
         }
 
-        const mergedHistory = Array.from(msgMap.values()).sort((a, b) => {
+        const mergedHistory: any[] = [];
+        const seenKeys = new Set<string>();
+
+        // Sort chronologically
+        const sorted = allCandidates.filter(Boolean).sort((a, b) => {
           const tA = Number(a.createdAt || a.createdAtMs || 0);
           const tB = Number(b.createdAt || b.createdAtMs || 0);
           return tA - tB;
         });
+
+        for (const msg of sorted) {
+          const mId = msg.id ? String(msg.id).trim() : "";
+          if (mId && seenKeys.has(mId)) continue;
+          if (mId) seenKeys.add(mId);
+
+          const mText = (msg.text || "").trim().toLowerCase();
+          const mSender = (msg.senderEmail || msg.senderName || msg.senderId || "").trim().toLowerCase();
+          const mTime = Number(msg.createdAt || msg.createdAtMs || 0);
+
+          const isDuplicate = mergedHistory.some((existing) => {
+            if (mId && existing.id && mId === existing.id) return true;
+            const exText = (existing.text || "").trim().toLowerCase();
+            const exSender = (existing.senderEmail || existing.senderName || existing.senderId || "").trim().toLowerCase();
+            const exTime = Number(existing.createdAt || existing.createdAtMs || 0);
+            return (
+              mText.length > 0 &&
+              mText === exText &&
+              mSender === exSender &&
+              Math.abs(mTime - exTime) < 45000
+            );
+          });
+
+          if (!isDuplicate) {
+            mergedHistory.push(msg);
+          }
+        }
 
         const mergedParticipants = Array.from(new Set([
           ...(Array.isArray(existingData.participants) ? existingData.participants : []),

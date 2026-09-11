@@ -36,6 +36,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
+import { deduplicateChatHistory } from "../lib/socialSync";
 
 interface CopoMessagesViewProps {
   messages: CopoMessage[];
@@ -53,7 +54,9 @@ interface CopoMessagesViewProps {
     text: string,
     recipient: { id: string; name: string; avatar: string; email?: string },
     videoUrl?: string,
-    customVideoId?: string
+    customVideoId?: string,
+    customMessageId?: string,
+    customCreatedAt?: number
   ) => Promise<void>;
   onMarkThreadRead?: (threadId: string) => void;
   onSelectVideo?: (videoId: string, source?: string) => void;
@@ -606,19 +609,23 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       sanitizedThumb = currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
     }
 
+    const nowMs = Date.now();
+    const deterministicMsgId = `msg_${nowMs}_${Math.random().toString(36).substring(2, 6)}`;
     const newMessage = {
-      id: `user-msg-${Date.now()}`,
+      id: deterministicMsgId,
       senderName: currentUser?.name || "You",
       senderAvatar: currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
       text: text.trim(),
       timestamp: "Just now",
+      createdAt: nowMs,
+      createdAtMs: nowMs,
       isMe: true,
       videoThumbnail: sanitizedThumb,
       videoId: customVideoId
     };
 
     const threadHistory = activeThread.history || [];
-    const updatedHistory = [...threadHistory, newMessage];
+    const updatedHistory = deduplicateChatHistory([...threadHistory, newMessage]);
 
     const threadExistsInList = messages.some((m) => m.id === activeThread.id);
     const updated = threadExistsInList
@@ -665,7 +672,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
           email: targetRecipientEmail
         },
         sanitizedThumb,
-        customVideoId
+        customVideoId,
+        deterministicMsgId,
+        nowMs
       );
     }
   };
@@ -844,10 +853,39 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   };
 
   const handleOpenAuthorProfile = (name?: string, id?: string, avatar?: string) => {
-    if (id && onSelectPlace && places.find(p => p.id === id || (p as any).brandDomain === id)) {
-      onSelectPlace(id);
-      return;
+    const cleanId = (id || "").toLowerCase().trim();
+    const cleanName = (name || "").toLowerCase().trim();
+
+    const matchingPlace = (places || []).find((p) => {
+      const pId = (p.id || "").toLowerCase().trim();
+      const pName = (p.name || "").toLowerCase().trim();
+      const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].trim();
+      const pSlug = pName.replace(/[^a-z0-9]/g, "");
+      const nSlug = cleanName.replace(/[^a-z0-9]/g, "");
+
+      return (
+        (cleanId && (pId === cleanId || pDomain === cleanId || pId === `${cleanId}.com` || pDomain === `${cleanId}.com`)) ||
+        pId === cleanName ||
+        pId === `${cleanName}.com` ||
+        pDomain === cleanName ||
+        pDomain === `${cleanName}.com` ||
+        pName === cleanName ||
+        (nSlug.length > 2 && pSlug === nSlug) ||
+        cleanName === "yoouz" ||
+        cleanName === "yoouz.com" ||
+        cleanId === "yoouz" ||
+        cleanId === "yoouz.com"
+      );
+    });
+
+    if (matchingPlace || cleanName === "yoouz" || cleanName === "yoouz.com" || cleanId === "yoouz" || cleanId === "yoouz.com") {
+      const targetPlaceId = matchingPlace ? matchingPlace.id : "yoouz.com";
+      if (onSelectPlace) {
+        onSelectPlace(targetPlaceId);
+        return;
+      }
     }
+
     const author = resolveAuthor(name, id, avatar);
     if (onOpenCreator) {
       onOpenCreator(author);
@@ -1293,7 +1331,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       </div>
                     </div>
                   ) : (
-                    activeThread.history.map((msg) => (
+                    deduplicateChatHistory(activeThread.history || []).map((msg) => (
                       <div
                         key={`msg-log-${msg.id}`}
                         className={`flex items-start gap-2.5 sm:gap-3 ${msg.isMe ? "flex-row-reverse" : ""} animate-in fade-in duration-200`}

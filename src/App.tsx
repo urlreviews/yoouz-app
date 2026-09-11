@@ -55,7 +55,8 @@ import {
   subscribeToChats,
   sendChatMessageToBunnyDB,
   markChatThreadAsRead,
-  deleteChatThreadFromBunnyDB
+  deleteChatThreadFromBunnyDB,
+  deduplicateChatHistory
 } from "./lib/socialSync";
 import { buildCommentTree } from "./utils/commentUtils";
 
@@ -403,54 +404,91 @@ export function App() {
           // But usually Place Drawer is viewed on top of home
         } else if (creatorParam) {
           const rawParam = decodeURIComponent(creatorParam).replace(/^@+/, "").toLowerCase().trim();
-          const matchingVid = videosRef.current.find((v) => {
-            if (!v.author) return false;
-            const h = (v.author.name || "").replace(/^@+/, "").toLowerCase().trim();
-            const n = (v.author.name || "")
+          
+          // Check if this handle / param corresponds to a business or place
+          const matchingPlace = (places || []).find((p: Place) => {
+            const pId = (p.id || "").toLowerCase().trim();
+            const pName = (p.name || "").toLowerCase().trim();
+            const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "")
               .toLowerCase()
-              .trim()
-              .replace(/^@+/, "")
-              .replace(/\s+/g, "-")
-              .replace(/[^a-z0-9_-]/g, "")
-              .replace(/-+/g, "-");
-            return h === rawParam || n === rawParam;
-          });
-          const authorObj: VideoAuthor = matchingVid?.author || {
-            name: rawParam.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-            avatar: `/api/avatar?name=${encodeURIComponent(rawParam)}&background=27272a&color=fff&bold=true&size=128`,
-            isVerified: true,
-            isFollowed: false
-          };
-          setSelectedAuthorForDrawer(authorObj);
-          setSelectedPlaceIdForDrawer(null);
+              .replace(/^https?:\/\//, "")
+              .replace(/^www\./, "")
+              .split("/")[0]
+              .trim();
+            const pSlug = pName.replace(/[^a-z0-9]/g, "");
+            const rSlug = rawParam.replace(/[^a-z0-9]/g, "");
 
-          // Asynchronously fetch live user data to guarantee exact Google avatar and profile details
-          fetch(`/api/nosql/users`)
-            .then(res => res.json())
-            .then(usersList => {
-              if (Array.isArray(usersList)) {
-                const matched = usersList.find((u: any) => {
-                  const uName = (u.name || "").trim().toLowerCase();
-                  const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
-                  const uEmail = (u.email || "").split("@")[0].toLowerCase();
-                  return uName === rawParam || uHandle === rawParam || uEmail === rawParam;
-                });
-                if (matched && matched.avatar) {
-                  setSelectedAuthorForDrawer(prev => {
-                    if (!prev) return prev;
-                    return {
-                      ...prev,
-                      name: matched.name || prev.name,
-                      avatar: matched.avatar,
-                      bio: matched.bio || prev.bio,
-                      banner: matched.banner || prev.banner,
-                      location: matched.location || prev.location
-                    };
+            return (
+              pId === rawParam ||
+              pId === `${rawParam}.com` ||
+              pDomain === rawParam ||
+              pDomain === `${rawParam}.com` ||
+              pName === rawParam ||
+              (rSlug.length > 2 && pSlug === rSlug) ||
+              rawParam === "yoouz" ||
+              rawParam === "yoouz.com" ||
+              rawParam === "legal500" ||
+              rawParam === "legal500.com"
+            );
+          });
+
+          if (matchingPlace || rawParam === "yoouz" || rawParam === "yoouz.com" || rawParam === "legal500" || rawParam === "legal500.com") {
+            const targetPlaceId = matchingPlace ? matchingPlace.id : (rawParam.includes("legal500") ? "legal500.com" : "yoouz.com");
+            setSelectedPlaceIdForDrawer(targetPlaceId);
+            setSelectedAuthorForDrawer(null);
+            try {
+              window.history.replaceState(null, "", `/place/${getPlaceSlug(targetPlaceId)}`);
+            } catch (e) {}
+          } else {
+            const matchingVid = videosRef.current.find((v) => {
+              if (!v.author) return false;
+              const h = (v.author.name || "").replace(/^@+/, "").toLowerCase().trim();
+              const n = (v.author.name || "")
+                .toLowerCase()
+                .trim()
+                .replace(/^@+/, "")
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9_-]/g, "")
+                .replace(/-+/g, "-");
+              return h === rawParam || n === rawParam;
+            });
+            const authorObj: VideoAuthor = matchingVid?.author || {
+              name: rawParam.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+              avatar: `/api/avatar?name=${encodeURIComponent(rawParam)}&background=27272a&color=fff&bold=true&size=128`,
+              isVerified: true,
+              isFollowed: false
+            };
+            setSelectedAuthorForDrawer(authorObj);
+            setSelectedPlaceIdForDrawer(null);
+
+            // Asynchronously fetch live user data to guarantee exact Google avatar and profile details
+            fetch(`/api/nosql/users`)
+              .then(res => res.json())
+              .then(usersList => {
+                if (Array.isArray(usersList)) {
+                  const matched = usersList.find((u: any) => {
+                    const uName = (u.name || "").trim().toLowerCase();
+                    const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
+                    const uEmail = (u.email || "").split("@")[0].toLowerCase();
+                    return uName === rawParam || uHandle === rawParam || uEmail === rawParam;
                   });
+                  if (matched && matched.avatar) {
+                    setSelectedAuthorForDrawer(prev => {
+                      if (!prev) return prev;
+                      return {
+                        ...prev,
+                        name: matched.name || prev.name,
+                        avatar: matched.avatar,
+                        bio: matched.bio || prev.bio,
+                        banner: matched.banner || prev.banner,
+                        location: matched.location || prev.location
+                      };
+                    });
+                  }
                 }
-              }
-            })
-            .catch(() => {});
+              })
+              .catch(() => {});
+          }
         } else {
           setSelectedPlaceIdForDrawer(null);
           setSelectedAuthorForDrawer(null);
@@ -1419,24 +1457,10 @@ export function App() {
           const prevThread = prevMap.get(thread.id);
           if (!prevThread) return thread;
 
-          const histMap = new Map<string, any>();
-          (prevThread.history || []).forEach((m) => {
-            if (m) {
-              const k = m.id || `${m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
-              histMap.set(k, m);
-            }
-          });
-          (thread.history || []).forEach((m) => {
-            if (m) {
-              const k = m.id || `${m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
-              histMap.set(k, m);
-            }
-          });
-          const mergedHistory = Array.from(histMap.values()).sort((a, b) => {
-            const tA = Number(a.createdAtMs || 0);
-            const tB = Number(b.createdAtMs || 0);
-            return tA - tB;
-          });
+          const mergedHistory = deduplicateChatHistory([
+            ...(prevThread.history || []),
+            ...(thread.history || [])
+          ]);
 
           return {
             ...prevThread,
@@ -2597,6 +2621,52 @@ export function App() {
     document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
       try { v.pause(); } catch (e) {}
     });
+
+    const authorLower = (author.name || "").toLowerCase().trim();
+    const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
+
+    // Check if this author corresponds to a business / place
+    const matchingPlace = (places || []).find((p: Place) => {
+      const pId = (p.id || "").toLowerCase().trim();
+      const pName = (p.name || "").toLowerCase().trim();
+      const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "")
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .split("/")[0]
+        .trim();
+      const pSlug = pName.replace(/[^a-z0-9]/g, "");
+      const aSlug = authorIdentifier.replace(/[^a-z0-9]/g, "");
+
+      return (
+        pId === authorIdentifier ||
+        pId === `${authorIdentifier}.com` ||
+        pDomain === authorIdentifier ||
+        pDomain === `${authorIdentifier}.com` ||
+        pName === authorLower ||
+        (aSlug.length > 2 && pSlug === aSlug) ||
+        authorLower === "yoouz" ||
+        authorLower === "yoouz.com" ||
+        authorIdentifier === "yoouz" ||
+        authorIdentifier === "yoouz.com" ||
+        authorLower === "legal 500" ||
+        authorLower === "legal500" ||
+        authorLower === "legal500.com"
+      );
+    });
+
+    if (
+      matchingPlace ||
+      authorLower === "yoouz" ||
+      authorLower === "yoouz.com" ||
+      authorIdentifier === "yoouz" ||
+      authorIdentifier === "yoouz.com" ||
+      authorLower.includes("legal500")
+    ) {
+      const targetPlaceId = matchingPlace ? matchingPlace.id : (authorLower.includes("legal500") ? "legal500.com" : "yoouz.com");
+      handleOpenPlaceDrawer(targetPlaceId);
+      return;
+    }
     
     // Save background video index and section before entering the drawer context
     if (!selectedPlaceIdForDrawer && !selectedAuthorForDrawer) {
@@ -2604,7 +2674,6 @@ export function App() {
       previousSectionRef.current = activeSection;
     }
 
-    const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
     const registeredUser = allRegisteredUsers?.find((u: any) => {
       const uName = (u.name || "").trim().toLowerCase();
       const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
@@ -4676,7 +4745,7 @@ export function App() {
                   deleteChatThreadFromBunnyDB(threadId);
                   setMessages((prev) => prev.filter((m) => m.id !== threadId));
                 }}
-                onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId) => {
+                onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt) => {
                   if (currentUser) {
                     await sendChatMessageToBunnyDB(
                       threadId,
@@ -4684,7 +4753,9 @@ export function App() {
                       currentUser,
                       recipient,
                       videoUrl,
-                      customVideoId
+                      customVideoId,
+                      customMessageId,
+                      customCreatedAt
                     );
                   }
                 }}
@@ -4795,7 +4866,7 @@ export function App() {
                 onSaveOwnerResponse={handleSaveOwnerResponse}
                 onDeleteOwnerResponse={handleDeleteOwnerResponse}
                 onUpdatePlace={handleUpdatePlace}
-                onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId) => {
+                onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt) => {
                   let effectiveSender = currentUser as any;
                   try {
                     const saved = localStorage.getItem('copo_business_verified_session');
@@ -4834,7 +4905,9 @@ export function App() {
                     effectiveSender,
                     recipient,
                     videoUrl,
-                    customVideoId
+                    customVideoId,
+                    customMessageId,
+                    customCreatedAt
                   );
                 }}
                 onDeleteThread={(threadId) => {

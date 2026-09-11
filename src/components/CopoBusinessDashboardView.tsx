@@ -118,7 +118,9 @@ interface CopoBusinessDashboardViewProps {
     text: string,
     recipient: { id: string; name: string; avatar: string; email?: string },
     videoUrl?: string,
-    customVideoId?: string
+    customVideoId?: string,
+    customMessageId?: string,
+    customCreatedAt?: number
   ) => Promise<void>;
   onDeleteThread?: (threadId: string) => void;
   onMarkThreadRead?: (threadId: string) => void;
@@ -1928,7 +1930,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <button 
                       onClick={() => {
                         setShowAccountDropdown(false);
-                        onNavigate('home');
+                        const targetId = selectedPlaceId || currentPlace?.id || 'yoouz.com';
+                        if (onOpenPlaceDrawer) {
+                          onOpenPlaceDrawer(targetId);
+                        } else {
+                          window.location.href = `/place/${targetId}`;
+                        }
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
