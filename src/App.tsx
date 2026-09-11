@@ -4196,10 +4196,16 @@ export function App() {
     });
     setActiveSection("home");
     setActiveSubTab("discover");
-    setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
+    setFullscreenFeedContext(null);
     setCurrentVideoIndex(0);
     setPendingVideoId(newReview.id);
+
+    // Land directly on the specific Business Page for this review
+    const placeIdToOpen = newReview.placeId || (newReview as any).place?.id;
+    if (placeIdToOpen) {
+      handleOpenPlaceDrawer(placeIdToOpen);
+    }
 
     // Persist to Firestore database so all viewers across any browser/device see it immediately
     try {
