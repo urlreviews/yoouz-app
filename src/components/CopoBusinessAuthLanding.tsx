@@ -117,12 +117,49 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
 
   const conflictInfo = checkReviewerConflict(email);
 
-  // Auto-verify Magic Link if token exists in URL
+  const handleResetAccount = async (targetEmail?: string) => {
+    setIsLoading(true);
+    try {
+      localStorage.removeItem('copo_business_verified_session');
+      localStorage.removeItem('copo_claimed_places');
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('copo_business_profile_') || key.startsWith('demo_cta_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+
+      await fetch('/api/business/reset-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail || email || 'info@yoouz.com' })
+      });
+
+      setEmail('');
+      setStep('email');
+      setSelectedPlace(null);
+      setErrorMessage('Account memory & previous sign-up deleted! You can now sign up completely fresh from scratch with your new logo.');
+    } catch (e) {
+      setErrorMessage('Sign-up reset completed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Auto-verify Magic Link or handle reset if present in URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const magicToken = urlParams.get('magic_token');
     const paramEmail = urlParams.get('email');
     const paramPlace = urlParams.get('place');
+    const isReset = urlParams.get('reset') === 'true' || urlParams.get('action') === 'reset';
+
+    if (isReset) {
+      handleResetAccount(paramEmail || 'info@yoouz.com');
+      return;
+    }
 
     if (magicToken && paramEmail) {
       setIsLoading(true);
@@ -498,6 +535,18 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   </>
                 )}
               </button>
+
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  id="btn-business-reset-signup"
+                  onClick={() => handleResetAccount('info@yoouz.com')}
+                  className="text-[11px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer inline-flex items-center gap-1.5 underline decoration-zinc-800 underline-offset-4"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Start Sign-Up From Scratch (Delete Saved Session)</span>
+                </button>
+              </div>
             </form>
           )}
 

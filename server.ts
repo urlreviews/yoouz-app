@@ -9116,6 +9116,40 @@ app.post("/api/videos/save-review", async (req, res) => {
     return { isCustomerReviewer: false };
   }
 
+  // 0. Reset & Clear Business Signup / Session State Endpoint
+  app.post("/api/business/reset-account", async (req, res) => {
+    try {
+      const { email } = req.body;
+      const cleanEmail = email ? String(email).trim().toLowerCase() : "info@yoouz.com";
+      const rawDomain = cleanEmail.includes("@") ? cleanEmail.split("@")[1] : "yoouz.com";
+
+      // Clear memory verification store
+      businessVerificationStore.delete(cleanEmail);
+      businessVerificationStore.delete("info@yoouz.com");
+
+      // Clear any custom places or claims in DB
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          await bunnyDb.execute({
+            sql: `DELETE FROM places WHERE id LIKE '%yoouz%' OR data LIKE '%yoouz.com%'`
+          });
+          await bunnyDb.execute({
+            sql: `DELETE FROM businessClaims WHERE data LIKE '%info@yoouz.com%' OR data LIKE '%yoouz.com%'`
+          });
+        }
+      } catch (e) {}
+
+      return res.json({
+        success: true,
+        message: `Business sign-up state and account memory completely deleted for ${cleanEmail} (${rawDomain}). You can now sign up completely fresh from scratch!`
+      });
+    } catch (err: any) {
+      console.error("reset-account error:", err);
+      return res.status(500).json({ error: err.message || "Failed to reset account" });
+    }
+  });
+
   // 1. Send Magic Link & 6-Digit Verification Code to Business Email via Resend
   app.post("/api/business/send-magic-link", async (req, res) => {
     try {
@@ -9316,25 +9350,27 @@ app.post("/api/videos/save-review", async (req, res) => {
         matchedPlaceId = `place-custom-${rawDomain.replace(/[^a-z0-9]/g, '-')}`;
       }
 
-      let existingPlaceLogo = '';
+      let existingPlaceLogo = rawDomain && KNOWN_BRAND_LOGOS[rawDomain] ? KNOWN_BRAND_LOGOS[rawDomain] : '';
       try {
-        const bunnyDb = getBunnyDb();
-        if (bunnyDb) {
-          const pRows = await bunnyDb.execute({
-            sql: `SELECT data FROM places WHERE id = ? LIMIT 1`,
-            args: [matchedPlaceId]
-          });
-          if (pRows.rows && pRows.rows.length > 0) {
-            const pData = JSON.parse(pRows.rows[0].data as string);
-            if (pData.logoUrl) existingPlaceLogo = pData.logoUrl;
+        if (!existingPlaceLogo) {
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
+            const pRows = await bunnyDb.execute({
+              sql: `SELECT data FROM places WHERE id = ? LIMIT 1`,
+              args: [matchedPlaceId]
+            });
+            if (pRows.rows && pRows.rows.length > 0) {
+              const pData = JSON.parse(pRows.rows[0].data as string);
+              if (pData.logoUrl) existingPlaceLogo = pData.logoUrl;
+            }
           }
-        }
-        
-        if (!existingPlaceLogo && adminDb) {
-          const snap = await adminDb.collection("places").doc(matchedPlaceId).get();
-          if (snap.exists) {
-            const pData = snap.data();
-            if (pData && pData.logoUrl) existingPlaceLogo = pData.logoUrl;
+          
+          if (!existingPlaceLogo && adminDb) {
+            const snap = await adminDb.collection("places").doc(matchedPlaceId).get();
+            if (snap.exists) {
+              const pData = snap.data();
+              if (pData && pData.logoUrl) existingPlaceLogo = pData.logoUrl;
+            }
           }
         }
       } catch (e) {}
@@ -11910,9 +11946,10 @@ Return JSON:
   // Dynamic Social Sharing Meta Tags & Open Graph Card Generator Engine
   app.get(['/api/og-image/icon', '/favicon.svg'], (_req: any, res: any) => {
     const iconSvg = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="512" height="512" rx="140" fill="#18181b"/>
+      <rect width="512" height="512" rx="140" fill="#ffffff"/>
+      <rect x="2" y="2" width="508" height="508" rx="138" stroke="rgba(0, 0, 0, 0.08)" stroke-width="4"/>
       <g transform="translate(86, 86) scale(14.166)">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#09090b"/>
       </g>
     </svg>`;
     res.setHeader('Content-Type', 'image/svg+xml');
@@ -13929,6 +13966,14 @@ function escapeXml(unsafe: string) {
 }
 
 const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "yoouz.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="28" fill="#ffffff"/>
+    <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#09090b"/>
+  </svg>`,
+  "www.yoouz.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="28" fill="#ffffff"/>
+    <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#09090b"/>
+  </svg>`,
   "tajhotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
     <rect width="100" height="100" rx="22" fill="#1c1917"/>
     <path d="M50 18 C36 32 28 48 28 62 C28 74 38 82 50 82 C62 82 72 74 72 62 C72 48 64 32 50 18 Z" fill="#d97706"/>
