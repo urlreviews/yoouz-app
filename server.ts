@@ -12993,8 +12993,9 @@ const isPlaceCard = type === 'place';
         </g>
       </svg>`;
 
-      await sharp(Buffer.from(defaultSvg))
-        .png({ quality: 100, compressionLevel: 6 })
+      await sharp(Buffer.from(defaultSvg), { density: 150 })
+        .resize(1200, 630)
+        .png({ palette: false, quality: 100, compressionLevel: 6, force: true })
         .toFile(path.join(process.cwd(), 'public', 'og-banner.png'));
       
       console.log("Successfully generated icon-only /public/og-banner.png");
@@ -13522,14 +13523,21 @@ app.get('/api/og-preview-v2', async (req, res) => {
   res.send(svg);
 });
 
-    app.get(['/api/og', '/api/og.png', '/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
+    app.all(['/api/og', '/api/og.png', '/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
     try {
+      const ogBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
       let type = (req.query.type as string) || "";
       if (!type) {
         if (req.query.id || req.query.reviewId) type = "video";
         else if (req.query.domain || req.query.logoUrl || req.query.website) type = "place";
         else if (req.query.avatarUrl || req.query.handle) type = "creator";
         else type = "homepage";
+      }
+
+      if (type === 'homepage' && fs.existsSync(ogBannerPath)) {
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        return res.sendFile(ogBannerPath);
       }
 
       if (type === 'video') {
@@ -13966,8 +13974,19 @@ app.get('/api/og-preview-v2', async (req, res) => {
           </g>
         </g>
       </svg>`;
-      const fallbackBuf = await sharp(Buffer.from(defaultSvg)).png().toBuffer();
+      if (fs.existsSync(ogBannerPath)) {
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        return res.sendFile(ogBannerPath);
+      }
+
+      const fallbackBuf = await sharp(Buffer.from(defaultSvg), { density: 150 })
+        .resize(1200, 630)
+        .png({ palette: false, quality: 100, compressionLevel: 6, force: true })
+        .toBuffer();
+
       res.setHeader("Content-Type", "image/png");
+      res.setHeader("Content-Length", fallbackBuf.length);
       res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       return res.end(fallbackBuf);
     } catch (e: any) {
@@ -14590,7 +14609,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     const safeTitle = escapeHtml(meta.title);
     const safeDesc = escapeHtml(meta.description);
     const safeUrl = escapeHtml(meta.url);
-    let rawImage = meta.imageUrl || "https://yoouz.com/og-banner.png?v=5";
+    let rawImage = meta.imageUrl || "https://yoouz.com/og-banner.png?v=7";
     if (rawImage.includes("localhost") || rawImage.startsWith("/")) {
       rawImage = rawImage.replace(/^https?:\/\/[^\/]+/, "https://yoouz.com").replace(/^\//, "https://yoouz.com/");
     }
@@ -14694,7 +14713,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     const publicBase = 'https://yoouz.com';
     let title = "Yoouz - Authentic 60-Second Video Reviews";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.";
-    let imageUrl = `${publicBase}/og-banner.png?v=5`;
+    let imageUrl = `${publicBase}/og-banner.png?v=7`;
     let videoUrl = "";
     let embedUrl = "";
     let type = "website";
