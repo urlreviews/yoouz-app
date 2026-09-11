@@ -105,8 +105,8 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             onClick={() => onSelectSection("home")}
             className="flex items-center gap-3 px-3 py-2 cursor-pointer group"
           >
-            <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white shadow-[0_4px_16px_rgba(255,255,255,0.15)] group-hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-white/20">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
+            <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.6)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-zinc-800">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
@@ -221,9 +221,9 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           {/* Logo Icon Only */}
           <div
             onClick={() => onSelectSection("home")}
-            className="flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white shadow-[0_4px_16px_rgba(255,255,255,0.15)] cursor-pointer hover:-translate-y-0.5 transition-all duration-300 border border-white/20"
+            className="flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] cursor-pointer hover:-translate-y-0.5 transition-all duration-300 border border-zinc-800"
           >
-            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-zinc-950">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>

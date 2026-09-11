@@ -11946,10 +11946,9 @@ Return JSON:
   // Dynamic Social Sharing Meta Tags & Open Graph Card Generator Engine
   app.get(['/api/og-image/icon', '/favicon.svg'], (_req: any, res: any) => {
     const iconSvg = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="512" height="512" rx="140" fill="#ffffff"/>
-      <rect x="2" y="2" width="508" height="508" rx="138" stroke="rgba(0, 0, 0, 0.08)" stroke-width="4"/>
+      <rect width="512" height="512" rx="140" fill="#18181b"/>
       <g transform="translate(86, 86) scale(14.166)">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#09090b"/>
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
       </g>
     </svg>`;
     res.setHeader('Content-Type', 'image/svg+xml');
@@ -13967,12 +13966,12 @@ function escapeXml(unsafe: string) {
 
 const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "yoouz.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="28" fill="#ffffff"/>
-    <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#09090b"/>
+    <rect width="100" height="100" rx="28" fill="#09090b"/>
+    <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#ffffff"/>
   </svg>`,
   "www.yoouz.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="28" fill="#ffffff"/>
-    <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#09090b"/>
+    <rect width="100" height="100" rx="28" fill="#09090b"/>
+    <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#ffffff"/>
   </svg>`,
   "tajhotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
     <rect width="100" height="100" rx="22" fill="#1c1917"/>

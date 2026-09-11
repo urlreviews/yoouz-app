@@ -363,8 +363,8 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
           className="flex items-center gap-2.5 cursor-pointer group"
           id="btn-business-logo-exit"
         >
-          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-white text-zinc-950 shadow-sm group-hover:scale-105 transition-transform">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-zinc-950">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 text-white shadow-sm group-hover:scale-105 transition-transform">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>

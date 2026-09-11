@@ -4,13 +4,13 @@ import { Place } from "../types";
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "yoouz.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <rect width="100" height="100" rx="28" fill="#ffffff"/>
-      <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#09090b"/>
+      <rect width="100" height="100" rx="28" fill="#09090b"/>
+      <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#ffffff"/>
     </svg>`),
   "www.yoouz.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <rect width="100" height="100" rx="28" fill="#ffffff"/>
-      <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#09090b"/>
+      <rect width="100" height="100" rx="28" fill="#09090b"/>
+      <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#ffffff"/>
     </svg>`),
   "facebook.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
