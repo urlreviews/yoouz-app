@@ -4205,6 +4205,9 @@ export function App() {
     const placeIdToOpen = newReview.placeId || (newReview as any).place?.id;
     if (placeIdToOpen) {
       handleOpenPlaceDrawer(placeIdToOpen);
+      // Force the background feed index to 0 so when the user closes the drawer,
+      // they instantly see their newly published video at the top of the homepage feed.
+      savedHomeVideoIndexRef.current = 0;
     }
 
     // Persist to local durable backup store so it is never dropped across reload or navigation
