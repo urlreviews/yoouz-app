@@ -1,5 +1,5 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { NavSection, Place, VideoReview, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from '../types';
 import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
 import { getDisplayViews } from '../utils/placeUtils';
@@ -20,6 +20,7 @@ import {
   Building2, 
   Mail, 
   Check, 
+  CheckCheck,
   ArrowLeft, 
   ChevronLeft, 
   Lock, 
@@ -1046,7 +1047,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
 
-  // Business Notification Preferences (Persisted across local storage, component state, and Firestore)
+  // Business Notification Preferences (Persisted across local storage, component state, and bunnydb)
   const [businessNotificationSettings, setBusinessNotificationSettings] = useState<NotificationPreferences>(() => {
     if (currentUser?.notificationSettings) {
       return currentUser.notificationSettings;
@@ -1082,6 +1083,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [followerSearchQuery, setFollowerSearchQuery] = useState('');
   const [hoveredUnfollow, setHoveredUnfollow] = useState<string | null>(null);
   const [targetThreadId, setTargetThreadId] = useState<string>('');
+  const [seenFollowerIds, setSeenFollowerIds] = useState<Set<string>>(() => {
+    try {
+      const placeKey = currentPlace?.id || 'biz';
+      const stored = localStorage.getItem(`copo_seen_followers_${placeKey}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return new Set(parsed);
+      }
+    } catch (e) {}
+    return new Set();
+  });
 
   // Effective Business User Profile for Messaging & Collaboration
   const effectiveUser: UserProfile = useMemo(() => {
@@ -1245,27 +1257,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return (messages || []).reduce((acc, m) => acc + (m.unreadCount || 0), 0);
   }, [messages]);
 
-  const handleMessageFollower = (follower: any) => {
-    setActiveTab('inbox');
-    const existing = (messages || []).find(m => 
-      m.senderId === follower.id || 
-      (m.senderName && m.senderName.toLowerCase() === follower.name.toLowerCase()) ||
-      (follower.handle && m.senderName && m.senderName.toLowerCase().replace(/^@/, '') === follower.handle.toLowerCase())
-    );
-    if (existing) {
-      setTargetThreadId(existing.id);
-    } else {
-      setTargetThreadId(follower.id);
-    }
-  };
-
-  // Count reviews that need owner attention (unreplied)
-  const unrepliedReviewsCount = useMemo(() => {
-    return placeVideos.filter(
-      (v) => !ownerReplies[v.id] && !v.ownerResponse?.text
-    ).length;
-  }, [placeVideos, ownerReplies]);
-
   // Business Notifications computed from props and active notification preferences
   const businessNotifications = useMemo(() => {
     if (!notifications || notifications.length === 0) return [];
@@ -1291,9 +1282,61 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   }, [notifications, currentPlace, placeVideos, businessNotificationSettings]);
 
   const unreadBusinessNotifsCount = useMemo(() => {
-    const unread = businessNotifications.filter(n => !n.isRead).length;
-    return unread + unrepliedReviewsCount;
-  }, [businessNotifications, unrepliedReviewsCount]);
+    return businessNotifications.filter(n => !n.isRead).length;
+  }, [businessNotifications]);
+
+  // Unseen new followers count for the Followers tab badge
+  const unseenFollowersCount = useMemo(() => {
+    return businessFollowers.filter(
+      (f) => !seenFollowerIds.has(f.id) && !seenFollowerIds.has(f.handle)
+    ).length;
+  }, [businessFollowers, seenFollowerIds]);
+
+  // Mark all followers as read/seen
+  const handleMarkFollowersAsRead = useCallback(() => {
+    const allIds = businessFollowers.map((f) => f.id || f.handle);
+    const nextSet = new Set([...Array.from(seenFollowerIds), ...allIds]);
+    setSeenFollowerIds(nextSet);
+    try {
+      const placeKey = currentPlace?.id || 'biz';
+      localStorage.setItem(`copo_seen_followers_${placeKey}`, JSON.stringify(Array.from(nextSet)));
+    } catch (e) {}
+
+    // Also mark any business follow notifications as read
+    if (onMarkNotificationRead) {
+      businessNotifications
+        .filter((n) => n.type === 'follow' && !n.isRead)
+        .forEach((n) => onMarkNotificationRead(n.id));
+    }
+  }, [businessFollowers, seenFollowerIds, currentPlace, businessNotifications, onMarkNotificationRead]);
+
+  // When active tab is followers, automatically mark followers as seen
+  useEffect(() => {
+    if (activeTab === 'followers' && businessFollowers.length > 0 && unseenFollowersCount > 0) {
+      handleMarkFollowersAsRead();
+    }
+  }, [activeTab, businessFollowers.length, unseenFollowersCount, handleMarkFollowersAsRead]);
+
+  const handleMessageFollower = (follower: any) => {
+    setActiveTab('inbox');
+    const existing = (messages || []).find(m => 
+      m.senderId === follower.id || 
+      (m.senderName && m.senderName.toLowerCase() === follower.name.toLowerCase()) ||
+      (follower.handle && m.senderName && m.senderName.toLowerCase().replace(/^@/, '') === follower.handle.toLowerCase())
+    );
+    if (existing) {
+      setTargetThreadId(existing.id);
+    } else {
+      setTargetThreadId(follower.id);
+    }
+  };
+
+  // Count reviews that need owner attention (unreplied)
+  const unrepliedReviewsCount = useMemo(() => {
+    return placeVideos.filter(
+      (v) => !ownerReplies[v.id] && !v.ownerResponse?.text
+    ).length;
+  }, [placeVideos, ownerReplies]);
 
   // Dynamic KPIs calculated strictly from real data
   const totalReviews = placeVideos.length;
@@ -1576,7 +1619,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       id: 'followers' as BusinessTab, 
       label: t('business.followers', 'Followers'), 
       icon: Users,
-      badge: businessFollowers.length > 0 ? businessFollowers.length : undefined
+      badge: unseenFollowersCount > 0 ? unseenFollowersCount : undefined
     },
     { 
       id: 'notifications' as BusinessTab, 
@@ -2649,9 +2692,23 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </h1>
                       <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
                         {businessFollowers.length} {businessFollowers.length === 1 ? 'customer follower' : 'customer followers'}
+                        {unseenFollowersCount > 0 && (
+                          <span className="text-emerald-400 ml-1 font-semibold">({unseenFollowersCount} new)</span>
+                        )}
                       </p>
                     </div>
                   </div>
+
+                  {businessFollowers.length > 0 && (
+                    <button
+                      onClick={handleMarkFollowersAsRead}
+                      className="px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                      title="Mark all followers as read"
+                    >
+                      <CheckCheck className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
+                      <span>Mark read</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Search Bar matching CopoFollowingView */}

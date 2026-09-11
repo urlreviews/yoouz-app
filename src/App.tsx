@@ -1412,12 +1412,46 @@ export function App() {
 
     const unsubscribe = subscribeToChats(effectiveMessagingUser, (threads) => {
       setMessages((prev) => {
+        const prevMap = new Map<string, CopoMessage>();
+        prev.forEach((t) => prevMap.set(t.id, t));
+
+        const mergedThreads = threads.map((thread) => {
+          const prevThread = prevMap.get(thread.id);
+          if (!prevThread) return thread;
+
+          const histMap = new Map<string, any>();
+          (prevThread.history || []).forEach((m) => {
+            if (m) {
+              const k = m.id || `${m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
+              histMap.set(k, m);
+            }
+          });
+          (thread.history || []).forEach((m) => {
+            if (m) {
+              const k = m.id || `${m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
+              histMap.set(k, m);
+            }
+          });
+          const mergedHistory = Array.from(histMap.values()).sort((a, b) => {
+            const tA = Number(a.createdAtMs || 0);
+            const tB = Number(b.createdAtMs || 0);
+            return tA - tB;
+          });
+
+          return {
+            ...prevThread,
+            ...thread,
+            history: mergedHistory,
+            lastMessage: thread.lastMessage || (mergedHistory[mergedHistory.length - 1]?.text ?? prevThread.lastMessage)
+          };
+        });
+
         const serverIds = new Set(threads.map((t) => t.id));
         const pendingLocal = prev.filter(
           (m) => !serverIds.has(m.id) && (m.id === activeThreadId || (m.history && m.history.length > 0))
         );
-        if (pendingLocal.length === 0) return threads;
-        return [...pendingLocal, ...threads];
+
+        return [...pendingLocal, ...mergedThreads];
       });
 
       if (isFirstChatLoadRef.current) {

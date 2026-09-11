@@ -1038,8 +1038,33 @@ export function subscribeToChats(
           const existingIdx = cachedThreads.findIndex((t) => t.id === freshThread.id);
           let nextThreads: CopoMessage[];
           if (existingIdx >= 0) {
+            const existingThread = cachedThreads[existingIdx];
+            const histMap = new Map<string, any>();
+            (existingThread.history || []).forEach((m) => {
+              if (m) {
+                const k = m.id || `${m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
+                histMap.set(k, m);
+              }
+            });
+            (freshThread.history || []).forEach((m) => {
+              if (m) {
+                const k = m.id || `${m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
+                histMap.set(k, m);
+              }
+            });
+            const mergedHist = Array.from(histMap.values()).sort((a, b) => {
+              const tA = Number(a.createdAtMs || 0);
+              const tB = Number(b.createdAtMs || 0);
+              return tA - tB;
+            });
+            const mergedThread: CopoMessage = {
+              ...existingThread,
+              ...freshThread,
+              history: mergedHist,
+              lastMessage: freshThread.lastMessage || (mergedHist[mergedHist.length - 1]?.text ?? existingThread.lastMessage)
+            };
             nextThreads = [...cachedThreads];
-            nextThreads[existingIdx] = freshThread;
+            nextThreads[existingIdx] = mergedThread;
           } else {
             nextThreads = [freshThread, ...cachedThreads];
           }
@@ -1118,13 +1143,46 @@ export async function sendChatMessage(
   let existingHistory: any[] = [];
   let prevRecipientUnread = 0;
 
+  // 0. Try reading prior thread history from local cache first
+  const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+  const cacheKey = `copo_cached_chats_${userKey}`;
+  try {
+    const rawCache = localStorage.getItem(cacheKey);
+    if (rawCache) {
+      const parsed = JSON.parse(rawCache);
+      if (Array.isArray(parsed)) {
+        const match = parsed.find((t: any) => t.id === threadId);
+        if (match && Array.isArray(match.history) && match.history.length > 0) {
+          existingHistory = match.history;
+        }
+      }
+    }
+  } catch (e) {}
+
   // 1. Try reading prior thread history from Bunny DB or bunnydb
   try {
     const res = await fetch(`/api/nosql/chats/${threadId}`);
     if (res.ok) {
       const d = await res.json();
-      if (Array.isArray(d.history)) {
-        existingHistory = d.history;
+      if (Array.isArray(d.history) && d.history.length > 0) {
+        const histMap = new Map<string, any>();
+        existingHistory.forEach((m) => {
+          if (m) {
+            const k = m.id || `${m.createdAt || m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
+            histMap.set(k, m);
+          }
+        });
+        d.history.forEach((m: any) => {
+          if (m) {
+            const k = m.id || `${m.createdAt || m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
+            histMap.set(k, m);
+          }
+        });
+        existingHistory = Array.from(histMap.values()).sort((a, b) => {
+          const tA = Number(a.createdAt || a.createdAtMs || 0);
+          const tB = Number(b.createdAt || b.createdAtMs || 0);
+          return tA - tB;
+        });
       }
       if (d.unreadCounts && typeof d.unreadCounts === "object") {
         prevRecipientUnread =
@@ -1137,7 +1195,19 @@ export async function sendChatMessage(
     }
   } catch (e) {}
 
-  const fullHistory = [...existingHistory, newMessage];
+  const fullHistMap = new Map<string, any>();
+  existingHistory.forEach((m) => {
+    if (m) {
+      const k = m.id || `${m.createdAt || m.createdAtMs || m.timestamp || ''}_${m.text || ''}`;
+      fullHistMap.set(k, m);
+    }
+  });
+  fullHistMap.set(newMessage.id, newMessage);
+  const fullHistory = Array.from(fullHistMap.values()).sort((a, b) => {
+    const tA = Number(a.createdAt || a.createdAtMs || 0);
+    const tB = Number(b.createdAt || b.createdAtMs || 0);
+    return tA - tB;
+  });
 
   const canonicalAliases: string[] = [];
   if (recipientName.toLowerCase() === "avt ertuop" || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientId.includes("avt")) {

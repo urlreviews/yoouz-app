@@ -4664,8 +4664,27 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
               const curDataRaw = (existingRow.rows[0] as any).data;
               let curData = typeof curDataRaw === 'string' ? JSON.parse(curDataRaw) : (curDataRaw || {});
               finalDataObj = mergeDeep(curData, data || {});
-              if (data?.history && Array.isArray(data.history)) {
-                finalDataObj.history = data.history;
+              if (colName === 'chats' || (data?.history && Array.isArray(data.history))) {
+                const existingHist = Array.isArray(curData.history) ? curData.history : [];
+                const incomingHist = Array.isArray(data?.history) ? data.history : [];
+                const msgMap = new Map<string, any>();
+                existingHist.forEach((m: any) => {
+                  if (m) {
+                    const key = m.id || `${m.createdAt || m.timestamp || ''}_${m.senderEmail || m.senderName || ''}_${m.text || ''}`;
+                    msgMap.set(key, m);
+                  }
+                });
+                incomingHist.forEach((m: any) => {
+                  if (m) {
+                    const key = m.id || `${m.createdAt || m.timestamp || ''}_${m.senderEmail || m.senderName || ''}_${m.text || ''}`;
+                    msgMap.set(key, m);
+                  }
+                });
+                finalDataObj.history = Array.from(msgMap.values()).sort((a, b) => {
+                  const tA = Number(a.createdAt || a.createdAtMs || 0);
+                  const tB = Number(b.createdAt || b.createdAtMs || 0);
+                  return tA - tB;
+                });
               }
             }
           } catch (mErr) {}
@@ -8122,32 +8141,100 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       if (!threadId || !threadData) return res.status(400).json({ error: "Missing fields" });
 
       const bunnyDb = getBunnyDb();
+      let finalThreadData = { ...threadData };
+
       if (bunnyDb) {
+        let existingData: any = {};
+        try {
+          const rs = await bunnyDb.execute({
+            sql: "SELECT data FROM chats WHERE id = ? LIMIT 1",
+            args: [threadId]
+          });
+          if (rs && rs.rows && rs.rows.length > 0) {
+            const raw = (rs.rows[0] as any).data;
+            existingData = typeof raw === "string" ? JSON.parse(raw) : (raw || {});
+          }
+        } catch (e) {}
+
+        const existingHist = Array.isArray(existingData.history) ? existingData.history : [];
+        const incomingHist = Array.isArray(threadData.history) ? threadData.history : [];
+        const msgMap = new Map<string, any>();
+
+        existingHist.forEach((m: any) => {
+          if (m) {
+            const key = m.id || `${m.createdAt || m.timestamp || ''}_${m.senderEmail || m.senderName || ''}_${m.text || ''}`;
+            msgMap.set(key, m);
+          }
+        });
+
+        incomingHist.forEach((m: any) => {
+          if (m) {
+            const key = m.id || `${m.createdAt || m.timestamp || ''}_${m.senderEmail || m.senderName || ''}_${m.text || ''}`;
+            msgMap.set(key, m);
+          }
+        });
+
+        if (message && (message.text || message.videoThumbnail || message.videoId)) {
+          const key = message.id || `${message.createdAt || message.timestamp || ''}_${message.senderEmail || message.senderName || ''}_${message.text || ''}`;
+          msgMap.set(key, message);
+        }
+
+        const mergedHistory = Array.from(msgMap.values()).sort((a, b) => {
+          const tA = Number(a.createdAt || a.createdAtMs || 0);
+          const tB = Number(b.createdAt || b.createdAtMs || 0);
+          return tA - tB;
+        });
+
+        const mergedParticipants = Array.from(new Set([
+          ...(Array.isArray(existingData.participants) ? existingData.participants : []),
+          ...(Array.isArray(threadData.participants) ? threadData.participants : [])
+        ].filter(Boolean)));
+
+        const mergedUnreadCounts = {
+          ...(existingData.unreadCounts || {}),
+          ...(threadData.unreadCounts || {})
+        };
+
+        const lastMsg = mergedHistory[mergedHistory.length - 1];
+
+        finalThreadData = {
+          ...existingData,
+          ...threadData,
+          id: threadId,
+          participants: mergedParticipants,
+          unreadCounts: mergedUnreadCounts,
+          history: mergedHistory,
+          lastMessage: message?.text || threadData.lastMessage || lastMsg?.text || "",
+          lastSenderEmail: message?.senderEmail || threadData.lastSenderEmail || lastMsg?.senderEmail || "",
+          lastSenderName: message?.senderName || threadData.lastSenderName || lastMsg?.senderName || "",
+          updatedAt: Date.now()
+        };
+
         await bunnyDb.execute({
           sql: "INSERT INTO chats (id, participants, lastMessage, lastSenderEmail, data, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET participants = ?, lastMessage = ?, lastSenderEmail = ?, data = ?, updatedAt = CURRENT_TIMESTAMP",
           args: [
             threadId, 
-            JSON.stringify(threadData.participants || []), 
-            threadData.lastMessage || message?.text || "", 
-            threadData.lastSenderEmail || message?.senderEmail || "", 
-            JSON.stringify(threadData),
-            JSON.stringify(threadData.participants || []),
-            threadData.lastMessage || message?.text || "", 
-            threadData.lastSenderEmail || message?.senderEmail || "", 
-            JSON.stringify(threadData)
+            JSON.stringify(finalThreadData.participants || []), 
+            finalThreadData.lastMessage || "", 
+            finalThreadData.lastSenderEmail || "", 
+            JSON.stringify(finalThreadData),
+            JSON.stringify(finalThreadData.participants || []),
+            finalThreadData.lastMessage || "", 
+            finalThreadData.lastSenderEmail || "", 
+            JSON.stringify(finalThreadData)
           ]
         });
       }
 
       // Instant live broadcast to participants
-      const rawTargets = Array.isArray(threadData.participants)
-        ? threadData.participants
+      const rawTargets = Array.isArray(finalThreadData.participants)
+        ? finalThreadData.participants
         : [
-            threadData.recipientEmail,
-            threadData.recipientId,
-            threadData.recipientHandle,
-            threadData.senderEmail,
-            threadData.senderId
+            finalThreadData.recipientEmail,
+            finalThreadData.recipientId,
+            finalThreadData.recipientHandle,
+            finalThreadData.senderEmail,
+            finalThreadData.senderId
           ].filter(Boolean);
 
       const targets = [...rawTargets];
@@ -8164,12 +8251,12 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       broadcastSseEvent({
         type: "chat_message",
         threadId,
-        data: threadData
+        data: finalThreadData
       }, targets);
 
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: (err as any).message });
+      res.json({ success: true, threadData: finalThreadData });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
     }
   });
 
