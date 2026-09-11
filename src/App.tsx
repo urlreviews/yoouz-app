@@ -4194,8 +4194,9 @@ export function App() {
     });
     setActiveSection("home");
     setActiveSubTab("discover");
-    setSelectedPlaceIdForDrawer(newReview.placeId); // Open the business profile drawer after submission
+    setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
+    setCurrentVideoIndex(0);
     setPendingVideoId(newReview.id);
 
     // Persist to Firestore database so all viewers across any browser/device see it immediately

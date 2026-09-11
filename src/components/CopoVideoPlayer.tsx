@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from
 import { useLanguage } from "../i18n/LanguageContext";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
-import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, resolveVideoPosterUrl, resolvePlayableVideoSourcesCascade } from "../utils/videoUtils";
 import { VideoFeedCard } from "./VideoFeedCard";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import {
@@ -133,6 +133,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const playPromiseRef = useRef<Promise<void> | null>(null);
   const lastAdvanceTimeRef = useRef<{ time: number; currentTime: number }>({ time: Date.now(), currentTime: 0 });
   const lastLoadedVideoIdRef = useRef<string | null>(null);
+  const activeVideoRef = useRef<VideoReview | null>(null);
 
   // Initialize pool of 3 hardware-accelerated video elements once
   useLayoutEffect(() => {
@@ -211,6 +212,30 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         vid.addEventListener("volumechange", () => {
           if (feedVideoRef.current === vid) {
             setIsActualMuted(vid.muted);
+          }
+        });
+
+        // Failover error listener: automatically cascade to fallback streams if primary CDN URL encounters any decode or network issue
+        vid.addEventListener("error", () => {
+          if (feedVideoRef.current === vid) {
+            const active = activeVideoRef.current;
+            if (active) {
+              const currentSrc = vid.currentSrc || vid.src;
+              const cascade = resolvePlayableVideoSourcesCascade(active);
+              const nextCandidate = cascade.find(
+                (s) => s && s !== currentSrc && !currentSrc.endsWith(s)
+              );
+              if (nextCandidate && nextCandidate !== currentSrc) {
+                console.warn(`[CopoVideoPlayer] Auto-recovering playback for ${active.id} with candidate: ${nextCandidate}`);
+                vid.src = nextCandidate;
+                vid.load();
+                vid.play().then(() => {
+                  setIsPlaying(true);
+                  setIsBuffering(false);
+                  setFirstFrameRenderedId(active.id);
+                }).catch(() => {});
+              }
+            }
           }
         });
 
@@ -317,6 +342,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     // Point feedVideoRef to the active video element
     feedVideoRef.current = activeVid;
+    activeVideoRef.current = activeVideo;
     const isNewVideo = lastLoadedVideoIdRef.current !== activeVideo.id;
 
     const isSameSrc = (elSrc: string, targetSrc: string) => {
@@ -355,11 +381,47 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
     setIsActualMuted(activeVid.muted);
 
+    // Robust Playback Starter with Autoplay Policy & Audio Fallback
+    const startPlayback = () => {
+      if (isPaused) return;
+      const p = activeVid.play();
+      if (p !== undefined) {
+        playPromiseRef.current = p;
+        p.then(() => {
+          playPromiseRef.current = null;
+          setIsPlaying(true);
+          setIsBuffering(false);
+          setFirstFrameRenderedId(activeVideo.id);
+        }).catch((err) => {
+          playPromiseRef.current = null;
+          if (err?.name === "NotAllowedError") {
+            // Autoplay policy: unmuted playback blocked without prior gesture
+            // Fall back instantly to muted playback which all browsers permit 100%
+            activeVid.muted = true;
+            setIsActualMuted(true);
+            const retryP = activeVid.play();
+            if (retryP !== undefined) {
+              retryP.then(() => {
+                setIsPlaying(true);
+                setIsBuffering(false);
+                setFirstFrameRenderedId(activeVideo.id);
+              }).catch(() => {});
+            }
+          } else if (err?.name !== "AbortError") {
+            setIsPlaying(false);
+          }
+        });
+      }
+    };
+
     // If still on the same video, handle pause state
     if (!isNewVideo) {
       if (isPaused) {
         try { activeVid.pause(); } catch (e) {}
         setIsPlaying(false);
+      } else if (!isManuallyPausedRef.current && (activeVid.paused || !isPlaying)) {
+        // Resuming playback after an overlay (drawer/modal/tab) closed
+        startPlayback();
       }
     } else {
       // New active video detected - rewind to start
@@ -374,11 +436,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         activeVid.currentTime = 0;
       } catch (e) {}
 
-      const shouldStartPaused = Boolean(isPaused || initialAutoplayPaused);
-
-      if (shouldStartPaused) {
-        isManuallyPausedRef.current = true;
-        setIsManuallyPaused(true);
+      if (isPaused || initialAutoplayPaused) {
+        if (initialAutoplayPaused) {
+          isManuallyPausedRef.current = true;
+          setIsManuallyPaused(true);
+        }
         setIsPlaying(false);
         setIsBuffering(false);
         try { activeVid.pause(); } catch (e) {}
@@ -397,33 +459,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           });
         }
 
-        const startPlayback = () => {
-          const p = activeVid.play();
-          if (p !== undefined) {
-            playPromiseRef.current = p;
-            p.then(() => {
-              playPromiseRef.current = null;
-              // Do NOT set playing/firstFrame rendered here; let compositor events handle it
-              setIsBuffering(false);
-            }).catch((err) => {
-              playPromiseRef.current = null;
-              if (err?.name === "NotAllowedError") {
-                // Desktop autoplay policy: unmuted playback blocked without prior gesture
-                // Instantly fall back to muted playback which all browsers permit 100%
-                activeVid.muted = true;
-                setIsActualMuted(true);
-                const retryP = activeVid.play();
-                if (retryP !== undefined) {
-                  retryP.then(() => {
-                    setIsBuffering(false);
-                  }).catch(() => {});
-                }
-              } else if (err?.name !== "AbortError") {
-                setIsPlaying(false);
-              }
-            });
-          }
-        };
         startPlayback();
       }
     }
@@ -609,27 +644,53 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         } catch (e) {}
       }
       setIsPlaying(false);
-      const isDrawerContext = Boolean(contextKey?.startsWith("place_") || contextKey?.startsWith("creator_"));
-      if (isDrawerContext) {
-        isManuallyPausedRef.current = true;
-        setIsManuallyPaused(true);
-      }
+      isManuallyPausedRef.current = false;
+      setIsManuallyPaused(false);
       previousContextKeyRef.current = contextKey;
     }
   }, [contextKey]);
 
-  // Direct isPaused watcher: Immediately pause if app pauses playback
+  // Direct isPaused watcher: Pause when overlay is active, resume automatically when overlay closes!
   useEffect(() => {
+    const vid = feedVideoRef.current;
     if (isPaused) {
-      const vid = feedVideoRef.current;
       if (vid) {
         try {
           vid.pause();
         } catch (e) {}
       }
       setIsPlaying(false);
-      isManuallyPausedRef.current = true;
-      setIsManuallyPaused(true);
+    } else {
+      // Overlay/modal closed! If user did NOT manually pause with a tap, resume immediately
+      if (vid && !isManuallyPausedRef.current && (vid.paused || !isPlaying)) {
+        setIsBuffering(true);
+        const p = vid.play();
+        if (p !== undefined) {
+          p.then(() => {
+            setIsPlaying(true);
+            setIsBuffering(false);
+            if (activeVideoRef.current?.id) {
+              setFirstFrameRenderedId(activeVideoRef.current.id);
+            }
+          }).catch((err) => {
+            if (err?.name === "NotAllowedError") {
+              vid.muted = true;
+              setIsActualMuted(true);
+              vid.play().then(() => {
+                setIsPlaying(true);
+                setIsBuffering(false);
+                if (activeVideoRef.current?.id) {
+                  setFirstFrameRenderedId(activeVideoRef.current.id);
+                }
+              }).catch(() => {
+                setIsBuffering(false);
+              });
+            } else {
+              setIsBuffering(false);
+            }
+          });
+        }
+      }
     }
   }, [isPaused]);
 
@@ -1359,8 +1420,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               }}
               className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 pb-[calc(var(--mobile-nav-height,calc(71px+max(10px,env(safe-area-inset-bottom,10px))))+24px)] md:pb-8 bg-black md:bg-zinc-950 md:rounded-3xl border-0 md:border md:border-white/10 text-center select-none relative"
             >
-              {/* Green checkmark circle */}
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mb-5 text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)]">
+              {/* Checkmark circle - natural dark mode */}
+              <div className="w-16 h-16 rounded-full bg-zinc-850 border border-zinc-700/80 flex items-center justify-center mb-5 text-zinc-100 shadow-md">
                 <CheckCircle2 className="w-8 h-8 stroke-[2]" />
               </div>
 
@@ -1406,9 +1467,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     type="button"
                     id="btn-end-card-record-review"
                     onClick={onOpenCreateModal}
-                    className="mt-2 text-xs font-medium text-zinc-200 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer py-2"
+                    className="mt-2 text-xs font-medium text-zinc-300 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer py-2"
                   >
-                    <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                    <Plus className="w-3.5 h-3.5 text-zinc-300" />
                     <span>{t("video.recordYourOwnReview", "Record your own video review")}</span>
                   </button>
                 )}

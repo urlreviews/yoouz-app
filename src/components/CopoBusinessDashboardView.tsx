@@ -514,7 +514,7 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
               </div>
             </button>
             <div className="flex items-center gap-1 text-white text-xs font-bold shrink-0 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
-              <Star className="w-3.5 h-3.5 fill-white text-white" />
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>{video.rating || 5}</span>
             </div>
           </div>
@@ -1693,37 +1693,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           </div>
         </div>
 
-        {/* Pinned Desktop Footer & Legal Links (Matching user account CopoSidebar exactly) */}
-        <div className="pt-4 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
-          <div className="flex items-center gap-2 text-xs text-zinc-200 font-medium">
-            <button
-              type="button"
-              onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate('home')}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.privacy", "Privacy")}
-            </button>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate('home')}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.terms", "Terms")}
-            </button>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => onNavigate('more')}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.about", "About")}
-            </button>
-          </div>
-          <p className="text-xs text-zinc-200 font-normal">
-            {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
-          </p>
-        </div>
+        {/* Sidebar Footer Spacer */}
+        <div className="pt-2 border-t border-zinc-800/80 flex flex-col shrink-0 bg-zinc-950" />
       </aside>
         
         {/* Right side content wrapper */}
@@ -2016,7 +1987,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   {[
                     { key: 'views' as const, label: t('business.kpiImpressions', 'Video Reviews Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-zinc-800' },
                     { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Video Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Video, color: 'text-white', bg: 'bg-zinc-800' },
-                    { key: 'rating' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-zinc-200', bg: 'bg-zinc-800' },
+                    { key: 'rating' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-amber-400 fill-amber-400', bg: 'bg-zinc-800' },
                   ].map((stat, i) => {
                     const isSelected = selectedChartMetric === stat.key;
                     const sparklineColor = isSelected ? '#ffffff' : '#71717a';
@@ -2043,7 +2014,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <div className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter leading-none flex items-center gap-1">
                               <span>{stat.value}</span>
                               {stat.key === 'rating' && (
-                                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-white fill-white inline-block drop-shadow-xs" />
+                                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400 inline-block drop-shadow-xs" />
                               )}
                             </div>
                             {/* SVG Mini Sparkline */}
@@ -2077,7 +2048,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             {selectedChartMetric === 'reviews' && 'Verified Video Reviews'}
                             {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
                           </h3>
-                          <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                          <span className="text-[10px] sm:text-[11px] font-bold text-zinc-300 bg-zinc-800/80 px-2.5 py-1 rounded-full border border-zinc-700 flex items-center gap-1">
                             <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Real Video Impressions Live
                           </span>
                         </div>
@@ -2413,9 +2384,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       )}
                                     </div>
                                     <div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-200 flex-wrap">
-                                      <div className="flex text-white">
-                                        {Array.from({ length: video.rating || 5 }).map((_, i) => (
-                                          <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                                      <div className="flex items-center gap-0.5 text-amber-400">
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                          <Star
+                                            key={i}
+                                            className={`w-3.5 h-3.5 ${
+                                              i < (video.rating || 5)
+                                                ? 'fill-amber-400 text-amber-400'
+                                                : 'fill-zinc-800 text-zinc-700'
+                                            }`}
+                                          />
                                         ))}
                                       </div>
                                       <span>•</span>
@@ -2745,8 +2723,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 }}
                               />
                               {follower.isReviewer && (
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-zinc-900 text-white" title="Verified Customer Reviewer">
-                                  <Star className="w-2.5 h-2.5 fill-white" />
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-950 text-amber-400 shadow-xs" title="Verified Customer Reviewer">
+                                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                                 </div>
                               )}
                             </div>
@@ -2757,8 +2735,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   {follower.name}
                                 </h3>
                                 {follower.isReviewer && (
-                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold shrink-0">
-                                    Reviewer {follower.rating ? `· ⭐ ${follower.rating.toFixed(1)}` : ""}
+                                  <span className="px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 border border-zinc-700/80 text-[10px] font-medium shrink-0 flex items-center gap-1">
+                                    <span>Reviewer</span>
+                                    {follower.rating && (
+                                      <>
+                                        <span className="text-zinc-500">•</span>
+                                        <span className="flex items-center gap-0.5 text-zinc-200 font-semibold">
+                                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                          {follower.rating.toFixed(1)}
+                                        </span>
+                                      </>
+                                    )}
                                   </span>
                                 )}
                               </div>
@@ -2980,7 +2967,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <div className="space-y-2 pt-2 border-t border-zinc-800">
                           <label className="flex items-center justify-between text-xs font-semibold text-zinc-200 cursor-pointer">
                             <span className="flex items-center gap-1.5">
-                              <Star className="w-3.5 h-3.5 text-white fill-white" />
+                              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                               Display Yoouz Brand Trust Header
                             </span>
                             <input
@@ -3179,9 +3166,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     {embedShowStars && (
                                       <div className="flex items-center gap-1">
                                         <span className="font-black text-white">4.9</span>
-                                        <div className="flex text-white">
+                                        <div className="flex text-amber-400 items-center gap-0.5">
                                           {Array.from({ length: 5 }).map((_, i) => (
-                                            <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                                           ))}
                                         </div>
                                       </div>
@@ -3223,7 +3210,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   </div>
                                   {embedShowStars && (
                                     <div className="text-[11px] text-zinc-200 flex items-center gap-1 font-bold">
-                                      ★★★★★ <span>4.9 ({placeVideos.length} Video Reviews)</span>
+                                      <span className="text-amber-400">★★★★★</span> <span>4.9 ({placeVideos.length} Video Reviews)</span>
                                     </div>
                                   )}
                                 </div>
@@ -3281,8 +3268,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       </div>
                                     )}
 
-                                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-0.5 z-10">
-                                      ★ {v.rating || 5}
+                                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-1 z-10">
+                                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                      <span>{v.rating || 5}</span>
                                     </div>
 
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-white">
@@ -3328,8 +3316,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       </div>
                                     )}
 
-                                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-0.5 z-10">
-                                      ★ {v.rating || 5}
+                                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-1 z-10">
+                                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                      <span>{v.rating || 5}</span>
                                     </div>
 
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-white">
@@ -4152,7 +4141,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <h4 className="text-[13px] font-bold text-white">Business Notification Preferences</h4>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                               businessNotificationSettings.enabled
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                ? 'bg-zinc-800 text-zinc-200 border border-zinc-700'
                                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                             }`}>
                               {businessNotificationSettings.enabled ? 'Active' : 'Paused'}
@@ -4469,56 +4458,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 </div>
               </div>
             )}
-
-            {/* Bottom Footer & Legal Links (Matching user account layout on both desktop & mobile) */}
-            <footer className="pt-12 pb-8 mt-10 border-t border-zinc-800/80 text-center text-xs text-zinc-400 space-y-4 select-none">
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <button
-                  type="button"
-                  id="business-footer-terms-btn"
-                  onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate('home')}
-                  className="hover:text-white underline cursor-pointer bg-transparent border-none p-0 transition-colors"
-                >
-                  {t("legal.termsConditions", "Terms & Conditions")}
-                </button>
-                <span className="text-zinc-600">•</span>
-                <button
-                  type="button"
-                  id="business-footer-privacy-btn"
-                  onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate('home')}
-                  className="hover:text-white underline cursor-pointer bg-transparent border-none p-0 transition-colors"
-                >
-                  {t("legal.privacyPolicy", "Privacy Policy")}
-                </button>
-                <span className="text-zinc-600">•</span>
-                <button
-                  type="button"
-                  id="business-footer-support-btn"
-                  onClick={() => setShowHelpModal(true)}
-                  className="hover:text-white underline cursor-pointer bg-transparent border-none p-0 transition-colors"
-                >
-                  {t("legal.supportDesk", "Support Desk")}
-                </button>
-                <span className="text-zinc-600">•</span>
-                <button
-                  type="button"
-                  id="business-footer-about-btn"
-                  onClick={() => onNavigate('more')}
-                  className="hover:text-white underline cursor-pointer bg-transparent border-none p-0 transition-colors"
-                >
-                  {t("legal.about", "About")}
-                </button>
-              </div>
-
-              <div className="space-y-1 text-center font-medium">
-                <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                  {t("legal.networkLocation", "Yoouz Trust Network • San Francisco, CA")}
-                </p>
-                <p className="text-[11px] text-zinc-400">
-                  {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews.")}
-                </p>
-              </div>
-            </footer>
 
           </div>
         </main>

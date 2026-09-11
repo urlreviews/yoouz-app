@@ -1196,7 +1196,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onClick={() => setStarFilter(stars)}
                       className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap transition-all border flex items-center gap-1 shrink-0 ${starFilter === stars ? "bg-white border-white text-zinc-950" : "bg-zinc-900 border-zinc-800 text-zinc-200 hover:text-zinc-200"}`}
                     >
-                      {stars} <Star className={`w-2.5 h-2.5 ${starFilter === stars ? "fill-zinc-950" : "fill-zinc-400 text-zinc-200"}`} />
+                      {stars} <Star className={`w-2.5 h-2.5 ${starFilter === stars ? "fill-zinc-950 text-zinc-950" : "fill-amber-400 text-amber-400"}`} />
                     </button>
                   ))}
                 </div>
