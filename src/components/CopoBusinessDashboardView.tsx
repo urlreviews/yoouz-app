@@ -132,6 +132,10 @@ interface CopoBusinessDashboardViewProps {
   onClearAllNotifications?: () => void;
   onSaveNotificationSettings?: (newSettings: NotificationPreferences) => Promise<void> | void;
   onOpenLegal?: (tab: 'terms' | 'privacy') => void;
+  blockedUserIds?: string[];
+  onBlockUser?: (userId: string, userName?: string) => void;
+  onUnblockUser?: (userId: string) => void;
+  onOpenReport?: (reportData: { targetId: string; targetType: 'review' | 'user' | 'chat' | 'place'; targetName?: string; targetAvatar?: string }) => void;
 }
 
 type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'billing';
@@ -621,7 +625,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onMarkNotificationRead,
   onClearAllNotifications,
   onSaveNotificationSettings,
-  onOpenLegal
+  onOpenLegal,
+  blockedUserIds = [],
+  onBlockUser,
+  onUnblockUser,
+  onOpenReport
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   // Navigation tab state
@@ -2675,6 +2683,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   onNavigateHome={() => setActiveTab('overview')}
                   onNavigateToNotifications={() => setActiveTab('notifications')}
                   unreadNotifsCount={unreadBusinessNotifsCount}
+                  blockedUserIds={blockedUserIds}
+                  onBlockUser={onBlockUser}
+                  onUnblockUser={onUnblockUser}
+                  onOpenReport={onOpenReport}
                 />
               </div>
             )}
