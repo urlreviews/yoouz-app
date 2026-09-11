@@ -2696,9 +2696,9 @@ async function startServer() {
       let host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
       let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
       if (!host.includes('localhost') && !host.includes('127.0.0.1')) protocol = 'https';
-      const baseUrl失 = `${protocol}://${host}`;
+      const baseUrl = `${protocol}://${host}`;
 
-      const targetUrl = new URL(urlQuery.toString(), baseUrl失);
+      const targetUrl = new URL(urlQuery.toString(), baseUrl);
       const pathname = targetUrl.pathname;
       const searchParams = targetUrl.searchParams;
 
@@ -2724,8 +2724,8 @@ async function startServer() {
       const placeName = foundVideo?.placeName || "Business";
       const authorName = foundVideo?.author?.name || foundVideo?.authorName || "Verified Customer";
       const title = foundVideo ? `${authorName}'s 60-Second Video Review of ${placeName}` : "Yoouz - Authentic 60-Second Video Reviews";
-      const embedUrl = foundVideo ? `${baseUrl失}/embed/video/${encodeURIComponent(foundVideo.id)}` : `${baseUrl失}/embed`;
-      const thumbnailUrl = foundVideo?.videoThumbnail || foundVideo?.thumbnailUrl || `${baseUrl失}/og-banner.png`;
+      const embedUrl = foundVideo ? `${baseUrl}/embed/video/${encodeURIComponent(foundVideo.id)}` : `${baseUrl}/embed`;
+      const thumbnailUrl = foundVideo?.videoThumbnail || foundVideo?.thumbnailUrl || `${baseUrl}/og-banner.png`;
 
       const oembedResponse = {
         version: "1.0",
@@ -2734,7 +2734,7 @@ async function startServer() {
         provider_url: "https://yoouz.com",
         title: title,
         author_name: authorName,
-        author_url: `${baseUrl失}/@${encodeURIComponent(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, ""))}`,
+        author_url: `${baseUrl}/@${encodeURIComponent(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, ""))}`,
         html: `<iframe src="${embedUrl}" width="360" height="640" style="border:0;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`,
         width: 360,
         height: 640,
@@ -14608,17 +14608,20 @@ function formatBusinessName(name?: string | null): string {
 function injectOpenGraphTags(html: string, meta: any) {
     const safeTitle = escapeHtml(meta.title);
     const safeDesc = escapeHtml(meta.description);
-    const safeUrl = escapeHtml(meta.url);
-    let rawImage = meta.imageUrl || "https://yoouz.com/og-banner.png?v=7";
-    if (rawImage.includes("localhost") || rawImage.startsWith("/")) {
-      rawImage = rawImage.replace(/^https?:\/\/[^\/]+/, "https://yoouz.com").replace(/^\//, "https://yoouz.com/");
+    let safeUrl = escapeHtml(meta.url);
+    if (safeUrl.startsWith("https://yoouz.com") || safeUrl.startsWith("http://yoouz.com")) {
+      safeUrl = safeUrl.replace(/^https?:\/\/yoouz\.com/, "https://www.yoouz.com");
+    }
+    let rawImage = meta.imageUrl || "https://www.yoouz.com/og-banner.png?v=8";
+    if (rawImage.includes("localhost") || rawImage.startsWith("/") || rawImage.includes("yoouz.com/")) {
+      rawImage = rawImage.replace(/^https?:\/\/(www\.)?yoouz\.com/, "https://www.yoouz.com").replace(/^https?:\/\/[^\/]+/, "https://www.yoouz.com").replace(/^\//, "https://www.yoouz.com/");
     }
     const safeImage = escapeHtml(rawImage);
     const safeKeywords = escapeHtml(meta.keywords || "");
     const safeType = escapeHtml(meta.type || "website");
     const safeTwitterCard = escapeHtml(meta.twitterCard || "summary_large_image");
 
-    let baseUrl = "https://yoouz.com";
+    let baseUrl = "https://www.yoouz.com";
     try {
       if (meta.url) {
         baseUrl = new URL(meta.url).origin;
@@ -14710,10 +14713,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     const params = urlObj.searchParams;
     const pathname = urlObj.pathname;
     
-    const publicBase = 'https://yoouz.com';
+    const publicBase = 'https://www.yoouz.com';
     let title = "Yoouz - Authentic 60-Second Video Reviews";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.";
-    let imageUrl = `${publicBase}/og-banner.png?v=7`;
+    let imageUrl = `${publicBase}/og-banner.png?v=8`;
     let videoUrl = "";
     let embedUrl = "";
     let type = "website";
