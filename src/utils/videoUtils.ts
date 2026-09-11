@@ -120,43 +120,7 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(video.videoData);
   }
 
-  // 3. Prioritize fully qualified remote CDN URLs stored directly in the database (0ms startup, bypasses dynamic lookups)
-  if (video.videoUrl && (video.videoUrl.startsWith("http://") || video.videoUrl.startsWith("https://"))) {
-    const norm = normalizeVideoUrl(video.videoUrl);
-    if (norm && !sources.includes(norm)) {
-      sources.push(norm);
-    }
-  }
-
-  // 4. Direct Bunny CDN Pull Zone Edge URLs Fallback
-  if (activeBunnyPullZone) {
-    const cleanZone = activeBunnyPullZone.replace(/\/+$/, "");
-    
-    if (video.videoUrl) {
-      const match = video.videoUrl.match(/rev-[a-zA-Z0-9_\-\.]+/);
-      if (match && match[0]) {
-        let fn = match[0];
-        if (!fn.includes(".")) fn += ".mp4";
-        const cdnUrl = `${cleanZone}/videos/${fn}`;
-        if (!sources.includes(cdnUrl)) sources.push(cdnUrl);
-      }
-    }
-
-    if (video.id) {
-      const cdnUrlMp4 = `${cleanZone}/videos/${video.id}.mp4`;
-      const cdnUrlWebm = `${cleanZone}/videos/${video.id}.webm`;
-      if (!sources.includes(cdnUrlMp4)) sources.push(cdnUrlMp4);
-      if (!sources.includes(cdnUrlWebm)) sources.push(cdnUrlWebm);
-    }
-  }
-
-  // 4. Normalized Primary videoUrl (fallback)
-  const normalizedPrimary = normalizeVideoUrl(video.videoUrl);
-  if (normalizedPrimary && !sources.includes(normalizedPrimary)) {
-    sources.push(normalizedPrimary);
-  }
-
-  // 5. Local Server streaming endpoint (fallback)
+  // 3. Local Server streaming endpoint FIRST (ensures newly recorded local video files stream instantly)
   if (video.id) {
     const serverStream = `/api/videos/stream/${video.id}.mp4`;
     if (!sources.includes(serverStream)) {
@@ -164,12 +128,40 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 6. Fallback video URLs from document
+  // 4. Normalized Primary videoUrl
+  const normalizedPrimary = normalizeVideoUrl(video.videoUrl);
+  if (normalizedPrimary && !sources.includes(normalizedPrimary)) {
+    sources.push(normalizedPrimary);
+  }
+
+  // 5. Fallback video URLs from document
   if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
     for (const fb of video.fallbackVideoUrls) {
       const norm = normalizeVideoUrl(fb);
       if (norm && !sources.includes(norm)) {
         sources.push(norm);
+      }
+    }
+  }
+
+  // 6. Direct Bunny CDN Pull Zone Edge URLs (Fallback / Secondary)
+  if (activeBunnyPullZone) {
+    const cleanZone = activeBunnyPullZone.replace(/\/+$/, "");
+    
+    if (video.id) {
+      const cdnUrlMp4 = `${cleanZone}/videos/${video.id}.mp4`;
+      const cdnUrlWebm = `${cleanZone}/videos/${video.id}.webm`;
+      if (!sources.includes(cdnUrlMp4)) sources.push(cdnUrlMp4);
+      if (!sources.includes(cdnUrlWebm)) sources.push(cdnUrlWebm);
+    }
+
+    if (video.videoUrl) {
+      const match = video.videoUrl.match(/rev-[a-zA-Z0-9_\-\.]+/);
+      if (match && match[0]) {
+        let fn = match[0];
+        if (!fn.includes(".")) fn += ".mp4";
+        const cdnUrl = `${cleanZone}/videos/${fn}`;
+        if (!sources.includes(cdnUrl)) sources.push(cdnUrl);
       }
     }
   }
