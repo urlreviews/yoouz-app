@@ -26,4 +26,6 @@ export function cleanUndefinedFields<T = any>(obj: T): T {
   return obj;
 }
 
-export const cleanForFirestore = cleanUndefinedFields;
+export function cleanData<T = any>(obj: T): T {
+  return cleanUndefinedFields(obj);
+}
