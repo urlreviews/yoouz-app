@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_model": "yoouz_video_reviews",
+  "name_for_human": "Yoouz Authentic Video Reviews",
+  "description_for_model": "Search, discover, and retrieve authentic 60-second video reviews for local restaurants, cafes, hotels, services, and online stores. All Yoouz reviews feature verified face-to-camera live video recordings with zero fake text reviews.",
+  "description_for_human": "Discover 100% authentic 60-second video reviews for local places, restaurants, cafes, and websites.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://yoouz.com/api/v1/meta"
+  },
+  "logo_url": "https://yoouz.com/icon-512.png",
+  "contact_email": "support@yoouz.com",
+  "legal_info_url": "https://yoouz.com/terms"
+}

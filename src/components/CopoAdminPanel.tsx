@@ -176,7 +176,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [videoRatingFilter, setVideoRatingFilter] = useState<number | "all">("all");
   const [placeCategoryFilter, setPlaceCategoryFilter] = useState<string>("all");
   const [placeClaimFilter, setPlaceClaimFilter] = useState<"all" | "claimed" | "unclaimed">("all");
-  const [userTypeFilter, setUserTypeFilter] = useState<"all" | "registered" | "creators">("all");
+  const [userTypeFilter, setUserTypeFilter] = useState<"all" | "registered" | "creators" | "business">("all");
   const [subscriptionPlanFilter, setSubscriptionPlanFilter] = useState<string>("all");
   const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState<string>("all");
 

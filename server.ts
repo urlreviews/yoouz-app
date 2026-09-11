@@ -4074,6 +4074,61 @@ async function startServer() {
     });
   });
 
+  // Machine-Readable AEO (Answer Engine Optimization) Endpoint
+  app.get(["/aeo.json", "/api/aeo-knowledge"], (req, res) => {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    return res.json({
+      title: "Yoouz Authentic Video Reviews AEO Knowledge Graph",
+      canonical: "https://yoouz.com",
+      brand: {
+        name: "Yoouz",
+        logo: "https://yoouz.com/icon-512.png",
+        color: "#09090b",
+        symbol: "White 5-pointed star in dark squircle"
+      },
+      tagline: "Real People. Real Video Reviews.",
+      summary: "Yoouz is the anti-fake review platform that mandates live 60-second video reviews recorded via camera for all local businesses and websites."
+    });
+  });
+
+  // OpenAPI Metadata Endpoint for AI Plugin Discovery
+  app.get(["/api/v1/meta", "/openapi.json"], (req, res) => {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    return res.json({
+      openapi: "3.0.1",
+      info: {
+        title: "Yoouz Video Reviews API",
+        description: "API for searching authentic 60-second video reviews and verified places on Yoouz.",
+        version: "v1.0.0"
+      },
+      servers: [
+        { url: "https://yoouz.com" }
+      ],
+      paths: {
+        "/api/ai/knowledge": {
+          get: {
+            summary: "Get full Yoouz platform knowledge graph and FAQ index for LLMs",
+            operationId: "getAiKnowledge",
+            responses: { "200": { description: "Successful response" } }
+          }
+        },
+        "/api/search-places": {
+          get: {
+            summary: "Search local places, restaurants, cafes, hotels, and websites on Yoouz",
+            operationId: "searchPlaces",
+            parameters: [
+              { name: "query", in: "query", required: true, schema: { type: "string" } }
+            ],
+            responses: { "200": { description: "Successful place search results" } }
+          }
+        }
+      }
+    });
+  });
+
 
 const getNoSqlTable = (col: string) => {
   switch(col) {
@@ -12908,29 +12963,41 @@ const isPlaceCard = type === 'place';
   // Pre-render static fallback /public/og-banner.png on boot
   async function regenerateDefaultOgBanner() {
     try {
-      // Ultra high-resolution authentic human reviewer portrait (natural selfie review angle, warm real photography)
-      const reviewerPhotoUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=95';
-      let reviewerPhotoBase64 = '';
-      try {
-        reviewerPhotoBase64 = await fetchBase64(reviewerPhotoUrl);
-      } catch(e) {}
+      const defaultSvg = `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#09090b"/>
+            <stop offset="50%" stop-color="#111115"/>
+            <stop offset="100%" stop-color="#09090b"/>
+          </linearGradient>
+          <radialGradient id="starGlow" cx="600" cy="315" r="400" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.14"/>
+            <stop offset="50%" stop-color="#ffffff" stop-opacity="0.03"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
 
-      let logoBase64 = '';
-      try {
-        logoBase64 = fs.readFileSync(path.join(process.cwd(), 'public', 'icon-512.png')).toString('base64');
-      } catch(e) {}
+        <!-- Background Base -->
+        <rect width="1200" height="630" fill="url(#bgGrad)"/>
+        <rect width="1200" height="630" fill="url(#starGlow)"/>
 
-      const defaultSvg = buildOgImageSvg({ 
-        type: 'homepage', 
-        logoBase64,
-        reviewerPhotoBase64 
-      });
+        <!-- Outer Border Frame -->
+        <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
-      await sharp(Buffer.from(defaultSvg), { density: 96 })
+        <!-- Centered Icon Only (Dark Squircle with White Star Emblem) -->
+        <g transform="translate(460, 175)">
+          <rect width="280" height="280" rx="76" fill="#09090b" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
+          <g transform="translate(47, 47) scale(7.75)">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
+          </g>
+        </g>
+      </svg>`;
+
+      await sharp(Buffer.from(defaultSvg))
         .png({ quality: 100, compressionLevel: 6 })
         .toFile(path.join(process.cwd(), 'public', 'og-banner.png'));
       
-      console.log("Successfully generated high-end /public/og-banner.png");
+      console.log("Successfully generated icon-only /public/og-banner.png");
     } catch (e: any) {
       console.warn("Notice: og-banner.png pre-render error:", e?.message || e);
     }
@@ -13181,8 +13248,8 @@ const isPlaceCard = type === 'place';
           if (preset === 'homepage') {
             url += '?type=homepage&v=4';
             details = {
-              title: 'Yoouz: The Authentic Video Review Platform for Business & Software',
-              description: 'Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.',
+              title: 'Yoouz - Authentic 60-Second Video Reviews',
+              description: 'Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.',
               shareUrl: 'https://yoouz.com/'
             };
           } else if (preset === 'londontrust') {
@@ -13869,31 +13936,36 @@ app.get('/api/og-preview-v2', async (req, res) => {
          return res.end(finalImage);
       }
 
-      // Default fallback for non-video OG images (Clean centered brand emblem, NO text)
-      const defaultSvg = `
-        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="defGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#09090b" />
-              <stop offset="50%" stop-color="#111115" />
-              <stop offset="100%" stop-color="#18181c" />
-            </linearGradient>
-            <radialGradient id="defGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ef4444" stop-opacity="0.2" />
-              <stop offset="60%" stop-color="#ef4444" stop-opacity="0.04" />
-              <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
-            </radialGradient>
-          </defs>
-          <rect width="1200" height="630" fill="url(#defGrad)"/>
-          <circle cx="600" cy="315" r="300" fill="url(#defGlow)"/>
-          <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
-          <!-- Pure Geometric Hexagon & Play Emblem (ZERO text) -->
-          <g transform="translate(600, 315)">
-            <polygon points="0,-100 86.6,-50 86.6,50 0,100 -86.6,50 -86.6,-50" fill="#ef4444" stroke="#fca5a5" stroke-width="4"/>
-            <polygon points="-24,-40 40,0 -24,40" fill="#ffffff"/>
+      // Default fallback for non-video OG images (Clean centered brand icon emblem, NO text)
+      const defaultSvg = `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="defGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#09090b"/>
+            <stop offset="50%" stop-color="#111115"/>
+            <stop offset="100%" stop-color="#09090b"/>
+          </linearGradient>
+          <radialGradient id="defStarGlow" cx="600" cy="315" r="400" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.14"/>
+            <stop offset="50%" stop-color="#ffffff" stop-opacity="0.03"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Background Base -->
+        <rect width="1200" height="630" fill="url(#defGrad)"/>
+        <rect width="1200" height="630" fill="url(#defStarGlow)"/>
+
+        <!-- Outer Border Frame -->
+        <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
+
+        <!-- Centered Icon Only (Dark Squircle with White Star Emblem) -->
+        <g transform="translate(460, 175)">
+          <rect width="280" height="280" rx="76" fill="#09090b" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
+          <g transform="translate(47, 47) scale(7.75)">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
           </g>
-        </svg>
-      `;
+        </g>
+      </svg>`;
       const fallbackBuf = await sharp(Buffer.from(defaultSvg)).png().toBuffer();
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
@@ -14518,7 +14590,11 @@ function injectOpenGraphTags(html: string, meta: any) {
     const safeTitle = escapeHtml(meta.title);
     const safeDesc = escapeHtml(meta.description);
     const safeUrl = escapeHtml(meta.url);
-    const safeImage = escapeHtml(meta.imageUrl);
+    let rawImage = meta.imageUrl || "https://yoouz.com/og-banner.png?v=5";
+    if (rawImage.includes("localhost") || rawImage.startsWith("/")) {
+      rawImage = rawImage.replace(/^https?:\/\/[^\/]+/, "https://yoouz.com").replace(/^\//, "https://yoouz.com/");
+    }
+    const safeImage = escapeHtml(rawImage);
     const safeKeywords = escapeHtml(meta.keywords || "");
     const safeType = escapeHtml(meta.type || "website");
     const safeTwitterCard = escapeHtml(meta.twitterCard || "summary_large_image");
@@ -14615,9 +14691,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     const params = urlObj.searchParams;
     const pathname = urlObj.pathname;
     
+    const publicBase = 'https://yoouz.com';
     let title = "Yoouz - Authentic 60-Second Video Reviews";
-    let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials. Zero fake text reviews, 100% verified trust.";
-    let imageUrl = `${baseUrl}/og-banner.png?v=4`;
+    let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.";
+    let imageUrl = `${publicBase}/og-banner.png?v=5`;
     let videoUrl = "";
     let embedUrl = "";
     let type = "website";
