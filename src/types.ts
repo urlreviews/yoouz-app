@@ -178,6 +178,7 @@ export interface VideoReview {
   };
   isPinned?: boolean;
   isHiddenFromWidget?: boolean;
+  isLocalUpload?: boolean;
 }
 
 export type VideoAuthor = VideoReview["author"];

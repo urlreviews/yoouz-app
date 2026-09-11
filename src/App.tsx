@@ -4207,6 +4207,33 @@ export function App() {
       handleOpenPlaceDrawer(placeIdToOpen);
     }
 
+    // Persist to local durable backup store so it is never dropped across reload or navigation
+    try {
+      const existingSaved = localStorage.getItem("yoouz_local_created_reviews");
+      let list: any[] = [];
+      if (existingSaved) {
+        try { list = JSON.parse(existingSaved); } catch (e) {}
+      }
+      if (!Array.isArray(list)) list = [];
+      list = [newReview, ...list.filter((v: any) => v && v.id !== newReview.id)].slice(0, 50);
+      localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
+    } catch (e) {}
+
+    // Double-sync to Bunny Database and Server
+    try {
+      fetch("/api/videos/save-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newReview)
+      }).catch(() => {});
+
+      fetch(`/api/nosql/videoReviews/${newReview.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: newReview, merge: true })
+      }).catch(() => {});
+    } catch (e) {}
+
     // Persist to Firestore database so all viewers across any browser/device see it immediately
     try {
       if (db) {

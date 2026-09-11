@@ -1022,24 +1022,48 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       viewsCount: 1,
       sharesCount: 0,
       tags: [selectedPlace.category || "Review"],
-      recordedAt: "Just now"
+      recordedAt: "Just now",
+      isLocalUpload: true
     };
 
-    // 4. Save metadata to server & firestore
+    // 4. Save metadata locally first so it is immune to network dropouts or reloads
     try {
-      fetch("/api/videos/save-review", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newReview)
-      }).catch((e) => console.warn("Server video review save notice:", e));
+      const existingSaved = localStorage.getItem("yoouz_local_created_reviews");
+      let list: any[] = [];
+      if (existingSaved) {
+        try { list = JSON.parse(existingSaved); } catch (e) {}
+      }
+      if (!Array.isArray(list)) list = [];
+      list = [newReview, ...list.filter((v: any) => v && v.id !== newReview.id)].slice(0, 50);
+      localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
+    // 5. Save metadata to server & Bunny Database & Firestore and await confirmation
     try {
+      setUploadProgress(95);
+      const savePromises: Promise<any>[] = [
+        // Save to Server review index and memory cache
+        fetch("/api/videos/save-review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newReview)
+        }).catch((e) => console.warn("Server video review save notice:", e)),
+
+        // Save directly to Bunny Database (libSQL cloud)
+        fetch(`/api/nosql/videoReviews/${reviewId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: newReview, merge: true })
+        }).catch((e) => console.warn("BunnyDB video review save notice:", e))
+      ];
+
       if (db) {
         const firestoreCleanedReview = cleanForFirestore(newReview);
-        setDoc(doc(db, "videoReviews", reviewId), firestoreCleanedReview, { merge: true }).catch((err) => {
-          console.warn("Firestore video review write notice:", err?.message || err);
-        });
+        savePromises.push(
+          setDoc(doc(db, "videoReviews", reviewId), firestoreCleanedReview, { merge: true }).catch((err) => {
+            console.warn("Firestore video review write notice:", err?.message || err);
+          })
+        );
 
         if (selectedPlace) {
           const placeDocId = selectedPlace.id;
@@ -1051,16 +1075,23 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               rating: rating
             };
 
-            // Persist directly to BunnyDB
-            fetch(`/api/nosql/places/${placeDocId}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ data: updatedPlaceData, merge: true })
-            }).catch(() => {});
+            // Persist place update directly to BunnyDB
+            savePromises.push(
+              fetch(`/api/nosql/places/${placeDocId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: updatedPlaceData, merge: true })
+              }).catch(() => {})
+            );
           }
         }
       }
-    } catch (e) {}
+
+      await Promise.allSettled(savePromises);
+      setUploadProgress(100);
+    } catch (e) {
+      console.warn("Persistence sync notice:", e);
+    }
 
     setIsPublishing(false);
     onClose();

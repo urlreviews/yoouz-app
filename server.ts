@@ -4742,6 +4742,67 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
             args: [id, placeName, address, category, city, country, latitude, longitude, logoUrl, jsonStr,
                    placeName, address, category, city, country, latitude, longitude, logoUrl, jsonStr]
           });
+        } else if (colName === 'videoReviews' || colName === 'videos') {
+          const rev = enrichReviewPlaceAssets({ id, ...finalDataObj });
+          await bunnyDb.execute({
+            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, data, createdAt, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET 
+                    placeId = ?, placeName = ?, authorName = ?, authorAvatar = ?, userId = ?, rating = ?, videoUrl = ?, thumbnailUrl = ?, duration = ?, likesCount = ?, viewsCount = ?, data = ?, createdAt = COALESCE(videoReviews.createdAt, CURRENT_TIMESTAMP), updatedAt = CURRENT_TIMESTAMP`,
+            args: [
+              id,
+              rev.placeId || (rev.place && rev.place.id) || '',
+              rev.placeName || (rev.place && rev.place.name) || '',
+              rev.authorName || (rev.author && rev.author.name) || '',
+              rev.authorAvatar || (rev.author && rev.author.avatar) || '',
+              rev.userId || rev.authorEmail || (rev.author && rev.author.email) || '',
+              rev.rating || 5,
+              rev.videoUrl || '',
+              rev.thumbnailUrl || '',
+              rev.duration || 60,
+              rev.likesCount || rev.likes || 0,
+              rev.viewsCount || rev.views || 0,
+              jsonStr,
+              // Update args
+              rev.placeId || (rev.place && rev.place.id) || '',
+              rev.placeName || (rev.place && rev.place.name) || '',
+              rev.authorName || (rev.author && rev.author.name) || '',
+              rev.authorAvatar || (rev.author && rev.author.avatar) || '',
+              rev.userId || rev.authorEmail || (rev.author && rev.author.email) || '',
+              rev.rating || 5,
+              rev.videoUrl || '',
+              rev.thumbnailUrl || '',
+              rev.duration || 60,
+              rev.likesCount || rev.likes || 0,
+              rev.viewsCount || rev.views || 0,
+              jsonStr
+            ]
+          });
+
+          // Sync into local server reviews index
+          const localList = readReviewsIndex();
+          const existingIdx = localList.findIndex((item: any) => item.id === id);
+          if (existingIdx !== -1) {
+            localList[existingIdx] = { ...localList[existingIdx], ...rev };
+          } else {
+            localList.unshift(rev);
+          }
+          writeReviewsIndex(localList);
+
+          // Update memory feed cache immediately
+          const cachedIdx = feedCache.videos.findIndex((item: any) => item.id === id);
+          if (cachedIdx !== -1) {
+            feedCache.videos[cachedIdx] = { ...feedCache.videos[cachedIdx], ...rev };
+          } else {
+            feedCache.videos.unshift(rev);
+          }
+          feedCache.lastFetched = Date.now();
+
+          // Broadcast to connected users
+          broadcastSseEvent({
+            type: "new_video_review",
+            review: rev
+          });
         } else {
           await bunnyDb.execute({
             sql: `INSERT INTO ${colName} (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
@@ -5516,7 +5577,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     try {
       console.log("🐰 [BunnyDB] Authoritative sync: Querying video reviews, bookmarks, comments, likes, and shares...");
       const [bunnyRows, bmCountsRes, commCountsRes, likeCountsRes, shareCountsRes, allCommentsRes] = await Promise.all([
-        bunnyDb.execute("SELECT * FROM videoReviews ORDER BY createdAt DESC LIMIT 100").catch(() => ({ rows: [] })),
+        bunnyDb.execute("SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC LIMIT 100").catch(() => ({ rows: [] })),
         bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM bookmarks GROUP BY videoId").catch(() => ({ rows: [] })),
         bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM comments GROUP BY videoId").catch(() => ({ rows: [] })),
         bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM likes GROUP BY videoId").catch(() => ({ rows: [] })),
@@ -5989,7 +6050,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
         try {
-          const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY createdAt DESC LIMIT 100");
+          const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC LIMIT 100");
           bunnyRows.rows.forEach((r: any) => {
             if (r && r.id && !deletedSet.has(String(r.id))) {
               const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
@@ -8331,8 +8392,14 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
       writeReviewsIndex(list);
 
-      // Invalidate memory cache to force an immediate refresh on next feed request
-      feedCache.lastFetched = 0;
+      // Instantly update memory feed cache so any immediate feed fetch or another user gets the review
+      const cachedIdx = feedCache.videos.findIndex((item: any) => item.id === review.id);
+      if (cachedIdx !== -1) {
+        feedCache.videos[cachedIdx] = { ...feedCache.videos[cachedIdx], ...review };
+      } else {
+        feedCache.videos.unshift(review);
+      }
+      feedCache.lastFetched = Date.now();
 
       // 2. Sync to Bunny Database (libSQL cloud)
       const bunnyDb = getBunnyDb();
@@ -8340,10 +8407,10 @@ app.post("/api/videos/save-review", async (req, res) => {
         try {
           const jsonStr = JSON.stringify(review);
           await bunnyDb.execute({
-            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, data, updatedAt)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, data, createdAt, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                   ON CONFLICT(id) DO UPDATE SET 
-                    placeId = ?, placeName = ?, authorName = ?, authorAvatar = ?, userId = ?, rating = ?, videoUrl = ?, thumbnailUrl = ?, duration = ?, likesCount = ?, viewsCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                    placeId = ?, placeName = ?, authorName = ?, authorAvatar = ?, userId = ?, rating = ?, videoUrl = ?, thumbnailUrl = ?, duration = ?, likesCount = ?, viewsCount = ?, data = ?, createdAt = COALESCE(videoReviews.createdAt, CURRENT_TIMESTAMP), updatedAt = CURRENT_TIMESTAMP`,
             args: [
               review.id,
               review.placeId || (review.place && review.place.id) || '',
@@ -8373,10 +8440,17 @@ app.post("/api/videos/save-review", async (req, res) => {
               jsonStr
             ]
           });
+          console.log(`🐰 [Server] BunnyDB successfully permanently saved video review ${review.id}`);
         } catch (bunnySaveErr: any) {
           console.warn("BunnyDB sync in save-review notice:", bunnySaveErr?.message || bunnySaveErr);
         }
       }
+
+      // Broadcast new video review to all active connected browsers via SSE
+      broadcastSseEvent({
+        type: "new_video_review",
+        review
+      });
 
       // 3. Sync to Firestore Admin directly
       if (adminDb) {

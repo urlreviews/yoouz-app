@@ -97,13 +97,39 @@ export function useFeedPagination() {
       localStorage.removeItem("yoouz_cached_videos_v18");
       localStorage.removeItem("yoouz_cached_videos_v16");
 
+      let localPublished: any[] = [];
+      try {
+        const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
+        if (localPubStr) {
+          const parsedLp = JSON.parse(localPubStr);
+          if (Array.isArray(parsedLp)) {
+            localPublished = parsedLp.filter((v: any) => v && v.id && !deletedIds.includes(String(v.id))).map(normalizeReview);
+          }
+        }
+      } catch (e) {}
+
       const cached = localStorage.getItem("yoouz_cached_videos_v21");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           const filtered = parsed.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
-          if (filtered.length > 0) return filtered;
+          if (filtered.length > 0) {
+            const combinedMap = new Map<string, VideoReview>();
+            localPublished.forEach((v) => combinedMap.set(v.id, v));
+            filtered.forEach((v) => {
+              if (!combinedMap.has(v.id)) combinedMap.set(v.id, v);
+            });
+            return Array.from(combinedMap.values());
+          }
         }
+      }
+      if (localPublished.length > 0) {
+        const combinedMap = new Map<string, VideoReview>();
+        localPublished.forEach((v) => combinedMap.set(v.id, v));
+        INITIAL_SEED_VIDEOS.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview).forEach((v) => {
+          if (!combinedMap.has(v.id)) combinedMap.set(v.id, v);
+        });
+        return Array.from(combinedMap.values());
       }
     } catch (e) {}
     // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
@@ -160,15 +186,13 @@ export function useFeedPagination() {
                 }
               });
 
-              // Keep any fresh local pending uploads that haven't hit the server feed yet (within last 60s)
-              const nowMs = Date.now();
+              // Keep any fresh local pending uploads that haven't hit the server feed yet
               const pendingLocalVideos = prev.filter(
                 (v) =>
                   v &&
                   v.id &&
                   !allDeletedSet.has(String(v.id)) &&
                   (v as any).isLocalUpload &&
-                  nowMs - (v.createdAtMs || 0) < 60000 &&
                   !valid.some((sv) => sv.id === v.id)
               );
 
@@ -317,6 +341,19 @@ export function useFeedPagination() {
                 bookmarks: typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : v.bookmarks,
                 bookmarksCount: typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : v.bookmarksCount
               } : v));
+            } else if (payload.type === "new_video_review" && payload.review && payload.review.id) {
+              const incoming = normalizeReview(payload.review);
+              const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+              let delList: string[] = [];
+              try { delList = JSON.parse(deletedStr); } catch (e) {}
+              if (!delList.includes(String(incoming.id))) {
+                setVideos((prev) => {
+                  if (prev.some((v) => v.id === incoming.id)) {
+                    return prev.map((v) => v.id === incoming.id ? { ...v, ...incoming } : v);
+                  }
+                  return [incoming, ...prev];
+                });
+              }
             } else if (payload.type === "video_shared" && payload.videoId) {
               const vidId = String(payload.videoId);
               setVideos((prev) => prev.map((v) => v.id === vidId ? {
