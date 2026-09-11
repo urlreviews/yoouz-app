@@ -2,27 +2,19 @@ import { Place } from "../types";
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
-  "yoouz.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <rect width="100" height="100" rx="28" fill="#09090b"/>
-      <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#ffffff"/>
-    </svg>`),
-  "www.yoouz.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <rect width="100" height="100" rx="28" fill="#09090b"/>
-      <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#ffffff"/>
-    </svg>`),
-  "facebook.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "yoouz.com": "https://www.yoouz.com/icon-512.png",
+  "www.yoouz.com": "https://www.yoouz.com/icon-512.png",
+  "facebook.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="22" fill="#1877f2"/>
       <path d="M62 50 H52 V42 C52 38 54 36 58 36 H63 V24 H52 C41 24 37 31 37 41 V50 H28 V62 H37 V96 H52 V62 H61 L62 50 Z" fill="#ffffff"/>
     </svg>`),
-  "www.facebook.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.facebook.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="22" fill="#1877f2"/>
       <path d="M62 50 H52 V42 C52 38 54 36 58 36 H63 V24 H52 C41 24 37 31 37 41 V50 H28 V62 H37 V96 H52 V62 H61 L62 50 Z" fill="#ffffff"/>
     </svg>`),
-  "reddit.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "reddit.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <circle cx="50" cy="50" r="50" fill="#FF4500"/>
       <circle cx="50" cy="56" r="23" fill="#FFFFFF"/>
@@ -34,7 +26,7 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <circle cx="67" cy="24" r="4.5" fill="#FFFFFF"/>
       <path d="M 50 33 L 56 22 L 65 24" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </svg>`),
-  "www.reddit.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.reddit.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <circle cx="50" cy="50" r="50" fill="#FF4500"/>
       <circle cx="50" cy="56" r="23" fill="#FFFFFF"/>
@@ -46,39 +38,39 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <circle cx="67" cy="24" r="4.5" fill="#FFFFFF"/>
       <path d="M 50 33 L 56 22 L 65 24" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </svg>`),
-  "uber.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "uber.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#000000"/>
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="1">UBER</text>
     </svg>`),
-  "www.uber.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.uber.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#000000"/>
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="1">UBER</text>
     </svg>`),
-  "spotify.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "spotify.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <circle cx="50" cy="50" r="50" fill="#1DB954"/>
       <path d="M28 40 C44 35 62 38 74 44 M30 52 C44 47 58 50 69 55 M33 64 C43 60 54 62 64 66" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
     </svg>`),
-  "www.spotify.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.spotify.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <circle cx="50" cy="50" r="50" fill="#1DB954"/>
       <path d="M28 40 C44 35 62 38 74 44 M30 52 C44 47 58 50 69 55 M33 64 C43 60 54 62 64 66" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
     </svg>`),
-  "usa.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "usa.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0A2540"/>
       <circle cx="50" cy="50" r="38" fill="none" stroke="#E63946" stroke-width="3"/>
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">USA</text>
     </svg>`),
-  "www.usa.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.usa.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0A2540"/>
       <circle cx="50" cy="50" r="38" fill="none" stroke="#E63946" stroke-width="3"/>
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">USA</text>
     </svg>`),
-  "midtownwellness.co.uk": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "midtownwellness.co.uk": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#18181b"/>
       <g fill="#f4f4f5">
@@ -89,7 +81,7 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
         <rect x="70" y="24" width="6" height="52" rx="3"/>
       </g>
     </svg>`),
-  "coventgardenmassage.co.uk": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "coventgardenmassage.co.uk": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#18181b"/>
       <g fill="#f4f4f5">
@@ -100,195 +92,195 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
         <rect x="70" y="24" width="6" height="52" rx="3"/>
       </g>
     </svg>`),
-  "spaandmassage.co.uk": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "spaandmassage.co.uk": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#292524"/>
       <circle cx="50" cy="50" r="38" fill="none" stroke="#d97706" stroke-width="3"/>
       <path d="M50 24 C45 32 36 40 36 50 C36 60 42 66 50 72 C58 66 64 60 64 50 C64 40 55 32 50 24 Z" fill="#f59e0b"/>
       <circle cx="50" cy="46" r="6" fill="#fef3c7"/>
     </svg>`),
-  "latakiano.be": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "latakiano.be": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f172a"/>
       <circle cx="50" cy="50" r="40" fill="none" stroke="#eab308" stroke-width="2.5"/>
       <text x="50" y="58" font-family="'Playfair Display', serif" font-weight="bold" font-size="34" fill="#facc15" text-anchor="middle">LB</text>
       <path d="M38 70 Q50 64 62 70" stroke="#facc15" stroke-width="2" fill="none" stroke-linecap="round"/>
     </svg>`),
-  "latakianobarbero.be": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "latakianobarbero.be": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f172a"/>
       <circle cx="50" cy="50" r="40" fill="none" stroke="#eab308" stroke-width="2.5"/>
       <text x="50" y="58" font-family="'Playfair Display', serif" font-weight="bold" font-size="34" fill="#facc15" text-anchor="middle">LB</text>
       <path d="M38 70 Q50 64 62 70" stroke="#facc15" stroke-width="2" fill="none" stroke-linecap="round"/>
     </svg>`),
-  "bpost.be": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "bpost.be": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#dc2626"/>
       <circle cx="50" cy="50" r="32" fill="#ffffff"/>
       <path d="M38 38 H52 C58 38 62 42 62 48 C62 54 58 58 52 58 H44 V68 H38 V38 Z" fill="#dc2626"/>
       <circle cx="50" cy="48" r="4" fill="#ffffff"/>
     </svg>`),
-  "bol.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "bol.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0000a4"/>
       <text x="46" y="58" font-family="Arial, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle">bol.</text>
       <circle cx="76" cy="53" r="5" fill="#00b4f0"/>
     </svg>`),
-  "immoweb.be": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "immoweb.be": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0284c7"/>
       <path d="M50 20 L24 44 H34 V74 H66 V44 H76 Z" fill="#ffffff"/>
       <rect x="58" y="26" width="6" height="12" fill="#ffffff"/>
       <rect x="44" y="52" width="12" height="22" rx="2" fill="#0284c7"/>
     </svg>`),
-  "graftonpharmacy.co.uk": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "graftonpharmacy.co.uk": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#15803d"/>
       <rect x="42" y="24" width="16" height="52" rx="4" fill="#ffffff"/>
       <rect x="24" y="42" width="52" height="16" rx="4" fill="#ffffff"/>
     </svg>`),
-  "cnn.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "cnn.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#cc0000"/>
       <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
     </svg>`),
-  "edition.cnn.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "edition.cnn.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#cc0000"/>
       <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
     </svg>`),
-  "legal500.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "legal500.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#09090b"/>
       <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#27272a" stroke-width="2"/>
       <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#eab308" text-anchor="middle" letter-spacing="-1">L500</text>
       <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#eab308"/>
     </svg>`),
-  "www.legal500.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.legal500.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#09090b"/>
       <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#27272a" stroke-width="2"/>
       <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#eab308" text-anchor="middle" letter-spacing="-1">L500</text>
       <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#eab308"/>
     </svg>`),
-  "l500.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "l500.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#09090b"/>
       <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#27272a" stroke-width="2"/>
       <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#eab308" text-anchor="middle" letter-spacing="-1">L500</text>
       <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#eab308"/>
     </svg>`),
-  "l500": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "l500": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#09090b"/>
       <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#27272a" stroke-width="2"/>
       <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#eab308" text-anchor="middle" letter-spacing="-1">L500</text>
       <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#eab308"/>
     </svg>`),
-  "legal-500": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "legal-500": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#09090b"/>
       <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#27272a" stroke-width="2"/>
       <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#eab308" text-anchor="middle" letter-spacing="-1">L500</text>
       <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#eab308"/>
     </svg>`),
-  "districtuae.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "districtuae.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#18181b"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
       <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="26" fill="#38bdf8" text-anchor="middle">DRE</text>
     </svg>`),
-  "www.districtuae.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.districtuae.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#18181b"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
       <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="26" fill="#38bdf8" text-anchor="middle">DRE</text>
     </svg>`),
-  "thecapitalavenue.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "thecapitalavenue.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f172a"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#d97706" stroke-width="2.5"/>
       <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="26" fill="#f59e0b" text-anchor="middle">TCA</text>
     </svg>`),
-  "www.thecapitalavenue.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.thecapitalavenue.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f172a"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#d97706" stroke-width="2.5"/>
       <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="26" fill="#f59e0b" text-anchor="middle">TCA</text>
     </svg>`),
-  "freecancellations.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "freecancellations.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#1e1b4b"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#6366f1" stroke-width="2.5"/>
       <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#a5b4fc" text-anchor="middle">FC</text>
     </svg>`),
-  "www.freecancellations.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.freecancellations.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#1e1b4b"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#6366f1" stroke-width="2.5"/>
       <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#a5b4fc" text-anchor="middle">FC</text>
     </svg>`),
-  "timehotels.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "timehotels.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#312e81"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#818cf8" stroke-width="2.5"/>
       <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#e0e7ff" text-anchor="middle">TIME</text>
     </svg>`),
-  "www.timehotels.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.timehotels.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#312e81"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#818cf8" stroke-width="2.5"/>
       <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#e0e7ff" text-anchor="middle">TIME</text>
     </svg>`),
-  "mastercard.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "mastercard.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#18181b"/>
       <circle cx="40" cy="50" r="24" fill="#eb001b"/>
       <circle cx="60" cy="50" r="24" fill="#f79e1b" fill-opacity="0.85"/>
     </svg>`),
-  "leopoldhotelantwerp.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "leopoldhotelantwerp.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#7c2d12"/>
       <circle cx="50" cy="50" r="38" fill="none" stroke="#fcd34d" stroke-width="2"/>
       <text x="50" y="58" font-family="'Playfair Display', Georgia, serif" font-weight="bold" font-size="30" fill="#fef08a" text-anchor="middle">HL</text>
     </svg>`),
-  "londontrustedtherapy.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "londontrustedtherapy.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f766e"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#5eead4" stroke-width="3"/>
       <path d="M50 28 C42 36 34 46 34 56 C34 66 42 72 50 72 C58 72 66 66 66 56 C66 46 58 36 50 28 Z" fill="#2dd4bf"/>
       <path d="M50 42 C46 48 42 54 42 60 C42 64 46 68 50 68 C54 68 58 64 58 60 C58 54 54 48 50 42 Z" fill="#ccfbf1"/>
     </svg>`),
-  "kempinski.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "kempinski.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#18181b"/>
       <polygon points="50,22 58,38 76,38 62,50 67,68 50,56 33,68 38,50 24,38 42,38" fill="#d4af37"/>
       <text x="50" y="86" font-family="'Cinzel', serif, Georgia" font-weight="bold" font-size="12" fill="#d4af37" text-anchor="middle" letter-spacing="1">KEMPINSKI</text>
     </svg>`),
-  "ibm.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "ibm.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#001d6c"/>
       <text x="50" y="60" font-family="'Arial Black', Impact, sans-serif" font-weight="900" font-size="30" fill="#4589ff" text-anchor="middle" letter-spacing="1">IBM</text>
     </svg>`),
-  "ups.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "ups.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#351c15"/>
       <path d="M50 20 L76 30 V56 C76 72 50 82 50 82 C50 82 24 72 24 56 V30 Z" fill="#ffb500"/>
       <text x="50" y="60" font-family="Arial Black, sans-serif" font-weight="bold" font-size="20" fill="#351c15" text-anchor="middle">ups</text>
     </svg>`),
-  "aa.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "aa.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#00447c"/>
       <path d="M32 30 L46 70 H54 L68 30 H58 L50 56 L42 30 Z" fill="#ffffff"/>
       <path d="M50 36 L62 70 H70 L82 36 H73 L66 60 L59 36 Z" fill="#c3102f"/>
     </svg>`),
-  "tajhotels.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "tajhotels.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#292524"/>
       <path d="M50 22 C38 34 30 48 30 62 C30 72 38 78 50 78 C62 78 70 72 70 62 C70 48 62 34 50 22 Z" fill="#d97706"/>
       <circle cx="50" cy="54" r="10" fill="#fef3c7"/>
     </svg>`),
-  "digitalparkae.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "digitalparkae.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f172a"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
@@ -296,7 +288,7 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
       <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`),
-  "www.digitalparkae.com": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.digitalparkae.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f172a"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
@@ -304,7 +296,7 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
       <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`),
-  "digitalpark.ae": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "digitalpark.ae": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f172a"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
@@ -312,7 +304,7 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
       <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`),
-  "www.digitalpark.ae": "data:image/svg+xml;utf8," + encodeURIComponent(`
+  "www.digitalpark.ae": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#0f172a"/>
       <circle cx="50" cy="50" r="34" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-dasharray="4 2"/>
@@ -439,7 +431,7 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
     <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${letters}</text>
   </svg>`;
 
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null): string | null {

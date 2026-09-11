@@ -61,10 +61,13 @@ export function getDomainLogoUrl(domain: string): string {
   if (!clean || clean.includes('gmail.com') || clean.includes('yahoo.com') || clean.includes('hotmail.com')) {
     return '';
   }
+  if (clean === 'yoouz.com' || clean === 'www.yoouz.com' || clean.includes('yoouz')) {
+    return 'https://www.yoouz.com/icon-512.png';
+  }
   if (KNOWN_BRAND_LOGOS[clean]) {
     return KNOWN_BRAND_LOGOS[clean];
   }
-  return `https://www.google.com/s2/favicons?domain=${clean}&sz=128`;
+  return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${clean}&size=256`;
 }
 
 /**
@@ -102,26 +105,29 @@ export function derivePlaceFromEmailOrDomain(
     if (matchedBySlug) return matchedBySlug;
   }
 
-  // 3. Auto-generate a dynamic Place representation from domain
-  const businessName = cleanDomain ? formatBusinessNameFromDomain(cleanDomain) : 'Verified Business';
-  const logoUrl = getDomainLogoUrl(cleanDomain);
+  // Special case: Yoouz official website
+  const isYoouz = cleanDomain === 'yoouz.com' || cleanDomain === 'www.yoouz.com' || cleanDomain.includes('yoouz');
+  const businessName = isYoouz ? 'Yoouz' : (cleanDomain ? formatBusinessNameFromDomain(cleanDomain) : 'Verified Business');
+  const logoUrl = isYoouz ? 'https://www.yoouz.com/icon-512.png' : getDomainLogoUrl(cleanDomain);
   const placeId = cleanDomain ? `place-custom-${cleanDomain.replace(/[^a-z0-9]/g, '-')}` : 'place-custom';
 
   return {
     id: placeId,
     name: businessName,
-    address: cleanDomain ? `Official Domain: ${cleanDomain}` : '123 Enterprise Way, Suite 400',
-    category: 'Verified Enterprise & Merchant',
+    address: isYoouz ? 'Global Headquarters • yoouz.com' : (cleanDomain ? `Official Domain: ${cleanDomain}` : '123 Enterprise Way, Suite 400'),
+    category: isYoouz ? 'Video Reviews & Discovery Platform' : 'Verified Enterprise & Merchant',
     categoryType: 'services',
-    city: 'Global Headquarters',
+    city: isYoouz ? 'Brussels' : 'Global Headquarters',
     rating: 5.0,
     reviewCount: 0,
-    lat: 40.7128,
-    lng: -74.0060,
+    lat: 50.8503,
+    lng: 4.3517,
     phone: '',
-    website: cleanDomain ? `https://${cleanDomain}` : '',
+    website: isYoouz ? 'https://www.yoouz.com' : (cleanDomain ? `https://${cleanDomain}` : ''),
     hours: 'Mon-Fri: 9:00 AM - 6:00 PM',
-    description: `Official verified merchant profile for ${businessName}. Authenticated through official business domain ownership.`,
+    description: isYoouz 
+      ? 'Official verified business profile for Yoouz. Real people, authentic 60-second video reviews.' 
+      : `Official verified merchant profile for ${businessName}. Authenticated through official business domain ownership.`,
     logoUrl: logoUrl,
     coverImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80',
     claimedByEmail: emailOrDomain.includes('@') ? emailOrDomain.toLowerCase().trim() : undefined

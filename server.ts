@@ -9174,13 +9174,18 @@ app.post("/api/videos/save-review", async (req, res) => {
   // 0. Reset & Clear Business Signup / Session State Endpoint
   app.post("/api/business/reset-account", async (req, res) => {
     try {
-      const { email } = req.body;
+      const { email } = req.body || {};
       const cleanEmail = email ? String(email).trim().toLowerCase() : "info@yoouz.com";
       const rawDomain = cleanEmail.includes("@") ? cleanEmail.split("@")[1] : "yoouz.com";
 
       // Clear memory verification store
       businessVerificationStore.delete(cleanEmail);
       businessVerificationStore.delete("info@yoouz.com");
+      for (const [k, v] of businessVerificationStore.entries()) {
+        if (k.includes("yoouz") || (v as any)?.email?.includes("yoouz")) {
+          businessVerificationStore.delete(k);
+        }
+      }
 
       // Clear any custom places or claims in DB
       try {
@@ -9190,14 +9195,21 @@ app.post("/api/videos/save-review", async (req, res) => {
             sql: `DELETE FROM places WHERE id LIKE '%yoouz%' OR data LIKE '%yoouz.com%'`
           });
           await bunnyDb.execute({
-            sql: `DELETE FROM businessClaims WHERE data LIKE '%info@yoouz.com%' OR data LIKE '%yoouz.com%'`
+            sql: `DELETE FROM businessClaims WHERE data LIKE '%info@yoouz.com%' OR data LIKE '%yoouz.com%' OR placeId LIKE '%yoouz%'`
+          });
+          await bunnyDb.execute({
+            sql: `DELETE FROM users WHERE email = ? OR data LIKE '%info@yoouz.com%' OR data LIKE '%yoouz.com%'`,
+            args: [cleanEmail]
+          });
+          await bunnyDb.execute({
+            sql: `DELETE FROM notifications WHERE data LIKE '%yoouz%' OR data LIKE '%info@yoouz.com%'`
           });
         }
       } catch (e) {}
 
       return res.json({
         success: true,
-        message: `Business sign-up state and account memory completely deleted for ${cleanEmail} (${rawDomain}). You can now sign up completely fresh from scratch!`
+        message: `Business sign-up state, claims, signer profile, and account memory completely deleted for ${cleanEmail} (${rawDomain}). You can now sign up completely fresh from scratch!`
       });
     } catch (err: any) {
       console.error("reset-account error:", err);
@@ -9405,7 +9417,13 @@ app.post("/api/videos/save-review", async (req, res) => {
         matchedPlaceId = `place-custom-${rawDomain.replace(/[^a-z0-9]/g, '-')}`;
       }
 
-      let existingPlaceLogo = rawDomain && KNOWN_BRAND_LOGOS[rawDomain] ? KNOWN_BRAND_LOGOS[rawDomain] : '';
+      const isYoouz = rawDomain === 'yoouz.com' || rawDomain === 'www.yoouz.com' || rawDomain.includes('yoouz');
+      if (isYoouz) {
+        matchedPlaceName = 'Yoouz';
+        matchedPlaceId = 'place-custom-yoouz-com';
+      }
+
+      let existingPlaceLogo = isYoouz ? 'https://www.yoouz.com/icon-512.png' : (rawDomain && KNOWN_BRAND_LOGOS[rawDomain] ? KNOWN_BRAND_LOGOS[rawDomain] : '');
       try {
         if (!existingPlaceLogo) {
           const bunnyDb = getBunnyDb();
@@ -9430,9 +9448,43 @@ app.post("/api/videos/save-review", async (req, res) => {
         }
       } catch (e) {}
 
-      const logoUrl = existingPlaceLogo || (rawDomain && !rawDomain.includes('gmail.com') && !rawDomain.includes('yahoo.com') && !rawDomain.includes('hotmail.com')
-        ? `https://www.google.com/s2/favicons?domain=${rawDomain}&sz=128`
-        : '');
+      if (existingPlaceLogo && existingPlaceLogo.startsWith('<svg')) {
+        existingPlaceLogo = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(existingPlaceLogo)}`;
+      }
+
+      let logoUrl = isYoouz 
+        ? 'https://www.yoouz.com/icon-512.png' 
+        : (existingPlaceLogo || (rawDomain && !rawDomain.includes('gmail.com') && !rawDomain.includes('yahoo.com') && !rawDomain.includes('hotmail.com')
+          ? `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${rawDomain}&size=256`
+          : ''));
+
+      // Upsert verified place into Bunny DB
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const placeRecord = {
+            id: matchedPlaceId,
+            name: matchedPlaceName,
+            category: isYoouz ? 'Video Reviews Platform' : 'Verified Business',
+            categoryType: 'services',
+            city: isYoouz ? 'Brussels' : 'Global Headquarters',
+            rating: 5.0,
+            reviewCount: 0,
+            website: `https://${rawDomain || 'yoouz.com'}`,
+            logoUrl: logoUrl,
+            description: isYoouz 
+              ? 'Official verified business profile for Yoouz. 100% authentic 60-second video reviews.' 
+              : `Official verified business profile for ${matchedPlaceName}.`,
+            address: isYoouz ? 'Global Headquarters • yoouz.com' : `Official Domain: ${rawDomain}`,
+            claimedByEmail: cleanEmail,
+            verifiedAt: new Date().toISOString()
+          };
+          await bunnyDb.execute({
+            sql: `INSERT OR REPLACE INTO places (id, name, city, category, data, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+            args: [matchedPlaceId, matchedPlaceName, isYoouz ? 'Brussels' : 'Global Headquarters', isYoouz ? 'Video Reviews Platform' : 'Verified Business', JSON.stringify(placeRecord)]
+          });
+        }
+      } catch (e) {}
 
       const session = {
         businessEmail: cleanEmail,
@@ -14056,14 +14108,8 @@ function escapeXml(unsafe: string) {
 }
 
 const KNOWN_BRAND_LOGOS: Record<string, string> = {
-  "yoouz.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="28" fill="#09090b"/>
-    <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#ffffff"/>
-  </svg>`,
-  "www.yoouz.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="28" fill="#09090b"/>
-    <path d="M50 16 L61.8 39.9 L88 43.7 L69 62.2 L73.5 88.3 L50 76 L26.5 88.3 L31 62.2 L12 43.7 L38.2 39.9 Z" fill="#ffffff"/>
-  </svg>`,
+  "yoouz.com": "https://www.yoouz.com/icon-512.png",
+  "www.yoouz.com": "https://www.yoouz.com/icon-512.png",
   "tajhotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
     <rect width="100" height="100" rx="22" fill="#1c1917"/>
     <path d="M50 18 C36 32 28 48 28 62 C28 74 38 82 50 82 C62 82 72 74 72 62 C72 48 64 32 50 18 Z" fill="#d97706"/>
@@ -14342,8 +14388,15 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
   }
 
   // 5. Direct match for known brand vector logo
-  if (!place.logoUrl && KNOWN_BRAND_LOGOS[domain]) {
-    place.logoUrl = `data:image/svg+xml;utf8,${encodeURIComponent(KNOWN_BRAND_LOGOS[domain])}`;
+  const isYoouz = domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz');
+  if (isYoouz) {
+    place.name = 'Yoouz';
+    place.logoUrl = 'https://www.yoouz.com/icon-512.png';
+  } else if (!place.logoUrl && KNOWN_BRAND_LOGOS[domain]) {
+    const brand = KNOWN_BRAND_LOGOS[domain];
+    place.logoUrl = brand.startsWith('<svg')
+      ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(brand)}`
+      : brand;
   }
 
   return place;
@@ -14364,6 +14417,20 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
   let logoBuf: Buffer | null = null;
   const directUrl = explicitLogoUrl || placeObj?.logoUrl || placeObj?.avatarUrl || placeObj?.icon || "";
 
+  // Check if this is Yoouz itself
+  if (domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || name?.toLowerCase() === 'yoouz') {
+    try {
+      const localIconPath = path.join(process.cwd(), 'public', 'icon-512.png');
+      if (fs.existsSync(localIconPath)) {
+        logoBuf = fs.readFileSync(localIconPath);
+        if (logoBuf && logoBuf.length > 0) {
+          placeLogoBufferCache.set(cacheKey, { buf: logoBuf, timestamp: Date.now() });
+          return logoBuf;
+        }
+      }
+    } catch (e) {}
+  }
+
   // 1. Direct Data URL
   if (directUrl && directUrl.startsWith("data:")) {
     logoBuf = decodeDataUrl(directUrl);
@@ -14372,7 +14439,9 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
   // 2. Direct SVG for known brands
   if (!logoBuf && domain && KNOWN_BRAND_LOGOS[domain]) {
     try {
-      logoBuf = Buffer.from(KNOWN_BRAND_LOGOS[domain]);
+      if (KNOWN_BRAND_LOGOS[domain].startsWith('<svg')) {
+        logoBuf = Buffer.from(KNOWN_BRAND_LOGOS[domain]);
+      }
     } catch (e) {}
   }
 
@@ -14897,8 +14966,15 @@ function injectOpenGraphTags(html: string, meta: any) {
           }
         } catch(e) {}
 
-        if (!foundLogo && KNOWN_BRAND_LOGOS[domain]) {
-          foundLogo = `data:image/svg+xml;utf8,${encodeURIComponent(KNOWN_BRAND_LOGOS[domain])}`;
+        const isYoouzPlace = domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || placeName?.toLowerCase() === 'yoouz';
+        if (isYoouzPlace) {
+          foundLogo = 'https://www.yoouz.com/icon-512.png';
+          placeName = 'Yoouz';
+        } else if (!foundLogo && KNOWN_BRAND_LOGOS[domain]) {
+          const brand = KNOWN_BRAND_LOGOS[domain];
+          foundLogo = brand.startsWith('<svg')
+            ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(brand)}`
+            : brand;
         }
 
         title = `Authentic Video Reviews for ${placeName} | Yoouz`;
@@ -15078,6 +15154,28 @@ function injectOpenGraphTags(html: string, meta: any) {
                   }
                 }
               ]
+            }
+          ]
+        };
+    } else if (pathname === '/business' || pathname.startsWith('/business') || pathname === '/claim') {
+        title = "Yoouz for Business | Verified Merchant Portal & Video Reviews";
+        description = "Claim and verify your official business profile on Yoouz. Showcase authentic 60-second customer video reviews, embed trust widgets, and eliminate fake text reviews.";
+        imageUrl = `${publicBase}/og-banner.png?v=8`;
+        keywords = "Yoouz business, claim business, authentic video reviews, verified merchant, customer video testimonials, embed video reviews, anti-fake reviews";
+        structuredData = {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebPage",
+              "name": title,
+              "description": description,
+              "url": `${publicBase}/business`,
+              "publisher": {
+                "@type": "Organization",
+                "name": "Yoouz",
+                "url": publicBase,
+                "logo": `${publicBase}/icon-512.png`
+              }
             }
           ]
         };

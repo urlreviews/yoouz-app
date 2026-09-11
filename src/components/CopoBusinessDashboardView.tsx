@@ -627,7 +627,24 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [verifiedBusinessSession, setVerifiedBusinessSession] = useState<BusinessSession | null>(() => {
     try {
       const saved = localStorage.getItem('copo_business_verified_session');
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      if (parsed) {
+        const dom = (parsed.domain || parsed.businessEmail || '').toLowerCase();
+        if (dom.includes('yoouz.com') || parsed.placeName?.toLowerCase() === 'yoouz') {
+          parsed.logoUrl = 'https://www.yoouz.com/icon-512.png';
+          parsed.placeName = 'Yoouz';
+          localStorage.setItem('copo_business_verified_session', JSON.stringify(parsed));
+        } else if (parsed.logoUrl && (parsed.logoUrl.startsWith('<svg') || parsed.logoUrl.startsWith('data:image/svg+xml;utf8,'))) {
+          if (parsed.logoUrl.startsWith('<svg')) {
+            parsed.logoUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(parsed.logoUrl)}`;
+          } else {
+            parsed.logoUrl = parsed.logoUrl.replace('data:image/svg+xml;utf8,', 'data:image/svg+xml;charset=utf-8,');
+          }
+          localStorage.setItem('copo_business_verified_session', JSON.stringify(parsed));
+        }
+      }
+      return parsed;
     } catch (e) {
       return null;
     }
@@ -661,9 +678,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           if (verifiedBusinessSession.placeName && verifiedBusinessSession.placeName !== 'Verified Business') {
             derived.name = verifiedBusinessSession.placeName;
           }
-          if (verifiedBusinessSession.logoUrl) {
+          if (verifiedBusinessSession.logoUrl && !verifiedBusinessSession.logoUrl.startsWith('<svg')) {
             derived.logoUrl = verifiedBusinessSession.logoUrl;
           }
+        }
+
+        const isYoouz = (verifiedBusinessSession.domain || '').includes('yoouz.com') || 
+                        (verifiedBusinessSession.businessEmail || '').includes('yoouz.com') || 
+                        derived.name === 'Yoouz';
+        if (isYoouz) {
+          derived.name = 'Yoouz';
+          derived.logoUrl = 'https://www.yoouz.com/icon-512.png';
+          derived.website = 'https://www.yoouz.com';
         }
         
         return derived as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
@@ -1759,7 +1785,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         fetchPriority="high" 
                         className="w-full h-full object-contain rounded-md"
                         onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = 'none';
+                          const target = e.currentTarget as HTMLImageElement;
+                          if (currentPlace.name?.toLowerCase().includes('yoouz') || (currentPlace.id && currentPlace.id.includes('yoouz'))) {
+                            target.src = 'https://www.yoouz.com/icon-512.png';
+                          } else {
+                            target.style.display = 'none';
+                            if (target.parentElement && !target.parentElement.querySelector('.fallback-initial')) {
+                              const span = document.createElement('span');
+                              span.className = 'fallback-initial font-black text-[11px] text-white';
+                              span.textContent = currentPlace.name?.charAt(0).toUpperCase() || 'B';
+                              target.parentElement.appendChild(span);
+                            }
+                          }
                         }} 
                       />
                     ) : (
@@ -1786,6 +1823,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               src={currentPlace.logoUrl} 
                               alt={currentPlace.name} 
                               className="w-full h-full object-contain rounded-lg"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                if (currentPlace.name?.toLowerCase().includes('yoouz') || (currentPlace.id && currentPlace.id.includes('yoouz'))) {
+                                  target.src = 'https://www.yoouz.com/icon-512.png';
+                                } else {
+                                  target.style.display = 'none';
+                                  if (target.parentElement && !target.parentElement.querySelector('.fallback-initial')) {
+                                    const span = document.createElement('span');
+                                    span.className = 'fallback-initial font-black text-xs text-white';
+                                    span.textContent = currentPlace.name?.charAt(0).toUpperCase() || 'B';
+                                    target.parentElement.appendChild(span);
+                                  }
+                                }
+                              }}
                             />
                           ) : (
                             <span className="font-black text-xs text-white">
@@ -4152,7 +4203,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <div className="flex items-center gap-4 mb-6">
                                 <div className="w-14 h-14 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-2xl font-black text-white shrink-0 overflow-hidden shadow-inner">
                                   {currentPlace.logoUrl ? (
-                                    <img src={currentPlace.logoUrl} loading="eager" decoding="sync" fetchPriority="high" className="w-full h-full object-cover" />
+                                    <img 
+                                      src={currentPlace.logoUrl} 
+                                      loading="eager" 
+                                      decoding="sync" 
+                                      fetchPriority="high" 
+                                      className="w-full h-full object-cover" 
+                                      onError={(e) => {
+                                        const target = e.currentTarget as HTMLImageElement;
+                                        if (currentPlace.name?.toLowerCase().includes('yoouz') || (currentPlace.id && currentPlace.id.includes('yoouz'))) {
+                                          target.src = 'https://www.yoouz.com/icon-512.png';
+                                        } else {
+                                          target.style.display = 'none';
+                                        }
+                                      }}
+                                    />
                                   ) : (
                                     (profileName.charAt(0).toUpperCase() || 'B')
                                   )}
