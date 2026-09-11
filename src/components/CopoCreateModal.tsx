@@ -84,6 +84,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const audioContextRef = useRef<any>(null);
   const analyserRef = useRef<any>(null);
   const voiceDetectionLoopRef = useRef<any>(null);
+  const voiceFallbackTimeoutRef = useRef<any>(null);
 
   // Camera settings (Front / Rear camera flip)
   const [cameraActive, setCameraActive] = useState(false);
@@ -569,6 +570,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       clearInterval(faceIntervalRef.current);
       faceIntervalRef.current = null;
     }
+    if (voiceFallbackTimeoutRef.current) {
+      clearTimeout(voiceFallbackTimeoutRef.current);
+      voiceFallbackTimeoutRef.current = null;
+    }
     if (voiceDetectionLoopRef.current) {
       cancelAnimationFrame(voiceDetectionLoopRef.current);
       voiceDetectionLoopRef.current = null;
@@ -619,16 +624,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setMicVolumeLevel(0);
   };
 
-  // Triggers countdown then speech/voice detection
+  // Triggers countdown in 1 click (desktop and mobile)
   const handleTriggerCountdown = () => {
-    // Face verification check before starting
-    if (!isFaceDetected) {
-      setFaceWarning("Please position your face clearly in the front camera frame.");
-      setTimeout(() => {
-        setFaceWarning(null);
-      }, 3000);
-      return; // STOP: Face must be detected to proceed
-    }
+    triggerHaptic("medium");
 
     // Warm up / unlock AudioContext synchronously on user tap gesture (Safari/iOS requirement)
     try {
@@ -650,7 +648,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         if (prev === null) return null;
         if (prev <= 1) {
           clearInterval(countdownTimerRef.current);
-          initiateVoiceWait(); // Wait for user speech to start recording
+          initiateVoiceWait(); // Wait for user speech or tap to start recording
           return null;
         }
         return prev - 1;
@@ -658,7 +656,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     }, 1000);
   };
 
-  // Speech & Voice Detection Engine (Mobile & Desktop)
+  // Speech & Voice Detection Engine (Mobile & Desktop) with Auto-Start Fallback
   const initiateVoiceWait = () => {
     if (!videoRef.current || !videoRef.current.srcObject) {
       startActualRecording();
@@ -667,13 +665,21 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     setIsWaitingForVoice(true);
     setMicVolumeLevel(0);
+
+    // Safety Fallback: Automatically start recording after 3.5 seconds so user is never stuck
+    if (voiceFallbackTimeoutRef.current) {
+      clearTimeout(voiceFallbackTimeoutRef.current);
+    }
+    voiceFallbackTimeoutRef.current = setTimeout(() => {
+      handleForceStartRecording();
+    }, 3500);
+
     const stream = videoRef.current.srcObject as MediaStream;
 
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) {
-        setIsWaitingForVoice(false);
-        startActualRecording();
+        handleForceStartRecording();
         return;
       }
 
@@ -686,7 +692,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       const analyser = audioCtx.createAnalyser();
       analyserRef.current = analyser;
       analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.3;
+      analyser.smoothingTimeConstant = 0.2;
 
       const source = audioCtx.createMediaStreamSource(stream);
       audioSourceRef.current = source;
@@ -694,7 +700,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       let isStarted = false;
-      let speechConfidenceFrames = 0;
 
       const checkVolume = () => {
         if (isStarted || !analyserRef.current) return;
@@ -710,33 +715,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         const normalized = Math.min(100, Math.round((maxDeviation / 128) * 100));
         setMicVolumeLevel(normalized);
 
-        // A normal speaking voice easily spikes deviation > 15. Ambient hum stays < 5.
-        // We trigger on the very first sign of a vocal spike (1 frame) to not cut off the first word.
-        if (maxDeviation > 8) {
-          speechConfidenceFrames++;
-          if (speechConfidenceFrames >= 2) {
-            isStarted = true;
-            setIsWaitingForVoice(false);
-
-            // Haptic feedback on mobile if supported
-            if (typeof navigator !== "undefined" && navigator.vibrate) {
-              try { navigator.vibrate(50); } catch (e) {}
-            }
-
-            try { source.disconnect(); } catch (e) {}
-            audioSourceRef.current = null;
-
-            startActualRecording();
-
-            if (audioCtx.state === "running") {
-              audioCtx.close().catch(() => {});
-            }
-            audioContextRef.current = null;
-            analyserRef.current = null;
-            return;
-          }
-        } else {
-          speechConfidenceFrames = Math.max(0, speechConfidenceFrames - 1);
+        // Vocal spike trigger: deviation > 5 starts recording immediately without missing words
+        if (maxDeviation > 5) {
+          isStarted = true;
+          handleForceStartRecording();
+          return;
         }
 
         voiceDetectionLoopRef.current = requestAnimationFrame(checkVolume);
@@ -745,18 +728,36 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       voiceDetectionLoopRef.current = requestAnimationFrame(checkVolume);
 
     } catch (e) {
-      console.error("AudioContext init error:", e);
-      setErrorMessage("Microphone access is required for voice activation. Please check your permissions or try using a different browser.");
-      setIsWaitingForVoice(false);
+      console.warn("AudioContext init notice:", e);
+      // If microphone analysis fails, start recording directly without blocking
+      handleForceStartRecording();
     }
   };
 
   const handleForceStartRecording = () => {
+    if (voiceFallbackTimeoutRef.current) {
+      clearTimeout(voiceFallbackTimeoutRef.current);
+      voiceFallbackTimeoutRef.current = null;
+    }
     if (voiceDetectionLoopRef.current) {
       cancelAnimationFrame(voiceDetectionLoopRef.current);
+      voiceDetectionLoopRef.current = null;
+    }
+    if (audioSourceRef.current) {
+      try {
+        audioSourceRef.current.disconnect();
+      } catch (e) {}
+      audioSourceRef.current = null;
+    }
+    if (analyserRef.current) {
+      try {
+        analyserRef.current.disconnect();
+      } catch (e) {}
+      analyserRef.current = null;
     }
     if (audioContextRef.current && audioContextRef.current.state === "running") {
       audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
     }
     setIsWaitingForVoice(false);
     triggerHaptic("heavy");
@@ -1235,38 +1236,39 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         {step === 1 && selectedPlace && (
           <div className="flex flex-col h-full w-full bg-zinc-950 md:bg-zinc-900 relative z-[260]">
             {/* Step 1 Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 md:border-zinc-800 bg-zinc-900/50 md:bg-zinc-950/80 backdrop-blur-sm shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/80 backdrop-blur-sm shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-zinc-800 flex items-center justify-center text-white shadow-md shadow-black/50">
+                <div className="w-10 h-10 rounded-2xl bg-zinc-800 border border-zinc-700/50 flex items-center justify-center text-white shadow-md shadow-black/50">
                   <Video className="w-5 h-5 stroke-[2.5]" />
                 </div>
                 <div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h2 className="text-lg font-bold text-white md:text-white">Record Video Review</h2>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800 md:bg-zinc-700 text-zinc-200 md:text-white font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                      <h2 className="text-lg font-bold text-white">Record Video Review</h2>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap border border-zinc-700/60">
                         Step 1 of 2
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-200 md:text-zinc-200 font-medium">
+                    <p className="text-xs text-zinc-400 font-medium">
                       Rate your experience & proceed to camera
                     </p>
                   </div>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={onClose}
-                className="w-9 h-9 rounded-full bg-zinc-800 md:bg-zinc-200 hover:bg-zinc-700 md:hover:bg-zinc-300 flex items-center justify-center text-zinc-200 md:text-zinc-200 transition-colors cursor-pointer"
+                className="w-10 h-10 rounded-full bg-zinc-800/90 hover:bg-zinc-700 border border-zinc-700/60 text-white flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-95 shrink-0"
                 title="Close"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-white stroke-[2.5]" />
               </button>
             </div>
 
             {/* Step 1 Body */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
               {(errorMessage || errorMsg) && (
-                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-red-900/20 md:bg-red-50 border border-red-800 md:border-red-200 text-red-400 md:text-red-700 text-sm font-medium">
+                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-red-900/20 border border-red-800 text-red-400 text-sm font-medium">
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   <span>{errorMessage || errorMsg}</span>
                 </div>
@@ -1274,29 +1276,29 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
               {/* Responsive Place Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-100 md:text-zinc-200 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-zinc-200" />
+                <label className="text-sm font-bold text-zinc-200 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-zinc-400" />
                   <span>Selected Business</span>
                 </label>
                 
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-900 md:bg-zinc-800 border border-zinc-800 md:border-zinc-700 shadow-lg ">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-lg ">
                   <CopoBrandLogo
                     domain={selectedPlace.brandDomain}
                     name={selectedPlace.name}
                     website={selectedPlace.website}
                     logoUrl={selectedPlace.logoUrl || selectedPlace.avatarUrl}
                     bannerUrl={selectedPlace.bannerUrl || selectedPlace.ogImage}
-                    className="w-14 h-14 rounded-xl border border-zinc-800 md:border-zinc-800 bg-white overflow-hidden flex items-center justify-center p-1 shrink-0"
+                    className="w-14 h-14 rounded-xl border border-zinc-800 bg-white overflow-hidden flex items-center justify-center p-1 shrink-0"
                     imageClassName="w-full h-full object-contain rounded-lg"
                     fallbackTextClassName="font-bold text-xl text-zinc-900"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-white md:text-white text-sm truncate">{formatBusinessName(selectedPlace.name)}</h4>
-                    <p className="text-xs text-zinc-200 md:text-zinc-200 truncate">{selectedPlace.brandDomain || selectedPlace.website || selectedPlace.address || selectedPlace.city}</p>
+                    <h4 className="font-bold text-white text-sm truncate">{formatBusinessName(selectedPlace.name)}</h4>
+                    <p className="text-xs text-zinc-400 truncate">{selectedPlace.brandDomain || selectedPlace.website || selectedPlace.address || selectedPlace.city}</p>
                   </div>
                   <button
                     onClick={() => setSelectedPlace(null)}
-                    className="shrink-0 text-xs font-bold text-zinc-200 hover:text-white px-3 py-2 bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer shadow-sm"
+                    className="shrink-0 text-xs font-bold text-zinc-200 hover:text-white px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl border border-zinc-700 transition-all cursor-pointer shadow-sm"
                   >
                     Change
                   </button>
@@ -1304,16 +1306,16 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               </div>
 
               {/* Star Rating Section */}
-              <div className="p-6 rounded-3xl bg-zinc-900 md:bg-zinc-950 border border-zinc-800 md:border-zinc-800 space-y-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center justify-between">
                   <div className="text-left">
-                    <h3 className="text-sm font-bold text-white md:text-white">Your Rating</h3>
-                    <p className="text-[11px] text-zinc-200 md:text-zinc-200 font-medium">Tap stars to rate your experience</p>
+                    <h3 className="text-sm font-bold text-white">Your Rating</h3>
+                    <p className="text-[11px] text-zinc-400 font-medium">Tap stars to rate your experience</p>
                   </div>
                   <div className={`px-3 py-1.5 rounded-full font-black text-[9px] uppercase tracking-[0.1em] transition-all duration-300 ${
                     rating === 0
-                      ? "bg-zinc-800 md:bg-zinc-200 text-zinc-200 md:text-zinc-200 border border-zinc-700 md:border-zinc-700"
-                      : "bg-amber-500/20 md:bg-amber-100 text-amber-400 md:text-amber-600 border border-amber-500/30 md:border-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                      ? "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                      : "bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
                   }`}>
                     {rating === 0 ? "Select Star Rating" : getRatingLabel(rating)}
                   </div>
@@ -1331,7 +1333,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                         className={`w-11 h-11 transition-all duration-300 ${
                           star <= rating 
                              ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]" 
-                             : "text-zinc-800 md:text-zinc-200 group-hover:text-zinc-700 md:group-hover:text-zinc-200"
+                             : "text-zinc-700 group-hover:text-zinc-500"
                         }`}
                       />
                     </button>
@@ -1341,10 +1343,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             </div>
 
             {/* Step 1 Footer */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800 md:border-zinc-800 bg-zinc-900 md:bg-zinc-900 shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800 bg-zinc-900 shrink-0">
               <button
                 onClick={() => setSelectedPlace(null)}
-                className="px-4 py-2.5 rounded-xl text-zinc-200 md:text-zinc-200 hover:bg-zinc-800 md:hover:bg-zinc-800 font-bold text-sm transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-zinc-300 hover:text-white hover:bg-zinc-800 font-bold text-sm transition-colors cursor-pointer"
               >
                 {t('create.back', 'Back')}
               </button>
@@ -1630,7 +1632,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
                 {/* Center Audio Speech Waiting Screen ("Speak to Start Recording") */}
                 {isWaitingForVoice && (
-                  <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-40 flex flex-col items-center justify-center text-white p-6 text-center animate-fadeIn select-none">
+                  <div
+                    onClick={handleForceStartRecording}
+                    className="absolute inset-0 bg-black/85 backdrop-blur-md z-40 flex flex-col items-center justify-center text-white p-6 text-center animate-fadeIn select-none cursor-pointer"
+                  >
                     {/* Pulsating Microphone Soundwave Ring */}
                     <div className="relative flex items-center justify-center mb-6">
                       {/* Dynamic Ambient Audio Ring */}
@@ -1652,19 +1657,30 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     <h3 className="text-2xl font-bold font-display tracking-tight text-white mb-2">
                       Speak now to start recording...
                     </h3>
-                    <p className="text-sm text-zinc-200 max-w-xs mb-6 leading-relaxed">
+                    <p className="text-sm text-zinc-300 max-w-xs mb-5 leading-relaxed">
                       Say anything about your experience at <span className="text-emerald-300 font-bold">{formatBusinessName(selectedPlace?.name)}</span> to automatically begin recording!
                     </p>
 
                     {/* Speech Volume Live Meter */}
-                    <div className="w-52 h-2.5 bg-white/20 rounded-full overflow-hidden mb-6">
+                    <div className="w-52 h-2.5 bg-white/20 rounded-full overflow-hidden mb-5">
                       <div
                         className="h-full bg-emerald-400 transition-all duration-75 rounded-full"
                         style={{ width: `${Math.max(5, micVolumeLevel)}%` }}
                       />
                     </div>
 
-                    
+                    {/* Instant Tap to Record fallback button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleForceStartRecording();
+                      }}
+                      className="px-5 py-2.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold text-xs uppercase tracking-wider backdrop-blur-md transition-all active:scale-95 flex items-center gap-2 shadow-lg cursor-pointer"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                      <span>Or tap here to start now</span>
+                    </button>
                   </div>
                 )}
 
