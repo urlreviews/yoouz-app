@@ -1,4 +1,3 @@
-import { db, doc, setDoc, serverTimestamp } from "../lib/firebase";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import {
@@ -25,7 +24,7 @@ import {
 } from "lucide-react";
 import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
-import { cleanUndefinedFields, cleanForFirestore } from "../utils/cleanData";
+import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { initFaceDetection, detectFaceInVideo } from "../utils/faceDetector";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain } from "../utils/placeUtils";
@@ -942,7 +941,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     setUploadProgress(100);
 
-    // 3. Base64 backup for direct firestore fall-back if under 750KB
+    // 3. Base64 backup for direct bunnydb fall-back if under 750KB
     let base64Backup: string | undefined = undefined;
     if (recordedVideoBlob && recordedVideoBlob.size < 750 * 1024) {
       try {
@@ -1038,7 +1037,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
-    // 5. Save metadata to server & Bunny Database & Firestore and await confirmation
+    // 5. Save metadata to server & Bunny Database & bunnydb and await confirmation
     try {
       setUploadProgress(95);
       const savePromises: Promise<any>[] = [
@@ -1057,33 +1056,24 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         }).catch((e) => console.warn("BunnyDB video review save notice:", e))
       ];
 
-      if (db) {
-        const firestoreCleanedReview = cleanForFirestore(newReview);
-        savePromises.push(
-          setDoc(doc(db, "videoReviews", reviewId), firestoreCleanedReview, { merge: true }).catch((err) => {
-            console.warn("Firestore video review write notice:", err?.message || err);
-          })
-        );
+      if (selectedPlace) {
+        const placeDocId = selectedPlace.id;
+        if (placeDocId) {
+          const updatedPlaceData = {
+            ...selectedPlace,
+            id: placeDocId,
+            totalReviews: (selectedPlace.totalReviews || 0) + 1,
+            rating: rating
+          };
 
-        if (selectedPlace) {
-          const placeDocId = selectedPlace.id;
-          if (placeDocId) {
-            const updatedPlaceData = {
-              ...selectedPlace,
-              id: placeDocId,
-              totalReviews: (selectedPlace.totalReviews || 0) + 1,
-              rating: rating
-            };
-
-            // Persist place update directly to BunnyDB
-            savePromises.push(
-              fetch(`/api/nosql/places/${placeDocId}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ data: updatedPlaceData, merge: true })
-              }).catch(() => {})
-            );
-          }
+          // Persist place update directly to BunnyDB
+          savePromises.push(
+            fetch(`/api/nosql/places/${placeDocId}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ data: updatedPlaceData, merge: true })
+            }).catch(() => {})
+          );
         }
       }
 

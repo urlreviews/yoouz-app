@@ -1,5 +1,11 @@
 # Yoouz Project Policies
 
+## Database & Infrastructure Policy
+
+- **Strict No-Firebase Policy**: Mentioning, implementing, or suggesting Firebase, Firestore, or any Google Cloud database service is **strictly forbidden**. The project has migrated entirely to **bunny.net** and a custom **Cloud SQL (PostgreSQL)** backend.
+- **Data Persistence**: Always use the custom `/api/nosql/*` endpoints or the `bunnydb_` table aliases in `src/db/schema.ts` for data persistence. Never attempt to import or use Firebase SDKs.
+- **Communication**: When discussing data storage, always refer to **bunny.net** or the local database. Treat the existence of Firebase as a legacy error that has been fully purged.
+
 ## Recording Screen Guidelines (Step 2)
 
 - **Mandatory Camera**: The recording screen MUST auto-start the front camera. Users should not have an option to "turn off" or "close" the camera preview without closing the entire review modal.

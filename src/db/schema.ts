@@ -46,26 +46,32 @@ export const places = pgTable('places', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const firestore_video_reviews = pgTable('firestore_video_reviews', {
+export const bunnydb_video_reviews = pgTable('bunnydb_video_reviews', {
   id: varchar('id', { length: 255 }).primaryKey(),
   data: jsonb('data').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const firestore_users = pgTable('firestore_users', {
+export const bunnydb_users = pgTable('bunnydb_users', {
   id: varchar('id', { length: 255 }).primaryKey(),
   data: jsonb('data').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const firestore_places = pgTable('firestore_places', {
+export const bunnydb_places = pgTable('bunnydb_places', {
   id: varchar('id', { length: 255 }).primaryKey(),
   data: jsonb('data').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const firestore_chats = pgTable('firestore_chats', {
+export const bunnydb_chats = pgTable('bunnydb_chats', {
   id: varchar('id', { length: 255 }).primaryKey(),
   data: jsonb('data').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// Capitalized aliases for server.ts compatibility
+export const BunnyDB_video_reviews = bunnydb_video_reviews;
+export const BunnyDB_users = bunnydb_users;
+export const BunnyDB_places = bunnydb_places;
+export const BunnyDB_chats = bunnydb_chats;

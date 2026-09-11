@@ -4,7 +4,7 @@ export const storage: any = null;
 export const logOutUser = async () => {};
 export const onAuthStateChanged = (auth: any, cb: any) => () => {};
 export const handleRedirectResult = async () => null;
-export const handleFirestoreError = (err: any) => console.error(err);
+export const handleBunnyDBError = (err: any) => console.error(err);
 export enum OperationType { READ, WRITE, DELETE }
 export const collection = (...args: any[]) => null;
 export const getDocs = async (...args: any[]) => ({ empty: true, docs: [] });

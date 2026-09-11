@@ -1118,7 +1118,7 @@ export async function sendChatMessage(
   let existingHistory: any[] = [];
   let prevRecipientUnread = 0;
 
-  // 1. Try reading prior thread history from Bunny DB or Firestore
+  // 1. Try reading prior thread history from Bunny DB or bunnydb
   try {
     const res = await fetch(`/api/nosql/chats/${threadId}`);
     if (res.ok) {
@@ -1383,5 +1383,5 @@ export async function deleteChatThread(threadId: string): Promise<void> {
 }
 
 // Aliases for seamless backward compatibility
-export const sendChatMessageToFirestore = sendChatMessage;
-export const deleteChatThreadFromFirestore = deleteChatThread;
+export const sendChatMessageToBunnyDB = sendChatMessage;
+export const deleteChatThreadFromBunnyDB = deleteChatThread;

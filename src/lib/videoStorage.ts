@@ -131,7 +131,7 @@ export async function getRawVideoBlobFromIndexedDB(videoId: string): Promise<Blo
 }
 
 // ==========================================
-// Firebase Resumable Storage Upload Engine
+// Cloud Storage Upload Engine
 // ==========================================
 
 export interface UploadProgressInfo {
@@ -152,7 +152,7 @@ export async function uploadVideoResumableWithProgress(
   blob: Blob,
   videoId: string,
   onProgress?: ProgressCallback
-): Promise<{ downloadUrl: string; thumbnailUrl?: string; provider: "server" | "firebase" | "bunny", bunnyVideoId?: string }> {
+): Promise<{ downloadUrl: string; thumbnailUrl?: string; provider: "server" | "bunny", bunnyVideoId?: string }> {
   try {
     // Send to our server to handle Bunny CDN upload
     const result = await uploadVideoToServerWithProgress(blob, videoId, (pct) => {
@@ -186,7 +186,7 @@ export async function uploadVideoResumableWithProgress(
 // Existing Utility Functions
 // ==========================================
 
-export async function uploadVideoToFirebaseStorage(blob: Blob, videoId: string): Promise<string | null> {
+export async function uploadVideoToCloudStorage(blob: Blob, videoId: string): Promise<string | null> {
   try {
     const res = await uploadVideoResumableWithProgress(blob, videoId);
     return res.downloadUrl;

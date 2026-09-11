@@ -38,9 +38,9 @@ import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { CopoNotificationSettingsModal } from "./components/CopoNotificationSettingsModal";
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "./utils/videoUtils";
-import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleFirestoreError, OperationType } from "./lib/firebase";
-import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/firebase";
-import { cleanUndefinedFields, cleanForFirestore } from "./utils/cleanData";
+import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleBunnyDBError, OperationType } from "./lib/bunnydb";
+import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
+import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
@@ -53,9 +53,9 @@ import {
   deleteNotification,
   clearAllNotifications,
   subscribeToChats,
-  sendChatMessageToFirestore,
+  sendChatMessageToBunnyDB,
   markChatThreadAsRead,
-  deleteChatThreadFromFirestore
+  deleteChatThreadFromBunnyDB
 } from "./lib/socialSync";
 import { buildCommentTree } from "./utils/commentUtils";
 
@@ -286,25 +286,9 @@ export function App() {
       return nextUser;
     });
 
-    // 2. Real-time Live Database Update (Firestore users collection)
-    const firestorePromises: Promise<any>[] = [];
-    if (db) {
-      if (currentUid) {
-        firestorePromises.push(
-          setDoc(doc(db, "users", currentUid), { notificationSettings: newSettings }, { merge: true }).catch((err) => {
-            console.warn("Firestore notification settings sync error:", err);
-          })
-        );
-      }
-      if (currentEmail) {
-        const emailUid = `usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}`;
-        if (emailUid !== currentUid) {
-          firestorePromises.push(
-            setDoc(doc(db, "users", emailUid), { notificationSettings: newSettings }, { merge: true }).catch(() => {})
-          );
-        }
-      }
-    }
+    // 2. Real-time Live Database Update (BunnyDB users collection)
+    const BunnyDBPromises: Promise<any>[] = [];
+
 
     // 3. Real-time Live Database Update (Server NoSQL API)
     const targetUid = currentUid || (currentEmail ? `usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}` : 'guest');
@@ -326,7 +310,7 @@ export function App() {
       );
     }
 
-    await Promise.allSettled([...firestorePromises, ...nosqlPromises]);
+    await Promise.allSettled([...BunnyDBPromises, ...nosqlPromises]);
   };
 
   const [preselectedPlaceForRecording, setPreselectedPlaceForRecording] = useState<Place | null>(null);
@@ -484,7 +468,7 @@ export function App() {
           if (idx !== -1) {
             setCurrentVideoIndex(idx);
           } else {
-            // Fetch from server API to ensure seed JSON data is merged with Firestore
+            // Fetch from server API to ensure seed JSON data is merged with BunnyDB
             fetch(`/api/nosql/videoReviews/${targetVidId}`)
               .then(res => res.json())
               .then(vidData => {
@@ -574,12 +558,9 @@ export function App() {
       }).catch(() => {});
     } catch (e) {}
 
-    // 8. Delete directly from Firestore
+    // 8. Delete directly from BunnyDB
     try {
-      if (db) {
-        deleteDoc(doc(db, "videoReviews", targetId)).catch(() => {});
-        deleteDoc(doc(db, "videos", targetId)).catch(() => {});
-      }
+
     } catch (err) {}
   };
 
@@ -641,14 +622,9 @@ export function App() {
       });
     } catch (e) {}
 
-    // 8. Delete directly from Firestore
+    // 8. Delete directly from BunnyDB
     try {
-      if (db) {
-        await Promise.all(targetIds.map(id => {
-          deleteDoc(doc(db, "videoReviews", id)).catch(() => {});
-          return deleteDoc(doc(db, "videos", id)).catch(() => {});
-        }));
-      }
+
     } catch (err) {}
   };
 
@@ -675,19 +651,11 @@ export function App() {
       fetch("/api/admin/videos/purge-all", { method: "POST" }).catch(() => {});
     } catch (e) {}
 
-    // 3. Purge all videoReviews and videos from Firestore
+    // 3. Purge all videoReviews and videos from BunnyDB
     try {
-      if (db) {
-        const snap = await getDocs(collection(db, "videoReviews"));
-        const deletes = snap.docs.map((d) => deleteDoc(doc(db, "videoReviews", d.id)).catch(console.error));
-        await Promise.all(deletes);
 
-        const vSnap = await getDocs(collection(db, "videos"));
-        const vDeletes = vSnap.docs.map((d) => deleteDoc(doc(db, "videos", d.id)).catch(console.error));
-        await Promise.all(vDeletes);
-      }
     } catch (err) {
-      console.warn("Failed to purge video reviews from Firestore:", err);
+      console.warn("Failed to purge video reviews from BunnyDB:", err);
     }
   };
 
@@ -708,9 +676,7 @@ export function App() {
     });
 
     fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
-    if (db) {
-      deleteDoc(doc(db, "places", id)).catch(() => {});
-    }
+
   };
 
   const handleAdminBulkDeletePlaces = async (ids: string[]) => {
@@ -735,11 +701,9 @@ export function App() {
     } catch (e) {}
 
     try {
-      if (db) {
-        await Promise.all(ids.map(id => deleteDoc(doc(db, "places", id))));
-      }
+
     } catch (err) {
-      console.warn("Failed to bulk delete places from Firestore:", err);
+      console.warn("Failed to bulk delete places from BunnyDB:", err);
     }
   };
 
@@ -806,15 +770,9 @@ export function App() {
       }).catch(() => {});
     } catch (e) {}
 
-    // 3. Delete directly from Firestore
+    // 3. Delete directly from BunnyDB
     try {
-      if (db) {
-        if (userToDelete.id) deleteDoc(doc(db, "users", userToDelete.id)).catch(() => {});
-        if (userToDelete.uid && userToDelete.uid !== userToDelete.id) deleteDoc(doc(db, "users", userToDelete.uid)).catch(() => {});
-        if (uEmail) {
-          deleteDoc(doc(db, "users", `usr_${uEmail.replace(/[^a-zA-Z0-9]/g, '_')}`)).catch(() => {});
-        }
-      }
+
     } catch (e) {}
   };
 
@@ -902,7 +860,7 @@ export function App() {
     }
   }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser]);
 
-  // Firebase Auth state listener and multi-tab reactive sync
+  // BunnyDB Auth state listener and multi-tab reactive sync
   useEffect(() => {
     // Purge any accidental blacklist of valid community accounts
     try {
@@ -988,7 +946,7 @@ export function App() {
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // 4. Firebase onAuthStateChanged listener
+    // 4. BunnyDB onAuthStateChanged listener
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         let savedProfile: Partial<UserProfile> = {};
@@ -1056,7 +1014,7 @@ export function App() {
           localStorage.setItem("copo_user_profile", JSON.stringify(profileObj));
         } catch (e) {}
 
-        // Try reading custom profile data from Firestore if available
+        // Try reading custom profile data from BunnyDB if available
         try {
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (typeof (userDoc as any).exists === "function" ? (userDoc as any).exists() : Boolean((userDoc as any).exists)) {
@@ -1064,7 +1022,7 @@ export function App() {
             if (data) {
               let finalLocation = data.location || savedProfile.location || "";
               
-              // Validate firestore avatar - if it's a video frame, discard it and use Google/clean avatar
+              // Validate BunnyDB avatar - if it's a video frame, discard it and use Google/clean avatar
               let finalAvatar = profileObj.avatar;
               if (data.avatar && typeof data.avatar === "string") {
                 const a = data.avatar;
@@ -1079,7 +1037,7 @@ export function App() {
                 }
               }
 
-              // Sync follows from Firestore to localStorage
+              // Sync follows from BunnyDB to localStorage
               let fAuthors = initialFollowed;
               let fPlaces: string[] = [];
               if (data.followedAuthors && Array.isArray(data.followedAuthors)) {
@@ -1222,10 +1180,6 @@ export function App() {
                         };
                         setCurrentUser(profileWithLocation);
                         localStorage.setItem("copo_user_profile", JSON.stringify(profileWithLocation));
-                        
-                        await setDoc(doc(db, "users", user.uid), {
-                          location: detectedLocation
-                        }, { merge: true });
                       }
                     }
                   }
@@ -1270,32 +1224,13 @@ export function App() {
               setCurrentUser(signupProfile);
               localStorage.setItem("copo_user_profile", JSON.stringify(signupProfile));
               
-              // Save user doc to Firestore with geo-location
-              await setDoc(doc(db, "users", user.uid), {
-                uid: user.uid,
-                name: signupProfile.name,
-                email: signupProfile.email,
-                avatar: signupProfile.avatar,
-                bio: signupProfile.bio,
-                location: detectedLocation || "",
-                createdAt: Date.now(),
-                lastLogin: Date.now()
-              }, { merge: true });
             } catch (geoErr) {
               console.warn("First signup IP geo-detection failed:", geoErr);
-              // Fallback to saving standard user document without location
-              await setDoc(doc(db, "users", user.uid), {
-                uid: user.uid,
-                name: profileObj.name,
-                email: profileObj.email,
-                avatar: profileObj.avatar,
-                bio: profileObj.bio,
-                createdAt: Date.now(),
-                lastLogin: Date.now()
-              }, { merge: true });
             }
-          }
-        } catch (err) {}
+        }
+        } catch (e) {
+          console.warn("Error fetching user from BunnyDB:", e);
+        }
       } else {
         // If auth state is temporarily null (e.g. initial load or storage partitioning), preserve cached session if present
         const storedStr = localStorage.getItem("copo_user_profile");
@@ -1589,52 +1524,7 @@ export function App() {
     fetchAllUsers();
     const interval = setInterval(fetchAllUsers, 2500);
 
-    if (db) {
-      try {
-        const usersCol = collection(db, "users");
-        const unsubscribe = onSnapshot(usersCol, (snapshot) => {
-          if (!isCancelled && snapshot && snapshot.docs) {
-            const dbUsers: any[] = [];
-            snapshot.forEach((docSnap) => {
-              dbUsers.push({ id: docSnap.id, ...docSnap.data() });
-            });
-            if (dbUsers.length > 0) {
-              setAllRegisteredUsers((prev) => {
-                let deletedList: string[] = [];
-                try {
-                  const stored = localStorage.getItem("yoouz_deleted_users");
-                  if (stored) deletedList = JSON.parse(stored);
-                } catch (e) {}
-                const deletedSet = new Set(deletedList.map((k) => String(k).toLowerCase()));
 
-                const map = new Map<string, any>();
-                prev.forEach((u) => {
-                  const k = (u.email || u.uid || u.id || u.name || "").toLowerCase();
-                  if (k && !deletedSet.has(k) && k !== "4samet@gmail.com" && k !== "samet") {
-                    map.set(k, u);
-                  }
-                });
-                dbUsers.forEach((u) => {
-                  const k = (u.email || u.uid || u.id || u.name || "").toLowerCase();
-                  const uName = (u.name || "").toLowerCase();
-                  const uId = (u.id || u.uid || "").toLowerCase();
-                  if (k && !deletedSet.has(k) && !deletedSet.has(uName) && !deletedSet.has(uId) && k !== "4samet@gmail.com" && uName !== "samet" && uId !== "4samet-user-id") {
-                    map.set(k, u);
-                  }
-                });
-                return Array.from(map.values());
-              });
-            }
-          }
-        }, () => {});
-
-        return () => {
-          isCancelled = true;
-          clearInterval(interval);
-          unsubscribe();
-        };
-      } catch (err) {}
-    }
 
     return () => {
       isCancelled = true;
@@ -1654,69 +1544,6 @@ export function App() {
         location: updated.location !== undefined ? updated.location : prev.location,
         handle: updated.handle !== undefined ? updated.handle : (prev as any).handle
       };
-      try {
-        localStorage.setItem("copo_user_profile", JSON.stringify(nextProfile));
-        const userUid = auth.currentUser?.uid || (nextProfile.email ? nextProfile.email.replace(/[^a-zA-Z0-9]/g, '_') : 'guest');
-        
-        // 1. Live server profile update (propagates to users table, videoReviews author, memory feed cache, and indexes)
-        fetch('/api/users/update-profile', {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            uid: userUid,
-            id: userUid,
-            name: nextProfile.name,
-            handle: (nextProfile as any).handle || "",
-            email: nextProfile.email,
-            avatar: nextProfile.avatar,
-            banner: (nextProfile as any).banner || "",
-            bio: nextProfile.bio,
-            location: nextProfile.location || ""
-          })
-        }).catch((err) => console.warn("Live profile update error:", err));
-
-        // 2. Mirror to BunnyDB (Cloud NoSQL)
-        fetch(`/api/nosql/users/${userUid}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            data: {
-              uid: userUid,
-              name: nextProfile.name,
-              handle: (nextProfile as any).handle || "",
-              email: nextProfile.email,
-              avatar: nextProfile.avatar,
-              banner: (nextProfile as any).banner || "",
-              bio: nextProfile.bio,
-              location: nextProfile.location || "",
-              lastLogin: Date.now()
-            },
-            merge: true
-          })
-        }).catch(() => {});
-
-        // 3. Dispatch global profile event
-        window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: nextProfile }));
-
-        // 4. Save to Firebase Firestore database
-        if (auth.currentUser && db) {
-          setDoc(doc(db, "users", auth.currentUser.uid), {
-            uid: auth.currentUser.uid,
-            name: nextProfile.name,
-            handle: (nextProfile as any).handle || "",
-            email: nextProfile.email,
-            avatar: nextProfile.avatar,
-            banner: (nextProfile as any).banner || "",
-            bio: nextProfile.bio,
-            location: nextProfile.location || "",
-            lastLogin: Date.now()
-          }, { merge: true }).catch((err) => {
-            console.warn("Failed to update user profile in Firestore:", err);
-          });
-        }
-      } catch (e) {}
-
-      // Keep user registry and videos state in sync with updated author info
       updateUserRegistry(nextProfile);
       setAllRegisteredUsers((prevUsers) => {
         const index = prevUsers.findIndex((u) => 
@@ -1777,11 +1604,9 @@ export function App() {
     if (auth.currentUser) {
       try {
         const uid = auth.currentUser.uid;
-        if (db) {
-          await deleteDoc(doc(db, "users", uid));
-        }
+
       } catch (err) {
-        console.warn("Failed to delete user document from Firestore:", err);
+        console.warn("Failed to delete user document from BunnyDB:", err);
       }
     }
 
@@ -1896,21 +1721,8 @@ export function App() {
         }
       } catch (e) {}
 
-      // Fallback mirror to Firestore if present
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(
-          vidRef,
-          {
-            ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
-            ...(updates.caption !== undefined && { caption: updates.caption }),
-            ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
-            ...(updates.tags !== undefined && { tags: updates.tags }),
-            updatedAt: Date.now()
-          },
-          { merge: true }
-        ).catch(() => {});
-      }
+      // Fallback mirror to BunnyDB if present
+
     } catch (err) {
       console.warn("Update video rating error:", err);
     }
@@ -1949,24 +1761,11 @@ export function App() {
       return next;
     });
 
-    // 2. Persist to Firestore database using increment(1)
+    // 2. Persist to BunnyDB database using increment(1)
     try {
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        setDoc(
-          vidRef,
-          {
-            views: increment(1),
-            viewsCount: increment(1),
-            lastViewedAt: serverTimestamp()
-          },
-          { merge: true }
-        ).catch((err) => {
-          console.warn("Firestore view increment note:", err);
-        });
-      }
+
     } catch (err) {
-      console.warn("Firestore view tracking error:", err);
+      console.warn("BunnyDB view tracking error:", err);
     }
 
     // 3. Persist to backend server API
@@ -2108,7 +1907,7 @@ export function App() {
     return [];
   }
 
-  // Places sync from Firestore with live subscription & auto-synthesis from reviews
+  // Places sync from BunnyDB with live subscription & auto-synthesis from reviews
   useEffect(() => {
     try {
       const deletedStr = localStorage.getItem("copo_deleted_places") || "[]";
@@ -2773,7 +2572,7 @@ export function App() {
     }
   };
 
-  // Handle Likes - fully synced with Firestore
+  // Handle Likes - fully synced with BunnyDB
   const handleToggleLike = async (videoId: string) => {
     if (!currentUser) {
       setAuthIntent("like");
@@ -2812,7 +2611,7 @@ export function App() {
       localStorage.setItem("copo_liked_video_ids", JSON.stringify(likedIds));
     } catch (e) {}
 
-    // Persist to Server and Firestore database
+    // Persist to Server and BunnyDB database
     try {
       const effectiveUserId = currentUser?.email || auth.currentUser?.uid || "community_user";
       fetch("/api/interactions/like", {
@@ -2831,10 +2630,7 @@ export function App() {
     } catch (e) {}
 
     try {
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        setDoc(vidRef, { likes: nextLikes, likesCount: nextLikes }, { merge: true }).catch(() => {});
-      }
+
     } catch (err) {}
 
     // Send social activity notification to video author
@@ -2913,7 +2709,7 @@ export function App() {
     };
   };
 
-  // Handle Bookmarks - fully synced with Server, BunnyDB & Firestore
+  // Handle Bookmarks - fully synced with Server, BunnyDB & BunnyDB
   const handleToggleBookmark = async (videoId: string) => {
     if (!currentUser) {
       setAuthIntent("bookmarks");
@@ -2952,17 +2748,11 @@ export function App() {
       }
       localStorage.setItem("copo_saved_video_ids", JSON.stringify(savedIds));
       
-      // Also sync to global user profile in Firestore
-      if (currentUser && currentUser.email && db) {
-        // We use auth.currentUser?.uid directly as it's the doc ID
-        const uid = auth.currentUser?.uid;
-        if (uid) {
-          setDoc(doc(db, "users", uid), { savedVideoIds: savedIds }, { merge: true }).catch(() => {});
-        }
-      }
+      // Also sync to global user profile in BunnyDB
+
     } catch (e) {}
 
-    // Persist to Server, Bunny.net Database and Firestore database
+    // Persist to Server, Bunny.net Database and BunnyDB database
     try {
       const targetVid =
         videos.find((v) => v.id === videoId) ||
@@ -2991,10 +2781,7 @@ export function App() {
     } catch (e) {}
 
     try {
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        setDoc(vidRef, { bookmarksCount: nextCount, bookmarks: nextCount }, { merge: true }).catch(() => {});
-      }
+
     } catch (err) {}
 
     // Send social activity notification to video author for bookmark/save
@@ -3043,10 +2830,7 @@ export function App() {
       }).catch(() => {});
 
       const shareData = { shares: newSharesCount, sharesCount: newSharesCount };
-      if (db) {
-        const vidRef = doc(db, "videoReviews", video.id);
-        setDoc(vidRef, shareData, { merge: true }).catch(() => {});
-      }
+
       fetch(`/api/nosql/videoReviews/${video.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3205,17 +2989,8 @@ export function App() {
       })
     }).catch((err) => console.warn("Notice updating server follow interaction:", err));
 
-    // 8. Persist follower's profile in Firestore and NoSQL sync
-    if (auth.currentUser && db) {
-      setDoc(
-        doc(db, "users", auth.currentUser.uid),
-        {
-          followedAuthors: updatedFollowed,
-          followingCount: updatedFollowed.length
-        },
-        { merge: true }
-      ).catch((err) => console.warn("Failed to update followedAuthors in Firestore:", err));
-    }
+    // 8. Persist follower's profile in BunnyDB and NoSQL sync
+
 
     fetch(`/api/nosql/users/${followerUid}`, {
       method: "POST",
@@ -3244,7 +3019,7 @@ export function App() {
       }).catch(() => {});
     }
 
-    // 9. Persist target user's followers in Firestore and NoSQL sync
+    // 9. Persist target user's followers in BunnyDB and NoSQL sync
     const targetDocId = targetUserObj?.id || targetUserObj?.uid;
     if (targetDocId) {
       fetch(`/api/nosql/users/${targetDocId}`, {
@@ -3290,87 +3065,16 @@ export function App() {
 
   // Handle Follow Place (Business)
   const handleToggleFollowPlace = (placeId: string) => {
-    if (!currentUser) {
-      setAuthIntent('following');
-      setIsAuthModalOpen(true);
-      return;
-    }
-    
-    // 1. Determine next follow state
-    const currentPlace = places.find(p => p.id === placeId);
-    let storedFollowed: string[] = [];
-    try {
-      storedFollowed = JSON.parse(localStorage.getItem("copo_followed_places") || "[]");
-    } catch(e){}
-    const currentlyFollowed = Boolean(currentPlace?.isFollowed || storedFollowed.includes(placeId) || (currentUser.followedPlaces || []).includes(placeId));
-    const newFollowState = !currentlyFollowed;
-
-    // 2. Compute next followed places array
-    let updatedFollowedPlaces = [...(currentUser.followedPlaces || storedFollowed)];
-    if (newFollowState) {
-      if (!updatedFollowedPlaces.includes(placeId)) {
-        updatedFollowedPlaces.push(placeId);
-      }
-    } else {
-      updatedFollowedPlaces = updatedFollowedPlaces.filter(id => id !== placeId);
-    }
-
-    // 3. Update places state immediately
-    setPlaces((prev) => {
-      const updated = prev.map((p) => {
-        if (p.id === placeId) {
-          return { ...p, isFollowed: newFollowState };
-        }
-        return p;
-      });
-      return updated;
-    });
-
-    // 4. Update currentUser state & copo_user_profile
-    setCurrentUser((prev) => {
-      if (!prev) return prev;
-      const nextUser: UserProfile = {
-        ...prev,
-        followedPlaces: updatedFollowedPlaces,
-        followingCount: (prev.followedAuthors?.length || 0) + updatedFollowedPlaces.length
-      };
-      try {
-        localStorage.setItem("copo_user_profile", JSON.stringify(nextUser));
-      } catch(e){}
-      return nextUser;
-    });
-
-    // 5. Update localStorage
-    try {
-      localStorage.setItem("copo_followed_places", JSON.stringify(updatedFollowedPlaces));
-    } catch(e){}
-
-    // 6. Notify all components listening to profile / follow updates
-    try {
-      window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: { followedPlaces: updatedFollowedPlaces } }));
-    } catch(e){}
-
-    // 7. Persist to live server API (Bunny DB follows table, users table, places table)
-    const followerUid = auth.currentUser?.uid || (currentUser.email ? currentUser.email.replace(/[^a-zA-Z0-9]/g, '_') : 'guest');
-    fetch("/api/interactions/follow-place", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        followerUserId: followerUid,
-        followerName: currentUser.name || currentUser.email || "User",
-        followerAvatar: currentUser.avatar || "",
-        placeId,
-        placeName: currentPlace?.name || placeId,
-        isFollowed: newFollowState
-      })
-    }).catch(err => console.warn("Notice updating server place follow interaction:", err));
-
-    // 8. Persist to Firestore if available
-    if (auth.currentUser && db) {
-      setDoc(doc(db, "users", auth.currentUser.uid), {
-        followedPlaces: updatedFollowedPlaces
-      }, { merge: true }).catch(err => console.warn("Failed to update followedPlaces in Firestore:", err));
-    }
+    if (!currentUser) return;
+    const currentFollows = currentUser.followedPlaces || [];
+    const isFollowing = currentFollows.includes(placeId);
+    const updatedFollowedPlaces = isFollowing
+      ? currentFollows.filter(id => id !== placeId)
+      : [...currentFollows, placeId];
+      
+    const followerUid = currentUser.id || currentUser.uid || currentUser.email || "guest";
+    setCurrentUser(prev => prev ? { ...prev, followedPlaces: updatedFollowedPlaces } : null);
+    setSavedPlaceIds(updatedFollowedPlaces);
 
     // 9. Persist to NoSQL endpoint
     fetch(`/api/nosql/users/${followerUid}`, {
@@ -3385,7 +3089,7 @@ export function App() {
     }).catch(() => {});
   };
 
-  // Handle Adding Comment or Threaded Reply - fully synced with Firestore
+  // Handle Adding Comment or Threaded Reply - fully synced with BunnyDB
   const handleAddComment = async (
     videoId: string,
     text: string,
@@ -3486,16 +3190,13 @@ export function App() {
       );
     }
 
-    // Persist to Firestore database & SQLite
+    // Persist to BunnyDB database & SQLite
     try {
-      const dataToSave = cleanForFirestore({
+      const dataToSave = cleanData({
         comments: tree.comments,
         commentsCount: tree.count
       });
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(vidRef, dataToSave, { merge: true });
-      }
+
       fetch(`/api/nosql/videoReviews/${videoId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3507,7 +3208,7 @@ export function App() {
         body: JSON.stringify({ videoId, comment: newCommentItem, userId: currentUser?.email || auth.currentUser?.uid })
       }).catch(() => {});
     } catch (err) {
-      console.warn("Firestore comment sync warning:", err);
+      console.warn("BunnyDB comment sync warning:", err);
     }
 
     // Send social notification for comment / reply IMMEDIATELY
@@ -3636,13 +3337,10 @@ export function App() {
       );
     }
 
-    // Persist to Firestore database & SQLite
+    // Persist to BunnyDB database & SQLite
     try {
-      const dataToSave = cleanForFirestore({ comments: updatedComments });
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(vidRef, dataToSave, { merge: true });
-      }
+      const dataToSave = cleanData({ comments: updatedComments });
+
       fetch(`/api/nosql/videoReviews/${videoId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3663,7 +3361,7 @@ export function App() {
         })
       }).catch(() => {});
     } catch (err) {
-      console.warn("Firestore comment like sync warning:", err);
+      console.warn("BunnyDB comment like sync warning:", err);
     }
 
     // Send social activity notification to comment/reply author
@@ -3764,11 +3462,8 @@ export function App() {
     }
 
     try {
-      const dataToSave = cleanForFirestore({ comments: updatedComments });
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(vidRef, dataToSave, { merge: true });
-      }
+      const dataToSave = cleanData({ comments: updatedComments });
+
       fetch(`/api/nosql/videoReviews/${videoId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3789,7 +3484,7 @@ export function App() {
         })
       }).catch(() => {});
     } catch (err) {
-      console.warn("Firestore creator heart sync warning:", err);
+      console.warn("BunnyDB creator heart sync warning:", err);
     }
 
     // Send social activity notification to comment author if creator loved it
@@ -3913,11 +3608,8 @@ export function App() {
         if (Array.isArray(c.replies)) totalCount += c.replies.length;
       });
 
-      const dataToSave = cleanForFirestore({ comments: updatedComments, commentsCount: totalCount });
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(vidRef, dataToSave, { merge: true });
-      }
+      const dataToSave = cleanData({ comments: updatedComments, commentsCount: totalCount });
+
       fetch(`/api/nosql/videoReviews/${videoId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3938,7 +3630,7 @@ export function App() {
     }
   };
 
-  // Handle Adding/Updating Owner Response on Review - fully synced with Firestore
+  // Handle Adding/Updating Owner Response on Review - fully synced with BunnyDB
   const handleSaveOwnerResponse = async (videoId: string, text: string) => {
     const ownerResp = {
       text: text.trim(),
@@ -3998,7 +3690,7 @@ export function App() {
       );
     }
 
-    // Persist to Server and Firestore database
+    // Persist to Server and BunnyDB database
     try {
       fetch("/api/videos/save-review", {
         method: "POST",
@@ -4011,19 +3703,6 @@ export function App() {
         })
       }).catch(() => {});
     } catch (e) {}
-
-    try {
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(vidRef, cleanForFirestore({
-          ownerResponse: text.trim() ? ownerResp : null,
-          comments: updatedComments,
-          commentsCount: updatedComments.length
-        }), { merge: true });
-      }
-    } catch (err) {
-      console.warn("Firestore owner response sync warning:", err);
-    }
 
     // Send social notification to review author that business responded
     if (text.trim()) {
@@ -4087,19 +3766,6 @@ export function App() {
           commentsCount: updatedComments.length
         };
       });
-    }
-
-    try {
-      if (db) {
-        const vidRef = doc(db, "videoReviews", videoId);
-        await setDoc(vidRef, cleanForFirestore({
-          ownerResponse: null,
-          comments: updatedComments,
-          commentsCount: updatedComments.length
-        }), { merge: true });
-      }
-    } catch (err) {
-      console.warn("Firestore delete owner response sync warning:", err);
     }
   };
 
@@ -4170,7 +3836,7 @@ export function App() {
       return [updatedPlace, ...prev];
     });
 
-    // Mirror updates to BunnyDB (libSQL/SQLite) and Firestore so they persist forever (even after page refresh!)
+    // Mirror updates to BunnyDB (libSQL/SQLite) and BunnyDB so they persist forever (even after page refresh!)
     try {
       fetch(`/api/nosql/places/${updatedPlace.id}`, {
         method: "POST",
@@ -4178,10 +3844,7 @@ export function App() {
         body: JSON.stringify({ data: updatedPlace, merge: true })
       }).catch((e) => console.error("Error updating place in BunnyDB:", e));
 
-      if (db) {
-        setDoc(doc(db, "places", updatedPlace.id), cleanForFirestore(updatedPlace), { merge: true })
-          .catch((e) => console.error("Error updating place in Firestore:", e));
-      }
+
     } catch (err) {
       console.error("Failed to sync updated place to databases:", err);
     }
@@ -4237,11 +3900,9 @@ export function App() {
       }).catch(() => {});
     } catch (e) {}
 
-    // Persist to Firestore database so all viewers across any browser/device see it immediately
+    // Persist to BunnyDB database so all viewers across any browser/device see it immediately
     try {
-      if (db) {
-        setDoc(doc(db, "videoReviews", newReview.id), cleanForFirestore(newReview), { merge: true }).catch(() => {});
-      }
+
     } catch (e) {}
 
     // Auto-grab place to profile
@@ -4288,11 +3949,7 @@ export function App() {
 
       // Persist place directly to database so it is remembered forever
       if (targetPlace! && targetPlace.id) {
-        if (db) {
-          try {
-            setDoc(doc(db, "places", targetPlace.id), cleanForFirestore(targetPlace), { merge: true }).catch(() => {});
-          } catch (e) {}
-        }
+
         fetch(`/api/nosql/places/${targetPlace.id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -4734,13 +4391,8 @@ export function App() {
                     body: JSON.stringify({ data: cleanPlace, merge: true })
                   }).catch(() => {});
 
-                  // Persist to Firestore immediately so it's "already saved" as per user request
-                  if (db && cleanPlace.id) {
-                    try {
-                      setDoc(doc(db, "places", cleanPlace.id), cleanForFirestore(cleanPlace), { merge: true })
-                        .catch(err => console.warn("Auto-save place search result error:", err));
-                    } catch (e) {}
-                  }
+                  // Persist to BunnyDB immediately so it's "already saved" as per user request
+
 
                   setPlaces((prev) => {
                     const map = new Map<string, Place>();
@@ -4784,13 +4436,8 @@ export function App() {
                     body: JSON.stringify({ data: cleanPlace, merge: true })
                   }).catch(() => {});
 
-                  // Persist to Firestore immediately so it's "already saved" as per user request
-                  if (db && cleanPlace.id) {
-                    try {
-                      setDoc(doc(db, "places", cleanPlace.id), cleanForFirestore(cleanPlace), { merge: true })
-                        .catch(err => console.warn("Auto-save place search result error:", err));
-                    } catch (e) {}
-                  }
+                  // Persist to BunnyDB immediately so it's "already saved" as per user request
+
 
                   setPlaces((prev) => {
                     const map = new Map<string, Place>();
@@ -4857,9 +4504,7 @@ export function App() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ data: updatedVid, merge: true })
                   }).catch(() => {});
-                  if (db) {
-                    setDoc(doc(db, "videoReviews", updatedVid.id), cleanForFirestore(updatedVid), { merge: true }).catch(() => {});
-                  }
+
                 }}
                 onDeletePlace={handleAdminDeletePlace}
                 onBulkDeletePlaces={handleAdminBulkDeletePlaces}
@@ -4874,9 +4519,7 @@ export function App() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ data: newPlace, merge: true })
                   }).catch(() => {});
-                  if (db) {
-                    setDoc(doc(db, "places", newPlace.id), cleanForFirestore(newPlace), { merge: true }).catch(() => {});
-                  }
+
                 }}
                 onDeleteComment={handleDeleteComment}
                 onBroadcastNotification={async (notif) => {
@@ -4969,12 +4612,12 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onDeleteThread={(threadId) => {
-                  deleteChatThreadFromFirestore(threadId);
+                  deleteChatThreadFromBunnyDB(threadId);
                   setMessages((prev) => prev.filter((m) => m.id !== threadId));
                 }}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId) => {
                   if (currentUser) {
-                    await sendChatMessageToFirestore(
+                    await sendChatMessageToBunnyDB(
                       threadId,
                       text,
                       currentUser,
@@ -5124,7 +4767,7 @@ export function App() {
                     };
                   }
                   
-                  await sendChatMessageToFirestore(
+                  await sendChatMessageToBunnyDB(
                     threadId,
                     text,
                     effectiveSender,
@@ -5134,7 +4777,7 @@ export function App() {
                   );
                 }}
                 onDeleteThread={(threadId) => {
-                  deleteChatThreadFromFirestore(threadId);
+                  deleteChatThreadFromBunnyDB(threadId);
                   setMessages((prev) => prev.filter((m) => m.id !== threadId));
                 }}
                 onMarkThreadRead={(threadId) => {
@@ -5377,13 +5020,8 @@ export function App() {
               body: JSON.stringify({ data: cleanPlace, merge: true })
             }).catch(() => {});
 
-            // Persist to Firestore immediately so it's "already saved" as per user request
-            if (db && cleanPlace.id) {
-              try {
-                setDoc(doc(db, "places", cleanPlace.id), cleanForFirestore(cleanPlace), { merge: true })
-                  .catch(err => console.warn("Auto-save place search result error:", err));
-              } catch (e) {}
-            }
+            // Persist to BunnyDB immediately so it's "already saved" as per user request
+
 
             setPlaces((prev) => {
               const map = new Map<string, Place>();

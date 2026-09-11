@@ -328,7 +328,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 </p>
                 <ul className="list-disc pl-5 space-y-1 text-zinc-200">
                   <li>
-                    <strong className="text-white">{t("legal.serviceProviders", "Service Providers:")}</strong> {t("legal.serviceProvidersBody", "With trusted backend and hosting infrastructure providers (such as Google Cloud and Supabase/Firebase) required to run our web application.")}
+                    <strong className="text-white">{t("legal.serviceProviders", "Service Providers:")}</strong> {t("legal.serviceProvidersBody", "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.")}
                   </li>
                   <li>
                     <strong className="text-white">{t("legal.legalCompliance", "Legal Compliance:")}</strong> {t("legal.legalComplianceBody", "If required to comply with applicable laws, regulations, or legal processes.")}

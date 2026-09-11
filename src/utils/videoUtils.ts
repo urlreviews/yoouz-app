@@ -38,9 +38,7 @@ export function normalizeVideoUrl(url?: string | null): string {
     trimmed.includes("b-cdn.net") ||
     trimmed.includes("bunnycdn.com") ||
     trimmed.includes("video.bunnycdn.com") ||
-    trimmed.includes("firebasestorage.googleapis.com") ||
-    trimmed.includes("cloudinary.com") ||
-    trimmed.includes("googleapis.com")
+    trimmed.includes("cloudinary.com")
   ) {
     return trimmed;
   }
