@@ -111,7 +111,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   }, [places]);
 
   // Pre-fetch metadata in the background for any recent search item not already in places
-  // so the database in BunnyDB/Firestore keeps the banner and logo immediately
+  // so the database in BunnyDB/bunnydb keeps the banner and logo immediately
   useEffect(() => {
     if (!onAddPlace) return;
     recentSearches.forEach(async (term) => {
@@ -130,7 +130,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               const fetchedLogo = data.logo || getCleanLogoUrl(null, data.domain) || "";
               const fetchedBanner = data.image || "";
               const newPlace: Place = {
-                id: (data.domain || cleanDom).replace(/[^a-zA-Z0-9]/g, "-"),
+                id: (data.domain || cleanDom).toLowerCase(),
                 name: data.title || data.domain || cleanDom,
                 category: "Website",
                 categoryType: "all",

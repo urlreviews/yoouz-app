@@ -3,7 +3,7 @@ import { VideoReview } from "../types";
 export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   {
     "id": "rev-1788290824170-vg5vg",
-    "placeId": "legal500-com",
+    "placeId": "legal500.com",
     "placeName": "L500 | Legal 500 – The Clients Guide to the best Law firms, top Lawyers, Attorneys, Advocates, Solicitors and Barristers.Legal 500MenuCloseMoreMoreMoreMoreMoreMoreMoreMoreMoreMoreMoreMore",
     "placeCategory": "Business",
     "placeAddress": "Verified Location",
@@ -56,7 +56,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   },
   {
     "id": "rev-1788279180166-rh08t",
-    "placeId": "digitalpark-ae",
+    "placeId": "digitalpark.ae",
     "placeName": "Dubai Digital Park",
     "placeCategory": "Website",
     "placeAddress": "Verified Location",
@@ -108,7 +108,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   },
   {
     "id": "rev-1788277000192-c9ypn",
-    "placeId": "plomberiebruxelles24-be",
+    "placeId": "plomberiebruxelles24.be",
     "placeName": "Toptech Belgium SRL - Plombier et Chauffagiste - Plombier Chauffagiste",
     "placeCategory": "Website",
     "placeAddress": "Verified Location",
@@ -160,7 +160,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   },
   {
     "id": "rev-1788273403304-fh8sj",
-    "placeId": "aldhabidental-ae",
+    "placeId": "aldhabidental.ae",
     "placeName": "Al Dhabi Dental Center | Top Dental Clinic in Abu Dhabi",
     "placeCategory": "Website",
     "placeAddress": "Verified Location",
@@ -197,7 +197,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   },
   {
     "id": "rev-1788261417746-edax0",
-    "placeId": "thecapitalavenue-com",
+    "placeId": "thecapitalavenue.com",
     "placeName": "The Capital Avenue Real Estate - Abu Dhabi",
     "placeCategory": "Business",
     "placeAddress": "Verified Location",
@@ -234,7 +234,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   },
   {
     "id": "rev-1788258521064-qa2vl",
-    "placeId": "www-districtuae-com",
+    "placeId": "districtuae.com",
     "placeName": "District Real Estate | Abu Dhabi & Dubai Property Advisory",
     "placeCategory": "Business",
     "placeAddress": "Verified Location",
@@ -271,7 +271,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   },
   {
     "id": "rev-1787774080951-vuu2k",
-    "placeId": "londontrustedtherapy-com",
+    "placeId": "londontrustedtherapy.com",
     "placeName": "londontrustedtherapy.com",
     "placeCategory": "Website",
     "placeAddress": "Verified Location",
@@ -337,7 +337,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   },
   {
     "id": "rev-1787768997506-0esgw",
-    "placeId": "www-kempinski-com",
+    "placeId": "kempinski.com",
     "placeName": "Kempinski Hotels | Luxury Five Star Hotels & Resorts",
     "placeCategory": "Website",
     "placeAddress": "Verified Location",
@@ -389,7 +389,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   },
   {
     "id": "rev-1787510734251-tcadw",
-    "placeId": "mastercard-com",
+    "placeId": "mastercard.com",
     "placeName": "mastercard.com",
     "placeCategory": "Website",
     "placeAddress": "Verified Location",

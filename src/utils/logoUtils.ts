@@ -149,27 +149,7 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <rect width="100" height="100" rx="20" fill="#cc0000"/>
       <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
     </svg>`),
-  "yoouz.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <rect width="100" height="100" rx="22" fill="#09090b"/>
-      <rect x="5" y="5" width="90" height="90" rx="18" fill="none" stroke="#27272a" stroke-width="2"/>
-      <circle cx="50" cy="50" r="34" fill="#000000" stroke="#ffffff" stroke-width="2"/>
-      <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">YOO</text>
-    </svg>`),
-  "www.yoouz.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <rect width="100" height="100" rx="22" fill="#09090b"/>
-      <rect x="5" y="5" width="90" height="90" rx="18" fill="none" stroke="#27272a" stroke-width="2"/>
-      <circle cx="50" cy="50" r="34" fill="#000000" stroke="#ffffff" stroke-width="2"/>
-      <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">YOO</text>
-    </svg>`),
-  "yoouz": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-      <rect width="100" height="100" rx="22" fill="#09090b"/>
-      <rect x="5" y="5" width="90" height="90" rx="18" fill="none" stroke="#27272a" stroke-width="2"/>
-      <circle cx="50" cy="50" r="34" fill="#000000" stroke="#ffffff" stroke-width="2"/>
-      <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">YOO</text>
-    </svg>`),
+  "yoouz": "https://www.yoouz.com/icon-512.png",
   "legal500.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#09090b"/>
@@ -389,6 +369,7 @@ export function extractDomain(str: string | null | undefined): string | null {
   let clean = trimmed.replace(/^www[\.\-\/]/i, "").toLowerCase();
   clean = clean.split("/")[0].split("?")[0].split("#")[0].split(":")[0];
   
+  if (clean.endsWith("-co-uk")) clean = clean.replace(/-co-uk$/, ".co.uk");
   if (clean.endsWith("-com")) clean = clean.replace(/-com$/, ".com");
   if (clean.endsWith("-net")) clean = clean.replace(/-net$/, ".net");
   if (clean.endsWith("-org")) clean = clean.replace(/-org$/, ".org");
@@ -398,10 +379,23 @@ export function extractDomain(str: string | null | undefined): string | null {
   if (clean.endsWith("-app")) clean = clean.replace(/-app$/, ".app");
   if (clean.endsWith("-dev")) clean = clean.replace(/-dev$/, ".dev");
   if (clean.endsWith("-me")) clean = clean.replace(/-me$/, ".me");
+  if (clean.endsWith("-ae")) clean = clean.replace(/-ae$/, ".ae");
+  if (clean.endsWith("-be")) clean = clean.replace(/-be$/, ".be");
+  if (clean.endsWith("-de")) clean = clean.replace(/-de$/, ".de");
+  if (clean.endsWith("-fr")) clean = clean.replace(/-fr$/, ".fr");
+  if (clean.endsWith("-uk")) clean = clean.replace(/-uk$/, ".uk");
+  if (clean.endsWith("-ca")) clean = clean.replace(/-ca$/, ".ca");
   if (clean.endsWith("-tech")) clean = clean.replace(/-tech$/, ".tech");
   if (clean.endsWith("-store")) clean = clean.replace(/-store$/, ".store");
-  if (clean.endsWith("-be")) clean = clean.replace(/-be$/, ".be");
-  if (clean.endsWith("-co-uk")) clean = clean.replace(/-co-uk$/, ".co.uk");
+  if (clean.endsWith("-online")) clean = clean.replace(/-online$/, ".online");
+  if (clean.endsWith("-xyz")) clean = clean.replace(/-xyz$/, ".xyz");
+  if (clean.endsWith("-site")) clean = clean.replace(/-site$/, ".site");
+  if (clean.endsWith("-digital")) clean = clean.replace(/-digital$/, ".digital");
+  if (clean.endsWith("-agency")) clean = clean.replace(/-agency$/, ".agency");
+
+  if (!clean.includes(".") && /-([a-z]{2,10})$/i.test(clean)) {
+    clean = clean.replace(/-([a-z]{2,10})$/i, ".$1");
+  }
 
   if (!clean.includes(".") && clean.length > 2) {
     clean = clean.replace(/[^a-z0-9]/g, "") + ".com";

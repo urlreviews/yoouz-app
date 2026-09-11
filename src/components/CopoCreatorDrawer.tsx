@@ -25,7 +25,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
@@ -857,7 +857,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       <span>Official Business Listing</span>
                       <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                     </div>
-                    <div className="text-[11px] text-zinc-400 truncate">yoouz.com/place/{associatedPlaceId}</div>
+                    <div className="text-[11px] text-zinc-400 truncate">yoouz.com/place/{getPlaceSlug(associatedPlaceId)}</div>
                   </div>
                 </div>
                 <button

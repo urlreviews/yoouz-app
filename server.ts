@@ -6212,7 +6212,13 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
           // Case E: Clean up messy placeName scrapes
           if (newPlaceName.includes("MenuClose") || newPlaceName.includes("MoreMoreMore") || newPlaceName.length > 80) {
-            const domain = extractCleanDomain(parsedData.placeWebsite || parsedData.brandDomain || newPlaceId);
+            const rawTarget = String(parsedData.placeWebsite || parsedData.brandDomain || newPlaceId || "")
+              .replace(/^https?:\/\//i, "")
+              .replace(/^www[\.\-\/]/i, "")
+              .split("/")[0].split("?")[0].split(":")[0];
+            const domain = rawTarget
+              .replace(/-co-uk$/, '.co.uk')
+              .replace(/-([a-z]{2,10})$/i, '.$1');
             if (domain && domain.includes(".")) {
               const cap = domain.split(".")[0].replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
               newPlaceName = cap;

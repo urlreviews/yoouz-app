@@ -42,7 +42,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import {
@@ -784,9 +784,10 @@ export function App() {
       let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
 
       if (selectedPlaceIdForDrawer) {
-        path = `/place/${selectedPlaceIdForDrawer}`;
-        const place = places.find(p => p.id === selectedPlaceIdForDrawer);
-        title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : "Business Profile | Yoouz";
+        const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
+        const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
+        path = `/place/${slug}`;
+        title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug)} - Business Profile | Yoouz`;
       } else if (selectedAuthorForDrawer) {
         const cleanSlug = (selectedAuthorForDrawer.name || selectedAuthorForDrawer.name || "reviewer")
           .toLowerCase()

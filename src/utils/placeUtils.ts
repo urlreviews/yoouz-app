@@ -22,7 +22,8 @@ export function extractCleanDomain(input?: string | null): string {
   // Remove trailing colon and port
   clean = clean.split(":")[0];
   
-  // If slug like "fiverr-com" or "tajhotels-com" where the user entered domain as id
+  // If slug like "fiverr-com", "digitalpark-ae", "mastercard-com", "legal500-com"
+  if (clean.endsWith("-co-uk")) clean = clean.replace(/-co-uk$/, ".co.uk");
   if (clean.endsWith("-com")) clean = clean.replace(/-com$/, ".com");
   if (clean.endsWith("-net")) clean = clean.replace(/-net$/, ".net");
   if (clean.endsWith("-org")) clean = clean.replace(/-org$/, ".org");
@@ -32,10 +33,24 @@ export function extractCleanDomain(input?: string | null): string {
   if (clean.endsWith("-app")) clean = clean.replace(/-app$/, ".app");
   if (clean.endsWith("-dev")) clean = clean.replace(/-dev$/, ".dev");
   if (clean.endsWith("-me")) clean = clean.replace(/-me$/, ".me");
+  if (clean.endsWith("-ae")) clean = clean.replace(/-ae$/, ".ae");
+  if (clean.endsWith("-be")) clean = clean.replace(/-be$/, ".be");
+  if (clean.endsWith("-de")) clean = clean.replace(/-de$/, ".de");
+  if (clean.endsWith("-fr")) clean = clean.replace(/-fr$/, ".fr");
+  if (clean.endsWith("-uk")) clean = clean.replace(/-uk$/, ".uk");
+  if (clean.endsWith("-ca")) clean = clean.replace(/-ca$/, ".ca");
   if (clean.endsWith("-tech")) clean = clean.replace(/-tech$/, ".tech");
   if (clean.endsWith("-store")) clean = clean.replace(/-store$/, ".store");
-  if (clean.endsWith("-be")) clean = clean.replace(/-be$/, ".be");
-  if (clean.endsWith("-co-uk")) clean = clean.replace(/-co-uk$/, ".co.uk");
+  if (clean.endsWith("-online")) clean = clean.replace(/-online$/, ".online");
+  if (clean.endsWith("-xyz")) clean = clean.replace(/-xyz$/, ".xyz");
+  if (clean.endsWith("-site")) clean = clean.replace(/-site$/, ".site");
+  if (clean.endsWith("-digital")) clean = clean.replace(/-digital$/, ".digital");
+  if (clean.endsWith("-agency")) clean = clean.replace(/-agency$/, ".agency");
+  
+  // Generic fallback for any hyphenated TLD (e.g. -sa, -in, -biz)
+  if (!clean.includes(".") && /-([a-z]{2,10})$/i.test(clean)) {
+    clean = clean.replace(/-([a-z]{2,10})$/i, ".$1");
+  }
 
   // Strip again in case of www remaining
   clean = clean.replace(/^www[\.\-\/]/, "");
@@ -436,7 +451,7 @@ export function isAuthorMatch(
 export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Place[] = []): Place {
   const existing = existingPlaces.find((p) => isPlaceReviewMatch(video, p));
   const domain = extractCleanDomain(video.placeWebsite || video.placeName || video.placeId);
-  const cleanId = video.placeId || (domain ? domain.replace(/[^a-zA-Z0-9]/g, "-") : `place-${Date.now()}`);
+  const cleanId = domain || (video.placeId ? extractCleanDomain(video.placeId) : `place-${Date.now()}`);
   const reviewBanner =
     (video as any).placeBannerUrl ||
     (video as any).bannerUrl ||

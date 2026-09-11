@@ -1097,8 +1097,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     
     try {
       const cleanDomain = domain.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").toLowerCase();
-      const placeId = cleanDomain.replace(/[^a-zA-Z0-9]/g, "-");
-      let foundPlace = places.find(p => p.id === placeId || p.brandDomain === cleanDomain);
+      const placeId = cleanDomain;
+      let foundPlace = places.find(p => p.id === placeId || p.brandDomain === cleanDomain || p.id === cleanDomain.replace(/[^a-zA-Z0-9]/g, "-"));
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);

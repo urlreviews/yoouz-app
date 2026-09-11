@@ -109,7 +109,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const instantName = foundPlace?.name || formatBusinessName(domain) || domain;
 
       const instantPlace: Place = foundPlace || {
-        id: domain.replace(/[^a-zA-Z0-9]/g, "-"),
+        id: domain,
         name: instantName,
         category: "Website",
         categoryType: "all",
@@ -173,7 +173,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                }
              } else {
                const newPlace: Place = {
-                 id: (data.domain || domain || "website").replace(/[^a-zA-Z0-9]/g, "-"),
+                 id: (data.domain || domain || "website").toLowerCase(),
                  name: data.title || data.domain || instantName,
                  category: "Website",
                  categoryType: "all",
