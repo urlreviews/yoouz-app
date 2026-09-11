@@ -90,12 +90,12 @@ export function getCleanDomainUrl(item?: string | { brandDomain?: string; websit
 }
 
 /**
- * Gets a clean URL slug for a place (e.g. "tajhotels-com", "mastercard-com", "apple-com")
- * Guarantees no "www-" prefixes or URL protocol baggage.
+ * Gets a clean URL slug for a place (e.g. "digitalpark.ae", "legal500.com", "yoouz.com")
+ * Guarantees no "www." prefixes or URL protocol baggage while keeping authentic domain dots.
  */
 export function getPlaceSlug(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string } | null | undefined): string {
   const domain = getDisplayUrlAsDomain(placeSource);
-  return domain.toLowerCase().replace(/^www[\.\-]/, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return domain.toLowerCase().replace(/^www\./, "").replace(/[^a-z0-9\._-]/g, "").trim();
 }
 
 export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string } | null | undefined): string {

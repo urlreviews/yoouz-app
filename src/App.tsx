@@ -2141,6 +2141,28 @@ export function App() {
     return found;
   }, [places, selectedPlaceIdForDrawer, videos]);
 
+  // When selectedPlaceIdForDrawer is active, dynamically fetch full rich metadata from database if not present or missing banner/description
+  useEffect(() => {
+    if (!selectedPlaceIdForDrawer) return;
+    const cleanId = selectedPlaceIdForDrawer.trim();
+    if (!cleanId) return;
+
+    fetch(`/api/nosql/places/${encodeURIComponent(cleanId)}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(fetchedPlace => {
+        if (fetchedPlace && fetchedPlace.id) {
+          setPlaces(prev => {
+            const exists = prev.some(p => p.id === fetchedPlace.id);
+            if (exists) {
+              return prev.map(p => p.id === fetchedPlace.id ? { ...p, ...fetchedPlace } : p);
+            }
+            return [fetchedPlace, ...prev];
+          });
+        }
+      })
+      .catch(() => {});
+  }, [selectedPlaceIdForDrawer]);
+
   // Fullscreen Feed Context for TikTok-style scroll through specific Creator or Business videos
   const [fullscreenFeedContext, setFullscreenFeedContext] = useState<{
     type: "creator" | "place" | "profile";
@@ -4215,6 +4237,10 @@ export function App() {
             handleCloseDrawers();
           }}
           onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
+          onOpenPlace={(placeId) => {
+            setSelectedAuthorForDrawer(null);
+            setSelectedPlaceIdForDrawer(placeId);
+          }}
         />
        ) : (activeSection === "business" || activeSection === "admin") ? null : (
         <CopoSidebar

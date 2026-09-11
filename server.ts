@@ -4555,6 +4555,69 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
       if (resolved) return res.json(resolved);
     }
 
+    // 6. Try synthesizing/enriching place if collection is places and id is domain-like
+    if (colName === 'places') {
+      const rawSlug = id.toLowerCase().trim();
+      let derivedDomain = rawSlug
+        .replace(/^place-custom-/, '')
+        .replace(/^www\./, '')
+        .replace(/^www-/, '');
+
+      if (!derivedDomain.includes('.') && derivedDomain.includes('-')) {
+        const parts = derivedDomain.split('-');
+        if (parts.length >= 2) {
+          derivedDomain = `${parts.slice(0, -1).join('-')}.${parts[parts.length - 1]}`;
+        }
+      }
+
+      if (derivedDomain.includes('.')) {
+        const cleanDomain = derivedDomain.replace(/^www\./, '');
+        const autoPlaceId = cleanDomain;
+        const logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+        const banner = `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80`;
+        const capitalizedTitle = cleanDomain.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+        const autoPlaceDoc = {
+          id: autoPlaceId,
+          name: capitalizedTitle,
+          category: "Website / Business",
+          categoryType: "all",
+          address: cleanDomain,
+          city: "Online",
+          rating: 5,
+          totalReviews: 0,
+          ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: logo,
+          logoUrl: logo,
+          bannerUrl: banner,
+          ogImage: banner,
+          photos: [banner],
+          website: `https://${cleanDomain}`,
+          description: `Official profile and customer video reviews for ${capitalizedTitle}.`,
+          brandDomain: cleanDomain
+        };
+
+        try {
+          if (bunnyDb) {
+            await bunnyDb.execute({
+              sql: `INSERT OR IGNORE INTO places (id, name, address, category, city, logoUrl, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+              args: [autoPlaceId, capitalizedTitle, cleanDomain, "Website / Business", "Online", logo, JSON.stringify(autoPlaceDoc)]
+            });
+            // Also store hyphenated alias for backwards compatibility
+            const hyphenId = cleanDomain.replace(/[^a-z0-9]/g, '-');
+            if (hyphenId !== autoPlaceId) {
+              await bunnyDb.execute({
+                sql: `INSERT OR IGNORE INTO places (id, name, address, category, city, logoUrl, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                args: [hyphenId, capitalizedTitle, cleanDomain, "Website / Business", "Online", logo, JSON.stringify(autoPlaceDoc)]
+              });
+            }
+          }
+        } catch (e) {}
+
+        return res.json(autoPlaceDoc);
+      }
+    }
+
     res.status(404).json({ error: 'Not found' });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -5649,6 +5712,18 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
     const KNOWN_PREVIOUS_SEARCHES = [
       {
+        domain: "yoouz.com",
+        title: "Yoouz",
+        description: "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.",
+        banner: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"
+      },
+      {
+        domain: "legal500.com",
+        title: "The Legal 500",
+        description: "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.",
+        banner: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"
+      },
+      {
         domain: "reddit.com",
         title: "Reddit",
         description: "Reddit is a network of communities where people can dive into their interests, hobbies and passions.",
@@ -5847,6 +5922,317 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       console.log(`✅ [BunnyDB] Successfully synchronized all previous search metadata into Bunny Cloud Database!`);
     } catch (err: any) {
       console.warn("Notice seeding searches to BunnyDB:", err?.message || err);
+    }
+  }
+
+  // ── Database Migration & Place Metadata Canonicalizer ──
+  async function syncAndMigrateBusinessPlaces() {
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return;
+
+    try {
+      console.log(`🚀 [Migration] Checking & migrating place records and video review links in BunnyDB...`);
+
+      // 1. Ensure Yoouz place exists with canonical ID 'yoouz.com' and rich metadata
+      const yoouzDoc = {
+        id: "yoouz.com",
+        name: "Yoouz",
+        category: "Video Reviews Platform",
+        categoryType: "all",
+        address: "yoouz.com",
+        city: "Worldwide",
+        country: "Global",
+        lat: 0,
+        lng: 0,
+        rating: 5,
+        totalReviews: 1,
+        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: "/icon.png",
+        logoUrl: "/icon.png",
+        bannerUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+        ogImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+        photos: ["https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"],
+        openingHours: "Available 24/7",
+        isOpen: true,
+        phone: "",
+        website: "https://www.yoouz.com",
+        priceRange: "Free",
+        plusCode: "",
+        description: "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.",
+        popularKeywords: [{ tag: "Authentic", count: 1 }, { tag: "Video Reviews", count: 1 }],
+        amenities: ["Verified Merchant", "Live Camera Only", "Instant Sync"],
+        topDishes: [],
+        brandDomain: "yoouz.com",
+        isClaimed: true,
+        isVerified: true
+      };
+      await bunnyDb.execute({
+        sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+        args: ["yoouz.com", "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon.png", JSON.stringify(yoouzDoc),
+               "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon.png", JSON.stringify(yoouzDoc)]
+      }).catch(() => {});
+      // Hyphenated alias for backwards compatibility
+      await bunnyDb.execute({
+        sql: `INSERT OR IGNORE INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        args: ["yoouz-com", "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon.png", JSON.stringify(yoouzDoc)]
+      }).catch(() => {});
+
+      // 2. Ensure Legal 500 place exists with canonical ID 'legal500.com' and rich metadata
+      const legal500Logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://legal500.com&size=256`;
+      const legal500Banner = `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80`;
+      const legal500Doc = {
+        id: "legal500.com",
+        name: "The Legal 500",
+        category: "Legal Directory & Law Firm Rankings",
+        categoryType: "all",
+        address: "legal500.com",
+        city: "London / Global",
+        country: "UK",
+        lat: 51.5074,
+        lng: -0.1278,
+        rating: 5,
+        totalReviews: 1,
+        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: legal500Logo,
+        logoUrl: legal500Logo,
+        bannerUrl: legal500Banner,
+        ogImage: legal500Banner,
+        photos: [legal500Banner],
+        openingHours: "Available 24/7",
+        isOpen: true,
+        phone: "",
+        website: "https://www.legal500.com",
+        priceRange: "$$$",
+        plusCode: "",
+        description: "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.",
+        popularKeywords: [{ tag: "Legal", count: 1 }, { tag: "Law Firms", count: 1 }],
+        amenities: ["Verified Directory", "Global Rankings"],
+        topDishes: [],
+        brandDomain: "legal500.com",
+        isClaimed: true,
+        isVerified: true
+      };
+      await bunnyDb.execute({
+        sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+        args: ["legal500.com", "The Legal 500", "legal500.com", "Legal Directory & Law Firm Rankings", "London / Global", "UK", 51.5074, -0.1278, legal500Logo, JSON.stringify(legal500Doc),
+               "The Legal 500", "legal500.com", "Legal Directory & Law Firm Rankings", "London / Global", "UK", 51.5074, -0.1278, legal500Logo, JSON.stringify(legal500Doc)]
+      }).catch(() => {});
+      // Hyphenated alias
+      await bunnyDb.execute({
+        sql: `INSERT OR IGNORE INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        args: ["legal500-com", "The Legal 500", "legal500.com", "Legal Directory & Law Firm Rankings", "London / Global", "UK", 51.5074, -0.1278, legal500Logo, JSON.stringify(legal500Doc)]
+      }).catch(() => {});
+
+      // 3. Ensure Digital Park place exists with canonical ID 'digitalpark.ae'
+      const digitalParkLogo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://digitalpark.ae&size=256`;
+      const digitalParkBanner = `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80`;
+      const digitalParkDoc = {
+        id: "digitalpark.ae",
+        name: "Digital Park",
+        category: "Smart Community & Technology Park",
+        categoryType: "all",
+        address: "digitalpark.ae",
+        city: "Dubai",
+        country: "United Arab Emirates",
+        lat: 25.1235,
+        lng: 55.3813,
+        rating: 5,
+        totalReviews: 1,
+        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: digitalParkLogo,
+        logoUrl: digitalParkLogo,
+        bannerUrl: digitalParkBanner,
+        ogImage: digitalParkBanner,
+        photos: [digitalParkBanner],
+        openingHours: "Mon-Sat: 8:00 AM - 8:00 PM",
+        isOpen: true,
+        phone: "+971 4 501 5555",
+        website: "https://digitalpark.ae",
+        priceRange: "$$$",
+        plusCode: "",
+        description: "Digital Park is Dubai Silicon Oasis's premier integrated smart community and technology business park.",
+        popularKeywords: [{ tag: "Technology", count: 1 }, { tag: "Dubai", count: 1 }],
+        amenities: ["Smart Offices", "Commercial Center", "High Speed Fiber"],
+        topDishes: [],
+        brandDomain: "digitalpark.ae",
+        isClaimed: true,
+        isVerified: true
+      };
+      await bunnyDb.execute({
+        sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+        args: ["digitalpark.ae", "Digital Park", "digitalpark.ae", "Smart Community & Technology Park", "Dubai", "United Arab Emirates", 25.1235, 55.3813, digitalParkLogo, JSON.stringify(digitalParkDoc),
+               "Digital Park", "digitalpark.ae", "Smart Community & Technology Park", "Dubai", "United Arab Emirates", 25.1235, 55.3813, digitalParkLogo, JSON.stringify(digitalParkDoc)]
+      }).catch(() => {});
+      // Hyphenated alias
+      await bunnyDb.execute({
+        sql: `INSERT OR IGNORE INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        args: ["digitalpark-ae", "Digital Park", "digitalpark.ae", "Smart Community & Technology Park", "Dubai", "United Arab Emirates", 25.1235, 55.3813, digitalParkLogo, JSON.stringify(digitalParkDoc)]
+      }).catch(() => {});
+
+      // 4. Automatically convert and ensure ALL existing database places have canonical dot domain IDs
+      const allPlaceRows = await bunnyDb.execute({
+        sql: `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, data FROM places`
+      });
+
+      if (allPlaceRows.rows && allPlaceRows.rows.length > 0) {
+        for (const pRow of allPlaceRows.rows as any[]) {
+          const rawId = String(pRow.id || '');
+          let dotId = rawId.toLowerCase().trim()
+            .replace(/^place-custom-/, '')
+            .replace(/^www-/, '')
+            .replace(/^www\./, '');
+
+          dotId = dotId
+            .replace(/-co-uk$/, '.co.uk')
+            .replace(/-com$/, '.com')
+            .replace(/-org$/, '.org')
+            .replace(/-net$/, '.net')
+            .replace(/-io$/, '.io')
+            .replace(/-ai$/, '.ai')
+            .replace(/-ae$/, '.ae')
+            .replace(/-be$/, '.be')
+            .replace(/-de$/, '.de')
+            .replace(/-fr$/, '.fr')
+            .replace(/-nl$/, '.nl')
+            .replace(/-store$/, '.store')
+            .replace(/-online$/, '.online')
+            .replace(/-uk$/, '.uk')
+            .replace(/-us$/, '.us');
+
+          if (!dotId.includes('.') && dotId.includes('-')) {
+            const parts = dotId.split('-');
+            if (parts.length >= 2) {
+              dotId = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
+            }
+          }
+
+          if (dotId.includes('.') && dotId !== rawId) {
+            let parsedData: any = {};
+            try {
+              parsedData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {});
+            } catch (e) {}
+            parsedData.id = dotId;
+            if (parsedData.address === rawId) parsedData.address = dotId;
+
+            await bunnyDb.execute({
+              sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+              args: [
+                dotId, pRow.name, dotId, pRow.category, pRow.city, pRow.country, pRow.latitude, pRow.longitude, pRow.logoUrl, JSON.stringify(parsedData),
+                pRow.name, dotId, pRow.category, pRow.city, pRow.country, pRow.latitude, pRow.longitude, pRow.logoUrl, JSON.stringify(parsedData)
+              ]
+            }).catch(() => {});
+          }
+        }
+      }
+
+      // 5. Migrate videoReviews table to use canonical placeId slugs and clean names
+      const revRows = await bunnyDb.execute({
+        sql: `SELECT id, placeId, placeName, data FROM videoReviews`
+      });
+
+      if (revRows.rows && revRows.rows.length > 0) {
+        for (const row of revRows.rows as any[]) {
+          let updated = false;
+          let newPlaceId = String(row.placeId || "");
+          let newPlaceName = String(row.placeName || "");
+          let parsedData: any = {};
+          try {
+            parsedData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {});
+          } catch (e) {}
+
+          // Case A: Migration for Yoouz reviews
+          if (newPlaceId === "yoouz" || newPlaceId === "@yoouz" || newPlaceId === "place-custom-yoouz-com" || newPlaceId === "yoouz-com" || newPlaceName.toLowerCase() === "yoouz" || (row.id && String(row.id).includes("yoouz"))) {
+            if (newPlaceId !== "yoouz.com" || newPlaceName !== "Yoouz") {
+              newPlaceId = "yoouz.com";
+              newPlaceName = "Yoouz";
+              parsedData.placeId = "yoouz.com";
+              parsedData.placeName = "Yoouz";
+              parsedData.placeWebsite = "https://www.yoouz.com";
+              parsedData.placeLogoUrl = "/icon.png";
+              parsedData.placeBannerUrl = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80";
+              updated = true;
+            }
+          }
+
+          // Case B: Migration for Legal 500 reviews
+          if (newPlaceId.includes("legal500") || newPlaceName.toLowerCase().includes("legal 500") || newPlaceName.toLowerCase().includes("legal500")) {
+            if (newPlaceId !== "legal500.com" || newPlaceName !== "The Legal 500" || newPlaceName.includes("MenuClose")) {
+              newPlaceId = "legal500.com";
+              newPlaceName = "The Legal 500";
+              parsedData.placeId = "legal500.com";
+              parsedData.placeName = "The Legal 500";
+              parsedData.placeWebsite = "https://www.legal500.com";
+              parsedData.placeLogoUrl = legal500Logo;
+              parsedData.placeBannerUrl = legal500Banner;
+              updated = true;
+            }
+          }
+
+          // Case C: Migration for Digital Park reviews
+          if (newPlaceId.includes("digitalpark") || newPlaceName.toLowerCase().includes("digital park") || newPlaceName.toLowerCase().includes("digitalpark")) {
+            if (newPlaceId !== "digitalpark.ae" || newPlaceName !== "Digital Park") {
+              newPlaceId = "digitalpark.ae";
+              newPlaceName = "Digital Park";
+              parsedData.placeId = "digitalpark.ae";
+              parsedData.placeName = "Digital Park";
+              parsedData.placeWebsite = "https://digitalpark.ae";
+              parsedData.placeLogoUrl = digitalParkLogo;
+              parsedData.placeBannerUrl = digitalParkBanner;
+              updated = true;
+            }
+          }
+
+          // Case D: Convert any domain-like placeId with hyphen to dot
+          if (newPlaceId.includes("-com") || newPlaceId.includes("-ae") || newPlaceId.includes("-net") || newPlaceId.includes("-org") || newPlaceId.includes("-io") || newPlaceId.includes("-be")) {
+            const converted = newPlaceId
+              .replace(/-com$/, '.com')
+              .replace(/-ae$/, '.ae')
+              .replace(/-net$/, '.net')
+              .replace(/-org$/, '.org')
+              .replace(/-io$/, '.io')
+              .replace(/-be$/, '.be')
+              .replace(/-co-uk$/, '.co.uk');
+            if (converted !== newPlaceId) {
+              newPlaceId = converted;
+              parsedData.placeId = converted;
+              updated = true;
+            }
+          }
+
+          // Case E: Clean up messy placeName scrapes
+          if (newPlaceName.includes("MenuClose") || newPlaceName.includes("MoreMoreMore") || newPlaceName.length > 80) {
+            const domain = extractCleanDomain(parsedData.placeWebsite || parsedData.brandDomain || newPlaceId);
+            if (domain && domain.includes(".")) {
+              const cap = domain.split(".")[0].replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+              newPlaceName = cap;
+              parsedData.placeName = cap;
+              updated = true;
+            }
+          }
+
+          if (updated) {
+            await bunnyDb.execute({
+              sql: `UPDATE videoReviews SET placeId = ?, placeName = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [newPlaceId, newPlaceName, JSON.stringify(parsedData), String(row.id)]
+            }).catch(() => {});
+          }
+        }
+      }
+
+      console.log(`✅ [Migration] Completed business place canonicalization & video review sync!`);
+    } catch (err: any) {
+      console.warn("Migration warning:", err?.message || err);
     }
   }
 
@@ -9096,7 +9482,8 @@ app.post("/api/videos/save-review", async (req, res) => {
       if (!cleanPlaceName || cleanPlaceName === 'Your Business' || cleanPlaceName === 'Your Business Listing' || cleanPlaceName === 'Verified Business') {
         cleanPlaceName = derivedBrand;
       }
-      const cleanPlaceId = (placeId && placeId !== 'place-custom') ? placeId : (rawDomain ? `place-custom-${rawDomain.replace(/[^a-z0-9]/g, '-')}` : 'place-custom');
+      const canonicalDomainSlug = rawDomain ? rawDomain.toLowerCase().replace(/^www\./, '') : 'yoouz.com';
+      const cleanPlaceId = (placeId && placeId !== 'place-custom' && !placeId.startsWith('place-custom-')) ? placeId : canonicalDomainSlug;
       const cleanWebsite = website || (rawDomain ? `https://${rawDomain}` : '');
 
       // Generate 6-digit numeric OTP code and UUID token
@@ -9263,14 +9650,14 @@ app.post("/api/videos/save-review", async (req, res) => {
         matchedPlaceName = derivedBrand;
       }
 
-      if (matchedPlaceId === 'place-custom' && rawDomain) {
-        matchedPlaceId = `place-custom-${rawDomain.replace(/[^a-z0-9]/g, '-')}`;
-      }
-
       const isYoouz = rawDomain === 'yoouz.com' || rawDomain === 'www.yoouz.com' || rawDomain.includes('yoouz');
       if (isYoouz) {
         matchedPlaceName = 'Yoouz';
-        matchedPlaceId = 'place-custom-yoouz-com';
+        matchedPlaceId = 'yoouz.com';
+      } else if (rawDomain) {
+        matchedPlaceId = rawDomain.toLowerCase().replace(/^www\./, '');
+      } else if (!matchedPlaceId || matchedPlaceId === 'place-custom') {
+        matchedPlaceId = 'yoouz.com';
       }
 
       let existingPlaceLogo = isYoouz ? 'https://www.yoouz.com/icon-512.png' : (rawDomain && KNOWN_BRAND_LOGOS[rawDomain] ? KNOWN_BRAND_LOGOS[rawDomain] : '');
@@ -15306,6 +15693,7 @@ function injectOpenGraphTags(html: string, meta: any) {
   await syncInitialVideoInteractionsToBunnyDb().catch(() => {});
   await syncAndWarmFeedFromBunnyDb().catch(() => {});
   await seedKnownSearchesToBunnyDb().catch(() => {});
+  await syncAndMigrateBusinessPlaces().catch(() => {});
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://localhost:${PORT}`);

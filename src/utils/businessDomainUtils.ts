@@ -109,7 +109,7 @@ export function derivePlaceFromEmailOrDomain(
   const isYoouz = cleanDomain === 'yoouz.com' || cleanDomain === 'www.yoouz.com' || cleanDomain.includes('yoouz');
   const businessName = isYoouz ? 'Yoouz' : (cleanDomain ? formatBusinessNameFromDomain(cleanDomain) : 'Verified Business');
   const logoUrl = isYoouz ? 'https://www.yoouz.com/icon-512.png' : getDomainLogoUrl(cleanDomain);
-  const placeId = cleanDomain ? `place-custom-${cleanDomain.replace(/[^a-z0-9]/g, '-')}` : 'place-custom';
+  const placeId = cleanDomain ? cleanDomain : 'place-custom';
 
   return {
     id: placeId,

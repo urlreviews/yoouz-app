@@ -149,6 +149,27 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <rect width="100" height="100" rx="20" fill="#cc0000"/>
       <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
     </svg>`),
+  "yoouz.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#09090b"/>
+      <rect x="5" y="5" width="90" height="90" rx="18" fill="none" stroke="#27272a" stroke-width="2"/>
+      <circle cx="50" cy="50" r="34" fill="#000000" stroke="#ffffff" stroke-width="2"/>
+      <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">YOO</text>
+    </svg>`),
+  "www.yoouz.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#09090b"/>
+      <rect x="5" y="5" width="90" height="90" rx="18" fill="none" stroke="#27272a" stroke-width="2"/>
+      <circle cx="50" cy="50" r="34" fill="#000000" stroke="#ffffff" stroke-width="2"/>
+      <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">YOO</text>
+    </svg>`),
+  "yoouz": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#09090b"/>
+      <rect x="5" y="5" width="90" height="90" rx="18" fill="none" stroke="#27272a" stroke-width="2"/>
+      <circle cx="50" cy="50" r="34" fill="#000000" stroke="#ffffff" stroke-width="2"/>
+      <text x="50" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">YOO</text>
+    </svg>`),
   "legal500.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#09090b"/>
@@ -316,6 +337,10 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses
 export const KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "yoouz.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+  "www.yoouz.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+  "legal500.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+  "www.legal500.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
   "facebook.com": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80",
   "www.facebook.com": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80",
   "reddit.com": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
