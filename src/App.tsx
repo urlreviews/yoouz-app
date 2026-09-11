@@ -4189,6 +4189,8 @@ export function App() {
 
   // Handle Publishing New Video Review
   const handlePublishVideoReview = (newReview: VideoReview) => {
+    setIsCreateModalOpen(false);
+    setPreselectedPlaceForRecording(null);
     setVideos((prev) => {
       return [newReview, ...prev.filter((v) => v.id !== newReview.id)];
     });

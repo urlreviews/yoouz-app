@@ -212,7 +212,15 @@ function readReviewsIndex(): any[] {
       const raw = fs.readFileSync(reviewsIndexPath, "utf8");
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+        return parsed
+          .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)))
+          .map((r: any) => {
+            if (!r.createdAtMs && r.id && typeof r.id === "string" && r.id.startsWith("rev-")) {
+              const ts = parseInt(r.id.split("-")[1], 10);
+              if (!isNaN(ts) && ts > 0) r.createdAtMs = ts;
+            }
+            return r;
+          });
       }
     }
   } catch (e) {}
@@ -5057,6 +5065,9 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       }
 
       if (!filePath || !fs.existsSync(filePath)) {
+        if (base && typeof base === "string" && base.startsWith("rev-")) {
+          return res.redirect(302, `https://rev1.b-cdn.net/videos/${base}.mp4`);
+        }
         // Fallback to high-performance default video asset immediately (0ms wait)
         const fallbackCandidates = [
           path.join(process.cwd(), "public", "default-review.mp4"),
@@ -5957,7 +5968,11 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           }
         });
         const merged = Array.from(map.values());
-        merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+        merged.sort((a, b) => {
+          const aTime = a.createdAtMs || (a.id && typeof a.id === "string" && a.id.startsWith("rev-") ? parseInt(a.id.split("-")[1]) : 0) || 0;
+          const bTime = b.createdAtMs || (b.id && typeof b.id === "string" && b.id.startsWith("rev-") ? parseInt(b.id.split("-")[1]) : 0) || 0;
+          return bTime - aTime;
+        });
         return res.json({ success: true, videos: merged, deletedIds });
       }
 
@@ -6091,7 +6106,11 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
               }
             });
             const mergedCached = Array.from(cachedMap.values());
-            mergedCached.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+            mergedCached.sort((a, b) => {
+              const aTime = a.createdAtMs || (a.id && typeof a.id === "string" && a.id.startsWith("rev-") ? parseInt(a.id.split("-")[1]) : 0) || 0;
+              const bTime = b.createdAtMs || (b.id && typeof b.id === "string" && b.id.startsWith("rev-") ? parseInt(b.id.split("-")[1]) : 0) || 0;
+              return bTime - aTime;
+            });
             return res.json({ success: true, videos: mergedCached, deletedIds });
           }
         }

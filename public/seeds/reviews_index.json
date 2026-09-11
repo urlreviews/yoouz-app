@@ -55,7 +55,8 @@
     "likes": 1,
     "bookmarksCount": 1,
     "bookmarks": 1,
-    "views": 1
+    "views": 1,
+    "createdAtMs": 1788290824170
   },
   {
     "id": "rev-1788279180166-rh08t",
@@ -296,7 +297,8 @@
     "bookmarks": 0,
     "views": 1,
     "comments": [],
-    "commentsCount": 0
+    "commentsCount": 0,
+    "createdAtMs": 1788261417746
   },
   {
     "shares": 0,
@@ -328,7 +330,8 @@
     "bookmarks": 0,
     "views": 1,
     "comments": [],
-    "commentsCount": 0
+    "commentsCount": 0,
+    "createdAtMs": 1788258521064
   },
   {
     "id": "rev-1787774080951-vuu2k",

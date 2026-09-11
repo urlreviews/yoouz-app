@@ -1062,9 +1062,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       }
     } catch (e) {}
 
-    onPublishVideoReview(newReview);
     setIsPublishing(false);
     onClose();
+    onPublishVideoReview(newReview);
   };
 
   const filteredPlaces = places.filter((p) =>

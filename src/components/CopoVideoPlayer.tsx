@@ -217,6 +217,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
         // Failover error listener: automatically cascade to fallback streams if primary CDN URL encounters any decode or network issue
         vid.addEventListener("error", () => {
+          if (!vid.error || vid.error.code === 1) return; // Ignore user/browser aborted requests
           if (feedVideoRef.current === vid) {
             const active = activeVideoRef.current;
             if (active) {
@@ -354,13 +355,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     };
 
-    // Load active source if not matching and it is a new video or empty
+    // Load active source if not matching
     const activeSrc = resolvePlayableVideoSource(activeVideo);
     activeVid.preload = "auto";
-    if (isNewVideo || !activeVid.src) {
-      if (!isSameSrc(activeVid.src, activeSrc)) {
-        activeVid.src = activeSrc;
-      }
+    if (!isSameSrc(activeVid.src, activeSrc)) {
+      activeVid.src = activeSrc;
     }
     const activePoster = resolveVideoPosterUrl(activeVideo);
     if (activeVid.poster !== activePoster) {
@@ -440,6 +439,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (initialAutoplayPaused) {
           isManuallyPausedRef.current = true;
           setIsManuallyPaused(true);
+        } else {
+          isManuallyPausedRef.current = false;
+          setIsManuallyPaused(false);
         }
         setIsPlaying(false);
         setIsBuffering(false);
