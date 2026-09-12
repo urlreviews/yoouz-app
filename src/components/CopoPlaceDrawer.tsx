@@ -125,6 +125,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
     setBannerError(false);
     setLogoError(false);
     setFetchedBannerUrl(null);
+    fetchedTargetUrlRef.current = null;
   }, [place?.id]);
 
   // Tab switching with scroll to top
@@ -289,24 +290,34 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return null;
   }, [place, rawPlaceVideos, allVideos]);
 
+  const fetchedTargetUrlRef = React.useRef<string | null>(null);
+
   // Background auto-enrichment: Fetch and sync rich metadata & business description from URL
   useEffect(() => {
     const targetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
+    
+    if (!targetUrl || fetchedTargetUrlRef.current === targetUrl) {
+      return;
+    }
+
     const isGenericDesc = !place.description ||
       place.description.includes("Verified video review destination") ||
       place.description.includes("Verified Yoouz business listing") ||
       place.description.includes("Verified Google Maps") ||
       place.description === "No description available.";
+
     const isGenericName = !place.name ||
       place.name === place.brandDomain ||
       place.name === drawerDomain ||
       place.name.toLowerCase().includes("hostinger") ||
       place.name.toLowerCase().includes("untitled") ||
       place.name.toLowerCase() === "website";
+
     const needsBanner = !reviewBannerUrl && !place.bannerUrl && !place.ogImage;
     const needsLogo = !place.logoUrl || place.logoUrl.startsWith("data:;") || place.logoUrl.includes("760X310");
 
     if (targetUrl && (isGenericDesc || isGenericName || needsBanner || needsLogo)) {
+      fetchedTargetUrlRef.current = targetUrl;
       let isMounted = true;
       fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
         .then((res) => (res.ok ? res.json() : null))
@@ -335,7 +346,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         isMounted = false;
       };
     }
-  }, [place.id, place.website, place.description, place.name, drawerDomain, reviewBannerUrl, onUpdatePlace]);
+  }, [place.id, place.website, place.description, place.name, drawerDomain, reviewBannerUrl, onUpdatePlace, place]);
 
   const effectiveBanner =
     fetchedBannerUrl ||
@@ -554,7 +565,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className="absolute inset-0 w-full h-full bg-zinc-900 md:bg-zinc-900 relative overflow-hidden flex items-center justify-center group">
+          <div className="absolute inset-0 w-full h-full bg-zinc-900 md:bg-zinc-900 relative overflow-hidden flex items-center justify-center group animate-in fade-in duration-700">
             {/* Blurred Background to fill the space without zooming the main image heavily */}
             <img
               src={allPhotos[0]}

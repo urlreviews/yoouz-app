@@ -5427,7 +5427,26 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const videoBookmarksCountMap = new Map<string, number>();
       const videoLikesCountMap = new Map<string, number>();
       const videoSharesCountMap = new Map<string, number>();
+      const placesDataMap = new Map<string, any>();
+      
       if (bunnyDb) {
+        try {
+          const pRows = await bunnyDb.execute("SELECT id, data FROM places");
+          if (pRows && pRows.rows) {
+            pRows.rows.forEach((row: any) => {
+              if (row.id) {
+                let parsed: any = {};
+                try {
+                  parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+                } catch(e){}
+                placesDataMap.set(String(row.id), {
+                  bannerUrl: parsed.bannerUrl || parsed.ogImage || "",
+                  logoUrl: parsed.logoUrl || parsed.avatarUrl || ""
+                });
+              }
+            });
+          }
+        } catch(pErr) {}
         try {
           const commentsRows = await bunnyDb.execute("SELECT videoId, data FROM comments ORDER BY createdAt ASC");
           if (commentsRows && commentsRows.rows) {
@@ -5486,6 +5505,19 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       }
 
       const merged = Array.from(map.values()).map((r: any) => {
+        // Overlay live place metadata onto the video review to prevent banner popping on the client
+        if (r.placeId && placesDataMap.has(String(r.placeId))) {
+          const livePlace = placesDataMap.get(String(r.placeId));
+          if (livePlace.bannerUrl && !livePlace.bannerUrl.startsWith("data:") && !livePlace.bannerUrl.startsWith("blob:")) {
+            r.placeBannerUrl = livePlace.bannerUrl;
+            r.bannerUrl = livePlace.bannerUrl;
+          }
+          if (livePlace.logoUrl && !livePlace.logoUrl.startsWith("data:") && !livePlace.logoUrl.startsWith("blob:")) {
+            r.placeLogoUrl = livePlace.logoUrl;
+            r.logoUrl = livePlace.logoUrl;
+          }
+        }
+        
         const enriched = enrichReviewPlaceAssets(r);
         const separateComments = videoCommentsMap.get(String(r.id)) || [];
         const existingComments = Array.isArray(enriched.comments) ? enriched.comments : [];
