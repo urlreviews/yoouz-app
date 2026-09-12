@@ -1037,14 +1037,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   }, [selectedPlaceId, currentPlace.name]);
 
   // Embed Customizer & Curation State
-  const [embedTheme, setEmbedTheme] = useState<'google_light' | 'minimal_dark' | 'card_compact'>('minimal_dark');
-  const [embedLayout, setEmbedLayout] = useState<'grid' | 'carousel' | 'badge'>('grid');
-  const [embedAccentColor, setEmbedAccentColor] = useState<string>('#ffffff');
   const [embedFormat, setEmbedFormat] = useState<'script' | 'iframe'>('script');
-  const [embedShowStars, setEmbedShowStars] = useState(true);
-  const [embedShowVerifiedBadge, setEmbedShowVerifiedBadge] = useState(true);
-  const [embedShowTrustHeader, setEmbedShowTrustHeader] = useState(true);
-  const [embedStarFilter, setEmbedStarFilter] = useState<'all' | '5' | '4plus' | '3plus' | 'pinned_only'>('all');
   const [pinnedVideoIds, setPinnedVideoIds] = useState<string[]>([]);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>([]);
   const [pinNotice, setPinNotice] = useState<string | null>(null);
@@ -2816,7 +2809,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     <span>Reviewer</span>
                                     {follower.rating && (
                                       <>
-                                        <span className="text-zinc-500">•</span>
+                                        <span className="text-zinc-400">•</span>
                                         <span className="flex items-center gap-0.5 text-zinc-200 font-semibold">
                                           <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                                           {follower.rating.toFixed(1)}
@@ -2942,265 +2935,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Embed Controls */}
-                    <div className="space-y-4">
-                      <div className="bg-zinc-950 rounded-2xl p-4 border border-zinc-800 space-y-4">
-                        {/* Widget Layout Style */}
-                        <div>
-                          <label className="text-xs font-bold text-zinc-200 block mb-2">Widget Layout</label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {[
-                              { id: 'grid', label: '3-Col Grid' },
-                              { id: 'carousel', label: 'Reel Carousel' },
-                              { id: 'badge', label: 'Corner Badge' },
-                            ].map(l => (
-                              <button
-                                key={l.id}
-                                onClick={() => setEmbedLayout(l.id as any)}
-                                className={`py-2 px-1 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer ${
-                                  embedLayout === l.id 
-                                    ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs font-bold' 
-                                    : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:text-white font-medium'
-                                }`}
-                              >
-                                {l.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Widget Theme Selector */}
-                        <div>
-                          <label className="text-xs font-bold text-zinc-200 block mb-2">Widget Theme</label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {[
-                              { id: 'minimal_dark', label: 'Dark Mode' },
-                              { id: 'card_compact', label: 'Compact' },
-                              { id: 'google_light', label: 'Monochrome' },
-                            ].map(t => (
-                              <button
-                                key={t.id}
-                                onClick={() => setEmbedTheme(t.id as any)}
-                                className={`py-2 px-1 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer ${
-                                  embedTheme === t.id 
-                                    ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs font-bold' 
-                                    : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:text-white font-medium'
-                                }`}
-                              >
-                                {t.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Brand Accent Color */}
-                        <div>
-                          <label className="text-xs font-bold text-zinc-200 block mb-2 flex items-center justify-between">
-                            <span>Widget Button Style</span>
-                            <span className="text-[10px] text-zinc-200 font-normal uppercase tracking-wider">Monochrome</span>
-                          </label>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {[
-                              { color: '#ffffff', name: 'Crisp White' },
-                              { color: '#d4d4d8', name: 'Light Zinc' },
-                              { color: '#71717a', name: 'Mid Gray' },
-                              { color: '#27272a', name: 'Dark Charcoal' },
-                              { color: '#09090b', name: 'Deep Black' },
-                            ].map(c => (
-                              <button
-                                key={c.color}
-                                onClick={() => setEmbedAccentColor(c.color)}
-                                className={`w-7 h-7 rounded-full border-2 transition-transform cursor-pointer shrink-0 ${
-                                  embedAccentColor.toLowerCase() === c.color ? 'scale-115 ring-2 ring-offset-2 ring-zinc-600 border-white' : 'border-zinc-700 hover:scale-105'
-                                }`}
-                                style={{ backgroundColor: c.color }}
-                                title={c.name}
-                              />
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Minimum Star Rating Filter */}
-                        <div className="pt-2 border-t border-zinc-800">
-                          <label className="text-xs font-bold text-zinc-200 block mb-2 flex items-center justify-between">
-                            <span>Show Reviews By Star Rating</span>
-                            <span className="text-[10px] text-zinc-200 font-normal">Auto-filter</span>
-                          </label>
-                          <select
-                            value={embedStarFilter}
-                            onChange={(e) => setEmbedStarFilter(e.target.value as any)}
-                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-200 focus:outline-hidden focus:ring-1 focus:ring-zinc-700 focus:border-zinc-700"
-                          >
-                            <option value="all">⭐ All Star Ratings (5★, 4★, 3★)</option>
-                            <option value="5">⭐⭐⭐⭐⭐ 5-Star Reviews Only</option>
-                            <option value="4plus">⭐⭐⭐⭐ 4+ Stars (4★ & 5★)</option>
-                            <option value="3plus">⭐⭐⭐ 3+ Stars (3★, 4★ & 5★)</option>
-                            <option value="pinned_only">📌 Curated / Pinned Reviews Only</option>
-                          </select>
-                        </div>
-
-                        {/* Brand & Badge Options */}
-                        <div className="space-y-2 pt-2 border-t border-zinc-800">
-                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-200 cursor-pointer">
-                            <span className="flex items-center gap-1.5">
-                              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                              Display Yoouz Brand Trust Header
-                            </span>
-                            <input
-                              type="checkbox"
-                              checked={embedShowTrustHeader}
-                              onChange={(e) => setEmbedShowTrustHeader(e.target.checked)}
-                              className="w-4 h-4 rounded-sm accent-white"
-                            />
-                          </label>
-
-                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-200 cursor-pointer">
-                            <span>Display Star Score Summary</span>
-                            <input
-                              type="checkbox"
-                              checked={embedShowStars}
-                              onChange={(e) => setEmbedShowStars(e.target.checked)}
-                              className="w-4 h-4 rounded-sm accent-white"
-                            />
-                          </label>
-
-                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-200 cursor-pointer">
-                            <span className="flex items-center gap-1.5">
-                              <BadgeCheck className="w-3.5 h-3.5 text-white" />
-                              Display Verified Business Badge
-                            </span>
-                            <input
-                              type="checkbox"
-                              checked={embedShowVerifiedBadge}
-                              onChange={(e) => setEmbedShowVerifiedBadge(e.target.checked)}
-                              className="w-4 h-4 rounded-sm accent-white"
-                            />
-                          </label>
-                        </div>
-
-                        {/* Quick Pinning & Curation Panel */}
-                        <div className="pt-2 border-t border-zinc-800 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-zinc-200 flex items-center gap-1">
-                              <Pin className="w-3.5 h-3.5 text-white" />
-                              Curate Pinned Reviews
-                            </span>
-                            <span className="text-[10px] text-zinc-200 font-bold bg-zinc-800 px-1.5 py-0.5 rounded-md border border-zinc-700">
-                              {pinnedVideoIds.length}/3 Pinned
-                            </span>
-                          </div>
-
-                          <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
-                            {placeVideos.map((v) => {
-                              const isPinned = pinnedVideoIds.includes(v.id);
-                              const isHidden = hiddenVideoIds.includes(v.id);
-                              const title = v.dishOrItem && v.dishOrItem !== selectedPlaceId 
-                                ? v.dishOrItem 
-                                : (v.author?.name && v.author.name !== selectedPlaceId ? `Review by ${v.author.name}` : 'Customer Review');
-
-                              return (
-                                <div 
-                                  key={v.id}
-                                  className={`p-2 rounded-xl text-xs flex items-center justify-between gap-2 border ${
-                                    isPinned 
-                                      ? 'bg-zinc-800 border-zinc-600 text-white font-bold' 
-                                      : isHidden 
-                                      ? 'bg-zinc-900 border-zinc-800 text-zinc-200 opacity-60' 
-                                      : 'bg-zinc-950 border-zinc-800 text-zinc-200'
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-white font-bold text-[11px] shrink-0">
-                                      {v.rating || 5}★
-                                    </span>
-                                    <span className="truncate text-[11px]">
-                                      {title}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={() => togglePinVideo(v.id)}
-                                      className={`p-1 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
-                                        isPinned
-                                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                          : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800'
-                                      }`}
-                                      title={isPinned ? 'Unpin video' : 'Pin video (Max 3)'}
-                                    >
-                                      📌 {isPinned ? 'Pinned' : 'Pin'}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleHideVideo(v.id)}
-                                      className={`p-1 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
-                                        isHidden
-                                          ? 'bg-zinc-800 text-zinc-200 border border-zinc-700'
-                                          : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200'
-                                      }`}
-                                      title={isHidden ? 'Unhide video' : 'Hide from widget'}
-                                    >
-                                      {isHidden ? '👁️' : '🙈'}
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Code Snippet Box */}
-                      <div className="bg-zinc-900 rounded-2xl p-4 text-white font-mono text-xs space-y-3 shadow-md border border-zinc-800">
-                        <div className="flex items-center justify-between text-zinc-200 text-[11px]">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setEmbedFormat('script')}
-                              className={`px-3 py-1 rounded-full text-xs font-sans font-bold cursor-pointer border transition-all ${
-                                embedFormat === 'script' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:text-white'
-                              }`}
-                            >
-                              JS Script Tag
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEmbedFormat('iframe')}
-                              className={`px-3 py-1 rounded-full text-xs font-sans font-bold cursor-pointer border transition-all ${
-                                embedFormat === 'iframe' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:text-white'
-                              }`}
-                            >
-                              iFrame Tag
-                            </button>
-                          </div>
-                          <button
-                            onClick={copyEmbedCode}
-                            className="flex items-center gap-1 text-white hover:text-zinc-200 transition-colors cursor-pointer font-sans font-bold"
-                          >
-                            {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-200" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span>{isCodeCopied ? 'Copied!' : 'Copy Code'}</span>
-                          </button>
-                        </div>
-
-                        <div className="overflow-x-auto text-[11px] text-zinc-200 py-1 leading-relaxed">
-                          {embedFormat === 'script' ? (
-                            <code>{`<div id="yoouz-widget"\n  data-place-id="${selectedPlaceId}"\n  data-theme="${embedTheme}"\n  data-layout="${embedLayout}"\n  data-accent="${embedAccentColor}"\n  data-star-filter="${embedStarFilter}"\n  data-show-stars="${embedShowStars}"\n  data-show-verified="${embedShowVerifiedBadge}"\n  data-show-trust-header="${embedShowTrustHeader}"${pinnedVideoIds.length > 0 ? `\n  data-pinned-ids="${pinnedVideoIds.join(',')}"` : ''}${hiddenVideoIds.length > 0 ? `\n  data-hidden-ids="${hiddenVideoIds.join(',')}"` : ''}>\n</div>\n<script src="https://cdn.yoouz.com/embed/v2.js" async defer></script>`}</code>
-                          ) : (
-                            <code>{`<iframe src="https://yoouz.com/embed/widget?placeId=${selectedPlaceId}&theme=${embedTheme}&layout=${embedLayout}&accent=${encodeURIComponent(embedAccentColor)}" \n  width="100%" height="480" frameborder="0" loading="lazy" allow="autoplay; encrypted-media">\n</iframe>`}</code>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
+                  <div className="flex flex-col gap-6">
                     {/* Live Website Preview Container */}
-                    <div className="lg:col-span-2 bg-zinc-950 rounded-3xl p-6 border border-zinc-800 flex flex-col justify-between">
+                    <div className="bg-zinc-950 rounded-3xl p-6 border border-zinc-800 flex flex-col justify-between">
                       <div>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                           <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
                             <Globe className="w-3.5 h-3.5 text-zinc-200" />
-                            Live Website Preview ({embedLayout.toUpperCase()} MODE)
+                            Live Website Preview (GRID MODE)
                           </span>
                           
                           <div className="flex items-center gap-2">
@@ -3237,173 +2979,69 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
 
                         {/* Rendered Widget Simulation Container (Desktop or Physical Smartphone Frame) */}
-                        <div className={embedDeviceMode === 'mobile' ? "max-w-[340px] mx-auto bg-white border-[8px] border-zinc-950 rounded-[44px] px-3.5 py-4 shadow-2xl relative my-2 overflow-hidden transition-all" : "widget-simulation-container p-8 rounded-3xl border border-zinc-800 bg-white shadow-xl transition-all"}>
+                        <div className={embedDeviceMode === 'mobile' ? "max-w-[340px] mx-auto bg-zinc-950 border-[8px] border-zinc-800 rounded-[44px] px-3.5 py-4 shadow-2xl relative my-2 overflow-hidden transition-all ring-1 ring-zinc-700/50" : "widget-simulation-container p-6 rounded-3xl border border-zinc-800 bg-zinc-900 text-white shadow-xl transition-all"}>
                           {embedDeviceMode === 'mobile' && (
-                            <div className="mb-3 px-2 flex items-center justify-between text-[11px] font-semibold text-zinc-800 select-none">
+                            <div className="mb-3 px-2 flex items-center justify-between text-[11px] font-semibold text-zinc-400 select-none">
                               <span>9:41</span>
                               {/* Dynamic Island Notch */}
-                              <div className="w-24 h-5 bg-black mx-auto rounded-full flex items-center justify-center gap-1.5 px-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-zinc-900"></div>
-                                <div className="w-2 h-2 rounded-full bg-zinc-800 animate-pulse"></div>
+                              <div className="w-24 h-5 bg-zinc-900 mx-auto rounded-full flex items-center justify-center gap-1.5 px-2 border border-zinc-800">
+                                <div className="w-2.5 h-2.5 rounded-full bg-zinc-950"></div>
+                                <div className="w-2 h-2 rounded-full bg-zinc-900 animate-pulse"></div>
                               </div>
-                              <div className="flex items-center gap-1 text-[10px] text-zinc-900">
+                              <div className="flex items-center gap-1 text-[10px]">
                                 <span>5G</span>
-                                <div className="w-4 h-2.5 border border-zinc-900 rounded-xs p-0.5 flex items-center">
-                                  <div className="w-full h-full bg-zinc-900 rounded-2xs"></div>
+                                <div className="w-4 h-2.5 border border-zinc-400 rounded-xs p-0.5 flex items-center">
+                                  <div className="w-full h-full bg-zinc-400 rounded-2xs"></div>
                                 </div>
                               </div>
                             </div>
                           )}
 
                           {/* Super Luxury Yoouz Brand Trust Header */}
-                          {embedShowTrustHeader && (
-                            <div className={`p-4 rounded-2xl mb-4 border border-zinc-100 bg-zinc-50 text-zinc-900 flex flex-col ${embedDeviceMode === 'mobile' ? 'gap-3' : 'sm:flex-row sm:items-center justify-between'} transition-all`}>
-                              <div className="flex items-center gap-3">
-                                {/* Official Yoouz Brand Icon Badge */}
-                                <div 
-                                  className="w-10 h-10 rounded-2xl text-zinc-950 bg-white flex items-center justify-center font-black text-base shadow-sm shrink-0 border border-white/40"
-                                >
-                                  ★
-                                </div>
-
-                                <div>
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="font-extrabold text-sm tracking-tight truncate max-w-[180px] text-zinc-950">{currentPlace.name}</span>
-                                    {embedShowVerifiedBadge && (
-                                      <span 
-                                        className="inline-flex items-center text-[10px] bg-zinc-950 text-white p-0.5 rounded-full"
-                                        title="Verified"
-                                      >
-                                        <BadgeCheck className="w-3 h-3 fill-current text-white" />
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap text-[11px]">
-                                    {embedShowStars && (
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-black text-zinc-950">4.9</span>
-                                        <div className="flex text-amber-400 items-center gap-0.5">
-                                          {Array.from({ length: 5 }).map((_, i) => (
-                                            <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    <span className="text-zinc-500">•</span>
-                                    <span className="text-zinc-700 text-[10px]">
-                                      {placeVideos.length} Reviews
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Write Review CTA Button */}
-                              <a
-                                href={`/#/record_review?placeId=${selectedPlaceId}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-2 py-1.5 rounded-lg text-zinc-950 bg-white hover:bg-zinc-100 text-[10px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 shrink-0 cursor-pointer border border-zinc-200"
+                          <div className={`p-4 rounded-2xl mb-4 border border-zinc-700/80 bg-zinc-800/90 text-white flex flex-col ${embedDeviceMode === 'mobile' ? 'gap-3' : 'sm:flex-row sm:items-center justify-between'} transition-all`}>
+                            <div className="flex items-center gap-3">
+                              {/* Official Yoouz Brand Icon Badge */}
+                              <div 
+                                className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-inner shrink-0"
                               >
-                                <Video className="w-3 h-3" />
-                                <span>Review</span>
-                              </a>
-                            </div>
-                          )}
-
-                          {/* Fallback Compact Header if Trust Header is disabled */}
-                          {!embedShowTrustHeader && (
-                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800">
-                              <div className="flex items-center gap-2">
-                                <div 
-                                  className="w-7 h-7 rounded-lg text-zinc-950 bg-white flex items-center justify-center font-bold text-xs"
-                                >
-                                  ★
+                                <span className="text-zinc-950 text-xl font-black">★</span>
+                              </div>
+                              
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-white tracking-tight">{currentPlace.name}</span>
+                                  <BadgeCheck className="w-4 h-4 text-white" />
                                 </div>
-                                <div>
-                                  <div className="text-sm font-black flex items-center gap-1 text-white">
-                                    {currentPlace.name}
-                                    {embedShowVerifiedBadge && <BadgeCheck className="w-3.5 h-3.5 text-white" />}
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <div className="flex items-center gap-0.5 text-amber-400">
+                                    <Star className="w-3.5 h-3.5 fill-current" />
                                   </div>
-                                  {embedShowStars && (
-                                    <div className="text-[11px] text-zinc-300 flex items-center gap-1 font-bold">
-                                      <span className="text-amber-400">★★★★★</span> <span>4.9 ({placeVideos.length})</span>
-                                    </div>
-                                  )}
+                                  <span className="text-[11px] font-bold text-white">4.9</span>
+                                  <span className="text-[11px] text-zinc-400">•</span>
+                                  <span className="text-[11px] text-zinc-300 font-medium">
+                                    {placeVideos.length} Reviews
+                                  </span>
                                 </div>
                               </div>
-                              <span className="text-[10px] text-zinc-400 font-mono">yoouz</span>
                             </div>
-                          )}
 
-                          {/* Video Simulation Display according to embedLayout */}
+                            {/* Write Review CTA Button */}
+                            <a
+                              href={`/#/record_review?placeId=${selectedPlaceId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-1.5 rounded-lg text-zinc-950 bg-white hover:bg-zinc-100 text-[10px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 shrink-0 cursor-pointer border border-zinc-200"
+                            >
+                              <Video className="w-3 h-3" />
+                              <span>Review</span>
+                            </a>
+                          </div>
+
+                          {/* Video Simulation Display (GRID MODE ONLY) */}
                           {displayableWidgetVideos.length === 0 ? (
                             <div className="py-12 text-center text-zinc-400 space-y-2">
                               <AlertCircle className="w-8 h-8 mx-auto text-zinc-500" />
-                              <p className="text-xs font-semibold text-zinc-300">No video reviews match the filter.</p>
-                              <p className="text-[11px] text-zinc-500">Try switching rating to "All Star Ratings".</p>
-                            </div>
-                          ) : embedLayout === 'badge' ? (
-                            /* CORNER FLOATING BADGE PREVIEW */
-                            <div className="relative bg-zinc-900 rounded-2xl p-6 border border-dashed border-zinc-700 flex flex-col items-center justify-center min-h-[180px]">
-                              <span className="text-[11px] text-zinc-400 font-semibold mb-2">[ Simulated Website Page ]</span>
-                              <div className="absolute bottom-3 right-3 bg-zinc-950 rounded-2xl border border-zinc-800 text-white p-2.5 shadow-xl flex items-center gap-2.5 animate-bounce cursor-pointer hover:scale-105 transition-transform" onClick={() => setActiveVideoModal(displayableWidgetVideos[0])}>
-                                <div className="w-10 h-10 rounded-xl overflow-hidden relative shrink-0">
-                                  <img src={displayableWidgetVideos[0].thumbnailUrl} alt="Review" className="w-full h-full object-cover" />
-                                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white">
-                                    <Play className="w-3 h-3 fill-current" />
-                                  </div>
-                                </div>
-                                <div className="min-w-0 pr-1">
-                                  <div className="text-[11px] font-bold text-white truncate">★ 4.9 Reviews</div>
-                                  <div className="text-[9px] text-zinc-400 truncate">Tap to watch</div>
-                                </div>
-                              </div>
-                            </div>
-                          ) : embedLayout === 'carousel' ? (
-                            /* HORIZONTAL REEL CAROUSEL PREVIEW */
-                            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none">
-                              {displayableWidgetVideos.map((v) => {
-                                const isPinned = pinnedVideoIds.includes(v.id);
-                                return (
-                                  <div 
-                                    key={v.id} 
-                                    onClick={() => setActiveVideoModal(v)}
-                                    className="w-36 shrink-0 relative rounded-2xl overflow-hidden aspect-9/14 bg-zinc-800 group shadow-xs cursor-pointer hover:scale-[1.02] transition-transform"
-                                    title="Click to play video reel"
-                                  >
-                                    <img
-                                      src={v.thumbnailUrl}
-                                      alt={v.dishOrItem || 'Review'}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                    
-                                    {isPinned && (
-                                      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-white text-zinc-950 text-[9px] font-black shadow-md flex items-center gap-0.5 z-10">
-                                        <Pin className="w-2.5 h-2.5 fill-current" /> Pinned
-                                      </div>
-                                    )}
-
-                                    <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-0.5 z-10">
-                                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                      <span>{v.rating || 5}</span>
-                                    </div>
-
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
-                                      <span className="text-[10px] font-bold leading-tight line-clamp-1">
-                                        {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
-                                      </span>
-                                    </div>
-
-                                    <div 
-                                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
-                                    >
-                                      <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                              <p className="text-xs font-semibold text-zinc-300">No video reviews pinned or found.</p>
                             </div>
                           ) : (
                             /* 3-COLUMN REEL GRID PREVIEW */
@@ -3461,6 +3099,47 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <div className="text-[11px] text-zinc-400 mt-4 text-center flex items-center justify-center gap-1.5">
                         <Sparkles className="w-3 h-3 text-zinc-400" />
                         <span>Tap any video thumbnail to test the immersive HD video review player.</span>
+                      </div>
+                    </div>
+
+                    {/* Code Snippet Box */}
+                    <div className="bg-zinc-900 rounded-2xl p-4 text-white font-mono text-xs space-y-3 shadow-md border border-zinc-800">
+                      <div className="flex items-center justify-between text-zinc-200 text-[11px]">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEmbedFormat('script')}
+                            className={`px-3 py-1 rounded-full text-xs font-sans font-bold cursor-pointer border transition-all ${
+                              embedFormat === 'script' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:text-white'
+                            }`}
+                          >
+                            JS Script Tag
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEmbedFormat('iframe')}
+                            className={`px-3 py-1 rounded-full text-xs font-sans font-bold cursor-pointer border transition-all ${
+                              embedFormat === 'iframe' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:text-white'
+                            }`}
+                          >
+                            iFrame Tag
+                          </button>
+                        </div>
+                        <button
+                          onClick={copyEmbedCode}
+                          className="flex items-center gap-1 text-white hover:text-zinc-200 transition-colors cursor-pointer font-sans font-bold"
+                        >
+                          {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-200" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{isCodeCopied ? 'Copied!' : 'Copy Code'}</span>
+                        </button>
+                      </div>
+
+                      <div className="overflow-x-auto text-[11px] text-zinc-200 py-1 leading-relaxed">
+                        {embedFormat === 'script' ? (
+                          <code>{`<div id="yoouz-widget"\n  data-place-id="${selectedPlaceId}"\n  data-theme="minimal_dark"\n  data-layout="grid"\n  data-accent="#ffffff"${pinnedVideoIds.length > 0 ? `\n  data-pinned-ids="${pinnedVideoIds.join(',')}"` : ''}${hiddenVideoIds.length > 0 ? `\n  data-hidden-ids="${hiddenVideoIds.join(',')}"` : ''}>\n</div>\n<script src="https://cdn.yoouz.com/embed/v2.js" async defer></script>`}</code>
+                        ) : (
+                          <code>{`<iframe src="https://yoouz.com/embed/widget?placeId=${selectedPlaceId}&theme=minimal_dark&layout=grid&accent=%23ffffff" \n  width="100%" height="480" frameBorder="0" loading="lazy" allow="autoplay; encrypted-media">\n</iframe>`}</code>
+                        )}
                       </div>
                     </div>
                   </div>
