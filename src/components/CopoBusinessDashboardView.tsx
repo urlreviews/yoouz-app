@@ -135,7 +135,7 @@ interface CopoBusinessDashboardViewProps {
   blockedUserIds?: string[];
   onBlockUser?: (userId: string, userName?: string) => void;
   onUnblockUser?: (userId: string) => void;
-  onOpenReport?: (reportData: { targetId: string; targetType: 'review' | 'user' | 'chat' | 'place'; targetName?: string; targetAvatar?: string }) => void;
+  onOpenReport?: (reportData: any) => void;
 }
 
 type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'billing';

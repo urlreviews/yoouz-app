@@ -1,5 +1,3 @@
-import { db, doc, setDoc, serverTimestamp } from "./firebase";
-
 export async function uploadVideoReview(
   blob: Blob,
   meta: any,
@@ -76,18 +74,6 @@ export async function uploadVideoReview(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(fullReview)
     }).catch(() => {});
-  } catch (e) {}
-
-  // 2. Persist to Firestore if available
-  try {
-    if (db) {
-      await setDoc(doc(db, "videoReviews", reviewId), {
-        ...fullReview,
-        createdAt: serverTimestamp()
-      }, { merge: true }).catch((err) => {
-        console.warn("Firestore upload review write notice:", err?.message || err);
-      });
-    }
   } catch (e) {}
 
   onProgress(100);
