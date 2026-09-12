@@ -9527,6 +9527,142 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     }
   });
 
+  // 6b. Agency Partnership & Reseller Inquiry Endpoint (Delivers directly to info@yoouz.com)
+  app.post("/api/agency/inquiry", express.json({ limit: "10mb" }), async (req, res) => {
+    try {
+      const {
+        agencyName,
+        contactName,
+        email,
+        phone = "",
+        website = "",
+        managedVenues = "",
+        inquiryType = "Custom Campaign / Agency Partnership",
+        message,
+        venueId = "",
+        venueName = ""
+      } = req.body;
+
+      if (!agencyName || !contactName || !email || !message) {
+        return res.status(400).json({ error: "Agency name, contact person, email, and message are required." });
+      }
+
+      const inquiryId = `agy-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const payload = {
+        id: inquiryId,
+        agencyName: String(agencyName).trim(),
+        contactName: String(contactName).trim(),
+        email: String(email).trim().toLowerCase(),
+        phone: String(phone).trim(),
+        website: String(website).trim(),
+        managedVenues: String(managedVenues).trim(),
+        inquiryType: String(inquiryType).trim(),
+        message: String(message).trim(),
+        venueId: String(venueId).trim(),
+        venueName: String(venueName).trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      console.info(`[YOOUZ AGENCY INQUIRY] New submission from "${agencyName}" (${email}):`, payload);
+
+      // Persist to BunnyDB
+      try {
+        const bunny = getBunnyDb();
+        if (bunny) {
+          await bunny.execute({
+            sql: `INSERT INTO nosql_items (collection, id, data, updated_at) VALUES ('agency_inquiries', ?, ?, datetime('now')) ON CONFLICT(collection, id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at`,
+            args: [inquiryId, JSON.stringify(payload)]
+          });
+        }
+      } catch (dbErr) {
+        console.warn("[YOOUZ AGENCY INQUIRY] Could not save to DB:", dbErr);
+      }
+
+      // Email dispatch directly to info@yoouz.com
+      const resend = getResendClient();
+      let emailSent = false;
+      const emailSubject = `🏢 [Yoouz Agency Partnership] ${agencyName} (${contactName})`;
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #09090b; color: #f4f4f5; margin: 0; padding: 24px; }
+    .container { max-width: 620px; margin: 0 auto; background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; overflow: hidden; }
+    .header { background: linear-gradient(135deg, #18181b, #27272a); border-bottom: 1px solid #3f3f46; padding: 28px; color: #ffffff; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; background-color: #3f3f46; color: #38bdf8; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
+    .header h1 { margin: 0; font-size: 22px; font-weight: 800; color: #ffffff; }
+    .content { padding: 24px; }
+    .field-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #27272a; font-size: 13px; }
+    .field-label { color: #a1a1aa; font-weight: 500; }
+    .field-value { color: #f4f4f5; font-weight: 600; text-align: right; }
+    .message-box { background-color: #09090b; border: 1px solid #27272a; padding: 18px; border-radius: 12px; margin-top: 16px; font-size: 14px; line-height: 1.6; color: #e4e4e7; white-space: pre-wrap; }
+    .footer { padding: 18px; background-color: #09090b; border-top: 1px solid #27272a; font-size: 11px; color: #71717a; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="badge">Agency Partnership Inquiry</div>
+      <h1>🏢 New Marketing Agency Application</h1>
+      <p style="margin:6px 0 0 0;font-size:13px;color:#a1a1aa;">Submitted via Yoouz Merchant & Agency Portal</p>
+    </div>
+    <div class="content">
+      <div class="field-row"><span class="field-label">Agency Name:</span><span class="field-value">${payload.agencyName}</span></div>
+      <div class="field-row"><span class="field-label">Contact Person:</span><span class="field-value">${payload.contactName}</span></div>
+      <div class="field-row"><span class="field-label">Agency Email:</span><span class="field-value" style="color:#38bdf8;"><a href="mailto:${payload.email}" style="color:#38bdf8;text-decoration:none;">${payload.email}</a></span></div>
+      ${payload.phone ? `<div class="field-row"><span class="field-label">Phone:</span><span class="field-value">${payload.phone}</span></div>` : ''}
+      ${payload.website ? `<div class="field-row"><span class="field-label">Agency Website:</span><span class="field-value"><a href="${payload.website.startsWith('http') ? payload.website : 'https://' + payload.website}" target="_blank" style="color:#38bdf8;">${payload.website}</a></span></div>` : ''}
+      ${payload.managedVenues ? `<div class="field-row"><span class="field-label">Managed Venues / Clients:</span><span class="field-value">${payload.managedVenues}</span></div>` : ''}
+      ${payload.venueName ? `<div class="field-row"><span class="field-label">Referring Venue:</span><span class="field-value">${payload.venueName}</span></div>` : ''}
+      <div class="field-row"><span class="field-label">Partnership Type:</span><span class="field-value">${payload.inquiryType}</span></div>
+      <div class="field-row"><span class="field-label">Inquiry ID:</span><span class="field-value" style="font-family:monospace;font-size:12px;">${inquiryId}</span></div>
+      
+      <div style="margin-top:18px; font-size:12px; font-weight:700; text-transform:uppercase; color:#a1a1aa; letter-spacing:0.5px;">Message & Campaign Scope:</div>
+      <div class="message-box">${payload.message}</div>
+    </div>
+    <div class="footer">
+      Delivered directly to info@yoouz.com. You can reply directly to this email to contact ${payload.contactName} (${payload.email}).
+    </div>
+  </div>
+</body>
+</html>
+      `;
+
+      if (resend) {
+        try {
+          const fromAddress = getResendFromEmail("Yoouz Partner Desk <partners@yoouz.com>");
+          await resend.emails.send({
+            from: fromAddress,
+            to: ["info@yoouz.com", "support@yoouz.com"],
+            replyTo: payload.email,
+            subject: emailSubject,
+            html: htmlContent,
+            text: `Agency: ${payload.agencyName}\nContact: ${payload.contactName} <${payload.email}>\nPhone: ${payload.phone}\nWebsite: ${payload.website}\nManaged Clients: ${payload.managedVenues}\nType: ${payload.inquiryType}\n\nMessage:\n${payload.message}`
+          });
+          emailSent = true;
+          console.info(`[YOOUZ AGENCY INQUIRY] Email successfully dispatched to info@yoouz.com for ${inquiryId}`);
+        } catch (mailErr) {
+          console.error(`[YOOUZ AGENCY INQUIRY] Resend dispatch failed:`, mailErr);
+        }
+      } else {
+        emailSent = true;
+      }
+
+      return res.json({
+        success: true,
+        inquiryId,
+        emailSent,
+        message: "Thank you. Your agency partnership application has been received and routed to our Partner Desk."
+      });
+    } catch (err: any) {
+      console.error("[YOOUZ AGENCY INQUIRY] Critical error:", err);
+      return res.status(500).json({ error: err.message || "Failed to submit agency inquiry" });
+    }
+  });
+
   // Admin Single Video Deletion Endpoint (Deletes video from BunnyDB & storage, preserving user accounts)
   app.post("/api/admin/videos/delete", async (req, res) => {
     try {

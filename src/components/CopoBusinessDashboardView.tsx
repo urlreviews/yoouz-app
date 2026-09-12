@@ -85,6 +85,7 @@ import {
 } from 'lucide-react';
 import { CopoBusinessPricingModal } from './CopoBusinessPricingModal';
 import { CopoAgencyUpgradeModal } from './CopoAgencyUpgradeModal';
+import { CopoAgencyInquiryModal } from './CopoAgencyInquiryModal';
 import { VERIFIED_PARTNER_AGENCIES, getAgencyById, PartnerAgency } from '../data/agencies';
 import { QRCodeCanvas } from 'qrcode.react';
 import { normalizeVideoUrl, releaseVideoHardwareDecoder } from '../utils/videoUtils';
@@ -1225,6 +1226,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showAgencyInquiryModal, setShowAgencyInquiryModal] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
 
@@ -1816,7 +1818,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
     { id: 'qr_invites' as BusinessTab, label: t('business.qrCode', 'QR Code'), icon: QrCode },
     { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
-    { id: 'billing' as BusinessTab, label: t('business.billing', 'Billing'), icon: CreditCard, isProBadge: currentPlan === 'pro' || currentPlan === 'premium' },
+    { id: 'billing' as BusinessTab, label: t('business.planAgencies', 'Plan & Agency'), icon: ShieldCheck },
   ];
 
   // If user hasn't signed in / claimed a business or is currently claiming
@@ -1909,7 +1911,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           {item.badge}
                         </span>
                       )}
-                      {item.isProBadge && (
+                      {(item as any).isProBadge && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-200 border border-zinc-700">
                           {t("business.active", "Active")}
                         </span>
@@ -2087,8 +2089,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
-                      <CreditCard className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.billing", "Billing")}</span>
+                      <ShieldCheck className="w-4 h-4 text-zinc-200" />
+                      <span>{t("business.planAgencies", "Plan & Agency")}</span>
                     </button>
                     <button 
                       onClick={() => {
@@ -3906,28 +3908,28 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
               </div>
             )}
-            {/* TAB 7: SUBSCRIPTION & CREEM.IO */}
+            {/* TAB 7: PLAN & AGENCY PARTNERSHIP (100% FREE FOR VENUES) */}
             {activeTab === 'billing' && (
-              <div className="space-y-6 animate-in fade-in duration-200 pb-16 max-w-xl mx-auto">
+              <div className="space-y-6 animate-in fade-in duration-200 pb-16 max-w-2xl mx-auto">
                 
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-black text-white tracking-tight">Subscription & Billing</h2>
-                    <p className="text-sm text-zinc-400 mt-1">Manage active plan, payment method, and Creem.io invoices.</p>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Plan & Agency Partnerships</h2>
+                    <p className="text-sm text-zinc-400 mt-1">Yoouz is 100% free for verified businesses. No subscription or billing required.</p>
                   </div>
                   <button
                     type="button"
-                    id="btn-billing-compare-plans"
-                    onClick={() => setShowPricingModal(true)}
+                    id="btn-faq-help-open"
+                    onClick={() => setShowHelpModal(true)}
                     className="self-start sm:self-auto px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold border border-zinc-700 hover:border-zinc-600 transition-all cursor-pointer shadow-md flex items-center gap-2 active:scale-95"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>Compare All Plans</span>
+                    <HelpCircle className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>Questions & Answers (FAQ)</span>
                   </button>
                 </div>
 
-                {/* Main Unified Billing Card */}
+                {/* Main Unified Membership Card */}
                 <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-6 shadow-2xl backdrop-blur-xl">
 
                   {/* ACTIVE PLAN SHOWCASE */}
@@ -3935,244 +3937,107 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-semibold">
-                            {currentPlan === 'basic' ? 'Free Plan' : 'Active Subscription'}
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/80 text-[11px] font-bold">
+                            100% Free Forever
                           </span>
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/80 text-[11px] font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Live
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Verified Venue
                           </span>
                         </div>
                         <h3 className="text-2xl font-black text-white tracking-tight pt-1">
-                          {currentPlan === 'premium' ? 'Yoouz Premium Business' : currentPlan === 'basic' ? 'Yoouz Basic Business' : 'Yoouz Pro Business'}
+                          Yoouz Merchant Suite
                         </h3>
                         <div className="flex items-baseline gap-2 pt-0.5">
                           <span className="text-3xl font-black text-white">
-                            {currentPlan === 'premium' ? '$299' : currentPlan === 'basic' ? '$0' : '$149'}
+                            $0
                           </span>
-                          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">/ month</span>
-                          <span className="text-xs text-zinc-500 font-medium ml-1.5">
-                            {currentPlan === 'basic' ? 'Free forever' : 'Cancel anytime'}
+                          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">/ lifetime</span>
+                          <span className="text-xs text-emerald-400/90 font-semibold ml-1.5">
+                            No credit card or billing ever
                           </span>
                         </div>
                       </div>
 
                       <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shrink-0 shadow-md">
-                        {currentPlan === 'premium' ? (
-                          <Star className="w-6 h-6 text-zinc-200" />
-                        ) : currentPlan === 'basic' ? (
-                          <ShieldCheck className="w-6 h-6 text-zinc-200" />
-                        ) : (
-                          <Sparkles className="w-6 h-6 text-zinc-200" />
-                        )}
+                        <ShieldCheck className="w-6 h-6 text-emerald-400" />
                       </div>
                     </div>
 
                     {/* Included Plan Features Checklist */}
                     <div className="pt-3 border-t border-zinc-800/80">
                       <div className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-2.5">
-                        Included in Your Plan
+                        Included In Your Free Account
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-zinc-300 font-medium">
-                        {(currentPlan === 'premium' ? [
-                          'Everything in Pro Tier',
-                          'Up to 10 Direct Messages / day',
-                          'Website Video Widget Embeds',
-                          'Full Paid Ads Commercial Rights',
-                          'Advanced Analytics & Tracking',
-                          'Premium NFC Tap Stands Kit'
-                        ] : currentPlan === 'basic' ? [
-                          'Claim Business Listing',
-                          'Verified Business Badge',
-                          'Update Address & Hours',
-                          'Email Alerts for New Reviews'
-                        ] : [
-                          'Verified Business Badge',
-                          'Website Link & Action Buttons',
-                          'Public Video Replies & Moderation',
-                          'Up to 5 Direct Messages / day',
-                          'Dedicated Business Dashboard',
-                          'Custom Review Invite QR Kit'
-                        ]).map((feature, i) => (
+                        {[
+                          'Verified Business Status & Badge',
+                          'Official Public Video Replies',
+                          'Real-Time Video Review Alerts',
+                          'Website Video Review Embed Widget',
+                          'Downloadable Table & Window QR Standees',
+                          'Operating Hours, Phone & Address Sync',
+                          'Direct Customer Follower Insights',
+                          'Direct Merchant Message Center'
+                        ].map((feature, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <Check className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                            <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             <span>{feature}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Plan Action Buttons (All Dark Mode) */}
-                    <div className="pt-2">
-                      {currentPlan === 'pro' && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          <button
-                            type="button"
-                            id="btn-billing-upgrade-premium"
-                            onClick={() => {
-                              setTargetUpgradePlan('premium');
-                              setShowAgencyUpgradeModal(true);
-                            }}
-                            className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                          >
-                            <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-                            <span>Upgrade to Premium ($299)</span>
-                          </button>
-                          <button
-                            type="button"
-                            id="btn-billing-manage-plan"
-                            onClick={() => setShowPricingModal(true)}
-                            className="w-full py-3 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white border border-zinc-800 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                          >
-                            <span>Compare Plans</span>
-                          </button>
-                        </div>
-                      )}
-
-                      {currentPlan === 'premium' && (
-                        <button
-                          type="button"
-                          id="btn-billing-manage-premium"
-                          onClick={() => setShowPricingModal(true)}
-                          className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          <Star className="w-3.5 h-3.5 text-zinc-300" />
-                          <span>View Premium Features & Partner Details</span>
-                        </button>
-                      )}
-
-                      {currentPlan === 'basic' && (
-                        <button
-                          type="button"
-                          id="btn-billing-upgrade-pro"
-                          onClick={() => {
-                            setTargetUpgradePlan('pro');
-                            setShowAgencyUpgradeModal(true);
-                          }}
-                          className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-                          <span>Connect with Agency Partner to Upgrade ($149/mo)</span>
-                        </button>
-                      )}
-                    </div>
-
                   </div>
 
-                  {/* AUTHORIZED PARTNER AGENCY DETAILS */}
+                  {/* AGENCY PARTNERSHIP ONBOARDING SECTION */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
-                        Assigned Agency Reseller & Account Manager
+                        Working with an Advertising or Marketing Agency?
                       </label>
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/60 uppercase tracking-wide">
-                        Verified Partner
+                      <span className="text-[10px] font-bold text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-md border border-zinc-700 uppercase tracking-wide">
+                        Agency Inquiries
                       </span>
                     </div>
 
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-zinc-800/80">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shrink-0">
-                            <Building2 className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                              {assignedAgency.name}
-                            </div>
-                            <div className="text-xs text-zinc-400 mt-0.5">
-                              {assignedAgency.city}, {assignedAgency.country} • <span className="text-zinc-300">{assignedAgency.specialty}</span>
-                            </div>
-                          </div>
+                    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-4">
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shrink-0 mt-0.5">
+                          <Building2 className="w-5 h-5 text-zinc-300" />
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTargetUpgradePlan(currentPlan === 'premium' ? 'premium' : 'pro');
-                            setShowAgencyUpgradeModal(true);
-                          }}
-                          className="px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-semibold transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
-                        >
-                          Change Agency / Upgrade
-                        </button>
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-bold text-white">
+                            Direct Agency Management & Custom Campaigns
+                          </h4>
+                          <p className="text-xs text-zinc-400 leading-relaxed">
+                            Yoouz is completely free for venue operators. If your business works with an external PR, marketing, or advertising agency for customized paid ad campaigns, sponsored content, or managed video production, your agency can partner with us directly.
+                          </p>
+                        </div>
                       </div>
 
-                      {/* Account Manager Contact Bar */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                        <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-xl">
-                          <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Account Manager</div>
-                          <div className="font-semibold text-white mt-0.5">{assignedAgency.accountManager}</div>
+                      <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-xl space-y-3">
+                        <div className="text-xs font-semibold text-zinc-300">
+                          How it works for agencies:
                         </div>
+                        <ul className="text-xs text-zinc-400 space-y-1.5 list-disc list-inside">
+                          <li>Submit your agency information through our secure Partner Desk application form</li>
+                          <li>We verify agency authorization and connect client profiles for multi-venue management</li>
+                          <li>Your agency receives dedicated partner support, API tools, and campaign materials</li>
+                        </ul>
 
-                        <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-xl">
-                          <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Direct Phone / WhatsApp</div>
-                          <a href={`tel:${assignedAgency.contactPhone.replace(/\s+/g, '')}`} className="font-semibold text-emerald-400 hover:underline mt-0.5 block">
-                            {assignedAgency.contactPhone}
-                          </a>
-                        </div>
-
-                        <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-xl">
-                          <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Agency Invoicing Email</div>
-                          <a href={`mailto:${assignedAgency.contactEmail}`} className="font-semibold text-zinc-200 hover:text-white truncate block mt-0.5">
-                            {assignedAgency.contactEmail}
-                          </a>
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowAgencyInquiryModal(true)}
+                            className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                          >
+                            <Building2 className="w-4 h-4 text-zinc-950" />
+                            <span>Open Agency Partnership Form</span>
+                          </button>
                         </div>
                       </div>
 
                     </div>
-                  </div>
-
-                  {/* B2B INVOICES & SERVICE STATEMENTS */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
-                        B2B Invoices & Statements
-                      </label>
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
-                        Agency Reseller Invoicing
-                      </span>
-                    </div>
-
-                    {invoicesList.length > 0 ? (
-                      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden divide-y divide-zinc-800/80">
-                        {invoicesList.map((invoice) => (
-                          <div key={invoice.id} className="p-4 flex items-center justify-between gap-3 hover:bg-zinc-900/40 transition-colors">
-                            <div className="min-w-0 space-y-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-mono text-xs font-bold text-white">
-                                  {invoice.id}
-                                </span>
-                                <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-bold uppercase tracking-wider">
-                                  Settled
-                                </span>
-                              </div>
-                              <div className="text-[11px] text-zinc-400 font-medium">
-                                {invoice.date} • <span className="text-zinc-300 font-semibold">{invoice.amount}</span> • <span className="text-zinc-400">{invoice.agency || assignedAgency.name}</span>
-                              </div>
-                            </div>
-
-                            <button 
-                              type="button"
-                              id={`btn-receipt-${invoice.id}`}
-                              onClick={() => setShowReceiptModal(true)}
-                              className="px-3 py-1.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-750 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                              <span>Statement</span>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-center">
-                        <div className="text-xs text-zinc-400 font-medium">
-                          No invoices yet. Your account is on the Free Basic Tier ($0/mo).
-                        </div>
-                        <div className="text-[11px] text-zinc-500 mt-1">
-                          Official tax invoices will be issued and settled directly through your authorized Partner Agency upon upgrading.
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                 </div>
@@ -4327,53 +4192,129 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         />
       )}
 
-      {/* Help Modal */}
+      {/* Help & FAQ Modal */}
       {showHelpModal && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-          <div className="bg-[#1a1a1c] rounded-3xl border border-white/[0.04] text-white p-6 max-w-[420px] w-full shadow-2xl relative flex flex-col gap-5 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-zinc-950 rounded-3xl border border-zinc-800 text-white p-6 sm:p-7 max-w-lg w-full shadow-2xl relative flex flex-col gap-5 animate-in zoom-in-95 duration-300 max-h-[85vh] overflow-hidden">
             <button
               onClick={() => setShowHelpModal(false)}
-              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/[0.08] text-zinc-200 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2.5 mb-1 pr-6 mt-1">
-              <Sparkles className="w-6 h-6 text-white" />
-              <h3 className="font-bold text-white text-[19px]">Yoouz Business Merchant Guide</h3>
+            <div className="flex items-center gap-3 pr-8">
+              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-lg">Merchant Q&A & Guide</h3>
+                <p className="text-xs text-zinc-400">Everything you need to know about Yoouz Business</p>
+              </div>
             </div>
 
-            <div className="space-y-4 text-[13px] text-[#a1a1aa] leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1.5">
-                <strong className="text-white font-bold flex items-center gap-2.5 text-[15px]">
-                  <Star className="w-4 h-4 text-white" /> Verified Business Status
-                </strong>
-                <p>Your badge tells consumers that reviews are monitored by the authentic venue operator.</p>
+            <div className="space-y-3.5 text-xs text-zinc-300 leading-relaxed overflow-y-auto pr-1 custom-scrollbar">
+              
+              {/* Question 1: Is it free? */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1.5">
+                <div className="text-white font-bold flex items-center gap-2 text-sm">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Is Yoouz 100% free for business owners?</span>
+                </div>
+                <p className="text-zinc-400 pl-6">
+                  <strong className="text-white">Yes, completely free.</strong> Claiming your venue, getting verified, replying to video reviews, downloading table QR standees, and embedding video review widgets on your website is 100% free forever with no credit card required.
+                </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#000000] border border-white/[0.06] space-y-1.5">
-                <strong className="text-white font-bold flex items-center gap-2.5 text-[15px]">
-                  <QrCode className="w-4 h-4 text-white" /> Table Standee QR Codes
-                </strong>
-                <p>Download the high-resolution QR standee to print and place on customer tables or receipt holders.</p>
+              {/* Question 2: Why no billing? */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1.5">
+                <div className="text-white font-bold flex items-center gap-2 text-sm">
+                  <CreditCard className="w-4 h-4 text-zinc-300 shrink-0" />
+                  <span>Why is there no billing or credit card option?</span>
+                </div>
+                <p className="text-zinc-400 pl-6">
+                  Because there is no money or charges involved for venue owners. Yoouz does not charge local businesses any subscription or listing fees.
+                </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#000000] border border-white/[0.06] space-y-1.5">
-                <strong className="text-white font-bold flex items-center gap-2.5 text-[15px]">
-                  <Code className="w-4 h-4 text-white" /> Auto-Sync Web Widget
-                </strong>
-                <p>Copy the HTML snippet into your WordPress, Squarespace, Shopify, or custom HTML site to showcase video reviews.</p>
+              {/* Question 3: How do upgrades / agencies work? */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2">
+                <div className="text-white font-bold flex items-center gap-2 text-sm">
+                  <Building2 className="w-4 h-4 text-zinc-300 shrink-0" />
+                  <span>How do we upgrade or run custom ad campaigns?</span>
+                </div>
+                <p className="text-zinc-400 pl-6">
+                  We work directly with certified advertising, marketing, and PR agencies. If your business wants custom promotional campaigns, commercial media rights, or dedicated video shoots, have your marketing agency submit an application through our Partner Desk form.
+                </p>
+                <div className="pl-6 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowHelpModal(false);
+                      setShowAgencyInquiryModal(true);
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-[11px] transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-zinc-700"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>Open Agency Form</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Question 4: Can our marketing agency manage our profile? */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2">
+                <div className="text-white font-bold flex items-center gap-2 text-sm">
+                  <Users className="w-4 h-4 text-zinc-300 shrink-0" />
+                  <span>Can our external marketing agency manage our profile?</span>
+                </div>
+                <p className="text-zinc-400 pl-6">
+                  Yes! Your marketing agency can submit an inquiry through our secure Agency Partner Form with your venue name. We will verify and authorize their agency account to manage multi-location campaigns on your behalf.
+                </p>
+                <div className="pl-6 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowHelpModal(false);
+                      setShowAgencyInquiryModal(true);
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-[11px] transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-zinc-700"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>Open Agency Form</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Question 5: QR Codes & Embeds */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1.5">
+                <div className="text-white font-bold flex items-center gap-2 text-sm">
+                  <QrCode className="w-4 h-4 text-zinc-300 shrink-0" />
+                  <span>How do Table QR Codes & Website Embeds work?</span>
+                </div>
+                <p className="text-zinc-400 pl-6">
+                  You can download print-ready QR standees directly from the "QR Code" tab and embed an authentic video review carousel on your website (WordPress, Shopify, Squarespace) via the "Embed" tab at zero cost.
+                </p>
+              </div>
+
             </div>
 
             <button
               onClick={() => setShowHelpModal(false)}
-              className="w-full py-3.5 bg-white text-black font-bold rounded-2xl text-[14px] hover:bg-zinc-200 transition-colors cursor-pointer shadow-lg mt-1"
+              className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-md shrink-0"
             >
               Got it, thanks!
             </button>
           </div>
         </div>
+      )}
+
+      {/* Agency Partnership Application Modal */}
+      {showAgencyInquiryModal && (
+        <CopoAgencyInquiryModal
+          onClose={() => setShowAgencyInquiryModal(false)}
+          venueId={currentPlace?.id}
+          venueName={currentPlace?.name}
+        />
       )}
 
       {/* Business Claim & Verification Modal (Resend Magic Link & Website Meta Tag) */}

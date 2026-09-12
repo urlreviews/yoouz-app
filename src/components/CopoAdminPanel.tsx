@@ -607,7 +607,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const claimedPlaces = places.filter((p) => p.isClaimed || Boolean(p.claimedByEmail)).length;
     const avgRating = totalVids > 0 ? (videos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalVids).toFixed(1) : "5.0";
 
-    // Subscription & Revenue Metrics (Creem.io Merchant Tiers)
+    // Subscription & Revenue Metrics (Merchant Tiers & Agency Managed)
     let mrr = 0;
     let paidPlacesCount = 0;
     let basicCount = 0;
@@ -1422,11 +1422,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
 
                 <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Billing Provider</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Merchant Model</span>
                   <div className="text-lg font-bold text-white mt-1 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Creem.io Merchant Checkout
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Agency Reseller Network
                   </div>
-                  <div className="text-xs text-zinc-400 mt-1">Automated 1-tap checkout & merchant webhook connected</div>
+                  <div className="text-xs text-zinc-400 mt-1">100% Free venue onboarding • Agency B2B accounts</div>
                 </div>
               </div>
 
@@ -1565,7 +1565,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                             <td className="p-4">
                               <span className="text-xs font-mono text-zinc-400">
-                                {place.subscriptionTransactionId || (plan === "pro" || plan === "premium" ? `CREEM-INV-${place.id.slice(0, 4)}` : "—")}
+                                {place.subscriptionTransactionId || (plan === "pro" || plan === "premium" ? `AGY-INV-${place.id.slice(0, 4)}` : "—")}
                               </span>
                             </td>
 
