@@ -47,6 +47,8 @@ import {
   Copy,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
+  Camera,
   Search,
   Bell,
   HelpCircle,
@@ -136,6 +138,7 @@ interface CopoBusinessDashboardViewProps {
   onBlockUser?: (userId: string, userName?: string) => void;
   onUnblockUser?: (userId: string) => void;
   onOpenReport?: (reportData: any) => void;
+  onRecordReview?: (place: Place) => void;
 }
 
 type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'billing';
@@ -629,7 +632,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   blockedUserIds = [],
   onBlockUser,
   onUnblockUser,
-  onOpenReport
+  onOpenReport,
+  onRecordReview
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   // Navigation tab state
@@ -1012,29 +1016,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [expandedCommentsMap, setExpandedCommentsMap] = useState<Record<string, boolean>>({});
   const [activeVideoModal, setActiveVideoModal] = useState<VideoReview | null>(null);
 
-  // Email Invites & QR Standee Studio State
-  const [customerEmails, setCustomerEmails] = useState('');
-  const [isSendingEmails, setIsSendingEmails] = useState(false);
-  const [emailSendResult, setEmailSendResult] = useState<{success?: boolean; message?: string} | null>(null);
-  const [qrStandeeStyle, setQrStandeeStyle] = useState<'acrylic_standee' | 'decal_badge' | 'receipt_card'>('acrylic_standee');
+  // QR Standee Studio State
   const [qrCustomHeading, setQrCustomHeading] = useState('LEAVE A 60-SECOND VIDEO REVIEW');
   const [qrTableLabel, setQrTableLabel] = useState('');
   const [qrLinkCopied, setQrLinkCopied] = useState(false);
-  const [inviteChannel, setInviteChannel] = useState<'email' | 'whatsapp'>('email');
-  const [includeIncentive, setIncludeIncentive] = useState(true);
-  const [incentiveText, setIncentiveText] = useState('Get 10% off your next visit when you record a 60s video review!');
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showCustomizeAccordion, setShowCustomizeAccordion] = useState(false);
 
-  // Custom Invite Messaging & Dynamic Tags State
-  const [inviteSubject, setInviteSubject] = useState('');
-  const [inviteGreetingStyle, setInviteGreetingStyle] = useState<'smart_tag' | 'generic' | 'none'>('smart_tag');
-  const [inviteBodyText, setInviteBodyText] = useState('');
-
-  // Keep default subject and body text in sync with selected business name
-  useEffect(() => {
-    setInviteSubject(`How was your experience with ${currentPlace.name}? Leave a video review!`);
-    setInviteBodyText(`Thank you for choosing ${currentPlace.name}! We value your business and would love to hear your feedback. Tap below to record a 60-second video review directly from your phone.`);
-  }, [selectedPlaceId, currentPlace.name]);
+  const qrDirectReviewUrl = useMemo(() => {
+    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://www.yoouz.com';
+    const slug = getPlaceSlug(currentPlace);
+    return `${origin}/place/${slug}?action=record`;
+  }, [currentPlace]);
 
   // Embed Customizer & Curation State
   const [embedFormat, setEmbedFormat] = useState<'script' | 'iframe' | 'react'>('script');
@@ -1489,27 +1482,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setTimeout(() => setIsProfileSaved(false), 3000);
   };
 
-  const [orderSubmitted, setOrderSubmitted] = useState(false);
-  const [orderingKitType, setOrderingKitType] = useState<string | null>(null);
-  const [shippingAddress, setShippingAddress] = useState('123 Culinary Row, Suite B');
-  const [kitQuantity, setKitQuantity] = useState(1);
-
-  const handleOrderPhysicalKit = (kitName: string) => {
-    setOrderingKitType(kitName);
-    setTimeout(() => {
-      setOrderSubmitted(true);
-      setOrderingKitType(null);
-      setTimeout(() => setOrderSubmitted(false), 5000);
-    }, 1500);
-  };
-
   const downloadQRCode = () => {
-    const canvas = document.getElementById("yoouz-qr-code") as HTMLCanvasElement;
+    const canvas = (document.getElementById("yoouz-qr-code-mobile") as HTMLCanvasElement) || 
+                   (document.getElementById("yoouz-qr-code") as HTMLCanvasElement);
     if (canvas) {
-      const pngUrl = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+      const pngUrl = canvas.toDataURL("image/png");
       const downloadLink = document.createElement("a");
       downloadLink.href = pngUrl;
-      downloadLink.download = `${currentPlace.name.toLowerCase().replace(/\s+/g, '-')}-yoouz-qr.png`;
+      downloadLink.download = `${(currentPlace.name || 'venue').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-yoouz-qr.png`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
@@ -1630,7 +1610,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       badge: unreadBusinessNotifsCount > 0 ? unreadBusinessNotifsCount : undefined
     },
     { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
-    { id: 'qr_invites' as BusinessTab, label: t('business.invites', 'Invites'), icon: QrCode },
+    { id: 'qr_invites' as BusinessTab, label: t('business.qrCode', 'QR Code'), icon: QrCode },
     { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
     { id: 'billing' as BusinessTab, label: t('business.billing', 'Billing'), icon: CreditCard, isProBadge: currentPlan === 'pro' || currentPlan === 'premium' },
   ];
@@ -3083,384 +3063,237 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
             )}
 
-            {/* TAB 4: QR CODES & REVIEW INVITES STUDIO */}
+            {/* TAB 4: QR CODE STUDIO */}
             {activeTab === 'qr_invites' && (
-              <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200 max-w-lg mx-auto pb-16 px-1 sm:px-0">
                 
-                {/* Header Banner */}
-                <div className="bg-zinc-900 rounded-3xl p-6 text-white shadow-md border border-zinc-800 relative overflow-hidden">
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-extrabold uppercase tracking-wider">
-                          Google Business Partner Tools
+                {/* Header Banner - Native Mobile App Card Styling */}
+                <div className="bg-zinc-900/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white border border-zinc-800 shadow-sm backdrop-blur-md">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          Live In-Venue QR
                         </span>
-                        <span className="text-zinc-200 text-xs">• Real-Time Sync Active</span>
                       </div>
-                      <h2 className="text-2xl font-black text-white tracking-tight">Merchant QR & Customer Review Campaign Studio</h2>
-                      <p className="text-xs text-zinc-200 mt-1 max-w-2xl leading-relaxed">
-                        Design print-ready acrylic table tents, window stickers, and automated review invitations that lead guests straight to your 1-tap video review recorder.
+                      <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
+                        Venue QR Code
+                      </h2>
+                      <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                        Display on counter tops, dining tables, or windows. Scanning immediately launches the 60-second video review screen.
                       </p>
                     </div>
 
+                    {/* Quick Direct Link Copy Pill */}
                     <button
                       type="button"
                       onClick={() => {
-                        const link = `https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`;
-                        navigator.clipboard.writeText(link);
+                        navigator.clipboard.writeText(qrDirectReviewUrl);
                         setQrLinkCopied(true);
                         setTimeout(() => setQrLinkCopied(false), 2500);
                       }}
-                      className="px-4 py-2.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                      className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl sm:rounded-2xl bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-750 text-white border border-zinc-700 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-98 shadow-xs"
                     >
-                      {qrLinkCopied ? <Check className="w-4 h-4 text-zinc-200" /> : <Copy className="w-4 h-4 text-zinc-200" />}
-                      <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Video Review Link'}</span>
+                      {qrLinkCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-300" />}
+                      <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Link'}</span>
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  
-                  {/* Left: Table QR Standee Studio */}
-                  <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-5 md:p-6 shadow-xs flex flex-col justify-between space-y-6">
-                    <div className="space-y-5">
-                      <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-                        <div className="flex items-center gap-2.5 text-white font-extrabold text-lg">
-                          <div className="w-9 h-9 rounded-xl bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center">
-                            <QrCode className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h2>Table QR Standee Studio</h2>
-                            <p className="text-[11px] text-zinc-200 font-normal">Physical in-venue print collateral</p>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-zinc-200 bg-zinc-800 px-2 py-1 rounded-md border border-zinc-700">
-                          Format: {qrStandeeStyle.replace('_', ' ').toUpperCase()}
+                {/* Centerpiece: Physical Mobile App Standee Card */}
+                <div className="flex flex-col items-center w-full">
+                  <div className="w-full bg-zinc-950 border border-zinc-800/90 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden text-center text-white ring-1 ring-white/5">
+                    {/* Top Acrylic Lip & Bevel */}
+                    <div className="w-16 sm:w-20 h-1 sm:h-1.5 bg-zinc-700/80 rounded-full mx-auto mb-4 sm:mb-5 shadow-inner" />
+
+                    {qrTableLabel && (
+                      <div className="absolute top-4 right-4 sm:top-5 sm:right-5 px-2.5 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 text-[8.5px] sm:text-[9px] font-extrabold uppercase border border-zinc-700 tracking-wider">
+                        {qrTableLabel}
+                      </div>
+                    )}
+
+                    {/* Venue Logo Avatar */}
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white text-zinc-950 p-1 flex items-center justify-center mx-auto mb-2.5 sm:mb-3 shadow-lg border border-zinc-200/20 overflow-hidden">
+                      {currentPlace.logoUrl ? (
+                        <img 
+                          src={currentPlace.logoUrl} 
+                          alt={currentPlace.name} 
+                          className="w-full h-full object-cover rounded-xl"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.style.display = 'none';
+                            if (target.parentElement && !target.parentElement.querySelector('.fallback-initial')) {
+                              const span = document.createElement('span');
+                              span.className = 'fallback-initial font-black text-base text-zinc-950';
+                              span.textContent = currentPlace.name?.charAt(0).toUpperCase() || '★';
+                              target.parentElement.appendChild(span);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <span className="font-black text-base text-zinc-950">
+                          {currentPlace.name?.charAt(0).toUpperCase() || '★'}
                         </span>
+                      )}
+                    </div>
+
+                    {/* Venue Title & Verified Badge */}
+                    <div className="flex items-center justify-center gap-1.5 mb-1 px-2">
+                      <h3 className="font-black text-white text-base sm:text-lg tracking-tight truncate max-w-[240px] sm:max-w-[280px]">
+                        {currentPlace.name}
+                      </h3>
+                      <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
+                    </div>
+
+                    {/* Star Rating & Reviews Count */}
+                    <div className="flex items-center justify-center gap-1.5 text-xs font-bold mb-3">
+                      <span className="text-amber-400">★ {(currentPlace.rating || 5.0).toFixed(1)}</span>
+                      <div className="flex text-amber-400 text-xs">
+                        {'★★★★★'.split('').map((s, idx) => (
+                          <span key={idx}>{s}</span>
+                        ))}
+                      </div>
+                      <span className="text-zinc-400 text-[11px] font-normal">
+                        ({placeVideos.length} {placeVideos.length === 1 ? 'Video Review' : 'Video Reviews'})
+                      </span>
+                    </div>
+
+                    {/* Callout Prompt */}
+                    <div className="mb-3 sm:mb-4 px-2">
+                      <span className="inline-block px-3 py-1 rounded-full bg-zinc-900 text-zinc-200 font-extrabold text-[10px] sm:text-[10.5px] uppercase tracking-wider border border-zinc-800 shadow-inner max-w-full truncate">
+                        {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
+                      </span>
+                    </div>
+
+                    {/* QR Code Canvas Card (Responsive Sizing for Mobile) */}
+                    <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xl inline-block border border-zinc-300 relative group my-1 max-w-full">
+                      {/* Responsive QR canvas sizing: 180px on narrow mobile, 210px on tablet/desktop */}
+                      <div className="hidden sm:block">
+                        <QRCodeCanvas
+                          id="yoouz-qr-code"
+                          value={qrDirectReviewUrl}
+                          size={210}
+                          level="H"
+                          includeMargin={true}
+                        />
+                      </div>
+                      <div className="sm:hidden flex items-center justify-center">
+                        <QRCodeCanvas
+                          id="yoouz-qr-code-mobile"
+                          value={qrDirectReviewUrl}
+                          size={180}
+                          level="H"
+                          includeMargin={true}
+                        />
                       </div>
 
-                      {/* Controls */}
-                      <div className="space-y-3">
-                        {/* Style Format Switcher */}
-                        <div>
-                          <label className="block text-xs font-bold text-zinc-200 mb-1.5">Standee Format</label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {[
-                              { id: 'acrylic_standee', label: 'Table Tent (A6)', icon: '📐' },
-                              { id: 'decal_badge', label: 'Window Sticker', icon: '🏷️' },
-                              { id: 'receipt_card', label: 'Receipt Footer', icon: '🧾' },
-                            ].map(s => (
-                              <button
-                                key={s.id}
-                                type="button"
-                                onClick={() => setQrStandeeStyle(s.id as any)}
-                                className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
-                                  qrStandeeStyle === s.id
-                                    ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs font-bold'
-                                    : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:text-white'
-                                }`}
-                              >
-                                <span>{s.icon}</span>
-                                <span className="truncate">{s.label}</span>
-                              </button>
-                            ))}
-                          </div>
+                      {/* Center Yoouz Star Overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-950 border-2 border-white text-white flex items-center justify-center font-black text-xs shadow-lg">
+                          ★
                         </div>
-
-                        {/* Heading & Table Label Text */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-bold text-zinc-200 mb-1">Printed Callout Heading</label>
-                            <input
-                              type="text"
-                              value={qrCustomHeading}
-                              onChange={(e) => setQrCustomHeading(e.target.value)}
-                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-700"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-zinc-200 mb-1">Table / Zone Label (Optional)</label>
-                            <input
-                              type="text"
-                              value={qrTableLabel}
-                              onChange={(e) => setQrTableLabel(e.target.value)}
-                              placeholder="e.g. Table #4"
-                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-700"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Live Visual Standee Mockup Preview */}
-                      <div className="relative pt-2">
-                        <div className="text-[10px] font-bold text-zinc-200 uppercase tracking-wider text-center mb-2">
-                          Print Preview ({qrStandeeStyle.replace('_', ' ')})
-                        </div>
-
-                        {qrStandeeStyle === 'acrylic_standee' && (
-                          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center max-w-xs mx-auto shadow-xl relative overflow-hidden text-white">
-                            {/* Decorative Top Acrylic Lip */}
-                            <div className="w-20 h-1.5 bg-zinc-700 rounded-full mb-4 shadow-inner" />
-
-                            {qrTableLabel && (
-                              <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[9px] font-extrabold uppercase border border-zinc-700">
-                                {qrTableLabel}
-                              </div>
-                            )}
-
-                            <div className="w-12 h-12 rounded-2xl bg-white text-zinc-950 flex items-center justify-center mb-2 shadow-md">
-                              <Star className="w-6 h-6 fill-zinc-950" />
-                            </div>
-
-                            <h3 className="font-black text-white text-base tracking-tight">{currentPlace.name}</h3>
-                            <div className="flex items-center gap-1 text-white text-xs font-bold my-1">
-                              <span>4.9</span>
-                              <div className="flex text-white">
-                                {'★★★★★'.split('').map((s, idx) => (
-                                  <span key={idx}>{s}</span>
-                                ))}
-                              </div>
-                              <span className="text-zinc-200 text-[10px] font-normal">({placeVideos.length} Video Reviews)</span>
-                            </div>
-
-                            <p className="text-[11px] text-zinc-200 max-w-[200px] mb-3 leading-snug">
-                              Scan with your camera app to record your 1-tap video review
-                            </p>
-
-                            <div className="bg-white p-3.5 rounded-2xl shadow-lg border border-zinc-700 relative group">
-                              <QRCodeCanvas
-                                id="yoouz-qr-code"
-                                value={`https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`}
-                                size={150}
-                                level="H"
-                                includeMargin={true}
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="w-8 h-8 rounded-full bg-zinc-950 border-2 border-white text-white flex items-center justify-center font-black text-xs shadow-md">
-                                  ★
-                                </div>
-                              </div>
-                            </div>
-
-                            <span className="text-[10px] font-extrabold text-zinc-200 mt-4 uppercase tracking-wider bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
-                              {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
-                            </span>
-                          </div>
-                        )}
-
-                        {qrStandeeStyle === 'decal_badge' && (
-                          <div className="w-64 h-64 mx-auto rounded-full bg-zinc-900 border border-zinc-700 p-1 shadow-2xl flex flex-col items-center justify-center text-center text-white relative">
-                            <div className="w-full h-full rounded-full border-2 border-dashed border-zinc-700 p-4 flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-xs">
-                              <span className="text-[10px] font-black tracking-widest uppercase text-zinc-200 mb-1">{currentPlace.name}</span>
-                              
-                              <div className="bg-white p-2.5 rounded-2xl shadow-xl">
-                                <QRCodeCanvas
-                                  id="yoouz-qr-code"
-                                  value={`https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`}
-                                  size={110}
-                                  level="H"
-                                  includeMargin={true}
-                                />
-                              </div>
-
-                              <span className="text-[9px] font-bold text-zinc-200 mt-2 max-w-[150px] leading-tight">
-                                {qrCustomHeading}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {qrStandeeStyle === 'receipt_card' && (
-                          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 max-w-sm mx-auto shadow-xs font-mono text-zinc-200 text-center space-y-2">
-                            <div className="text-xs font-bold tracking-widest uppercase border-b border-dashed border-zinc-800 pb-2 text-zinc-200">
-                              *** THANK YOU FOR VISITING {currentPlace.name.toUpperCase()} ***
-                            </div>
-                            <div className="flex items-center justify-center gap-4 py-1">
-                              <div className="bg-white p-2 rounded-xl border border-zinc-700">
-                                <QRCodeCanvas
-                                  id="yoouz-qr-code"
-                                  value={`https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`}
-                                  size={90}
-                                  level="H"
-                                  includeMargin={true}
-                                />
-                              </div>
-                              <div className="text-left max-w-[160px]">
-                                <div className="text-[11px] font-bold text-white leading-tight">
-                                  {qrCustomHeading}
-                                </div>
-                                <div className="text-[9px] text-zinc-200 mt-1">
-                                  Scan QR on receipt to publish your video review.
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
 
-                    {/* Export Actions */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-zinc-800">
+                    {/* Camera Guidance Prompt */}
+                    <div className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 mt-3 font-medium px-2">
+                      <Camera className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      <span>Scan with phone camera to record live review</span>
+                    </div>
+
+                    {/* Direct URL Footnote */}
+                    <div className="mt-3.5 pt-2.5 border-t border-zinc-900/80">
+                      <p className="text-[10px] font-mono text-zinc-500 truncate max-w-[260px] sm:max-w-xs mx-auto">
+                        {qrDirectReviewUrl.replace(/^https?:\/\//, '')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tactile Native Mobile App Buttons */}
+                  <div className="w-full mt-4 sm:mt-6 space-y-2.5 sm:space-y-3">
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                       <button
                         type="button"
                         onClick={downloadQRCode}
-                        className="py-3 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="py-3 px-3 sm:px-4 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 rounded-2xl text-xs font-extrabold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                       >
-                        <Download className="w-4 h-4" />
-                        Download High-Res PNG
+                        <Download className="w-4 h-4 text-zinc-950 shrink-0" />
+                        <span className="truncate">Download PNG</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setShowPrintModal(true)}
-                        className="py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-700"
+                        className="py-3 px-3 sm:px-4 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-750 text-white rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-750 active:scale-95 shadow-md"
                       >
-                        <Printer className="w-4 h-4 text-zinc-200" />
-                        Print Standee Sheet (PDF)
+                        <Printer className="w-4 h-4 text-zinc-300 shrink-0" />
+                        <span className="truncate">Print Standee</span>
                       </button>
                     </div>
-                  </div>
 
-                  {/* Right: In-Venue Physical QR & NFC Print Kits */}
-                  <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-6 shadow-xs flex flex-col justify-between space-y-6">
-                    <div className="space-y-5">
-                      <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-                        <div className="flex items-center gap-2.5 text-white font-extrabold text-lg">
-                          <div className="w-9 h-9 rounded-xl bg-zinc-800 text-zinc-200 border border-zinc-700 flex items-center justify-center">
-                            <Package className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h2>Physical Review Kit</h2>
-                            <p className="text-[11px] text-zinc-200 font-normal">All-in-one offline marketing bundle</p>
-                          </div>
-                        </div>
+                    {/* Test Scan / Open Recorder Button (Mobile touch-friendly) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onRecordReview) {
+                          onRecordReview(currentPlace);
+                        } else {
+                          window.location.href = qrDirectReviewUrl;
+                        }
+                      }}
+                      className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800 text-zinc-200 hover:text-white rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-800 active:scale-98"
+                    >
+                      <Video className="w-4 h-4 text-white shrink-0" />
+                      <span>Test Scan & Record Flow</span>
+                    </button>
 
-                        {/* Status badge */}
-                        <span className="text-[10px] font-extrabold text-zinc-200 bg-zinc-800 border border-zinc-700 px-2.5 py-1 rounded-full flex items-center gap-1">
-                          <Truck className="w-3.5 h-3.5 text-zinc-200" /> Free Shipping
+                    {/* Minimal Inline Customization Toggle */}
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomizeAccordion(!showCustomizeAccordion)}
+                        className="w-full flex items-center justify-between text-xs font-semibold text-zinc-400 hover:text-zinc-200 py-2.5 px-3.5 rounded-xl bg-zinc-900/60 active:bg-zinc-900 border border-zinc-800 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Sliders className="w-3.5 h-3.5" />
+                          <span>Customize Standee Text</span>
                         </span>
-                      </div>
+                        {showCustomizeAccordion ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
 
-                      <p className="text-xs text-zinc-200 leading-relaxed">
-                        Top venues capture over 85% of their reviews directly in-person. Instead of risky spam emails, display high-contrast physical prompts so customers scan and record before they leave.
-                      </p>
-
-                      {/* Unified Bundle Overview Card */}
-                      <div className="p-5 rounded-2xl border border-zinc-800 bg-zinc-950 relative overflow-hidden">
-                        <div className="flex items-center justify-between mb-3.5">
-                          <span className="text-[10px] bg-zinc-800 text-zinc-200 font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider border border-zinc-700">
-                            Complete In-Venue Suite
-                          </span>
-                          <span className="text-[10px] text-zinc-200 font-medium">Included for Pro & Premium</span>
-                        </div>
-
-                        <h3 className="font-extrabold text-white text-sm mb-3">What's in your box:</h3>
-                        
-                        <ul className="space-y-2.5">
-                          <li className="flex items-start gap-2.5 text-xs text-zinc-200">
-                            <span className="text-sm shrink-0 leading-none">📐</span>
-                            <div>
-                              <strong className="font-bold text-white">2x Acrylic Table Stands:</strong> Heavy-duty, double-sided displays for host stands, counters, or dining tables.
-                            </div>
-                          </li>
-                          <li className="flex items-start gap-2.5 text-xs text-zinc-200">
-                            <span className="text-sm shrink-0 leading-none">🏷️</span>
-                            <div>
-                              <strong className="font-bold text-white">4x Window & Door Stickers:</strong> Weatherproof, adhesive vinyl decals with high-visibility QR prompts.
-                            </div>
-                          </li>
-                          <li className="flex items-start gap-2.5 text-xs text-zinc-200">
-                            <span className="text-sm shrink-0 leading-none">⚡</span>
-                            <div>
-                              <strong className="font-bold text-white">1x Smart NFC Fast Tap Plate:</strong> High-tech embedded microchip plate. Guests just tap their phone to instantly open the recorder.
-                            </div>
-                          </li>
-                        </ul>
-                      </div>
-
-                      {/* Shipping Form controls */}
-                      <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3.5">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="sm:col-span-2">
-                            <label className="block text-[10px] font-extrabold text-zinc-200 uppercase tracking-wider mb-1">
-                              Shipping Business Address
+                      {showCustomizeAccordion && (
+                        <div className="mt-2 p-3.5 sm:p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-3 text-left animate-in fade-in slide-in-from-top-1">
+                          <div>
+                            <label className="block text-[11px] font-bold text-zinc-300 mb-1">
+                              Callout Heading
                             </label>
-                            <div className="relative">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-200 absolute left-3 top-1/2 -translate-y-1/2" />
-                              <input
-                                type="text"
-                                value={shippingAddress}
-                                onChange={(e) => setShippingAddress(e.target.value)}
-                                className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-lg pl-8 pr-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-hidden focus:ring-1 focus:ring-zinc-700"
-                                placeholder="Enter shipping address"
-                              />
-                            </div>
+                            <input
+                              type="text"
+                              value={qrCustomHeading}
+                              onChange={(e) => setQrCustomHeading(e.target.value)}
+                              placeholder="e.g. LEAVE A 60-SECOND VIDEO REVIEW"
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                            />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-extrabold text-zinc-200 uppercase tracking-wider mb-1">
-                              Quantity
+                            <label className="block text-[11px] font-bold text-zinc-300 mb-1">
+                              Table / Zone Label (Optional)
                             </label>
-                            <select
-                              value={kitQuantity}
-                              onChange={(e) => setKitQuantity(Number(e.target.value))}
-                              className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-lg px-2.5 py-1.5 text-xs font-bold text-zinc-200 focus:outline-hidden focus:ring-1 focus:ring-zinc-700"
-                            >
-                              <option value={1}>1 Full Kit</option>
-                              <option value={2}>2 Full Kits</option>
-                              <option value={3}>3 Full Kits</option>
-                            </select>
+                            <input
+                              type="text"
+                              value={qrTableLabel}
+                              onChange={(e) => setQrTableLabel(e.target.value)}
+                              placeholder="e.g. Counter, Table #4"
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                            />
                           </div>
                         </div>
-
-                        {/* Order status message */}
-                        {orderSubmitted && (
-                          <div className="p-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                            <CheckCircle2 className="w-4.5 h-4.5 text-zinc-200 shrink-0" />
-                            <div>
-                              <p className="leading-tight">Physical Kit Ordered Successfully!</p>
-                              <p className="text-[10px] font-normal text-zinc-200 mt-0.5">
-                                Your custom branded QR & NFC kit will ship to <span className="underline">{shippingAddress}</span> in 3-5 business days. Tracking email sent!
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Master Action Trigger */}
-                    <div>
-                      {currentPlan === 'none' || currentPlan === 'basic' ? (
-                        <button
-                          type="button"
-                          onClick={() => setShowPricingModal(true)}
-                          className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-extrabold"
-                        >
-                          <Sparkles className="w-4 h-4 text-zinc-950" />
-                          Upgrade to Get This Physical Kit Shipped Free
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleOrderPhysicalKit('Full Complete Physical Kit')}
-                          disabled={orderingKitType !== null || orderSubmitted}
-                          className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:bg-zinc-800 disabled:text-zinc-200"
-                        >
-                          {orderingKitType !== null ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-                              <span>Customizing & Shipping Your Kit...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Truck className="w-4 h-4 text-zinc-950" />
-                              <span>Ship My Free In-Venue Review Kit</span>
-                            </>
-                          )}
-                        </button>
                       )}
                     </div>
                   </div>
                 </div>
+
               </div>
             )}
             {/* TAB 6: BUSINESS PROFILE & INFO */}

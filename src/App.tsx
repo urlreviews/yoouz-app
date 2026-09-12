@@ -380,7 +380,11 @@ export function App() {
         }
         const hash = window.location.hash;
 
-        let placeParam = params.get("place") || params.get("p") || params.get("business") || (hash.startsWith("#/place/") ? hash.replace("#/place/", "") : null);
+        let placeParam = params.get("place") || params.get("placeId") || params.get("p") || params.get("business") || (hash.startsWith("#/place/") ? hash.replace("#/place/", "") : null);
+        if (!placeParam && hash.includes("placeId=")) {
+          const hashParams = new URLSearchParams(hash.split("?")[1] || "");
+          placeParam = hashParams.get("placeId") || hashParams.get("place");
+        }
         let creatorParam = params.get("creator") || params.get("c") || params.get("user") || params.get("u") || (hash.startsWith("#/creator/") ? hash.replace("#/creator/", "") : null);
         let videoParam = params.get("video") || params.get("v") || (hash.startsWith("#/video/") ? hash.replace("#/video/", "") : null);
         let sectionParam = params.get("section") || (hash.startsWith("#/") && !hash.startsWith("#/place/") && !hash.startsWith("#/creator/") && !hash.startsWith("#/video/") ? hash.replace("#/", "") : null);
@@ -441,8 +445,27 @@ export function App() {
           const cleanPlaceId = decodeURIComponent(placeParam);
           setSelectedPlaceIdForDrawer(cleanPlaceId);
           setSelectedAuthorForDrawer(null);
-          // If we are coming from a deep link or popstate, don't force home if we were elsewhere
-          // But usually Place Drawer is viewed on top of home
+
+          const shouldTriggerRecord = 
+            params.get("action") === "record" || 
+            params.get("record") === "1" || 
+            params.get("record") === "true" ||
+            hash.includes("record_review") ||
+            pathname.startsWith("/review/") ||
+            pathname.startsWith("/record/");
+
+          if (shouldTriggerRecord) {
+            setTimeout(() => {
+              const targetPlace = (places || []).find((p: Place) => 
+                p.id === cleanPlaceId || 
+                getPlaceSlug(p) === cleanPlaceId || 
+                (p.name && p.name.toLowerCase() === cleanPlaceId.toLowerCase())
+              );
+              if (targetPlace) {
+                handleOpenCreateReview(targetPlace);
+              }
+            }, 300);
+          }
         } else if (creatorParam) {
           const rawParam = decodeURIComponent(creatorParam).replace(/^@+/, "").toLowerCase().trim();
           
@@ -4981,6 +5004,7 @@ export function App() {
                 onSaveOwnerResponse={handleSaveOwnerResponse}
                 onDeleteOwnerResponse={handleDeleteOwnerResponse}
                 onUpdatePlace={handleUpdatePlace}
+                onRecordReview={(targetPlace) => handleOpenCreateReview(targetPlace)}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt) => {
                   let effectiveSender = currentUser as any;
                   try {
