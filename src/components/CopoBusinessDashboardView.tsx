@@ -795,29 +795,115 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profileAddress, setProfileAddress] = useState(currentPlace.address || '');
   const [profilePhone, setProfilePhone] = useState((currentPlace as any).phone || '');
   const [profileWebsite, setProfileWebsite] = useState((currentPlace as any).website || '');
-  const [profileHours, setProfileHours] = useState((currentPlace as any).hours || 'Mon-Fri: 9:00 AM - 6:00 PM');
+  const [profileEmail, setProfileEmail] = useState((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
+  const [profileHours, setProfileHours] = useState((currentPlace as any).hours || currentPlace.openingHours || 'Mon-Fri: 9:00 AM - 6:00 PM');
   const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || `Official verified business profile on Yoouz.`);
   const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? 'https://www.yoouz.com/icon-512.png' : ''));
-  const [profileBannerUrl, setProfileBannerUrl] = useState((currentPlace as any).bannerUrl || '');
+  const [profileBannerUrl, setProfileBannerUrl] = useState((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
-  const [showLogoUrlInput, setShowLogoUrlInput] = useState(false);
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
+  const [logoError, setLogoError] = useState("");
+  const [bannerError, setBannerError] = useState("");
 
   const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Image size should be less than 5MB");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setProfileLogoUrl(reader.result);
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Please select a valid image file.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setLogoError("Image file must be under 8MB.");
+      return;
+    }
+    setLogoError("");
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 400;
+        const MAX_HEIGHT = 400;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          try {
+            const compressed = canvas.toDataURL("image/jpeg", 0.88);
+            setProfileLogoUrl(compressed);
+          } catch (err) {
+            setLogoError("Failed to process image.");
+          }
         }
       };
-      reader.readAsDataURL(file);
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleBannerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setBannerError("Please select a valid image file.");
+      return;
     }
+    if (file.size > 8 * 1024 * 1024) {
+      setBannerError("Image file must be under 8MB.");
+      return;
+    }
+    setBannerError("");
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          try {
+            const compressed = canvas.toDataURL("image/jpeg", 0.88);
+            setProfileBannerUrl(compressed);
+          } catch (err) {
+            setBannerError("Failed to process image.");
+          }
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   // Sync profile fields whenever currentPlace changes (e.g. on business login)
@@ -827,12 +913,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       setProfileAddress(currentPlace.address || '');
       setProfilePhone((currentPlace as any).phone || '');
       setProfileWebsite((currentPlace as any).website || '');
-      setProfileHours((currentPlace as any).hours || 'Mon-Fri: 9:00 AM - 6:00 PM');
+      setProfileEmail((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
+      setProfileHours((currentPlace as any).hours || currentPlace.openingHours || 'Mon-Fri: 9:00 AM - 6:00 PM');
       setProfileDesc((currentPlace as any).description || `Official verified business profile on Yoouz.`);
       if (currentPlace.logoUrl) {
         setProfileLogoUrl(currentPlace.logoUrl);
       } else if (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz')) {
         setProfileLogoUrl('https://www.yoouz.com/icon-512.png');
+      }
+      if ((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0]) {
+        setProfileBannerUrl((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
       }
       if (currentPlace.city) setCity(currentPlace.city);
     }
@@ -873,9 +963,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   useEffect(() => {
     setProfileName(currentPlace.name || '');
     setProfileWebsite((currentPlace as any).website || '');
+    setProfileEmail((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
+    setProfileHours((currentPlace as any).hours || currentPlace.openingHours || 'Mon-Fri: 9:00 AM - 6:00 PM');
     setProfileDesc((currentPlace as any).description || '');
     setProfileLogoUrl(currentPlace.logoUrl || '');
-    setProfileBannerUrl((currentPlace as any).bannerUrl || '');
+    setProfileBannerUrl((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
     setBusinessCategory(currentPlace.category || 'Dining & Artisanal Food');
 
     if (currentPlace.address) {
@@ -894,6 +986,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
     if ((currentPlace as any).phone) {
       const rawPhone = (currentPlace as any).phone as string;
+      setProfilePhone(rawPhone);
       if (rawPhone.startsWith('+')) {
         const spaceIdx = rawPhone.indexOf(' ');
         if (spaceIdx > 0) {
@@ -1460,11 +1553,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   };
 
   const handleSaveProfile = () => {
+    const parts = [streetAddress.trim(), city.trim(), stateRegion.trim(), zipCode.trim(), selectedCountry.trim()].filter(Boolean);
+    const finalAddress = parts.join(', ') || profileAddress;
+
     (currentPlace as any).name = profileName;
-    (currentPlace as any).address = profileAddress;
+    (currentPlace as any).address = finalAddress;
+    currentPlace.address = finalAddress;
+    setProfileAddress(finalAddress);
+    (currentPlace as any).city = city;
+    (currentPlace as any).country = selectedCountry;
     (currentPlace as any).phone = profilePhone;
     (currentPlace as any).website = profileWebsite;
     (currentPlace as any).hours = profileHours;
+    currentPlace.openingHours = profileHours;
+    (currentPlace as any).email = profileEmail;
     (currentPlace as any).description = profileDesc;
     (currentPlace as any).category = businessCategory;
     currentPlace.logoUrl = profileLogoUrl;
@@ -1475,7 +1577,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
 
     if (verifiedBusinessSession) {
-      const updatedSession = { ...verifiedBusinessSession, logoUrl: profileLogoUrl, placeName: profileName };
+      const updatedSession = { 
+        ...verifiedBusinessSession, 
+        logoUrl: profileLogoUrl, 
+        placeName: profileName,
+        bannerUrl: profileBannerUrl,
+        email: profileEmail,
+        phone: profilePhone,
+        address: finalAddress
+      };
       setVerifiedBusinessSession(updatedSession);
       try {
         localStorage.setItem('copo_business_verified_session', JSON.stringify(updatedSession));
@@ -1485,10 +1595,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     try {
       localStorage.setItem(`copo_business_profile_${selectedPlaceId}`, JSON.stringify({
         name: profileName,
-        address: profileAddress,
+        address: finalAddress,
         phone: profilePhone,
         website: profileWebsite,
         hours: profileHours,
+        email: profileEmail,
         description: profileDesc,
         category: businessCategory,
         streetAddress,
@@ -1498,10 +1609,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         country: selectedCountry,
         weeklySchedule,
         selectedAmenities,
+        logoUrl: profileLogoUrl,
+        bannerUrl: profileBannerUrl
       }));
     } catch (e) {
       console.warn('Failed to save profile to localStorage:', e);
     }
+
+    try {
+      window.dispatchEvent(new CustomEvent('copo-place-updated', { detail: currentPlace }));
+    } catch (e) {}
 
     setIsProfileSaved(true);
     setTimeout(() => setIsProfileSaved(false), 3000);
@@ -3324,7 +3441,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             {/* TAB 6: BUSINESS PROFILE & INFO */}
             
             {activeTab === 'profile' && (
-              <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200 pb-16 max-w-2xl mx-auto">
+              <div className="space-y-6 animate-in fade-in duration-200 pb-16 max-w-xl mx-auto">
                 
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -3357,233 +3474,360 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 </div>
 
                 {/* Main Unified Settings Card */}
-                <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/80 shadow-2xl backdrop-blur-xl">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-6 shadow-2xl backdrop-blur-xl">
                   
-                  {/* Photo & Identity Section */}
-                  <div className="p-5 sm:p-6 bg-zinc-900/60">
-                    <input 
-                      ref={logoFileInputRef}
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      onChange={handleLogoFileUpload}
-                    />
-
-                    <div className="flex items-center gap-4 sm:gap-5">
-                      {/* Avatar preview with upload overlay */}
-                      <div 
-                        onClick={() => logoFileInputRef.current?.click()}
-                        className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-2xl font-black text-white overflow-hidden shadow-lg ring-1 ring-white/10 shrink-0 cursor-pointer relative group"
-                        title="Click to upload venue photo"
-                      >
+                  {/* Profile Picture / Logo Uploader */}
+                  <div className="flex flex-col items-center gap-2.5 pt-1">
+                    <div 
+                      className="relative group cursor-pointer" 
+                      onClick={() => logoFileInputRef.current?.click()}
+                      title="Click to upload custom logo"
+                    >
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center">
                         {profileLogoUrl ? (
                           <img 
                             src={profileLogoUrl} 
-                            alt={profileName || "Venue Logo"}
-                            className="w-full h-full object-cover group-hover:opacity-75 transition-opacity" 
+                            alt={profileName || "Logo"} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                            referrerPolicy="no-referrer"
                             onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.src = 'https://www.yoouz.com/icon-512.png';
+                              (e.currentTarget as HTMLImageElement).src = 'https://www.yoouz.com/icon-512.png';
                             }}
                           />
                         ) : (
-                          (profileName.charAt(0).toUpperCase() || 'B')
+                          <span className="text-2xl font-black text-white uppercase">
+                            {profileName ? profileName.charAt(0) : "B"}
+                          </span>
                         )}
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Camera className="w-5 h-5 text-white" />
+                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <Camera className="w-6 h-6" />
                         </div>
                       </div>
+                      <button 
+                        type="button" 
+                        id="btn-upload-logo-badge"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          logoFileInputRef.current?.click();
+                        }}
+                        className="absolute bottom-0 right-0 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"
+                        title="Upload logo"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+                      <input 
+                        type="file" 
+                        ref={logoFileInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleLogoFileUpload} 
+                      />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-xs font-bold text-zinc-200">Profile Picture</span>
+                      <p className="text-[11px] text-zinc-400">Click to upload a custom JPG or PNG</p>
+                    </div>
+                    {logoError && <p className="text-xs text-rose-400 font-semibold">{logoError}</p>}
+                  </div>
 
-                      {/* Name & Actions */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-base sm:text-lg font-black text-white truncate tracking-tight">
-                            {profileName || 'Your Venue Name'}
-                          </h3>
-                          {/* Monochrome Verified Badge (No Green) */}
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-semibold">
-                            <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
-                            <span>Verified</span>
+                  {/* Cover Banner Uploader */}
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div 
+                      className="relative group cursor-pointer w-full" 
+                      onClick={() => bannerFileInputRef.current?.click()}
+                      title="Click to upload cover banner"
+                    >
+                      <div className="w-full h-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center">
+                        {profileBannerUrl ? (
+                          <img 
+                            src={profileBannerUrl} 
+                            alt="Cover Banner" 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                            referrerPolicy="no-referrer" 
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-zinc-950 flex flex-col items-center justify-center gap-2 text-zinc-500">
+                            <Camera className="w-7 h-7 text-zinc-600" />
+                            <span className="text-xs font-medium text-zinc-500">No cover banner set</span>
                           </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <Camera className="w-6 h-6" />
                         </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        id="btn-upload-banner-badge"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          bannerFileInputRef.current?.click();
+                        }}
+                        className="absolute bottom-2.5 right-2.5 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"
+                        title="Upload cover banner"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+                      <input 
+                        type="file" 
+                        ref={bannerFileInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleBannerFileUpload} 
+                      />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-xs font-bold text-zinc-200">Cover Banner</span>
+                      <p className="text-[11px] text-zinc-400">Click to upload a custom JPG or PNG</p>
+                    </div>
+                    {bannerError && <p className="text-xs text-rose-400 font-semibold">{bannerError}</p>}
+                  </div>
 
-                        {/* Button Actions in Dark Mode (No White Buttons) */}
-                        <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-                          <button
-                            type="button"
-                            id="btn-upload-logo"
-                            onClick={() => logoFileInputRef.current?.click()}
-                            className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-[12px] font-semibold border border-zinc-700 transition-all cursor-pointer flex items-center gap-1.5"
-                          >
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>Upload Photo</span>
-                          </button>
-                          <button
-                            type="button"
-                            id="btn-toggle-logo-url"
-                            onClick={() => setShowLogoUrlInput(!showLogoUrlInput)}
-                            className="px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white text-[12px] font-medium transition-colors cursor-pointer hover:bg-zinc-800/60"
-                          >
-                            {showLogoUrlInput ? 'Hide URL' : 'Paste Image URL'}
-                          </button>
-                          {profileLogoUrl !== 'https://www.yoouz.com/icon-512.png' && (
-                            <button
-                              type="button"
-                              id="btn-use-yoouz-icon"
-                              onClick={() => setProfileLogoUrl('https://www.yoouz.com/icon-512.png')}
-                              className="px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white text-[12px] font-medium transition-colors cursor-pointer hover:bg-zinc-800/60"
-                            >
-                              Use Yoouz Icon
-                            </button>
+                  {/* DISPLAY NAME */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
+                      Display Name
+                    </label>
+                    <input
+                      type="text"
+                      id="input-profile-name"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value.slice(0, 70))}
+                      placeholder="e.g. Legal500"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                    />
+                  </div>
+
+                  {/* BIO */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300">
+                        Bio
+                      </label>
+                      <span className="text-[10px] font-bold text-zinc-400">{profileDesc.length} / 300</span>
+                    </div>
+                    <textarea
+                      id="textarea-profile-desc"
+                      value={profileDesc}
+                      onChange={(e) => setProfileDesc(e.target.value.slice(0, 300))}
+                      rows={3}
+                      placeholder="Tell visitors what makes your venue authentic and special..."
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500 leading-relaxed font-medium"
+                    />
+                  </div>
+
+                  {/* LOCATION (Structured Country, Region, City, Neighborhood) */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
+                      Location
+                    </label>
+                    
+                    <CountrySelector
+                      value={selectedCountry}
+                      onChange={handleCountryChange}
+                    />
+
+                    {selectedCountry && (() => {
+                      const selectedCountryObj = Country.getAllCountries().find(c => c.name === selectedCountry);
+                      const isoCode = selectedCountryObj?.isoCode || "";
+                      const statesObj = State.getStatesOfCountry(isoCode);
+                      const hasStates = statesObj.length > 0;
+                      const stateOptions = statesObj.map(s => s.name);
+                      
+                      let cityOptions: string[] = [];
+                      if (stateRegion) {
+                        const selectedState = statesObj.find(s => s.name === stateRegion);
+                        if (selectedState) {
+                          const stateCities = City.getCitiesOfState(isoCode, selectedState.isoCode).map(c => c.name);
+                          cityOptions = stateCities.length > 0 ? stateCities : (City.getCitiesOfCountry(isoCode)?.map(c => c.name) || []);
+                        } else {
+                          cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
+                        }
+                      } else {
+                        cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
+                      }
+                      const uniqueCityOptions = Array.from(new Set(cityOptions));
+
+                      return (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                          {hasStates ? (
+                            <>
+                              <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                                  Region / Province
+                                </span>
+                                <SearchableComboSelector
+                                  value={stateRegion}
+                                  onChange={(val) => {
+                                    setStateRegion(val);
+                                    setCity("");
+                                  }}
+                                  options={stateOptions}
+                                  placeholder="Region / Province"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                                  City
+                                </span>
+                                <SearchableComboSelector
+                                  value={city}
+                                  onChange={setCity}
+                                  options={uniqueCityOptions}
+                                  placeholder="Select City"
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <div className="col-span-1 sm:col-span-2 space-y-1">
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                                City
+                              </span>
+                              <SearchableComboSelector
+                                value={city}
+                                onChange={setCity}
+                                options={uniqueCityOptions}
+                                placeholder="Select City"
+                              />
+                            </div>
                           )}
                         </div>
-                      </div>
-                    </div>
+                      );
+                    })()}
 
-                    {/* Expandable Image URL input */}
-                    {showLogoUrlInput && (
-                      <div className="mt-4 pt-4 border-t border-zinc-800/80 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                        <input
-                          type="url"
-                          id="input-profile-logo-url"
-                          value={profileLogoUrl}
-                          onChange={(e) => setProfileLogoUrl(e.target.value)}
-                          placeholder="https://example.com/logo.png"
-                          className="flex-1 bg-zinc-950/90 border border-zinc-800 rounded-xl px-3.5 py-2 text-[12px] text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowLogoUrlInput(false)}
-                          className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-[12px] font-semibold border border-zinc-700 cursor-pointer"
-                        >
-                          Done
-                        </button>
-                      </div>
-                    )}
+                    {/* Street Address / Neighborhood */}
+                    <div className="space-y-1 pt-1">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                        Street Address / Neighborhood
+                      </span>
+                      <input
+                        type="text"
+                        id="input-profile-street"
+                        value={streetAddress}
+                        onChange={(e) => {
+                          setStreetAddress(e.target.value);
+                          setProfileAddress(e.target.value);
+                        }}
+                        placeholder="e.g. 100 Bay Street, Financial District"
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all font-medium"
+                      />
+                    </div>
                   </div>
-                      
-                      {/* Venue Name */}
-                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
-                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-zinc-400" /> Venue Name
-                        </label>
-                        <input
-                          type="text"
-                          id="input-profile-name"
-                          value={profileName}
-                          onChange={(e) => setProfileName(e.target.value)}
-                          placeholder="e.g. The Rustic Spoon"
-                          className="w-full bg-transparent text-[14px] font-bold text-white placeholder-zinc-600 focus:outline-none"
-                        />
-                      </div>
 
-                      {/* Category */}
-                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors relative group focus-within:bg-zinc-850/40">
-                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-zinc-400" /> Category
-                        </label>
-                        <div className="relative">
-                          <select
-                            id="select-profile-category"
-                            value={businessCategory}
-                            onChange={(e) => setBusinessCategory(e.target.value)}
-                            className="w-full bg-transparent text-[14px] font-semibold text-white appearance-none cursor-pointer focus:outline-none pr-8"
-                          >
-                            <option value="Dining & Artisanal Food" className="bg-zinc-900 text-white">Dining & Artisanal Food</option>
-                            <option value="Coffee, Cafes & Bakeries" className="bg-zinc-900 text-white">Coffee, Cafes & Bakeries</option>
-                            <option value="Nightlife, Bars & Lounges" className="bg-zinc-900 text-white">Nightlife, Bars & Lounges</option>
-                            <option value="Hospitality & Hotels" className="bg-zinc-900 text-white">Hospitality & Hotels</option>
-                            <option value="Retail & Local Boutiques" className="bg-zinc-900 text-white">Retail & Local Boutiques</option>
-                            <option value="Health, Beauty & Wellness" className="bg-zinc-900 text-white">Health, Beauty & Wellness</option>
-                            <option value="Entertainment & Venues" className="bg-zinc-900 text-white">Entertainment & Venues</option>
-                            <option value="Services & Home Trades" className="bg-zinc-900 text-white">Services & Home Trades</option>
-                            <option value="Other Venue" className="bg-zinc-900 text-white">Other Venue</option>
-                          </select>
-                          <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        </div>
-                      </div>
+                  {/* OPERATING HOURS */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-zinc-400" /> Operating Hours
+                    </label>
+                    <input
+                      type="text"
+                      id="input-profile-hours"
+                      value={profileHours}
+                      onChange={(e) => setProfileHours(e.target.value)}
+                      placeholder="e.g. Mon-Fri: 9:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                    />
+                  </div>
 
-                      {/* Address */}
-                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
-                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-zinc-400" /> Physical Location
-                        </label>
-                        <input
-                          type="text"
-                          id="input-profile-address"
-                          value={profileAddress}
-                          onChange={(e) => {
-                            setProfileAddress(e.target.value);
-                            setStreetAddress(e.target.value);
-                          }}
-                          placeholder="e.g. 123 Main St, New York, NY 10001"
-                          className="w-full bg-transparent text-[14px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
-                        />
-                        <p className="text-[11px] text-zinc-500 mt-1">Where guests visit to record video reviews.</p>
-                      </div>
+                  {/* PHONE NUMBER */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-zinc-400" /> Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="input-profile-phone"
+                      value={profilePhone}
+                      onChange={(e) => setProfilePhone(e.target.value)}
+                      placeholder="e.g. +1 (212) 555-0198"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                    />
+                  </div>
 
-                      {/* Phone Number */}
-                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
-                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5 text-zinc-400" /> Phone Number
-                        </label>
-                        <input
-                          type="tel"
-                          id="input-profile-phone"
-                          value={profilePhone}
-                          onChange={(e) => {
-                            setProfilePhone(e.target.value);
-                            setLocalPhone(e.target.value);
-                          }}
-                          placeholder="e.g. +1 (212) 555-0198"
-                          className="w-full bg-transparent text-[14px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
-                        />
-                      </div>
+                  {/* BUSINESS EMAIL */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-zinc-400" /> Business Email
+                    </label>
+                    <input
+                      type="email"
+                      id="input-profile-email"
+                      value={profileEmail}
+                      onChange={(e) => setProfileEmail(e.target.value)}
+                      placeholder="e.g. contact@business.com"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                    />
+                  </div>
 
-                      {/* Website */}
-                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
-                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                          <Globe className="w-3.5 h-3.5 text-zinc-400" /> Website URL
-                        </label>
-                        <input
-                          type="url"
-                          id="input-profile-website"
-                          value={profileWebsite}
-                          onChange={(e) => setProfileWebsite(e.target.value)}
-                          placeholder="https://yourwebsite.com"
-                          className="w-full bg-transparent text-[14px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
-                        />
-                      </div>
-
-                      {/* Short Bio / Story */}
-                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors focus-within:bg-zinc-850/40">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
-                            <FileText className="w-3.5 h-3.5 text-zinc-400" /> About Venue
-                          </label>
-                          <span className="text-[10px] text-zinc-500 font-mono">
-                            {profileDesc.length} / 300
-                          </span>
-                        </div>
-                        <textarea
-                          id="textarea-profile-desc"
-                          value={profileDesc}
-                          onChange={(e) => setProfileDesc(e.target.value)}
-                          maxLength={300}
-                          rows={3}
-                          placeholder="Tell visitors what makes your venue authentic and special..."
-                          className="w-full bg-zinc-950/80 border border-zinc-800 rounded-2xl p-3.5 text-[13px] text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 resize-none leading-relaxed font-medium transition-colors"
-                        />
-                      </div>
-
+                  {/* WEBSITE (Read-Only / Linked Domain) */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-zinc-400" /> Website URL
+                      </label>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/60 text-[10px] font-semibold text-zinc-400">
+                        <Lock className="w-2.5 h-2.5 text-zinc-400" /> Verified Domain
+                      </span>
                     </div>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        id="input-profile-website-readonly"
+                        value={profileWebsite || (currentPlace as any).website || 'https://legal500.com'}
+                        readOnly
+                        tabIndex={-1}
+                        className="w-full bg-zinc-950/60 border border-zinc-800/80 text-zinc-400 rounded-2xl px-4 py-3 text-sm font-medium cursor-not-allowed select-all pr-12 focus:outline-none"
+                      />
+                      {(profileWebsite || (currentPlace as any).website) && (
+                        <a
+                          href={profileWebsite || (currentPlace as any).website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute right-3.5 p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                          title="Open website"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-zinc-500 pl-1">
+                      Associated with your verified business credentials and cannot be edited.
+                    </p>
+                  </div>
 
-                    {/* Bottom Save Action Button in Dark Mode (No White Button) */}
+                  {/* BUSINESS CATEGORY */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-zinc-400" /> Business Category
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="select-profile-category"
+                        value={businessCategory}
+                        onChange={(e) => setBusinessCategory(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all pr-10"
+                      >
+                        <option value="Dining & Artisanal Food" className="bg-zinc-900 text-white">Dining & Artisanal Food</option>
+                        <option value="Coffee, Cafes & Bakeries" className="bg-zinc-900 text-white">Coffee, Cafes & Bakeries</option>
+                        <option value="Nightlife, Bars & Lounges" className="bg-zinc-900 text-white">Nightlife, Bars & Lounges</option>
+                        <option value="Hospitality & Hotels" className="bg-zinc-900 text-white">Hospitality & Hotels</option>
+                        <option value="Retail & Local Boutiques" className="bg-zinc-900 text-white">Retail & Local Boutiques</option>
+                        <option value="Health, Beauty & Wellness" className="bg-zinc-900 text-white">Health, Beauty & Wellness</option>
+                        <option value="Entertainment & Venues" className="bg-zinc-900 text-white">Entertainment & Venues</option>
+                        <option value="Services & Home Trades" className="bg-zinc-900 text-white">Services & Home Trades</option>
+                        <option value="Corporate & Legal" className="bg-zinc-900 text-white">Corporate & Legal</option>
+                        <option value="Other Venue" className="bg-zinc-900 text-white">Other Venue</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Bottom Save Action Button */}
+                  <div className="pt-2">
                     <button
                       type="button"
                       id="btn-save-profile-bottom"
                       onClick={handleSaveProfile}
-                      className="w-full py-3.5 px-6 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-[13px] transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3.5 px-6 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-sm transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>
@@ -3594,9 +3838,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <span>Save Profile Changes</span>
                       )}
                     </button>
-
                   </div>
-                )}
+
+                </div>
+
+              </div>
+            )}
 {/* TAB 7: SUBSCRIPTION & CREEM.IO */}
             {activeTab === 'billing' && (
               <div className="space-y-8 animate-in fade-in duration-200 pb-12 max-w-6xl mx-auto">
