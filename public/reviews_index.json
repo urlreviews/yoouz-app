@@ -1,6 +1,4 @@
-import { VideoReview } from "../types";
-
-export const INITIAL_SEED_VIDEOS: VideoReview[] = [
+[
   {
     "id": "rev-1788277000192-c9ypn",
     "placeId": "plomberiebruxelles24.be",
@@ -467,4 +465,4 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "createdAt": "2026-08-30 12:01:31",
     "createdAtMs": 1788091291000
   }
-];
+]

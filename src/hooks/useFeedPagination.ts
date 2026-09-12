@@ -91,11 +91,20 @@ export function useFeedPagination() {
     try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
 
     try {
-      // Purge legacy caches to eliminate corrupted counts
+      // Purge legacy caches to eliminate corrupted counts and stale sort
+      localStorage.removeItem("yoouz_cached_videos_v21");
       localStorage.removeItem("yoouz_cached_videos_v20");
       localStorage.removeItem("yoouz_cached_videos_v19");
       localStorage.removeItem("yoouz_cached_videos_v18");
       localStorage.removeItem("yoouz_cached_videos_v16");
+
+      const getReviewTime = (v: any) => {
+        if (!v) return 0;
+        const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+        const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
+        const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
+        return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
+      };
 
       let localPublished: any[] = [];
       try {
@@ -108,7 +117,7 @@ export function useFeedPagination() {
         }
       } catch (e) {}
 
-      const cached = localStorage.getItem("yoouz_cached_videos_v21");
+      const cached = localStorage.getItem("yoouz_cached_videos_v22");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -119,7 +128,9 @@ export function useFeedPagination() {
             filtered.forEach((v) => {
               if (!combinedMap.has(v.id)) combinedMap.set(v.id, v);
             });
-            return Array.from(combinedMap.values());
+            const result = Array.from(combinedMap.values());
+            result.sort((a, b) => getReviewTime(b) - getReviewTime(a));
+            return result;
           }
         }
       }
@@ -129,19 +140,33 @@ export function useFeedPagination() {
         INITIAL_SEED_VIDEOS.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview).forEach((v) => {
           if (!combinedMap.has(v.id)) combinedMap.set(v.id, v);
         });
-        return Array.from(combinedMap.values());
+        const result = Array.from(combinedMap.values());
+        result.sort((a, b) => getReviewTime(b) - getReviewTime(a));
+        return result;
       }
     } catch (e) {}
     // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
-    return INITIAL_SEED_VIDEOS.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
+    const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
+    return seeds;
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   useEffect(() => {
     let active = true;
+    let isFetching = false;
+    let sse: EventSource | null = null;
+    let sseReconnectTimeout: any = null;
+    let sseRetryDelay = 2000;
 
     const loadData = async (isBackground = false) => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        if (!isBackground) setIsLoading(false);
+        return;
+      }
+      if (isFetching) return;
+      isFetching = true;
+
       const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
       let deletedIds: string[] = [];
       try { 
@@ -150,8 +175,8 @@ export function useFeedPagination() {
       } catch (e) {}
 
       try {
-        // 1. Fetch from Server API (with memory warmth and HTTP stale-while-revalidate caching)
-        const res = await fetch(`/api/videos/feed`);
+        // 1. Fetch from Server API (with fresh cache-busting)
+        const res = await fetch(`/api/videos/feed?_t=${Date.now()}`, { cache: "no-store" });
         if (res.ok && active) {
           const data = await res.json();
           const serverDeletedIds: string[] = Array.isArray(data?.deletedIds) ? data.deletedIds : [];
@@ -240,15 +265,19 @@ export function useFeedPagination() {
                 return v;
               });
 
+              const getReviewTime = (v: any) => {
+                if (!v) return 0;
+                const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+                const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
+                const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
+                return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
+              };
+
               const merged = [...pendingLocalVideos, ...mergedServerVideos];
-              merged.sort((a, b) => {
-                const aTime = a.createdAtMs || (a.id && a.id.startsWith('rev-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
-                const bTime = b.createdAtMs || (b.id && b.id.startsWith('rev-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
-                return bTime - aTime;
-              });
+              merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
               
               // Persist fresh feed to cache
-              try { localStorage.setItem("yoouz_cached_videos_v21", JSON.stringify(merged.slice(0, 50))); } catch(e){}
+              try { localStorage.setItem("yoouz_cached_videos_v22", JSON.stringify(merged.slice(0, 50))); } catch(e){}
               
               return merged;
             });
@@ -259,9 +288,10 @@ export function useFeedPagination() {
         }
       } catch (err) {
         if (!isBackground) {
-          console.warn("[useFeedPagination] Server fetch failed:", err);
           setIsLoading(false);
         }
+      } finally {
+        isFetching = false;
       }
 
       if (!isBackground) {
@@ -270,15 +300,23 @@ export function useFeedPagination() {
     };
 
     // 2. Real-Time Server-Sent Events (SSE) stream for instant cross-device deletions & updates
-    let sse: EventSource | null = null;
-    let sseReconnectTimeout: any = null;
-
     const setupSse = () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      if (sse) {
+        try { sse.close(); } catch (e) {}
+        sse = null;
+      }
+
       try {
         sse = new EventSource("/api/videos/stream");
 
+        sse.onopen = () => {
+          sseRetryDelay = 2000;
+        };
+
         sse.onmessage = (event) => {
           if (!active) return;
+          sseRetryDelay = 2000;
           try {
             const payload = JSON.parse(event.data);
             if (payload.type === "video_deleted" && payload.videoId) {
@@ -380,11 +418,13 @@ export function useFeedPagination() {
 
         sse.onerror = () => {
           if (sse) {
-            sse.close();
+            try { sse.close(); } catch (e) {}
             sse = null;
           }
-          if (active) {
-            sseReconnectTimeout = setTimeout(setupSse, 3000);
+          if (active && (typeof navigator === "undefined" || navigator.onLine)) {
+            if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
+            sseReconnectTimeout = setTimeout(setupSse, sseRetryDelay);
+            sseRetryDelay = Math.min(sseRetryDelay * 1.5, 30000);
           }
         };
       } catch (e) {}
@@ -409,35 +449,53 @@ export function useFeedPagination() {
     // Initial load
     loadData(false);
 
-    // Live background polling every 3 seconds as ultra-reliable synchronization fallback
+    // Live background polling (every 12 seconds) as backup synchronization
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && (typeof navigator === "undefined" || navigator.onLine)) {
         loadData(true);
       }
-    }, 3000);
+    }, 12000);
 
-    // Immediate refresh on tab focus / app resume
+    // Immediate refresh on tab focus / app resume / network online
     const handleVisibilityOrFocus = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && (typeof navigator === "undefined" || navigator.onLine)) {
         loadData(true);
+      }
+    };
+
+    const handleOnline = () => {
+      sseRetryDelay = 2000;
+      if (!sse) setupSse();
+      loadData(true);
+    };
+
+    const handleOffline = () => {
+      if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
+      if (sse) {
+        try { sse.close(); } catch (e) {}
+        sse = null;
       }
     };
 
     window.addEventListener("focus", handleVisibilityOrFocus);
     document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
       active = false;
       clearInterval(interval);
       if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
       if (sse) {
-        sse.close();
+        try { sse.close(); } catch (e) {}
         sse = null;
       }
       window.removeEventListener("copo-video-deleted", handleVideoDeletedEvent);
       window.removeEventListener("copo-videos-purged", handleVideosPurgedEvent);
       window.removeEventListener("focus", handleVisibilityOrFocus);
       document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 

@@ -5370,12 +5370,20 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
   // Get Video Feed endpoint (combines server index with BunnyDB and uploaded videos with memory caching & write-back resiliency)
   app.get("/api/videos/feed", async (_req, res) => {
     try {
-      res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=60");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       const now = Date.now();
       const deletedIds = readDeletedReviewsIndex();
       const deletedSet = new Set(deletedIds);
       const localList = readReviewsIndex().filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
       
+      const getReviewTime = (v: any) => {
+        if (!v) return 0;
+        const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+        const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
+        const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
+        return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
+      };
+
       // If we have a valid memory cache AND we are not due for a live fetch, serve from cache
       const isCacheValid = (now - feedCache.lastFetched < CACHE_TTL_MS) && feedCache.videos.length > 0;
       
@@ -5405,11 +5413,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
           }
         });
         const merged = Array.from(map.values());
-        merged.sort((a, b) => {
-          const aTime = a.createdAtMs || (a.id && typeof a.id === "string" && a.id.startsWith("rev-") ? parseInt(a.id.split("-")[1]) : 0) || 0;
-          const bTime = b.createdAtMs || (b.id && typeof b.id === "string" && b.id.startsWith("rev-") ? parseInt(b.id.split("-")[1]) : 0) || 0;
-          return bTime - aTime;
-        });
+        merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
         return res.json({ success: true, videos: merged, deletedIds });
       }
 
@@ -5442,6 +5446,13 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
               const sharesCountVal = typeof r.sharesCount === 'number' ? r.sharesCount : (typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : (parsedData.shares || 0));
               const viewsCountVal = typeof r.viewsCount === 'number' ? r.viewsCount : (typeof parsedData.viewsCount === 'number' ? parsedData.viewsCount : (parsedData.views || 0));
 
+              const parsedDt = r.createdAt ? new Date(r.createdAt.includes('T') ? r.createdAt : r.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+              const effCreatedAtMs = Math.max(
+                parsedDt || 0,
+                typeof parsedData.createdAtMs === 'number' ? parsedData.createdAtMs : 0,
+                (r.id && typeof r.id === 'string' && r.id.startsWith('rev-')) ? parseInt(r.id.split('-')[1], 10) : 0
+              );
+
               map.set(r.id, {
                 ...existing,
                 ...parsedData,
@@ -5454,6 +5465,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
                 videoUrl: r.videoUrl || parsedData.videoUrl,
                 thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
                 duration: r.duration || parsedData.duration || 60,
+                createdAt: r.createdAt || parsedData.createdAt,
+                createdAtMs: effCreatedAtMs,
                 likesCount: likesCountVal,
                 likes: likesCountVal,
                 bookmarksCount: bookmarksCountVal,
@@ -5591,11 +5604,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
         return enriched;
       });
-      merged.sort((a, b) => {
-        const aTime = a.createdAtMs || (a.id && a.id.startsWith('rev-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
-        const bTime = b.createdAtMs || (b.id && b.id.startsWith('rev-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
-        return bTime - aTime;
-      });
+      merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
 
       // 4. Update memory cache and write-back to local reviews_index.json on success
       if (bunnyFetchSuccess || BunnyDBFetchSuccess) {

@@ -781,7 +781,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Robust programmatic scroll function that guarantees instant synchronization
   const scrollToCard = useCallback(
     (targetIndex: number, behavior: ScrollBehavior = "smooth") => {
-      const maxIdx = videos.length > 0 ? videos.length : 0;
+      const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
       if (targetIndex < 0 || targetIndex > maxIdx) return;
 
       // Update refs and trigger state change immediately to prevent race conditions
@@ -958,7 +958,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     if (isSessionAudioUnlocked && !isMuted) {
       ensureSharedAudioContextUnlocked();
     }
-    const maxIdx = videos.length > 0 ? videos.length : 0;
+    const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
     if (currentIndexRef.current < maxIdx) {
       const nextIdx = currentIndexRef.current + 1;
       if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
@@ -1405,9 +1405,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           <button
             id="btn-scroll-next-video"
             onClick={handleNext}
-            disabled={currentIndex >= (videos.length > 0 ? videos.length : 0)}
+            disabled={currentIndex >= (videos.length > 0 ? videos.length - 1 : 0)}
             className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-              currentIndex >= (videos.length > 0 ? videos.length : 0)
+              currentIndex >= (videos.length > 0 ? videos.length - 1 : 0)
                 ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
                 : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
             }`}

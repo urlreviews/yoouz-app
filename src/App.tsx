@@ -1591,8 +1591,12 @@ export function App() {
   // Real-time synchronization of all registered users across the platform
   useEffect(() => {
     let isCancelled = false;
+    let isFetchingUsers = false;
 
     const fetchAllUsers = async () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      if (isFetchingUsers) return;
+      isFetchingUsers = true;
       try {
         const res = await fetch(`/api/nosql/users?_t=${Date.now()}`);
         if (res.ok) {
@@ -1641,17 +1645,35 @@ export function App() {
             });
           }
         }
-      } catch (e) {}
+      } catch (e) {
+      } finally {
+        isFetchingUsers = false;
+      }
     };
 
     fetchAllUsers();
-    const interval = setInterval(fetchAllUsers, 2500);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible" && (typeof navigator === "undefined" || navigator.onLine)) {
+        fetchAllUsers();
+      }
+    }, 20000);
 
+    const handleUsersRefresh = () => {
+      if (document.visibilityState === "visible") {
+        fetchAllUsers();
+      }
+    };
 
+    window.addEventListener("online", handleUsersRefresh);
+    window.addEventListener("focus", handleUsersRefresh);
+    document.addEventListener("visibilitychange", handleUsersRefresh);
 
     return () => {
       isCancelled = true;
       clearInterval(interval);
+      window.removeEventListener("online", handleUsersRefresh);
+      window.removeEventListener("focus", handleUsersRefresh);
+      document.removeEventListener("visibilitychange", handleUsersRefresh);
     };
   }, []);
 
@@ -2329,13 +2351,19 @@ export function App() {
     }
 
     // Apply Profile Sort
+    const getReviewTime = (v: any) => {
+      if (!v) return 0;
+      const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+      const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
+      const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
+      return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
+    };
+
     return [...filtered].sort((a, b) => {
       if (profileVideoSort === "highest") {
         return b.rating - a.rating;
       }
-      const timeA = a.createdAtMs || (a.recordedAt ? new Date(a.recordedAt).getTime() : 0) || 0;
-      const timeB = b.createdAtMs || (b.recordedAt ? new Date(b.recordedAt).getTime() : 0) || 0;
-      return timeB - timeA;
+      return getReviewTime(b) - getReviewTime(a);
     });
   }, [videos, currentUser, profileVideoSort, profileVideoFilter]);
 

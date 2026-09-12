@@ -67,7 +67,11 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
   // Automatically fetch & poll real registered users from server to ensure instant real-time discoverability
   useEffect(() => {
     let isMounted = true;
+    let isFetching = false;
     const fetchUsers = async () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      if (isFetching) return;
+      isFetching = true;
       try {
         const res = await fetch(`/api/nosql/users?_t=${Date.now()}`);
         if (res.ok) {
@@ -78,15 +82,32 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         }
       } catch (e) {
         // Silently handle
+      } finally {
+        isFetching = false;
       }
     };
 
     fetchUsers();
-    const interval = setInterval(fetchUsers, 3000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible" && (typeof navigator === "undefined" || navigator.onLine)) {
+        fetchUsers();
+      }
+    }, 30000);
+
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        fetchUsers();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("online", handleFocus);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("online", handleFocus);
     };
   }, []);
 

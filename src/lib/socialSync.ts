@@ -35,10 +35,40 @@ type RealtimeEventHandler = (event: { type: string; [key: string]: any }) => voi
 const realtimeListeners = new Set<RealtimeEventHandler>();
 let activeEventSource: EventSource | null = null;
 let sseReconnectTimer: any = null;
+let sseRetryDelay = 2000;
 let currentSseUserKey = "";
+let isNetworkOnline = typeof navigator !== "undefined" ? navigator.onLine !== false : true;
+
+if (typeof window !== "undefined") {
+  window.addEventListener("online", () => {
+    isNetworkOnline = true;
+    sseRetryDelay = 2000;
+    if (activeCurrentUser && realtimeListeners.size > 0 && !activeEventSource) {
+      setupRealtimeStream(activeCurrentUser);
+    }
+  });
+
+  window.addEventListener("offline", () => {
+    isNetworkOnline = false;
+    if (sseReconnectTimer) {
+      clearTimeout(sseReconnectTimer);
+      sseReconnectTimer = null;
+    }
+    if (activeEventSource) {
+      try {
+        activeEventSource.close();
+      } catch (e) {}
+      activeEventSource = null;
+    }
+  });
+}
+
+let activeCurrentUser: UserProfile | null = null;
 
 function setupRealtimeStream(user: UserProfile) {
+  activeCurrentUser = user;
   if (typeof window === "undefined" || typeof EventSource === "undefined") return;
+  if (!isNetworkOnline) return;
 
   const email = (user.email || "").toLowerCase().trim();
   const userId = (user.userId || (user as any).id || "").trim();
@@ -67,16 +97,19 @@ function setupRealtimeStream(user: UserProfile) {
     const es = new EventSource(`/api/realtime/stream?${query}`);
     activeEventSource = es;
 
+    es.onopen = () => {
+      sseRetryDelay = 2000;
+    };
+
     es.onmessage = (e) => {
+      sseRetryDelay = 2000;
       try {
         if (!e.data || e.data.trim() === "heartbeat") return;
         const parsed = JSON.parse(e.data);
         realtimeListeners.forEach((fn) => {
           try {
             fn(parsed);
-          } catch (err) {
-            console.warn("Error in SSE listener handler:", err);
-          }
+          } catch (err) {}
         });
       } catch (parseErr) {}
     };
@@ -88,18 +121,17 @@ function setupRealtimeStream(user: UserProfile) {
       if (activeEventSource === es) {
         activeEventSource = null;
       }
-      if (!sseReconnectTimer) {
+      if (!sseReconnectTimer && isNetworkOnline) {
         sseReconnectTimer = setTimeout(() => {
           sseReconnectTimer = null;
-          if (realtimeListeners.size > 0 && user) {
+          if (realtimeListeners.size > 0 && user && isNetworkOnline) {
             setupRealtimeStream(user);
           }
-        }, 3500);
+        }, sseRetryDelay);
+        sseRetryDelay = Math.min(sseRetryDelay * 1.5, 30000);
       }
     };
-  } catch (err) {
-    console.warn("Failed to initialize SSE EventSource:", err);
-  }
+  } catch (err) {}
 }
 
 function registerRealtimeListener(user: UserProfile, handler: RealtimeEventHandler): () => void {
@@ -500,7 +532,11 @@ export function subscribeToNotifications(
   } catch (e) {}
 
   // 1. Initial immediate fetch from Bunny Cloud Database
+  let isFetchingNotifs = false;
   const fetchFromBunny = async () => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    if (isFetchingNotifs) return;
+    isFetchingNotifs = true;
     try {
       const res = await fetch(`/api/nosql/notifications?_t=${Date.now()}`);
       if (res.ok) {
@@ -541,7 +577,10 @@ export function subscribeToNotifications(
           updateList(merged);
         }
       }
-    } catch (e) {}
+    } catch (e) {
+    } finally {
+      isFetchingNotifs = false;
+    }
   };
   fetchFromBunny();
 
@@ -579,8 +618,24 @@ export function subscribeToNotifications(
     }
   });
 
-  // 3. Periodic Background Sync (every 4 seconds) for infallible consistency
-  const pollTimer = setInterval(fetchFromBunny, 4000);
+  // 3. Periodic Background Sync (every 12 seconds when visible & online)
+  const pollTimer = setInterval(() => {
+    if (document.visibilityState === "visible" && (typeof navigator === "undefined" || navigator.onLine)) {
+      fetchFromBunny();
+    }
+  }, 12000);
+
+  const handleOnlineRefresh = () => {
+    if (document.visibilityState === "visible") {
+      fetchFromBunny();
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("online", handleOnlineRefresh);
+    window.addEventListener("focus", handleOnlineRefresh);
+    document.addEventListener("visibilitychange", handleOnlineRefresh);
+  }
 
   // 4. Instant local window event listener for 0ms in-app actions
   const handleLocalNotif = (e: Event) => {
@@ -612,6 +667,9 @@ export function subscribeToNotifications(
     unregisterSse();
     if (typeof window !== "undefined") {
       window.removeEventListener("copo-notification-received", handleLocalNotif);
+      window.removeEventListener("online", handleOnlineRefresh);
+      window.removeEventListener("focus", handleOnlineRefresh);
+      document.removeEventListener("visibilitychange", handleOnlineRefresh);
     }
   };
 }
@@ -1088,7 +1146,11 @@ export function subscribeToChats(
   } catch (e) {}
 
   // 1. Initial immediate fetch from Bunny Cloud Database
+  let isFetchingChats = false;
   const fetchFromBunny = async () => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    if (isFetchingChats) return;
+    isFetchingChats = true;
     try {
       const res = await fetch(`/api/nosql/chats?_t=${Date.now()}`);
       if (res.ok) {
@@ -1110,7 +1172,10 @@ export function subscribeToChats(
           updateThreads(merged);
         }
       }
-    } catch (e) {}
+    } catch (e) {
+    } finally {
+      isFetchingChats = false;
+    }
   };
   fetchFromBunny();
 
@@ -1148,13 +1213,34 @@ export function subscribeToChats(
     }
   });
 
-  // 3. Fallback background sync (every 4 seconds)
-  const pollTimer = setInterval(fetchFromBunny, 4000);
+  // 3. Fallback background sync (every 12 seconds when visible & online)
+  const pollTimer = setInterval(() => {
+    if (document.visibilityState === "visible" && (typeof navigator === "undefined" || navigator.onLine)) {
+      fetchFromBunny();
+    }
+  }, 12000);
+
+  const handleOnlineRefreshChats = () => {
+    if (document.visibilityState === "visible") {
+      fetchFromBunny();
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("online", handleOnlineRefreshChats);
+    window.addEventListener("focus", handleOnlineRefreshChats);
+    document.addEventListener("visibilitychange", handleOnlineRefreshChats);
+  }
 
   return () => {
     isDisposed = true;
     clearInterval(pollTimer);
     unregisterSse();
+    if (typeof window !== "undefined") {
+      window.removeEventListener("online", handleOnlineRefreshChats);
+      window.removeEventListener("focus", handleOnlineRefreshChats);
+      document.removeEventListener("visibilitychange", handleOnlineRefreshChats);
+    }
   };
 }
 
