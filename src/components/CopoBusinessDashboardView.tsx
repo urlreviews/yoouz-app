@@ -1799,8 +1799,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   className="h-9 sm:h-10 px-2 sm:px-3 flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold group shadow-xs"
                   title="Business Account Menu"
                 >
-                  {/* Dedicated Logo Container with Inset Padding for Any Dark/Light Logo */}
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-zinc-950 text-white border border-zinc-700/80 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden p-0.5 shadow-2xs">
+                  {/* Dedicated Logo Container with High-Contrast Background for Dark Mode */}
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white text-zinc-950 border border-zinc-700 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs">
                     {currentPlace.logoUrl ? (
                       <img 
                         src={currentPlace.logoUrl} 
@@ -1808,7 +1808,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         loading="eager" 
                         decoding="sync" 
                         fetchPriority="high" 
-                        className="w-full h-full object-contain rounded-md"
+                        className="w-full h-full object-cover rounded-md"
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
                           if (currentPlace.name?.toLowerCase().includes('yoouz') || (currentPlace.id && currentPlace.id.includes('yoouz'))) {
@@ -1817,7 +1817,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             target.style.display = 'none';
                             if (target.parentElement && !target.parentElement.querySelector('.fallback-initial')) {
                               const span = document.createElement('span');
-                              span.className = 'fallback-initial font-black text-[11px] text-white';
+                              span.className = 'fallback-initial font-black text-[11px] text-zinc-950';
                               span.textContent = currentPlace.name?.charAt(0).toUpperCase() || 'B';
                               target.parentElement.appendChild(span);
                             }
@@ -1825,7 +1825,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         }} 
                       />
                     ) : (
-                      <span className="font-black text-[11px] text-white">
+                      <span className="font-black text-[11px] text-zinc-950">
                         {currentPlace.name?.charAt(0).toUpperCase() || 'B'}
                       </span>
                     )}
@@ -1842,12 +1842,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div className="fixed top-[60px] right-3 w-[270px] sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-2 sm:w-68 bg-zinc-900 rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-3 border-b border-zinc-800 mb-1">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white border border-zinc-700/80 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden p-0.5">
+                        <div className="w-8 h-8 rounded-xl bg-white text-zinc-950 border border-zinc-700 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs">
                           {currentPlace.logoUrl ? (
                             <img 
                               src={currentPlace.logoUrl} 
                               alt={currentPlace.name} 
-                              className="w-full h-full object-contain rounded-lg"
+                              className="w-full h-full object-cover rounded-lg"
                               onError={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;
                                 if (currentPlace.name?.toLowerCase().includes('yoouz') || (currentPlace.id && currentPlace.id.includes('yoouz'))) {
@@ -1856,7 +1856,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   target.style.display = 'none';
                                   if (target.parentElement && !target.parentElement.querySelector('.fallback-initial')) {
                                     const span = document.createElement('span');
-                                    span.className = 'fallback-initial font-black text-xs text-white';
+                                    span.className = 'fallback-initial font-black text-xs text-zinc-950';
                                     span.textContent = currentPlace.name?.charAt(0).toUpperCase() || 'B';
                                     target.parentElement.appendChild(span);
                                   }
@@ -1864,7 +1864,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               }}
                             />
                           ) : (
-                            <span className="font-black text-xs text-white">
+                            <span className="font-black text-xs text-zinc-950">
                               {currentPlace.name?.charAt(0).toUpperCase() || 'B'}
                             </span>
                           )}
