@@ -3844,191 +3844,267 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
               </div>
             )}
-{/* TAB 7: SUBSCRIPTION & CREEM.IO */}
+            {/* TAB 7: SUBSCRIPTION & CREEM.IO */}
             {activeTab === 'billing' && (
-              <div className="space-y-8 animate-in fade-in duration-200 pb-12 max-w-6xl mx-auto">
+              <div className="space-y-6 animate-in fade-in duration-200 pb-16 max-w-xl mx-auto">
                 
-                {/* 10/10 iOS-Style Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-black text-white tracking-tight">Subscription & Billing</h2>
-                    <p className="text-sm text-zinc-200 mt-1">Manage your active plans, payment methods, and Creem.io invoices.</p>
+                    <p className="text-sm text-zinc-400 mt-1">Manage active plan, payment method, and Creem.io invoices.</p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <button
-                      onClick={() => setShowPricingModal(true)}
-                      className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-black rounded-full text-[13px] font-bold shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
-                    >
-                      Compare All Plans
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    id="btn-billing-compare-plans"
+                    onClick={() => setShowPricingModal(true)}
+                    className="self-start sm:self-auto px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold border border-zinc-700 hover:border-zinc-600 transition-all cursor-pointer shadow-md flex items-center gap-2 active:scale-95"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>Compare All Plans</span>
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-                  {/* Left Column: Active Plan & History (7 cols) */}
-                  <div className="lg:col-span-7 space-y-10">
-                    
-                    {/* SECTION 1: Active Subscription */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <CreditCard className="w-3.5 h-3.5" /> Current Plan
-                      </h3>
-                      
-                      <div className="bg-[#111113] rounded-[32px] border border-zinc-800 overflow-hidden relative shadow-sm">
-                        {/* Glow effect */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-[80px] rounded-full pointer-events-none" />
-                        
-                        <div className="p-8 relative z-10">
-                           <div className="flex flex-col sm:flex-row sm:items-start sm:items-center justify-between gap-6 mb-8">
-                             <div>
-                               <div className="flex items-center gap-2 mb-3">
-                                 <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white text-[10px] font-bold border border-white/20 uppercase tracking-wider">
-                                   Active Subscription
-                                 </span>
-                                 <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white text-[10px] font-bold border border-white/20 uppercase tracking-wider flex items-center gap-1.5">
-                                   <span className="w-1.5 h-1.5 rounded-full bg-white" /> Live
-                                 </span>
-                               </div>
-                               <h4 className="text-3xl font-black text-white tracking-tight">Yoouz Pro <span className="text-zinc-200">Business</span></h4>
-                               <div className="text-zinc-200 text-[13px] font-semibold mt-2">
-                                 $49.00 USD / month
-                                </div>
-                             </div>
-                             
-                             <div className="w-16 h-16 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white shrink-0">
-                               <Sparkles className="w-8 h-8 text-white" />
-                             </div>
-                           </div>
-                           
-                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-[#000000]/40 rounded-[20px] border border-white/[0.04]">
-                             <div>
-                               <div className="text-[11px] text-zinc-200 font-bold uppercase tracking-wider mb-1">Next Billing Date</div>
-                               <div className="text-[13px] font-semibold text-white">
-                                 Renews on <span className="text-white font-bold">{renewalDate}</span>
-                               </div>
-                               <div className="text-[12px] text-zinc-200 font-medium mt-0.5">
-                                 via {paymentMethodDisplay}
-                               </div>
-                             </div>
-                             <div className="flex items-center gap-2 shrink-0">
-                               <button
-                                 onClick={() => {
-                                   setCreemPlan('premium');
-                                   setShowCreemCheckout(true);
-                                 }}
-                                 className="px-5 py-2.5 bg-white hover:bg-zinc-200 text-black rounded-xl text-[13px] font-bold shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
-                               >
-                                 <Sparkles className="w-4 h-4" /> Upgrade to Premium
-                               </button>
-                             </div>
-                           </div>
+                {/* Main Unified Billing Card */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-6 shadow-2xl backdrop-blur-xl">
+
+                  {/* ACTIVE PLAN SHOWCASE */}
+                  <div className="bg-zinc-950 border border-zinc-800/90 rounded-2xl p-5 sm:p-6 space-y-5 relative overflow-hidden">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-semibold">
+                            {currentPlan === 'basic' ? 'Free Plan' : 'Active Subscription'}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/80 text-[11px] font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Live
+                          </span>
                         </div>
+                        <h3 className="text-2xl font-black text-white tracking-tight pt-1">
+                          {currentPlan === 'premium' ? 'Yoouz Premium Business' : currentPlan === 'basic' ? 'Yoouz Basic Business' : 'Yoouz Pro Business'}
+                        </h3>
+                        <div className="flex items-baseline gap-2 pt-0.5">
+                          <span className="text-3xl font-black text-white">
+                            {currentPlan === 'premium' ? '$299' : currentPlan === 'basic' ? '$0' : '$149'}
+                          </span>
+                          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">/ month</span>
+                          <span className="text-xs text-zinc-500 font-medium ml-1.5">
+                            {currentPlan === 'basic' ? 'Free forever' : 'Cancel anytime'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shrink-0 shadow-md">
+                        {currentPlan === 'premium' ? (
+                          <Star className="w-6 h-6 text-zinc-200" />
+                        ) : currentPlan === 'basic' ? (
+                          <ShieldCheck className="w-6 h-6 text-zinc-200" />
+                        ) : (
+                          <Sparkles className="w-6 h-6 text-zinc-200" />
+                        )}
                       </div>
                     </div>
 
-                    {/* SECTION 2: Billing History */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Receipt className="w-3.5 h-3.5" /> Billing History
-                      </h3>
-                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] shadow-sm overflow-hidden flex flex-col">
-                        <div className="overflow-x-auto custom-scrollbar">
-                          <table className="w-full text-left min-w-[600px]">
-                            <thead className="bg-[#18181b] border-b border-white/[0.06]">
-                              <tr>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest whitespace-nowrap">Invoice</th>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest whitespace-nowrap">Date</th>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest whitespace-nowrap">Amount</th>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest whitespace-nowrap">Status</th>
-                                <th className="py-3 px-5 text-[10px] font-bold text-zinc-200 uppercase tracking-widest text-right whitespace-nowrap">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/[0.06]">
-                              {[
-                                { id: 'CREEM-INV-9021', date: 'Aug 1, 2026', amount: '$49.00 USD' },
-                                { id: 'CREEM-INV-8419', date: 'Jul 1, 2026', amount: '$49.00 USD' }
-                              ].map((invoice) => (
-                                <tr key={invoice.id} className="hover:bg-white/[0.02] transition-colors group">
-                                  <td className="py-4 px-5">
-                                    <span className="font-mono text-[11px] text-zinc-200 bg-[#18181b] px-2.5 py-1.5 rounded-md border border-white/[0.06] whitespace-nowrap">{invoice.id}</span>
-                                  </td>
-                                  <td className="py-4 px-5 text-[13px] font-semibold text-zinc-200 whitespace-nowrap">{invoice.date}</td>
-                                  <td className="py-4 px-5 text-[13px] font-bold text-white whitespace-nowrap">{invoice.amount}</td>
-                                  <td className="py-4 px-5 whitespace-nowrap">
-                                    <span className="px-2.5 py-1 rounded-md bg-white/10 text-white text-[10px] font-bold border border-white/20 uppercase tracking-wider">
-                                      Paid
-                                    </span>
-                                  </td>
-                                  <td className="py-4 px-5 text-right whitespace-nowrap">
-                                    <button 
-                                      onClick={() => setShowReceiptModal(true)}
-                                      className="text-[12px] font-bold text-zinc-200 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-end gap-1.5 ml-auto md:opacity-100"
-                                    >
-                                      <Download className="w-3.5 h-3.5" /> Receipt
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                    {/* Included Plan Features Checklist */}
+                    <div className="pt-3 border-t border-zinc-800/80">
+                      <div className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-2.5">
+                        Included in Your Plan
                       </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-zinc-300 font-medium">
+                        {(currentPlan === 'premium' ? [
+                          'Everything in Pro Tier',
+                          'Up to 10 Direct Messages / day',
+                          'Website Video Widget Embeds',
+                          'Full Paid Ads Commercial Rights',
+                          'Advanced Analytics & Tracking',
+                          'Premium NFC Tap Stands Kit'
+                        ] : currentPlan === 'basic' ? [
+                          'Claim Business Listing',
+                          'Verified Business Badge',
+                          'Update Address & Hours',
+                          'Email Alerts for New Reviews'
+                        ] : [
+                          'Verified Business Badge',
+                          'Website Link & Action Buttons',
+                          'Public Video Replies & Moderation',
+                          'Up to 5 Direct Messages / day',
+                          'Dedicated Business Dashboard',
+                          'Custom Review Invite QR Kit'
+                        ]).map((feature, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <Check className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                            <span>{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Plan Action Buttons (All Dark Mode) */}
+                    <div className="pt-2">
+                      {currentPlan === 'pro' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <button
+                            type="button"
+                            id="btn-billing-upgrade-premium"
+                            onClick={() => {
+                              setCreemPlan('premium');
+                              setShowCreemCheckout(true);
+                            }}
+                            className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                            <span>Upgrade to Premium ($299)</span>
+                          </button>
+                          <button
+                            type="button"
+                            id="btn-billing-manage-plan"
+                            onClick={() => setShowPricingModal(true)}
+                            className="w-full py-3 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white border border-zinc-800 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <span>Change Plan</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {currentPlan === 'premium' && (
+                        <button
+                          type="button"
+                          id="btn-billing-manage-premium"
+                          onClick={() => setShowPricingModal(true)}
+                          className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Star className="w-3.5 h-3.5 text-zinc-300" />
+                          <span>Manage Plan / Downgrade Options</span>
+                        </button>
+                      )}
+
+                      {currentPlan === 'basic' && (
+                        <button
+                          type="button"
+                          id="btn-billing-upgrade-pro"
+                          onClick={() => {
+                            setCreemPlan('pro');
+                            setShowCreemCheckout(true);
+                          }}
+                          className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                          <span>Upgrade to Pro ($149/mo)</span>
+                        </button>
+                      )}
                     </div>
 
                   </div>
 
-                  {/* Right Column: Upgrade / Features (5 cols) */}
-                  <div className="lg:col-span-5 relative">
-                    <div className="sticky top-24 space-y-6">
-                      
-                      <div className="bg-[#111113] rounded-[32px] border border-white/[0.08] p-8 relative overflow-hidden shadow-2xl">
-                        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-                        
-                        <div className="relative z-10">
-                          <div className="w-12 h-12 rounded-2xl bg-[#18181b] border border-white/[0.08] flex items-center justify-center mb-6 shadow-inner">
-                            <ShieldCheck className="w-5 h-5 text-white" />
-                          </div>
-                          
-                          <h4 className="text-xl font-bold text-white mb-2 tracking-tight">Secure Merchant Billing</h4>
-                          <p className="text-[13px] text-zinc-200 leading-relaxed font-medium mb-8">
-                            Your subscription and payment methods are securely managed through Creem.io's encrypted merchant infrastructure.
-                          </p>
+                  {/* BILLING SCHEDULE & PAYMENT METHOD */}
+                  <div className="space-y-3">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
+                      Payment Details & Renewal
+                    </label>
 
-                          <div className="space-y-4">
-                            {[
-                              'PCI-DSS Compliant Infrastructure',
-                              '256-bit AES Encryption',
-                              'Automated Monthly Invoicing',
-                              'Cancel or modify anytime'
-                            ].map((feature, idx) => (
-                              <div key={idx} className="flex items-center gap-3">
-                                <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                                  <Check className="w-3.5 h-3.5 text-white" />
-                                </div>
-                                <span className="text-[13px] font-semibold text-zinc-200">{feature}</span>
-                              </div>
-                            ))}
+                    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
+                      
+                      {/* Renewal Info */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-zinc-800/80">
+                        <div>
+                          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
+                            Next Billing Date
                           </div>
+                          <div className="text-sm font-semibold text-white mt-0.5">
+                            Renews automatically on <span className="text-white font-bold">{renewalDate}</span>
+                          </div>
+                        </div>
+                        <div className="text-xs text-zinc-400 font-medium">
+                          Billed to <span className="text-zinc-200">{billingEmail}</span>
                         </div>
                       </div>
 
-                      {/* Payment Method Card */}
-                      <div className="bg-[#111113] rounded-[24px] border border-white/[0.08] p-5 flex items-center justify-between group cursor-pointer hover:bg-white/[0.02] transition-colors shadow-sm">
-                         <div className="flex items-center gap-4">
-                           <div className="w-14 h-10 bg-[#18181b] border border-white/[0.06] rounded-lg flex items-center justify-center shadow-inner">
-                             <CreditCard className="w-5 h-5 text-zinc-200" />
-                           </div>
-                           <div>
-                             <div className="text-[13px] font-bold text-white mb-0.5">{paymentMethodDisplay}</div>
-                             <div className="text-[11px] text-zinc-200 font-bold uppercase tracking-wider">Default Payment Method</div>
-                           </div>
-                         </div>
-                         <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-200 transition-colors" />
+                      {/* Payment Card Item */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-12 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shrink-0">
+                            <CreditCard className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-bold text-white truncate">
+                              {paymentMethodDisplay}
+                            </div>
+                            <div className="text-[11px] text-zinc-400 font-medium">
+                              Default • Expires 10/28
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          id="btn-billing-update-card"
+                          onClick={() => {
+                            setCreemPlan(currentPlan === 'premium' ? 'premium' : 'pro');
+                            setShowCreemCheckout(true);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-750 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                        >
+                          Update Card
+                        </button>
                       </div>
 
                     </div>
                   </div>
+
+                  {/* BILLING HISTORY / INVOICES */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
+                        Recent Invoices
+                      </label>
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide">
+                        Creem.io Automated
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden divide-y divide-zinc-800/80">
+                      {[
+                        { 
+                          id: 'CREEM-INV-9021', 
+                          date: 'Aug 1, 2026', 
+                          amount: currentPlan === 'premium' ? '$299.00 USD' : '$149.00 USD' 
+                        },
+                        { 
+                          id: 'CREEM-INV-8419', 
+                          date: 'Jul 1, 2026', 
+                          amount: currentPlan === 'premium' ? '$299.00 USD' : '$149.00 USD' 
+                        }
+                      ].map((invoice) => (
+                        <div key={invoice.id} className="p-4 flex items-center justify-between gap-3 hover:bg-zinc-900/40 transition-colors">
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono text-xs font-bold text-white">
+                                {invoice.id}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-bold uppercase tracking-wider">
+                                Paid
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-zinc-400 font-medium">
+                              {invoice.date} • <span className="text-zinc-300 font-semibold">{invoice.amount}</span>
+                            </div>
+                          </div>
+
+                          <button 
+                            type="button"
+                            id={`btn-receipt-${invoice.id}`}
+                            onClick={() => setShowReceiptModal(true)}
+                            className="px-3 py-1.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-750 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Receipt</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
+
               </div>
             )}
 
@@ -4079,23 +4155,27 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               <div className="flex justify-between"><span>Invoice:</span><strong className="text-white">CREEM-INV-9021</strong></div>
               <div className="flex justify-between"><span>Billed To:</span><span>{billingEmail}</span></div>
               <div className="flex justify-between"><span>Merchant:</span><span>{currentPlace.name}</span></div>
-              <div className="flex justify-between"><span>Plan:</span><span>Yoouz Pro Subscription</span></div>
+              <div className="flex justify-between"><span>Plan:</span><span>Yoouz {currentPlan === 'premium' ? 'Premium' : currentPlan === 'basic' ? 'Basic' : 'Pro'} Subscription</span></div>
               <div className="flex justify-between"><span>Payment:</span><span>{paymentMethodDisplay}</span></div>
               <div className="flex justify-between pt-2 border-t border-zinc-800 text-sm font-sans font-black text-white">
-                <span>Total Paid:</span><span>$49.00 USD</span>
+                <span>Total Paid:</span><span>{currentPlan === 'premium' ? '$299.00' : currentPlan === 'basic' ? '$0.00' : '$149.00'} USD</span>
               </div>
             </div>
 
             <div className="flex gap-2">
               <button
+                type="button"
+                id="btn-print-receipt"
                 onClick={() => window.print()}
-                className="flex-1 py-2.5 bg-white hover:bg-zinc-200 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold border border-zinc-700 flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md"
               >
                 <Printer className="w-4 h-4" /> Print / PDF
               </button>
               <button
+                type="button"
+                id="btn-close-receipt-modal"
                 onClick={() => setShowReceiptModal(false)}
-                className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-bold cursor-pointer"
+                className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl text-xs font-bold cursor-pointer transition-colors"
               >
                 Close
               </button>
