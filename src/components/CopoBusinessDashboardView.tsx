@@ -883,11 +883,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   }, [selectedPlaceId, currentPlace]);
 
-  // Sync profileAddress string from structured address fields
+  // Sync profileAddress string from structured address fields on initial load
   useEffect(() => {
     const parts = [streetAddress, city, stateRegion, zipCode, selectedCountry].filter(Boolean);
     const formatted = parts.join(', ');
-    if (formatted) setProfileAddress(formatted);
+    if (formatted && !profileAddress) setProfileAddress(formatted);
   }, [streetAddress, city, stateRegion, zipCode, selectedCountry]);
 
   // Handle Country Selection with Automatic State/Province & Dial Code Recognition
@@ -959,10 +959,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   
   cityOptions = Array.from(new Set(cityOptions));
 
-  // Sync profilePhone string from dial code and local phone
+  // Sync profilePhone string from dial code and local phone on initial load
   useEffect(() => {
     const formattedPhone = `${phoneDialCode} ${localPhone}`.trim();
-    if (formattedPhone) setProfilePhone(formattedPhone);
+    if (formattedPhone && !profilePhone) setProfilePhone(formattedPhone);
   }, [phoneDialCode, localPhone]);
 
   // Sync profileHours string from weekly schedule
@@ -3299,13 +3299,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             {/* TAB 6: BUSINESS PROFILE & INFO */}
             
             {activeTab === 'profile' && (
-              <div className="space-y-8 animate-in fade-in duration-200 pb-12 max-w-6xl mx-auto">
+              <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200 pb-16 max-w-5xl mx-auto">
                 
-                {/* 10/10 iOS-Style Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                {/* 10/10 Native App-Style Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-black text-white tracking-tight">Venue Profile Settings</h2>
-                    <p className="text-sm text-zinc-200 mt-1">Configure your official public listing details and appearance.</p>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Business Profile</h2>
+                    <p className="text-sm text-zinc-400 mt-1">The essential information guests and reviewers see on Yoouz.</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {isProfileSaved && (
@@ -3314,524 +3314,341 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </span>
                     )}
                     <button
+                      type="button"
+                      id="btn-save-profile-header"
                       onClick={handleSaveProfile}
                       className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-black rounded-full text-[13px] font-bold shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                     >
-                      Save Changes
+                      {isProfileSaved ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-600" />
+                          <span>Changes Saved</span>
+                        </>
+                      ) : (
+                        <span>Save Profile</span>
+                      )}
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-                  {/* Left Column: Form Controls (7 cols) */}
-                  <div className="lg:col-span-7 space-y-10">
-                    
-                    {/* SECTION 1: Business Identity */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Building2 className="w-3.5 h-3.5 text-zinc-400" /> Business Identity
-                      </h3>
-                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
-                        
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Venue Logo URL</div>
+                {/* HERO: Business Identity Card */}
+                <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 p-5 sm:p-6 shadow-xl relative overflow-hidden backdrop-blur-xl">
+                  <div className="absolute top-0 right-1/4 w-64 h-28 bg-white/[0.03] blur-3xl pointer-events-none rounded-full" />
+                  
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6 relative z-10">
+                    {/* Venue Avatar */}
+                    <div className="relative group shrink-0">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-3xl font-black text-white overflow-hidden shadow-xl ring-1 ring-white/10">
+                        {profileLogoUrl ? (
+                          <img 
+                            src={profileLogoUrl} 
+                            alt={profileName || "Venue Logo"}
+                            className="w-full h-full object-cover" 
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.src = 'https://www.yoouz.com/icon-512.png';
+                            }}
+                          />
+                        ) : (
+                          (profileName.charAt(0).toUpperCase() || 'B')
+                        )}
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-zinc-300 shadow-md">
+                        <Camera className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+
+                    {/* Quick Info & Logo URL Editor */}
+                    <div className="flex-1 min-w-0 text-center sm:text-left space-y-2">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
+                          {profileName || 'Your Venue Name'}
+                        </h3>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-bold">
+                          <BadgeCheck className="w-3.5 h-3.5" /> Verified
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-center sm:justify-start gap-2">
+                        <span className="px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 text-[11px] font-semibold border border-zinc-700/60">
+                          {businessCategory || 'Dining & Artisanal Food'}
+                        </span>
+                        {profileAddress && (
+                          <span className="text-[12px] text-zinc-400 truncate max-w-xs hidden sm:inline-block">
+                            • {profileAddress}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Clean Logo URL Field */}
+                      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <div className="relative flex-1">
                           <input
                             type="url"
+                            id="input-profile-logo-url"
                             value={profileLogoUrl}
                             onChange={(e) => setProfileLogoUrl(e.target.value)}
-                            placeholder="https://yourwebsite.com/logo.png"
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
+                            placeholder="Paste venue logo image URL (e.g. https://...)"
+                            className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-[12px] font-medium text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-colors"
                           />
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Venue Banner URL</div>
-                          <input
-                            type="url"
-                            value={profileBannerUrl}
-                            onChange={(e) => setProfileBannerUrl(e.target.value)}
-                            placeholder="https://yourwebsite.com/banner.jpg"
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Venue Name</div>
-                          <input
-                            type="text"
-                            value={profileName}
-                            onChange={(e) => setProfileName(e.target.value)}
-                            placeholder="e.g. The Rustic Spoon"
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Category</div>
-                          <div className="flex-1 w-full relative">
-                            <select
-                              value={businessCategory}
-                              onChange={(e) => setBusinessCategory(e.target.value)}
-                              className="bg-transparent text-[13px] font-semibold text-white appearance-none cursor-pointer focus:outline-none w-full"
-                            >
-                              <option value="Dining & Artisanal Food" className="bg-zinc-900 text-white">Dining & Artisanal Food</option>
-                              <option value="Hospitality & Hotels" className="bg-zinc-900 text-white">Hospitality & Hotels</option>
-                              <option value="Services & Home Trades" className="bg-zinc-900 text-white">Services & Home Trades</option>
-                              <option value="Health, Beauty & Wellness" className="bg-zinc-900 text-white">Health, Beauty & Wellness</option>
-                              <option value="Retail & Local Boutique" className="bg-zinc-900 text-white">Retail & Local Boutique</option>
-                              <option value="Professional, Legal & Finance" className="bg-zinc-900 text-white">Professional, Legal & Finance</option>
-                              <option value="Digital Platform & E-Commerce" className="bg-zinc-900 text-white">Digital Platform & E-Commerce</option>
-                              <option value="Automotive & Transportation" className="bg-zinc-900 text-white">Automotive & Transportation</option>
-                              <option value="Entertainment & Venues" className="bg-zinc-900 text-white">Entertainment & Venues</option>
-                            </select>
-                            <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Website URL</div>
-                          <input
-                            type="url"
-                            value={profileWebsite}
-                            onChange={(e) => setProfileWebsite(e.target.value)}
-                            placeholder="https://yourwebsite.com"
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
-                          />
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* SECTION 2: Physical Address */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 text-zinc-400" /> Physical Address
-                      </h3>
-                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
-                        
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Country / Region</div>
-                          <div className="flex-1 w-full relative">
-                            <CountrySelector
-                              value={selectedCountry}
-                              onChange={handleCountryChange}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Street Address</div>
-                          <input
-                            type="text"
-                            value={streetAddress}
-                            onChange={(e) => setStreetAddress(e.target.value)}
-                            placeholder="e.g. 123 Main St, Suite 400"
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
-                          />
-                        </div>
-
-                        {hasStates && (
-                          <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
-                            <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">{stateLabel}</div>
-                            <div className="flex-1 w-full relative">
-                              <SearchableComboSelector
-                                value={stateRegion}
-                                onChange={(val) => {
-                                  setStateRegion(val);
-                                  setCity("");
-                                }}
-                                options={stateOptions}
-                                placeholder={`Select ${stateLabel}`}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">City</div>
-                          <div className="flex-1 w-full relative">
-                            <SearchableComboSelector
-                              value={city}
-                              onChange={setCity}
-                              options={cityOptions}
-                              placeholder={
-                                cityOptions.length > 0
-                                  ? `e.g. ${cityOptions[0]}`
-                                  : stateRegion
-                                    ? `e.g. City in ${stateRegion}`
-                                    : "e.g. New York"
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">{activeCountryDialInfo.postalLabel || "ZIP Code"}</div>
-                          <input
-                            type="text"
-                            value={zipCode}
-                            onChange={(e) => setZipCode(e.target.value)}
-                            placeholder={activeCountryDialInfo.postalPlaceholder || "e.g. 10001"}
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-none"
-                          />
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* SECTION 3: Phone Contact */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 text-zinc-400" /> Contact Information
-                      </h3>
-                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
-                        
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors relative">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Dialing Code</div>
-                          <div className="flex-1 w-full relative">
-                            <select
-                              value={phoneDialCode}
-                              onChange={(e) => setPhoneDialCode(e.target.value)}
-                              className="bg-transparent text-[13px] font-semibold text-white appearance-none cursor-pointer focus:outline-hidden w-full"
-                            >
-                              {countryDialData.map((item) => (
-                                <option key={`${item.code}-${item.dialCode}-${item.name}`} value={item.dialCode} className="bg-zinc-900 text-white">
-                                  {item.flag} {item.dialCode} ({item.name})
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors group focus-within:bg-zinc-800/40">
-                          <div className="w-48 text-[13px] font-semibold text-zinc-300 mb-2 sm:mb-0 shrink-0">Direct Number</div>
-                          <input
-                            type="tel"
-                            value={localPhone}
-                            onChange={(e) => setLocalPhone(e.target.value)}
-                            placeholder={activeCountryDialInfo.phonePlaceholder || "e.g. 555-0198"}
-                            className="flex-1 bg-transparent text-[13px] font-semibold text-white placeholder-zinc-500 focus:outline-hidden"
-                          />
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* SECTION 4: Operating Hours */}
-                    <div>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 px-1 gap-2">
-                         <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-2">
-                           <Clock className="w-3.5 h-3.5 text-zinc-400" /> Operating Hours
-                         </h3>
-                         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-                            <button
-                              onClick={() => setWeeklySchedule(prev => prev.map((d, i) => i < 5 ? { ...d, status: 'open', openTime: '08:00 AM', closeTime: '06:00 PM' } : { ...d, status: 'closed' }))}
-                              className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
-                            >
-                              Mon-Fri
-                            </button>
-                            <button
-                              onClick={() => setWeeklySchedule(prev => prev.map(d => ({ ...d, status: 'open', openTime: '11:00 AM', closeTime: '11:00 PM' })))}
-                              className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
-                            >
-                              Everyday
-                            </button>
-                            <button
-                              onClick={() => setWeeklySchedule(prev => prev.map(d => ({ ...d, status: '24h' })))}
-                              className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer uppercase tracking-wider shrink-0"
-                            >
-                              24/7
-                            </button>
-                         </div>
-                      </div>
-
-                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
-                        {weeklySchedule.map((item, idx) => (
-                          <div key={item.day} className="flex flex-col lg:flex-row lg:items-center p-4 hover:bg-zinc-800/40 transition-colors gap-4">
-                             <div className="w-32 text-[13px] font-semibold text-white shrink-0 flex items-center gap-2">
-                               <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'open' ? 'bg-white' : item.status === '24h' ? 'bg-zinc-300' : 'bg-zinc-700'}`} />
-                               {item.day}
-                             </div>
-                             
-                             <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 lg:gap-3">
-                               <div className="flex items-center bg-zinc-950 rounded-full p-1 border border-zinc-800">
-                                 {(['open', '24h', 'closed'] as const).map(status => (
-                                   <button
-                                     key={status}
-                                     onClick={() => {
-                                       const copy = [...weeklySchedule];
-                                       copy[idx].status = status;
-                                       setWeeklySchedule(copy);
-                                     }}
-                                     className={`px-3 py-1.5 rounded-full text-[11px] font-bold capitalize transition-all cursor-pointer ${
-                                       item.status === status 
-                                         ? 'bg-zinc-800 text-white border border-zinc-700 shadow-xs font-bold'
-                                         : 'text-zinc-300 hover:text-white'
-                                     }`}
-                                   >
-                                     {status === '24h' ? '24 Hrs' : status}
-                                   </button>
-                                 ))}
-                               </div>
-
-                               {item.status === 'open' && (
-                                 <div className="flex items-center gap-2 shrink-0 sm:ml-auto">
-                                   <div className="relative">
-                                     <select
-                                       value={item.openTime}
-                                       onChange={(e) => {
-                                         const copy = [...weeklySchedule];
-                                         copy[idx].openTime = e.target.value;
-                                         setWeeklySchedule(copy);
-                                       }}
-                                       className="bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-3 pr-7 py-2 text-[12px] font-semibold appearance-none focus:outline-none focus:border-zinc-600"
-                                     >
-                                       {['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM'].map(t => <option key={t} value={t} className="bg-zinc-900 text-white">{t}</option>)}
-                                     </select>
-                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                                   </div>
-                                   <span className="text-zinc-400 text-[11px] font-bold">to</span>
-                                   <div className="relative">
-                                     <select
-                                       value={item.closeTime}
-                                       onChange={(e) => {
-                                         const copy = [...weeklySchedule];
-                                         copy[idx].closeTime = e.target.value;
-                                         setWeeklySchedule(copy);
-                                       }}
-                                       className="bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-3 pr-7 py-2 text-[12px] font-semibold appearance-none focus:outline-none focus:border-zinc-600"
-                                     >
-                                       {['05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM', '11:59 PM'].map(t => <option key={t} value={t} className="bg-zinc-900 text-white">{t}</option>)}
-                                     </select>
-                                     <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                                   </div>
-                                 </div>
-                               )}
-                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* SECTION 5: About & Amenities */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Info className="w-3.5 h-3.5 text-zinc-400" /> About & Amenities
-                      </h3>
-                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800 shadow-sm">
-                        
-                        <div className="p-4 sm:p-5 hover:bg-zinc-800/40 transition-colors focus-within:bg-zinc-800/40">
-                          <div className="flex items-center justify-between mb-3">
-                             <div className="text-[13px] font-semibold text-zinc-300">Public Story & Description</div>
-                             <span className="text-[10px] text-zinc-400 font-mono">{profileDesc.length} / 500</span>
-                          </div>
-                          <textarea
-                            value={profileDesc}
-                            onChange={(e) => setProfileDesc(e.target.value)}
-                            maxLength={500}
-                            placeholder="Tell visitors what makes your venue special..."
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-[13px] text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 resize-none h-28 leading-relaxed font-medium"
-                          />
-                        </div>
-
-                        <div className="p-4 sm:p-5">
-                          <div className="text-[13px] font-semibold text-zinc-300 mb-4">Venue Amenities</div>
-                          <div className="flex flex-wrap gap-2">
-                            {['Free Wi-Fi', 'Outdoor Seating', 'Onsite Parking', 'Wheelchair Accessible', 'Pet Friendly', 'Live Music', 'Full Bar', 'Accepts Credit Cards'].map(amenity => {
-                              const isSelected = selectedAmenities.includes(amenity);
-                              return (
-                                <button
-                                  key={amenity}
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      setSelectedAmenities(prev => prev.filter(a => a !== amenity));
-                                    } else {
-                                      setSelectedAmenities(prev => [...prev, amenity]);
-                                    }
-                                  }}
-                                  className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer border ${
-                                    isSelected
-                                      ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs'
-                                      : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-900'
-                                  }`}
-                                >
-                                  {isSelected && <Check className="w-3 h-3 inline-block mr-1 -mt-0.5" />}
-                                  {amenity}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* SECTION 6: Pro Merchant Support & Documentation (Moved above alerts for clean hierarchy) */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t("business.proMerchantSupport", "Pro Merchant Support & Documentation")}
-                      </h3>
-                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-                        <div className="space-y-1">
-                          <h4 className="text-[13px] font-bold text-white">
-                            {t("business.proMerchantSupport", "Pro Merchant Support & Knowledge Base")}
-                          </h4>
-                          <p className="text-[12px] text-zinc-400 leading-relaxed max-w-lg">
-                            {t("business.proSupportDesc", "Need assistance setting up website widgets, table QR stands, or video review moderation? Access complete step-by-step documentation and live support.")}
-                          </p>
                         </div>
                         <button
                           type="button"
-                          id="btn-profile-open-support-docs"
-                          onClick={() => setShowHelpModal(true)}
-                          className="px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-[12px] font-bold transition-all active:scale-95 shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
+                          id="btn-profile-use-yoouz-icon"
+                          onClick={() => setProfileLogoUrl('https://www.yoouz.com/icon-512.png')}
+                          className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[11px] font-bold border border-zinc-700 transition-all shrink-0 active:scale-95 cursor-pointer whitespace-nowrap"
                         >
-                          <FileText className="w-4 h-4 text-zinc-950" />
-                          <span>{t("business.openGuideDocs", "Open Guide & Docs")}</span>
+                          Use Yoouz Icon
                         </button>
                       </div>
-                    </div>
-
-                    {/* SECTION 7: Alerts & Notification Preferences */}
-                    <div>
-                      <h3 className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
-                        <Bell className="w-3.5 h-3.5 text-zinc-400" /> Alerts & Notification Preferences
-                      </h3>
-                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-[13px] font-bold text-white">Business Notification Preferences</h4>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              businessNotificationSettings.enabled
-                                ? 'bg-zinc-800 text-zinc-200 border border-zinc-700'
-                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            }`}>
-                              {businessNotificationSettings.enabled ? 'Active' : 'Paused'}
-                            </span>
-                          </div>
-                          <p className="text-[12px] text-zinc-400 font-medium">
-                            {businessNotificationSettings.enabled 
-                              ? 'Manage customer reviews, direct messages, followers, and interaction alerts.' 
-                              : 'In-app notifications are currently paused. Enable them to stay updated in real time.'}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          id="btn-open-business-notif-settings"
-                          onClick={() => setIsNotificationSettingsOpen(true)}
-                          className="px-4 py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-[12px] font-bold border border-zinc-700/80 transition-all active:scale-95 shadow-xs flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
-                        >
-                          <Settings className="w-4 h-4 text-zinc-300" />
-                          <span>Customize Settings</span>
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Right Column: Premium Live Mobile Preview Widget (5 cols) */}
-                  <div className="lg:col-span-5 relative">
-                    <div className="sticky top-24">
-                      
-                      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden relative">
-                         {/* Subtle Glow */}
-                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-40 bg-white/5 blur-[60px] rounded-full pointer-events-none" />
-                         
-                         {/* Header */}
-                         <div className="px-6 py-5 border-b border-zinc-800 flex items-center justify-between relative z-10 bg-zinc-900/80 backdrop-blur-xl">
-                           <div className="flex items-center gap-2">
-                             <Eye className="w-4 h-4 text-zinc-300" />
-                             <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-300">Live Preview</span>
-                           </div>
-                           <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white text-[10px] font-bold border border-white/20">Yoouz App</span>
-                         </div>
-
-                         {/* Mobile Card Replica */}
-                         <div className="p-6 bg-zinc-950 min-h-[500px]">
-                           <div className="bg-zinc-900 rounded-3xl border border-zinc-800 p-5 shadow-2xl relative overflow-hidden ring-1 ring-white/[0.04]">
-                              
-                              {/* Preview Head */}
-                              <div className="flex items-center gap-4 mb-6">
-                                <div className="w-14 h-14 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-2xl font-black text-white shrink-0 overflow-hidden shadow-inner">
-                                  {currentPlace.logoUrl ? (
-                                    <img 
-                                      src={currentPlace.logoUrl} 
-                                      loading="eager" 
-                                      decoding="sync" 
-                                      fetchPriority="high" 
-                                      className="w-full h-full object-cover" 
-                                      onError={(e) => {
-                                        const target = e.currentTarget as HTMLImageElement;
-                                        if (currentPlace.name?.toLowerCase().includes('yoouz') || (currentPlace.id && currentPlace.id.includes('yoouz'))) {
-                                          target.src = 'https://www.yoouz.com/icon-512.png';
-                                        } else {
-                                          target.style.display = 'none';
-                                        }
-                                      }}
-                                    />
-                                  ) : (
-                                    (profileName.charAt(0).toUpperCase() || 'B')
-                                  )}
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <h4 className="font-bold text-white text-lg truncate tracking-tight">{profileName || 'Venue Name'}</h4>
-                                    <BadgeCheck className="w-4.5 h-4.5 text-white shrink-0" />
-                                  </div>
-                                  <div className="text-[11px] text-zinc-400 font-semibold mt-0.5 uppercase tracking-widest">{businessCategory || 'Category'}</div>
-                                </div>
-                              </div>
-
-                              <div className="space-y-3">
-                                {/* Map Preview */}
-                                <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm">
-                                  <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                                      <MapPin className="w-3.5 h-3.5 text-zinc-300" />
-                                    </div>
-                                    <div>
-                                      <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Physical Location</div>
-                                      <div className="text-[13px] font-semibold text-zinc-200 leading-snug">{profileAddress || 'Address will appear here'}</div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Status & Phone Grid */}
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm">
-                                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Status</div>
-                                    <div className="text-[12px] font-bold text-white flex items-center gap-1.5">
-                                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Open Now
-                                    </div>
-                                  </div>
-                                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm overflow-hidden">
-                                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Direct Line</div>
-                                    <div className="text-[12px] font-bold text-white truncate">{profilePhone || 'Not set'}</div>
-                                  </div>
-                                </div>
-
-                                {/* Hours */}
-                                <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm">
-                                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Schedule</div>
-                                  <div className="text-[12px] text-zinc-300 leading-relaxed font-mono font-medium">{profileHours || 'Schedule not configured'}</div>
-                                </div>
-
-                                {/* About */}
-                                {profileDesc && (
-                                  <div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-850 shadow-sm">
-                                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Story</div>
-                                    <div className="text-[12.5px] text-zinc-300 leading-relaxed font-medium line-clamp-4">{profileDesc}</div>
-                                  </div>
-                                )}
-                              </div>
-                           </div>
-                         </div>
-                      </div>
-
                     </div>
                   </div>
                 </div>
+
+                {/* 2-Column Responsive Layout: Essential Form (7 cols) + Live Guest Card (5 cols) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                  
+                  {/* Left Column: Essential Form Fields */}
+                  <div className="lg:col-span-7 space-y-6">
+                    
+                    {/* The Primary Settings Group */}
+                    <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/80 shadow-xl">
+                      
+                      {/* Venue Name */}
+                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
+                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-zinc-400" /> Venue Name
+                        </label>
+                        <input
+                          type="text"
+                          id="input-profile-name"
+                          value={profileName}
+                          onChange={(e) => setProfileName(e.target.value)}
+                          placeholder="e.g. The Rustic Spoon"
+                          className="w-full bg-transparent text-[14px] font-bold text-white placeholder-zinc-600 focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Category */}
+                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors relative group focus-within:bg-zinc-850/40">
+                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-zinc-400" /> Category
+                        </label>
+                        <div className="relative">
+                          <select
+                            id="select-profile-category"
+                            value={businessCategory}
+                            onChange={(e) => setBusinessCategory(e.target.value)}
+                            className="w-full bg-transparent text-[14px] font-semibold text-white appearance-none cursor-pointer focus:outline-none pr-8"
+                          >
+                            <option value="Dining & Artisanal Food" className="bg-zinc-900 text-white">Dining & Artisanal Food</option>
+                            <option value="Coffee, Cafes & Bakeries" className="bg-zinc-900 text-white">Coffee, Cafes & Bakeries</option>
+                            <option value="Nightlife, Bars & Lounges" className="bg-zinc-900 text-white">Nightlife, Bars & Lounges</option>
+                            <option value="Hospitality & Hotels" className="bg-zinc-900 text-white">Hospitality & Hotels</option>
+                            <option value="Retail & Local Boutiques" className="bg-zinc-900 text-white">Retail & Local Boutiques</option>
+                            <option value="Health, Beauty & Wellness" className="bg-zinc-900 text-white">Health, Beauty & Wellness</option>
+                            <option value="Entertainment & Venues" className="bg-zinc-900 text-white">Entertainment & Venues</option>
+                            <option value="Services & Home Trades" className="bg-zinc-900 text-white">Services & Home Trades</option>
+                            <option value="Other Venue" className="bg-zinc-900 text-white">Other Venue</option>
+                          </select>
+                          <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {/* Address */}
+                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
+                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-zinc-400" /> Physical Location
+                        </label>
+                        <input
+                          type="text"
+                          id="input-profile-address"
+                          value={profileAddress}
+                          onChange={(e) => {
+                            setProfileAddress(e.target.value);
+                            setStreetAddress(e.target.value);
+                          }}
+                          placeholder="e.g. 123 Main St, New York, NY 10001"
+                          className="w-full bg-transparent text-[14px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
+                        />
+                        <p className="text-[11px] text-zinc-500 mt-1">Where guests visit to record video reviews.</p>
+                      </div>
+
+                      {/* Phone Number */}
+                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
+                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-zinc-400" /> Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          id="input-profile-phone"
+                          value={profilePhone}
+                          onChange={(e) => {
+                            setProfilePhone(e.target.value);
+                            setLocalPhone(e.target.value);
+                          }}
+                          placeholder="e.g. +1 (212) 555-0198"
+                          className="w-full bg-transparent text-[14px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Website */}
+                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
+                        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5 text-zinc-400" /> Website URL
+                        </label>
+                        <input
+                          type="url"
+                          id="input-profile-website"
+                          value={profileWebsite}
+                          onChange={(e) => setProfileWebsite(e.target.value)}
+                          placeholder="https://yourwebsite.com"
+                          className="w-full bg-transparent text-[14px] font-semibold text-white placeholder-zinc-600 focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Short Bio / Story */}
+                      <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors focus-within:bg-zinc-850/40">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5 text-zinc-400" /> About Venue
+                          </label>
+                          <span className="text-[10px] text-zinc-500 font-mono">
+                            {profileDesc.length} / 300
+                          </span>
+                        </div>
+                        <textarea
+                          id="textarea-profile-desc"
+                          value={profileDesc}
+                          onChange={(e) => setProfileDesc(e.target.value)}
+                          maxLength={300}
+                          rows={3}
+                          placeholder="Tell visitors what makes your venue authentic and special..."
+                          className="w-full bg-zinc-950/80 border border-zinc-800 rounded-2xl p-3.5 text-[13px] text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 resize-none leading-relaxed font-medium transition-colors"
+                        />
+                      </div>
+
+                    </div>
+
+                    {/* Bottom Save Action */}
+                    <button
+                      type="button"
+                      id="btn-save-profile-bottom"
+                      onClick={handleSaveProfile}
+                      className="w-full py-3.5 px-6 rounded-2xl bg-white hover:bg-zinc-200 text-black font-bold text-[13px] transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isProfileSaved ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-600" />
+                          <span>Profile Updated Successfully</span>
+                        </>
+                      ) : (
+                        <span>Save Profile Changes</span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Right Column: Live In-App Guest Card (Sticky) */}
+                  <div className="lg:col-span-5 relative">
+                    <div className="sticky top-24 space-y-4">
+                      
+                      <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden relative backdrop-blur-xl">
+                        {/* Header */}
+                        <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/80">
+                          <div className="flex items-center gap-2">
+                            <Eye className="w-4 h-4 text-zinc-300" />
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-300">Live Guest View</span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live on Yoouz
+                          </span>
+                        </div>
+
+                        {/* Guest Card Mockup */}
+                        <div className="p-5 sm:p-6 bg-zinc-950 space-y-4">
+                          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4 sm:p-5 shadow-lg relative overflow-hidden ring-1 ring-white/[0.04] space-y-4">
+                            
+                            {/* Card Top */}
+                            <div className="flex items-center gap-3.5">
+                              <div className="w-13 h-13 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-xl font-black text-white shrink-0 overflow-hidden shadow-inner">
+                                {profileLogoUrl ? (
+                                  <img 
+                                    src={profileLogoUrl} 
+                                    alt="Venue Logo"
+                                    className="w-full h-full object-cover" 
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      target.src = 'https://www.yoouz.com/icon-512.png';
+                                    }}
+                                  />
+                                ) : (
+                                  (profileName.charAt(0).toUpperCase() || 'B')
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <h4 className="font-bold text-white text-base truncate tracking-tight">
+                                    {profileName || 'Your Venue Name'}
+                                  </h4>
+                                  <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                                </div>
+                                <div className="text-[11px] text-zinc-400 font-semibold mt-0.5 uppercase tracking-wider truncate">
+                                  {businessCategory || 'Dining & Artisanal Food'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Location */}
+                            <div className="bg-zinc-950/90 p-3 rounded-xl border border-zinc-800/80 flex items-start gap-2.5">
+                              <MapPin className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
+                              <div className="text-[12px] font-medium text-zinc-300 leading-snug break-words">
+                                {profileAddress || 'Address will appear here for guests'}
+                              </div>
+                            </div>
+
+                            {/* Contact Badges */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-zinc-950/90 p-2.5 rounded-xl border border-zinc-800/80 text-center truncate">
+                                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Phone</div>
+                                <div className="text-[11.5px] font-semibold text-white truncate">
+                                  {profilePhone || 'Not set'}
+                                </div>
+                              </div>
+                              <div className="bg-zinc-950/90 p-2.5 rounded-xl border border-zinc-800/80 text-center truncate">
+                                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Website</div>
+                                <div className="text-[11.5px] font-semibold text-white truncate">
+                                  {profileWebsite ? (profileWebsite.replace(/^https?:\/\/(www\.)?/, '')) : 'Not set'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Short Story */}
+                            {profileDesc && (
+                              <div className="bg-zinc-950/90 p-3 rounded-xl border border-zinc-800/80">
+                                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">About</div>
+                                <p className="text-[12px] text-zinc-300 leading-relaxed font-normal line-clamp-3">
+                                  {profileDesc}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Yoouz 60s Review Guarantee */}
+                            <div className="pt-1 flex items-center justify-between text-[11px] text-zinc-400 border-t border-zinc-800/80">
+                              <span className="flex items-center gap-1.5 font-medium">
+                                <Video className="w-3.5 h-3.5 text-zinc-300" /> 60s Video Reviews
+                              </span>
+                              <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Verified Host</span>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+
               </div>
             )}
 {/* TAB 7: SUBSCRIPTION & CREEM.IO */}
