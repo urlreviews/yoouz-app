@@ -84,7 +84,8 @@ import {
   Upload
 } from 'lucide-react';
 import { CopoBusinessPricingModal } from './CopoBusinessPricingModal';
-import { CopoCreemCheckoutModal } from './CopoCreemCheckoutModal';
+import { CopoAgencyUpgradeModal } from './CopoAgencyUpgradeModal';
+import { VERIFIED_PARTNER_AGENCIES, getAgencyById, PartnerAgency } from '../data/agencies';
 import { QRCodeCanvas } from 'qrcode.react';
 import { normalizeVideoUrl, releaseVideoHardwareDecoder } from '../utils/videoUtils';
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from '../hooks/useGlobalMute';
@@ -719,8 +720,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return derivePlaceFromEmailOrDomain('yoouz.com', places) as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
   }, [places, selectedPlaceId, initialPlace, verifiedBusinessSession]);
 
-  // Plan & Pricing State (default to Pro for rich enterprise demo)
-  const [currentPlan, setCurrentPlan] = useState<'none' | 'basic' | 'pro' | 'premium'>('pro');
+  // Plan & Pricing State (defaults to basic free plan unless upgraded)
+  const [currentPlan, setCurrentPlan] = useState<'none' | 'basic' | 'pro' | 'premium'>(() => {
+    const savedPlan = localStorage.getItem(`yoouz_plan_${currentPlace?.id}`);
+    if (savedPlan === 'pro' || savedPlan === 'premium' || savedPlan === 'basic') return savedPlan;
+    if ((currentPlace as any)?.subscriptionPlan && (currentPlace as any).subscriptionPlan !== 'free') {
+      return (currentPlace as any).subscriptionPlan;
+    }
+    return 'basic';
+  });
   const [showPricingModal, setShowPricingModal] = useState(false);
   
   // Claiming Flow State (for onboarding new business)
@@ -732,6 +740,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setIsClaiming(initialMode === 'claim');
   }, [initialMode]);
 
+  // Sync plan if place changes
+  useEffect(() => {
+    if (currentPlace?.id) {
+      const savedPlan = localStorage.getItem(`yoouz_plan_${currentPlace.id}`);
+      if (savedPlan === 'pro' || savedPlan === 'premium' || savedPlan === 'basic') {
+        setCurrentPlan(savedPlan);
+      } else if ((currentPlace as any)?.subscriptionPlan && (currentPlace as any).subscriptionPlan !== 'free') {
+        setCurrentPlan((currentPlace as any).subscriptionPlan);
+      } else {
+        setCurrentPlan('basic');
+      }
+    }
+  }, [currentPlace?.id]);
+
   // Listen to business auth changes
   useEffect(() => {
     const handleAuthChange = (e: CustomEvent<BusinessSession>) => {
@@ -739,8 +761,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         setVerifiedBusinessSession(e.detail);
         if (e.detail.placeId) {
           setSelectedPlaceId(e.detail.placeId);
+          const savedPlan = localStorage.getItem(`yoouz_plan_${e.detail.placeId}`);
+          if (savedPlan === 'pro' || savedPlan === 'premium') {
+            setCurrentPlan(savedPlan);
+          } else {
+            setCurrentPlan('basic');
+          }
         }
-        setCurrentPlan('pro');
       }
     };
     window.addEventListener('copo_business_auth_changed' as any, handleAuthChange as any);
@@ -1113,18 +1140,53 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   }, [weeklySchedule]);
 
-  // Creem Checkout & Subscription Billing State
-  const [showCreemCheckout, setShowCreemCheckout] = useState(false);
-  const [creemPlan, setCreemPlan] = useState<'pro' | 'premium'>('pro');
-  const [billingEmail, setBillingEmail] = useState(() => verifiedBusinessSession?.businessEmail || (currentPlace as any).claimedByEmail || 'business@domain.com');
-  const [paymentMethodDisplay, setPaymentMethodDisplay] = useState('Visa ending in 4242');
-  const [isAutoRenew, setIsAutoRenew] = useState(true);
+  // Agency Partner & Subscription Billing State
+  const [showAgencyUpgradeModal, setShowAgencyUpgradeModal] = useState(false);
+  const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'premium'>('pro');
+  const [assignedAgencyId, setAssignedAgencyId] = useState<string>(() => {
+    return localStorage.getItem(`yoouz_agency_${currentPlace?.id}`) || 'agency_london_apex';
+  });
+  const assignedAgency = getAgencyById(assignedAgencyId);
+
+  const [billingEmail, setBillingEmail] = useState(() => verifiedBusinessSession?.businessEmail || (currentPlace as any).claimedByEmail || 'billing@domain.com');
+  const [billingContactPhone, setBillingContactPhone] = useState(() => localStorage.getItem(`yoouz_phone_${currentPlace?.id}`) || '+1 (555) 019-2831');
   const [renewalDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 30);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   });
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [invoicesList, setInvoicesList] = useState<Array<{ id: string; date: string; amount: string; agency: string }>>(() => {
+    try {
+      const stored = localStorage.getItem(`yoouz_invoices_${currentPlace?.id}`);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    if (currentPlan === 'pro') {
+      return [{ id: 'AGENCY-INV-1049', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), amount: '$149.00 USD', agency: assignedAgency.name }];
+    } else if (currentPlan === 'premium') {
+      return [{ id: 'AGENCY-INV-2099', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), amount: '$299.00 USD', agency: assignedAgency.name }];
+    }
+    return [];
+  });
+
+  // Sync agency and invoices when place or plan changes
+  useEffect(() => {
+    if (currentPlace?.id) {
+      const storedAgency = localStorage.getItem(`yoouz_agency_${currentPlace.id}`);
+      if (storedAgency) {
+        setAssignedAgencyId(storedAgency);
+      }
+
+      try {
+        const storedInvoices = localStorage.getItem(`yoouz_invoices_${currentPlace.id}`);
+        if (storedInvoices) {
+          setInvoicesList(JSON.parse(storedInvoices));
+        } else if (currentPlan === 'basic') {
+          setInvoicesList([]);
+        }
+      } catch (e) {}
+    }
+  }, [currentPlace?.id, currentPlan]);
 
   // Reviews Moderation & Reply State
   const [reviewsFilter, setReviewsFilter] = useState<'all' | '5' | '4' | '3'>('all');
@@ -1521,9 +1583,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Handlers
   const handleSelectPlan = (plan: 'basic' | 'pro' | 'premium') => {
     if (plan === 'pro' || plan === 'premium') {
-      setCreemPlan(plan);
+      setTargetUpgradePlan(plan);
       setShowPricingModal(false);
-      setShowCreemCheckout(true);
+      setShowAgencyUpgradeModal(true);
     } else {
       setCurrentPlan(plan);
       setShowPricingModal(false);
@@ -3947,8 +4009,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             type="button"
                             id="btn-billing-upgrade-premium"
                             onClick={() => {
-                              setCreemPlan('premium');
-                              setShowCreemCheckout(true);
+                              setTargetUpgradePlan('premium');
+                              setShowAgencyUpgradeModal(true);
                             }}
                             className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
                           >
@@ -3961,7 +4023,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             onClick={() => setShowPricingModal(true)}
                             className="w-full py-3 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white border border-zinc-800 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                           >
-                            <span>Change Plan</span>
+                            <span>Compare Plans</span>
                           </button>
                         </div>
                       )}
@@ -3974,7 +4036,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <Star className="w-3.5 h-3.5 text-zinc-300" />
-                          <span>Manage Plan / Downgrade Options</span>
+                          <span>View Premium Features & Partner Details</span>
                         </button>
                       )}
 
@@ -3983,124 +4045,134 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           type="button"
                           id="btn-billing-upgrade-pro"
                           onClick={() => {
-                            setCreemPlan('pro');
-                            setShowCreemCheckout(true);
+                            setTargetUpgradePlan('pro');
+                            setShowAgencyUpgradeModal(true);
                           }}
                           className="w-full py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-xs transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-                          <span>Upgrade to Pro ($149/mo)</span>
+                          <span>Connect with Agency Partner to Upgrade ($149/mo)</span>
                         </button>
                       )}
                     </div>
 
                   </div>
 
-                  {/* BILLING SCHEDULE & PAYMENT METHOD */}
+                  {/* AUTHORIZED PARTNER AGENCY DETAILS */}
                   <div className="space-y-3">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
-                      Payment Details & Renewal
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
+                        Assigned Agency Reseller & Account Manager
+                      </label>
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/60 uppercase tracking-wide">
+                        Verified Partner
+                      </span>
+                    </div>
 
                     <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
-                      
-                      {/* Renewal Info */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-zinc-800/80">
-                        <div>
-                          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
-                            Next Billing Date
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-zinc-800/80">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shrink-0">
+                            <Building2 className="w-5 h-5" />
                           </div>
-                          <div className="text-sm font-semibold text-white mt-0.5">
-                            Renews automatically on <span className="text-white font-bold">{renewalDate}</span>
+                          <div>
+                            <div className="text-sm font-bold text-white flex items-center gap-1.5">
+                              {assignedAgency.name}
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-0.5">
+                              {assignedAgency.city}, {assignedAgency.country} • <span className="text-zinc-300">{assignedAgency.specialty}</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-xs text-zinc-400 font-medium">
-                          Billed to <span className="text-zinc-200">{billingEmail}</span>
-                        </div>
-                      </div>
 
-                      {/* Payment Card Item */}
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-12 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shrink-0">
-                            <CreditCard className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-bold text-white truncate">
-                              {paymentMethodDisplay}
-                            </div>
-                            <div className="text-[11px] text-zinc-400 font-medium">
-                              Default • Expires 10/28
-                            </div>
-                          </div>
-                        </div>
                         <button
                           type="button"
-                          id="btn-billing-update-card"
                           onClick={() => {
-                            setCreemPlan(currentPlan === 'premium' ? 'premium' : 'pro');
-                            setShowCreemCheckout(true);
+                            setTargetUpgradePlan(currentPlan === 'premium' ? 'premium' : 'pro');
+                            setShowAgencyUpgradeModal(true);
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-750 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                          className="px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-semibold transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
                         >
-                          Update Card
+                          Change Agency / Upgrade
                         </button>
+                      </div>
+
+                      {/* Account Manager Contact Bar */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-xl">
+                          <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Account Manager</div>
+                          <div className="font-semibold text-white mt-0.5">{assignedAgency.accountManager}</div>
+                        </div>
+
+                        <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-xl">
+                          <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Direct Phone / WhatsApp</div>
+                          <a href={`tel:${assignedAgency.contactPhone.replace(/\s+/g, '')}`} className="font-semibold text-emerald-400 hover:underline mt-0.5 block">
+                            {assignedAgency.contactPhone}
+                          </a>
+                        </div>
+
+                        <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-xl">
+                          <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Agency Invoicing Email</div>
+                          <a href={`mailto:${assignedAgency.contactEmail}`} className="font-semibold text-zinc-200 hover:text-white truncate block mt-0.5">
+                            {assignedAgency.contactEmail}
+                          </a>
+                        </div>
                       </div>
 
                     </div>
                   </div>
 
-                  {/* BILLING HISTORY / INVOICES */}
+                  {/* B2B INVOICES & SERVICE STATEMENTS */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
-                        Recent Invoices
+                        B2B Invoices & Statements
                       </label>
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide">
-                        Creem.io Automated
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
+                        Agency Reseller Invoicing
                       </span>
                     </div>
 
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden divide-y divide-zinc-800/80">
-                      {[
-                        { 
-                          id: 'CREEM-INV-9021', 
-                          date: 'Aug 1, 2026', 
-                          amount: currentPlan === 'premium' ? '$299.00 USD' : '$149.00 USD' 
-                        },
-                        { 
-                          id: 'CREEM-INV-8419', 
-                          date: 'Jul 1, 2026', 
-                          amount: currentPlan === 'premium' ? '$299.00 USD' : '$149.00 USD' 
-                        }
-                      ].map((invoice) => (
-                        <div key={invoice.id} className="p-4 flex items-center justify-between gap-3 hover:bg-zinc-900/40 transition-colors">
-                          <div className="min-w-0 space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono text-xs font-bold text-white">
-                                {invoice.id}
-                              </span>
-                              <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-bold uppercase tracking-wider">
-                                Paid
-                              </span>
+                    {invoicesList.length > 0 ? (
+                      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden divide-y divide-zinc-800/80">
+                        {invoicesList.map((invoice) => (
+                          <div key={invoice.id} className="p-4 flex items-center justify-between gap-3 hover:bg-zinc-900/40 transition-colors">
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono text-xs font-bold text-white">
+                                  {invoice.id}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-bold uppercase tracking-wider">
+                                  Settled
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-zinc-400 font-medium">
+                                {invoice.date} • <span className="text-zinc-300 font-semibold">{invoice.amount}</span> • <span className="text-zinc-400">{invoice.agency || assignedAgency.name}</span>
+                              </div>
                             </div>
-                            <div className="text-[11px] text-zinc-400 font-medium">
-                              {invoice.date} • <span className="text-zinc-300 font-semibold">{invoice.amount}</span>
-                            </div>
-                          </div>
 
-                          <button 
-                            type="button"
-                            id={`btn-receipt-${invoice.id}`}
-                            onClick={() => setShowReceiptModal(true)}
-                            className="px-3 py-1.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-750 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>Receipt</span>
-                          </button>
+                            <button 
+                              type="button"
+                              id={`btn-receipt-${invoice.id}`}
+                              onClick={() => setShowReceiptModal(true)}
+                              className="px-3 py-1.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-750 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Statement</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-center">
+                        <div className="text-xs text-zinc-400 font-medium">
+                          No invoices yet. Your account is on the Free Basic Tier ($0/mo).
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-[11px] text-zinc-500 mt-1">
+                          Official tax invoices will be issued and settled directly through your authorized Partner Agency upon upgrading.
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -4135,7 +4207,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         />
       )}
 
-      {/* Receipt Modal */}
+      {/* Statement Modal */}
       {showReceiptModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-6 max-w-md w-full shadow-2xl relative space-y-4">
@@ -4148,17 +4220,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             
             <div className="flex items-center gap-2">
               <Receipt className="w-5 h-5 text-white" />
-              <h3 className="font-bold text-white text-base">Creem.io Tax Invoice</h3>
+              <h3 className="font-bold text-white text-base">Agency Partner B2B Statement</h3>
             </div>
 
             <div className="bg-zinc-950 p-4 rounded-2xl space-y-2 text-xs font-mono border border-zinc-800 text-zinc-200">
-              <div className="flex justify-between"><span>Invoice:</span><strong className="text-white">CREEM-INV-9021</strong></div>
-              <div className="flex justify-between"><span>Billed To:</span><span>{billingEmail}</span></div>
+              <div className="flex justify-between"><span>Statement Ref:</span><strong className="text-white">{invoicesList[0]?.id || 'AGENCY-INV-9021'}</strong></div>
+              <div className="flex justify-between"><span>Issuing Agency:</span><span className="text-white font-bold">{assignedAgency.name}</span></div>
               <div className="flex justify-between"><span>Merchant:</span><span>{currentPlace.name}</span></div>
-              <div className="flex justify-between"><span>Plan:</span><span>Yoouz {currentPlan === 'premium' ? 'Premium' : currentPlan === 'basic' ? 'Basic' : 'Pro'} Subscription</span></div>
-              <div className="flex justify-between"><span>Payment:</span><span>{paymentMethodDisplay}</span></div>
+              <div className="flex justify-between"><span>Plan Tier:</span><span>Yoouz {currentPlan === 'premium' ? 'Premium Elite' : currentPlan === 'basic' ? 'Basic' : 'Pro'} Plan</span></div>
+              <div className="flex justify-between"><span>Settlement:</span><span>Agency Direct Invoice / Wire</span></div>
               <div className="flex justify-between pt-2 border-t border-zinc-800 text-sm font-sans font-black text-white">
-                <span>Total Paid:</span><span>{currentPlan === 'premium' ? '$299.00' : currentPlan === 'basic' ? '$0.00' : '$149.00'} USD</span>
+                <span>Total:</span><span>{currentPlan === 'premium' ? '$299.00' : currentPlan === 'basic' ? '$0.00' : '$149.00'} USD/mo</span>
               </div>
             </div>
 
@@ -4188,21 +4260,69 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       {showPricingModal && (
         <CopoBusinessPricingModal
           onClose={() => setShowPricingModal(false)}
-          onSelectPlan={handleSelectPlan}
+          onSelectPlan={(plan) => {
+            setShowPricingModal(false);
+            if (plan === 'basic') {
+              handleSelectPlan('basic');
+            } else {
+              setTargetUpgradePlan(plan);
+              setShowAgencyUpgradeModal(true);
+            }
+          }}
           currentPlan={currentPlan}
         />
       )}
 
-      {/* Creem Checkout Modal */}
-      {showCreemCheckout && (
-        <CopoCreemCheckoutModal
-          onClose={() => setShowCreemCheckout(false)}
-          plan={creemPlan}
+      {/* Agency Partner Upgrade Modal */}
+      {showAgencyUpgradeModal && (
+        <CopoAgencyUpgradeModal
+          plan={targetUpgradePlan}
+          placeName={currentPlace.name}
+          placeCity={currentPlace.city}
+          initialAgencyId={assignedAgencyId}
+          onClose={() => setShowAgencyUpgradeModal(false)}
           onSuccess={(details) => {
-            setCurrentPlan(creemPlan);
-            if (details?.email) setBillingEmail(details.email);
-            if (details?.last4) setPaymentMethodDisplay(`Card ending in ${details.last4}`);
-            setShowCreemCheckout(false);
+            const nextPlan = targetUpgradePlan;
+            setCurrentPlan(nextPlan);
+            
+            if (details.agency) {
+              setAssignedAgencyId(details.agency.id);
+            }
+            if (details.email) setBillingEmail(details.email);
+            if (details.phone) setBillingContactPhone(details.phone);
+
+            const newInv = {
+              id: `AGENCY-INV-${Math.floor(1000 + Math.random() * 9000)}`,
+              date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              amount: nextPlan === 'premium' ? '$299.00 USD' : '$149.00 USD',
+              agency: details.agency.name
+            };
+            const updatedInvoices = [newInv, ...invoicesList];
+            setInvoicesList(updatedInvoices);
+
+            // Persist locally for place
+            if (currentPlace?.id) {
+              localStorage.setItem(`yoouz_plan_${currentPlace.id}`, nextPlan);
+              localStorage.setItem(`yoouz_agency_${currentPlace.id}`, details.agency.id);
+              localStorage.setItem(`yoouz_phone_${currentPlace.id}`, details.phone);
+              localStorage.setItem(`yoouz_invoices_${currentPlace.id}`, JSON.stringify(updatedInvoices));
+            }
+
+            // Dispatch global event for Admin Panel synchronisation
+            window.dispatchEvent(new CustomEvent('copo_business_plan_updated', {
+              detail: {
+                placeId: currentPlace?.id,
+                plan: nextPlan,
+                agencyId: details.agency.id,
+                agencyName: details.agency.name,
+                email: details.email,
+                phone: details.phone,
+                amount: nextPlan === 'premium' ? 299 : 149,
+                transactionId: newInv.id
+              }
+            }));
+
+            setShowAgencyUpgradeModal(false);
           }}
         />
       )}

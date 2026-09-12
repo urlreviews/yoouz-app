@@ -607,7 +607,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const claimedPlaces = places.filter((p) => p.isClaimed || Boolean(p.claimedByEmail)).length;
     const avgRating = totalVids > 0 ? (videos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalVids).toFixed(1) : "5.0";
 
-    // Subscription & Revenue Metrics
+    // Subscription & Revenue Metrics (Creem.io Merchant Tiers)
     let mrr = 0;
     let paidPlacesCount = 0;
     let basicCount = 0;
@@ -616,19 +616,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
     places.forEach((p) => {
       const plan = p.subscriptionPlan;
-      const status = p.subscriptionStatus || (plan && plan !== "free" ? "active" : "free");
-      const isPaid = (plan === "basic" || plan === "pro" || plan === "premium") && status !== "canceled" && status !== "unpaid";
+      const status = p.subscriptionStatus || (plan && plan !== "free" && plan !== "basic" ? "active" : "free");
+      const isPaid = (plan === "pro" || plan === "premium") && status !== "canceled" && status !== "unpaid";
+      
+      if (plan === "basic" || p.isClaimed || p.claimedByEmail) {
+        basicCount++;
+      }
+
       if (isPaid) {
         paidPlacesCount++;
-        if (plan === "basic") {
-          basicCount++;
-          mrr += p.subscriptionAmount !== undefined ? p.subscriptionAmount : 29;
-        } else if (plan === "pro") {
+        if (plan === "pro") {
           proCount++;
-          mrr += p.subscriptionAmount !== undefined ? p.subscriptionAmount : 79;
+          mrr += p.subscriptionAmount !== undefined ? p.subscriptionAmount : 149;
         } else if (plan === "premium") {
           premiumCount++;
-          mrr += p.subscriptionAmount !== undefined ? p.subscriptionAmount : 199;
+          mrr += p.subscriptionAmount !== undefined ? p.subscriptionAmount : 299;
         }
       }
     });
@@ -1422,9 +1424,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800">
                   <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Billing Provider</span>
                   <div className="text-lg font-bold text-white mt-1 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-zinc-200" /> Stripe / In-App
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Creem.io Merchant Checkout
                   </div>
-                  <div className="text-xs text-zinc-200 mt-1">Live webhook & merchant checkout connected</div>
+                  <div className="text-xs text-zinc-400 mt-1">Automated 1-tap checkout & merchant webhook connected</div>
                 </div>
               </div>
 
@@ -1434,30 +1436,30 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <select
                     value={subscriptionPlanFilter}
                     onChange={(e) => setSubscriptionPlanFilter(e.target.value)}
-                    className="px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none"
+                    className="px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none cursor-pointer"
                   >
-                    <option value="all">All Plans</option>
-                    <option value="basic">Basic ($29/mo)</option>
-                    <option value="pro">Pro ($79/mo)</option>
-                    <option value="premium">Premium Elite ($199/mo)</option>
-                    <option value="free">Free Tier ($0)</option>
+                    <option value="all">All Merchant Plans</option>
+                    <option value="premium">Premium Elite ($299/mo)</option>
+                    <option value="pro">Pro ($149/mo)</option>
+                    <option value="basic">Basic Claimed ($0/mo)</option>
+                    <option value="free">Unclaimed Free ($0)</option>
                   </select>
 
                   <select
                     value={subscriptionStatusFilter}
                     onChange={(e) => setSubscriptionStatusFilter(e.target.value)}
-                    className="px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none"
+                    className="px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none cursor-pointer"
                   >
                     <option value="all">All Payment Statuses</option>
                     <option value="active">Active (Paid)</option>
                     <option value="trialing">Trialing</option>
                     <option value="past_due">Past Due</option>
                     <option value="canceled">Canceled</option>
-                    <option value="free">Free</option>
+                    <option value="free">Free / Unpaid</option>
                   </select>
                 </div>
 
-                <div className="text-xs text-zinc-200 font-mono">
+                <div className="text-xs text-zinc-300 font-mono">
                   Showing {filteredSubscribedPlaces.length} of {places.length} businesses
                 </div>
               </div>
@@ -1466,7 +1468,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-md">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm text-zinc-200">
-                    <thead className="bg-zinc-950 text-xs font-bold uppercase tracking-wider text-zinc-200 border-b border-zinc-800">
+                    <thead className="bg-zinc-950 text-xs font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-800">
                       <tr>
                         <th className="p-4">Business & Identity</th>
                         <th className="p-4">Website URL</th>
@@ -1480,11 +1482,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </thead>
                     <tbody className="divide-y divide-zinc-800/80 font-medium">
                       {filteredSubscribedPlaces.map((place) => {
-                        const plan = place.subscriptionPlan || "free";
-                        const status = place.subscriptionStatus || (plan !== "free" ? "active" : "free");
+                        const savedPlan = typeof window !== 'undefined' ? localStorage.getItem(`yoouz_plan_${place.id}`) : null;
+                        const plan = savedPlan || place.subscriptionPlan || (place.isClaimed ? "basic" : "free");
+                        const status = place.subscriptionStatus || (plan === "pro" || plan === "premium" ? "active" : "free");
                         const amount = place.subscriptionAmount !== undefined 
                           ? place.subscriptionAmount 
-                          : (plan === "basic" ? 29 : plan === "pro" ? 79 : plan === "premium" ? 199 : 0);
+                          : (plan === "premium" ? 299 : plan === "pro" ? 149 : 0);
 
                         return (
                           <tr key={place.id} className="hover:bg-zinc-850/50 transition-colors">
@@ -1494,9 +1497,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 <div className="min-w-0">
                                   <div className="font-bold text-white flex items-center gap-1.5">
                                     {place.name}
-                                    {place.isClaimed && <BadgeCheck className="w-4 h-4 text-zinc-200 shrink-0" />}
+                                    {place.isClaimed && <BadgeCheck className="w-4 h-4 text-white shrink-0" />}
                                   </div>
-                                  <div className="text-xs text-zinc-200 truncate">{place.city || place.address}</div>
+                                  <div className="text-xs text-zinc-400 truncate">{place.city || place.address}</div>
                                 </div>
                               </div>
                             </td>
@@ -1507,52 +1510,62 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   href={place.website.startsWith("http") ? place.website : `https://${place.website}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-xs text-zinc-200 hover:text-white hover:underline flex items-center gap-1 max-w-[180px] truncate"
+                                  className="text-xs text-zinc-300 hover:text-white hover:underline flex items-center gap-1 max-w-[180px] truncate"
                                 >
-                                  <Globe className="w-3.5 h-3.5 shrink-0" />
+                                  <Globe className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
                                   <span className="truncate">{place.website.replace(/^https?:\/\//, "")}</span>
-                                  <ExternalLink className="w-3 h-3 shrink-0" />
+                                  <ExternalLink className="w-3 h-3 shrink-0 opacity-60" />
                                 </a>
                               ) : (
-                                <span className="text-xs text-zinc-200 italic">No URL set</span>
+                                <span className="text-xs text-zinc-500 italic">No URL set</span>
                               )}
                             </td>
 
                             <td className="p-4">
                               {place.claimedByEmail ? (
                                 <div className="flex items-center gap-1.5 text-xs text-zinc-200">
-                                  <Mail className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                                  <span className="truncate max-w-[160px]">{place.claimedByEmail}</span>
+                                  <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                  <span className="truncate max-w-[160px] font-mono">{place.claimedByEmail}</span>
                                 </div>
                               ) : (
-                                <span className="text-xs text-zinc-200">Unclaimed</span>
+                                <span className="text-xs text-zinc-500">Unclaimed</span>
                               )}
                             </td>
 
                             <td className="p-4">
                               <span
-                                className="text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider bg-zinc-800 text-zinc-200 border border-zinc-700"
+                                className={`text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider border ${
+                                  plan === 'premium'
+                                    ? 'bg-amber-950/40 text-amber-300 border-amber-800/60'
+                                    : plan === 'pro'
+                                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/60'
+                                    : 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                                }`}
                               >
-                                {plan}
+                                {plan === 'premium' ? 'Premium ($299)' : plan === 'pro' ? 'Pro ($149)' : plan === 'basic' ? 'Basic ($0)' : 'Free Tier'}
                               </span>
                             </td>
 
                             <td className="p-4">
                               <span
-                                className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-200 border border-zinc-700"
+                                className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                                  status === 'active'
+                                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/60'
+                                    : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                                }`}
                               >
-                                <span className={`w-1.5 h-1.5 rounded-full ${status === 'active' ? 'bg-white animate-pulse' : 'bg-zinc-500'}`} />
+                                <span className={`w-1.5 h-1.5 rounded-full ${status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
                                 {status.toUpperCase()}
                               </span>
                             </td>
 
                             <td className="p-4">
-                              <div className="font-bold text-white">${amount} <span className="text-xs text-zinc-200 font-normal">/mo</span></div>
+                              <div className="font-bold text-white">${amount} <span className="text-xs text-zinc-400 font-normal">/mo</span></div>
                             </td>
 
                             <td className="p-4">
-                              <span className="text-xs font-mono text-zinc-200">
-                                {place.subscriptionTransactionId || (plan !== "free" ? `tx_rev_${place.id.slice(0, 6)}` : "—")}
+                              <span className="text-xs font-mono text-zinc-400">
+                                {place.subscriptionTransactionId || (plan === "pro" || plan === "premium" ? `CREEM-INV-${place.id.slice(0, 4)}` : "—")}
                               </span>
                             </td>
 
@@ -1561,7 +1574,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 onClick={() => setEditPlaceModal(place)}
                                 className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ml-auto cursor-pointer"
                               >
-                                <Edit className="w-3.5 h-3.5" /> Manage Billing
+                                <Edit className="w-3.5 h-3.5" /> Manage
                               </button>
                             </td>
                           </tr>

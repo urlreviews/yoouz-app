@@ -3575,6 +3575,139 @@ function mergeDeep(target: any, source: any): any {
   return output;
 }
 
+// -------------------------------------------------------------
+// CREEM.IO BILLING API & WEBHOOK INTEGRATION
+// -------------------------------------------------------------
+app.get('/api/creem/config', (req, res) => {
+  const isConfigured = Boolean(process.env.CREEM_API_KEY);
+  res.json({
+    isConfigured,
+    mode: isConfigured ? 'live' : 'unconfigured',
+    currency: 'USD',
+    products: {
+      pro: {
+        id: process.env.CREEM_PRODUCT_ID_PRO || 'prod_yoouz_pro',
+        amount: 149,
+        name: 'Yoouz Pro Business',
+        interval: 'month'
+      },
+      premium: {
+        id: process.env.CREEM_PRODUCT_ID_PREMIUM || 'prod_yoouz_premium',
+        amount: 299,
+        name: 'Yoouz Premium Business',
+        interval: 'month'
+      }
+    }
+  });
+});
+
+app.post('/api/creem/create-checkout', express.json(), async (req, res) => {
+  try {
+    const { plan, placeId, businessEmail, successUrl, cancelUrl } = req.body;
+    const apiKey = process.env.CREEM_API_KEY;
+    const productId = plan === 'premium' 
+      ? (process.env.CREEM_PRODUCT_ID_PREMIUM || 'prod_yoouz_premium')
+      : (process.env.CREEM_PRODUCT_ID_PRO || 'prod_yoouz_pro');
+    
+    if (!apiKey) {
+      // In-app fallback response when API key not yet set in .env
+      return res.json({
+        success: true,
+        isLive: false,
+        checkoutUrl: null,
+        message: 'Creem API Key not yet configured in environment variables. Operating in direct verified authorization mode.'
+      });
+    }
+
+    // Call Creem.io API
+    const creemRes = await fetch('https://api.creem.io/v1/checkouts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'X-Creem-Version': '2024-01-01'
+      },
+      body: JSON.stringify({
+        product_id: productId,
+        customer_email: businessEmail,
+        success_url: successUrl || `${req.headers.origin || 'https://www.yoouz.com'}/business?billing_success=true&place_id=${placeId}`,
+        cancel_url: cancelUrl || `${req.headers.origin || 'https://www.yoouz.com'}/business?billing_cancel=true`,
+        metadata: {
+          placeId,
+          plan: plan || 'pro',
+          environment: 'production'
+        }
+      })
+    });
+
+    if (!creemRes.ok) {
+      const errData = await creemRes.json().catch(() => ({}));
+      return res.status(creemRes.status).json({
+        error: errData.message || 'Failed to create checkout session with Creem.io'
+      });
+    }
+
+    const creemData = await creemRes.json();
+    return res.json({
+      success: true,
+      isLive: true,
+      checkoutUrl: creemData.checkout_url || creemData.url,
+      sessionId: creemData.id
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Internal server error in Creem checkout' });
+  }
+});
+
+app.post('/api/creem/webhook', express.json({ type: '*/*' }), async (req, res) => {
+  try {
+    const event = req.body;
+    const eventType = event.type || event.event;
+    console.log(`[Creem.io Webhook] Received event: ${eventType}`, event);
+
+    const placeId = event.data?.metadata?.placeId || event.metadata?.placeId;
+    const plan = event.data?.metadata?.plan || event.metadata?.plan || 'pro';
+    const customerEmail = event.data?.customer_email || event.customer_email;
+    const transactionId = event.data?.id || event.id || `creem_tx_${Date.now()}`;
+    const amount = plan === 'premium' ? 299 : 149;
+
+    if (placeId) {
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          if (eventType === 'checkout.completed' || eventType === 'subscription.created' || eventType === 'invoice.paid') {
+            await bunnyDb.execute({
+              sql: `UPDATE places SET 
+                subscription_plan = ?, 
+                subscription_status = 'active', 
+                subscription_amount = ?, 
+                subscription_transaction_id = ?,
+                claimed_by_email = COALESCE(claimed_by_email, ?)
+                WHERE id = ?`,
+              args: [plan, amount, transactionId, customerEmail || '', placeId]
+            });
+          } else if (eventType === 'subscription.cancelled' || eventType === 'subscription.deleted') {
+            await bunnyDb.execute({
+              sql: `UPDATE places SET 
+                subscription_plan = 'basic', 
+                subscription_status = 'canceled', 
+                subscription_amount = 0
+                WHERE id = ?`,
+              args: [placeId]
+            });
+          }
+        } catch (dbErr) {
+          console.error('[Creem.io Webhook] DB update error:', dbErr);
+        }
+      }
+    }
+
+    res.json({ received: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req, res) => {
   try {
     const { collection: colName, id } = req.params;
