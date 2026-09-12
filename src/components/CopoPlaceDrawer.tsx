@@ -270,19 +270,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Check if any video review for this place has a high quality banner or logo
   const reviewBannerUrl = React.useMemo(() => {
-    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && !place.bannerUrl.startsWith("data:")) return place.bannerUrl;
-    if (place.ogImage && !place.ogImage.startsWith("blob:") && !place.ogImage.startsWith("data:")) return place.ogImage;
+    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && !place.bannerUrl.startsWith("data:") && !place.bannerUrl.includes("unsplash.com") && !place.bannerUrl.includes("placeholder") && !place.bannerUrl.includes("mock")) return place.bannerUrl;
+    if (place.ogImage && !place.ogImage.startsWith("blob:") && !place.ogImage.startsWith("data:") && !place.ogImage.includes("unsplash.com") && !place.ogImage.includes("placeholder") && !place.ogImage.includes("mock")) return place.ogImage;
     for (const v of rawPlaceVideos) {
       const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
       if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/"))) {
-        return b;
+        if (!b.includes("unsplash.com") && !b.includes("placeholder") && !b.includes("mock")) return b;
       }
     }
     for (const v of (allVideos || [])) {
       if (isPlaceReviewMatch(v, place)) {
         const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
         if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/"))) {
-          return b;
+          if (!b.includes("unsplash.com") && !b.includes("placeholder") && !b.includes("mock")) return b;
         }
       }
     }

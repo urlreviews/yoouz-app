@@ -3451,10 +3451,23 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
         });
         if (rs.rows.length > 0) {
           const row: any = rs.rows[0];
-          let parsedData = {};
+          let parsedData: any = {};
           try {
             parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
           } catch (e) {}
+          
+          if (colName === 'places') {
+            if (parsedData.bannerUrl && (parsedData.bannerUrl.includes('unsplash.com') || parsedData.bannerUrl.includes('placeholder') || parsedData.bannerUrl.includes('mock'))) {
+              parsedData.bannerUrl = "";
+            }
+            if (parsedData.ogImage && (parsedData.ogImage.includes('unsplash.com') || parsedData.ogImage.includes('placeholder') || parsedData.ogImage.includes('mock'))) {
+              parsedData.ogImage = "";
+            }
+            if (Array.isArray(parsedData.photos)) {
+              parsedData.photos = parsedData.photos.filter((p: string) => !p.includes('unsplash.com') && !p.includes('placeholder') && !p.includes('mock'));
+            }
+          }
+          
           return res.json({ id: String(row.id), ...parsedData });
         }
       } catch (bunnyErr) {}
@@ -13911,6 +13924,17 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
     place.logoUrl = brand.startsWith('<svg')
       ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(brand)}`
       : brand;
+  }
+
+  // Final sanitization of banners across all data sources
+  if (place.bannerUrl && (place.bannerUrl.includes('unsplash.com') || place.bannerUrl.includes('placeholder') || place.bannerUrl.includes('mock'))) {
+    place.bannerUrl = "";
+  }
+  if (place.ogImage && (place.ogImage.includes('unsplash.com') || place.ogImage.includes('placeholder') || place.ogImage.includes('mock'))) {
+    place.ogImage = "";
+  }
+  if (Array.isArray(place.photos)) {
+    place.photos = place.photos.filter((p: string) => !p.includes('unsplash.com') && !p.includes('placeholder') && !p.includes('mock'));
   }
 
   return place;
