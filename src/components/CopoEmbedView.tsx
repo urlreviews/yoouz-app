@@ -246,9 +246,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
           <button
             onClick={() => onRecordReview?.(targetPlace)}
-            className="pointer-events-auto px-3.5 py-2 rounded-2xl bg-white text-black hover:bg-zinc-100 text-xs font-black flex items-center gap-1.5 transition-transform active:scale-95 shadow-xl shrink-0 cursor-pointer"
+            className="pointer-events-auto px-3.5 py-2 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/80 text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-lg shadow-black/50 shrink-0 cursor-pointer"
           >
-            <Video className="w-3.5 h-3.5 text-black shrink-0 stroke-[2.5]" />
+            <Video className="w-3.5 h-3.5 text-white shrink-0 stroke-[2.5]" />
             <span>Review</span>
           </button>
         </div>
@@ -417,9 +417,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
             <button
               onClick={() => onRecordReview?.(targetPlace)}
-              className="px-5 py-2.5 rounded-2xl bg-white text-black hover:bg-zinc-100 text-xs font-black flex items-center gap-2 transition active:scale-95 shadow-xl cursor-pointer"
+              className="px-5 py-2.5 rounded-2xl bg-zinc-900 border border-zinc-700/80 hover:bg-zinc-800 hover:border-zinc-500 text-white text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-xl shadow-black/50 cursor-pointer"
             >
-              <Video className="w-4 h-4 text-black shrink-0 stroke-[2.5]" />
+              <Video className="w-4 h-4 text-white shrink-0 stroke-[2.5]" />
               <span>Record 60s Video Review</span>
             </button>
           </div>
