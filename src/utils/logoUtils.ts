@@ -239,6 +239,30 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <circle cx="40" cy="50" r="24" fill="#eb001b"/>
       <circle cx="60" cy="50" r="24" fill="#f79e1b" fill-opacity="0.85"/>
     </svg>`),
+  "tinder.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <defs>
+        <linearGradient id="tinderGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#fd297b"/>
+          <stop offset="50%" stop-color="#ff5864"/>
+          <stop offset="100%" stop-color="#ff655b"/>
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="22" fill="url(#tinderGrad)"/>
+      <path d="M52 20 C52 20 40 33 40 48 C40 56 46 63 54 63 C58 63 62 61 65 58 C65 67 58 76 48 76 C37 76 28 67 28 55 C28 41 38 30 46 22 C44 26 44 31 46 34 C48 37 52 38 54 36 C56 34 56 28 52 20 Z" fill="#ffffff"/>
+    </svg>`),
+  "www.tinder.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <defs>
+        <linearGradient id="tinderGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#fd297b"/>
+          <stop offset="50%" stop-color="#ff5864"/>
+          <stop offset="100%" stop-color="#ff655b"/>
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="22" fill="url(#tinderGrad2)"/>
+      <path d="M52 20 C52 20 40 33 40 48 C40 56 46 63 54 63 C58 63 62 61 65 58 C65 67 58 76 48 76 C37 76 28 67 28 55 C28 41 38 30 46 22 C44 26 44 31 46 34 C48 37 52 38 54 36 C56 34 56 28 52 20 Z" fill="#ffffff"/>
+    </svg>`),
   "leopoldhotelantwerp.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#7c2d12"/>
@@ -342,6 +366,8 @@ export const KNOWN_BRAND_BANNERS: Record<string, string> = {
   "tajhotels.com": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80",
   "ups.com": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&auto=format&fit=crop&q=80",
   "mastercard.com": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1200&auto=format&fit=crop&q=80",
+  "tinder.com": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&auto=format&fit=crop&q=80",
+  "www.tinder.com": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&auto=format&fit=crop&q=80",
   "londontrustedtherapy.com": "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp",
   "kempinski.com": "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg",
   "timehotels.com": "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png",

@@ -866,6 +866,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     const observer = new IntersectionObserver(
       (entries) => {
+        if (isProgrammaticScrollRef.current) return;
+
+        // If user is at the top of the scroll container, firmly lock to first video (index 0)
+        if (container.scrollTop <= 20) {
+          if (currentIndexRef.current !== 0) {
+            currentIndexRef.current = 0;
+            lastObserverIndexRef.current = 0;
+            onSelectVideoIndex(0);
+          }
+          return;
+        }
+
         const visibleEntries = entries.filter(
           (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.45
         );
@@ -877,7 +889,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         const idxAttr = bestEntry.target.getAttribute("data-video-index");
         if (idxAttr !== null) {
           const idx = parseInt(idxAttr, 10);
-          const maxIdx = videos.length > 0 ? videos.length : 0;
+          const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
           if (!isNaN(idx) && idx >= 0 && idx <= maxIdx && idx !== currentIndexRef.current) {
             currentIndexRef.current = idx;
             lastObserverIndexRef.current = idx;
@@ -902,6 +914,30 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       observer.disconnect();
     };
   }, [videos, onSelectVideoIndex]);
+
+  // Keep top-of-feed locked to index 0 when feed updates or new video is published
+  const prevFirstVideoIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentFirstId = videos[0]?.id || null;
+    if (currentFirstId && currentFirstId !== prevFirstVideoIdRef.current) {
+      prevFirstVideoIdRef.current = currentFirstId;
+      if (currentIndexRef.current === 0) {
+        lastObserverIndexRef.current = 0;
+        currentIndexRef.current = 0;
+        onSelectVideoIndex(0);
+        if (containerRef.current) {
+          containerRef.current.scrollTo({ top: 0, behavior: "instant" });
+        }
+      }
+    }
+  }, [videos, onSelectVideoIndex]);
+
+  // Initial mount top-lock
+  useEffect(() => {
+    if (currentIndex === 0 && containerRef.current) {
+      containerRef.current.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, []);
 
   // Zero-Latency Frame-Synchronized Settle Engine
   // Real-time scroll frame updates via requestAnimationFrame ensuring zero delay on mobile swipes
