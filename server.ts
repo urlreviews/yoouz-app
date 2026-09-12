@@ -15186,6 +15186,6 @@ function injectOpenGraphTags(html: string, meta: any) {
 startServer().catch(err => {
   console.error("CRITICAL SERVER STARTUP ERROR:", err);
   process.exit(1);
-});
+}); // End of server startup
 
 
