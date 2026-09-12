@@ -139,12 +139,12 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     key={item.id}
                     id={`nav-btn-${item.id}`}
                     onClick={() => onSelectSection(item.id)}
-                    className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                    className={`relative flex items-center transition-all duration-150 cursor-pointer group ${
                       item.isDarkBlue
-                        ? "justify-center bg-zinc-900 hover:bg-zinc-850 text-white border border-zinc-700 shadow-lg shadow-black/50 font-bold my-1 mt-4 active:scale-[0.98] transition-all"
+                        ? "justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg my-1 mt-4 active:scale-[0.98] transition-all"
                         : isActive
-                        ? "bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                        : "text-white hover:bg-zinc-900/90 font-medium"
+                        ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
+                        : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
                     }`}
                   >
                     <div className="relative flex items-center justify-center">
@@ -157,21 +157,18 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                           }`}
                           referrerPolicy="no-referrer"
                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
-                      ) : item.isDarkBlue ? (
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
-                          <Icon className="w-5 h-5 shrink-0 text-white" />
-                        </div>
                       ) : (
                         <Icon
-                          className="w-5 h-5 shrink-0 transition-colors text-white"
+                          className={`w-5 h-5 shrink-0 transition-colors ${
+                            item.isDarkBlue ? "text-zinc-950 stroke-[2.2]" : "text-white"
+                          }`}
                         />
                       )}
                       {item.hasDot && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
                       )}
                     </div>
-                    <span className={item.isDarkBlue ? "font-bold text-[15px] text-white tracking-tight" : "truncate flex-1"}>
+                    <span className={item.isDarkBlue ? "font-bold text-[15px] text-zinc-950 tracking-tight" : "truncate flex-1"}>
                       {item.id === "profile" && currentUser?.name ? currentUser.name.split(" ")[0] : item.label}
                     </span>
                     
@@ -246,7 +243,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     onClick={() => onSelectSection(item.id)}
                     className={`relative flex items-center justify-center w-12 h-12 mx-auto rounded-full transition-all duration-150 cursor-pointer ${
                       item.isDarkBlue
-                        ? "bg-zinc-900 hover:bg-zinc-850 text-white border border-zinc-700 shadow-lg shadow-black/50 my-1 mt-4 active:scale-95 transition-all"
+                        ? "bg-white hover:bg-zinc-200 text-zinc-950 shadow-lg my-1 mt-4 active:scale-95 transition-all"
                         : isActive
                         ? "bg-zinc-850 border border-zinc-700 text-white shadow-xs"
                         : "text-white hover:bg-zinc-900/90"
@@ -264,14 +261,11 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                           referrerPolicy="no-referrer"
                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
                       ) : (
-                        <div className="relative flex items-center justify-center">
-                          <Icon
-                            className="w-[22px] h-[22px] shrink-0 transition-colors text-white"
-                          />
-                          {item.isDarkBlue && (
-                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
-                          )}
-                        </div>
+                        <Icon
+                          className={`w-[22px] h-[22px] shrink-0 transition-colors ${
+                            item.isDarkBlue ? "text-zinc-950 stroke-[2.2]" : "text-white"
+                          }`}
+                        />
                       )}
                       {item.hasDot && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
