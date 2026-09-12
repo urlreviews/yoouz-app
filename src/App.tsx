@@ -633,6 +633,7 @@ export function App() {
 
       // Clean active and legacy local storage caches
       const cacheKeys = [
+        "yoouz_cached_videos_v25",
         "yoouz_cached_videos_v22",
         "yoouz_cached_videos_v21",
         "yoouz_cached_videos_v20",
@@ -730,6 +731,7 @@ export function App() {
 
       // Clean active and legacy local storage caches
       const cacheKeys = [
+        "yoouz_cached_videos_v25",
         "yoouz_cached_videos_v22",
         "yoouz_cached_videos_v21",
         "yoouz_cached_videos_v20",
@@ -808,6 +810,9 @@ export function App() {
     try {
       localStorage.removeItem("copo_videos");
       localStorage.removeItem("copo_deleted_videos");
+      localStorage.removeItem("yoouz_cached_videos_v25");
+      localStorage.removeItem("yoouz_cached_videos_v22");
+      localStorage.removeItem("yoouz_cached_videos_v21");
       localStorage.removeItem("yoouz_cached_videos_v20");
       localStorage.removeItem("yoouz_cached_videos_v16");
     } catch (e) {}
@@ -1914,7 +1919,7 @@ export function App() {
 
       // Update local storage cache immediately
       try {
-        const cachedStr = localStorage.getItem("yoouz_cached_videos_v20");
+        const cachedStr = localStorage.getItem("yoouz_cached_videos_v25");
         if (cachedStr) {
           const cached = JSON.parse(cachedStr);
           if (Array.isArray(cached)) {
@@ -1929,7 +1934,7 @@ export function App() {
                   }
                 : c
             );
-            localStorage.setItem("yoouz_cached_videos_v20", JSON.stringify(updated));
+            localStorage.setItem("yoouz_cached_videos_v25", JSON.stringify(updated));
           }
         }
       } catch (e) {}
@@ -1968,7 +1973,7 @@ export function App() {
 
       // Update local storage cache
       try {
-        localStorage.setItem("yoouz_cached_videos_v16", JSON.stringify(next.slice(0, 50)));
+        localStorage.setItem("yoouz_cached_videos_v25", JSON.stringify(next.slice(0, 50)));
       } catch (e) {}
 
       return next;

@@ -23,12 +23,12 @@ function recordClientDeletedId(id: string) {
 
     // Immediately remove from cached feed and local reviews
     try {
-      const cached = localStorage.getItem("yoouz_cached_videos_v22");
+      const cached = localStorage.getItem("yoouz_cached_videos_v25");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
           const filtered = parsed.filter((v: any) => v && v.id !== strId);
-          localStorage.setItem("yoouz_cached_videos_v22", JSON.stringify(filtered));
+          localStorage.setItem("yoouz_cached_videos_v25", JSON.stringify(filtered));
         }
       }
     } catch (e) {}
@@ -115,6 +115,7 @@ export function useFeedPagination() {
 
     try {
       // Purge legacy caches to eliminate corrupted counts and stale sort
+      localStorage.removeItem("yoouz_cached_videos_v22");
       localStorage.removeItem("yoouz_cached_videos_v21");
       localStorage.removeItem("yoouz_cached_videos_v20");
       localStorage.removeItem("yoouz_cached_videos_v19");
@@ -140,7 +141,7 @@ export function useFeedPagination() {
         }
       } catch (e) {}
 
-      const cached = localStorage.getItem("yoouz_cached_videos_v22");
+      const cached = localStorage.getItem("yoouz_cached_videos_v25");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -208,12 +209,12 @@ export function useFeedPagination() {
           if (serverDeletedIds.length > 0) {
             try {
               localStorage.setItem("copo_deleted_videos", JSON.stringify(Array.from(allDeletedSet)));
-              const cached = localStorage.getItem("yoouz_cached_videos_v22");
+              const cached = localStorage.getItem("yoouz_cached_videos_v25");
               if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed)) {
                   const filtered = parsed.filter((v: any) => v && !allDeletedSet.has(String(v.id)));
-                  localStorage.setItem("yoouz_cached_videos_v22", JSON.stringify(filtered));
+                  localStorage.setItem("yoouz_cached_videos_v25", JSON.stringify(filtered));
                 }
               }
               const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
@@ -316,7 +317,7 @@ export function useFeedPagination() {
               merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
               
               // Persist fresh feed to cache
-              try { localStorage.setItem("yoouz_cached_videos_v22", JSON.stringify(merged.slice(0, 50))); } catch(e){}
+              try { localStorage.setItem("yoouz_cached_videos_v25", JSON.stringify(merged.slice(0, 50))); } catch(e){}
               
               return merged;
             });
@@ -442,6 +443,8 @@ export function useFeedPagination() {
               setVideos([]);
               try {
                 localStorage.removeItem("copo_videos");
+                localStorage.removeItem("yoouz_cached_videos_v25");
+                localStorage.removeItem("yoouz_cached_videos_v22");
                 localStorage.removeItem("yoouz_cached_videos_v21");
                 localStorage.removeItem("yoouz_cached_videos_v20");
                 localStorage.removeItem("yoouz_cached_videos_v16");
