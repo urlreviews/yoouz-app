@@ -3011,7 +3011,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <span className="font-bold text-sm text-white tracking-tight truncate">
                                 {currentPlace.name}
                               </span>
-                              <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
@@ -3073,7 +3073,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       )}
 
                       <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-500 pt-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                         <span>Live Sync Powered by Yoouz</span>
                       </div>
                     </div>
