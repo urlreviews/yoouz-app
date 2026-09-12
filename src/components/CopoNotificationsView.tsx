@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { extractCleanDomain } from "../utils/placeUtils";
@@ -67,6 +67,23 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 }) => {
   const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const checkTouch = () => {
+        setIsTouchDevice(
+          'ontouchstart' in window ||
+          navigator.maxTouchPoints > 0 ||
+          window.matchMedia('(pointer: coarse)').matches ||
+          window.innerWidth < 640
+        );
+      };
+      checkTouch();
+      window.addEventListener('resize', checkTouch);
+      return () => window.removeEventListener('resize', checkTouch);
+    }
+  }, []);
 
   // Unauthenticated Gating View
   if (!currentUser) {
@@ -449,27 +466,29 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   key={`notif-${notif.id}`}
                   initial={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
-                  className="relative overflow-hidden bg-rose-600 group"
+                  className="relative overflow-hidden bg-zinc-950 group"
                 >
-                  {/* Swipe-to-delete Red Backdrop */}
-                  <div 
-                    onClick={(e) => handleDismiss(notif.id, e)}
-                    className="absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Delete</span>
-                  </div>
+                  {/* Mobile Swipe-to-delete Red Backdrop (Only active on mobile touch screens) */}
+                  {isTouchDevice && (
+                    <div 
+                      onClick={(e) => handleDismiss(notif.id, e)}
+                      className="sm:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
+                    </div>
+                  )}
 
-                  {/* Drag Front Card */}
+                  {/* Notification Card */}
                   <motion.div
-                    drag="x"
-                    dragConstraints={{ left: -90, right: 0 }}
-                    dragElastic={0.1}
-                    onDragEnd={(_, info) => {
+                    drag={isTouchDevice ? "x" : false}
+                    dragConstraints={isTouchDevice ? { left: -90, right: 0 } : undefined}
+                    dragElastic={isTouchDevice ? 0.1 : false}
+                    onDragEnd={isTouchDevice ? (_, info) => {
                       if (info.offset.x < -60 || info.velocity.x < -250) {
                         handleDismiss(notif.id);
                       }
-                    }}
+                    } : undefined}
                     onClick={() => {
                       handleMarkAsRead(notif.id);
                       if (notif.type === "message" && onNavigateToMessages) {
@@ -491,8 +510,10 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                         onSelectNotificationVideo(notif.videoId);
                       }
                     }}
-                    className={`relative z-10 p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800 cursor-pointer transition-colors ${
-                      !notif.isRead ? "bg-zinc-900" : "bg-zinc-950/80"
+                    className={`relative z-10 p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer transition-colors ${
+                      !notif.isRead 
+                        ? "bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800" 
+                        : "bg-zinc-950 hover:bg-zinc-900 active:bg-zinc-850"
                     }`}
                   >
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
@@ -609,7 +630,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   </div>
 
                   {/* Right Thumbnail & Desktop Quick Delete */}
-                  <div className="flex items-center gap-2 shrink-0 select-none">
+                  <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 select-none">
                     {resolvedThumbnail ? (
                       <div 
                         onClick={(e) => {
@@ -644,13 +665,15 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                       </div>
                     ) : null}
 
-                    {/* Desktop Hover Delete Action Button (Hidden on Mobile for Clean Swipe Gesture) */}
+                    {/* Desktop Dedicated Delete Button: visible on hover / focus, no swiping needed on desktop */}
                     <button
+                      type="button"
                       onClick={(e) => handleDismiss(notif.id, e)}
-                      className="hidden sm:flex p-1.5 rounded-full bg-zinc-800/80 hover:bg-rose-600 hover:text-white text-zinc-400 border border-zinc-700/60 transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-90 items-center justify-center"
+                      className="hidden sm:inline-flex p-2 rounded-xl text-zinc-500 hover:text-rose-400 hover:bg-rose-500/15 border border-transparent hover:border-rose-500/20 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all cursor-pointer items-center justify-center shrink-0 active:scale-90"
                       title="Delete notification"
+                      aria-label="Delete notification"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </motion.div>

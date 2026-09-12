@@ -134,6 +134,8 @@ interface CopoBusinessDashboardViewProps {
   onToggleFollow?: (authorHandle: string) => void;
   onToggleFollowPlace?: (placeId: string) => void;
   onMarkNotificationRead?: (id: string) => void;
+  onDeleteNotification?: (id: string) => void;
+  onUpdateNotifications?: (updated: CopoNotification[]) => void;
   onClearAllNotifications?: () => void;
   onSaveNotificationSettings?: (newSettings: NotificationPreferences) => Promise<void> | void;
   onOpenLegal?: (tab: 'terms' | 'privacy') => void;
@@ -629,6 +631,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onToggleFollow,
   onToggleFollowPlace,
   onMarkNotificationRead,
+  onDeleteNotification,
+  onUpdateNotifications,
   onClearAllNotifications,
   onSaveNotificationSettings,
   onOpenLegal,
@@ -3061,6 +3065,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   onNavigateToMessages={() => setActiveTab('inbox')}
                   onNavigateHome={() => setActiveTab('overview')}
                   onMarkRead={(id) => onMarkNotificationRead?.(id)}
+                  onDeleteNotification={onDeleteNotification}
+                  onUpdateNotifications={onUpdateNotifications}
                   onClearAll={onClearAllNotifications}
                   onOpenCreator={onOpenCreator}
                   onOpenSettings={() => setIsNotificationSettingsOpen(true)}

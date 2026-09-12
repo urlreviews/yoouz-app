@@ -5070,6 +5070,15 @@ export function App() {
                   }
                   setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
                 }}
+                onDeleteNotification={(id) => {
+                  if (effectiveMessagingUser) {
+                    deleteNotification(id, effectiveMessagingUser as any);
+                  }
+                  setNotifications(prev => prev.filter(n => n.id !== id));
+                }}
+                onUpdateNotifications={(updated) => {
+                  setNotifications(updated);
+                }}
                 onClearAllNotifications={() => {
                   if (effectiveMessagingUser) {
                     clearAllNotifications(notifications.map(n => n.id), effectiveMessagingUser as any);
