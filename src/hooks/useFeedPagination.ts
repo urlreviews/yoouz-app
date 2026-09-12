@@ -20,6 +20,29 @@ function recordClientDeletedId(id: string) {
       deletedIds.push(strId);
       localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedIds));
     }
+
+    // Immediately remove from cached feed and local reviews
+    try {
+      const cached = localStorage.getItem("yoouz_cached_videos_v22");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          const filtered = parsed.filter((v: any) => v && v.id !== strId);
+          localStorage.setItem("yoouz_cached_videos_v22", JSON.stringify(filtered));
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
+      if (localPubStr) {
+        const parsedLp = JSON.parse(localPubStr);
+        if (Array.isArray(parsedLp)) {
+          const filteredLp = parsedLp.filter((v: any) => v && v.id !== strId);
+          localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(filteredLp));
+        }
+      }
+    } catch (e) {}
   } catch (e) {}
 }
 
@@ -185,6 +208,22 @@ export function useFeedPagination() {
           if (serverDeletedIds.length > 0) {
             try {
               localStorage.setItem("copo_deleted_videos", JSON.stringify(Array.from(allDeletedSet)));
+              const cached = localStorage.getItem("yoouz_cached_videos_v22");
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed)) {
+                  const filtered = parsed.filter((v: any) => v && !allDeletedSet.has(String(v.id)));
+                  localStorage.setItem("yoouz_cached_videos_v22", JSON.stringify(filtered));
+                }
+              }
+              const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
+              if (localPubStr) {
+                const parsedLp = JSON.parse(localPubStr);
+                if (Array.isArray(parsedLp)) {
+                  const filteredLp = parsedLp.filter((v: any) => v && !allDeletedSet.has(String(v.id)));
+                  localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(filteredLp));
+                }
+              }
             } catch (e) {}
           }
 

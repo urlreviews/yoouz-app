@@ -630,9 +630,43 @@ export function App() {
         deletedVideos.push(targetId);
         localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
       }
-      localStorage.removeItem("copo_videos");
-      localStorage.removeItem("yoouz_cached_videos_v20");
-      localStorage.removeItem("yoouz_cached_videos_v16");
+
+      // Clean active and legacy local storage caches
+      const cacheKeys = [
+        "yoouz_cached_videos_v22",
+        "yoouz_cached_videos_v21",
+        "yoouz_cached_videos_v20",
+        "yoouz_cached_videos_v19",
+        "yoouz_cached_videos_v18",
+        "yoouz_cached_videos_v16",
+        "copo_videos"
+      ];
+      cacheKeys.forEach(k => {
+        try {
+          const raw = localStorage.getItem(k);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              const cleaned = parsed.filter((item: any) => item && item.id !== targetId);
+              localStorage.setItem(k, JSON.stringify(cleaned));
+            } else {
+              localStorage.removeItem(k);
+            }
+          }
+        } catch (e) {}
+      });
+
+      // Clean local published reviews
+      try {
+        const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
+        if (localPubStr) {
+          const parsedLocal = JSON.parse(localPubStr);
+          if (Array.isArray(parsedLocal)) {
+            const cleaned = parsedLocal.filter((item: any) => item && item.id !== targetId);
+            localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(cleaned));
+          }
+        }
+      } catch (e) {}
     } catch (e) {}
 
     // 5. Clear IndexedDB cache
@@ -693,9 +727,43 @@ export function App() {
         if (!deletedVideos.includes(id)) deletedVideos.push(id);
       });
       localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
-      localStorage.removeItem("copo_videos");
-      localStorage.removeItem("yoouz_cached_videos_v20");
-      localStorage.removeItem("yoouz_cached_videos_v16");
+
+      // Clean active and legacy local storage caches
+      const cacheKeys = [
+        "yoouz_cached_videos_v22",
+        "yoouz_cached_videos_v21",
+        "yoouz_cached_videos_v20",
+        "yoouz_cached_videos_v19",
+        "yoouz_cached_videos_v18",
+        "yoouz_cached_videos_v16",
+        "copo_videos"
+      ];
+      cacheKeys.forEach(k => {
+        try {
+          const raw = localStorage.getItem(k);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              const cleaned = parsed.filter((item: any) => item && !idSet.has(String(item.id)));
+              localStorage.setItem(k, JSON.stringify(cleaned));
+            } else {
+              localStorage.removeItem(k);
+            }
+          }
+        } catch (e) {}
+      });
+
+      // Clean local published reviews
+      try {
+        const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
+        if (localPubStr) {
+          const parsedLocal = JSON.parse(localPubStr);
+          if (Array.isArray(parsedLocal)) {
+            const cleaned = parsedLocal.filter((item: any) => item && !idSet.has(String(item.id)));
+            localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(cleaned));
+          }
+        }
+      } catch (e) {}
     } catch (e) {}
 
     // 5. Clear IndexedDB cache for bulk deleted videos
