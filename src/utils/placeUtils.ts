@@ -187,17 +187,133 @@ export function formatViewCount(views?: number | null): string {
 }
 
 /**
+ * Verified Official Names Dictionary for Known Brands and Seeded Places
+ */
+export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "digitalpark": "Digital Park",
+  "digitalpark.ae": "Digital Park",
+  "digitalparkae": "Digital Park",
+  "digitalparkae.com": "Digital Park",
+  "dubaidigitalpark": "Dubai Digital Park",
+  "aldhabidental": "Al Dhabi Dental Center",
+  "aldhabidental.ae": "Al Dhabi Dental Center",
+  "aldhabidentalcenter": "Al Dhabi Dental Center",
+  "aldhabidentalclinic": "Al Dhabi Dental Center",
+  "aldhabi": "Al Dhabi Dental Center",
+  "thecapitalavenue": "The Capital Avenue",
+  "thecapitalavenue.com": "The Capital Avenue",
+  "thecapitalavenuerealestate": "The Capital Avenue Real Estate",
+  "thecapitalavenuerealestateabudhabi": "The Capital Avenue Real Estate",
+  "districtuae": "District Real Estate",
+  "districtuae.com": "District Real Estate",
+  "districtrealestate": "District Real Estate",
+  "londontrustedtherapy": "London Trusted Therapy",
+  "londontrustedtherapy.com": "London Trusted Therapy",
+  "kempinski": "Kempinski Hotels",
+  "kempinski.com": "Kempinski Hotels",
+  "timehotels": "Time Hotels",
+  "timehotels.com": "Time Hotels",
+  "www-timehotels-com": "Time Hotels",
+  "legal500": "The Legal 500",
+  "legal500.com": "The Legal 500",
+  "thelegal500": "The Legal 500",
+  "freecancellations": "Free Cancellations",
+  "freecancellations.com": "Free Cancellations",
+  "www-freecancellations-com": "Free Cancellations",
+  "tajhotels": "Taj Hotels",
+  "tajhotels.com": "Taj Hotels",
+  "www-tajhotels-com": "Taj Hotels",
+  "plomberiebruxelles24": "Plomberie Bruxelles 24",
+  "plomberiebruxelles24.be": "Plomberie Bruxelles 24",
+  "toptechbelgium": "Toptech Belgium SRL",
+  "toptechbelgiumsrl": "Toptech Belgium SRL",
+  "bhol": "B'Chadrei Charedim",
+  "bhol.co.il": "B'Chadrei Charedim",
+  "brettlevy": "Brett Levy",
+  "brettlevy.com": "Brett Levy",
+  "yoouz": "Yoouz",
+  "yoouz.com": "Yoouz",
+  "apple": "Apple",
+  "apple.com": "Apple",
+  "github": "GitHub",
+  "github.com": "GitHub",
+  "google": "Google",
+  "google.com": "Google",
+  "uber": "Uber",
+  "uber.com": "Uber",
+  "spotify": "Spotify",
+  "spotify.com": "Spotify",
+  "facebook": "Facebook",
+  "facebook.com": "Facebook",
+  "meta": "Meta",
+  "meta.com": "Meta",
+  "reddit": "Reddit",
+  "reddit.com": "Reddit",
+  "ibm": "IBM",
+  "ibm.com": "IBM",
+  "ups": "UPS",
+  "ups.com": "UPS",
+  "cnn": "CNN",
+  "cnn.com": "CNN",
+  "zoom": "Zoom",
+  "zoom.us": "Zoom",
+  "zoom.com": "Zoom",
+  "usa": "USA",
+  "usa.com": "USA",
+  "mastercard": "Mastercard",
+  "mastercard.com": "Mastercard"
+};
+
+/**
+ * Splits concatenated compound words, slugs, and camelCase domain strings into separate human-readable words.
+ */
+export function splitCompoundWords(str: string): string {
+  let s = str.trim();
+  // 1. Split camelCase/PascalCase
+  s = s.replace(/([a-z])([A-Z])/g, "$1 $2");
+  // 2. Split letter-number and number-letter
+  s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
+  // 3. Known brand/locational prefixes
+  s = s.replace(/^(al|el|the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
+  
+  // 4. Known compound word boundaries & suffixes
+  const commonWords = /(dental|clinic|center|centre|park|hotels?|avenue|valley|therapy|services?|solutions?|group|media|news|technology|tech|studios?|travel|cafe|coffee|bar|suites?|hospitals?|stores?|shops?|markets?|clubs?|fitness|gym|labs?|care|health|spa|salon|resorts?|villas?|restaurants?|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations?|motors?|auto|rentals?|logistics|express|trust|trusted|capital|consulting|associates?|partners?|properties|realestate|agency|law|firm|lawyers?|attorneys?|dentists?|orthodontics|wellness|massage|towers?|plaza|square|malls?|hubs?|holdings|globals?|international|world|networks?|systems?|software|security|design|creative|productions?|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  
+  // Apply word splitting if no spaces yet
+  const parts = s.split(" ").map(p => {
+    if (p.length > 4 && !p.includes("-") && !p.includes("_")) {
+      return p.replace(commonWords, " $1 ");
+    }
+    return p;
+  });
+  s = parts.join(" ").replace(/\s+/g, " ").trim();
+  return s;
+}
+
+/**
  * Formats a business name for display, cleaning it if it looks like a URL.
- * Also attempts to convert domain-like strings into readable names.
+ * Converts domain-like strings, slugs, and SEO titles into clean, official separate-word business names.
+ * e.g., "digitalpark.ae" -> "Digital Park"
+ * e.g., "aldhabidental.ae" -> "Al Dhabi Dental Center"
  * e.g., "https://www.tajhotels.com/" -> "Taj Hotels"
- * "www-tajhotels-com" -> "Taj Hotels"
- * "tajhotels-com" -> "Taj Hotels"
- * "https://www.freecancellations.com" -> "Free Cancellations"
+ * e.g., "www-tajhotels-com" -> "Taj Hotels"
+ * e.g., "thecapitalavenue.com" -> "The Capital Avenue"
+ * e.g., "https://www.freecancellations.com" -> "Free Cancellations"
  */
 export function formatBusinessName(name?: string | null): string {
   if (!name) return "";
   let trimmed = name.trim();
   
+  // Quick lookup of trimmed normalized key
+  const normalizedKey = trimmed.toLowerCase().replace(/^https?:\/\//, "").replace(/^www[\.\-]/, "").replace(/\/+$/, "");
+  if (KNOWN_OFFICIAL_NAMES[normalizedKey]) {
+    return KNOWN_OFFICIAL_NAMES[normalizedKey];
+  }
+  const cleanKey = normalizedKey.replace(/[^a-z0-9]/g, "");
+  if (KNOWN_OFFICIAL_NAMES[cleanKey]) {
+    return KNOWN_OFFICIAL_NAMES[cleanKey];
+  }
+
   // 1. Remove concatenated navigation text & spam keywords like "MenuCloseMoreMoreMore..."
   trimmed = trimmed.replace(/(?:Menu|Close|More|Search|Login|Sign|Cart|Navigation|Toggle|Header|Footer|Cookies|Accept|Privacy|Skip to content){2,}.*$/i, '').trim();
   trimmed = trimmed.replace(/([a-z0-9])(?:Menu|Close|More|Search|Login|Sign|Cart|Toggle|Header|Footer).*/i, '$1').trim();
@@ -225,8 +341,14 @@ export function formatBusinessName(name?: string | null): string {
     }
   }
 
+  // Re-check normalized key after SEO title strip
+  const strippedKey = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (KNOWN_OFFICIAL_NAMES[strippedKey]) {
+    return KNOWN_OFFICIAL_NAMES[strippedKey];
+  }
+
   // 4. If it is an explicit URL, domain, or domain-like string (e.g. "https://...", "www.domain.com", "domain.com", "tajhotels-com", "bhol.co.il", "digitalpark.ae")
-  if (
+  const isDomainLike = 
     trimmed.includes("://") || 
     trimmed.toLowerCase().startsWith("www.") || 
     trimmed.toLowerCase().startsWith("www-") ||
@@ -234,58 +356,49 @@ export function formatBusinessName(name?: string | null): string {
     trimmed.toLowerCase().startsWith("https:") ||
     /\.[a-z]{2,}(?:\/|$|\?|#)/i.test(trimmed) ||
     /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
-    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed)
-  ) {
-    const domain = extractCleanDomain(trimmed);
-    const namePart = domain.split('.')[0];
-    
-    if (namePart) {
-      const commonSuffixes = /(law|group|firm|media|news|park|tech|studios?|travel|cafe|coffee|bar|hotel|suites|dentist|dental|clinic|hospital|store|shop|market|club|fitness|gym|app|avocats?)$/i;
-      let spaced = namePart
-        .replace(/([a-zA-Z])([0-9])/g, "$1 $2")
-        .replace(/([0-9])([a-zA-Z])/g, "$1 $2")
-        .replace(/([a-z])([A-Z])/g, "$1 $2");
+    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
 
-      if (commonSuffixes.test(spaced) && !spaced.includes(" ") && !spaced.includes("-")) {
-        spaced = spaced.replace(commonSuffixes, " $1");
-      }
-      if (/^jb(?=[a-z])/i.test(spaced)) {
-        spaced = spaced.replace(/^jb/i, "JB ");
-      }
-      if (/^brettlevy$/i.test(spaced)) {
-        spaced = "Brett Levy";
-      }
-
-      const acronyms = new Set(["usa", "nyc", "la", "uk", "us", "ai", "api", "ibm", "bbc", "cnn", "cbs", "nbc", "hbo", "eu"]);
-      const lowerCaseWords = new Set(["of", "the", "and", "in", "at"]);
-
-      const words = spaced
-        .split(/[-_ ]+/)
-        .map(word => {
-          if (!word) return "";
-          const lower = word.toLowerCase();
-          if (acronyms.has(lower)) return lower.toUpperCase();
-          if (lowerCaseWords.has(lower)) return lower;
-          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-        })
-        .filter(Boolean);
-        
-      return words.join(' ');
-    }
-    return domain;
+  let rawName = trimmed;
+  if (isDomainLike) {
+    const cleanDomain = extractCleanDomain(trimmed);
+    rawName = cleanDomain.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] || cleanDomain;
   }
 
-  // 5. Final fallback cleanup - absolutely strip any remaining protocol, www, or TLD suffixes
-  let cleanName = trimmed
+  // 5. Final fallback cleanup - strip any remaining protocol, www, or TLD suffixes
+  rawName = rawName
     .replace(/^https?:\/\//i, '')
     .replace(/^www[\.\-\/]/i, '')
     .replace(/\.(?:com|net|org|io|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
 
-  if (!cleanName.includes(" ") && cleanName.length > 1) {
-    return cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+  // 6. Split compound words
+  let spaced = splitCompoundWords(rawName);
+
+  if (/^jb(?=[a-z])/i.test(spaced)) {
+    spaced = spaced.replace(/^jb/i, "JB ");
   }
-  
-  return cleanName;
+  if (/^brettlevy$/i.test(spaced)) {
+    spaced = "Brett Levy";
+  }
+
+  const acronyms = new Set(["usa", "nyc", "la", "uk", "us", "ai", "api", "ibm", "bbc", "cnn", "cbs", "nbc", "hbo", "eu", "srl", "uae"]);
+  const lowerCaseWords = new Set(["of", "the", "and", "in", "at", "de", "et", "du", "des"]);
+
+  const words = spaced
+    .split(/[-_ ]+/)
+    .map(word => {
+      if (!word) return "";
+      const lower = word.toLowerCase();
+      if (acronyms.has(lower)) return lower.toUpperCase();
+      if (lowerCaseWords.has(lower)) return lower;
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .filter(Boolean);
+
+  const result = words.join(' ');
+  if (result.length > 0 && !result.includes(" ")) {
+    return result.charAt(0).toUpperCase() + result.slice(1);
+  }
+  return result || trimmed;
 }
 
 /**
@@ -452,22 +565,33 @@ export function isAuthorMatch(
  * Synthesizes or updates a Place entry from a newly recorded VideoReview
  */
 export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Place[] = []): Place {
+  const sanitizeBanner = (url?: string | null): string => {
+    if (!url || typeof url !== "string") return "";
+    const t = url.trim();
+    if (t.includes("unsplash.com") || t.includes("placeholder") || t.includes("mock")) {
+      return "";
+    }
+    return t;
+  };
+
   const existing = existingPlaces.find((p) => isPlaceReviewMatch(video, p));
   const domain = extractCleanDomain(video.placeWebsite || video.placeName || video.placeId);
   const cleanId = domain || (video.placeId ? extractCleanDomain(video.placeId) : `place-${Date.now()}`);
-  const reviewBanner =
+  const reviewBanner = sanitizeBanner(
     (video as any).placeBannerUrl ||
     (video as any).bannerUrl ||
     (video as any).ogImage ||
     (domain && KNOWN_BRAND_BANNERS[domain]) ||
-    "";
+    ""
+  );
   const reviewLogo =
     video.placeLogoUrl ||
     (domain && KNOWN_BRAND_LOGOS[domain]) ||
     (domain ? getCleanLogoUrl(null, domain) || "" : "");
 
   if (existing) {
-    const banner = existing.bannerUrl || existing.ogImage || reviewBanner || (domain && KNOWN_BRAND_BANNERS[domain]) || "";
+    const rawBanner = existing.bannerUrl || existing.ogImage || reviewBanner || (domain && KNOWN_BRAND_BANNERS[domain]) || "";
+    const banner = sanitizeBanner(rawBanner);
     const logo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) ? existing.avatarUrl : (reviewLogo || (domain && KNOWN_BRAND_LOGOS[domain]) || ""));
     const website = (existing.website && !existing.website.includes("maps.google.com")) 
       ? existing.website 

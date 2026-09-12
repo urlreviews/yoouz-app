@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, generateBrandMonogramSvg } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, generateBrandMonogramSvg, isWhiteOrInvertedLogo } from "../utils/logoUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -26,6 +26,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   loading = "lazy",
   fetchPriority = "auto"
 }) => {
+  const [triedFallback, setTriedFallback] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   // Extract clean domain from any source
@@ -37,14 +38,22 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [domain, website, logoUrl, name]);
 
-  // Reset error when inputs change
+  // Reset error & fallback when inputs change
   useEffect(() => {
     setHasError(false);
+    setTriedFallback(false);
   }, [domain, website, logoUrl, name]);
 
   const monogramSvg = useMemo(() => {
     return generateBrandMonogramSvg(name || resolvedDomain || "Place", 128);
   }, [name, resolvedDomain]);
+
+  const googleFaviconUrl = useMemo(() => {
+    if (resolvedDomain && resolvedDomain.includes(".")) {
+      return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`;
+    }
+    return null;
+  }, [resolvedDomain]);
 
   const effectiveSrc = useMemo(() => {
     // 1. Known high quality vector logo by domain
@@ -52,9 +61,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return KNOWN_BRAND_LOGOS[resolvedDomain];
     }
 
-    // 2. Explicit clean Logo URL
+    // 2. Explicit clean Logo URL (not white/inverted)
     if (
       logoUrl &&
+      !isWhiteOrInvertedLogo(logoUrl) &&
       !logoUrl.includes("brandfetch.io") &&
       logoUrl !== "data:;" &&
       !logoUrl.startsWith("data:;") &&
@@ -77,14 +87,16 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     // 4. High-resolution authentic 256px favicon if domain is known
-    if (resolvedDomain && resolvedDomain.includes(".")) {
-      return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`;
+    if (googleFaviconUrl) {
+      return googleFaviconUrl;
     }
 
     return null;
-  }, [resolvedDomain, logoUrl, name]);
+  }, [resolvedDomain, logoUrl, name, googleFaviconUrl]);
 
-  if (hasError || !effectiveSrc) {
+  const currentSrc = triedFallback ? googleFaviconUrl : (effectiveSrc || googleFaviconUrl);
+
+  if (hasError || !currentSrc) {
     return (
       <div className={className}>
         <img
@@ -102,7 +114,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   return (
     <div className={className}>
       <img
-        src={effectiveSrc}
+        src={currentSrc}
         alt={name || "Brand Logo"}
         loading={loading}
         fetchPriority={fetchPriority}
@@ -110,7 +122,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         className={imageClassName}
         referrerPolicy="no-referrer"
         onError={() => {
-          setHasError(true);
+          if (!triedFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
+            setTriedFallback(true);
+          } else {
+            setHasError(true);
+          }
         }}
       />
     </div>

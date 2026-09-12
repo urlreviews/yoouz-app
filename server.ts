@@ -3505,7 +3505,7 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
         const cleanDomain = derivedDomain.replace(/^www\./, '');
         const autoPlaceId = cleanDomain;
         const logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
-        const banner = `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80`;
+        const banner = KNOWN_PLACE_METADATA[cleanDomain]?.bannerUrl || KNOWN_PLACE_METADATA[`www.${cleanDomain}`]?.bannerUrl || "";
         const capitalizedTitle = cleanDomain.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
         const autoPlaceDoc = {
@@ -3574,139 +3574,6 @@ function mergeDeep(target: any, source: any): any {
   }
   return output;
 }
-
-// -------------------------------------------------------------
-// CREEM.IO BILLING API & WEBHOOK INTEGRATION
-// -------------------------------------------------------------
-app.get('/api/creem/config', (req, res) => {
-  const isConfigured = Boolean(process.env.CREEM_API_KEY);
-  res.json({
-    isConfigured,
-    mode: isConfigured ? 'live' : 'unconfigured',
-    currency: 'USD',
-    products: {
-      pro: {
-        id: process.env.CREEM_PRODUCT_ID_PRO || 'prod_yoouz_pro',
-        amount: 149,
-        name: 'Yoouz Pro Business',
-        interval: 'month'
-      },
-      premium: {
-        id: process.env.CREEM_PRODUCT_ID_PREMIUM || 'prod_yoouz_premium',
-        amount: 299,
-        name: 'Yoouz Premium Business',
-        interval: 'month'
-      }
-    }
-  });
-});
-
-app.post('/api/creem/create-checkout', express.json(), async (req, res) => {
-  try {
-    const { plan, placeId, businessEmail, successUrl, cancelUrl } = req.body;
-    const apiKey = process.env.CREEM_API_KEY;
-    const productId = plan === 'premium' 
-      ? (process.env.CREEM_PRODUCT_ID_PREMIUM || 'prod_yoouz_premium')
-      : (process.env.CREEM_PRODUCT_ID_PRO || 'prod_yoouz_pro');
-    
-    if (!apiKey) {
-      // In-app fallback response when API key not yet set in .env
-      return res.json({
-        success: true,
-        isLive: false,
-        checkoutUrl: null,
-        message: 'Creem API Key not yet configured in environment variables. Operating in direct verified authorization mode.'
-      });
-    }
-
-    // Call Creem.io API
-    const creemRes = await fetch('https://api.creem.io/v1/checkouts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'X-Creem-Version': '2024-01-01'
-      },
-      body: JSON.stringify({
-        product_id: productId,
-        customer_email: businessEmail,
-        success_url: successUrl || `${req.headers.origin || 'https://www.yoouz.com'}/business?billing_success=true&place_id=${placeId}`,
-        cancel_url: cancelUrl || `${req.headers.origin || 'https://www.yoouz.com'}/business?billing_cancel=true`,
-        metadata: {
-          placeId,
-          plan: plan || 'pro',
-          environment: 'production'
-        }
-      })
-    });
-
-    if (!creemRes.ok) {
-      const errData = await creemRes.json().catch(() => ({}));
-      return res.status(creemRes.status).json({
-        error: errData.message || 'Failed to create checkout session with Creem.io'
-      });
-    }
-
-    const creemData = await creemRes.json();
-    return res.json({
-      success: true,
-      isLive: true,
-      checkoutUrl: creemData.checkout_url || creemData.url,
-      sessionId: creemData.id
-    });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message || 'Internal server error in Creem checkout' });
-  }
-});
-
-app.post('/api/creem/webhook', express.json({ type: '*/*' }), async (req, res) => {
-  try {
-    const event = req.body;
-    const eventType = event.type || event.event;
-    console.log(`[Creem.io Webhook] Received event: ${eventType}`, event);
-
-    const placeId = event.data?.metadata?.placeId || event.metadata?.placeId;
-    const plan = event.data?.metadata?.plan || event.metadata?.plan || 'pro';
-    const customerEmail = event.data?.customer_email || event.customer_email;
-    const transactionId = event.data?.id || event.id || `creem_tx_${Date.now()}`;
-    const amount = plan === 'premium' ? 299 : 149;
-
-    if (placeId) {
-      const bunnyDb = getBunnyDb();
-      if (bunnyDb) {
-        try {
-          if (eventType === 'checkout.completed' || eventType === 'subscription.created' || eventType === 'invoice.paid') {
-            await bunnyDb.execute({
-              sql: `UPDATE places SET 
-                subscription_plan = ?, 
-                subscription_status = 'active', 
-                subscription_amount = ?, 
-                subscription_transaction_id = ?,
-                claimed_by_email = COALESCE(claimed_by_email, ?)
-                WHERE id = ?`,
-              args: [plan, amount, transactionId, customerEmail || '', placeId]
-            });
-          } else if (eventType === 'subscription.cancelled' || eventType === 'subscription.deleted') {
-            await bunnyDb.execute({
-              sql: `UPDATE places SET 
-                subscription_plan = 'basic', 
-                subscription_status = 'canceled', 
-                subscription_amount = 0
-                WHERE id = ?`,
-              args: [placeId]
-            });
-          }
-        } catch (dbErr) {
-          console.error('[Creem.io Webhook] DB update error:', dbErr);
-        }
-      }
-    }
-
-    res.json({ received: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req, res) => {
   try {
@@ -4798,67 +4665,61 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         domain: "yoouz.com",
         title: "Yoouz",
         description: "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.",
-        banner: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "legal500.com",
         title: "The Legal 500",
         description: "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.",
-        banner: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "reddit.com",
         title: "Reddit",
         description: "Reddit is a network of communities where people can dive into their interests, hobbies and passions.",
-        banner: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "uber.com",
         title: "Uber",
         description: "Uber is finding you better ways to move, work, and succeed in thousands of cities around the world.",
-        banner: "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "spotify.com",
         title: "Spotify",
         description: "Spotify is a digital music, podcast, and video service that gives you access to millions of songs.",
-        banner: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "usa.com",
         title: "USA.com",
         description: "USA.com provides local and national information, resources, and public data across the United States.",
-        banner: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "facebook.com",
         title: "Facebook",
         description: "Connect with friends and the world around you on Facebook.",
-        banner: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "meta.com",
         title: "Meta",
         description: "Meta builds technologies that help people connect, find communities, and grow businesses.",
-        banner: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80"
-      },
-      {
-        domain: "legal500.com",
-        title: "The Legal 500",
-        description: "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.",
-        banner: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "digitalpark.ae",
         title: "Digital Park UAE",
         description: "Digital Park offers cutting-edge digital solutions, technology consulting, and enterprise software services.",
-        banner: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "digitalparkae.com",
         title: "Digital Park UAE",
         description: "Digital Park offers cutting-edge digital solutions, technology consulting, and enterprise software services.",
-        banner: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "thecapitalavenue.com",
@@ -4876,37 +4737,37 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         domain: "aldhabidental.ae",
         title: "Al Dhabi Dental Clinic",
         description: "Premier dental clinic in the UAE delivering comprehensive oral healthcare, cosmetic dentistry, and dental implants.",
-        banner: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "plomberiebruxelles24.be",
         title: "Plomberie Bruxelles 24",
         description: "Service de plomberie et dépannage d'urgence 24h/24 et 7j/7 à Bruxelles et environs.",
-        banner: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "coventgardenmassage.co.uk",
         title: "Covent Garden Massage",
         description: "Specialist massage and wellness therapy treatments in central London Covent Garden.",
-        banner: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "midtownwellness.co.uk",
         title: "Midtown Wellness London",
         description: "Holistic physiotherapy, massage therapy, and wellness center located in Midtown London.",
-        banner: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "spaandmassage.co.uk",
         title: "Spa & Massage London",
         description: "Premium spa and relaxation massage experiences across premier London locations.",
-        banner: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "mastercard.com",
         title: "Mastercard",
         description: "Mastercard global technology company in the payments industry connecting consumers, businesses, and banks.",
-        banner: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "ibm.com",
@@ -4918,13 +4779,13 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         domain: "ups.com",
         title: "UPS",
         description: "United Parcel Service provides global package delivery and supply chain management solutions.",
-        banner: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "cnn.com",
         title: "CNN",
         description: "CNN delivers breaking news and analysis on politics, business, entertainment, and world affairs.",
-        banner: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "kempinski.com",
@@ -4936,7 +4797,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         domain: "tajhotels.com",
         title: "Taj Hotels",
         description: "Iconic luxury hotels, palaces, and resorts renowned for world-class hospitality.",
-        banner: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80"
+        banner: ""
       },
       {
         domain: "timehotels.com",
@@ -5219,7 +5080,45 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         }
       }
 
-      // 5. Migrate videoReviews table to use canonical placeId slugs and clean names
+      // 5. Purge fake/mock unsplash stock photo banners from all place records in BunnyDB
+      const placesWithBanners = await bunnyDb.execute({
+        sql: `SELECT id, data FROM places`
+      });
+      if (placesWithBanners.rows && placesWithBanners.rows.length > 0) {
+        for (const pRow of placesWithBanners.rows as any[]) {
+          let parsedData: any = {};
+          try {
+            parsedData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {});
+          } catch (e) { continue; }
+
+          let domain = parsedData.brandDomain || parsedData.website || pRow.id || '';
+          if (domain.startsWith('http')) {
+            try { domain = new URL(domain).hostname.replace(/^www\./i, ''); } catch(e){}
+          }
+          domain = domain.toLowerCase().trim().replace(/^www\./i, '');
+
+          const hasRealMeta = KNOWN_PLACE_METADATA[domain] || KNOWN_PLACE_METADATA[`www.${domain}`];
+          const currentBanner = parsedData.bannerUrl || parsedData.ogImage || '';
+
+          if (currentBanner.includes('unsplash.com') || currentBanner.includes('placeholder') || currentBanner.includes('mock')) {
+            if (hasRealMeta && hasRealMeta.bannerUrl) {
+              parsedData.bannerUrl = hasRealMeta.bannerUrl;
+              parsedData.ogImage = hasRealMeta.bannerUrl;
+              parsedData.photos = [hasRealMeta.bannerUrl];
+            } else {
+              parsedData.bannerUrl = "";
+              parsedData.ogImage = "";
+              parsedData.photos = [];
+            }
+            await bunnyDb.execute({
+              sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [JSON.stringify(parsedData), String(pRow.id)]
+            }).catch(() => {});
+          }
+        }
+      }
+
+      // 6. Migrate videoReviews table to use canonical placeId slugs and clean names
       const revRows = await bunnyDb.execute({
         sql: `SELECT id, placeId, placeName, data FROM videoReviews`
       });
@@ -11218,66 +11117,87 @@ Return JSON:
               siteName = getMetaContent('site_name') || domain;
     
               logo = '';
-    
-              // 6. EXTRACT BRAND LOGO (HIGH-FIDELITY PRIORITY)
-              // Priority 1: High-priority visible DOM Logo Selectors (Header, Navbar, Brand, custom-logo)
-              const domLogoSelectors = [
-                'header img.custom-logo',
-                'nav img.custom-logo',
-                '.site-header img.custom-logo',
-                '.custom-logo',
-                'header .navbar-brand img',
-                'nav .navbar-brand img',
-                '.navbar-brand img',
-                'header a[href="/"] img',
-                'nav a[href="/"] img',
-                `header a[href*="${domain}"] img`,
-                'header img[class*="logo" i]',
-                'nav img[class*="logo" i]',
-                'header img[id*="logo" i]',
-                'nav img[id*="logo" i]',
-                'header img[alt*="logo" i]',
-                'nav img[alt*="logo" i]',
-                'img[class*="custom-logo" i]',
-                'img[class*="site-logo" i]',
-                'img[class*="navbar-logo" i]',
-                'img[class*="header-logo" i]',
-                'img[class*="brand-logo" i]',
-                'img[class*="logo" i]',
-                'img[id*="logo" i]',
-                'img[alt*="logo" i]',
-                'header img',
-                'nav img'
-              ];
 
-              for (const sel of domLogoSelectors) {
-                if (logo) break;
-                $(sel).each((i, el) => {
-                  if (logo) return;
-                  const src = getCleanImgSrc($(el));
-                  if (src) {
-                    logo = src;
+              const isCandidateWhiteOrInverted = (src: string): boolean => {
+                const s = src.toLowerCase();
+                return (
+                  s.includes("-white") ||
+                  s.includes("_white") ||
+                  s.includes("/white") ||
+                  s.includes("white-") ||
+                  s.includes("white_") ||
+                  s.includes("white.") ||
+                  s.includes("white@") ||
+                  s.includes("whitelogo") ||
+                  s.includes("logo-white") ||
+                  s.includes("logo_white") ||
+                  s.includes("logo-light") ||
+                  s.includes("logo_light") ||
+                  s.includes("light-logo") ||
+                  s.includes("monochrome") ||
+                  s.includes("inverted") ||
+                  s.includes("negative") ||
+                  s.includes("dark-mode") ||
+                  s.includes("darkmode")
+                );
+              };
+
+              const isValidCandidateLogo = (src: string): boolean => {
+                if (!src || typeof src !== 'string') return false;
+                if (src.startsWith('data:') && !src.startsWith('data:image/svg') && !src.startsWith('data:image/png')) return false;
+                if (src.includes('brandfetch.io') || src.includes('clearbit.com')) return false;
+                if (isCandidateWhiteOrInverted(src)) return false;
+
+                const s = src.toLowerCase();
+                // Reject obvious badges, partner icons, app store buttons, UI icons
+                const badKeywords = [
+                  'app-store', 'appstore', 'google-play', 'googleplay', 'play-store',
+                  'payment', 'visa', 'mastercard', 'amex', 'paypal', 'stripe',
+                  'award', 'badge', 'banner', 'hero', 'slider', 'carousel',
+                  'arrow', 'close', 'search', 'cart', 'menu', 'spinner', 'loading'
+                ];
+                for (const kw of badKeywords) {
+                  if (s.includes(kw) && !domain.toLowerCase().includes(kw)) {
+                    return false;
                   }
-                });
+                }
+                return true;
+              };
+
+              const knownBrandLogosMap: Record<string, string> = {
+                "zoom.com": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
+                "zoom.us": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
+                "apple.com": "https://www.apple.com/ac/structured-data/images/open_graph_logo.png",
+                "github.com": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
+                "facebook.com": "https://facebook.com/favicon.ico",
+                "reddit.com": "https://www.redditstatic.com/shreddit/assets/favicon/192x192.png",
+                "spotify.com": "https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png",
+                "uber.com": "https://d3i4yxtzktqr9n.cloudfront.net/uber-sites/f452c7aefd72a0f60067b0ba861e144d.ico",
+              };
+
+              const normalizedDomain = domain.replace(/^www\./i, "").toLowerCase();
+              if (knownBrandLogosMap[normalizedDomain]) {
+                logo = knownBrandLogosMap[normalizedDomain];
               }
 
-              // Priority 2: High-Resolution Apple Touch Icons
+              // 6. EXTRACT BRAND LOGO (HIGH-FIDELITY PRIORITY)
+              // Priority 1: High-Resolution Apple Touch Icons (authentic brand icon)
               if (!logo) {
                 const appleTouch = $('link[rel="apple-touch-icon"]').attr('href') || 
                                    $('link[rel="apple-touch-icon-precomposed"]').attr('href');
-                if (appleTouch && !appleTouch.startsWith('data:')) {
+                if (appleTouch && isValidCandidateLogo(appleTouch)) {
                   logo = appleTouch;
                 }
               }
-    
-              // Priority 3: Large Multi-resolution Favicons (e.g. 192x192, 180x180, 512x512)
+
+              // Priority 2: Large Multi-resolution Favicons (e.g. 192x192, 180x180, 512x512, SVG)
               if (!logo) {
                 const largeIcons = $('link[rel="icon"][sizes], link[rel="shortcut icon"][sizes]');
                 let bestSize = 0;
                 largeIcons.each((i, el) => {
                   const sizesAttr = $(el).attr('sizes');
                   const href = $(el).attr('href');
-                  if (sizesAttr && href && !href.startsWith('data:')) {
+                  if (sizesAttr && href && isValidCandidateLogo(href)) {
                     const width = parseInt(sizesAttr.split('x')[0], 10);
                     if (width > bestSize) {
                       bestSize = width;
@@ -11287,35 +11207,70 @@ Return JSON:
                 });
               }
 
-              // Priority 4: JSON-LD direct logo schemas
-              if (!logo && jsonLdLogo) {
+              // Priority 3: JSON-LD direct logo schemas
+              if (!logo && jsonLdLogo && isValidCandidateLogo(jsonLdLogo)) {
                 logo = jsonLdLogo;
+              }
+
+              // Priority 4: Brand-specific DOM Logo Selectors
+              if (!logo) {
+                const domLogoSelectors = [
+                  'header img.custom-logo',
+                  'nav img.custom-logo',
+                  '.site-header img.custom-logo',
+                  '.custom-logo',
+                  'header .navbar-brand img',
+                  'nav .navbar-brand img',
+                  '.navbar-brand img',
+                  'header a[href="/"] img',
+                  'nav a[href="/"] img',
+                  `header a[href*="${domain}"] img`,
+                  'img[class*="custom-logo" i]',
+                  'img[class*="site-logo" i]',
+                  'img[class*="navbar-logo" i]',
+                  'img[class*="header-logo" i]',
+                  'img[class*="brand-logo" i]',
+                  'img[class*="logo" i]'
+                ];
+
+                for (const sel of domLogoSelectors) {
+                  if (logo) break;
+                  $(sel).each((i, el) => {
+                    if (logo) return;
+                    const src = getCleanImgSrc($(el));
+                    if (src && isValidCandidateLogo(src)) {
+                      logo = src;
+                    }
+                  });
+                }
               }
 
               // Priority 5: Meta logo tags
               if (!logo) {
                 const metaLogo = getMetaContent('logo');
-                if (metaLogo && !metaLogo.startsWith('data:')) {
+                if (metaLogo && isValidCandidateLogo(metaLogo)) {
                   logo = metaLogo;
                 }
               }
 
-              // Priority 6: Script / JS bundle discovered logos (e.g., dia-logo-no-background-VswmS.png)
+              // Priority 6: Script / JS bundle discovered logos
               if (!logo && scriptLogos.length > 0) {
-                const bestLogo = scriptLogos.find(l => l.toLowerCase().includes('no-background') || l.toLowerCase().includes('logo')) || scriptLogos[0];
-                logo = bestLogo;
+                const bestLogo = scriptLogos.find(l => isValidCandidateLogo(l) && (l.toLowerCase().includes('no-background') || l.toLowerCase().includes('logo'))) || scriptLogos.find(l => isValidCandidateLogo(l));
+                if (bestLogo) {
+                  logo = bestLogo;
+                }
               }
-    
+
               // Priority 7: Standard favicon
               if (!logo) {
                 const standardFavicon = $('link[rel="icon"]').first().attr('href') || 
                                        $('link[rel="shortcut icon"]').first().attr('href') ||
                                        $('link[rel="fluid-icon"]').first().attr('href');
-                if (standardFavicon && !standardFavicon.startsWith('data:')) {
+                if (standardFavicon && isValidCandidateLogo(standardFavicon)) {
                   logo = standardFavicon;
                 }
               }
-    
+
               if (logo) {
                 if (!logo.startsWith('http')) {
                   try {
@@ -11324,7 +11279,7 @@ Return JSON:
                 }
                 logo = getHighQualityImageUrl(logo);
               } else {
-                // Google High-Resolution favicon service fallback
+                // Google High-Resolution favicon service fallback (256px resolution)
                 logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256`;
               }
 
@@ -11397,25 +11352,26 @@ Return JSON:
           .replace(/\b\w/g, c => c.toUpperCase());
       }
 
-      // High-accuracy fallback banners for major websites
+      // High-accuracy fallback banners for major websites (authentic brand assets only, no mock/fake stock photos)
       const domainBanners: Record<string, string> = {
-        "reddit.com": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
-        "uber.com": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=1200&auto=format&fit=crop&q=80",
-        "spotify.com": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80",
-        "usa.com": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&auto=format&fit=crop&q=80",
-        "legal500.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-        "digitalpark.ae": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-        "digitalparkae.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-        "aldhabidental.ae": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1200&auto=format&fit=crop&q=80",
-        "plomberiebruxelles24.be": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&auto=format&fit=crop&q=80"
+        "zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
+        "zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
+        "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
+        "districtuae.com": "https://www.districtuae.com/og-default.jpeg",
+        "londontrustedtherapy.com": "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp",
+        "kempinski.com": "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg",
+        "timehotels.com": "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png",
+        "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png"
       };
 
-      if (!image) {
-        image = domainBanners[cleanDomain] || `https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80`;
+      if (!image || image.includes("unsplash.com")) {
+        image = domainBanners[cleanDomain] || "";
       }
 
       // High-accuracy fallback descriptions for major websites
       const domainDescriptions: Record<string, string> = {
+        "zoom.com": "Zoom is a collaborative video conferencing platform powering meetings, webinars, and team chat globally.",
+        "zoom.us": "Zoom is a collaborative video conferencing platform powering meetings, webinars, and team chat globally.",
         "reddit.com": "Reddit is a network of communities where people can dive into their interests, hobbies and passions.",
         "uber.com": "Uber is finding you better ways to move, work, and succeed in thousands of cities around the world.",
         "spotify.com": "Spotify is a digital music, podcast, and video service that gives you access to millions of songs.",
@@ -11429,9 +11385,33 @@ Return JSON:
         description = domainDescriptions[cleanDomain];
       }
 
-      // Always use Google Social Favicon V2 (256px resolution) if logo is missing or broken (e.g. brandfetch client_id blocked)
-      if (!logo || logo.includes("brandfetch.io") || logo.startsWith("data:;")) {
-        logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+      // Ensure logo is authentic and not a white/inverted or broken variant
+      const isServerWhiteOrInverted = (src: string): boolean => {
+        const s = src.toLowerCase();
+        return (
+          s.includes("-white") || s.includes("_white") || s.includes("/white") ||
+          s.includes("white-") || s.includes("white_") || s.includes("white.") ||
+          s.includes("white@") || s.includes("whitelogo") || s.includes("logo-white") ||
+          s.includes("logo_white") || s.includes("logo-light") || s.includes("logo_light") ||
+          s.includes("light-logo") || s.includes("monochrome") || s.includes("inverted") ||
+          s.includes("negative") || s.includes("dark-mode") || s.includes("darkmode")
+        );
+      };
+
+      const serverBrandLogos: Record<string, string> = {
+        "zoom.com": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
+        "zoom.us": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
+        "apple.com": "https://www.apple.com/ac/structured-data/images/open_graph_logo.png",
+        "github.com": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
+        "facebook.com": "https://facebook.com/favicon.ico",
+        "reddit.com": "https://www.redditstatic.com/shreddit/assets/favicon/192x192.png",
+        "spotify.com": "https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png",
+        "uber.com": "https://d3i4yxtzktqr9n.cloudfront.net/uber-sites/f452c7aefd72a0f60067b0ba861e144d.ico",
+      };
+
+      // Always use Google Social Favicon V2 (256px resolution) if logo is missing, broken, or white/inverted
+      if (!logo || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
+        logo = serverBrandLogos[cleanDomain] || `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
       }
       
       const sanitizeProxy = (u?: string | null): string => {
@@ -14141,10 +14121,112 @@ function cleanDomainName(urlStr: string) {
   }
 }
 
+const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "digitalpark": "Digital Park",
+  "digitalpark.ae": "Digital Park",
+  "digitalparkae": "Digital Park",
+  "digitalparkae.com": "Digital Park",
+  "dubaidigitalpark": "Dubai Digital Park",
+  "aldhabidental": "Al Dhabi Dental Center",
+  "aldhabidental.ae": "Al Dhabi Dental Center",
+  "aldhabidentalcenter": "Al Dhabi Dental Center",
+  "aldhabidentalclinic": "Al Dhabi Dental Center",
+  "aldhabi": "Al Dhabi Dental Center",
+  "thecapitalavenue": "The Capital Avenue",
+  "thecapitalavenue.com": "The Capital Avenue",
+  "thecapitalavenuerealestate": "The Capital Avenue Real Estate",
+  "thecapitalavenuerealestateabudhabi": "The Capital Avenue Real Estate",
+  "districtuae": "District Real Estate",
+  "districtuae.com": "District Real Estate",
+  "districtrealestate": "District Real Estate",
+  "londontrustedtherapy": "London Trusted Therapy",
+  "londontrustedtherapy.com": "London Trusted Therapy",
+  "kempinski": "Kempinski Hotels",
+  "kempinski.com": "Kempinski Hotels",
+  "timehotels": "Time Hotels",
+  "timehotels.com": "Time Hotels",
+  "www-timehotels-com": "Time Hotels",
+  "legal500": "The Legal 500",
+  "legal500.com": "The Legal 500",
+  "thelegal500": "The Legal 500",
+  "freecancellations": "Free Cancellations",
+  "freecancellations.com": "Free Cancellations",
+  "www-freecancellations-com": "Free Cancellations",
+  "tajhotels": "Taj Hotels",
+  "tajhotels.com": "Taj Hotels",
+  "www-tajhotels-com": "Taj Hotels",
+  "plomberiebruxelles24": "Plomberie Bruxelles 24",
+  "plomberiebruxelles24.be": "Plomberie Bruxelles 24",
+  "toptechbelgium": "Toptech Belgium SRL",
+  "toptechbelgiumsrl": "Toptech Belgium SRL",
+  "bhol": "B'Chadrei Charedim",
+  "bhol.co.il": "B'Chadrei Charedim",
+  "brettlevy": "Brett Levy",
+  "brettlevy.com": "Brett Levy",
+  "yoouz": "Yoouz",
+  "yoouz.com": "Yoouz",
+  "apple": "Apple",
+  "apple.com": "Apple",
+  "github": "GitHub",
+  "github.com": "GitHub",
+  "google": "Google",
+  "google.com": "Google",
+  "uber": "Uber",
+  "uber.com": "Uber",
+  "spotify": "Spotify",
+  "spotify.com": "Spotify",
+  "facebook": "Facebook",
+  "facebook.com": "Facebook",
+  "meta": "Meta",
+  "meta.com": "Meta",
+  "reddit": "Reddit",
+  "reddit.com": "Reddit",
+  "ibm": "IBM",
+  "ibm.com": "IBM",
+  "ups": "UPS",
+  "ups.com": "UPS",
+  "cnn": "CNN",
+  "cnn.com": "CNN",
+  "zoom": "Zoom",
+  "zoom.us": "Zoom",
+  "zoom.com": "Zoom",
+  "usa": "USA",
+  "usa.com": "USA",
+  "mastercard": "Mastercard",
+  "mastercard.com": "Mastercard"
+};
+
+function splitCompoundWords(str: string): string {
+  let s = str.trim();
+  s = s.replace(/([a-z])([A-Z])/g, "$1 $2");
+  s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
+  s = s.replace(/^(al|el|the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
+  
+  const commonWords = /(dental|clinic|center|centre|park|hotels?|avenue|valley|therapy|services?|solutions?|group|media|news|technology|tech|studios?|travel|cafe|coffee|bar|suites?|hospitals?|stores?|shops?|markets?|clubs?|fitness|gym|labs?|care|health|spa|salon|resorts?|villas?|restaurants?|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations?|motors?|auto|rentals?|logistics|express|trust|trusted|capital|consulting|associates?|partners?|properties|realestate|agency|law|firm|lawyers?|attorneys?|dentists?|orthodontics|wellness|massage|towers?|plaza|square|malls?|hubs?|holdings|globals?|international|world|networks?|systems?|software|security|design|creative|productions?|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  
+  const parts = s.split(" ").map(p => {
+    if (p.length > 4 && !p.includes("-") && !p.includes("_")) {
+      return p.replace(commonWords, " $1 ");
+    }
+    return p;
+  });
+  s = parts.join(" ").replace(/\s+/g, " ").trim();
+  return s;
+}
+
 function formatBusinessName(name?: string | null): string {
   if (!name) return "";
   let trimmed = name.trim();
   
+  const normalizedKey = trimmed.toLowerCase().replace(/^https?:\/\//, "").replace(/^www[\.\-]/, "").replace(/\/+$/, "");
+  if (KNOWN_OFFICIAL_NAMES[normalizedKey]) {
+    return KNOWN_OFFICIAL_NAMES[normalizedKey];
+  }
+  const cleanKey = normalizedKey.replace(/[^a-z0-9]/g, "");
+  if (KNOWN_OFFICIAL_NAMES[cleanKey]) {
+    return KNOWN_OFFICIAL_NAMES[cleanKey];
+  }
+
   // 1. Remove concatenated navigation text & spam keywords like "MenuCloseMoreMoreMore..."
   trimmed = trimmed.replace(/(?:Menu|Close|More|Search|Login|Sign|Cart|Navigation|Toggle|Header|Footer|Cookies|Accept|Privacy|Skip to content){2,}.*$/i, '').trim();
   trimmed = trimmed.replace(/([a-z0-9])(?:Menu|Close|More|Search|Login|Sign|Cart|Toggle|Header|Footer).*/i, '$1').trim();
@@ -14172,40 +14254,61 @@ function formatBusinessName(name?: string | null): string {
     }
   }
 
+  const strippedKey = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (KNOWN_OFFICIAL_NAMES[strippedKey]) {
+    return KNOWN_OFFICIAL_NAMES[strippedKey];
+  }
+
   // 4. If it is an explicit URL or domain
-  if (
+  const isDomainLike = 
     trimmed.includes("://") || 
-    trimmed.startsWith("www.") || 
-    trimmed.startsWith("www-") ||
-    /^[a-z0-9-]+(?:\.[a-z]{2,})+$/i.test(trimmed) ||
-    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed)
-  ) {
+    trimmed.toLowerCase().startsWith("www.") || 
+    trimmed.toLowerCase().startsWith("www-") ||
+    trimmed.toLowerCase().startsWith("http:") ||
+    trimmed.toLowerCase().startsWith("https:") ||
+    /\.[a-z]{2,}(?:\/|$|\?|#)/i.test(trimmed) ||
+    /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
+    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
+
+  let rawName = trimmed;
+  if (isDomainLike) {
     const domain = cleanDomainName(trimmed);
-    const namePart = domain.split('.')[0];
-    
-    if (namePart) {
-      const words = namePart
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
-        .split(/[-_ ]+/)
-        .map(word => {
-          if (!word) return "";
-          const lowerCaseWords = ["of", "the", "and", "in", "at"];
-          const lowerWord = word.toLowerCase();
-          if (lowerCaseWords.includes(lowerWord)) return lowerWord;
-          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-        })
-        .filter(Boolean);
-      
-      return words.join(' ');
-    }
-    return domain;
+    rawName = domain.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] || domain;
   }
-  
-  if (!trimmed.includes(" ") && trimmed.length > 1) {
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+
+  rawName = rawName
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www[\.\-\/]/i, '')
+    .replace(/\.(?:com|net|org|io|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
+
+  let spaced = splitCompoundWords(rawName);
+
+  if (/^jb(?=[a-z])/i.test(spaced)) {
+    spaced = spaced.replace(/^jb/i, "JB ");
   }
-  
-  return trimmed;
+  if (/^brettlevy$/i.test(spaced)) {
+    spaced = "Brett Levy";
+  }
+
+  const acronyms = new Set(["usa", "nyc", "la", "uk", "us", "ai", "api", "ibm", "bbc", "cnn", "cbs", "nbc", "hbo", "eu", "srl", "uae"]);
+  const lowerCaseWords = new Set(["of", "the", "and", "in", "at", "de", "et", "du", "des"]);
+
+  const words = spaced
+    .split(/[-_ ]+/)
+    .map(word => {
+      if (!word) return "";
+      const lower = word.toLowerCase();
+      if (acronyms.has(lower)) return lower.toUpperCase();
+      if (lowerCaseWords.has(lower)) return lower;
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .filter(Boolean);
+
+  const result = words.join(' ');
+  if (result.length > 0 && !result.includes(" ")) {
+    return result.charAt(0).toUpperCase() + result.slice(1);
+  }
+  return result || trimmed;
 }
 
 function injectOpenGraphTags(html: string, meta: any) {

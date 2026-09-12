@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, isWhiteOrInvertedLogo } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -146,8 +146,21 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
          if (resp.ok) {
            const data = await resp.json();
            if (data.title || data.domain) {
-             const fetchedLogo = data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : "");
-             const fetchedBanner = data.image || "";
+             const isValidLogo = (l?: string | null): boolean => {
+               if (!l || typeof l !== "string") return false;
+               if (l.startsWith("data:;") || l.includes("brandfetch.io")) return false;
+               if (isWhiteOrInvertedLogo(l)) return false;
+               return true;
+             };
+
+             const domainCleanLogo = data.domain ? getCleanLogoUrl(null, data.domain) : null;
+             const fetchedLogo = isValidLogo(data.logo) 
+               ? data.logo 
+               : (domainCleanLogo || instantLogo);
+
+             const fetchedBanner = (data.image && !data.image.includes("unsplash.com")) 
+               ? data.image 
+               : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : "");
              
              if (foundPlace) {
                // Enrich existing place with fresh metadata
@@ -160,11 +173,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                foundPlace = {
                  ...foundPlace,
                  name: (data.title && (isGenericName(foundPlace.name) || foundPlace.name === foundPlace.brandDomain)) ? data.title : foundPlace.name,
-                 logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;")) ? foundPlace.logoUrl : (fetchedLogo || ""),
-                 avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
-                 bannerUrl: foundPlace.bannerUrl || fetchedBanner || "",
-                 ogImage: foundPlace.ogImage || fetchedBanner || "",
-                 photos: (foundPlace.photos && foundPlace.photos.length > 0) ? foundPlace.photos : (fetchedBanner ? [fetchedBanner] : []),
+                 logoUrl: (foundPlace.logoUrl && isValidLogo(foundPlace.logoUrl)) ? foundPlace.logoUrl : (fetchedLogo || instantLogo),
+                 avatarUrl: (foundPlace.avatarUrl && isValidLogo(foundPlace.avatarUrl)) ? foundPlace.avatarUrl : (fetchedLogo || instantLogo),
+                 bannerUrl: (foundPlace.bannerUrl && !foundPlace.bannerUrl.includes("unsplash.com")) ? foundPlace.bannerUrl : (fetchedBanner || ""),
+                 ogImage: (foundPlace.ogImage && !foundPlace.ogImage.includes("unsplash.com")) ? foundPlace.ogImage : (fetchedBanner || ""),
+                 photos: (foundPlace.photos && foundPlace.photos.length > 0 && !foundPlace.photos[0].includes("unsplash.com")) ? foundPlace.photos : (fetchedBanner ? [fetchedBanner] : []),
                  description: foundPlace.description || data.description || "",
                };
                setSearchedPlace(foundPlace);
@@ -186,9 +199,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
                  avatarUrl: fetchedLogo || instantLogo,
                  logoUrl: fetchedLogo || instantLogo,
-                 bannerUrl: fetchedBanner || instantBanner,
-                 ogImage: fetchedBanner || instantBanner,
-                 photos: (fetchedBanner || instantBanner) ? [fetchedBanner || instantBanner] : [],
+                 bannerUrl: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : ""),
+                 ogImage: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : ""),
+                 photos: ((fetchedBanner && !fetchedBanner.includes("unsplash.com")) || (instantBanner && !instantBanner.includes("unsplash.com"))) ? [(fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : instantBanner] : [],
                  openingHours: "Available 24/7",
                  isOpen: true,
                  phone: "",

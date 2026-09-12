@@ -1,5 +1,6 @@
 import { Place } from '../types';
 import { KNOWN_BRAND_LOGOS } from './logoUtils';
+import { formatBusinessName } from './placeUtils';
 
 /**
  * Extracts a clean domain from an email, URL or raw domain string
@@ -20,6 +21,8 @@ export function extractDomainFromInput(input: string): string {
 
 /**
  * Formats a clean, human-readable brand name from a domain
+ * e.g. "digitalpark.ae" -> "Digital Park"
+ * e.g. "aldhabidental.ae" -> "Al Dhabi Dental Center"
  * e.g. "yoouz.com" -> "Yoouz"
  * e.g. "the-rustic-spoon.com" -> "The Rustic Spoon"
  * e.g. "starbucks.co.uk" -> "Starbucks"
@@ -28,27 +31,7 @@ export function extractDomainFromInput(input: string): string {
  */
 export function formatBusinessNameFromDomain(domain: string): string {
   if (!domain) return 'Verified Business';
-  
-  const clean = domain.replace(/^www\./, '').toLowerCase();
-  // Strip TLD (.com, .co.uk, .org, .io, .net, etc.)
-  const withoutTld = clean.replace(/\.(co\.[a-z]{2}|[a-z]{2,8})$/i, '').split('.')[0] || clean;
-  
-  // Replace hyphens and underscores with spaces
-  const parts = withoutTld
-    .split(/[-_.]+/)
-    .filter(Boolean);
-
-  if (parts.length === 0) return 'Verified Business';
-
-  // Capitalize words properly
-  const formatted = parts
-    .map(word => {
-      if (word.length === 1) return word.toUpperCase();
-      // Handle camelCase or compound names if any
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join(' ');
-
+  const formatted = formatBusinessName(domain);
   return formatted || 'Verified Business';
 }
 

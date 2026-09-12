@@ -4,6 +4,30 @@ import { Place } from "../types";
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "yoouz.com": "https://www.yoouz.com/icon-512.png",
   "www.yoouz.com": "https://www.yoouz.com/icon-512.png",
+  "zoom.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#2D8CFF"/>
+      <path d="M24 38 C24 33.58 27.58 30 32 30 H52 C56.42 30 60 33.58 60 38 V62 C60 66.42 56.42 70 52 70 H32 C27.58 70 24 66.42 24 62 Z" fill="#ffffff"/>
+      <path d="M64 43.5 L74 36 C75.5 35 77 36 77 38 V62 C77 64 75.5 65 74 64 L64 56.5 Z" fill="#ffffff"/>
+    </svg>`),
+  "www.zoom.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#2D8CFF"/>
+      <path d="M24 38 C24 33.58 27.58 30 32 30 H52 C56.42 30 60 33.58 60 38 V62 C60 66.42 56.42 70 52 70 H32 C27.58 70 24 66.42 24 62 Z" fill="#ffffff"/>
+      <path d="M64 43.5 L74 36 C75.5 35 77 36 77 38 V62 C77 64 75.5 65 74 64 L64 56.5 Z" fill="#ffffff"/>
+    </svg>`),
+  "zoom.us": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#2D8CFF"/>
+      <path d="M24 38 C24 33.58 27.58 30 32 30 H52 C56.42 30 60 33.58 60 38 V62 C60 66.42 56.42 70 52 70 H32 C27.58 70 24 66.42 24 62 Z" fill="#ffffff"/>
+      <path d="M64 43.5 L74 36 C75.5 35 77 36 77 38 V62 C77 64 75.5 65 74 64 L64 56.5 Z" fill="#ffffff"/>
+    </svg>`),
+  "www.zoom.us": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="22" fill="#2D8CFF"/>
+      <path d="M24 38 C24 33.58 27.58 30 32 30 H52 C56.42 30 60 33.58 60 38 V62 C60 66.42 56.42 70 52 70 H32 C27.58 70 24 66.42 24 62 Z" fill="#ffffff"/>
+      <path d="M64 43.5 L74 36 C75.5 35 77 36 77 38 V62 C77 64 75.5 65 74 64 L64 56.5 Z" fill="#ffffff"/>
+    </svg>`),
   "facebook.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="22" fill="#1877f2"/>
@@ -339,41 +363,50 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
     </svg>`)
 };
 
-// High-fidelity fallback hero banner images for verified businesses
+// High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 export const KNOWN_BRAND_BANNERS: Record<string, string> = {
-  "yoouz.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-  "www.yoouz.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-  "legal500.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-  "www.legal500.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-  "facebook.com": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80",
-  "www.facebook.com": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80",
-  "reddit.com": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
-  "www.reddit.com": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
-  "uber.com": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=1200&auto=format&fit=crop&q=80",
-  "www.uber.com": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=1200&auto=format&fit=crop&q=80",
-  "spotify.com": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80",
-  "www.spotify.com": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80",
-  "usa.com": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&auto=format&fit=crop&q=80",
-  "www.usa.com": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&auto=format&fit=crop&q=80",
+  "zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
+  "www.zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
+  "zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
+  "www.zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
   "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
   "www.thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
   "districtuae.com": "https://www.districtuae.com/og-default.jpeg",
   "www.districtuae.com": "https://www.districtuae.com/og-default.jpeg",
-  "digitalparkae.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-  "www.digitalparkae.com": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-  "digitalpark.ae": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-  "www.digitalpark.ae": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-  "tajhotels.com": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80",
-  "ups.com": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&auto=format&fit=crop&q=80",
-  "mastercard.com": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1200&auto=format&fit=crop&q=80",
-  "tinder.com": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&auto=format&fit=crop&q=80",
-  "www.tinder.com": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&auto=format&fit=crop&q=80",
   "londontrustedtherapy.com": "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp",
   "kempinski.com": "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg",
   "timehotels.com": "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png",
   "freecancellations.com": "https://metasearch-cdn.azureedge.net/azure/seo-images/us/new-york-state/CDD5D4910706645C4CAD830CC6C07D52.jpg?quality=80&mode=crop&w=1200&h=800&scale=both&anchor=middlecenter",
   "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png"
 };
+
+/**
+ * Checks if a logo URL is a white/monochrome/inverted variant that would become
+ * invisible or have unreadable contrast on light avatar badges.
+ */
+export function isWhiteOrInvertedLogo(url: string | null | undefined): boolean {
+  if (!url || typeof url !== "string") return false;
+  const lower = url.toLowerCase();
+  return (
+    lower.includes("-white") ||
+    lower.includes("_white") ||
+    lower.includes("white-") ||
+    lower.includes("white_") ||
+    lower.includes("/white.") ||
+    lower.includes("white@") ||
+    lower.includes("logo-white") ||
+    lower.includes("logo_white") ||
+    lower.includes("whitelogo") ||
+    lower.includes("logo-light") ||
+    lower.includes("logo_light") ||
+    lower.includes("light-logo") ||
+    lower.includes("monochrome") ||
+    lower.includes("inverted") ||
+    lower.includes("negative") ||
+    lower.includes("dark-mode") ||
+    lower.includes("darkmode")
+  );
+}
 
 export function extractDomain(str: string | null | undefined): string | null {
   if (!str) return null;
@@ -485,7 +518,12 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     return KNOWN_BRAND_LOGOS[cleanDomain];
   }
 
-  if (url && (url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))) {
+  // Reject white/inverted variants that disappear on light badges
+  if (
+    url &&
+    !isWhiteOrInvertedLogo(url) &&
+    (url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
+  ) {
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
       if (url.startsWith("/api/proxy-image")) return url;
       if (url.includes("framerusercontent.com") || url.includes("googleusercontent.com")) {
@@ -526,8 +564,15 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return KNOWN_BRAND_LOGOS[cleanDomain];
   }
 
-  // 2. Explicit logoUrl provided (if not a broken brandfetch or stub)
-  if (place.logoUrl && place.logoUrl.trim() !== "" && !place.logoUrl.includes("brandfetch.io") && place.logoUrl !== "data:;" && !place.logoUrl.startsWith("data:;")) {
+  // 2. Explicit logoUrl provided (if not a broken brandfetch or white/inverted variant)
+  if (
+    place.logoUrl &&
+    place.logoUrl.trim() !== "" &&
+    !isWhiteOrInvertedLogo(place.logoUrl) &&
+    !place.logoUrl.includes("brandfetch.io") &&
+    place.logoUrl !== "data:;" &&
+    !place.logoUrl.startsWith("data:;")
+  ) {
     if (place.logoUrl.startsWith("/api/proxy-image")) return place.logoUrl;
     if (place.logoUrl.includes("googleusercontent.com") || place.logoUrl.includes("framerusercontent.com")) {
       return `/api/proxy-image?url=${encodeURIComponent(place.logoUrl)}`;

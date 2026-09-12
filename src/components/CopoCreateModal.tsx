@@ -62,7 +62,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const [errorMsg, setErrorMsg] = useState("");
 
   // Recording & Studio states
-  const [countdown, setCountdown] = useState<number | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const isRecordingRef = useRef(false);
   const isRecordingAbortedRef = useRef(false);
@@ -78,13 +77,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const faceIntervalRef = useRef<any>(null);
   const faceMissingSinceRef = useRef<number | null>(null);
 
-  // Speech / Voice-activated recording
-  const [isWaitingForVoice, setIsWaitingForVoice] = useState(false);
-  const [micVolumeLevel, setMicVolumeLevel] = useState<number>(0);
+  // Audio Context for hardware unlocking
   const audioContextRef = useRef<any>(null);
-  const analyserRef = useRef<any>(null);
-  const voiceDetectionLoopRef = useRef<any>(null);
-  const voiceFallbackTimeoutRef = useRef<any>(null);
 
   // Camera settings (Front / Rear camera flip)
   const [cameraActive, setCameraActive] = useState(false);
@@ -106,10 +100,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const playbackVideoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const activeStreamRef = useRef<MediaStream | null>(null);
-  const audioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<any>(null);
-  const countdownTimerRef = useRef<any>(null);
 
   // Global cleanup on tab switch, lock, or navigation away from website
   useEffect(() => {
@@ -169,8 +161,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   }, [step, isOpen, recordedVideoUrl]);
 
   const resetState = () => {
-    setIsRecording(false); isRecordingRef.current = false;
-    setCountdown(null);
+    setIsRecording(false);
+    isRecordingRef.current = false;
     setRecordedVideoBlob(null);
     if (recordedVideoUrl) {
       URL.revokeObjectURL(recordedVideoUrl);
@@ -186,8 +178,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setUploadProgress(0);
     setIsFaceDetected(false);
     setFaceWarning(null);
-    setIsWaitingForVoice(false);
-    setMicVolumeLevel(0);
   };
 
   const extractThumbnailFromVideo = (videoSource: string | Blob): Promise<string> => {
@@ -570,26 +560,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       clearInterval(faceIntervalRef.current);
       faceIntervalRef.current = null;
     }
-    if (voiceFallbackTimeoutRef.current) {
-      clearTimeout(voiceFallbackTimeoutRef.current);
-      voiceFallbackTimeoutRef.current = null;
-    }
-    if (voiceDetectionLoopRef.current) {
-      cancelAnimationFrame(voiceDetectionLoopRef.current);
-      voiceDetectionLoopRef.current = null;
-    }
-    if (audioSourceRef.current) {
-      try {
-        audioSourceRef.current.disconnect();
-      } catch (e) {}
-      audioSourceRef.current = null;
-    }
-    if (analyserRef.current) {
-      try {
-        analyserRef.current.disconnect();
-      } catch (e) {}
-      analyserRef.current = null;
-    }
     if (audioContextRef.current) {
       try {
         if (audioContextRef.current.state !== "closed") {
@@ -616,19 +586,33 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       videoRef.current.srcObject = null;
     }
     if (timerRef.current) clearInterval(timerRef.current);
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-    setIsWaitingForVoice(false);
     setCameraActive(false);
     setIsFaceDetected(false);
     setFaceWarning(null);
-    setMicVolumeLevel(0);
   };
 
-  // Triggers countdown in 1 click (desktop and mobile)
-  const handleTriggerCountdown = () => {
-    triggerHaptic("medium");
+  // Instant Shutter Record Start (Desktop & Mobile) - Immediate response in 1 click/tap
+  const isStartingRecordingRef = useRef(false);
 
-    // Warm up / unlock AudioContext synchronously on user tap gesture (Safari/iOS requirement)
+  const handleStartRecordingInstant = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (isRecording || isRecordingRef.current || isStartingRecordingRef.current) {
+      return;
+    }
+    isStartingRecordingRef.current = true;
+
+    // Instant tactile haptic feedback on mobile
+    triggerHaptic("heavy");
+
+    // Clear any previous transient warning
+    setErrorMessage(null);
+    setFaceWarning(null);
+
+    // Warm up / unlock AudioContext synchronously on user gesture (Safari/iOS requirement)
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContextClass) {
@@ -641,137 +625,27 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       }
     } catch (e) {}
 
-    setErrorMessage(null);
-    setCountdown(3);
-    countdownTimerRef.current = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearInterval(countdownTimerRef.current);
-          initiateVoiceWait(); // Wait for user speech or tap to start recording
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  // Speech & Voice Detection Engine (Mobile & Desktop) with Auto-Start Fallback
-  const initiateVoiceWait = () => {
-    if (!videoRef.current || !videoRef.current.srcObject) {
-      startActualRecording();
-      return;
-    }
-
-    setIsWaitingForVoice(true);
-    setMicVolumeLevel(0);
-
-    // Safety Fallback: Automatically start recording after 3.5 seconds so user is never stuck
-    if (voiceFallbackTimeoutRef.current) {
-      clearTimeout(voiceFallbackTimeoutRef.current);
-    }
-    voiceFallbackTimeoutRef.current = setTimeout(() => {
-      handleForceStartRecording();
-    }, 3500);
-
-    const stream = videoRef.current.srcObject as MediaStream;
-
-    try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) {
-        handleForceStartRecording();
-        return;
-      }
-
-      const audioCtx = audioContextRef.current || new AudioContextClass();
-      audioContextRef.current = audioCtx;
-      if (audioCtx.state === "suspended") {
-        audioCtx.resume().catch(() => {});
-      }
-
-      const analyser = audioCtx.createAnalyser();
-      analyserRef.current = analyser;
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.2;
-
-      const source = audioCtx.createMediaStreamSource(stream);
-      audioSourceRef.current = source;
-      source.connect(analyser);
-
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      let isStarted = false;
-
-      const checkVolume = () => {
-        if (isStarted || !analyserRef.current) return;
-
-        analyser.getByteTimeDomainData(dataArray);
-        let maxDeviation = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          const deviation = Math.abs(dataArray[i] - 128);
-          if (deviation > maxDeviation) maxDeviation = deviation;
-        }
-
-        // Map maxDeviation (0-128) to 0-100 percentage for UI wave feedback
-        const normalized = Math.min(100, Math.round((maxDeviation / 128) * 100));
-        setMicVolumeLevel(normalized);
-
-        // Vocal spike trigger: deviation > 5 starts recording immediately without missing words
-        if (maxDeviation > 5) {
-          isStarted = true;
-          handleForceStartRecording();
-          return;
-        }
-
-        voiceDetectionLoopRef.current = requestAnimationFrame(checkVolume);
-      };
-
-      voiceDetectionLoopRef.current = requestAnimationFrame(checkVolume);
-
-    } catch (e) {
-      console.warn("AudioContext init notice:", e);
-      // If microphone analysis fails, start recording directly without blocking
-      handleForceStartRecording();
-    }
-  };
-
-  const handleForceStartRecording = () => {
-    if (voiceFallbackTimeoutRef.current) {
-      clearTimeout(voiceFallbackTimeoutRef.current);
-      voiceFallbackTimeoutRef.current = null;
-    }
-    if (voiceDetectionLoopRef.current) {
-      cancelAnimationFrame(voiceDetectionLoopRef.current);
-      voiceDetectionLoopRef.current = null;
-    }
-    if (audioSourceRef.current) {
-      try {
-        audioSourceRef.current.disconnect();
-      } catch (e) {}
-      audioSourceRef.current = null;
-    }
-    if (analyserRef.current) {
-      try {
-        analyserRef.current.disconnect();
-      } catch (e) {}
-      analyserRef.current = null;
-    }
-    if (audioContextRef.current && audioContextRef.current.state === "running") {
-      audioContextRef.current.close().catch(() => {});
-      audioContextRef.current = null;
-    }
-    setIsWaitingForVoice(false);
-    triggerHaptic("heavy");
+    // Immediately start recording
     startActualRecording();
+
+    setTimeout(() => {
+      isStartingRecordingRef.current = false;
+    }, 400);
   };
 
   const startActualRecording = () => {
-    if (!videoRef.current || !videoRef.current.srcObject) {
-      startCamera();
+    const stream = (videoRef.current?.srcObject as MediaStream) || activeStreamRef.current;
+    if (!stream) {
+      // If camera is still spinning up, start camera and then start recording as soon as stream is ready
+      startCamera().then(() => {
+        setTimeout(() => {
+          startActualRecording();
+        }, 150);
+      });
       return;
     }
     triggerHaptic("heavy");
     chunksRef.current = [];
-    const stream = videoRef.current.srcObject as MediaStream;
     try {
       const config = getOptimalVideoRecorderConfig();
       const options: MediaRecorderOptions = config.mimeType ? { mimeType: config.mimeType } : {};
@@ -1630,70 +1504,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </div>
                 </div>
 
-                {/* Center Audio Speech Waiting Screen ("Speak to Start Recording") */}
-                {isWaitingForVoice && (
-                  <div
-                    onClick={handleForceStartRecording}
-                    className="absolute inset-0 bg-black/85 backdrop-blur-md z-40 flex flex-col items-center justify-center text-white p-6 text-center animate-fadeIn select-none cursor-pointer"
-                  >
-                    {/* Pulsating Microphone Soundwave Ring */}
-                    <div className="relative flex items-center justify-center mb-6">
-                      {/* Dynamic Ambient Audio Ring */}
-                      <div
-                        className="absolute rounded-full border-2 border-emerald-400/40 transition-all duration-75"
-                        style={{
-                          width: `${100 + micVolumeLevel * 1.5}px`,
-                          height: `${100 + micVolumeLevel * 1.5}px`,
-                          opacity: 0.3 + (micVolumeLevel / 100) * 0.7
-                        }}
-                      />
-                      <div
-                        className="w-24 h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-300 shadow-2xl animate-pulse"
-                      >
-                        <Mic className="w-10 h-10" />
-                      </div>
-                    </div>
-
-                    <h3 className="text-2xl font-bold font-display tracking-tight text-white mb-2">
-                      Speak now to start recording...
-                    </h3>
-                    <p className="text-sm text-zinc-300 max-w-xs mb-5 leading-relaxed">
-                      Say anything about your experience at <span className="text-emerald-300 font-bold">{formatBusinessName(selectedPlace?.name)}</span> to automatically begin recording!
-                    </p>
-
-                    {/* Speech Volume Live Meter */}
-                    <div className="w-52 h-2.5 bg-white/20 rounded-full overflow-hidden mb-5">
-                      <div
-                        className="h-full bg-emerald-400 transition-all duration-75 rounded-full"
-                        style={{ width: `${Math.max(5, micVolumeLevel)}%` }}
-                      />
-                    </div>
-
-                    {/* Instant Tap to Record fallback button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleForceStartRecording();
-                      }}
-                      className="px-5 py-2.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold text-xs uppercase tracking-wider backdrop-blur-md transition-all active:scale-95 flex items-center gap-2 shadow-lg cursor-pointer"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                      <span>Or tap here to start now</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* 3..2..1 Countdown Overlay */}
-                {countdown !== null && (
-                  <div className="absolute inset-0 bg-black/70 backdrop-blur-md flex flex-col items-center justify-center z-40 animate-fadeIn select-none">
-                    <p className="text-white font-bold text-sm uppercase tracking-widest mb-3">Get Ready!</p>
-                    <div className="w-24 h-24 rounded-full bg-white text-zinc-950 flex items-center justify-center text-5xl font-black shadow-2xl animate-bounce">
-                      {countdown}
-                    </div>
-                  </div>
-                )}
-
                 {/* Face Missing Warning Alert Banner */}
                 {faceWarning && (
                   <div className="absolute top-20 md:top-22 inset-x-4 md:inset-x-6 z-35 flex justify-center pointer-events-none animate-fadeIn">
@@ -1725,7 +1535,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 )}
 
                 {/* Camera Inactive Placeholder */}
-                {!cameraActive && !recordedVideoUrl && countdown === null && (
+                {!cameraActive && !recordedVideoUrl && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-black z-20">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
@@ -1735,21 +1545,23 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 )}
 
                 {/* Bottom Camera Controls Bar (When NOT recording) */}
-                {cameraActive && !isRecording && !recordedVideoUrl && countdown === null && !isWaitingForVoice && (
-                  <div className="absolute bottom-10 inset-x-0 flex flex-col items-center justify-center z-30 pointer-events-auto gap-5">
-                    {/* Simplified: Only Big Shutter Record Button */}
+                {cameraActive && !isRecording && !recordedVideoUrl && (
+                  <div className="absolute bottom-10 inset-x-0 flex flex-col items-center justify-center z-30 pointer-events-auto gap-4 select-none">
+                    {/* Simplified: Only Big Shutter Record Button - Instant Response */}
                     <button
+                      id="record-shutter-button"
                       type="button"
-                      onClick={handleTriggerCountdown}
-                      className="w-22 h-22 rounded-full border-[6px] border-white/30 p-1.5 flex items-center justify-center bg-transparent transition-all active:scale-90 cursor-pointer group"
-                      title="Tap to start recording"
+                      onClick={handleStartRecordingInstant}
+                      className="w-22 h-22 rounded-full border-[6px] border-white/40 p-1.5 flex items-center justify-center bg-transparent transition-transform active:scale-90 cursor-pointer group touch-manipulation select-none"
+                      title="Tap to record review instantly"
+                      aria-label="Tap to record review instantly"
                     >
-                      <div className="w-full h-full rounded-full bg-red-600 flex items-center justify-center shadow-2xl group-hover:bg-red-700 transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30" />
+                      <div className="w-full h-full rounded-full bg-red-600 flex items-center justify-center shadow-2xl group-hover:bg-red-500 active:bg-red-700 transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-white/30 border border-white/50" />
                       </div>
                     </button>
 
-                    <span className="text-[12px] font-bold text-white tracking-wide drop-shadow-md uppercase opacity-90">
+                    <span className="text-[12px] font-bold text-white tracking-wide drop-shadow-md uppercase opacity-90 select-none pointer-events-none">
                       Tap to record review
                     </span>
                   </div>
@@ -1789,10 +1601,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       </svg>
 
                       <button
+                        id="stop-recording-button"
                         type="button"
                         onClick={handleStopRecording}
-                        className="absolute w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-2xl transition-transform active:scale-90 cursor-pointer flex items-center justify-center"
+                        className="absolute w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-2xl transition-transform active:scale-90 cursor-pointer flex items-center justify-center touch-manipulation select-none"
                         title="Stop Recording"
+                        aria-label="Stop Recording"
                       >
                         <Square className="w-6 h-6 fill-white" />
                       </button>
