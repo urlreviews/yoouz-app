@@ -1544,7 +1544,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const copyEmbedCode = () => {
     const pinnedAttr = pinnedVideoIds.length > 0 ? `\n  data-pinned-ids="${pinnedVideoIds.join(',')}"` : '';
     const hiddenAttr = hiddenVideoIds.length > 0 ? `\n  data-hidden-ids="${hiddenVideoIds.join(',')}"` : '';
-    const embedSnippet = `<div id="yoouz-widget"\n  data-place-id="${selectedPlaceId}"\n  data-theme="${embedTheme}"\n  data-star-filter="${embedStarFilter}"\n  data-show-stars="${embedShowStars}"\n  data-show-verified="${embedShowVerifiedBadge}"\n  data-show-trust-header="${embedShowTrustHeader}"${pinnedAttr}${hiddenAttr}>\n</div>\n<script src="https://cdn.yoouz.com/embed/v2.js" async defer></script>`;
+    const embedSnippet = `<div id="yoouz-widget"\n  data-place-id="${selectedPlaceId}"\n  data-theme="minimal_dark"\n  data-layout="grid"\n  data-accent="#ffffff"${pinnedAttr}${hiddenAttr}>\n</div>\n<script src="https://cdn.yoouz.com/embed/v2.js" async defer></script>`;
     navigator.clipboard.writeText(embedSnippet);
     setIsCodeCopied(true);
     setTimeout(() => setIsCodeCopied(false), 2500);
@@ -1555,11 +1555,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return placeVideos
       .filter(v => {
         if (hiddenVideoIds.includes(v.id)) return false;
-        const rating = v.rating || 5;
-        if (embedStarFilter === '5') return rating === 5;
-        if (embedStarFilter === '4plus') return rating >= 4;
-        if (embedStarFilter === '3plus') return rating >= 3;
-        if (embedStarFilter === 'pinned_only') return pinnedVideoIds.includes(v.id);
         return true;
       })
       .sort((a, b) => {
@@ -1569,7 +1564,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         if (!aPinned && bPinned) return 1;
         return 0;
       });
-  }, [placeVideos, hiddenVideoIds, embedStarFilter, pinnedVideoIds]);
+  }, [placeVideos, hiddenVideoIds, pinnedVideoIds]);
 
   // Synchronize ownerReplies from placeVideos when videos or selectedPlaceId updates
   useEffect(() => {
