@@ -1049,6 +1049,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>([]);
   const [pinNotice, setPinNotice] = useState<string | null>(null);
   const [isCodeCopied, setIsCodeCopied] = useState(false);
+  const [embedDeviceMode, setEmbedDeviceMode] = useState<'desktop' | 'mobile'>('desktop');
 
   // Top header dropdowns & Command Palette
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -3196,62 +3197,101 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     {/* Live Website Preview Container */}
                     <div className="lg:col-span-2 bg-zinc-950 rounded-3xl p-6 border border-zinc-800 flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                           <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
                             <Globe className="w-3.5 h-3.5 text-zinc-200" />
-                            Live External Website Preview ({embedLayout.toUpperCase()} MODE)
+                            Live Website Preview ({embedLayout.toUpperCase()} MODE)
                           </span>
+                          
                           <div className="flex items-center gap-2">
-                            {pinnedVideoIds.length > 0 && (
-                              <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-bold border border-zinc-700">
-                                📌 {pinnedVideoIds.length} Pinned First
-                              </span>
-                            )}
-                            <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-bold border border-zinc-700">
-                              Auto-Sync Active
+                            {/* Desktop / Mobile Device Mode Toggle */}
+                            <div className="bg-zinc-900 p-0.5 rounded-xl border border-zinc-800 flex items-center">
+                              <button
+                                type="button"
+                                onClick={() => setEmbedDeviceMode('desktop')}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                  embedDeviceMode === 'desktop'
+                                    ? 'bg-zinc-800 text-white shadow-xs'
+                                    : 'text-zinc-400 hover:text-white'
+                                }`}
+                              >
+                                🖥️ Desktop
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEmbedDeviceMode('mobile')}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                  embedDeviceMode === 'mobile'
+                                    ? 'bg-zinc-800 text-white shadow-xs'
+                                    : 'text-zinc-400 hover:text-white'
+                                }`}
+                              >
+                                📱 Mobile App
+                              </button>
+                            </div>
+
+                            <span className="px-2.5 py-1 rounded-full bg-zinc-900 text-zinc-300 text-[10px] font-bold border border-zinc-800 hidden sm:inline-block">
+                              Auto-Sync
                             </span>
                           </div>
                         </div>
 
-                        {/* Rendered Widget Simulation Card */}
-                        <div className="widget-simulation-container p-6 rounded-3xl border border-zinc-800 bg-zinc-900 text-white shadow-xl transition-all">
+                        {/* Rendered Widget Simulation Container (Desktop or Physical Smartphone Frame) */}
+                        <div className={embedDeviceMode === 'mobile' ? "max-w-[340px] mx-auto bg-zinc-950 border-[8px] border-zinc-800 rounded-[44px] px-3.5 py-4 shadow-2xl relative my-2 overflow-hidden transition-all ring-1 ring-zinc-700/50" : "widget-simulation-container p-6 rounded-3xl border border-zinc-800 bg-zinc-900 text-white shadow-xl transition-all"}>
+                          {embedDeviceMode === 'mobile' && (
+                            <div className="mb-3 px-2 flex items-center justify-between text-[11px] font-semibold text-zinc-400 select-none">
+                              <span>9:41</span>
+                              {/* Dynamic Island Notch */}
+                              <div className="w-24 h-5 bg-zinc-900 mx-auto rounded-full flex items-center justify-center gap-1.5 px-2 border border-zinc-800">
+                                <div className="w-2.5 h-2.5 rounded-full bg-zinc-950"></div>
+                                <div className="w-2 h-2 rounded-full bg-zinc-900 animate-pulse"></div>
+                              </div>
+                              <div className="flex items-center gap-1 text-[10px]">
+                                <span>5G</span>
+                                <div className="w-4 h-2.5 border border-zinc-400 rounded-xs p-0.5 flex items-center">
+                                  <div className="w-full h-full bg-zinc-400 rounded-2xs"></div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Super Luxury Yoouz Brand Trust Header */}
                           {embedShowTrustHeader && (
-                            <div className="p-4 rounded-2xl mb-5 border border-zinc-700/80 bg-zinc-800/90 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+                            <div className={`p-4 rounded-2xl mb-4 border border-zinc-700/80 bg-zinc-800/90 text-white flex flex-col ${embedDeviceMode === 'mobile' ? 'gap-3' : 'sm:flex-row sm:items-center justify-between'} transition-all`}>
                               <div className="flex items-center gap-3">
                                 {/* Official Yoouz Brand Icon Badge */}
                                 <div 
-                                  className="w-11 h-11 rounded-2xl text-zinc-950 bg-white flex items-center justify-center font-black text-lg shadow-sm shrink-0 border border-white/40"
+                                  className="w-10 h-10 rounded-2xl text-zinc-950 bg-white flex items-center justify-center font-black text-base shadow-sm shrink-0 border border-white/40"
                                 >
                                   ★
                                 </div>
 
                                 <div>
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-extrabold text-base tracking-tight">{currentPlace.name}</span>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-extrabold text-sm tracking-tight truncate max-w-[180px]">{currentPlace.name}</span>
                                     {embedShowVerifiedBadge && (
                                       <span 
-                                        className="inline-flex items-center gap-1 text-[11px] font-bold bg-zinc-900 text-white px-2 py-0.5 rounded-full border border-zinc-700 shadow-2xs"
+                                        className="inline-flex items-center gap-0.5 text-[10px] font-bold bg-zinc-900 text-white px-1.5 py-0.5 rounded-full border border-zinc-700"
                                       >
-                                        <BadgeCheck className="w-3.5 h-3.5 fill-current text-white" /> Verified Merchant
+                                        <BadgeCheck className="w-3 h-3 fill-current text-white" /> Verified
                                       </span>
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
+                                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap text-[11px]">
                                     {embedShowStars && (
                                       <div className="flex items-center gap-1">
                                         <span className="font-black text-white">4.9</span>
                                         <div className="flex text-amber-400 items-center gap-0.5">
                                           {Array.from({ length: 5 }).map((_, i) => (
-                                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                            <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
                                           ))}
                                         </div>
                                       </div>
                                     )}
-                                    <span className="text-zinc-200">•</span>
-                                    <span className="text-zinc-200 font-medium">
-                                      Based on <strong className="text-white">{placeVideos.length} Video Reviews</strong> on <strong className="text-white">Yoouz</strong>
+                                    <span className="text-zinc-400">•</span>
+                                    <span className="text-zinc-300 text-[10px]">
+                                      {placeVideos.length} Reviews
                                     </span>
                                   </div>
                                 </div>
@@ -3262,10 +3302,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 href={`/#/record_review?placeId=${selectedPlaceId}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-3.5 py-2 rounded-xl text-zinc-950 bg-white hover:bg-zinc-200 text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 shrink-0 hover:scale-102 cursor-pointer"
+                                className="px-3 py-2 rounded-xl text-zinc-950 bg-white hover:bg-zinc-200 text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
                               >
                                 <Video className="w-3.5 h-3.5" />
-                                <span>Add Video Review</span>
+                                <span>Add Review</span>
                               </a>
                             </div>
                           )}
@@ -3285,50 +3325,50 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     {embedShowVerifiedBadge && <BadgeCheck className="w-3.5 h-3.5 text-white" />}
                                   </div>
                                   {embedShowStars && (
-                                    <div className="text-[11px] text-zinc-200 flex items-center gap-1 font-bold">
-                                      <span className="text-amber-400">★★★★★</span> <span>4.9 ({placeVideos.length} Video Reviews)</span>
+                                    <div className="text-[11px] text-zinc-300 flex items-center gap-1 font-bold">
+                                      <span className="text-amber-400">★★★★★</span> <span>4.9 ({placeVideos.length})</span>
                                     </div>
                                   )}
                                 </div>
                               </div>
-                              <span className="text-[10px] text-zinc-200 font-mono">powered by yoouz</span>
+                              <span className="text-[10px] text-zinc-400 font-mono">yoouz</span>
                             </div>
                           )}
 
                           {/* Video Simulation Display according to embedLayout */}
                           {displayableWidgetVideos.length === 0 ? (
-                            <div className="py-12 text-center text-zinc-200 space-y-2">
-                              <AlertCircle className="w-8 h-8 mx-auto text-zinc-200" />
-                              <p className="text-xs font-semibold text-zinc-200">No video reviews match the selected star filter.</p>
-                              <p className="text-[11px] text-zinc-200">Try switching the rating filter back to "All Star Ratings".</p>
+                            <div className="py-12 text-center text-zinc-400 space-y-2">
+                              <AlertCircle className="w-8 h-8 mx-auto text-zinc-500" />
+                              <p className="text-xs font-semibold text-zinc-300">No video reviews match the filter.</p>
+                              <p className="text-[11px] text-zinc-500">Try switching rating to "All Star Ratings".</p>
                             </div>
                           ) : embedLayout === 'badge' ? (
                             /* CORNER FLOATING BADGE PREVIEW */
-                            <div className="relative bg-zinc-900 rounded-2xl p-8 border border-dashed border-zinc-700 flex flex-col items-center justify-center min-h-[220px]">
-                              <span className="text-xs text-zinc-200 font-semibold mb-2">[ Simulated Merchant Website Page ]</span>
-                              <div className="absolute bottom-4 right-4 bg-zinc-950 rounded-2xl border border-zinc-800 text-white p-3 shadow-xl flex items-center gap-3 animate-bounce cursor-pointer hover:scale-105 transition-transform" onClick={() => setActiveVideoModal(displayableWidgetVideos[0])}>
-                                <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0">
+                            <div className="relative bg-zinc-900 rounded-2xl p-6 border border-dashed border-zinc-700 flex flex-col items-center justify-center min-h-[180px]">
+                              <span className="text-[11px] text-zinc-400 font-semibold mb-2">[ Simulated Website Page ]</span>
+                              <div className="absolute bottom-3 right-3 bg-zinc-950 rounded-2xl border border-zinc-800 text-white p-2.5 shadow-xl flex items-center gap-2.5 animate-bounce cursor-pointer hover:scale-105 transition-transform" onClick={() => setActiveVideoModal(displayableWidgetVideos[0])}>
+                                <div className="w-10 h-10 rounded-xl overflow-hidden relative shrink-0">
                                   <img src={displayableWidgetVideos[0].thumbnailUrl} alt="Review" className="w-full h-full object-cover" />
                                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white">
-                                    <Play className="w-4 h-4 fill-current" />
+                                    <Play className="w-3 h-3 fill-current" />
                                   </div>
                                 </div>
-                                <div className="min-w-0 pr-2">
-                                  <div className="text-xs font-bold text-white truncate">★ 4.9 Video Reviews</div>
-                                  <div className="text-[10px] text-zinc-200 truncate">Tap to watch {displayableWidgetVideos.length} reviews</div>
+                                <div className="min-w-0 pr-1">
+                                  <div className="text-[11px] font-bold text-white truncate">★ 4.9 Reviews</div>
+                                  <div className="text-[9px] text-zinc-400 truncate">Tap to watch</div>
                                 </div>
                               </div>
                             </div>
                           ) : embedLayout === 'carousel' ? (
                             /* HORIZONTAL REEL CAROUSEL PREVIEW */
-                            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none">
                               {displayableWidgetVideos.map((v) => {
                                 const isPinned = pinnedVideoIds.includes(v.id);
                                 return (
                                   <div 
                                     key={v.id} 
                                     onClick={() => setActiveVideoModal(v)}
-                                    className="w-40 shrink-0 relative rounded-2xl overflow-hidden aspect-9/14 bg-zinc-800 group shadow-xs cursor-pointer hover:scale-[1.02] transition-transform"
+                                    className="w-36 shrink-0 relative rounded-2xl overflow-hidden aspect-9/14 bg-zinc-800 group shadow-xs cursor-pointer hover:scale-[1.02] transition-transform"
                                     title="Click to play video reel"
                                   >
                                     <img
@@ -3339,29 +3379,26 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     />
                                     
                                     {isPinned && (
-                                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-white text-zinc-950 text-[9px] font-black shadow-md flex items-center gap-1 z-10">
+                                      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-white text-zinc-950 text-[9px] font-black shadow-md flex items-center gap-0.5 z-10">
                                         <Pin className="w-2.5 h-2.5 fill-current" /> Pinned
                                       </div>
                                     )}
 
-                                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-1 z-10">
+                                    <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-0.5 z-10">
                                       <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                                       <span>{v.rating || 5}</span>
                                     </div>
 
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-white">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
                                       <span className="text-[10px] font-bold leading-tight line-clamp-1">
                                         {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
-                                      </span>
-                                      <span className="text-[9px] text-zinc-200">
-                                        by {v.author?.name || 'Verified Customer'}
                                       </span>
                                     </div>
 
                                     <div 
-                                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
+                                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
                                     >
-                                      <Play className="w-4 h-4 fill-current ml-0.5" />
+                                      <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                                     </div>
                                   </div>
                                 );
@@ -3369,7 +3406,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             </div>
                           ) : (
                             /* 3-COLUMN REEL GRID PREVIEW */
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div className={`grid ${embedDeviceMode === 'mobile' ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-2.5`}>
                               {displayableWidgetVideos.map((v) => {
                                 const isPinned = pinnedVideoIds.includes(v.id);
                                 return (
@@ -3387,41 +3424,42 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     />
                                     
                                     {isPinned && (
-                                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-white text-zinc-950 text-[9px] font-black shadow-md flex items-center gap-1 z-10">
+                                      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-white text-zinc-950 text-[9px] font-black shadow-md flex items-center gap-0.5 z-10">
                                         <Pin className="w-2.5 h-2.5 fill-current" /> Pinned
                                       </div>
                                     )}
 
-                                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-1 z-10">
+                                    <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-0.5 z-10">
                                       <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                                       <span>{v.rating || 5}</span>
                                     </div>
 
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-white">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
                                       <span className="text-[10px] font-bold leading-tight line-clamp-1">
                                         {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
-                                      </span>
-                                      <span className="text-[9px] text-zinc-200">
-                                        by {v.author?.name || 'Verified Customer'}
                                       </span>
                                     </div>
 
                                     <div 
-                                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
+                                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"
                                     >
-                                      <Play className="w-4 h-4 fill-current ml-0.5" />
+                                      <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                                     </div>
                                   </div>
                                 );
                               })}
                             </div>
                           )}
+
+                          {embedDeviceMode === 'mobile' && (
+                            <div className="w-28 h-1 bg-zinc-700 mx-auto rounded-full mt-3"></div>
+                          )}
                         </div>
                       </div>
 
-                      <div className="text-[11px] text-zinc-200 mt-6 text-center flex items-center justify-center gap-1.5">
-                        <Sparkles className="w-3 h-3 text-zinc-200" />
-                        <span>Click any video thumbnail in the live preview to watch the full HD video review player.</span>
+                      <div className="text-[11px] text-zinc-400 mt-4 text-center flex items-center justify-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-zinc-400" />
+                        <span>Tap any video thumbnail to test the immersive HD video review player.</span>
                       </div>
                     </div>
                   </div>
