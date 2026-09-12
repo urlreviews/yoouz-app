@@ -97,11 +97,20 @@ export function App() {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
-          return parsed.map((p: any) => ({
-            ...p,
-            rating: typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0),
-            totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0)
-          }));
+          return parsed.map((p: any) => {
+            // Strip any mock/fake/unsplash banners aggressively from the local cache on boot
+            if (p.bannerUrl && (p.bannerUrl.includes('unsplash.com') || p.bannerUrl.includes('placeholder') || p.bannerUrl.includes('mock'))) {
+              p.bannerUrl = "";
+            }
+            if (p.ogImage && (p.ogImage.includes('unsplash.com') || p.ogImage.includes('placeholder') || p.ogImage.includes('mock'))) {
+              p.ogImage = "";
+            }
+            return {
+              ...p,
+              rating: typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0),
+              totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0)
+            };
+          });
         }
       }
     } catch(e){}

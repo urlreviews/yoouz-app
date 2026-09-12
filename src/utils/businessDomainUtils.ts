@@ -112,7 +112,7 @@ export function derivePlaceFromEmailOrDomain(
       ? 'Official verified business profile for Yoouz. Real people, authentic 60-second video reviews.' 
       : `Official verified merchant profile for ${businessName}. Authenticated through official business domain ownership.`,
     logoUrl: logoUrl,
-    coverImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80',
+    coverImage: "",
     claimedByEmail: emailOrDomain.includes('@') ? emailOrDomain.toLowerCase().trim() : undefined
   } as unknown as Place;
 }

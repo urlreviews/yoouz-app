@@ -1479,13 +1479,13 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
         stars1: 74
       },
       avatarUrl: "",
-      bannerUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80",
+      bannerUrl: "",
       photos: [
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        "",
+        ""
       ],
       openingHours: "Open 24 hours",
       hoursSubtext: "Front desk open 24/7 · Check-in 15:00 · Check-out 12:00",
@@ -1581,13 +1581,13 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
         stars1: 154
       },
       avatarUrl: "",
-      bannerUrl: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=1200&auto=format&fit=crop&q=80",
+      bannerUrl: "",
       photos: [
-        "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        "",
+        ""
       ],
       openingHours: "Open 24 hours",
       hoursSubtext: "24/7 Front desk · Check-in 14:00 · Check-out 12:00",
@@ -2002,67 +2002,67 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     // Dynamic photo libraries to avoid all hotels sharing the same photo
     const budgetHotelPhotos = [
       [
-        "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        ""
       ]
     ];
     const cityHotelPhotos = [
       [
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1591088398332-8a7791972843?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        ""
       ]
     ];
 
     const resortPhotos = [
       [
-        "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1544984243-ec57ea16fe25?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1563911302283-d2bc129e7570?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        ""
       ]
     ];
 
     const boutiquePhotos = [
       [
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        "",
+        ""
       ]
     ];
 
@@ -2128,7 +2128,7 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     if (!category || category === "Verified Google Business" || category === "Local Business") {
       category = "Bank & ATM";
     }
-    const bankPhotoSets = [["https://images.unsplash.com/photo-1601597111158-2fceff292cdc?w=1200&auto=format&fit=crop&q=80"]];
+    const bankPhotoSets = [[""]];
     hash = 0;
     nameStr = (item.name || rawQuery || textContext || "bank").toLowerCase();
     for (let i = 0; i < nameStr.length; i++) {
@@ -2145,14 +2145,14 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     }
     const gymPhotoSets = [
       [
-        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ]
     ];
     hash = 0;
@@ -2171,14 +2171,14 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     }
     const pharmPhotoSets = [
       [
-        "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1586015555751-63c299c855a8?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ]
     ];
     hash = 0;
@@ -2197,14 +2197,14 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     }
     const autoPhotoSets = [
       [
-        "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1613214149922-f1809c99b414?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ]
     ];
     hash = 0;
@@ -2223,24 +2223,24 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     }
     const diningPhotoSets = [
       [
-        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ]
     ];
     hash = 0;
@@ -2259,14 +2259,14 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     }
     const salonPhotoSets = [
       [
-        "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ]
     ];
     hash = 0;
@@ -2284,9 +2284,9 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
       category = "Educational Institution & University";
     }
     const schoolPhotos = [
-      "https://images.unsplash.com/photo-1562774053-701939374585?w=1200&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&auto=format&fit=crop&q=80"
+      "",
+      "",
+      ""
     ];
     avatarUrl = "";
     bannerUrl = "";
@@ -2304,14 +2304,14 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     }
     const retailPhotoSets = [
       [
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ]
     ];
     hash = 0;
@@ -2346,14 +2346,14 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     }
     const legalPhotoSets = [
       [
-        "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ]
     ];
     hash = 0;
@@ -2410,44 +2410,44 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
     // High quality deterministic fallback photo selection for any other business
     const generalPhotoSets = [
       [
-        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1497215842964-222b430dc094?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ],
       [
-        "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&auto=format&fit=crop&q=80"
+        "",
+        "",
+        ""
       ]
     ];
     hash = 0;
@@ -4893,9 +4893,9 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
         avatarUrl: "/icon.png",
         logoUrl: "/icon.png",
-        bannerUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-        ogImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
-        photos: ["https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80"],
+        bannerUrl: "",
+        ogImage: "",
+        photos: [""],
         openingHours: "Available 24/7",
         isOpen: true,
         phone: "",
@@ -4926,7 +4926,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
       // 2. Ensure Legal 500 place exists with canonical ID 'legal500.com' and rich metadata
       const legal500Logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://legal500.com&size=256`;
-      const legal500Banner = `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80`;
+      const legal500Banner = "";
       const legal500Doc = {
         id: "legal500.com",
         name: "The Legal 500",
@@ -4975,7 +4975,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
       // 3. Ensure Digital Park place exists with canonical ID 'digitalpark.ae'
       const digitalParkLogo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://digitalpark.ae&size=256`;
-      const digitalParkBanner = `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80`;
+      const digitalParkBanner = "";
       const digitalParkDoc = {
         id: "digitalpark.ae",
         name: "Digital Park",
@@ -5142,7 +5142,7 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
               parsedData.placeName = "Yoouz";
               parsedData.placeWebsite = "https://www.yoouz.com";
               parsedData.placeLogoUrl = "/icon.png";
-              parsedData.placeBannerUrl = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80";
+              parsedData.placeBannerUrl = "";
               updated = true;
             }
           }
@@ -9899,7 +9899,7 @@ Respond ONLY with a JSON object:
         process.env.GOOGLE_PLACES_API_KEY;
 
       if (!photoName || !gmpKey || gmpKey.startsWith("MY_") || gmpKey === "YOUR_API_KEY") {
-        return res.redirect("https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&auto=format&fit=crop&q=80");
+        return res.redirect("");
       }
 
       const maxHeight = req.query.maxHeightPx || "800";
@@ -9908,7 +9908,7 @@ Respond ONLY with a JSON object:
 
       const response = await fetch(photoUrl);
       if (!response.ok) {
-        return res.redirect("https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&auto=format&fit=crop&q=80");
+        return res.redirect("");
       }
 
       const contentType = response.headers.get("content-type") || "image/jpeg";
@@ -9917,7 +9917,7 @@ Respond ONLY with a JSON object:
       const arrayBuffer = await response.arrayBuffer();
       res.send(Buffer.from(arrayBuffer));
     } catch (err) {
-      res.redirect("https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&auto=format&fit=crop&q=80");
+      res.redirect("");
     }
   });
 
@@ -10319,7 +10319,7 @@ Respond ONLY with a JSON object:
             rating: 5.0,
             totalReviews: 1,
             avatarUrl: faviconUrl,
-            bannerUrl: ogImage || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&auto=format&fit=crop&q=80",
+            bannerUrl: ogImage || "",
             photos: ogImage ? [ogImage] : [],
             openingHours: "24/7 Website",
             isOpen: true,
