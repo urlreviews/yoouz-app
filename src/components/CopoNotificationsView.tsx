@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { extractCleanDomain } from "../utils/placeUtils";
 import {
@@ -16,7 +17,8 @@ import {
   Star,
   ChevronLeft,
   Bookmark,
-  Settings
+  Settings,
+  Trash2
 } from "lucide-react";
 import { CopoNotification, UserProfile, VideoReview } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
@@ -103,8 +105,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   };
 
   // Helper to dismiss a notification
-  const handleDismiss = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDismiss = (id: string, e?: React.SyntheticEvent) => {
+    if (e) e.stopPropagation();
     if (onDeleteNotification) onDeleteNotification(id);
     if (onUpdateNotifications) {
       const updated = notifications.filter((n) => n.id !== id);
@@ -406,6 +408,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         {/* Notification Feed Card List */}
         {filteredNotifications.length > 0 ? (
           <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
+            <AnimatePresence initial={false}>
             {filteredNotifications.map((notif) => {
               // Custom badge styles
               const badgeStyles = {
@@ -442,33 +445,56 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               const details = parseNotificationDetails(notif.text, notif);
 
               return (
-                <div
+                <motion.div
                   key={`notif-${notif.id}`}
-                  onClick={() => {
-                    handleMarkAsRead(notif.id);
-                    if (notif.type === "message" && onNavigateToMessages) {
-                      onNavigateToMessages();
-                    } else if (notif.type === "follow" && notif.user?.name && onOpenCreator) {
-                      const isYoouzTeam =
-                        (notif.user.name || "").toLowerCase().includes("yoouz") ||
-                        (notif.user.email || "").toLowerCase().includes("yoouz") ||
-                        (notif.user.email || "").toLowerCase().includes("admin");
-                      if (!isYoouzTeam) {
-                        onOpenCreator({
-                          name: notif.user.name,
-                          avatar: notif.user.avatar,
-                          handle: notif.user.name.toLowerCase().replace(/\s+/g, ""),
-                          isFollowed: false
-                        });
-                      }
-                    } else if (notif.videoId) {
-                      onSelectNotificationVideo(notif.videoId);
-                    }
-                  }}
-                  className={`group relative p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 hover:bg-zinc-800/60 active:bg-zinc-800 cursor-pointer transition-colors ${
-                    !notif.isRead ? "bg-zinc-800/30" : ""
-                  }`}
+                  initial={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
+                  className="relative overflow-hidden bg-rose-600 group"
                 >
+                  {/* Swipe-to-delete Red Backdrop */}
+                  <div 
+                    onClick={(e) => handleDismiss(notif.id, e)}
+                    className="absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </div>
+
+                  {/* Drag Front Card */}
+                  <motion.div
+                    drag="x"
+                    dragConstraints={{ left: -90, right: 0 }}
+                    dragElastic={0.1}
+                    onDragEnd={(_, info) => {
+                      if (info.offset.x < -60 || info.velocity.x < -250) {
+                        handleDismiss(notif.id);
+                      }
+                    }}
+                    onClick={() => {
+                      handleMarkAsRead(notif.id);
+                      if (notif.type === "message" && onNavigateToMessages) {
+                        onNavigateToMessages();
+                      } else if (notif.type === "follow" && notif.user?.name && onOpenCreator) {
+                        const isYoouzTeam =
+                          (notif.user.name || "").toLowerCase().includes("yoouz") ||
+                          (notif.user.email || "").toLowerCase().includes("yoouz") ||
+                          (notif.user.email || "").toLowerCase().includes("admin");
+                        if (!isYoouzTeam) {
+                          onOpenCreator({
+                            name: notif.user.name,
+                            avatar: notif.user.avatar,
+                            handle: notif.user.name.toLowerCase().replace(/\s+/g, ""),
+                            isFollowed: false
+                          });
+                        }
+                      } else if (notif.videoId) {
+                        onSelectNotificationVideo(notif.videoId);
+                      }
+                    }}
+                    className={`relative z-10 p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800 cursor-pointer transition-colors ${
+                      !notif.isRead ? "bg-zinc-900" : "bg-zinc-950/80"
+                    }`}
+                  >
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                     {/* Avatar with Badge Overlay - Tapping Avatar opens User Profile */}
                     <div 
@@ -582,7 +608,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Right Thumbnail & Dismiss */}
+                  {/* Right Thumbnail & Desktop Quick Delete */}
                   <div className="flex items-center gap-2 shrink-0 select-none">
                     {resolvedThumbnail ? (
                       <div 
@@ -618,18 +644,20 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                       </div>
                     ) : null}
 
-                    {/* Quick Dismiss Button */}
+                    {/* Desktop Hover Delete Action Button (Hidden on Mobile for Clean Swipe Gesture) */}
                     <button
                       onClick={(e) => handleDismiss(notif.id, e)}
-                      className="p-1 sm:p-1.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 hover:text-white text-zinc-400 border border-zinc-700/60 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 cursor-pointer active:scale-90"
+                      className="hidden sm:flex p-1.5 rounded-full bg-zinc-800/80 hover:bg-rose-600 hover:text-white text-zinc-400 border border-zinc-700/60 transition-all opacity-0 group-hover:opacity-100 cursor-pointer active:scale-90 items-center justify-center"
                       title="Delete notification"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                </div>
+                </motion.div>
+                </motion.div>
               );
             })}
+            </AnimatePresence>
           </div>
         ) : (
           /* Empty State */
