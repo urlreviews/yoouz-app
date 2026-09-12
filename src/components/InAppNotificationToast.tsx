@@ -66,32 +66,32 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
 
   // Determine badge styling based on actionType
   const actionType = toast.actionType || (toast.type === "message" ? "message" : undefined);
-  let badgeBg = "bg-amber-400";
-  let progressBg = "bg-amber-400";
+  let badgeBg = "bg-white text-zinc-950";
+  let progressBg = "bg-white";
   let ActionIcon = Bell;
 
   if (actionType === "message") {
-    badgeBg = "bg-emerald-400";
+    badgeBg = "bg-emerald-400 text-zinc-950";
     progressBg = "bg-emerald-400";
     ActionIcon = Mail;
   } else if (actionType === "like") {
-    badgeBg = "bg-rose-500";
-    progressBg = "bg-rose-500";
+    badgeBg = "bg-white text-zinc-950";
+    progressBg = "bg-white";
     ActionIcon = Heart;
   } else if (actionType === "comment") {
-    badgeBg = "bg-sky-400";
+    badgeBg = "bg-sky-400 text-zinc-950";
     progressBg = "bg-sky-400";
     ActionIcon = MessageSquare;
   } else if (actionType === "follow") {
-    badgeBg = "bg-violet-400";
+    badgeBg = "bg-violet-400 text-zinc-950";
     progressBg = "bg-violet-400";
     ActionIcon = UserPlus;
   } else if (actionType === "bookmark") {
-    badgeBg = "bg-amber-400";
+    badgeBg = "bg-amber-400 text-zinc-950";
     progressBg = "bg-amber-400";
     ActionIcon = Bookmark;
   } else if (actionType === "repost") {
-    badgeBg = "bg-blue-400";
+    badgeBg = "bg-blue-400 text-zinc-950";
     progressBg = "bg-blue-400";
     ActionIcon = Repeat2;
   }
