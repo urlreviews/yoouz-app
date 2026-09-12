@@ -43,7 +43,7 @@ export interface ReviewComment {
   text: string;
   createdAt: string;
   createdAtMs?: number;
-  likesCount: number;
+  likesCount?: number;
   isLiked?: boolean;
   isCreator?: boolean;
   isOwner?: boolean;
@@ -114,15 +114,15 @@ export interface VideoReview {
   createdAtMs?: number;
   placeId: string;
   placeName: string;
-  placeCategory: string;
-  placeAddress: string;
-  placeCity: string;
-  placeRating: number;
+  placeCategory?: string;
+  placeAddress?: string;
+  placeCity?: string;
+  placeRating?: number;
   placeWebsite?: string;
   placeLogoUrl?: string;
   placeBannerUrl?: string;
   placeDescription?: string;
-  author: {
+  author?: {
     name: string;
     handle?: string;
     email?: string;
@@ -143,29 +143,29 @@ export interface VideoReview {
     followersCount?: number;
   };
   rating: number; // 1-5 stars
-  durationSeconds: number;
+  durationSeconds?: number;
   videoUrl: string;
   bunnyVideoId?: string;
   localVideoUrl?: string;
   fallbackVideoUrls?: string[];
   videoData?: string;
   thumbnailUrl: string;
-  caption: string;
+  caption?: string;
   dishOrItem?: string;
-  likes: number;
+  likes?: number;
   likesCount?: number;
   shares?: number;
-  isLiked: boolean;
-  commentsCount: number;
-  comments: ReviewComment[];
+  isLiked?: boolean;
+  commentsCount?: number;
+  comments?: ReviewComment[];
   bookmarksCount?: number;
   bookmarks?: number;
-  isBookmarked: boolean;
+  isBookmarked?: boolean;
   repostsCount?: number;
   isReposted?: boolean;
   views?: number;
   viewsCount?: number;
-  sharesCount: number;
+  sharesCount?: number;
   recordedAt?: string; // e.g. "a week ago", "3 days ago"
   feedCategory?: "discover" | "following" | "clubs";
   clubName?: string;
@@ -179,6 +179,13 @@ export interface VideoReview {
   isPinned?: boolean;
   isHiddenFromWidget?: boolean;
   isLocalUpload?: boolean;
+  bannerUrl?: string;
+  lastViewedAt?: any;
+  updatedAt?: any;
+  authorName?: string;
+  authorAvatar?: string;
+  duration?: number;
+  ogImage?: string;
 }
 
 export type VideoAuthor = VideoReview["author"];

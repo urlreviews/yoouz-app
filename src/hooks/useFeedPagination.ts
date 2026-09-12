@@ -113,8 +113,29 @@ export function useFeedPagination() {
     let deletedIds: string[] = [];
     try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
 
+    const hardDeleted = [
+      "rev-1787774080951-vuu2k",
+      "rev-1788295000000-hertz",
+      "rev-1788294000000-avis"
+    ];
+    hardDeleted.forEach(id => {
+      if (!deletedIds.includes(id)) deletedIds.push(id);
+    });
+
+    const isPurgedItem = (v: any) => {
+      if (!v || !v.id) return true;
+      const id = String(v.id);
+      if (deletedIds.includes(id)) return true;
+      if (v.placeId === "yoouz.com" || v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
+      if (v.placeName === "Yoouz" || v.placeName === "Hertz" || v.placeName === "Car Rentals from Avis") return true;
+      return false;
+    };
+
     try {
       // Purge legacy caches to eliminate corrupted counts and stale sort
+      localStorage.removeItem("yoouz_cached_videos_v25");
+      localStorage.removeItem("yoouz_cached_videos_v24");
+      localStorage.removeItem("yoouz_cached_videos_v23");
       localStorage.removeItem("yoouz_cached_videos_v22");
       localStorage.removeItem("yoouz_cached_videos_v21");
       localStorage.removeItem("yoouz_cached_videos_v20");
@@ -136,16 +157,16 @@ export function useFeedPagination() {
         if (localPubStr) {
           const parsedLp = JSON.parse(localPubStr);
           if (Array.isArray(parsedLp)) {
-            localPublished = parsedLp.filter((v: any) => v && v.id && !deletedIds.includes(String(v.id))).map(normalizeReview);
+            localPublished = parsedLp.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
           }
         }
       } catch (e) {}
 
-      const cached = localStorage.getItem("yoouz_cached_videos_v25");
+      const cached = localStorage.getItem("yoouz_cached_videos_v26");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const filtered = parsed.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
+          const filtered = parsed.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
           if (filtered.length > 0) {
             const combinedMap = new Map<string, VideoReview>();
             localPublished.forEach((v) => combinedMap.set(v.id, v));
@@ -158,10 +179,11 @@ export function useFeedPagination() {
           }
         }
       }
+
       if (localPublished.length > 0) {
         const combinedMap = new Map<string, VideoReview>();
         localPublished.forEach((v) => combinedMap.set(v.id, v));
-        INITIAL_SEED_VIDEOS.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview).forEach((v) => {
+        INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview).forEach((v) => {
           if (!combinedMap.has(v.id)) combinedMap.set(v.id, v);
         });
         const result = Array.from(combinedMap.values());
@@ -170,7 +192,7 @@ export function useFeedPagination() {
       }
     } catch (e) {}
     // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
-    const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !deletedIds.includes(v.id)).map(normalizeReview);
+    const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
     return seeds;
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -203,25 +225,40 @@ export function useFeedPagination() {
         const res = await fetch(`/api/videos/feed?_t=${Date.now()}`, { cache: "no-store" });
         if (res.ok && active) {
           const data = await res.json();
+          const hardBannedIds = [
+            "rev-1787774080951-vuu2k",
+            "rev-1788295000000-hertz",
+            "rev-1788294000000-avis"
+          ];
           const serverDeletedIds: string[] = Array.isArray(data?.deletedIds) ? data.deletedIds : [];
-          const allDeletedSet = new Set([...deletedIds, ...serverDeletedIds]);
+          const allDeletedSet = new Set([...deletedIds, ...serverDeletedIds, ...hardBannedIds]);
 
-          if (serverDeletedIds.length > 0) {
+          const isPurgedVideo = (v: any) => {
+            if (!v || !v.id) return true;
+            const id = String(v.id);
+            if (allDeletedSet.has(id)) return true;
+            if (v.placeId === "yoouz.com" || v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
+            if (v.placeName === "Yoouz" || v.placeName === "Hertz" || v.placeName === "Car Rentals from Avis") return true;
+            return false;
+          };
+
+          if (serverDeletedIds.length > 0 || hardBannedIds.length > 0) {
             try {
               localStorage.setItem("copo_deleted_videos", JSON.stringify(Array.from(allDeletedSet)));
-              const cached = localStorage.getItem("yoouz_cached_videos_v25");
+              localStorage.removeItem("yoouz_cached_videos_v25");
+              const cached = localStorage.getItem("yoouz_cached_videos_v26");
               if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed)) {
-                  const filtered = parsed.filter((v: any) => v && !allDeletedSet.has(String(v.id)));
-                  localStorage.setItem("yoouz_cached_videos_v25", JSON.stringify(filtered));
+                  const filtered = parsed.filter((v: any) => !isPurgedVideo(v));
+                  localStorage.setItem("yoouz_cached_videos_v26", JSON.stringify(filtered));
                 }
               }
               const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
               if (localPubStr) {
                 const parsedLp = JSON.parse(localPubStr);
                 if (Array.isArray(parsedLp)) {
-                  const filteredLp = parsedLp.filter((v: any) => v && !allDeletedSet.has(String(v.id)));
+                  const filteredLp = parsedLp.filter((v: any) => !isPurgedVideo(v));
                   localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(filteredLp));
                 }
               }
@@ -230,7 +267,7 @@ export function useFeedPagination() {
 
           if (data && Array.isArray(data.videos)) {
             const valid = data.videos
-              .filter((v: any) => v && v.id && !allDeletedSet.has(String(v.id)))
+              .filter((v: any) => !isPurgedVideo(v))
               .map(normalizeReview);
             
             setVideos((prev) => {
@@ -317,7 +354,10 @@ export function useFeedPagination() {
               merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
               
               // Persist fresh feed to cache
-              try { localStorage.setItem("yoouz_cached_videos_v25", JSON.stringify(merged.slice(0, 50))); } catch(e){}
+              try { 
+                localStorage.removeItem("yoouz_cached_videos_v25");
+                localStorage.setItem("yoouz_cached_videos_v26", JSON.stringify(merged.slice(0, 50))); 
+              } catch(e){}
               
               return merged;
             });
