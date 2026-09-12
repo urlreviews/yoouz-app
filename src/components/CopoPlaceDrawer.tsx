@@ -565,7 +565,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className="absolute inset-0 w-full h-full bg-zinc-900 md:bg-zinc-900 relative overflow-hidden flex items-center justify-center group animate-in fade-in duration-700">
+          <div className="absolute inset-0 w-full h-full bg-zinc-900 md:bg-zinc-900 overflow-hidden flex items-center justify-center group">
             {/* Blurred Background to fill the space without zooming the main image heavily */}
             <img
               src={allPhotos[0]}

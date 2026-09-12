@@ -5508,7 +5508,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         // Overlay live place metadata onto the video review to prevent banner popping on the client
         if (r.placeId && placesDataMap.has(String(r.placeId))) {
           const livePlace = placesDataMap.get(String(r.placeId));
-          if (livePlace.bannerUrl && !livePlace.bannerUrl.startsWith("data:") && !livePlace.bannerUrl.startsWith("blob:")) {
+          // Only overwrite if livePlace has a REAL banner, and r.placeBannerUrl isn't already a better one
+          if (livePlace.bannerUrl && 
+              !livePlace.bannerUrl.startsWith("data:") && 
+              !livePlace.bannerUrl.startsWith("blob:") &&
+              !livePlace.bannerUrl.includes("unsplash.com") &&
+              !livePlace.bannerUrl.includes("placeholder") &&
+              !livePlace.bannerUrl.includes("mock")
+          ) {
             r.placeBannerUrl = livePlace.bannerUrl;
             r.bannerUrl = livePlace.bannerUrl;
           }
