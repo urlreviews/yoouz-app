@@ -3237,19 +3237,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
 
                         {/* Rendered Widget Simulation Container (Desktop or Physical Smartphone Frame) */}
-                        <div className={embedDeviceMode === 'mobile' ? "max-w-[340px] mx-auto bg-zinc-950 border-[8px] border-zinc-800 rounded-[44px] px-3.5 py-4 shadow-2xl relative my-2 overflow-hidden transition-all ring-1 ring-zinc-700/50" : "widget-simulation-container p-6 rounded-3xl border border-zinc-800 bg-zinc-900 text-white shadow-xl transition-all"}>
+                        <div className={embedDeviceMode === 'mobile' ? "max-w-[340px] mx-auto bg-white border-[8px] border-zinc-950 rounded-[44px] px-3.5 py-4 shadow-2xl relative my-2 overflow-hidden transition-all" : "widget-simulation-container p-8 rounded-3xl border border-zinc-800 bg-white shadow-xl transition-all"}>
                           {embedDeviceMode === 'mobile' && (
-                            <div className="mb-3 px-2 flex items-center justify-between text-[11px] font-semibold text-zinc-400 select-none">
+                            <div className="mb-3 px-2 flex items-center justify-between text-[11px] font-semibold text-zinc-800 select-none">
                               <span>9:41</span>
                               {/* Dynamic Island Notch */}
-                              <div className="w-24 h-5 bg-zinc-900 mx-auto rounded-full flex items-center justify-center gap-1.5 px-2 border border-zinc-800">
-                                <div className="w-2.5 h-2.5 rounded-full bg-zinc-950"></div>
-                                <div className="w-2 h-2 rounded-full bg-zinc-900 animate-pulse"></div>
+                              <div className="w-24 h-5 bg-black mx-auto rounded-full flex items-center justify-center gap-1.5 px-2">
+                                <div className="w-2.5 h-2.5 rounded-full bg-zinc-900"></div>
+                                <div className="w-2 h-2 rounded-full bg-zinc-800 animate-pulse"></div>
                               </div>
-                              <div className="flex items-center gap-1 text-[10px]">
+                              <div className="flex items-center gap-1 text-[10px] text-zinc-900">
                                 <span>5G</span>
-                                <div className="w-4 h-2.5 border border-zinc-400 rounded-xs p-0.5 flex items-center">
-                                  <div className="w-full h-full bg-zinc-400 rounded-2xs"></div>
+                                <div className="w-4 h-2.5 border border-zinc-900 rounded-xs p-0.5 flex items-center">
+                                  <div className="w-full h-full bg-zinc-900 rounded-2xs"></div>
                                 </div>
                               </div>
                             </div>
@@ -3257,7 +3257,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                           {/* Super Luxury Yoouz Brand Trust Header */}
                           {embedShowTrustHeader && (
-                            <div className={`p-4 rounded-2xl mb-4 border border-zinc-700/80 bg-zinc-800/90 text-white flex flex-col ${embedDeviceMode === 'mobile' ? 'gap-3' : 'sm:flex-row sm:items-center justify-between'} transition-all`}>
+                            <div className={`p-4 rounded-2xl mb-4 border border-zinc-100 bg-zinc-50 text-zinc-900 flex flex-col ${embedDeviceMode === 'mobile' ? 'gap-3' : 'sm:flex-row sm:items-center justify-between'} transition-all`}>
                               <div className="flex items-center gap-3">
                                 {/* Official Yoouz Brand Icon Badge */}
                                 <div 
@@ -3268,12 +3268,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                                 <div>
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="font-extrabold text-sm tracking-tight truncate max-w-[180px]">{currentPlace.name}</span>
+                                    <span className="font-extrabold text-sm tracking-tight truncate max-w-[180px] text-zinc-950">{currentPlace.name}</span>
                                     {embedShowVerifiedBadge && (
                                       <span 
-                                        className="inline-flex items-center gap-0.5 text-[10px] font-bold bg-zinc-900 text-white px-1.5 py-0.5 rounded-full border border-zinc-700"
+                                        className="inline-flex items-center text-[10px] bg-zinc-950 text-white p-0.5 rounded-full"
+                                        title="Verified"
                                       >
-                                        <BadgeCheck className="w-3 h-3 fill-current text-white" /> Verified
+                                        <BadgeCheck className="w-3 h-3 fill-current text-white" />
                                       </span>
                                     )}
                                   </div>
@@ -3281,7 +3282,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   <div className="flex items-center gap-1.5 mt-0.5 flex-wrap text-[11px]">
                                     {embedShowStars && (
                                       <div className="flex items-center gap-1">
-                                        <span className="font-black text-white">4.9</span>
+                                        <span className="font-black text-zinc-950">4.9</span>
                                         <div className="flex text-amber-400 items-center gap-0.5">
                                           {Array.from({ length: 5 }).map((_, i) => (
                                             <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
@@ -3289,8 +3290,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                         </div>
                                       </div>
                                     )}
-                                    <span className="text-zinc-400">•</span>
-                                    <span className="text-zinc-300 text-[10px]">
+                                    <span className="text-zinc-500">•</span>
+                                    <span className="text-zinc-700 text-[10px]">
                                       {placeVideos.length} Reviews
                                     </span>
                                   </div>
@@ -3302,10 +3303,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 href={`/#/record_review?placeId=${selectedPlaceId}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-3 py-2 rounded-xl text-zinc-950 bg-white hover:bg-zinc-200 text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                                className="px-2 py-1.5 rounded-lg text-zinc-950 bg-white hover:bg-zinc-100 text-[10px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 shrink-0 cursor-pointer border border-zinc-200"
                               >
-                                <Video className="w-3.5 h-3.5" />
-                                <span>Add Review</span>
+                                <Video className="w-3 h-3" />
+                                <span>Review</span>
                               </a>
                             </div>
                           )}
