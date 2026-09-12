@@ -80,7 +80,8 @@ import {
   UserCheck,
   UserMinus,
   Package,
-  Truck
+  Truck,
+  Upload
 } from 'lucide-react';
 import { CopoBusinessPricingModal } from './CopoBusinessPricingModal';
 import { CopoCreemCheckoutModal } from './CopoCreemCheckoutModal';
@@ -796,9 +797,28 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profileWebsite, setProfileWebsite] = useState((currentPlace as any).website || '');
   const [profileHours, setProfileHours] = useState((currentPlace as any).hours || 'Mon-Fri: 9:00 AM - 6:00 PM');
   const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || `Official verified business profile on Yoouz.`);
-  const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || '');
+  const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? 'https://www.yoouz.com/icon-512.png' : ''));
   const [profileBannerUrl, setProfileBannerUrl] = useState((currentPlace as any).bannerUrl || '');
   const [isProfileSaved, setIsProfileSaved] = useState(false);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const [showLogoUrlInput, setShowLogoUrlInput] = useState(false);
+
+  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Image size should be less than 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setProfileLogoUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Sync profile fields whenever currentPlace changes (e.g. on business login)
   useEffect(() => {
@@ -809,6 +829,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       setProfileWebsite((currentPlace as any).website || '');
       setProfileHours((currentPlace as any).hours || 'Mon-Fri: 9:00 AM - 6:00 PM');
       setProfileDesc((currentPlace as any).description || `Official verified business profile on Yoouz.`);
+      if (currentPlace.logoUrl) {
+        setProfileLogoUrl(currentPlace.logoUrl);
+      } else if (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz')) {
+        setProfileLogoUrl('https://www.yoouz.com/icon-512.png');
+      }
       if (currentPlace.city) setCity(currentPlace.city);
     }
   }, [currentPlace]);
@@ -3299,30 +3324,30 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             {/* TAB 6: BUSINESS PROFILE & INFO */}
             
             {activeTab === 'profile' && (
-              <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200 pb-16 max-w-5xl mx-auto">
+              <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200 pb-16 max-w-2xl mx-auto">
                 
-                {/* 10/10 Native App-Style Header */}
+                {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-black text-white tracking-tight">Business Profile</h2>
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Business Profile</h2>
                     <p className="text-sm text-zinc-400 mt-1">The essential information guests and reviewers see on Yoouz.</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {isProfileSaved && (
-                      <span className="text-[13px] font-bold text-emerald-400 flex items-center gap-1.5 animate-in zoom-in-95">
-                        <CheckCircle2 className="w-4 h-4" /> Saved
+                      <span className="text-[13px] font-bold text-zinc-300 flex items-center gap-1.5 animate-in zoom-in-95">
+                        <CheckCircle2 className="w-4 h-4 text-zinc-300" /> Saved
                       </span>
                     )}
                     <button
                       type="button"
                       id="btn-save-profile-header"
                       onClick={handleSaveProfile}
-                      className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-black rounded-full text-[13px] font-bold shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                      className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 rounded-full text-[13px] font-bold shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>
-                          <Check className="w-4 h-4 text-emerald-600" />
-                          <span>Changes Saved</span>
+                          <Check className="w-4 h-4 text-zinc-300" />
+                          <span>Saved</span>
                         </>
                       ) : (
                         <span>Save Profile</span>
@@ -3331,19 +3356,31 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   </div>
                 </div>
 
-                {/* HERO: Business Identity Card */}
-                <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 p-5 sm:p-6 shadow-xl relative overflow-hidden backdrop-blur-xl">
-                  <div className="absolute top-0 right-1/4 w-64 h-28 bg-white/[0.03] blur-3xl pointer-events-none rounded-full" />
+                {/* Main Unified Settings Card */}
+                <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/80 shadow-2xl backdrop-blur-xl">
                   
-                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6 relative z-10">
-                    {/* Venue Avatar */}
-                    <div className="relative group shrink-0">
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-3xl font-black text-white overflow-hidden shadow-xl ring-1 ring-white/10">
+                  {/* Photo & Identity Section */}
+                  <div className="p-5 sm:p-6 bg-zinc-900/60">
+                    <input 
+                      ref={logoFileInputRef}
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleLogoFileUpload}
+                    />
+
+                    <div className="flex items-center gap-4 sm:gap-5">
+                      {/* Avatar preview with upload overlay */}
+                      <div 
+                        onClick={() => logoFileInputRef.current?.click()}
+                        className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-2xl font-black text-white overflow-hidden shadow-lg ring-1 ring-white/10 shrink-0 cursor-pointer relative group"
+                        title="Click to upload venue photo"
+                      >
                         {profileLogoUrl ? (
                           <img 
                             src={profileLogoUrl} 
                             alt={profileName || "Venue Logo"}
-                            className="w-full h-full object-cover" 
+                            className="w-full h-full object-cover group-hover:opacity-75 transition-opacity" 
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
                               target.src = 'https://www.yoouz.com/icon-512.png';
@@ -3352,67 +3389,78 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         ) : (
                           (profileName.charAt(0).toUpperCase() || 'B')
                         )}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Camera className="w-5 h-5 text-white" />
+                        </div>
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-zinc-300 shadow-md">
-                        <Camera className="w-3.5 h-3.5" />
+
+                      {/* Name & Actions */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-base sm:text-lg font-black text-white truncate tracking-tight">
+                            {profileName || 'Your Venue Name'}
+                          </h3>
+                          {/* Monochrome Verified Badge (No Green) */}
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-semibold">
+                            <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
+                            <span>Verified</span>
+                          </div>
+                        </div>
+
+                        {/* Button Actions in Dark Mode (No White Buttons) */}
+                        <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                          <button
+                            type="button"
+                            id="btn-upload-logo"
+                            onClick={() => logoFileInputRef.current?.click()}
+                            className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-[12px] font-semibold border border-zinc-700 transition-all cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload Photo</span>
+                          </button>
+                          <button
+                            type="button"
+                            id="btn-toggle-logo-url"
+                            onClick={() => setShowLogoUrlInput(!showLogoUrlInput)}
+                            className="px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white text-[12px] font-medium transition-colors cursor-pointer hover:bg-zinc-800/60"
+                          >
+                            {showLogoUrlInput ? 'Hide URL' : 'Paste Image URL'}
+                          </button>
+                          {profileLogoUrl !== 'https://www.yoouz.com/icon-512.png' && (
+                            <button
+                              type="button"
+                              id="btn-use-yoouz-icon"
+                              onClick={() => setProfileLogoUrl('https://www.yoouz.com/icon-512.png')}
+                              className="px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white text-[12px] font-medium transition-colors cursor-pointer hover:bg-zinc-800/60"
+                            >
+                              Use Yoouz Icon
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Quick Info & Logo URL Editor */}
-                    <div className="flex-1 min-w-0 text-center sm:text-left space-y-2">
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
-                          {profileName || 'Your Venue Name'}
-                        </h3>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-bold">
-                          <BadgeCheck className="w-3.5 h-3.5" /> Verified
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-center sm:justify-start gap-2">
-                        <span className="px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 text-[11px] font-semibold border border-zinc-700/60">
-                          {businessCategory || 'Dining & Artisanal Food'}
-                        </span>
-                        {profileAddress && (
-                          <span className="text-[12px] text-zinc-400 truncate max-w-xs hidden sm:inline-block">
-                            • {profileAddress}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Clean Logo URL Field */}
-                      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <div className="relative flex-1">
-                          <input
-                            type="url"
-                            id="input-profile-logo-url"
-                            value={profileLogoUrl}
-                            onChange={(e) => setProfileLogoUrl(e.target.value)}
-                            placeholder="Paste venue logo image URL (e.g. https://...)"
-                            className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-[12px] font-medium text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-colors"
-                          />
-                        </div>
+                    {/* Expandable Image URL input */}
+                    {showLogoUrlInput && (
+                      <div className="mt-4 pt-4 border-t border-zinc-800/80 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                        <input
+                          type="url"
+                          id="input-profile-logo-url"
+                          value={profileLogoUrl}
+                          onChange={(e) => setProfileLogoUrl(e.target.value)}
+                          placeholder="https://example.com/logo.png"
+                          className="flex-1 bg-zinc-950/90 border border-zinc-800 rounded-xl px-3.5 py-2 text-[12px] text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+                        />
                         <button
                           type="button"
-                          id="btn-profile-use-yoouz-icon"
-                          onClick={() => setProfileLogoUrl('https://www.yoouz.com/icon-512.png')}
-                          className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[11px] font-bold border border-zinc-700 transition-all shrink-0 active:scale-95 cursor-pointer whitespace-nowrap"
+                          onClick={() => setShowLogoUrlInput(false)}
+                          className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-[12px] font-semibold border border-zinc-700 cursor-pointer"
                         >
-                          Use Yoouz Icon
+                          Done
                         </button>
                       </div>
-                    </div>
+                    )}
                   </div>
-                </div>
-
-                {/* 2-Column Responsive Layout: Essential Form (7 cols) + Live Guest Card (5 cols) */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-                  
-                  {/* Left Column: Essential Form Fields */}
-                  <div className="lg:col-span-7 space-y-6">
-                    
-                    {/* The Primary Settings Group */}
-                    <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/80 shadow-xl">
                       
                       {/* Venue Name */}
                       <div className="p-4 sm:p-5 hover:bg-zinc-850/40 transition-colors group focus-within:bg-zinc-850/40">
@@ -3530,127 +3578,25 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     </div>
 
-                    {/* Bottom Save Action */}
+                    {/* Bottom Save Action Button in Dark Mode (No White Button) */}
                     <button
                       type="button"
                       id="btn-save-profile-bottom"
                       onClick={handleSaveProfile}
-                      className="w-full py-3.5 px-6 rounded-2xl bg-white hover:bg-zinc-200 text-black font-bold text-[13px] transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3.5 px-6 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-[13px] transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>
-                          <Check className="w-4 h-4 text-emerald-600" />
+                          <Check className="w-4 h-4 text-zinc-300" />
                           <span>Profile Updated Successfully</span>
                         </>
                       ) : (
                         <span>Save Profile Changes</span>
                       )}
                     </button>
+
                   </div>
-
-                  {/* Right Column: Live In-App Guest Card (Sticky) */}
-                  <div className="lg:col-span-5 relative">
-                    <div className="sticky top-24 space-y-4">
-                      
-                      <div className="bg-zinc-900/90 rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden relative backdrop-blur-xl">
-                        {/* Header */}
-                        <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/80">
-                          <div className="flex items-center gap-2">
-                            <Eye className="w-4 h-4 text-zinc-300" />
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-300">Live Guest View</span>
-                          </div>
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live on Yoouz
-                          </span>
-                        </div>
-
-                        {/* Guest Card Mockup */}
-                        <div className="p-5 sm:p-6 bg-zinc-950 space-y-4">
-                          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4 sm:p-5 shadow-lg relative overflow-hidden ring-1 ring-white/[0.04] space-y-4">
-                            
-                            {/* Card Top */}
-                            <div className="flex items-center gap-3.5">
-                              <div className="w-13 h-13 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-xl font-black text-white shrink-0 overflow-hidden shadow-inner">
-                                {profileLogoUrl ? (
-                                  <img 
-                                    src={profileLogoUrl} 
-                                    alt="Venue Logo"
-                                    className="w-full h-full object-cover" 
-                                    onError={(e) => {
-                                      const target = e.currentTarget as HTMLImageElement;
-                                      target.src = 'https://www.yoouz.com/icon-512.png';
-                                    }}
-                                  />
-                                ) : (
-                                  (profileName.charAt(0).toUpperCase() || 'B')
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5">
-                                  <h4 className="font-bold text-white text-base truncate tracking-tight">
-                                    {profileName || 'Your Venue Name'}
-                                  </h4>
-                                  <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                                </div>
-                                <div className="text-[11px] text-zinc-400 font-semibold mt-0.5 uppercase tracking-wider truncate">
-                                  {businessCategory || 'Dining & Artisanal Food'}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Location */}
-                            <div className="bg-zinc-950/90 p-3 rounded-xl border border-zinc-800/80 flex items-start gap-2.5">
-                              <MapPin className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                              <div className="text-[12px] font-medium text-zinc-300 leading-snug break-words">
-                                {profileAddress || 'Address will appear here for guests'}
-                              </div>
-                            </div>
-
-                            {/* Contact Badges */}
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="bg-zinc-950/90 p-2.5 rounded-xl border border-zinc-800/80 text-center truncate">
-                                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Phone</div>
-                                <div className="text-[11.5px] font-semibold text-white truncate">
-                                  {profilePhone || 'Not set'}
-                                </div>
-                              </div>
-                              <div className="bg-zinc-950/90 p-2.5 rounded-xl border border-zinc-800/80 text-center truncate">
-                                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Website</div>
-                                <div className="text-[11.5px] font-semibold text-white truncate">
-                                  {profileWebsite ? (profileWebsite.replace(/^https?:\/\/(www\.)?/, '')) : 'Not set'}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Short Story */}
-                            {profileDesc && (
-                              <div className="bg-zinc-950/90 p-3 rounded-xl border border-zinc-800/80">
-                                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">About</div>
-                                <p className="text-[12px] text-zinc-300 leading-relaxed font-normal line-clamp-3">
-                                  {profileDesc}
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Yoouz 60s Review Guarantee */}
-                            <div className="pt-1 flex items-center justify-between text-[11px] text-zinc-400 border-t border-zinc-800/80">
-                              <span className="flex items-center gap-1.5 font-medium">
-                                <Video className="w-3.5 h-3.5 text-zinc-300" /> 60s Video Reviews
-                              </span>
-                              <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Verified Host</span>
-                            </div>
-
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-            )}
+                )}
 {/* TAB 7: SUBSCRIPTION & CREEM.IO */}
             {activeTab === 'billing' && (
               <div className="space-y-8 animate-in fade-in duration-200 pb-12 max-w-6xl mx-auto">
