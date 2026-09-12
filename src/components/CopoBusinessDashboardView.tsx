@@ -1045,6 +1045,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>([]);
   const [pinNotice, setPinNotice] = useState<string | null>(null);
   const [isCodeCopied, setIsCodeCopied] = useState(false);
+  const [isDirectLinkCopied, setIsDirectLinkCopied] = useState(false);
   const [embedDeviceMode, setEmbedDeviceMode] = useState<'desktop' | 'mobile'>('desktop');
 
   // Top header dropdowns & Command Palette
@@ -1545,38 +1546,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   };
 
   const copyEmbedCode = () => {
-    const pinnedAttr = pinnedVideoIds.length > 0 ? `\n  data-pinned-ids="${pinnedVideoIds.join(',')}"` : '';
-    const hiddenAttr = hiddenVideoIds.length > 0 ? `\n  data-hidden-ids="${hiddenVideoIds.join(',')}"` : '';
-    
-    let snippet = '';
-    if (embedFormat === 'script') {
-      snippet = `<div id="yoouz-widget"
-  data-place-id="${selectedPlaceId}"
-  data-theme="${embedTheme}"
-  data-layout="${embedLayout}"
-  data-accent="${embedAccentColor}"${pinnedAttr}${hiddenAttr}>
-</div>
-<script src="https://cdn.yoouz.com/embed/v2.js" async defer></script>`;
-    } else if (embedFormat === 'iframe') {
-      snippet = `<iframe src="https://yoouz.com/embed/widget?placeId=${selectedPlaceId}&theme=${embedTheme}&layout=${embedLayout}&accent=${encodeURIComponent(embedAccentColor)}"
-  width="100%" height="${embedLayout === 'badge' ? '180' : '540'}" frameborder="0" loading="lazy" allow="autoplay; encrypted-media">
-</iframe>`;
-    } else {
-      snippet = `import { YoouzReviewsWidget } from '@yoouz/react';
-
-export default function ReviewsSection() {
-  return (
-    <YoouzReviewsWidget 
-      placeId="${selectedPlaceId}" 
-      theme="${embedTheme}" 
-      layout="${embedLayout}" 
-      accentColor="${embedAccentColor}" 
-    />
-  );
-}`;
-    }
-
-    navigator.clipboard.writeText(snippet);
+    const iframeSnippet = `<iframe src="https://www.yoouz.com/embed/${selectedPlaceId}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
+    navigator.clipboard.writeText(iframeSnippet);
     setIsCodeCopied(true);
     setTimeout(() => setIsCodeCopied(false), 2500);
   };
@@ -2910,419 +2881,201 @@ export default function ReviewsSection() {
               </div>
             )}
 
-            {/* TAB 3: WEBSITE EMBED WIDGET */}
+            {/* TAB 3: WEBSITE EMBED */}
             {activeTab === 'embed' && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-4 sm:p-6 shadow-xs">
-                  {/* Header Info Banner */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in duration-200">
+                <div className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-4 sm:p-7 shadow-xl space-y-5 sm:space-y-6">
+                  {/* Clean Simple Title Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 border-b border-zinc-800 pb-4 sm:pb-5">
                     <div>
-                      <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                        <span>Official Yoouz Video Reviews Embed Studio</span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold uppercase tracking-wide">
-                          Pro Feature
-                        </span>
+                      <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                        Website Embed
                       </h2>
-                      <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                        Embed authentic, high-converting video reviews directly on your website or reservation page with automatic real-time sync.
+                      <p className="text-xs text-zinc-400 mt-1">
+                        Embed authentic video reviews directly on your website or reservation page.
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-3 py-1.5 rounded-full bg-zinc-800/90 border border-zinc-700/80 text-zinc-300 text-xs font-bold flex items-center gap-1.5">
-                        <Pin className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> {pinnedVideoIds.length}/3 Pinned
+                    {pinnedVideoIds.length > 0 && (
+                      <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] sm:text-xs font-medium flex items-center gap-1.5">
+                        <Pin className="w-3.5 h-3.5 text-white fill-current" /> {pinnedVideoIds.length}/3 Pinned
                       </span>
-                      {hiddenVideoIds.length > 0 && (
-                        <span className="px-3 py-1.5 rounded-full bg-zinc-800/90 border border-zinc-700/80 text-zinc-300 text-xs font-bold flex items-center gap-1.5">
-                          <EyeOff className="w-3.5 h-3.5 text-rose-400" /> {hiddenVideoIds.length} Hidden
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
 
-                  {/* Main Grid: Customization Controls (Left) & Live Preview Simulation (Right) */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left Customizer Studio Controls (5 Cols on LG) */}
-                    <div className="lg:col-span-5 space-y-5 bg-zinc-950/70 p-4 sm:p-5 rounded-2xl border border-zinc-800">
-                      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-                        <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-emerald-400" />
-                          <span>Widget Customizer Studio</span>
-                        </h3>
-                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-800">
-                          Live Sync
-                        </span>
-                      </div>
-
-                      {/* 1. Viewport Device Mode */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-zinc-300 block">Preview Viewport</label>
-                        <div className="grid grid-cols-2 gap-2 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
-                          <button
-                            type="button"
-                            onClick={() => setEmbedDeviceMode('desktop')}
-                            className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                              embedDeviceMode === 'desktop'
-                                ? 'bg-zinc-800 text-white shadow-xs border border-zinc-700'
-                                : 'text-zinc-400 hover:text-white'
-                            }`}
-                          >
-                            <span>🖥️</span>
-                            <span>Desktop View</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEmbedDeviceMode('mobile')}
-                            className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                              embedDeviceMode === 'mobile'
-                                ? 'bg-zinc-800 text-white shadow-xs border border-zinc-700'
-                                : 'text-zinc-400 hover:text-white'
-                            }`}
-                          >
-                            <span>📱</span>
-                            <span>Mobile App</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 2. Theme Selection */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-zinc-300 block">Widget Theme</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { id: 'dark_glass', label: 'Dark Glass', icon: '✨', desc: 'Glassmorphism' },
-                            { id: 'midnight_oled', label: 'Midnight OLED', icon: '🌙', desc: 'Pure Black' },
-                            { id: 'clean_light', label: 'Clean Light', icon: '☀️', desc: 'Light Mode' },
-                            { id: 'minimal', label: 'Minimal', icon: '🔲', desc: 'Outline' },
-                          ].map((t) => (
-                            <button
-                              key={t.id}
-                              type="button"
-                              onClick={() => setEmbedTheme(t.id as any)}
-                              className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                                embedTheme === t.id
-                                  ? 'bg-zinc-800 border-emerald-500/80 text-white shadow-md'
-                                  : 'bg-zinc-900/60 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'
-                              }`}
-                            >
-                              <div className="flex items-center gap-1.5 font-bold text-xs">
-                                <span>{t.icon}</span>
-                                <span>{t.label}</span>
-                              </div>
-                              <span className="text-[10px] text-zinc-500 block mt-0.5">{t.desc}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* 3. Display Layout */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-zinc-300 block">Widget Layout</label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { id: 'grid', label: 'Reel Grid', icon: '📱' },
-                            { id: 'carousel', label: 'Carousel', icon: '🎠' },
-                            { id: 'badge', label: 'Badge', icon: '🏷️' },
-                          ].map((l) => (
-                            <button
-                              key={l.id}
-                              type="button"
-                              onClick={() => setEmbedLayout(l.id as any)}
-                              className={`py-2 px-2 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
-                                embedLayout === l.id
-                                  ? 'bg-zinc-800 border-emerald-500/80 text-white shadow-md'
-                                  : 'bg-zinc-900/60 border-zinc-800/80 text-zinc-400 hover:text-white'
-                              }`}
-                            >
-                              <span>{l.icon}</span>
-                              <span>{l.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* 4. Accent Color Selection */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-zinc-300 block">Accent Highlight Color</label>
-                        <div className="flex items-center gap-3 bg-zinc-900 p-2.5 rounded-xl border border-zinc-800">
-                          {[
-                            { hex: '#10B981', name: 'Emerald' },
-                            { hex: '#F43F5E', name: 'Rose' },
-                            { hex: '#8B5CF6', name: 'Purple' },
-                            { hex: '#F59E0B', name: 'Amber' },
-                            { hex: '#FFFFFF', name: 'White' },
-                          ].map((c) => (
-                            <button
-                              key={c.hex}
-                              type="button"
-                              onClick={() => setEmbedAccentColor(c.hex)}
-                              className={`w-7 h-7 rounded-full border-2 transition-transform cursor-pointer flex items-center justify-center ${
-                                embedAccentColor === c.hex ? 'scale-110 border-white ring-2 ring-emerald-500/50' : 'border-transparent opacity-80 hover:opacity-100 hover:scale-105'
-                              }`}
-                              style={{ backgroundColor: c.hex }}
-                              title={c.name}
-                            >
-                              {embedAccentColor === c.hex && (
-                                <Check className={`w-3.5 h-3.5 ${c.hex === '#FFFFFF' ? 'text-zinc-950' : 'text-white'}`} />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Live Preview Area (7 Cols on LG) */}
-                    <div className="lg:col-span-7 bg-zinc-950 rounded-2xl p-4 sm:p-5 border border-zinc-800 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between gap-3 mb-4 border-b border-zinc-900 pb-3">
-                          <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-emerald-400" />
-                            Live Website Simulation
-                          </span>
-                          <span className="text-[11px] text-zinc-500 font-medium">
-                            {embedDeviceMode === 'mobile' ? 'Smartphone Frame (340px)' : 'Desktop Viewport'}
-                          </span>
-                        </div>
-
-                        {/* Widget Simulation Frame */}
-                        <div className={embedDeviceMode === 'mobile' ? "max-w-[340px] mx-auto bg-zinc-950 border-[8px] border-zinc-800 rounded-[40px] px-3 py-4 shadow-2xl relative my-2 overflow-hidden transition-all ring-1 ring-zinc-800" : "w-full p-4 sm:p-5 rounded-2xl border border-zinc-800 bg-zinc-900/90 text-white shadow-xl transition-all"}>
-                          {embedDeviceMode === 'mobile' && (
-                            <div className="mb-3 px-2 flex items-center justify-between text-[11px] font-semibold text-zinc-400 select-none">
-                              <span>9:41</span>
-                              <div className="w-20 h-4 bg-zinc-900 mx-auto rounded-full flex items-center justify-center gap-1 px-2 border border-zinc-800">
-                                <div className="w-2 h-2 rounded-full bg-zinc-950"></div>
-                              </div>
-                              <div className="flex items-center gap-1 text-[10px]">
-                                <span>5G</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* RENDERED WIDGET CONTAINER BASED ON SELECTED THEME */}
-                          <div
-                            className={`rounded-2xl p-3 sm:p-4 border transition-all ${
-                              embedTheme === 'dark_glass'
-                                ? 'bg-zinc-900/90 backdrop-blur-xl border-zinc-800 text-white shadow-2xl'
-                                : embedTheme === 'midnight_oled'
-                                ? 'bg-black border-zinc-850 text-white shadow-2xl'
-                                : embedTheme === 'clean_light'
-                                ? 'bg-white border-zinc-200 text-zinc-900 shadow-xl'
-                                : 'bg-zinc-900/40 border-dashed border-zinc-700 text-white'
-                            }`}
-                          >
-                            {/* WIDGET HEADER BAR */}
-                            <div
-                              className={`p-3 rounded-xl mb-3.5 border flex flex-row items-center justify-between gap-2.5 ${
-                                embedTheme === 'clean_light'
-                                  ? 'bg-zinc-100/90 border-zinc-200 text-zinc-900'
-                                  : 'bg-zinc-800/80 border-zinc-700/60 text-white backdrop-blur-md'
-                              }`}
-                            >
-                              {/* Left: Real Business Logo + Name + Ratings */}
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                {(profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl || (currentPlace as any)?.photo) ? (
-                                  <img
-                                    src={profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl || (currentPlace as any)?.photo}
-                                    alt={currentPlace.name}
-                                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover border border-zinc-700/80 shadow-md shrink-0"
-                                    referrerPolicy="no-referrer"
-                                    onError={(e) => {
-                                      const target = e.currentTarget as HTMLImageElement;
-                                      target.style.display = 'none';
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-950 border border-zinc-700/80 text-white flex items-center justify-center font-black text-lg shadow-md shrink-0">
-                                    {currentPlace.name ? currentPlace.name.charAt(0).toUpperCase() : 'Y'}
-                                  </div>
-                                )}
-
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`font-bold text-sm tracking-tight truncate ${embedTheme === 'clean_light' ? 'text-zinc-900' : 'text-white'}`}>
-                                      {currentPlace.name}
-                                    </span>
-                                    <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                                  </div>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    <div className="flex items-center gap-0.5 text-amber-400">
-                                      <Star className="w-3.5 h-3.5 fill-current" />
-                                    </div>
-                                    <span className={`text-[11px] font-extrabold ${embedTheme === 'clean_light' ? 'text-zinc-900' : 'text-white'}`}>4.9</span>
-                                    <span className="text-[11px] text-zinc-400">•</span>
-                                    <span className={`text-[11px] font-medium truncate ${embedTheme === 'clean_light' ? 'text-zinc-600' : 'text-zinc-300'}`}>
-                                      {placeVideos.length} Video Reviews
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Right: Write Review CTA Button */}
-                              <a
-                                href={`/#/record_review?placeId=${selectedPlaceId}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all shadow-md flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95 border"
-                                style={{
-                                  backgroundColor: embedTheme === 'clean_light' ? '#09090b' : embedAccentColor,
-                                  color: embedTheme === 'clean_light' || embedAccentColor === '#FFFFFF' ? '#09090b' : '#ffffff',
-                                  borderColor: 'rgba(255,255,255,0.2)'
-                                }}
-                              >
-                                <Video className="w-3.5 h-3.5 fill-current" />
-                                <span>Review</span>
-                              </a>
-                            </div>
-
-                            {/* WIDGET CONTENT BODY */}
-                            {displayableWidgetVideos.length === 0 ? (
-                              <div className="py-10 text-center text-zinc-400 space-y-2">
-                                <AlertCircle className="w-7 h-7 mx-auto text-zinc-500" />
-                                <p className="text-xs font-semibold text-zinc-400">No video reviews pinned or found.</p>
-                              </div>
-                            ) : embedLayout === 'badge' ? (
-                              <div className="py-2 text-center">
-                                <p className="text-xs font-medium text-zinc-400">Compact floating trust badge mode active.</p>
-                              </div>
-                            ) : embedLayout === 'carousel' ? (
-                              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x">
-                                {displayableWidgetVideos.map((v) => {
-                                  const isPinned = pinnedVideoIds.includes(v.id);
-                                  return (
-                                    <div
-                                      key={v.id}
-                                      onClick={() => setActiveVideoModal(v)}
-                                      className="relative rounded-xl overflow-hidden aspect-9/14 w-32 sm:w-36 shrink-0 bg-zinc-800 group shadow-md cursor-pointer hover:scale-[1.02] transition-transform snap-start border border-zinc-700/50"
-                                    >
-                                      <img
-                                        src={v.thumbnailUrl}
-                                        alt={v.dishOrItem || 'Review'}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                        referrerPolicy="no-referrer"
-                                      />
-                                      {isPinned && (
-                                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-white text-zinc-950 text-[9px] font-black shadow-md flex items-center gap-0.5 z-10">
-                                          <Pin className="w-2.5 h-2.5 fill-current text-zinc-950" /> Pinned
-                                        </div>
-                                      )}
-                                      <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-0.5 z-10">
-                                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                        <span>{v.rating || 5}</span>
-                                      </div>
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
-                                        <span className="text-[10px] font-bold leading-tight line-clamp-1">
-                                          {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
-                                        </span>
-                                      </div>
-                                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              /* REEL GRID MODE */
-                              <div className={`grid ${embedDeviceMode === 'mobile' ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-2.5`}>
-                                {displayableWidgetVideos.map((v) => {
-                                  const isPinned = pinnedVideoIds.includes(v.id);
-                                  return (
-                                    <div
-                                      key={v.id}
-                                      onClick={() => setActiveVideoModal(v)}
-                                      className="relative rounded-xl overflow-hidden aspect-9/14 bg-zinc-800 group shadow-md cursor-pointer hover:scale-[1.02] transition-transform border border-zinc-700/50"
-                                    >
-                                      <img
-                                        src={v.thumbnailUrl}
-                                        alt={v.dishOrItem || 'Review'}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                        referrerPolicy="no-referrer"
-                                      />
-                                      {isPinned && (
-                                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-white text-zinc-950 text-[9px] font-black shadow-md flex items-center gap-0.5 z-10">
-                                          <Pin className="w-2.5 h-2.5 fill-current text-zinc-950" /> Pinned
-                                        </div>
-                                      )}
-                                      <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-0.5 z-10">
-                                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                        <span>{v.rating || 5}</span>
-                                      </div>
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
-                                        <span className="text-[10px] font-bold leading-tight line-clamp-1">
-                                          {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
-                                        </span>
-                                      </div>
-                                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-
-                          {embedDeviceMode === 'mobile' && (
-                            <div className="w-24 h-1 bg-zinc-700 mx-auto rounded-full mt-3"></div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="text-[11px] text-zinc-400 mt-3 text-center flex items-center justify-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Tap any video reel thumbnail in the preview to launch full screen playback.</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Code Snippet Output Box */}
-                  <div className="mt-6 bg-zinc-950 rounded-2xl p-4 sm:p-5 text-white font-mono text-xs space-y-3 shadow-md border border-zinc-800">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-zinc-200 text-xs">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setEmbedFormat('script')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-sans font-bold cursor-pointer border transition-all ${
-                            embedFormat === 'script' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white'
-                          }`}
-                        >
-                          JS Script Tag
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEmbedFormat('iframe')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-sans font-bold cursor-pointer border transition-all ${
-                            embedFormat === 'iframe' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white'
-                          }`}
-                        >
-                          iFrame Tag
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEmbedFormat('react')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-sans font-bold cursor-pointer border transition-all ${
-                            embedFormat === 'react' ? 'bg-zinc-800 text-white border-zinc-700 shadow-xs' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white'
-                          }`}
-                        >
-                          React / Next.js
-                        </button>
-                      </div>
+                  {/* 1. Direct Link Section */}
+                  <div className="space-y-2">
+                    <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                      Direct Link
+                    </span>
+                    <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-2 sm:p-2.5">
+                      <input
+                        type="text"
+                        readOnly
+                        value={`https://www.yoouz.com/embed/${selectedPlaceId}`}
+                        className="bg-transparent text-xs text-zinc-200 flex-1 outline-none select-all truncate px-2 font-mono"
+                      />
                       <button
-                        onClick={copyEmbedCode}
-                        className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-sans font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95"
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`https://www.yoouz.com/embed/${selectedPlaceId}`);
+                          setIsDirectLinkCopied(true);
+                          setTimeout(() => setIsDirectLinkCopied(false), 2500);
+                        }}
+                        className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-zinc-800 hover:bg-zinc-750 text-xs font-semibold text-white flex items-center gap-1.5 shrink-0 transition cursor-pointer border border-zinc-700/60 active:scale-95"
                       >
-                        {isCodeCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        <span>{isCodeCopied ? 'Copied to Clipboard!' : 'Copy Code'}</span>
+                        {isDirectLinkCopied ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy</span>
+                          </>
+                        )}
                       </button>
                     </div>
+                  </div>
 
-                    <div className="overflow-x-auto text-[11px] text-emerald-400 bg-zinc-900/90 p-3.5 rounded-xl border border-zinc-800 leading-relaxed font-mono">
-                      {embedFormat === 'script' ? (
-                        <code>{`<div id="yoouz-widget"\n  data-place-id="${selectedPlaceId}"\n  data-theme="${embedTheme}"\n  data-layout="${embedLayout}"\n  data-accent="${embedAccentColor}"${pinnedVideoIds.length > 0 ? `\n  data-pinned-ids="${pinnedVideoIds.join(',')}"` : ''}${hiddenVideoIds.length > 0 ? `\n  data-hidden-ids="${hiddenVideoIds.join(',')}"` : ''}>\n</div>\n<script src="https://cdn.yoouz.com/embed/v2.js" async defer></script>`}</code>
-                      ) : embedFormat === 'iframe' ? (
-                        <code>{`<iframe src="https://yoouz.com/embed/widget?placeId=${selectedPlaceId}&theme=${embedTheme}&layout=${embedLayout}&accent=${encodeURIComponent(embedAccentColor)}" \n  width="100%" height="${embedLayout === 'badge' ? '180' : '540'}" frameBorder="0" loading="lazy" allow="autoplay; encrypted-media">\n</iframe>`}</code>
-                      ) : (
-                        <code>{`import { YoouzReviewsWidget } from '@yoouz/react';\n\nexport default function ReviewsSection() {\n  return (\n    <YoouzReviewsWidget \n      placeId="${selectedPlaceId}" \n      theme="${embedTheme}" \n      layout="${embedLayout}" \n      accentColor="${embedAccentColor}" \n    />\n  );\n}`}</code>
+                  {/* 2. HTML iFrame Code Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                        HTML iFrame Code
+                      </span>
+                      {isCodeCopied && (
+                        <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5 stroke-[2.5]" /> Copied!
+                        </span>
                       )}
+                    </div>
+
+                    <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 font-mono text-xs">
+                      <pre className="text-[10.5px] sm:text-[11px] text-zinc-300 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
+                        {`<iframe src="https://www.yoouz.com/embed/${selectedPlaceId}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`}
+                      </pre>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <a
+                        href={`/#/record_review?placeId=${selectedPlaceId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 transition-colors"
+                      >
+                        <span>Test player</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={copyEmbedCode}
+                        className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-white text-zinc-950 hover:bg-zinc-100 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                      >
+                        {isCodeCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{isCodeCopied ? 'Copied Code' : 'Copy Code'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 3. Official Dark Mode Widget Preview Card */}
+                  <div className="pt-4 border-t border-zinc-800 space-y-3">
+                    <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                      Preview
+                    </span>
+
+                    <div className="w-full max-w-[360px] mx-auto bg-black border border-zinc-800 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-2xl space-y-3">
+                      {/* Business Header Bar */}
+                      <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {(profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl || (currentPlace as any)?.photo) ? (
+                            <img
+                              src={profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl || (currentPlace as any)?.photo}
+                              alt={currentPlace.name}
+                              className="w-10 h-10 rounded-xl object-cover border border-zinc-700/80 shadow-md shrink-0"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center font-bold text-base shadow-md shrink-0">
+                              {currentPlace.name ? currentPlace.name.charAt(0).toUpperCase() : 'Y'}
+                            </div>
+                          )}
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-sm text-white tracking-tight truncate">
+                                {currentPlace.name}
+                              </span>
+                              <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                              <span className="text-xs font-bold text-white">4.9</span>
+                              <span className="text-xs text-zinc-500">•</span>
+                              <span className="text-xs text-zinc-400 font-medium truncate">
+                                {placeVideos.length} Reviews
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <a
+                          href={`/#/record_review?placeId=${selectedPlaceId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-xl bg-white text-zinc-950 text-xs font-bold transition hover:bg-zinc-100 shrink-0 flex items-center gap-1 cursor-pointer"
+                        >
+                          <Video className="w-3.5 h-3.5" />
+                          <span>Review</span>
+                        </a>
+                      </div>
+
+                      {/* Video Grid */}
+                      {displayableWidgetVideos.length === 0 ? (
+                        <div className="py-12 text-center text-zinc-500 space-y-2">
+                          <AlertCircle className="w-8 h-8 mx-auto text-zinc-600" />
+                          <p className="text-xs font-medium text-zinc-400">No video reviews found.</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2.5">
+                          {displayableWidgetVideos.slice(0, 4).map((v) => (
+                            <div
+                              key={v.id}
+                              onClick={() => setActiveVideoModal(v)}
+                              className="relative rounded-2xl overflow-hidden aspect-9/14 bg-zinc-900 group border border-zinc-800 cursor-pointer hover:scale-[1.02] transition-transform shadow-md"
+                            >
+                              <img
+                                src={v.thumbnailUrl}
+                                alt={v.dishOrItem || 'Review'}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-0.5 z-10">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                <span>{v.rating || 5}</span>
+                              </div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
+                                <span className="text-[10px] font-bold leading-tight line-clamp-1">
+                                  {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
+                                </span>
+                              </div>
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-500 pt-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Live Sync Powered by Yoouz</span>
+                      </div>
                     </div>
                   </div>
                 </div>
