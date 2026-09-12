@@ -46,11 +46,32 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+  const [progressPct, setProgressPct] = useState<number>(0);
+  const [showHeartBurst, setShowHeartBurst] = useState<boolean>(false);
+  const lastTapRef = useRef<number>(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Check if running inside an iframe or standalone
+  const isFramed = React.useMemo(() => {
+    try {
+      return typeof window !== "undefined" && window.self !== window.top;
+    } catch (e) {
+      return true;
+    }
+  }, []);
+
+  // Check if embedId matches a specific video directly
+  const specificVideo = React.useMemo(() => {
+    if (!embedId) return null;
+    const clean = embedId.toLowerCase().trim();
+    return videos.find((v) => v && (v.id === embedId || v.id.toLowerCase() === clean)) || null;
+  }, [videos, embedId]);
 
   // Normalize embed ID / slug
   let cleanSlug = (embedId || "yoouz.com").toLowerCase().trim();
-  if (cleanSlug.includes("place-custom") || cleanSlug.includes("yoouz")) {
+  if (specificVideo) {
+    cleanSlug = getPlaceSlug(specificVideo.placeId || specificVideo.placeName);
+  } else if (cleanSlug.includes("place-custom") || cleanSlug.includes("yoouz")) {
     cleanSlug = "yoouz.com";
   }
 
@@ -73,11 +94,11 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     return {
       id: isYoouz ? "yoouz.com" : cleanSlug,
       name: isYoouz ? "Yoouz" : cleanSlug.split(".")[0].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-      rating: 4.9,
-      totalReviews: 12,
-      website: `https://www.${cleanSlug}`,
+      rating: 5.0,
+      totalReviews: 0,
+      website: isYoouz ? "https://yoouz.com" : `https://www.${cleanSlug}`,
       logoUrl: isYoouz
-        ? "https://www.yoouz.com/icon-512.png"
+        ? "/icon-512.png"
         : getCleanLogoUrl(`https://www.${cleanSlug}`) || `https://logo.clearbit.com/${cleanSlug}`,
       isClaimed: true
     } as Place;
@@ -85,7 +106,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
   // Filter videos belonging strictly to this business
   const matchingVideos = React.useMemo(() => {
-    return videos.filter((v) => {
+    const matched = videos.filter((v) => {
       if (!v) return false;
       if (cleanSlug === "yoouz.com" || cleanSlug === "yoouz") {
         return (
@@ -102,7 +123,14 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         (v.placeName && v.placeName.toLowerCase().trim() === cleanSlug)
       );
     });
-  }, [videos, cleanSlug]);
+
+    // If a specific video was targeted by ID, prioritize it first
+    if (specificVideo && matched.some((v) => v.id === specificVideo.id)) {
+      return [specificVideo, ...matched.filter((v) => v.id !== specificVideo.id)];
+    }
+
+    return matched;
+  }, [videos, cleanSlug, specificVideo]);
 
   const currentVideo = matchingVideos[currentIndex] || null;
 
@@ -129,6 +157,20 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     setIsPlaying((prev) => !prev);
   };
 
+  const handleVideoTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300 && currentVideo) {
+      // Double tap to like
+      setLikedMap((prev) => ({ ...prev, [currentVideo.id]: true }));
+      setShowHeartBurst(true);
+      setTimeout(() => setShowHeartBurst(false), 800);
+      lastTapRef.current = 0;
+      return;
+    }
+    lastTapRef.current = now;
+    handleTogglePlay();
+  };
+
   const handleNextVideo = () => {
     if (matchingVideos.length === 0) return;
     setCurrentIndex((prev) => (prev + 1) % matchingVideos.length);
@@ -145,49 +187,75 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     setLikedMap((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const averageRating = React.useMemo(() => {
+    if (matchingVideos.length === 0) return targetPlace.rating || 5.0;
+    const sum = matchingVideos.reduce((acc, v) => acc + (v.rating || 5), 0);
+    return Number((sum / matchingVideos.length).toFixed(1));
+  }, [matchingVideos, targetPlace.rating]);
+
   return (
-    <div className="w-full h-full min-h-screen bg-black text-white flex flex-col items-center justify-center relative overflow-hidden font-sans select-none">
-      {/* Container Box matching 9:16 aspect ratio or responsive iframe */}
-      <div className="w-full h-full max-w-[440px] max-h-[100dvh] flex flex-col relative bg-zinc-950 shadow-2xl overflow-hidden sm:rounded-3xl border border-zinc-900">
-        
-        {/* TOP OVERLAY HEADER: Business Info & Record Review CTA */}
-        <div className="absolute top-0 left-0 right-0 z-30 p-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent flex items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2.5 min-w-0 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-3 py-2 shadow-lg">
+    <div className="w-full h-full min-h-screen bg-black text-white flex flex-col items-center justify-center relative overflow-hidden font-sans select-none antialiased">
+      {/* Container: edge-to-edge inside iframes, centered phone card standalone */}
+      <div
+        className={`w-full h-full flex flex-col relative bg-zinc-950 overflow-hidden ${
+          isFramed
+            ? "rounded-none border-0"
+            : "max-w-[420px] max-h-[100dvh] sm:h-[94vh] sm:max-h-[850px] sm:rounded-3xl sm:border sm:border-zinc-850 sm:shadow-2xl"
+        }`}
+      >
+        {/* Top Progress Bar Scrubber */}
+        {currentVideo && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 z-40">
+            <div
+              className="h-full bg-white transition-all duration-100 ease-linear shadow-[0_0_8px_rgba(255,255,255,0.9)]"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        )}
+
+        {/* TOP OVERLAY HEADER: Business Profile Pill & Record Review CTA */}
+        <div className="absolute top-0 left-0 right-0 z-30 p-3 pt-3.5 bg-gradient-to-b from-black/85 via-black/45 to-transparent flex items-center justify-between gap-2.5 pointer-events-none">
+          <a
+            href={targetPlace.website || "https://yoouz.com"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pointer-events-auto flex items-center gap-2.5 min-w-0 bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/15 rounded-2xl px-3 py-2 shadow-xl transition active:scale-95"
+          >
             <img
               src={targetPlace.logoUrl || getPlaceLogoUrl(targetPlace)}
               alt={targetPlace.name}
-              className="w-8 h-8 rounded-xl object-cover border border-white/15 bg-zinc-900 shrink-0"
+              className="w-8 h-8 rounded-xl object-cover border border-white/20 bg-zinc-900 shrink-0"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://www.yoouz.com/icon-512.png";
+                (e.target as HTMLImageElement).src = "/icon-512.png";
               }}
             />
             <div className="min-w-0 leading-tight">
               <div className="flex items-center gap-1">
-                <span className="font-bold text-xs text-white truncate max-w-[130px] sm:max-w-[160px]">
+                <span className="font-extrabold text-xs text-white truncate max-w-[130px] sm:max-w-[160px]">
                   {targetPlace.name}
                 </span>
                 <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
               </div>
               <div className="flex items-center gap-1 text-[11px] text-zinc-300">
                 <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                <span className="font-bold">{targetPlace.rating.toFixed(1)}</span>
+                <span className="font-bold">{averageRating.toFixed(1)}</span>
                 <span className="text-zinc-400">({matchingVideos.length} reviews)</span>
               </div>
             </div>
-          </div>
+          </a>
 
           <button
             onClick={() => onRecordReview?.(targetPlace)}
-            className="px-3 py-2 rounded-2xl bg-white text-black hover:bg-zinc-100 text-xs font-bold flex items-center gap-1.5 transition-transform active:scale-95 shadow-lg shrink-0 cursor-pointer"
+            className="pointer-events-auto px-3.5 py-2 rounded-2xl bg-white text-black hover:bg-zinc-100 text-xs font-black flex items-center gap-1.5 transition-transform active:scale-95 shadow-xl shrink-0 cursor-pointer"
           >
-            <Video className="w-3.5 h-3.5 text-black shrink-0" />
+            <Video className="w-3.5 h-3.5 text-black shrink-0 stroke-[2.5]" />
             <span>Review</span>
           </button>
         </div>
 
         {/* MAIN MEDIA CONTENT AREA */}
         {currentVideo ? (
-          <div className="relative flex-1 w-full h-full bg-black flex items-center justify-center">
+          <div className="relative flex-1 w-full h-full bg-black flex items-center justify-center overflow-hidden">
             <video
               ref={videoRef}
               src={resolvePlayableVideoSource(currentVideo)}
@@ -195,7 +263,13 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               playsInline
               loop
               muted={isMuted}
-              onClick={handleTogglePlay}
+              onClick={handleVideoTap}
+              onTimeUpdate={(e) => {
+                const el = e.currentTarget;
+                if (el.duration) {
+                  setProgressPct((el.currentTime / el.duration) * 100);
+                }
+              }}
               className="w-full h-full object-cover cursor-pointer"
             />
 
@@ -209,26 +283,39 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               </button>
             )}
 
+            {/* Double Tap Heart Burst Animation */}
+            {showHeartBurst && (
+              <div className="absolute inset-0 m-auto w-24 h-24 flex items-center justify-center z-30 pointer-events-none animate-ping">
+                <Heart className="w-20 h-20 fill-rose-500 text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.8)]" />
+              </div>
+            )}
+
             {/* RIGHT SIDE CONTROLS OVERLAY */}
-            <div className="absolute right-3 bottom-20 z-30 flex flex-col items-center gap-4">
+            <div className="absolute right-3 bottom-16 z-30 flex flex-col items-center gap-3.5">
               {/* Mute / Unmute Button */}
               <button
                 onClick={() => {
                   ensureSharedAudioContextUnlocked();
                   toggleMute();
                 }}
-                className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center shadow-lg hover:bg-black/80 transition cursor-pointer"
+                className="w-10 h-10 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-lg hover:bg-black/85 active:scale-90 transition cursor-pointer"
                 title={isMuted ? "Unmute" : "Mute"}
               >
-                {isMuted ? <VolumeX className="w-4 h-4 text-amber-400" /> : <Volume2 className="w-4 h-4 text-white" />}
+                {isMuted ? <VolumeX className="w-4.5 h-4.5 text-amber-400" /> : <Volume2 className="w-4.5 h-4.5 text-white" />}
               </button>
 
               {/* Like Button */}
               <button
                 onClick={() => handleToggleLike(currentVideo.id)}
-                className="flex flex-col items-center gap-1 group cursor-pointer"
+                className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
               >
-                <div className={`w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 flex items-center justify-center shadow-lg transition ${likedMap[currentVideo.id] ? "bg-rose-500/20 text-rose-500 border-rose-500/40" : "text-white"}`}>
+                <div
+                  className={`w-10 h-10 rounded-full bg-black/65 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg transition ${
+                    likedMap[currentVideo.id]
+                      ? "bg-rose-500/20 text-rose-500 border-rose-500/40"
+                      : "text-white hover:bg-black/85"
+                  }`}
+                >
                   <Heart className={`w-4.5 h-4.5 ${likedMap[currentVideo.id] ? "fill-rose-500 text-rose-500" : ""}`} />
                 </div>
                 <span className="text-[10px] font-bold text-white drop-shadow">
@@ -239,9 +326,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               {/* Comments Button */}
               <button
                 onClick={() => onOpenComments?.(currentVideo)}
-                className="flex flex-col items-center gap-1 group cursor-pointer"
+                className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
               >
-                <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center shadow-lg transition hover:bg-black/80">
+                <div className="w-10 h-10 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-lg hover:bg-black/85 transition">
                   <MessageCircle className="w-4.5 h-4.5" />
                 </div>
                 <span className="text-[10px] font-bold text-white drop-shadow">
@@ -252,9 +339,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               {/* Share Button */}
               <button
                 onClick={() => onOpenShare?.(currentVideo)}
-                className="flex flex-col items-center gap-1 group cursor-pointer"
+                className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
               >
-                <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center shadow-lg transition hover:bg-black/80">
+                <div className="w-10 h-10 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-lg hover:bg-black/85 transition">
                   <Share2 className="w-4.5 h-4.5" />
                 </div>
                 <span className="text-[10px] font-bold text-white drop-shadow">Share</span>
@@ -262,17 +349,17 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
               {/* Prev / Next Video Carousel Navigation */}
               {matchingVideos.length > 1 && (
-                <div className="flex flex-col gap-1.5 pt-2">
+                <div className="flex flex-col gap-1.5 pt-1">
                   <button
                     onClick={handlePrevVideo}
-                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
                     title="Previous Video"
                   >
                     <ChevronUp className="w-4 h-4" />
                   </button>
                   <button
                     onClick={handleNextVideo}
-                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
                     title="Next Video"
                   >
                     <ChevronDown className="w-4 h-4" />
@@ -282,7 +369,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             </div>
 
             {/* BOTTOM LEFT AUTHOR & CAPTION OVERLAY */}
-            <div className="absolute left-3 bottom-12 right-16 z-30 space-y-1.5 text-left bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2 rounded-2xl pointer-events-auto">
+            <div className="absolute left-3 bottom-10 right-16 z-30 space-y-1.5 text-left bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2 rounded-2xl pointer-events-auto">
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-sm text-white tracking-tight drop-shadow-md">
                   By {currentVideo.author?.name || "Verified Customer"}
@@ -307,23 +394,23 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         ) : (
           /* EMPTY STATE WHEN NO VIDEO REVIEWS ARE FOUND FOR THIS BUSINESS */
           <div className="flex-1 w-full h-full bg-zinc-950 flex flex-col items-center justify-center p-6 text-center space-y-5">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 p-2 shadow-2xl flex items-center justify-center">
+            <div className="w-20 h-20 rounded-2xl bg-zinc-900 border border-zinc-800 p-2.5 shadow-2xl flex items-center justify-center">
               <img
                 src={targetPlace.logoUrl || getPlaceLogoUrl(targetPlace)}
                 alt={targetPlace.name}
                 className="w-full h-full rounded-xl object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://www.yoouz.com/icon-512.png";
+                  (e.target as HTMLImageElement).src = "/icon-512.png";
                 }}
               />
             </div>
 
-            <div className="space-y-1 max-w-xs">
+            <div className="space-y-1.5 max-w-xs">
               <div className="flex items-center justify-center gap-1.5">
-                <h3 className="text-lg font-bold text-white tracking-tight">{targetPlace.name}</h3>
+                <h3 className="text-lg font-black text-white tracking-tight">{targetPlace.name}</h3>
                 <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
               </div>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 leading-relaxed">
                 No video reviews recorded yet. Be the first customer to share a live 60-second video review!
               </p>
             </div>
@@ -332,21 +419,21 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               onClick={() => onRecordReview?.(targetPlace)}
               className="px-5 py-2.5 rounded-2xl bg-white text-black hover:bg-zinc-100 text-xs font-black flex items-center gap-2 transition active:scale-95 shadow-xl cursor-pointer"
             >
-              <Video className="w-4 h-4 text-black shrink-0" />
+              <Video className="w-4 h-4 text-black shrink-0 stroke-[2.5]" />
               <span>Record 60s Video Review</span>
             </button>
           </div>
         )}
 
         {/* BOTTOM BRANDING FOOTER */}
-        <div className="w-full bg-black/90 border-t border-zinc-900 px-3 py-2 shrink-0 z-30 flex items-center justify-between text-[11px] text-zinc-400">
+        <div className="w-full bg-black/95 border-t border-zinc-900 px-3.5 py-2.5 shrink-0 z-30 flex items-center justify-between text-[11px] text-zinc-400">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
             <span className="font-medium text-zinc-300">Live Sync Powered by Yoouz</span>
           </div>
 
           <a
-            href="https://www.yoouz.com"
+            href="https://yoouz.com"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[10px] font-bold text-zinc-400 hover:text-white transition flex items-center gap-1"

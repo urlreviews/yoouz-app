@@ -186,10 +186,15 @@ export function App() {
   const [embedTargetId, setEmbedTargetId] = useState<string | null>(() => {
     try {
       const pathname = window.location.pathname;
-      const match = pathname.match(/^\/embed\/([^\/]+)/) || pathname.match(/^\/e\/([^\/]+)/);
-      if (match && match[1]) return decodeURIComponent(match[1]);
       const params = new URLSearchParams(window.location.search);
-      if (params.get("embed")) return params.get("embed");
+      if (params.get("embed")) return decodeURIComponent(params.get("embed")!);
+      const vidMatch = pathname.match(/^\/embed\/(?:video|v)\/([^\/]+)/i);
+      if (vidMatch && vidMatch[1]) return decodeURIComponent(vidMatch[1]);
+      const placeMatch = pathname.match(/^\/embed\/(?:place|p)\/([^\/]+)/i);
+      if (placeMatch && placeMatch[1]) return decodeURIComponent(placeMatch[1]);
+      const match = pathname.match(/^\/(?:embed|e)\/([^\/]+)/i);
+      if (match && match[1]) return decodeURIComponent(match[1]);
+      if (pathname === "/embed" || pathname === "/embed/") return "yoouz.com";
     } catch (e) {}
     return null;
   });
@@ -345,9 +350,25 @@ export function App() {
         const pathname = window.location.pathname;
         const params = new URLSearchParams(window.location.search);
         
-        const embedMatch = pathname.match(/^\/embed\/([^\/]+)/) || pathname.match(/^\/e\/([^\/]+)/) || (params.get("embed") ? ["", params.get("embed")] : null);
-        if (embedMatch && embedMatch[1]) {
-          setEmbedTargetId(decodeURIComponent(embedMatch[1]));
+        const vidMatch = pathname.match(/^\/embed\/(?:video|v)\/([^\/]+)/i);
+        const placeMatch = pathname.match(/^\/embed\/(?:place|p)\/([^\/]+)/i);
+        const match = pathname.match(/^\/(?:embed|e)\/([^\/]+)/i);
+        const queryEmbed = params.get("embed");
+
+        if (queryEmbed) {
+          setEmbedTargetId(decodeURIComponent(queryEmbed));
+          return;
+        } else if (vidMatch && vidMatch[1]) {
+          setEmbedTargetId(decodeURIComponent(vidMatch[1]));
+          return;
+        } else if (placeMatch && placeMatch[1]) {
+          setEmbedTargetId(decodeURIComponent(placeMatch[1]));
+          return;
+        } else if (match && match[1]) {
+          setEmbedTargetId(decodeURIComponent(match[1]));
+          return;
+        } else if (pathname === "/embed" || pathname === "/embed/") {
+          setEmbedTargetId("yoouz.com");
           return;
         } else {
           setEmbedTargetId(null);
