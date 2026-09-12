@@ -2,7 +2,7 @@ import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { NavSection, Place, VideoReview, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from '../types';
 import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
-import { getDisplayViews } from '../utils/placeUtils';
+import { getDisplayViews, getPlaceSlug } from '../utils/placeUtils';
 import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
 import { CopoBusinessAuthLanding } from './CopoBusinessAuthLanding';
 import { CopoMessagesView } from './CopoMessagesView';
@@ -1546,7 +1546,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   };
 
   const copyEmbedCode = () => {
-    const iframeSnippet = `<iframe src="https://www.yoouz.com/embed/${selectedPlaceId}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
+    const embedSlug = getPlaceSlug(currentPlace);
+    const iframeSnippet = `<iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
     navigator.clipboard.writeText(iframeSnippet);
     setIsCodeCopied(true);
     setTimeout(() => setIsCodeCopied(false), 2500);
@@ -2911,13 +2912,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <input
                         type="text"
                         readOnly
-                        value={`https://www.yoouz.com/embed/${selectedPlaceId}`}
+                        value={`https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}`}
                         className="bg-transparent text-xs text-zinc-200 flex-1 outline-none select-all truncate px-2 font-mono"
                       />
                       <button
                         type="button"
                         onClick={() => {
-                          navigator.clipboard.writeText(`https://www.yoouz.com/embed/${selectedPlaceId}`);
+                          navigator.clipboard.writeText(`https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}`);
                           setIsDirectLinkCopied(true);
                           setTimeout(() => setIsDirectLinkCopied(false), 2500);
                         }}
@@ -2953,13 +2954,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 font-mono text-xs">
                       <pre className="text-[10.5px] sm:text-[11px] text-zinc-300 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
-                        {`<iframe src="https://www.yoouz.com/embed/${selectedPlaceId}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`}
+                        {`<iframe src="https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`}
                       </pre>
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
                       <a
-                        href={`/#/record_review?placeId=${selectedPlaceId}`}
+                        href={`/embed/${getPlaceSlug(currentPlace)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 transition-colors"

@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { extractCleanDomain, formatBusinessName } from "../utils/placeUtils";
+import { extractCleanDomain, formatBusinessName, getPlaceSlug } from "../utils/placeUtils";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -181,14 +181,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : `Check out ${title} on Yoouz - Real People. Real Reviews.`;
 
   // Pre-generate embed codes
-  const embedId = isVideoMode && video ? video.id : "featured";
-  const embedUrl = `${appOrigin}/embed/${encodeURIComponent(embedId)}`;
+  const embedSlug = isVideoMode && video
+    ? getPlaceSlug(video.placeId || video.placeName)
+    : getPlaceSlug(propDomain || propTitle || "yoouz.com");
+  const embedUrl = `${appOrigin}/embed/${encodeURIComponent(embedSlug)}`;
 
-  const iframeEmbedCode = embedLayout === "reel"
-    ? `<iframe src="${embedUrl}?layout=reel" width="360" height="640" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.5);"></iframe>`
-    : embedLayout === "card"
-    ? `<iframe src="${embedUrl}?layout=card" width="400" height="260" frameborder="0" allow="autoplay; encrypted-media" style="border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></iframe>`
-    : `<iframe src="${embedUrl}?layout=widget" width="100%" height="450" frameborder="0" allow="autoplay; encrypted-media" style="border-radius:16px;max-width:800px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></iframe>`;
+  const iframeEmbedCode = `<iframe src="${embedUrl}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
 
   // Record share interaction to Bunny.net backend storage
   const recordShareAction = (platform: string = "general") => {

@@ -36,6 +36,7 @@ import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { InAppNotificationToast, InAppToastPayload } from "./components/InAppNotificationToast";
 import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { CopoNotificationSettingsModal } from "./components/CopoNotificationSettingsModal";
+import { CopoEmbedView } from "./components/CopoEmbedView";
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "./utils/videoUtils";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleBunnyDBError, OperationType } from "./lib/bunnydb";
@@ -182,6 +183,16 @@ export function App() {
   const previousVideoIndexRef = useRef<number>(0);
   const savedHomeVideoIndexRef = useRef<number>(0);
   const [selectedPlaceIdForDrawer, setSelectedPlaceIdForDrawer] = useState<string | null>(null);
+  const [embedTargetId, setEmbedTargetId] = useState<string | null>(() => {
+    try {
+      const pathname = window.location.pathname;
+      const match = pathname.match(/^\/embed\/([^\/]+)/) || pathname.match(/^\/e\/([^\/]+)/);
+      if (match && match[1]) return decodeURIComponent(match[1]);
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("embed")) return params.get("embed");
+    } catch (e) {}
+    return null;
+  });
   const [selectedAuthorForDrawer, setSelectedAuthorForDrawer] = useState<VideoAuthor | null>(null);
   const [pendingVideoId, setPendingVideoId] = useState<string | null>(null);
   const [placeReviewSort, setPlaceReviewSort] = useState<"latest" | "oldest" | "highest" | "lowest" | "popular">("latest");
@@ -331,13 +342,22 @@ export function App() {
   useEffect(() => {
     const syncFromUrl = () => {
       try {
+        const pathname = window.location.pathname;
+        const params = new URLSearchParams(window.location.search);
+        
+        const embedMatch = pathname.match(/^\/embed\/([^\/]+)/) || pathname.match(/^\/e\/([^\/]+)/) || (params.get("embed") ? ["", params.get("embed")] : null);
+        if (embedMatch && embedMatch[1]) {
+          setEmbedTargetId(decodeURIComponent(embedMatch[1]));
+          return;
+        } else {
+          setEmbedTargetId(null);
+        }
+
         if (window.location.pathname === "/yoouzadmin" || window.location.pathname.startsWith("/yoouzadmin")) {
           setActiveSection("admin");
           return;
         }
-        const params = new URLSearchParams(window.location.search);
         const hash = window.location.hash;
-        const pathname = window.location.pathname;
 
         let placeParam = params.get("place") || params.get("p") || params.get("business") || (hash.startsWith("#/place/") ? hash.replace("#/place/", "") : null);
         let creatorParam = params.get("creator") || params.get("c") || params.get("user") || params.get("u") || (hash.startsWith("#/creator/") ? hash.replace("#/creator/", "") : null);
@@ -4257,6 +4277,80 @@ export function App() {
     const url = new URL(window.location.href);
     return url.origin + url.pathname + url.search;
   }, [activeSection, activeSubTab]);
+
+  if (embedTargetId) {
+    return (
+      <div
+        id="copo-app-root"
+        className="w-screen h-[100dvh] bg-black text-white flex flex-col items-center justify-center overflow-hidden font-sans select-none antialiased relative"
+      >
+        <SEOTags title={`Embedded Video Review Player - Yoouz`} description={`Watch authentic 60-second video reviews for ${embedTargetId}`} url={seoUrl} />
+        
+        <CopoEmbedView
+          embedId={embedTargetId}
+          places={places}
+          videos={videos}
+          currentUser={currentUser}
+          onOpenComments={(video) => setActiveCommentVideo(video)}
+          onOpenShare={(video) => setActiveShareVideo(video)}
+          onRecordReview={(place) => {
+            setPreselectedPlaceForRecording(place || null);
+            setIsCreateModalOpen(true);
+          }}
+          onOpenAuth={() => {
+            setAuthIntent('record');
+            setIsAuthModalOpen(true);
+          }}
+        />
+
+        {activeCommentVideo && (
+          <CopoCommentsDrawer
+            video={activeCommentVideo}
+            currentUser={currentUser}
+            onClose={() => setActiveCommentVideo(null)}
+            onRequireAuth={() => {
+              setAuthIntent('comment');
+              setIsAuthModalOpen(true);
+            }}
+            onAddComment={handleAddComment}
+            onToggleCommentLike={handleToggleCommentLike}
+          />
+        )}
+
+        <CopoShareModal
+          isOpen={!!activeShareVideo}
+          video={activeShareVideo}
+          onClose={() => setActiveShareVideo(null)}
+        />
+
+        <CopoCreateModal
+          isOpen={isCreateModalOpen}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setPreselectedPlaceForRecording(null);
+          }}
+          places={places}
+          videos={videos}
+          preselectedPlace={preselectedPlaceForRecording}
+          onPublishVideoReview={handlePublishVideoReview}
+          currentUser={currentUser}
+          onAddPlace={handleUpdatePlace}
+        />
+
+        <CopoGoogleAuthModal
+          isOpen={isAuthModalOpen}
+          intent={authIntent}
+          onClose={() => setIsAuthModalOpen(false)}
+          onOpenHelp={() => setIsAuthModalOpen(false)}
+          onOpenLegal={(tab) => handleOpenLegal(tab)}
+          onSuccess={(user) => {
+            setCurrentUser(user);
+            setIsAuthModalOpen(false);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div

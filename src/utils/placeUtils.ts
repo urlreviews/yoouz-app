@@ -121,6 +121,9 @@ export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: str
   } else if (typeof placeSource === "object") {
     urlSource = placeSource.brandDomain || placeSource.placeWebsite || placeSource.website || placeSource.id || placeSource.placeName || placeSource.name || "";
   }
+  if (urlSource.includes("place-custom") || urlSource.includes("yoouz")) {
+    return "yoouz.com";
+  }
   let domain = extractCleanDomain(urlSource);
   
   if (!domain) {
