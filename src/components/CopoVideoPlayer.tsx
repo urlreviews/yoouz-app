@@ -230,11 +230,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 console.warn(`[CopoVideoPlayer] Auto-recovering playback for ${active.id} with candidate: ${nextCandidate}`);
                 vid.src = nextCandidate;
                 vid.load();
-                vid.play().then(() => {
-                  setIsPlaying(true);
+                if (!isManuallyPausedRef.current && !isPaused) {
+                  vid.play().then(() => {
+                    setIsPlaying(true);
+                    setIsBuffering(false);
+                    setFirstFrameRenderedId(active.id);
+                  }).catch(() => {});
+                } else {
+                  setIsPlaying(false);
                   setIsBuffering(false);
-                  setFirstFrameRenderedId(active.id);
-                }).catch(() => {});
+                }
               }
             }
           }
@@ -382,7 +387,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     // Robust Playback Starter with Autoplay Policy & Audio Fallback
     const startPlayback = () => {
-      if (isPaused) return;
+      if (isPaused || isManuallyPausedRef.current) return;
       const p = activeVid.play();
       if (p !== undefined) {
         playPromiseRef.current = p;
@@ -398,13 +403,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             // Fall back instantly to muted playback which all browsers permit 100%
             activeVid.muted = true;
             setIsActualMuted(true);
-            const retryP = activeVid.play();
-            if (retryP !== undefined) {
-              retryP.then(() => {
-                setIsPlaying(true);
-                setIsBuffering(false);
-                setFirstFrameRenderedId(activeVideo.id);
-              }).catch(() => {});
+            if (!isPaused && !isManuallyPausedRef.current) {
+              const retryP = activeVid.play();
+              if (retryP !== undefined) {
+                retryP.then(() => {
+                  setIsPlaying(true);
+                  setIsBuffering(false);
+                  setFirstFrameRenderedId(activeVideo.id);
+                }).catch(() => {});
+              }
             }
           } else if (err?.name !== "AbortError") {
             setIsPlaying(false);
@@ -1071,9 +1078,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (vid) {
         vid.muted = false;
         safeSetVolume(vid, 1);
-        const playPromise = vid.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {});
+        if (!isManuallyPausedRef.current && !isPaused) {
+          const playPromise = vid.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {});
+          }
         }
       }
       setIsActualMuted(false);

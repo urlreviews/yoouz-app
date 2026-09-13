@@ -4475,6 +4475,7 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
       const rawFilename = path.basename(rawParam);
       const base = rawFilename.replace(/\.[^.]+$/, "");
 
+      const isImageRequest = rawFilename.endsWith(".jpg") || rawFilename.endsWith(".jpeg") || rawFilename.endsWith(".png") || rawFilename.endsWith(".webp");
       const candidatePaths = [
         path.join(serverUploadsDir, rawFilename),
         path.join(serverUploadsVideosDir, rawFilename),
@@ -4482,6 +4483,8 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
         path.join(serverUploadsDir, `${base}.mp4`),
         path.join(serverUploadsVideosDir, `${base}.mp4`),
         path.join(process.cwd(), "public", `${base}.mp4`),
+        path.join(serverUploadsDir, `${base}.jpg`),
+        path.join(serverUploadsDir, `${base}.png`),
         path.join(serverUploadsDir, `${base}.webm`),
         path.join(serverUploadsVideosDir, `${base}.webm`),
         path.join(process.cwd(), "public", `${base}.webm`),
@@ -4494,11 +4497,13 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
 
       let filePath = candidatePaths.find((c) => fs.existsSync(c));
 
-      
-
       if (!filePath || !fs.existsSync(filePath)) {
-        if (base && typeof base === "string" && base.startsWith("rev-")) {
-          return res.redirect(302, `https://rev1.b-cdn.net/videos/${base}.mp4`);
+        if (!isImageRequest && base && typeof base === "string" && base.startsWith("rev-")) {
+          const bunnyZone = process.env.BUNNY_PULL_ZONE_URL;
+          if (bunnyZone) {
+            const pullZoneDomain = bunnyZone.replace(/\/$/, '');
+            return res.redirect(302, `${pullZoneDomain}/videos/${base}.mp4`);
+          }
         }
         // Fallback to high-performance default video asset immediately (0ms wait)
         const fallbackCandidates = [
@@ -4526,6 +4531,9 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
       if (filePath.endsWith(".webm")) contentType = "video/webm";
       else if (filePath.endsWith(".mov")) contentType = "video/quicktime";
       else if (filePath.endsWith(".ogg")) contentType = "video/ogg";
+      else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) contentType = "image/jpeg";
+      else if (filePath.endsWith(".png")) contentType = "image/png";
+      else if (filePath.endsWith(".webp")) contentType = "image/webp";
 
       if (req.method === "HEAD") {
         res.writeHead(200, {

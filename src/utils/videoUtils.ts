@@ -98,7 +98,7 @@ export function normalizeVideoUrl(url?: string | null): string {
 }
 
 /**
- * Resolves the prioritized list of playable video sources for instant failover (Bunny CDN -> Local Server -> Fallback MP4).
+ * Resolves the prioritized list of playable video sources for instant failover (Local Blob -> Direct videoUrl -> Local Server -> Bunny CDN -> Fallback MP4).
  */
 export function resolvePlayableVideoSourcesCascade(
   video?: VideoReview | null,
@@ -114,20 +114,20 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(cachedLocalBlobUrl);
   }
 
-  // 2. Prioritize Bunny CDN global edge delivery for maximum speed (0ms startup)
-  if (video.videoUrl && video.videoUrl.includes("b-cdn.net")) {
-    const norm = normalizeVideoUrl(video.videoUrl);
-    if (norm && !sources.includes(norm)) sources.push(norm);
-  } else if (video.id && video.id.startsWith("rev-")) {
-    const cdnUrlMp4 = `${cleanZone}/videos/${video.id}.mp4`;
-    if (!sources.includes(cdnUrlMp4)) sources.push(cdnUrlMp4);
-  }
-
-  // 3. Any other remote CDN or HTTPS URLs
-  if (video.videoUrl && (video.videoUrl.startsWith("http://") || video.videoUrl.startsWith("https://"))) {
+  // 2. Direct specified videoUrl on the video review (Authoritative URL from upload/storage)
+  if (video.videoUrl && typeof video.videoUrl === "string") {
     const norm = normalizeVideoUrl(video.videoUrl);
     if (norm && !sources.includes(norm)) {
       sources.push(norm);
+    }
+  }
+
+  // 3. Local Server streaming endpoint (direct stream for rev-* IDs)
+  if (video.id && typeof video.id === "string") {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
+    if (!sources.includes(serverStream)) {
+      sources.push(serverStream);
     }
   }
 
@@ -146,11 +146,12 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 6. Local Server streaming endpoint Fallback
-  if (video.id) {
-    const serverStream = `/api/videos/stream/${video.id}.mp4`;
-    if (!sources.includes(serverStream)) {
-      sources.push(serverStream);
+  // 6. Bunny CDN Edge URL fallback
+  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
+    if (!sources.includes(cdnUrlMp4)) {
+      sources.push(cdnUrlMp4);
     }
   }
 
@@ -204,9 +205,10 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
     }
   }
 
-  // Canonical Bunny CDN video frame poster
+  // Fallback to local server thumbnail or Bunny CDN thumbnail
   if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
-    return `${cleanZone}/videos/${video.id}.jpg`;
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    return `/api/videos/stream/${cleanId}.jpg`;
   }
 
   return "";
