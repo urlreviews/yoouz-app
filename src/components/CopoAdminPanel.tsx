@@ -41,6 +41,8 @@ import {
   FileText,
   BadgeCheck,
   UserCheck,
+  UserPlus,
+  Award,
   UserX,
   Globe,
   Phone,
@@ -121,6 +123,7 @@ interface CopoAdminPanelProps {
   allUsers?: any[];
   clubs?: Club[];
   onDeleteUser?: (user: any) => void;
+  onUpdateUser?: (updatedUser: any) => void;
   onPurgeAllUsers?: () => void;
   onDeleteVideo: (id: string) => void;
   onBulkDeleteVideos?: (ids: string[]) => void;
@@ -136,7 +139,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "subscriptions" | "videos" | "places" | "users" | "comments" | "broadcast" | "database";
+type AdminTab = "overview" | "creators" | "users" | "places" | "subscriptions" | "videos" | "comments" | "broadcast" | "database";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   videos = [],
@@ -144,6 +147,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   allUsers = [],
   clubs = [],
   onDeleteUser,
+  onUpdateUser,
   onPurgeAllUsers,
   onDeleteVideo,
   onBulkDeleteVideos,
@@ -180,6 +184,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [videoRatingFilter, setVideoRatingFilter] = useState<number | "all">("all");
   const [placeCategoryFilter, setPlaceCategoryFilter] = useState<string>("all");
   const [placeClaimFilter, setPlaceClaimFilter] = useState<"all" | "claimed" | "unclaimed">("all");
+  const [creatorFilter, setCreatorFilter] = useState<"all" | "verified" | "top" | "unverified">("all");
+  const [userFilter, setUserFilter] = useState<"all" | "verified" | "unverified">("all");
   const [userTypeFilter, setUserTypeFilter] = useState<"all" | "registered" | "creators" | "business">("all");
   const [subscriptionPlanFilter, setSubscriptionPlanFilter] = useState<string>("all");
   const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState<string>("all");
@@ -358,7 +364,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch {}
   };
 
-  // Unique Users Mapping
+  // Unique Users Mapping (Real registered users and video creators, without fake business email injection!)
   const uniqueUsers = useMemo(() => {
     const getCleanHandle = (str?: string) => (str || "").replace(/^@+/, "").trim().toLowerCase();
     const isKeyDeleted = (val?: string) => {
@@ -388,10 +394,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         name: u.name || "Registered User",
         email: u.email || "",
         handle: cleanHandle,
+        bio: u.bio || "",
         avatar:
           u.avatar ||
           `/api/avatar?name=${encodeURIComponent(u.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
-        isVerified: true,
+        isVerified: u.isVerified !== false,
         isRegisteredAccount: true,
         role: u.role || (u.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
         memberSince: u.memberSince || "Active"
@@ -452,28 +459,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         });
       }
     });
-    
-    // Include businesses
-    (places || []).forEach(p => {
-       const isBizClaimed = p.isClaimed || Boolean(p.claimedByEmail) || Boolean(p.website);
-       if (isBizClaimed) {
-          const bizEmail = p.claimedByEmail || `business_${p.id}@yoouz.com`;
-          if (isKeyDeleted(bizEmail) || isKeyDeleted(p.id)) return;
-          mergedList.push({
-            id: p.id,
-            uid: p.id,
-            name: p.name || "Business Owner",
-            email: bizEmail,
-            handle: p.id,
-            avatar: p.logoUrl || `/api/avatar?name=${encodeURIComponent(p.name || "Business")}&background=27272a&color=fff&bold=true&size=128`,
-            isVerified: Boolean(p.isClaimed || p.claimedByEmail),
-            isRegisteredAccount: true,
-            role: "Business",
-            website: p.website || '',
-            memberSince: "Active"
-          });
-       }
-    });
 
     // Final deduplication loop to aggressively merge records by Email or Name
     const finalList: any[] = [];
@@ -516,7 +501,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
        
        return !isIncomplete;
     });
-  }, [allUsers, videos, deletedUserKeys, places]);
+  }, [allUsers, videos, deletedUserKeys]);
 
   // All Comments aggregation for Moderation
   const allComments = useMemo(() => {
@@ -534,6 +519,44 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     return list;
   }, [videos]);
 
+  // Separate Creators vs Community Users
+  const { creatorsList, standardUsersList } = useMemo(() => {
+    const creators: any[] = [];
+    const regularUsers: any[] = [];
+
+    uniqueUsers.forEach((u) => {
+      const userVideos = videos.filter((v) =>
+        isAuthorMatch(v, {
+          name: u.name,
+          handle: `@${u.name}`,
+          email: u.email,
+          uid: u.uid || u.id
+        })
+      );
+      const isCreator = userVideos.length > 0 || u.role === "Creator";
+      const totalLikes = userVideos.reduce((acc, v) => acc + (v.likes || 0), 0);
+      const totalViews = userVideos.reduce((acc, v) => acc + (v.sharesCount || 0) * 10 + (v.likes || 0) * 5 + 15, 0);
+      const avgRating = userVideos.length > 0 ? (userVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / userVideos.length).toFixed(1) : "5.0";
+
+      const enriched = {
+        ...u,
+        videosCount: userVideos.length,
+        userVideos,
+        totalLikes,
+        totalViews,
+        avgRating
+      };
+
+      if (isCreator) {
+        creators.push(enriched);
+      } else {
+        regularUsers.push(enriched);
+      }
+    });
+
+    return { creatorsList: creators, standardUsersList: regularUsers };
+  }, [uniqueUsers, videos]);
+
   // Filtered Video List
   const filteredVideos = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -541,7 +564,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const matchQuery =
         !q ||
         (v.placeName && v.placeName.toLowerCase().includes(q)) ||
-        (v.author?.name && v.author.name.toLowerCase().includes(q)) ||
         (v.author?.name && v.author.name.toLowerCase().includes(q)) ||
         (v.caption && v.caption.toLowerCase().includes(q)) ||
         (v.id && v.id.toLowerCase().includes(q));
@@ -595,14 +617,53 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     });
   }, [places, searchQuery, subscriptionPlanFilter, subscriptionStatusFilter]);
 
-  // Filtered Users List
+  // Filtered Creators List
+  const filteredCreators = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return creatorsList.filter((c) => {
+      const matchQuery =
+        !q ||
+        (c.name && c.name.toLowerCase().includes(q)) ||
+        (c.handle && c.handle.toLowerCase().includes(q)) ||
+        (c.email && c.email.toLowerCase().includes(q));
+
+      const matchFilter =
+        creatorFilter === "all" ||
+        (creatorFilter === "verified" && c.isVerified) ||
+        (creatorFilter === "unverified" && !c.isVerified) ||
+        (creatorFilter === "top" && c.videosCount >= 2);
+
+      return matchQuery && matchFilter;
+    });
+  }, [creatorsList, searchQuery, creatorFilter]);
+
+  // Filtered Standard Users List
+  const filteredStandardUsers = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return standardUsersList.filter((u) => {
+      const matchQuery =
+        !q ||
+        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.handle && u.handle.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q));
+
+      const matchFilter =
+        userFilter === "all" ||
+        (userFilter === "verified" && u.isVerified) ||
+        (userFilter === "unverified" && !u.isVerified);
+
+      return matchQuery && matchFilter;
+    });
+  }, [standardUsersList, searchQuery, userFilter]);
+
+  // Filtered Users List (Combined fallback)
   const filteredUsers = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return uniqueUsers.filter((u) => {
       const matchQuery =
         !q ||
         (u.name && u.name.toLowerCase().includes(q)) ||
-        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.handle && u.handle.toLowerCase().includes(q)) ||
         (u.email && u.email.toLowerCase().includes(q));
 
       const matchType =
@@ -684,6 +745,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       claimedPlaces,
       unclaimedPlaces: totalPlaces - claimedPlaces,
       totalUsers: uniqueUsers.length,
+      totalCreators: creatorsList.length,
+      totalCommunityUsers: standardUsersList.length,
       avgRating,
       mrr,
       arr: mrr * 12,
@@ -693,7 +756,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       proCount,
       premiumCount
     };
-  }, [videos, places, uniqueUsers, allComments]);
+  }, [videos, places, uniqueUsers, creatorsList, standardUsersList, allComments]);
 
   // Multi-select handlers
   const handleSelectAllVideos = () => {
@@ -1028,6 +1091,57 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab("creators")}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "creators"
+                  ? "bg-white text-zinc-950 shadow-lg"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Award className="w-4 h-4 text-amber-400" />
+                Creators & Reviewers
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "creators" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-amber-400 border border-zinc-800"}`}>
+                {metrics.totalCreators}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "users"
+                  ? "bg-white text-zinc-950 shadow-lg"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4" />
+                Community Members
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "users" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+                {metrics.totalCommunityUsers}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("places")}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "places"
+                  ? "bg-white text-zinc-950 shadow-lg"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4" />
+                Places & Businesses
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "places" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+                {places.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("subscriptions")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "subscriptions"
@@ -1058,40 +1172,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
               <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "videos" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
                 {videos.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("places")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "places"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Building2 className="w-4 h-4" />
-                Places & Businesses
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "places" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
-                {places.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "users"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Users className="w-4 h-4" />
-                Users & Creators
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "users" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
-                {uniqueUsers.length}
               </span>
             </button>
 
@@ -1160,10 +1240,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             {(
               [
                 ["overview", "Overview"],
+                ["creators", `Creators (${metrics.totalCreators})`],
+                ["users", `Users (${metrics.totalCommunityUsers})`],
+                ["places", `Places (${places.length})`],
                 ["subscriptions", `Billing (${metrics.paidPlacesCount})`],
                 ["videos", `Videos (${videos.length})`],
-                ["places", `Places (${places.length})`],
-                ["users", `Users (${uniqueUsers.length})`],
                 ["comments", "Moderation"],
                 ["broadcast", "Broadcast"],
                 ["database", "Database"]
@@ -1207,24 +1288,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
 
               {/* Metric Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 <div 
                   onClick={() => setActiveTab("subscriptions")}
                   className="p-5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:border-zinc-700"
                 >
                   <div className="flex items-center justify-between text-zinc-200 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Monthly Revenue (MRR)</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Revenue (MRR)</span>
                     <DollarSign className="w-5 h-5 text-zinc-200" />
                   </div>
                   <div className="text-3xl font-black text-white">${metrics.mrr.toLocaleString()}</div>
                   <div className="flex items-center gap-2 text-xs text-zinc-200 mt-2">
-                    <span className="text-zinc-200 font-semibold">{metrics.paidPlacesCount} Paid Subscriptions</span>
+                    <span className="text-zinc-200 font-semibold">{metrics.paidPlacesCount} Paid</span>
                     <span>•</span>
                     <span className="text-zinc-200">${metrics.arr.toLocaleString()} ARR</span>
                   </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-sm relative overflow-hidden">
+                <div 
+                  onClick={() => setActiveTab("videos")}
+                  className="p-5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:border-zinc-700"
+                >
                   <div className="flex items-center justify-between text-zinc-200 mb-3">
                     <span className="text-xs font-bold uppercase tracking-wider">Video Reviews</span>
                     <Video className="w-5 h-5 text-zinc-200" />
@@ -1238,9 +1322,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-sm relative overflow-hidden">
+                <div 
+                  onClick={() => setActiveTab("places")}
+                  className="p-5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:border-zinc-700"
+                >
                   <div className="flex items-center justify-between text-zinc-200 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider">Places & Businesses</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Places / Businesses</span>
                     <Building2 className="w-5 h-5 text-zinc-200" />
                   </div>
                   <div className="text-3xl font-black text-white">{metrics.totalPlaces}</div>
@@ -1251,28 +1338,46 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-sm relative overflow-hidden">
+                <div 
+                  onClick={() => setActiveTab("creators")}
+                  className="p-5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:border-zinc-700"
+                >
                   <div className="flex items-center justify-between text-zinc-200 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider">Community Members</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Creators</span>
+                    <Award className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div className="text-3xl font-black text-white">{metrics.totalCreators}</div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-200 mt-2">
+                    <span className="text-amber-400 font-semibold">{metrics.totalVideos} Videos</span>
+                    <span>Authored</span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => setActiveTab("users")}
+                  className="p-5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:border-zinc-700"
+                >
+                  <div className="flex items-center justify-between text-zinc-200 mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider">Community Users</span>
                     <Users className="w-5 h-5 text-zinc-200" />
                   </div>
-                  <div className="text-3xl font-black text-white">{metrics.totalUsers}</div>
+                  <div className="text-3xl font-black text-white">{metrics.totalCommunityUsers}</div>
                   <div className="flex items-center gap-2 text-xs text-zinc-200 mt-2">
-                    <span className="text-zinc-200 font-semibold">100% Active</span>
-                    <span>Accounts Synced</span>
+                    <span className="text-zinc-200 font-semibold">Registered</span>
+                    <span>Accounts</span>
                   </div>
                 </div>
 
                 <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-sm relative overflow-hidden">
                   <div className="flex items-center justify-between text-zinc-200 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider">Social Interactions</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Interactions</span>
                     <Heart className="w-5 h-5 text-zinc-200" />
                   </div>
                   <div className="text-3xl font-black text-white">{metrics.totalLikes + metrics.totalComments}</div>
                   <div className="flex items-center gap-2 text-xs text-zinc-200 mt-2">
                     <span>{metrics.totalLikes} Likes</span>
                     <span>•</span>
-                    <span>{metrics.totalComments} Comments</span>
+                    <span>{metrics.totalComments} Comm.</span>
                   </div>
                 </div>
               </div>
@@ -2193,25 +2298,189 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
           )}
 
-          {/* TAB 4: USERS & CREATORS */}
+          {/* TAB: CREATORS & REVIEWERS */}
+          {activeTab === "creators" && (
+            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+              <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-amber-400" />
+                    <span className="text-sm font-bold text-white">Creators & Video Reviewers</span>
+                  </div>
+
+                  <select
+                    value={creatorFilter}
+                    onChange={(e) => setCreatorFilter(e.target.value as any)}
+                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
+                  >
+                    <option value="all">All Creators ({creatorsList.length})</option>
+                    <option value="verified">Verified Creators Only ({creatorsList.filter((c) => c.isVerified).length})</option>
+                    <option value="top">Top Creators (3+ Reviews)</option>
+                  </select>
+                </div>
+
+                <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
+                  Showing <span className="text-amber-400 font-bold">{filteredCreators.length}</span> creators
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCreators.map((creator) => {
+                  const creatorVideos = videos.filter((v) =>
+                    isAuthorMatch(v, {
+                      name: creator.name,
+                      handle: `@${creator.name}`,
+                      email: creator.email,
+                      uid: creator.uid || creator.id
+                    })
+                  );
+
+                  const totalLikes = creatorVideos.reduce((acc, v) => acc + (v.likes || 0), 0);
+                  const totalViews = creatorVideos.reduce((acc, v) => acc + (v.views || 0), 0);
+                  const avgCreatorRating = creatorVideos.length > 0 
+                    ? (creatorVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / creatorVideos.length).toFixed(1)
+                    : "5.0";
+
+                  return (
+                    <div
+                      key={creator.name || creator.email || creator.id}
+                      className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col justify-between space-y-4"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-13 h-13 rounded-full bg-zinc-950 border border-amber-500/30 overflow-hidden shrink-0 relative">
+                          <img 
+                            src={creator.avatar} 
+                            alt="" 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => { 
+                              const target = e.currentTarget as HTMLImageElement; 
+                              if (!target.src.includes('/api/avatar')) { 
+                                target.src = `/api/avatar?name=${encodeURIComponent(creator.name || "Creator")}&background=27272a&color=fff`; 
+                              } 
+                            }} 
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-bold text-white text-base truncate">{creator.name}</h3>
+                            {creator.isVerified && (
+                              <BadgeCheck className="w-4 h-4 text-amber-400 shrink-0" title="Verified Creator" />
+                            )}
+                          </div>
+                          
+                          <p className="text-xs text-amber-400/90 font-mono truncate">
+                            {creator.handle ? (creator.handle.startsWith("@") ? creator.handle : `@${creator.handle}`) : `@${creator.name}`}
+                          </p>
+
+                          {creator.email && <p className="text-[11px] text-zinc-400 truncate mt-0.5">{creator.email}</p>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-center">
+                        <div>
+                          <div className="text-[10px] text-zinc-400 uppercase font-bold">Reviews</div>
+                          <div className="font-black text-white text-sm">{creatorVideos.length}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-zinc-400 uppercase font-bold">Likes</div>
+                          <div className="font-black text-white text-sm">{totalLikes}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-zinc-400 uppercase font-bold">Avg Rating</div>
+                          <div className="font-black text-amber-400 text-sm flex items-center justify-center gap-0.5">
+                            <Star className="w-3 h-3 fill-amber-400" /> {avgCreatorRating}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2 pt-2 border-t border-zinc-800">
+                        <div className="flex items-center justify-between">
+                          <button
+                            onClick={() => setEditUserModal(creator)}
+                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5" /> Edit Creator
+                          </button>
+                          
+                          <div className="flex items-center gap-1">
+                            {creatorVideos.length > 0 && (
+                              <button
+                                onClick={() => {
+                                  const userVidIds = creatorVideos.map((v) => v.id);
+                                  if (onBulkDeleteVideos) onBulkDeleteVideos(userVidIds);
+                                  showToast(`Removed all ${userVidIds.length} reviews for @${creator.name}`);
+                                }}
+                                className="px-2.5 py-1.5 text-orange-400 hover:bg-orange-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                                title="Remove this creator's videos (keeps account intact)"
+                              >
+                                Clear Reviews
+                              </button>
+                            )}
+
+                            {confirmDeleteUserId === (creator.id || creator.uid) ? (
+                              <div className="flex items-center gap-1.5 bg-red-950/60 border border-red-900/60 p-1 rounded-xl">
+                                <span className="text-[11px] font-bold text-red-300 px-1">Delete?</span>
+                                <button
+                                  onClick={() => executeDeleteUser(creator)}
+                                  className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteUserId(null)}
+                                  className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteUserId(creator.id || creator.uid)}
+                                className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                title="Delete creator account"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filteredCreators.length === 0 && (
+                <div className="py-16 text-center text-zinc-400 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800">
+                  No creators found matching criteria.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: COMMUNITY MEMBERS */}
           {activeTab === "users" && (
             <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-zinc-200" />
+                    <span className="text-sm font-bold text-white">Community Members</span>
+                  </div>
+
                   <select
-                    value={userTypeFilter}
-                    onChange={(e) => setUserTypeFilter(e.target.value as any)}
+                    value={userFilter}
+                    onChange={(e) => setUserFilter(e.target.value as any)}
                     className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
                   >
-                    <option value="all">All User Accounts ({uniqueUsers.length})</option>
-                    <option value="registered">Registered Cloud Accounts</option>
-                    <option value="creators">Video Creators Only</option>
-                    <option value="business">Business Owners</option>
+                    <option value="all">All Members ({standardUsersList.length})</option>
+                    <option value="verified">Verified Members ({standardUsersList.filter((u) => u.isVerified).length})</option>
+                    <option value="unverified">Standard Members</option>
                   </select>
 
                   {confirmPurgeAllUsers ? (
                     <div className="flex items-center gap-1.5 bg-red-950/80 border border-red-800 px-2 py-1 rounded-xl">
-                      <span className="text-xs text-red-200 font-bold">Purge ALL users & kick active logins?</span>
+                      <span className="text-xs text-red-200 font-bold">Purge ALL user accounts?</span>
                       <button
                         onClick={handleExecutePurgeAllUsers}
                         disabled={isPurgingUsers}
@@ -2230,28 +2499,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <button
                       onClick={() => setConfirmPurgeAllUsers(true)}
                       className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      title="Delete all user accounts and force logouts"
+                      title="Delete all user accounts"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-red-400" /> Purge All Users
                     </button>
                   )}
                 </div>
-                <div className="text-xs text-zinc-200 font-semibold">
-                  Showing {filteredUsers.length} active users
+
+                <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
+                  Showing <span className="text-white font-bold">{filteredStandardUsers.length}</span> active members
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredUsers.map((user) => {
-                  const userVideos = videos.filter((v) =>
-                    isAuthorMatch(v, {
-                      name: user.name,
-                      handle: `@${user.name}`,
-                      email: user.email,
-                      uid: user.uid || user.id
-                    })
-                  );
-
+                {filteredStandardUsers.map((user) => {
                   return (
                     <div
                       key={user.name || user.email || user.id}
@@ -2259,30 +2520,37 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     >
                       <div className="flex items-center gap-3.5">
                         <div className="w-12 h-12 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0">
-                          <img src={user.avatar} alt="" className="w-full h-full object-cover"  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+                          <img 
+                            src={user.avatar} 
+                            alt="" 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => { 
+                              const target = e.currentTarget as HTMLImageElement; 
+                              if (!target.src.includes('/api/avatar')) { 
+                                target.src = `/api/avatar?name=${encodeURIComponent(user.name || "User")}&background=27272a&color=fff`; 
+                              } 
+                            }} 
+                          />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <h3 className="font-bold text-white text-base truncate">{user.name}</h3>
                             {user.isVerified && <BadgeCheck className="w-4 h-4 text-zinc-200 shrink-0" />}
                           </div>
                           
-                          {user.email && <p className="text-xs text-zinc-200 truncate">{user.email}</p>}
-                          {user.website && (
-                            <div className="flex items-center gap-1 mt-1 text-xs text-zinc-300">
-                              <Globe className="w-3 h-3 shrink-0" />
-                              <a href={user.website} target="_blank" rel="noreferrer" className="hover:underline truncate">
-                                {user.website.replace(/^https?:\/\//, "")}
-                              </a>
-                            </div>
+                          {user.email && <p className="text-xs text-zinc-300 truncate">{user.email}</p>}
+                          {user.city && (
+                            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                              {user.city}{user.country ? `, ${user.country}` : ""}
+                            </p>
                           )}
                         </div>
                       </div>
 
                       <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-xs flex items-center justify-between">
                         <div>
-                          <span className="text-zinc-200">Reviews Authored: </span>
-                          <span className="font-bold text-white">{userVideos.length}</span>
+                          <span className="text-zinc-400">Account Type: </span>
+                          <span className="font-bold text-white">Community Member</span>
                         </div>
                         <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700 font-semibold text-[10px]">
                           {user.role || "Member"}
@@ -2297,48 +2565,32 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           >
                             <Edit className="w-3.5 h-3.5" /> Edit Profile
                           </button>
-                          
-                          <div className="flex items-center gap-1">
-                            {userVideos.length > 0 && (
-                              <button
-                                onClick={() => {
-                                  const userVidIds = userVideos.map((v) => v.id);
-                                  if (onBulkDeleteVideos) onBulkDeleteVideos(userVidIds);
-                                  showToast(`Removed all ${userVidIds.length} reviews for @${user.name}`);
-                                }}
-                                className="px-2.5 py-1.5 text-orange-400 hover:bg-orange-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                                title="Remove this user's videos (keeps account intact)"
-                              >
-                                Clear Reviews
-                              </button>
-                            )}
 
-                            {confirmDeleteUserId === (user.id || user.uid) ? (
-                              <div className="flex items-center gap-1.5 bg-red-950/60 border border-red-900/60 p-1 rounded-xl">
-                                <span className="text-[11px] font-bold text-red-300 px-1">Delete user?</span>
-                                <button
-                                  onClick={() => executeDeleteUser(user)}
-                                  className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
-                                >
-                                  Yes
-                                </button>
-                                <button
-                                  onClick={() => setConfirmDeleteUserId(null)}
-                                  className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
+                          {confirmDeleteUserId === (user.id || user.uid) ? (
+                            <div className="flex items-center gap-1.5 bg-red-950/60 border border-red-900/60 p-1 rounded-xl">
+                              <span className="text-[11px] font-bold text-red-300 px-1">Delete user?</span>
                               <button
-                                onClick={() => setConfirmDeleteUserId(user.id || user.uid)}
-                                className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
-                                title="Delete entire user account"
+                                onClick={() => executeDeleteUser(user)}
+                                className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
                               >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                                Yes
                               </button>
-                            )}
-                          </div>
+                              <button
+                                onClick={() => setConfirmDeleteUserId(null)}
+                                className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDeleteUserId(user.id || user.uid)}
+                              className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                              title="Delete entire user account"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2346,9 +2598,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 })}
               </div>
 
-              {filteredUsers.length === 0 && (
-                <div className="py-16 text-center text-zinc-200 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800">
-                  No users found.
+              {filteredStandardUsers.length === 0 && (
+                <div className="py-16 text-center text-zinc-400 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800">
+                  No community members found.
                 </div>
               )}
             </div>
@@ -3079,11 +3331,51 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
 
             <div className="space-y-4 text-sm">
+              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-zinc-950 border border-zinc-800">
+                <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0 relative group">
+                  <img
+                    src={editUserModal.avatar || `/api/avatar?name=${encodeURIComponent(editUserModal.name || "User")}&background=27272a&color=fff`}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      if (!target.src.includes('/api/avatar')) {
+                        target.src = `/api/avatar?name=${encodeURIComponent(editUserModal.name || "User")}&background=27272a&color=fff`;
+                      }
+                    }}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-white truncate">{editUserModal.name || "User"}</p>
+                  <p className="text-[11px] text-zinc-400 truncate">{editUserModal.email || "No email"}</p>
+                  <label className="text-[11px] text-blue-400 hover:text-blue-300 font-medium underline mt-1 cursor-pointer block">
+                    Upload Avatar Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            if (typeof reader.result === "string") {
+                              setEditUserModal({ ...editUserModal, avatar: reader.result });
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-zinc-200 mb-1">Display Name</label>
                 <input
                   type="text"
-                  value={editUserModal.name}
+                  value={editUserModal.name || ""}
                   onChange={(e) => setEditUserModal({ ...editUserModal, name: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
                 />
@@ -3093,8 +3385,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <label className="block text-xs font-bold text-zinc-200 mb-1">Handle (@username)</label>
                 <input
                   type="text"
-                  value={editUserModal.name}
+                  value={editUserModal.handle ? editUserModal.handle.replace(/^@/, "") : ""}
                   onChange={(e) => setEditUserModal({ ...editUserModal, handle: e.target.value.replace(/^@/, "") })}
+                  placeholder="e.g. alex_travels"
                   className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
                 />
               </div>
@@ -3103,9 +3396,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <label className="block text-xs font-bold text-zinc-200 mb-1">Avatar Image URL</label>
                 <input
                   type="text"
-                  value={editUserModal.avatar}
+                  value={editUserModal.avatar || ""}
                   onChange={(e) => setEditUserModal({ ...editUserModal, avatar: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
+                  placeholder="https://... or data:image/..."
+                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 text-xs font-mono"
                 />
               </div>
 
@@ -3130,10 +3424,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    showToast(`Updated user @${editUserModal.name}.`);
+                    if (onUpdateUser) {
+                      onUpdateUser(editUserModal);
+                    }
+                    showToast(`Saved user @${editUserModal.name || "User"}.`);
                     setEditUserModal(null);
                   }}
-                  className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl cursor-pointer"
+                  className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl cursor-pointer shadow-lg"
                 >
                   Save Profile
                 </button>

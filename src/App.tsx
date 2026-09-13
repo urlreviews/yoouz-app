@@ -1023,6 +1023,42 @@ export function App() {
     } catch (e) {}
   };
 
+  const handleAdminUpdateUser = (updatedUser: any) => {
+    const targetEmail = (updatedUser.email || "").toLowerCase().trim();
+    const targetId = (updatedUser.id || updatedUser.uid || "").trim();
+
+    setAllRegisteredUsers((prev) =>
+      prev.map((u) => {
+        const match =
+          (targetEmail && u.email && u.email.toLowerCase() === targetEmail) ||
+          (targetId && (u.id === targetId || u.uid === targetId));
+        return match ? { ...u, ...updatedUser } : u;
+      })
+    );
+
+    if (
+      currentUser &&
+      ((targetEmail && currentUser.email && currentUser.email.toLowerCase() === targetEmail) ||
+        (targetId && (currentUser.id === targetId || currentUser.uid === targetId)))
+    ) {
+      setCurrentUser((prev: any) => (prev ? { ...prev, ...updatedUser } : prev));
+    }
+
+    fetch("/api/user/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: updatedUser.email,
+        name: updatedUser.name,
+        handle: updatedUser.handle,
+        bio: updatedUser.bio,
+        avatar: updatedUser.avatar,
+        role: updatedUser.role,
+        isVerified: updatedUser.isVerified
+      })
+    }).catch(() => {});
+  };
+
   // Synchronize URL: Keep it clean (root only) as requested by the user.
   // Synchronize App State to URL (True Client-Side Routing for SEO)
   useEffect(() => {
@@ -5021,6 +5057,7 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 clubs={clubs}
                 onDeleteUser={handleAdminDeleteUser}
+                onUpdateUser={handleAdminUpdateUser}
                 onPurgeAllUsers={() => {
                   forceLogoutUser("All users purged by admin");
                   setAllRegisteredUsers([]);
