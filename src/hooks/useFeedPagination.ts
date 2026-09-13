@@ -125,6 +125,41 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
     if (Array.isArray(extraDeletedIds) && extraDeletedIds.includes(id)) return true;
   }
   if (id === "rev-12345" || id.startsWith("rev-test") || id.startsWith("rev-err-")) return true;
+
+  // Check deleted places from localStorage
+  try {
+    const deletedPlacesStr = localStorage.getItem("copo_deleted_places") || localStorage.getItem("yoouz_deleted_places") || "[]";
+    const deletedPlaces: string[] = JSON.parse(deletedPlacesStr);
+    if (Array.isArray(deletedPlaces) && deletedPlaces.length > 0) {
+      const pId = (v.placeId || "").toLowerCase();
+      const pName = (v.placeName || "").toLowerCase();
+      if (deletedPlaces.some(dp => {
+        const dpLow = String(dp).toLowerCase();
+        return dpLow === pId || dpLow === pName || pName.includes(dpLow);
+      })) {
+        return true;
+      }
+    }
+  } catch (e) {}
+
+  // Check deleted users from localStorage
+  try {
+    const deletedUsersStr = localStorage.getItem("copo_deleted_users") || localStorage.getItem("yoouz_deleted_users") || "[]";
+    const deletedUsers: string[] = JSON.parse(deletedUsersStr);
+    if (Array.isArray(deletedUsers) && deletedUsers.length > 0) {
+      const uId = (v.userId || "").toLowerCase();
+      const uEmail = (v.userEmail || "").toLowerCase();
+      const uName = (v.author?.name || v.authorName || "").toLowerCase();
+      const uHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase();
+      if (deletedUsers.some(du => {
+        const duLow = String(du).toLowerCase();
+        return duLow === uId || duLow === uEmail || duLow === uName || duLow === uHandle;
+      })) {
+        return true;
+      }
+    }
+  } catch (e) {}
+
   if (v.placeId === "yoouz.com" || v.placeId === "avis.com" || v.placeId === "hertz.com" || v.placeId === "test" || v.placeId === "testplace.com") return true;
   const placeNameLower = (v.placeName || "").toLowerCase();
   if (placeNameLower === "yoouz" || placeNameLower === "hertz" || placeNameLower === "car rentals from avis" || placeNameLower.includes("test place") || placeNameLower.includes("test user") || placeNameLower.includes("culver")) return true;
@@ -557,7 +592,7 @@ export function useFeedPagination() {
 
     setupSse();
 
-    // 3. Listen for live video deletion events in current window
+    // 3. Listen for live video, place, and user deletion events in current window
     const handleVideoDeletedEvent = (e: any) => {
       const deletedId = e?.detail?.videoId;
       if (deletedId) {
@@ -567,9 +602,56 @@ export function useFeedPagination() {
     };
     const handleVideosPurgedEvent = () => {
       setVideos([]);
+      try {
+        localStorage.removeItem("yoouz_cached_videos_v28");
+        localStorage.removeItem("yoouz_cached_videos_v27");
+        localStorage.removeItem("yoouz_cached_videos_v26");
+        localStorage.removeItem("yoouz_cached_videos_v25");
+        localStorage.removeItem("yoouz_local_created_reviews");
+        localStorage.removeItem("copo_videos");
+      } catch (e) {}
     };
+
+    const handlePlaceDeletedEvent = (e: any) => {
+      const vars: string[] = Array.isArray(e?.detail?.variants) ? e.detail.variants : (e?.detail?.placeId ? [e.detail.placeId] : []);
+      const varsLow = vars.map(v => String(v).toLowerCase());
+      if (varsLow.length > 0) {
+        setVideos((prev) => prev.filter((v) => {
+          const pId = (v.placeId || "").toLowerCase();
+          const pName = (v.placeName || "").toLowerCase();
+          return !varsLow.some(val => val === pId || val === pName || (val.length > 3 && pName.includes(val)));
+        }));
+      }
+    };
+
+    const handlePlacesPurgedEvent = () => {
+      setVideos([]);
+    };
+
+    const handleUserDeletedEvent = (e: any) => {
+      const uIds: string[] = Array.isArray(e?.detail?.userIds) ? e.detail.userIds : (e?.detail?.userId ? [e.detail.userId] : []);
+      const uIdsLow = uIds.map(u => String(u).toLowerCase());
+      if (uIdsLow.length > 0) {
+        setVideos((prev) => prev.filter((v) => {
+          const uId = (v.userId || "").toLowerCase();
+          const uEmail = (v.userEmail || "").toLowerCase();
+          const uName = (v.author?.name || v.authorName || "").toLowerCase();
+          const uHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase();
+          return !uIdsLow.some(val => val === uId || val === uEmail || val === uName || val === uHandle);
+        }));
+      }
+    };
+
+    const handleUsersPurgedEvent = () => {
+      setVideos([]);
+    };
+
     window.addEventListener("copo-video-deleted", handleVideoDeletedEvent);
     window.addEventListener("copo-videos-purged", handleVideosPurgedEvent);
+    window.addEventListener("copo-place-deleted", handlePlaceDeletedEvent);
+    window.addEventListener("copo-places-purged", handlePlacesPurgedEvent);
+    window.addEventListener("copo-user-deleted", handleUserDeletedEvent);
+    window.addEventListener("copo-users-purged", handleUsersPurgedEvent);
 
     // Initial load
     loadData(false);
@@ -617,6 +699,10 @@ export function useFeedPagination() {
       }
       window.removeEventListener("copo-video-deleted", handleVideoDeletedEvent);
       window.removeEventListener("copo-videos-purged", handleVideosPurgedEvent);
+      window.removeEventListener("copo-place-deleted", handlePlaceDeletedEvent);
+      window.removeEventListener("copo-places-purged", handlePlacesPurgedEvent);
+      window.removeEventListener("copo-user-deleted", handleUserDeletedEvent);
+      window.removeEventListener("copo-users-purged", handleUsersPurgedEvent);
       window.removeEventListener("focus", handleVisibilityOrFocus);
       document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
       window.removeEventListener("online", handleOnline);

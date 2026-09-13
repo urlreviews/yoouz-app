@@ -380,35 +380,6 @@ function readReviewsIndex(): any[] {
     }
   } catch (e) {}
 
-  // Robust seed fallback ONLY if reviews_index.json has NEVER been initialized
-  const seedCandidates = [
-    path.join(process.cwd(), "public", "seeds", "reviews_index.json"),
-    path.join(process.cwd(), "public", "reviews_index.json"),
-    path.join(process.cwd(), "dist", "reviews_index.json")
-  ];
-
-  for (const seedPath of seedCandidates) {
-    try {
-      if (fs.existsSync(seedPath)) {
-        const raw = fs.readFileSync(seedPath, "utf8");
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const filtered = parsed.filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
-          try {
-            if (!fs.existsSync(globalUploadsDir)) {
-              fs.mkdirSync(globalUploadsDir, { recursive: true });
-            }
-            fs.writeFileSync(reviewsIndexPath, JSON.stringify(filtered, null, 2), "utf8");
-            console.log(`📦 [Server] Auto-initialized ${filtered.length} reviews from seed ${seedPath}`);
-          } catch (writeErr) {
-            console.warn("Notice writing seed reviews index:", writeErr);
-          }
-          return filtered;
-        }
-      }
-    } catch (err) {}
-  }
-
   return [];
 }
 
@@ -416,6 +387,9 @@ function writeReviewsIndex(list: any[]): void {
   try {
     const deletedSet = new Set(readDeletedReviewsIndex());
     const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+    if (!fs.existsSync(globalUploadsDir)) {
+      fs.mkdirSync(globalUploadsDir, { recursive: true });
+    }
     fs.writeFileSync(reviewsIndexPath, JSON.stringify(sanitized, null, 2), "utf8");
 
     // Keep memory feedCache instantly synchronized
@@ -3382,7 +3356,31 @@ async function purgePlaceFromAllStores(placeId: string, additionalVariants: stri
     } catch (e) {}
   }
 
-  // 4. Broadcast real-time SSE event to all connected clients
+  // 4. Also purge all video reviews associated with this place
+  try {
+    const list = readReviewsIndex();
+    const placeVideoIds = list.filter((v: any) => v && isDeletedPlaceServer(v, new Set(allVariants.map(s => s.toLowerCase())))).map((v: any) => String(v.id));
+    for (const vidId of placeVideoIds) {
+      await purgeVideoFromAllStores(vidId);
+    }
+    if (bunnyClient) {
+      for (const v of allVariants) {
+        try {
+          const vRows = await bunnyClient.execute({
+            sql: `SELECT id FROM videoReviews WHERE placeId = ? OR placeName = ? OR data LIKE ?`,
+            args: [v, v, `%"${v}"%`]
+          });
+          if (vRows && vRows.rows) {
+            for (const row of vRows.rows) {
+              if (row.id) await purgeVideoFromAllStores(String(row.id));
+            }
+          }
+        } catch (e) {}
+      }
+    }
+  } catch (e) {}
+
+  // 5. Broadcast real-time SSE event to all connected clients
   broadcastSseEvent({
     type: "place_deleted",
     placeId: rawId,
@@ -3432,6 +3430,14 @@ async function purgeAllPlacesFromAllStores() {
   if (collectedIds.length > 0) {
     recordDeletedPlaceIds(collectedIds);
   }
+
+  // Also purge all video reviews associated with places
+  try {
+    const list = readReviewsIndex();
+    for (const v of list) {
+      if (v && v.id) await purgeVideoFromAllStores(String(v.id));
+    }
+  } catch (e) {}
 
   broadcastSseEvent({ type: "places_purged" });
 
@@ -4267,6 +4273,37 @@ app.post('/api/admin/users/delete', express.json(), async (req, res) => {
     ].filter(Boolean);
     recordDeletedUserIds(extraUserIdentifiers);
 
+    // Purge all video reviews authored by this user from all stores
+    try {
+      const allVideos = readReviewsIndex();
+      const userVideoIds: string[] = [];
+      for (const v of allVideos) {
+        if (v && isDeletedUserServer(v, new Set(extraUserIdentifiers.map(s => s.toLowerCase())))) {
+          userVideoIds.push(String(v.id));
+        }
+      }
+      for (const vid of userVideoIds) {
+        await purgeVideoFromAllStores(vid);
+      }
+      if (bunnyDb) {
+        try {
+          for (const uidStr of extraUserIdentifiers) {
+            const bRows = await bunnyDb.execute({
+              sql: `SELECT id FROM videoReviews WHERE userId = ? OR authorName = ? OR data LIKE ?`,
+              args: [uidStr, uidStr, `%"${uidStr}"%`]
+            });
+            if (bRows && bRows.rows) {
+              for (const row of bRows.rows) {
+                if (row.id) {
+                  await purgeVideoFromAllStores(String(row.id));
+                }
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    } catch (e) {}
+
     // Broadcast instant kick/logout SSE event to all connected clients
     broadcastSseEvent({
       type: "user_deleted",
@@ -4351,6 +4388,14 @@ app.post('/api/admin/users/purge-all', express.json(), async (req, res) => {
       } catch (e) {}
     }
 
+    // Also purge all videos created by users
+    try {
+      const allVideos = readReviewsIndex();
+      for (const v of allVideos) {
+        if (v && v.id) await purgeVideoFromAllStores(String(v.id));
+      }
+    } catch (e) {}
+
     broadcastSseEvent({
       type: "users_purged",
       purgedCount: recordedList.length
@@ -4378,6 +4423,16 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
     if (colName === 'users') {
       recordDeletedUserIds([id]);
+      // Purge all video reviews authored by this user
+      try {
+        const allVideos = readReviewsIndex();
+        for (const v of allVideos) {
+          if (v && isDeletedUserServer(v, new Set([id.toLowerCase()]))) {
+            await purgeVideoFromAllStores(String(v.id));
+          }
+        }
+      } catch (e) {}
+
       broadcastSseEvent({
         type: "user_deleted",
         userId: id,
@@ -10203,12 +10258,46 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     }
   });
 
-  // Admin Purge All Videos Endpoint (Removes all recorded video files, reviews, users, bookings, and chats)
+  // Admin Purge All Videos Endpoint (Removes all recorded video files and reviews permanently)
   app.post("/api/admin/videos/purge-all", async (req, res) => {
     try {
-      // 1. Clear PostgreSQL and simulated NoSQL database tables
+      const deletedIds = new Set<string>();
+      const existingReviews = readReviewsIndex();
+      existingReviews.forEach(r => { if (r && r.id) deletedIds.add(String(r.id)); });
+
+      const bunnyClient = getBunnyDb();
+      if (bunnyClient) {
+        try {
+          const bRows = await bunnyClient.execute("SELECT id FROM videoReviews");
+          if (bRows && bRows.rows) {
+            for (const row of bRows.rows) {
+              if (row.id) deletedIds.add(String(row.id));
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (deletedIds.size > 0) {
+        recordDeletedReviews(Array.from(deletedIds));
+      }
+
+      // 1. Clear reviews index
       try { writeReviewsIndex([]); } catch(e) {}
-      try { if (fs.existsSync(reviewsIndexPath)) fs.unlinkSync(reviewsIndexPath); } catch(e) {}
+
+      // 2. Clear tables in Bunny Database (libSQL)
+      if (bunnyClient) {
+        try {
+          await bunnyClient.execute("DELETE FROM videoReviews");
+          await bunnyClient.execute("DELETE FROM comments");
+          await bunnyClient.execute("DELETE FROM likes");
+          await bunnyClient.execute("DELETE FROM bookmarks");
+          await bunnyClient.execute("DELETE FROM shares");
+        } catch (bErr) {
+          console.warn("BunnyDB purge notice:", bErr);
+        }
+      }
+
+      // 3. Clear PostgreSQL tables
       try {
         const table = getNoSqlTable('videoReviews');
         if (table) await db.delete(table);
@@ -10216,50 +10305,26 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       try {
         await db.delete(reviews);
       } catch(e) {}
-      try {
-        await db.delete(bookings);
-      } catch(e) {}
-      try {
-        await db.delete(users);
-      } catch(e) {}
-      try {
-        const table = getNoSqlTable('users');
-        if (table) await db.delete(table);
-      } catch(e) {}
-      try {
-        const table = getNoSqlTable('chats');
-        if (table) await db.delete(table);
-      } catch(e) {}
-
-      // Clear tables in Bunny Database (libSQL)
-      const bunnyClient = getBunnyDb();
-      if (bunnyClient) {
-        try {
-          await bunnyClient.execute("DELETE FROM videoReviews");
-          await bunnyClient.execute("DELETE FROM comments");
-          await bunnyClient.execute("DELETE FROM likes");
-          await bunnyClient.execute("DELETE FROM bookmarks");
-        } catch (bErr) {
-          console.warn("BunnyDB purge notice:", bErr);
-        }
-      }
       
-      // 2. Remove all files from uploads/ directory
+      // 4. Remove all files from uploads/ directory
       if (fs.existsSync(uploadsDir)) {
         const files = fs.readdirSync(uploadsDir);
         for (const file of files) {
+          if (file.endsWith(".json")) continue; // Keep index file structures
           try {
             fs.unlinkSync(path.join(uploadsDir, file));
           } catch (e) {}
         }
       }
 
-      // 3. Reset in-memory feed cache & broadcast real-time purge to all active browsers
+      // 5. Reset in-memory feed cache & broadcast real-time purge to all active browsers
       feedCache.videos = [];
-      feedCache.lastFetched = 0;
+      feedCache.lastFetched = Date.now();
       broadcastSseEvent({ type: "purge_all_videos" });
+      broadcastSseEvent({ type: "videos_purged" });
+      broadcastSseEvent({ type: "feed_updated", videos: [] });
 
-      return res.json({ success: true, message: "All video reviews, users, bookings, and simulated data successfully purged from the server." });
+      return res.json({ success: true, count: deletedIds.size, message: "All video reviews successfully purged permanently across all stores." });
     } catch (err: any) {
       console.error("Admin purge all error:", err);
       return res.status(500).json({ error: err.message });
