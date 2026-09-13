@@ -549,14 +549,10 @@ export const CopoAuthPrompt: React.FC<{
         </div>
       )}
 
-      <div className="w-full max-w-sm mx-auto flex flex-col items-center text-center space-y-4 py-2 sm:py-6 sm:my-auto pb-6">
+      <div className="w-full max-w-sm sm:max-w-md mx-auto flex flex-col items-center text-center space-y-4 py-2 sm:py-5 sm:my-auto pb-6">
         
-        {/* Step-Aware Brand / Profile Icon */}
-        {step === 'profile' ? (
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-xl shrink-0">
-            <User className="w-6 h-6 text-zinc-200" />
-          </div>
-        ) : (
+        {/* Step-Aware Brand / Profile Icon (hidden during profile step for clean hero focus) */}
+        {step !== 'profile' && (
           <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-[0_4px_24px_rgba(0,0,0,0.5)] shrink-0">
             <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -568,11 +564,11 @@ export const CopoAuthPrompt: React.FC<{
           <h1 className="text-[21px] sm:text-2xl font-bold text-white tracking-tight font-['Google_Sans',sans-serif] leading-tight">
             {step === 'code' ? t("auth.checkEmailTitle", "Check your email") : step === 'profile' ? t("auth.completeProfileTitle", "Complete your profile") : copy.title}
           </h1>
-          <p className="text-[12.5px] text-zinc-300 font-normal leading-relaxed">
+          <p className="text-[12.5px] text-zinc-400 font-normal leading-relaxed">
             {step === 'code' 
               ? `${t("auth.sentCodeTo", "We sent a 6-digit confirmation code to")} ${email}`
               : step === 'profile'
-                ? t("auth.enterNameSymbolDesc", "Enter your first and last name to activate your profile and start creating. Other details are optional.")
+                ? t("auth.completeProfileSubtitle", "Set up your photo and name to get started.")
                 : copy.subtitle}
           </p>
         </div>
@@ -731,9 +727,9 @@ export const CopoAuthPrompt: React.FC<{
           </form>
         )}
 
-        {/* STEP 3: Profile Setup (First Name & Last Name with asterisk *, Photo & Banner upload, Location Optional) */}
+        {/* STEP 3: Profile Setup (Luxury Integrated Avatar/Cover & Structured Form) */}
         {step === 'profile' && (
-          <form onSubmit={(e) => handleSaveProfile(e)} className="w-full max-w-sm space-y-4 pt-1 text-left">
+          <form onSubmit={(e) => handleSaveProfile(e)} className="w-full max-w-sm sm:max-w-md space-y-4 pt-1 text-left">
             
             {/* Hidden File Inputs */}
             <input
@@ -751,50 +747,44 @@ export const CopoAuthPrompt: React.FC<{
               className="hidden"
             />
 
-            {/* Profile Avatar & Banner Media Preview / Upload Area */}
-            <div className="w-full bg-zinc-900/80 border border-zinc-800/90 rounded-2xl p-3 space-y-3 shadow-inner">
-              {/* Cover Banner Uploader */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5 px-0.5">
-                  <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">
-                    {t("profile.coverBanner", "Cover Banner")}
-                  </span>
-                  <span className="text-[10px] text-zinc-400 font-normal">
-                    {t("common.optional", "optional")}
-                  </span>
-                </div>
-                <div
-                  onClick={() => bannerInputRef.current?.click()}
-                  className="relative w-full h-20 rounded-xl overflow-hidden bg-zinc-950 border border-dashed border-zinc-700/80 hover:border-zinc-500 flex items-center justify-center cursor-pointer group transition-all"
-                >
-                  {banner ? (
-                    <>
-                      <img
-                        src={banner}
-                        alt="Cover preview"
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-xs text-white font-medium backdrop-blur-xs">
-                        <Camera className="w-4 h-4" />
-                        <span>{t("profile.changeBanner", "Change Cover")}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-1 text-zinc-400 group-hover:text-zinc-200 transition-colors">
-                      <Camera className="w-5 h-5" />
-                      <span className="text-[11px] font-medium">{t("profile.uploadBanner", "Upload Cover Photo")}</span>
+            {/* Integrated Cover & Profile Photo Hero */}
+            <div className="relative w-full rounded-2xl overflow-hidden bg-zinc-900/90 border border-zinc-800/90 shadow-md">
+              {/* Cover Banner Area */}
+              <div
+                onClick={() => bannerInputRef.current?.click()}
+                className="relative w-full h-24 sm:h-28 bg-gradient-to-br from-zinc-850 via-zinc-900 to-zinc-950 overflow-hidden cursor-pointer group transition-all"
+                title="Click to set cover photo"
+              >
+                {banner ? (
+                  <>
+                    <img
+                      src={banner}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-xs text-white font-medium backdrop-blur-xs">
+                      <Camera className="w-4 h-4" />
+                      <span>{t("profile.changeCover", "Change Cover")}</span>
                     </div>
-                  )}
-                </div>
-                {bannerError && <p className="text-[11px] text-red-400 mt-1 px-1">{bannerError}</p>}
+                  </>
+                ) : (
+                  <>
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.06),transparent_60%)]" />
+                    <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-white/90 text-[11px] font-medium flex items-center gap-1.5 shadow-md transition-all">
+                      <Camera className="w-3.5 h-3.5 text-zinc-300" />
+                      <span>{t("profile.addCover", "Add Cover")}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Profile Avatar Uploader & Dynamic Letter Preview */}
-              <div className="flex items-center gap-3.5 pt-1 px-0.5">
+              {/* Avatar Overlap Container */}
+              <div className="px-4 pb-4 pt-0 -mt-10 sm:-mt-11 flex items-end justify-between relative z-10">
                 <div
                   onClick={() => avatarInputRef.current?.click()}
-                  className="relative w-16 h-16 rounded-full cursor-pointer group shrink-0 ring-2 ring-zinc-700 hover:ring-zinc-400 transition-all overflow-hidden bg-zinc-950 shadow-md"
+                  className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-full ring-4 ring-[#09090b] bg-zinc-950 overflow-hidden cursor-pointer group shadow-2xl transition-transform hover:scale-[1.02] active:scale-95 shrink-0"
+                  title="Click to choose profile picture"
                 >
                   {avatar ? (
                     <img
@@ -805,54 +795,42 @@ export const CopoAuthPrompt: React.FC<{
                     />
                   ) : previewLetter ? (
                     <div
-                      className="w-full h-full flex items-center justify-center font-bold text-2xl font-['Google_Sans',sans-serif] select-none"
+                      className="w-full h-full flex items-center justify-center font-bold text-2xl sm:text-3xl font-['Google_Sans',sans-serif] select-none"
                       style={{ backgroundColor: previewColor.bg, color: previewColor.text }}
                     >
                       {previewLetter}
                     </div>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-400">
-                      <Camera className="w-6 h-6" />
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-850 text-zinc-400">
+                      <User className="w-8 h-8 text-zinc-500" />
                     </div>
                   )}
-                  
-                  {/* Camera overlay icon */}
-                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                    <Camera className="w-5 h-5" />
+
+                  {/* Dark hover overlay with camera */}
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[1px]">
+                    <Camera className="w-6 h-6" />
                   </div>
-                  
-                  <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center shadow">
-                    <Camera className="w-3 h-3 text-zinc-200" />
+
+                  {/* Corner Camera Badge */}
+                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg border border-black/10 group-hover:scale-110 transition-transform">
+                    <Camera className="w-3.5 h-3.5 text-zinc-900" />
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-white tracking-tight">
-                      {t("profile.profilePhoto", "Profile Picture")}
-                    </p>
-                    <span className="text-[10px] text-zinc-400 font-normal">
-                      {t("common.optional", "optional")}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-zinc-400 leading-tight mt-0.5">
-                    {avatar
-                      ? t("profile.customPhotoUploaded", "Custom photo selected. Click to change.")
-                      : previewLetter
-                      ? t("profile.autoLetterGenerated", `Auto-generates "${previewLetter}" avatar if no photo is uploaded.`)
-                      : t("profile.uploadPhotoOrLetter", "Upload your photo or system will generate an avatar.")}
+                {/* Account info pill on the right */}
+                <div className="min-w-0 flex-1 pl-3.5 pb-1">
+                  <p className="text-sm font-bold text-white truncate leading-snug">
+                    {firstName || lastName ? `${firstName} ${lastName}`.trim() : (email ? email.split('@')[0] : "New Member")}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => avatarInputRef.current?.click()}
-                    className="text-[11px] text-blue-400 hover:text-blue-300 font-medium underline mt-1 cursor-pointer block"
-                  >
-                    {avatar ? t("profile.changePhoto", "Change photo") : t("profile.uploadPhoto", "Upload photo")}
-                  </button>
+                  <p className="text-[11.5px] text-zinc-400 truncate">
+                    {email || "Personal account"}
+                  </p>
                 </div>
               </div>
-              {avatarError && <p className="text-[11px] text-red-400 px-1">{avatarError}</p>}
             </div>
+
+            {avatarError && <p className="text-[11px] text-red-400 px-1">{avatarError}</p>}
+            {bannerError && <p className="text-[11px] text-red-400 px-1">{bannerError}</p>}
 
             {/* First & Last Name */}
             <div className="grid grid-cols-2 gap-2.5">
@@ -867,7 +845,7 @@ export const CopoAuthPrompt: React.FC<{
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="e.g. Alex"
-                  className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
+                  className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-medium"
                 />
               </div>
               <div>
@@ -880,7 +858,7 @@ export const CopoAuthPrompt: React.FC<{
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="e.g. Taylor"
-                  className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
+                  className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-medium"
                 />
               </div>
             </div>
@@ -987,7 +965,7 @@ export const CopoAuthPrompt: React.FC<{
             <button
               type="submit"
               disabled={isLoading || !firstName.trim() || !lastName.trim()}
-              className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 active:bg-zinc-300 text-black font-bold text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 active:scale-[0.98] text-black font-bold text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin text-black" />
@@ -1079,7 +1057,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="w-full sm:max-w-[460px] h-auto max-h-[85dvh] sm:max-h-[90dvh] bg-[#09090b] rounded-t-[28px] sm:rounded-[28px] shadow-2xl border-t sm:border border-white/10 text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto pb-[max(16px,env(safe-area-inset-bottom,16px))] mt-auto sm:my-auto"
+        className="w-full sm:max-w-[480px] h-auto max-h-[85dvh] sm:max-h-[90dvh] bg-[#09090b] rounded-t-[28px] sm:rounded-[28px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] border-t sm:border border-white/10 text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto pb-[max(16px,env(safe-area-inset-bottom,16px))] mt-auto sm:my-auto"
         style={{
           transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
