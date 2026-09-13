@@ -405,8 +405,8 @@ export const CopoAuthPrompt: React.FC<{
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    const fName = firstName.trim();
-    const lName = lastName.trim();
+    const fName = (firstName || "").trim();
+    const lName = (lastName || "").trim();
 
     if (!fName) {
       setErrorMessage(t("auth.enterFirstName", "Please enter your first name."));
@@ -420,72 +420,79 @@ export const CopoAuthPrompt: React.FC<{
     setIsLoading(true);
     setErrorMessage("");
 
-    const fullName = `${fName} ${lName}`;
-    const finalCity = city.trim();
-    const finalState = stateRegion.trim();
-    const finalCountry = country.trim();
-    const locParts = [finalCity, finalState, finalCountry].filter(Boolean);
-    const combinedLocation = locParts.join(", ");
-
-    let finalAvatar = avatar || tempUser?.avatar || currentUser?.avatar;
-
-    // If user uploaded a custom photo (data:image/jpeg/png...), upload to Bunny CDN / storage
-    if (avatar && avatar.startsWith('data:image/')) {
-      try {
-        const uploadRes = await fetch('/api/user/upload-avatar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageBase64: avatar,
-            userId: email.trim().toLowerCase()
-          })
-        });
-        const uploadData = await uploadRes.json();
-        if (uploadData.avatarUrl) {
-          finalAvatar = uploadData.avatarUrl;
-        }
-      } catch (uploadErr) {
-        console.warn("Avatar upload to Bunny CDN notice:", uploadErr);
-      }
-    }
-
-    // If no custom avatar uploaded, auto-generate single-letter avatar from First Name
-    if (!finalAvatar || finalAvatar.includes('ui-avatars')) {
-      finalAvatar = generateGoogleLetterAvatarSvg(fName, 128, email);
-    }
-
-    const updatedUser = {
-      uid: tempUser?.uid || tempUser?.id || currentUser?.uid || currentUser?.id || `usr_${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      id: tempUser?.uid || tempUser?.id || currentUser?.uid || currentUser?.id || `usr_${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      email: email.trim().toLowerCase(),
-      name: fullName,
-      firstName: fName,
-      lastName: lName,
-      city: finalCity,
-      country: finalCountry,
-      location: combinedLocation,
-      avatar: finalAvatar,
-      banner: banner || tempUser?.banner || currentUser?.banner || "",
-      bio: bio.trim(),
-      role: 'user',
-      isNewUser: false,
-      isVerified: true,
-      verifiedAt: new Date().toISOString()
-    };
-
     try {
+      const cleanEmail = (email || tempUser?.email || currentUser?.email || "").trim().toLowerCase();
+      if (!cleanEmail) {
+        throw new Error("Missing email address.");
+      }
+
+      const fullName = `${fName} ${lName}`;
+      const finalCity = (city || "").trim();
+      const finalState = (stateRegion || "").trim();
+      const finalCountry = (country || "").trim();
+      const locParts = [finalCity, finalState, finalCountry].filter(Boolean);
+      const combinedLocation = locParts.join(", ");
+
+      let finalAvatar = (avatar || "").trim() || tempUser?.avatar || currentUser?.avatar;
+
+      // If user uploaded a custom photo (data:image/jpeg/png...), upload to Bunny CDN / storage
+      if (finalAvatar && finalAvatar.startsWith('data:image/')) {
+        try {
+          const uploadRes = await fetch('/api/user/upload-avatar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageBase64: finalAvatar,
+              userId: cleanEmail
+            })
+          });
+          const uploadData = await uploadRes.json();
+          if (uploadData.avatarUrl) {
+            finalAvatar = uploadData.avatarUrl;
+          }
+        } catch (uploadErr) {
+          console.warn("Avatar upload to Bunny CDN notice:", uploadErr);
+        }
+      }
+
+      // If no custom avatar uploaded, auto-generate single-letter avatar from First Name
+      if (!finalAvatar || finalAvatar.includes('ui-avatars')) {
+        finalAvatar = generateGoogleLetterAvatarSvg(fName, 128, cleanEmail);
+      }
+
+      const updatedUser = {
+        uid: tempUser?.uid || tempUser?.id || currentUser?.uid || currentUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        id: tempUser?.uid || tempUser?.id || currentUser?.uid || currentUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        email: cleanEmail,
+        name: fullName,
+        firstName: fName,
+        lastName: lName,
+        city: finalCity,
+        country: finalCountry,
+        location: combinedLocation,
+        avatar: finalAvatar,
+        banner: (banner || "").trim() || tempUser?.banner || currentUser?.banner || "",
+        bio: (bio || "").trim(),
+        role: 'user',
+        isNewUser: false,
+        isVerified: true,
+        verifiedAt: new Date().toISOString()
+      };
+
       await fetch("/api/auth/update-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUser)
       });
+
       // Send real one-time welcome notification for newly registered user
       sendWelcomeNotificationForNewUser(updatedUser);
-    } catch (saveErr) {
-      console.warn("Profile update warning:", saveErr);
+      completeLogin(updatedUser);
+    } catch (err: any) {
+      console.error("Profile save error:", err);
+      setErrorMessage(err.message || "Failed to save profile. Please try again.");
     } finally {
       setIsLoading(false);
-      completeLogin(updatedUser);
     }
   };
 
