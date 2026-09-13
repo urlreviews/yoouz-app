@@ -719,6 +719,16 @@ export function unrecordDeletedUsersInLocalStorage(ids: string[]): void {
     const result = Array.from(set);
     localStorage.setItem("yoouz_deleted_users", JSON.stringify(result));
     localStorage.setItem("copo_deleted_users", JSON.stringify(result));
+
+    // Clear feed caches to ensure they reload instantly without stale user profiles/videos!
+    try {
+      localStorage.removeItem("yoouz_cached_videos_v28");
+      localStorage.removeItem("yoouz_cached_videos_v27");
+      localStorage.removeItem("yoouz_cached_videos_v26");
+      localStorage.removeItem("yoouz_cached_videos_v25");
+      localStorage.removeItem("yoouz_local_created_reviews");
+    } catch (err) {}
+
     window.dispatchEvent(new CustomEvent("copo-user-restored", { detail: { ids } }));
   } catch (e) {}
 }

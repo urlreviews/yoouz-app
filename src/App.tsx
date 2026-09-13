@@ -2366,6 +2366,13 @@ export function App() {
       }
     };
 
+    const handleUserRestored = (e: any) => {
+      const ids = e.detail?.ids || [];
+      if (Array.isArray(ids) && ids.length > 0) {
+        unrecordDeletedUsersInLocalStorage(ids);
+      }
+    };
+
     const checkActiveUserDeleted = () => {
       const activeUser = currentUserRef.current;
       if (activeUser && isUserDeleted(activeUser)) {
@@ -2385,6 +2392,7 @@ export function App() {
     window.addEventListener("copo-places-purged", handlePlacesPurged);
     window.addEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
     window.addEventListener("copo-user-deleted", handleUserDeleted);
+    window.addEventListener("copo-user-restored", handleUserRestored);
     window.addEventListener("copo-users-purged", handleUsersPurged);
     window.addEventListener("copo-init-deleted-users", handleInitDeletedUsers);
     window.addEventListener("storage", handleStorageChange);
@@ -2398,6 +2406,7 @@ export function App() {
       window.removeEventListener("copo-places-purged", handlePlacesPurged);
       window.removeEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
       window.removeEventListener("copo-user-deleted", handleUserDeleted);
+      window.removeEventListener("copo-user-restored", handleUserRestored);
       window.removeEventListener("copo-users-purged", handleUsersPurged);
       window.removeEventListener("copo-init-deleted-users", handleInitDeletedUsers);
       window.removeEventListener("storage", handleStorageChange);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { VideoReview } from '../types';
-import { getDisplayViews, resolveSafeAuthor } from '../utils/placeUtils';
+import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage } from '../utils/placeUtils';
 import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
 import { buildCommentTree } from '../utils/commentUtils';
 
@@ -649,11 +649,22 @@ export function useFeedPagination() {
       setVideos([]);
     };
 
+    const handleUserRestoredEvent = (e: any) => {
+      const uIds = e.detail?.ids || [];
+      if (Array.isArray(uIds) && uIds.length > 0) {
+        try {
+          unrecordDeletedUsersInLocalStorage(uIds);
+        } catch (err) {}
+      }
+      loadData(true);
+    };
+
     window.addEventListener("copo-video-deleted", handleVideoDeletedEvent);
     window.addEventListener("copo-videos-purged", handleVideosPurgedEvent);
     window.addEventListener("copo-place-deleted", handlePlaceDeletedEvent);
     window.addEventListener("copo-places-purged", handlePlacesPurgedEvent);
     window.addEventListener("copo-user-deleted", handleUserDeletedEvent);
+    window.addEventListener("copo-user-restored", handleUserRestoredEvent);
     window.addEventListener("copo-users-purged", handleUsersPurgedEvent);
 
     // Initial load
@@ -705,6 +716,7 @@ export function useFeedPagination() {
       window.removeEventListener("copo-place-deleted", handlePlaceDeletedEvent);
       window.removeEventListener("copo-places-purged", handlePlacesPurgedEvent);
       window.removeEventListener("copo-user-deleted", handleUserDeletedEvent);
+      window.removeEventListener("copo-user-restored", handleUserRestoredEvent);
       window.removeEventListener("copo-users-purged", handleUsersPurgedEvent);
       window.removeEventListener("focus", handleVisibilityOrFocus);
       document.removeEventListener("visibilitychange", handleVisibilityOrFocus);

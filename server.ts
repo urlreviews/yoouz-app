@@ -11,6 +11,7 @@ async function fetchBase64(url: string): Promise<string> {
   }
 }
 import express from "express";
+import crypto from "crypto";
 import { execSync } from "child_process";
 import { v2 as cloudinary } from 'cloudinary';
 import * as cheerio from 'cheerio';
@@ -379,6 +380,11 @@ function unrecordDeletedUserIds(ids: string[]): void {
       fs.mkdirSync(globalUploadsDir, { recursive: true });
     }
     fs.writeFileSync(deletedUsersIndexPath, JSON.stringify(updated, null, 2), "utf8");
+    // Invalidate server-side feedCache to force an immediate reload of up-to-date user reviews and profiles
+    try {
+      feedCache.lastFetched = 0;
+    } catch (cacheErr) {}
+
     try {
       broadcastSseEvent({
         type: "user_restored",
@@ -4257,6 +4263,55 @@ app.post('/api/user/delete-account', express.json(), async (req, res) => {
     res.json({ success: true, message: "Account permanently deleted and purged from all records.", ...result });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/account', express.json(), async (req: any, res: any) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized: Missing token' });
+    }
+    const token = authHeader.split('Bearer ')[1];
+    let activeUser: any = null;
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const base64Url = parts[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        activeUser = JSON.parse(Buffer.from(base64, 'base64').toString('utf8'));
+      } else {
+        activeUser = { uid: token, email: `${token}@user.com` };
+      }
+    } catch (e) {
+      return res.status(401).json({ error: "Unauthorized: Invalid token format" });
+    }
+
+    if (!activeUser || (!activeUser.uid && !activeUser.id)) {
+      return res.status(401).json({ error: "Unauthorized: Invalid session" });
+    }
+
+    const userId = activeUser.uid || activeUser.id;
+    const email = activeUser.email || '';
+    const name = activeUser.name || '';
+    const handle = activeUser.handle || '';
+
+    console.log(`[Account Deletion] Initiating complete deletion routine for user ${userId} (${email})`);
+
+    const result = await purgeUserFromAllStores(userId, email, name, handle);
+
+    try {
+      feedCache.lastFetched = 0;
+    } catch (e) {}
+
+    res.json({
+      success: true,
+      message: "Account and all associated video reviews have been permanently deleted and purged.",
+      ...result
+    });
+  } catch (err: any) {
+    console.error("Error in DELETE /api/account:", err);
+    res.status(500).json({ error: err.message || "Failed to delete account" });
   }
 });
 
@@ -8810,16 +8865,15 @@ app.post("/api/videos/save-review", async (req, res) => {
       const fName = (rawFName && rawFName.toLowerCase() !== emailPrefix && !rawFName.includes('@') && !rawFName.toLowerCase().startsWith('usr_')) ? rawFName : '';
       const lName = (rawLName && !rawLName.includes('@')) ? rawLName : '';
       const hasBothNames = Boolean(fName && lName);
-      const fullName = hasBothNames
-        ? `${fName} ${lName}`
-        : (existingUser?.name && !existingUser.name.includes('@') && existingUser.name.includes(' ') ? existingUser.name : '');
+      const fullName = fName && lName ? `${fName} ${lName}` : (fName || (existingUser?.name && !existingUser.name.includes('@') ? existingUser.name : ''));
       const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
 
       const isKnown = Boolean(existingUser) && hasBothNames && !isDeletedUserServer(existingUser);
 
+      const freshUuid = crypto.randomUUID();
       const userSession = {
-        uid: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-        id: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        uid: existingUser?.uid || existingUser?.id || freshUuid,
+        id: existingUser?.uid || existingUser?.id || freshUuid,
         email: cleanEmail,
         name: isKnown ? fullName : '',
         firstName: isKnown ? fName : '',
@@ -8893,13 +8947,17 @@ app.post("/api/videos/save-review", async (req, res) => {
   // Update User Profile Endpoint (Directly into Bunny Cloud Database)
   app.post("/api/auth/update-profile", async (req, res) => {
     try {
-      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name } = req.body;
+      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name, uid: bodyUid, id: bodyId } = req.body;
       if (!email) {
         return res.status(400).json({ error: "Missing email address." });
       }
 
       const cleanEmail = email.trim().toLowerCase();
-      const uid = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      let uid = bodyUid || bodyId;
+      if (!uid) {
+        const existingProfile = await resolveUserProfileFromAnySource(cleanEmail);
+        uid = existingProfile?.uid || existingProfile?.id || crypto.randomUUID();
+      }
       const fName = (firstName || '').trim();
       const lName = (lastName || '').trim();
       const fullName = (name || (fName && lName ? `${fName} ${lName}` : (fName || cleanEmail.split('@')[0]))).trim();
