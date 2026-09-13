@@ -2459,6 +2459,28 @@ export function App() {
     }
 
     if (found) {
+      const matchingVideoWithName = videos.find(
+        (v) =>
+          (isPlaceReviewMatch(v, found!) || v.placeId === found!.id) &&
+          Boolean(v.placeName && v.placeName.trim() !== "" && !v.placeName.includes(".com"))
+      );
+      if (matchingVideoWithName?.placeName) {
+        const candidateName = formatBusinessName(matchingVideoWithName.placeName);
+        const isCurrentNameDomainLike = !found.name ||
+          found.name.toLowerCase() === (found.id || "").toLowerCase() ||
+          found.name.toLowerCase() === (found.brandDomain || "").toLowerCase() ||
+          found.name.includes(".") ||
+          !found.name.includes(" ") ||
+          found.name.toLowerCase() === "website" ||
+          found.name.toLowerCase().includes("bensonbingham");
+        if (candidateName && (isCurrentNameDomainLike || !found.name)) {
+          found = {
+            ...found,
+            name: candidateName
+          };
+        }
+      }
+
       const matchingVideoWithBanner = videos.find(
         (v) =>
           (isPlaceReviewMatch(v, found!) || v.placeId === found!.id) &&

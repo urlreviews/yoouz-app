@@ -45,7 +45,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -244,6 +244,32 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanFromName && cleanFromName.includes(".")) return cleanFromName;
     return null;
   }, [place]);
+
+  // Clean, official human-readable business name for the Place Page and Drawer
+  const displayedPlaceName = React.useMemo(() => {
+    // 1. If any video review for this place has a clean, formatted multi-word placeName, prioritize it!
+    const matchingVid = (rawPlaceVideos || []).find(
+      (v) => v.placeName && v.placeName.trim() !== "" && !v.placeName.includes(".com") && v.placeName.trim().length > 2
+    );
+    if (matchingVid?.placeName) {
+      const formatted = formatBusinessName(matchingVid.placeName);
+      if (formatted && formatted.length > 2 && !formatted.includes(".com")) return formatted;
+    }
+    // 2. Check KNOWN_OFFICIAL_NAMES for drawerDomain or place.id
+    if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) {
+      return KNOWN_OFFICIAL_NAMES[drawerDomain];
+    }
+    const cleanId = extractCleanDomain(place?.id || "");
+    if (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) {
+      return KNOWN_OFFICIAL_NAMES[cleanId];
+    }
+    // 3. Format place.name
+    const formatted = formatBusinessName(place?.name);
+    if (formatted && !formatted.includes(".com") && formatted.trim() !== "") {
+      return formatted;
+    }
+    return formatBusinessName(place?.id) || place?.name || "";
+  }, [rawPlaceVideos, place?.name, place?.id, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
     if (place.website && place.website.trim() !== "" && !place.website.includes("maps.google.com")) {
@@ -502,7 +528,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     // If it has a website/domain, search ONLY by the domain to prevent Google Maps from failing to find it
     const query = place.brandDomain || place.website 
       ? (place.brandDomain || place.website)
-      : `${formatBusinessName(place.name)}, ${place.address || place.city}`;
+      : `${displayedPlaceName}, ${place.address || place.city}`;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query.trim())}`;
     window.open(url, "_blank");
   };
@@ -579,7 +605,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             {/* Foreground Banner Image - Contained properly */}
             <img
               src={allPhotos[0]}
-              alt={formatBusinessName(place.name)}
+              alt={displayedPlaceName}
               loading="eager"
               decoding="sync"
               fetchPriority="high"
@@ -603,7 +629,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Overlapping Business Logo/Avatar Badge - Official High-Res Brand Logo */}
         <CopoBrandLogo
           domain={drawerDomain || place.brandDomain}
-          name={formatBusinessName(place.name)}
+          name={displayedPlaceName}
           website={place.website}
           logoUrl={primaryLogoUrl || place.logoUrl}
           bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
@@ -618,7 +644,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="min-w-0 flex-1 pr-2">
             <h2 className="text-2xl font-bold text-white md:text-white tracking-tight leading-tight line-clamp-2 [overflow-wrap:anywhere]">
-              {formatBusinessName(place.name) || ""}
+              {displayedPlaceName || ""}
               <CheckCircle className="inline-block w-[22px] h-[22px] ml-1.5 align-text-bottom fill-white text-black shrink-0 relative -top-[2px]" />
             </h2>
           </div>
@@ -823,7 +849,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   onStartChat(place.claimedByEmail || place.id, place.name, getPlaceLogoUrl(place));
                 }}
                 className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
-                title={`${t("place.chatWith", "Chat with")} ${formatBusinessName(place.name)}`}
+                title={`${t("place.chatWith", "Chat with")} ${displayedPlaceName}`}
               >
                 <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
                   <MessageSquare className="w-5 h-5 text-white" />
@@ -920,7 +946,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-white">{t("place.noReviewsYet", "No video reviews yet")}</p>
-                      <p className="text-[11px] text-zinc-200">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {formatBusinessName(place.name)}!</p>
+                      <p className="text-[11px] text-zinc-200">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {displayedPlaceName}!</p>
                     </div>
                     <button
                       onClick={() => onRecordForPlace(place)}
@@ -1284,7 +1310,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <Info className="w-4 h-4 text-zinc-200" />
-                  <span>{t("place.about", "About")} {formatBusinessName(place.name)}</span>
+                  <span>{t("place.about", "About")} {displayedPlaceName}</span>
                 </h3>
                 {isUserOwner && (
                   <button
@@ -1414,7 +1440,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 <h3 className="text-lg font-bold text-white">
                   {modalStep === 1 ? t("place.suggestEdits", "Suggest Edits") : t("place.claimVerifyBusiness", "Claim & Verify Business")}
                 </h3>
-                <p className="text-xs text-zinc-200 truncate max-w-[280px]">{formatBusinessName(place.name)}</p>
+                <p className="text-xs text-zinc-200 truncate max-w-[280px]">{displayedPlaceName}</p>
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
@@ -1695,7 +1721,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <div className="space-y-1">
                       <h4 className="font-bold text-white text-sm">{t("place.verifyOwnership", "Verify Ownership")}</h4>
                       <p className="text-zinc-200 leading-relaxed text-[11px]">
-                        {t("place.verifyOwnershipPrompt", "To verify that you own")} <strong className="text-white">{formatBusinessName(place.name)}</strong>, {t("place.insertTagPrompt", "please insert this verification tag into the HTML head section of your home page:")}
+                        {t("place.verifyOwnershipPrompt", "To verify that you own")} <strong className="text-white">{displayedPlaceName}</strong>, {t("place.insertTagPrompt", "please insert this verification tag into the HTML head section of your home page:")}
                       </p>
                       
                       <div className="mt-3 p-3 bg-zinc-900 rounded-xl text-[10px] font-mono text-zinc-200 break-all border border-zinc-800 relative group">
@@ -1791,7 +1817,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={`${window.location.origin}/place/${getPlaceSlug(place)}`}
-        title={formatBusinessName(place.name || drawerDomain || place.id)}
+        title={displayedPlaceName}
         subtitle={t("place.businessLocation", "Business Location")}
         logoUrl={place.logoUrl || primaryLogoUrl || undefined}
         domain={drawerDomain || extractCleanDomain(place.website || place.id) || undefined}
@@ -1846,7 +1872,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {t("place.directMessagingUnavailable", "Direct Messaging Unavailable")}
                 </h3>
                 <p className="text-xs text-zinc-200 leading-relaxed font-medium">
-                  <span className="font-bold text-white">{formatBusinessName(place.name)}</span> {t("place.unclaimedChatNotice", "has not claimed their official page on Yoouz yet, so they cannot receive or reply to customer messages.")}
+                  <span className="font-bold text-white">{displayedPlaceName}</span> {t("place.unclaimedChatNotice", "has not claimed their official page on Yoouz yet, so they cannot receive or reply to customer messages.")}
                 </p>
               </div>
 

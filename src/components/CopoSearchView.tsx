@@ -417,7 +417,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 <div>
                   <h2 className="text-3xl font-extrabold text-white mb-2">
                     {(() => {
-                      const name = formatBusinessName(searchedPlace.name) || "";
+                      const matchingVideoName = placeVideos.find(v => v.placeName && !v.placeName.includes(".com"))?.placeName;
+                      const name = formatBusinessName(matchingVideoName || searchedPlace.name) || "";
                       const words = name.split(" ");
                       const lastWord = words.pop();
                       return (

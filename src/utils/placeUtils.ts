@@ -261,7 +261,12 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "usa": "USA",
   "usa.com": "USA",
   "mastercard": "Mastercard",
-  "mastercard.com": "Mastercard"
+  "mastercard.com": "Mastercard",
+  "bensonbingham": "Benson & Bingham",
+  "bensonbingham.com": "Benson & Bingham",
+  "bensonandbingham": "Benson & Bingham",
+  "bensonandbingham.com": "Benson & Bingham",
+  "www-bensonbingham-com": "Benson & Bingham"
 };
 
 /**
@@ -277,7 +282,7 @@ export function splitCompoundWords(str: string): string {
   s = s.replace(/^(al|el|the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
   
   // 4. Known compound word boundaries & suffixes
-  const commonWords = /(dental|clinic|center|centre|park|hotels?|avenue|valley|therapy|services?|solutions?|group|media|news|technology|tech|studios?|travel|cafe|coffee|bar|suites?|hospitals?|stores?|shops?|markets?|clubs?|fitness|gym|labs?|care|health|spa|salon|resorts?|villas?|restaurants?|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations?|motors?|auto|rentals?|logistics|express|trust|trusted|capital|consulting|associates?|partners?|properties|realestate|agency|law|firm|lawyers?|attorneys?|dentists?|orthodontics|wellness|massage|towers?|plaza|square|malls?|hubs?|holdings|globals?|international|world|networks?|systems?|software|security|design|creative|productions?|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  const commonWords = /(benson|bingham|injury|accident|lawyer|lawyers|attorney|attorneys|lawfirm|dental|clinic|center|centre|park|hotels?|avenue|valley|therapy|services?|solutions?|group|media|news|technology|tech|studios?|travel|cafe|coffee|bar|suites?|hospitals?|stores?|shops?|markets?|clubs?|fitness|gym|labs?|care|health|spa|salon|resorts?|villas?|restaurants?|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations?|motors?|auto|rentals?|logistics|express|trust|trusted|capital|consulting|associates?|partners?|properties|realestate|agency|law|firm|dentists?|orthodontics|wellness|massage|towers?|plaza|square|malls?|hubs?|holdings|globals?|international|world|networks?|systems?|software|security|design|creative|productions?|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
   
   // Apply word splitting if no spaces yet
   const parts = s.split(" ").map(p => {
@@ -597,8 +602,23 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
       ? existing.website 
       : (video.placeWebsite || (domain ? `https://${domain}` : ""));
     const description = video.placeDescription || (existing.description && !existing.description.includes("Verified video review destination") && !existing.description.includes("Verified Yoouz business listing") ? existing.description : "") || existing.description || "";
+    
+    // Automatically promote clean formatted business name if existing name was a raw domain or slug
+    const isGenericOrDomainName = !existing.name ||
+      existing.name.toLowerCase() === (existing.id || "").toLowerCase() ||
+      existing.name.toLowerCase() === (existing.brandDomain || "").toLowerCase() ||
+      existing.name.includes(".") ||
+      !existing.name.includes(" ") ||
+      existing.name.toLowerCase() === "website" ||
+      existing.name.toLowerCase().includes("bensonbingham");
+
+    const updatedName = (video.placeName && (isGenericOrDomainName || !video.placeName.includes(".")))
+      ? (formatBusinessName(video.placeName) || formatBusinessName(existing.name) || existing.name)
+      : (formatBusinessName(existing.name) || existing.name);
+
     return {
       ...existing,
+      name: updatedName,
       totalReviews: Math.max(existing.totalReviews || 1, (existing.totalReviews || 0) + 1),
       rating: video.rating || existing.rating || 5.0,
       avatarUrl: logo,
