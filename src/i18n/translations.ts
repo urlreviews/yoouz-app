@@ -847,7 +847,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       checkEmail: "Check your email",
       sentCodeTo: "We sent a 6-digit confirmation code to",
       completeProfileTitle: "Complete your profile",
-      completeProfileSubtitle: "Enter your name and location for verified reviews.",
+      completeProfileSubtitle: "Customize your public profile card.",
       emailAddress: "Email Address",
       emailPlaceholder: "you@example.com",
       continueEmail: "Continue with Email",

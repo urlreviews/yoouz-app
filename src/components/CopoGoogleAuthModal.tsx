@@ -555,7 +555,7 @@ export const CopoAuthPrompt: React.FC<{
             {step === 'code' 
               ? `${t("auth.sentCodeTo", "We sent a 6-digit confirmation code to")} ${email}`
               : step === 'profile'
-                ? t("auth.completeProfileSubtitle", "Set up your photo and name to get started.")
+                ? t("auth.completeProfileSubtitle", "Customize your public profile card.")
                 : copy.subtitle}
           </p>
         </div>
@@ -717,64 +717,7 @@ export const CopoAuthPrompt: React.FC<{
         {/* STEP 3: Profile Setup (Luxury Integrated Avatar/Cover & Structured Form) */}
         {step === 'profile' && (
           <form onSubmit={(e) => handleSaveProfile(e)} className="w-full max-w-sm sm:max-w-md space-y-4 pt-1 text-left">
-            {tempUser?.isNewUser ? (
-              <div className="space-y-4 pt-1 animate-in fade-in zoom-in-95 duration-200">
-                {/* First & Last Name */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5 tracking-wider uppercase">
-                      {t("auth.firstName", "First Name")} <span className="text-red-400 font-bold">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      autoFocus
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="e.g. Alex"
-                      className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5 tracking-wider uppercase">
-                      {t("auth.lastName", "Last Name")} <span className="text-red-400 font-bold">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="e.g. Taylor"
-                      className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-medium"
-                    />
-                  </div>
-                </div>
-
-                {errorMessage && (
-                  <div className="p-3 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
-                    <span>{errorMessage}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isLoading || !firstName.trim() || !lastName.trim()}
-                  className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 active:scale-[0.98] text-black font-bold text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer mt-2"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-black" />
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 text-black" />
-                      <span>{t("auth.activateProfileAndContinue", "Activate Profile & Continue")}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <>
-                {/* Hidden File Inputs */}
+            {/* Hidden File Inputs */}
             <input
               type="file"
               ref={avatarInputRef}
@@ -1028,8 +971,6 @@ export const CopoAuthPrompt: React.FC<{
                 </>
               )}
             </button>
-              </>
-            )}
           </form>
         )}
 
