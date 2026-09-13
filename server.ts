@@ -30,7 +30,7 @@ import { getBunnyDb, initBunnyDbSchema } from "./src/lib/bunny-db.ts";
 
 import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, or } from "drizzle-orm";
 
 dotenv.config();
 
@@ -704,7 +704,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
     }
   } catch (err) {}
 
-  // Layer 4: Check Drizzle SQL `users` table
+  // Layer 4: Check Drizzle SQL \`users\` table
   try {
     const sqlUsers = await db.select().from(users).where(eq(users.email, clean));
     if (sqlUsers && sqlUsers.length > 0) {
@@ -728,7 +728,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
     }
   } catch (err) {}
 
-  // Layer 5: Check Drizzle SQL `BunnyDB_users` table
+  // Layer 5: Check Drizzle SQL \`BunnyDB_users\` table
   try {
     const fsUsers = await db.select().from(BunnyDB_users);
     for (const fsu of fsUsers) {
@@ -748,55 +748,6 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
       }
     }
   } catch (err) {}
-
-  // Layer 6: Check BunnyDB Admin (users & BunnyDB_users collections)
-  
-
-  // Layer 7: Check existing video reviews in uploads/reviews_index.json
-  try {
-    const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-    const match = localList.find((vr: any) => {
-      const vrEmail = (vr.userEmail || vr.userId || "").toLowerCase().trim();
-      const a = vr.author || {};
-      const authorName = (a.name || vr.authorName || "").toLowerCase().trim();
-      const authorHandle = (a.handle || vr.authorHandle || "").toLowerCase().trim().replace(/^@+/, "");
-      const authorNameAlpha = authorName.replace(/[^a-z0-9]/g, "");
-      const authorHandleAlpha = authorHandle.replace(/[^a-z0-9]/g, "");
-
-      return vrEmail === clean || 
-             vrEmail.split('@')[0] === cleanWithoutAt ||
-             authorName === clean || 
-             authorName === slugWithSpaces ||
-             authorNameAlpha === alphaOnly ||
-             authorHandle === clean || 
-             authorHandle === cleanWithoutAt ||
-             authorHandleAlpha === alphaOnly;
-    });
-    if (match) {
-      const a = match.author || {};
-      const authorName = a.name || match.authorName || username;
-      const authorAvatar = a.avatar || match.authorAvatar;
-      const fName = authorName.split(' ')[0] || authorName;
-      const lName = authorName.includes(' ') ? authorName.split(' ').slice(1).join(' ') : '';
-      const candidateProfile = {
-        uid: match.userId || uid,
-        id: match.userId || uid,
-        email: clean.includes('@') ? clean : (match.userEmail || `${clean}@gmail.com`),
-        name: authorName,
-        firstName: fName,
-        lastName: lName,
-        handle: a.handle || match.authorHandle || `@${username}`,
-        avatar: authorAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff`,
-        bio: a.bio || "Community reviewer on Yoouz.",
-        isVerified: true,
-        role: 'user',
-        isNewUser: false
-      };
-      if (!isDeletedUserServer(candidateProfile)) {
-        return candidateProfile;
-      }
-    }
-  } catch (e) {}
 
   return null;
 }
@@ -3352,6 +3303,174 @@ async function purgeAllPlacesFromAllStores() {
   return { success: true, count: collectedIds.length };
 }
 
+async function purgeUserFromAllStores(targetId?: string, targetEmail?: string, targetName?: string, targetHandle?: string): Promise<{ success: boolean; deletedIds: string[]; purgedVideosCount: number }> {
+  console.log(`🗑️ [Server] Live PERMANENTLY purging user ${targetId || targetEmail || targetName} from all databases, reviews, files, and caches...`);
+  const idsToDelete = new Set<string>();
+
+  if (targetId) {
+    const cleanId = String(targetId).trim();
+    idsToDelete.add(cleanId);
+    idsToDelete.add(cleanId.toLowerCase());
+  }
+  if (targetEmail) {
+    const cleanEmail = String(targetEmail).trim().toLowerCase();
+    idsToDelete.add(cleanEmail);
+    idsToDelete.add(`usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    if (cleanEmail.includes('@')) {
+      idsToDelete.add(cleanEmail.split('@')[0]);
+    }
+  }
+  if (targetName) {
+    const cleanName = String(targetName).trim();
+    idsToDelete.add(cleanName);
+    idsToDelete.add(cleanName.toLowerCase());
+    const slugHyphens = cleanName.toLowerCase().replace(/[\s_]+/g, '-');
+    const slugSpaces = cleanName.toLowerCase().replace(/[-_]+/g, ' ');
+    idsToDelete.add(slugHyphens);
+    idsToDelete.add(slugSpaces);
+  }
+  if (targetHandle) {
+    const cleanHandle = String(targetHandle).replace(/^@+/, '').trim().toLowerCase();
+    idsToDelete.add(cleanHandle);
+    idsToDelete.add(`@${cleanHandle}`);
+  }
+
+  const idsArray = Array.from(idsToDelete).filter(Boolean);
+  const bunnyDb = getBunnyDb();
+  const dbInstance = getDb();
+
+  // 1. Delete from Bunny Database users table
+  if (bunnyDb) {
+    for (const tid of idsArray) {
+      try {
+        await bunnyDb.execute({
+          sql: `DELETE FROM users WHERE id = ? OR email = ? OR name = ?`,
+          args: [tid, tid, tid]
+        });
+      } catch (e) {}
+    }
+  }
+
+  // 2. Delete from Drizzle SQL `users` table
+  if (dbInstance) {
+    try {
+      for (const tid of idsArray) {
+        try {
+          await dbInstance.delete(users).where(or(
+            eq(users.uid, tid),
+            eq(users.email, tid),
+            eq(users.name, tid)
+          ));
+        } catch (e) {}
+      }
+    } catch (e) {}
+  }
+
+  // 3. Delete from Drizzle SQL `BunnyDB_users` table
+  if (dbInstance) {
+    try {
+      const table = getNoSqlTable('users');
+      if (table) {
+        for (const tid of idsArray) {
+          try {
+            await dbInstance.delete(table).where(eq(table.id, tid));
+          } catch (e) {}
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 4. Remove from in-memory defaultCommunityUsers & KNOWN_COMMUNITY_USERS_SERVER
+  for (let i = defaultCommunityUsers.length - 1; i >= 0; i--) {
+    const u = defaultCommunityUsers[i];
+    if (isDeletedUserServer(u, idsToDelete)) {
+      defaultCommunityUsers.splice(i, 1);
+    }
+  }
+  for (const k of Object.keys(KNOWN_COMMUNITY_USERS_SERVER)) {
+    if (idsToDelete.has(k.toLowerCase()) || idsToDelete.has(k)) {
+      delete KNOWN_COMMUNITY_USERS_SERVER[k];
+    }
+  }
+
+  // 5. Purge all video reviews authored by this user from uploads/reviews_index.json & storage
+  let purgedVideosCount = 0;
+  try {
+    const allVideos = readReviewsIndex();
+    const userVideoIds: string[] = [];
+    for (const v of allVideos) {
+      if (v && isDeletedUserServer(v, idsToDelete)) {
+        userVideoIds.push(String(v.id));
+      }
+    }
+    for (const vid of userVideoIds) {
+      await purgeVideoFromAllStores(vid);
+      purgedVideosCount++;
+    }
+    if (bunnyDb) {
+      for (const uidStr of idsArray) {
+        try {
+          const bRows = await bunnyDb.execute({
+            sql: `SELECT id FROM videoReviews WHERE userId = ? OR authorName = ? OR data LIKE ?`,
+            args: [uidStr, uidStr, `%"${uidStr}"%`]
+          });
+          if (bRows && bRows.rows) {
+            for (const row of bRows.rows as any[]) {
+              if (row.id) {
+                await purgeVideoFromAllStores(String(row.id));
+                purgedVideosCount++;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    }
+  } catch (e) {}
+
+  // 6. Delete avatar & banner files from disk
+  try {
+    const avatarDir = path.join(process.cwd(), 'uploads', 'avatars');
+    if (fs.existsSync(avatarDir)) {
+      const files = fs.readdirSync(avatarDir);
+      for (const f of files) {
+        for (const tid of idsArray) {
+          const sanitized = tid.replace(/[^a-zA-Z0-9]/g, '_');
+          if (f.includes(sanitized) || f.includes(tid)) {
+            try { fs.unlinkSync(path.join(avatarDir, f)); } catch (e) {}
+          }
+        }
+      }
+    }
+    const bannerDir = path.join(process.cwd(), 'uploads', 'banners');
+    if (fs.existsSync(bannerDir)) {
+      const files = fs.readdirSync(bannerDir);
+      for (const f of files) {
+        for (const tid of idsArray) {
+          const sanitized = tid.replace(/[^a-zA-Z0-9]/g, '_');
+          if (f.includes(sanitized) || f.includes(tid)) {
+            try { fs.unlinkSync(path.join(bannerDir, f)); } catch (e) {}
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  // 7. Record to deleted list
+  recordDeletedUserIds(idsArray);
+
+  // 8. Broadcast SSE user_deleted event
+  broadcastSseEvent({
+    type: "user_deleted",
+    userId: targetId || targetEmail,
+    userIds: idsArray,
+    email: targetEmail ? String(targetEmail).trim().toLowerCase() : "",
+    name: targetName ? String(targetName).trim() : "",
+    handle: targetHandle ? String(targetHandle).trim() : ""
+  });
+
+  return { success: true, deletedIds: idsArray, purgedVideosCount };
+}
+
 app.get('/api/nosql/:collection', async (req, res) => {
   try {
     const colName = req.params.collection;
@@ -4117,112 +4236,18 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
 app.post('/api/admin/users/delete', express.json(), async (req, res) => {
   try {
     const { id, uid, email, name, handle } = req.body || {};
-    const idsToDelete = new Set<string>();
-    if (id) idsToDelete.add(String(id).trim());
-    if (uid) idsToDelete.add(String(uid).trim());
-    if (email) {
-      const cleanEmail = String(email).trim().toLowerCase();
-      idsToDelete.add(cleanEmail);
-      idsToDelete.add(`usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
-    }
+    const result = await purgeUserFromAllStores(id || uid, email, name, handle);
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    const bunnyDb = getBunnyDb();
-    const dbInstance = getDb();
-
-    for (const targetId of idsToDelete) {
-      // 1. Delete from Bunny Database
-      if (bunnyDb) {
-        try {
-          await bunnyDb.execute({
-            sql: `DELETE FROM users WHERE id = ?`,
-            args: [targetId]
-          });
-        } catch (e) {}
-      }
-
-      // 2. Delete from BunnyDB Admin
-      
-
-      // 3. Delete from Drizzle if active
-      if (dbInstance) {
-        try {
-          const table = getNoSqlTable('users');
-          if (table) {
-            await dbInstance.delete(table).where(eq(table.id, targetId));
-          }
-        } catch (e) {}
-      }
-    }
-
-    if (bunnyDb) {
-      if (email) {
-        try {
-          await bunnyDb.execute({
-            sql: `DELETE FROM users WHERE email = ?`,
-            args: [String(email).trim().toLowerCase()]
-          });
-        } catch (e) {}
-      }
-      if (name) {
-        try {
-          await bunnyDb.execute({
-            sql: `DELETE FROM users WHERE name = ?`,
-            args: [String(name).trim()]
-          });
-        } catch (e) {}
-      }
-    }
-
-    const extraUserIdentifiers = [
-      ...Array.from(idsToDelete),
-      email ? String(email).trim().toLowerCase() : "",
-      name ? String(name).trim() : "",
-      handle ? String(handle).replace(/^@+/, "").trim().toLowerCase() : ""
-    ].filter(Boolean);
-    recordDeletedUserIds(extraUserIdentifiers);
-
-    // Purge all video reviews authored by this user from all stores
-    try {
-      const allVideos = readReviewsIndex();
-      const userVideoIds: string[] = [];
-      for (const v of allVideos) {
-        if (v && isDeletedUserServer(v, new Set(extraUserIdentifiers.map(s => s.toLowerCase())))) {
-          userVideoIds.push(String(v.id));
-        }
-      }
-      for (const vid of userVideoIds) {
-        await purgeVideoFromAllStores(vid);
-      }
-      if (bunnyDb) {
-        try {
-          for (const uidStr of extraUserIdentifiers) {
-            const bRows = await bunnyDb.execute({
-              sql: `SELECT id FROM videoReviews WHERE userId = ? OR authorName = ? OR data LIKE ?`,
-              args: [uidStr, uidStr, `%"${uidStr}"%`]
-            });
-            if (bRows && bRows.rows) {
-              for (const row of bRows.rows) {
-                if (row.id) {
-                  await purgeVideoFromAllStores(String(row.id));
-                }
-              }
-            }
-          }
-        } catch (e) {}
-      }
-    } catch (e) {}
-
-    // Broadcast instant kick/logout SSE event to all connected clients
-    broadcastSseEvent({
-      type: "user_deleted",
-      userId: id || uid || email,
-      userIds: extraUserIdentifiers,
-      email: email ? String(email).trim().toLowerCase() : "",
-      name: name ? String(name).trim() : "",
-      handle: handle ? String(handle).trim() : ""
-    });
-
-    res.json({ success: true, deletedIds: Array.from(idsToDelete) });
+app.post('/api/user/delete-account', express.json(), async (req, res) => {
+  try {
+    const { id, uid, email, name, handle } = req.body || {};
+    const result = await purgeUserFromAllStores(id || uid, email, name, handle);
+    res.json({ success: true, message: "Account permanently deleted and purged from all records.", ...result });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -8783,21 +8808,22 @@ app.post("/api/videos/save-review", async (req, res) => {
         : (existingUser?.name && !existingUser.name.includes('@') && existingUser.name.includes(' ') ? existingUser.name : '');
       const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
 
-      const isKnown = Boolean(existingUser) && hasBothNames;
+      const isKnown = Boolean(existingUser) && hasBothNames && !isDeletedUserServer(existingUser);
 
       const userSession = {
         uid: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
         id: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
         email: cleanEmail,
-        name: fullName,
-        firstName: fName,
-        lastName: lName,
-        city: existingUser?.city || '',
-        country: existingUser?.country || '',
-        location: existingUser?.location || '',
-        avatar: existingUser?.avatar || '',
-        handle: existingUser?.handle || `@${(fullName || cleanEmail.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-        bio: existingUser?.bio || "Community reviewer on Yoouz.",
+        name: isKnown ? fullName : '',
+        firstName: isKnown ? fName : '',
+        lastName: isKnown ? lName : '',
+        city: isKnown ? (existingUser?.city || '') : '',
+        country: isKnown ? (existingUser?.country || '') : '',
+        location: isKnown ? (existingUser?.location || '') : '',
+        avatar: isKnown ? (existingUser?.avatar || '') : '',
+        banner: isKnown ? (existingUser?.banner || '') : '',
+        handle: isKnown ? (existingUser?.handle || `@${(fullName || cleanEmail.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '')}`) : `@${cleanEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+        bio: isKnown ? (existingUser?.bio || "Community reviewer on Yoouz.") : "Community reviewer on Yoouz.",
         initial,
         role: existingUser?.role || 'user',
         isNewUser: !isKnown,
@@ -8806,8 +8832,9 @@ app.post("/api/videos/save-review", async (req, res) => {
         verifiedAt: new Date().toISOString()
       };
 
-      // Un-blacklist this email and user identifiers immediately so re-registration/signing in works seamlessly from scratch
-      unrecordDeletedUserIds([userSession.uid, userSession.id, cleanEmail, userSession.name, userSession.handle]);
+      if (isKnown) {
+        unrecordDeletedUserIds([userSession.uid, userSession.id, cleanEmail, userSession.name, userSession.handle]);
+      }
 
       // Save/update user session in Bunny Database & Drizzle SQL
       if (!userSession.isNewUser) {

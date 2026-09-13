@@ -2364,7 +2364,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           <div className="flex items-center gap-1.5">
                             <h3 className="font-bold text-white text-base truncate">{creator.name}</h3>
                             {creator.isVerified && (
-                              <BadgeCheck className="w-4 h-4 text-amber-400 shrink-0" title="Verified Creator" />
+                              <span title="Verified Creator">
+                                <BadgeCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                              </span>
                             )}
                           </div>
                           

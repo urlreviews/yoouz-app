@@ -748,11 +748,11 @@ export const CopoAuthPrompt: React.FC<{
             />
 
             {/* Integrated Cover & Profile Photo Hero */}
-            <div className="relative w-full rounded-2xl overflow-hidden bg-zinc-900/90 border border-zinc-800/90 shadow-md">
+            <div className="relative w-full rounded-2xl overflow-hidden bg-zinc-900/90 border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.4)]">
               {/* Cover Banner Area */}
               <div
                 onClick={() => bannerInputRef.current?.click()}
-                className="relative w-full h-24 sm:h-28 bg-gradient-to-br from-zinc-850 via-zinc-900 to-zinc-950 overflow-hidden cursor-pointer group transition-all"
+                className="relative w-full h-26 sm:h-30 bg-gradient-to-br from-zinc-850 via-zinc-900 to-zinc-950 overflow-hidden cursor-pointer group transition-all select-none"
                 title="Click to set cover photo"
               >
                 {banner ? (
@@ -760,37 +760,39 @@ export const CopoAuthPrompt: React.FC<{
                     <img
                       src={banner}
                       alt="Cover preview"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-xs text-white font-medium backdrop-blur-xs">
-                      <Camera className="w-4 h-4" />
+                    <div className="absolute top-2.5 right-2.5 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-xl border border-white/25 text-white text-[11px] font-semibold flex items-center gap-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.7)] transition-all">
+                      <Camera className="w-3.5 h-3.5 text-zinc-200" />
                       <span>{t("profile.changeCover", "Change Cover")}</span>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.06),transparent_60%)]" />
-                    <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/10 text-white/90 text-[11px] font-medium flex items-center gap-1.5 shadow-md transition-all">
-                      <Camera className="w-3.5 h-3.5 text-zinc-300" />
-                      <span>{t("profile.addCover", "Add Cover")}</span>
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.08),transparent_70%)]" />
+                    <div className="absolute inset-0 flex items-center justify-end px-3">
+                      <div className="px-3.5 py-1.5 rounded-full bg-zinc-900/85 hover:bg-black active:scale-90 backdrop-blur-xl border border-white/20 text-white text-[11.5px] font-semibold flex items-center gap-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.6)] hover:border-white/40 transition-all">
+                        <Camera className="w-3.5 h-3.5 text-zinc-200" />
+                        <span>{t("profile.addCover", "Add Cover")}</span>
+                      </div>
                     </div>
                   </>
                 )}
               </div>
 
               {/* Avatar Overlap Container */}
-              <div className="px-4 pb-4 pt-0 -mt-10 sm:-mt-11 flex items-end justify-between relative z-10">
+              <div className="px-4 pb-3.5 pt-0 -mt-10 sm:-mt-11 flex items-end justify-between relative z-10">
                 <div
                   onClick={() => avatarInputRef.current?.click()}
-                  className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-full ring-4 ring-[#09090b] bg-zinc-950 overflow-hidden cursor-pointer group shadow-2xl transition-transform hover:scale-[1.02] active:scale-95 shrink-0"
+                  className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-full ring-4 ring-[#09090b] bg-zinc-950 overflow-hidden cursor-pointer group shadow-[0_10px_25px_rgba(0,0,0,0.8)] transition-all hover:scale-[1.03] active:scale-95 shrink-0 select-none"
                   title="Click to choose profile picture"
                 >
                   {avatar ? (
                     <img
                       src={avatar}
                       alt="Avatar preview"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                     />
                   ) : previewLetter ? (
@@ -807,12 +809,12 @@ export const CopoAuthPrompt: React.FC<{
                   )}
 
                   {/* Dark hover overlay with camera */}
-                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[1px]">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[1px]">
                     <Camera className="w-6 h-6" />
                   </div>
 
                   {/* Corner Camera Badge */}
-                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg border border-black/10 group-hover:scale-110 transition-transform">
+                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg ring-2 ring-black group-hover:scale-110 group-active:scale-90 transition-transform">
                     <Camera className="w-3.5 h-3.5 text-zinc-900" />
                   </div>
                 </div>

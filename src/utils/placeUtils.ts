@@ -723,6 +723,30 @@ export function unrecordDeletedUsersInLocalStorage(ids: string[]): void {
   } catch (e) {}
 }
 
+export function purgeUserFromRegistryCache(ids: string[]): void {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  for (const rawId of ids) {
+    if (!rawId) continue;
+    const clean = String(rawId).toLowerCase().trim();
+    const withoutAt = clean.replace(/^@+/, "");
+    const slugHyphens = withoutAt.replace(/[\s_]+/g, "-").trim();
+    const slugSpaces = withoutAt.replace(/[-_]+/g, " ").trim();
+    const username = clean.includes("@") ? clean.split("@")[0] : withoutAt;
+    const usrKey = clean.startsWith("usr_") ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
+    const variants = [clean, withoutAt, slugHyphens, slugSpaces, username, usrKey];
+    for (const v of variants) {
+      delete memoryUserRegistry[v];
+    }
+  }
+
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("yoouz_users_registry_cache", JSON.stringify(memoryUserRegistry));
+    } catch (e) {}
+  }
+}
+
 export function recordDeletedUsersInLocalStorage(ids: string[]): void {
   if (typeof window === "undefined" || !Array.isArray(ids) || ids.length === 0) return;
   try {
@@ -748,7 +772,9 @@ export function recordDeletedUsersInLocalStorage(ids: string[]): void {
     }
     if (changed) {
       localStorage.setItem("yoouz_deleted_users", JSON.stringify(Array.from(set)));
+      localStorage.setItem("copo_deleted_users", JSON.stringify(Array.from(set)));
     }
+    purgeUserFromRegistryCache(ids);
   } catch (e) {}
 }
 
