@@ -763,18 +763,22 @@ export const CopoAuthPrompt: React.FC<{
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute top-2.5 right-2.5 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-xl border border-white/25 text-white text-[11px] font-semibold flex items-center gap-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.7)] transition-all">
-                      <Camera className="w-3.5 h-3.5 text-zinc-200" />
-                      <span>{t("profile.changeCover", "Change Cover")}</span>
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                      <div className="px-4 py-2 rounded-full bg-black/60 text-white text-[11px] font-semibold flex items-center gap-1.5 backdrop-blur-md shadow-[0_4px_14px_rgba(0,0,0,0.7)]">
+                         <Camera className="w-3.5 h-3.5 text-zinc-200" />
+                         <span>{t("profile.changeCover", "Change Cover")}</span>
+                      </div>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.08),transparent_70%)]" />
-                    <div className="absolute inset-0 flex items-center justify-end px-3">
-                      <div className="px-3.5 py-1.5 rounded-full bg-zinc-900/85 hover:bg-black active:scale-90 backdrop-blur-xl border border-white/20 text-white text-[11.5px] font-semibold flex items-center gap-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.6)] hover:border-white/40 transition-all">
-                        <Camera className="w-3.5 h-3.5 text-zinc-200" />
-                        <span>{t("profile.addCover", "Add Cover")}</span>
+                    <div className="absolute inset-0 flex items-center justify-center group-hover:bg-zinc-800/20 transition-colors">
+                      <div className="flex flex-col items-center gap-1.5 text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                        <div className="w-9 h-9 rounded-full bg-zinc-800/80 flex items-center justify-center group-hover:scale-110 active:scale-95 transition-transform shadow-lg border border-white/5">
+                          <Camera className="w-4 h-4 text-zinc-400" />
+                        </div>
+                        <span className="text-[10px] font-semibold tracking-wide uppercase">{t("profile.addCover", "Add Cover")}</span>
                       </div>
                     </div>
                   </>
@@ -783,38 +787,42 @@ export const CopoAuthPrompt: React.FC<{
 
               {/* Avatar Overlap Container */}
               <div className="px-4 pb-3.5 pt-0 -mt-10 sm:-mt-11 flex items-end justify-between relative z-10">
-                <div
+                
+                {/* Avatar Wrapper (Fixes the clipped corner badge) */}
+                <div 
                   onClick={() => avatarInputRef.current?.click()}
-                  className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-full ring-4 ring-[#09090b] bg-zinc-950 overflow-hidden cursor-pointer group shadow-[0_10px_25px_rgba(0,0,0,0.8)] transition-all hover:scale-[1.03] active:scale-95 shrink-0 select-none"
+                  className="relative cursor-pointer group shrink-0 transition-all hover:scale-[1.03] active:scale-95 select-none"
                   title="Click to choose profile picture"
                 >
-                  {avatar ? (
-                    <img
-                      src={avatar}
-                      alt="Avatar preview"
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : previewLetter ? (
-                    <div
-                      className="w-full h-full flex items-center justify-center font-bold text-2xl sm:text-3xl font-['Google_Sans',sans-serif] select-none"
-                      style={{ backgroundColor: previewColor.bg, color: previewColor.text }}
-                    >
-                      {previewLetter}
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-zinc-850 text-zinc-400">
-                      <User className="w-8 h-8 text-zinc-500" />
-                    </div>
-                  )}
+                  <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full ring-4 ring-[#09090b] bg-zinc-950 overflow-hidden shadow-[0_10px_25px_rgba(0,0,0,0.8)] relative">
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt="Avatar preview"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : previewLetter ? (
+                      <div
+                        className="w-full h-full flex items-center justify-center font-bold text-2xl sm:text-3xl font-['Google_Sans',sans-serif] select-none"
+                        style={{ backgroundColor: previewColor.bg, color: previewColor.text }}
+                      >
+                        {previewLetter}
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-zinc-850 text-zinc-400">
+                        <User className="w-8 h-8 text-zinc-500" />
+                      </div>
+                    )}
 
-                  {/* Dark hover overlay with camera */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[1px]">
-                    <Camera className="w-6 h-6" />
+                    {/* Dark hover overlay with camera */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[1px]">
+                      <Camera className="w-6 h-6" />
+                    </div>
                   </div>
-
-                  {/* Corner Camera Badge */}
-                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg ring-2 ring-black group-hover:scale-110 group-active:scale-90 transition-transform">
+                  
+                  {/* Corner Camera Badge (Now safely outside overflow-hidden) */}
+                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg ring-2 ring-[#09090b] group-hover:scale-110 group-active:scale-90 transition-transform">
                     <Camera className="w-3.5 h-3.5 text-zinc-900" />
                   </div>
                 </div>
