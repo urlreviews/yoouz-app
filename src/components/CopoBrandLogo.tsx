@@ -38,11 +38,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [domain, website, logoUrl, name]);
 
-  // Reset error & fallback when inputs change
+  // Reset error & fallback ONLY if the incoming source itself fundamentally changes
   useEffect(() => {
     setHasError(false);
     setTriedFallback(false);
-  }, [domain, website, logoUrl, name]);
+  }, [resolvedDomain, logoUrl, name]);
 
   const monogramSvg = useMemo(() => {
     return generateBrandMonogramSvg(name || resolvedDomain || "Place", 128);
