@@ -4,7 +4,7 @@ import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from ".
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
 import { locationData } from "../utils/locationData";
-import { KNOWN_COMMUNITY_USERS } from "../utils/placeUtils";
+import { KNOWN_COMMUNITY_USERS, unrecordDeletedUsersInLocalStorage } from "../utils/placeUtils";
 import { Country, State, City } from "country-state-city";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -303,6 +303,9 @@ export const CopoAuthPrompt: React.FC<{
 
   const completeLogin = (userObj: any) => {
     try {
+      if (userObj) {
+        unrecordDeletedUsersInLocalStorage([userObj.email, userObj.uid, userObj.id, userObj.name, userObj.handle]);
+      }
       localStorage.setItem("copo_user", JSON.stringify(userObj));
       localStorage.setItem("copo_user_profile", JSON.stringify(userObj));
       window.dispatchEvent(new CustomEvent("copo_auth_changed", { detail: userObj }));

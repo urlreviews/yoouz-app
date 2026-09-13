@@ -216,6 +216,32 @@ function readDeletedPlacesIndex(): string[] {
   return [];
 }
 
+function unrecordDeletedPlaceIds(ids: string[]): void {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const list = readDeletedPlacesIndex();
+    const set = new Set(list);
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).trim();
+      const lower = clean.toLowerCase();
+      const dot = lower.replace(/-/g, '.');
+      const hyphen = lower.replace(/\./g, '-');
+      const noWww = lower.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '');
+      const withWww = `www.${noWww}`;
+      const candidates = [clean, lower, dot, hyphen, noWww, withWww];
+      for (const cand of candidates) {
+        set.delete(cand);
+      }
+    }
+    const updated = Array.from(set);
+    if (!fs.existsSync(globalUploadsDir)) {
+      fs.mkdirSync(globalUploadsDir, { recursive: true });
+    }
+    fs.writeFileSync(deletedPlacesIndexPath, JSON.stringify(updated, null, 2), "utf8");
+  } catch (e) {}
+}
+
 function recordDeletedPlaceIds(ids: string[]): void {
   if (!Array.isArray(ids) || ids.length === 0) return;
   try {
@@ -325,6 +351,35 @@ function isDeletedUserServer(itemOrIdOrEmail: any, deletedSet?: Set<string>): bo
   }
 
   return false;
+}
+
+function unrecordDeletedUserIds(ids: string[]): void {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const list = readDeletedUsersIndex();
+    const set = new Set(list);
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).trim();
+      const lower = clean.toLowerCase();
+      const withoutAt = lower.replace(/^@+/, '');
+      const slugHyphens = withoutAt.replace(/[\s_]+/g, '-').trim();
+      const slugSpaces = withoutAt.replace(/[-_]+/g, ' ').trim();
+      const alphaOnly = withoutAt.replace(/[^a-z0-9]/g, '');
+      const username = lower.includes('@') ? lower.split('@')[0] : withoutAt;
+      const usrKey = lower.startsWith('usr_') ? lower : `usr_${lower.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+      const variations = [clean, lower, withoutAt, slugHyphens, slugSpaces, alphaOnly, username, usrKey];
+      for (const v of variations) {
+        set.delete(v);
+      }
+    }
+    const updated = Array.from(set);
+    if (!fs.existsSync(globalUploadsDir)) {
+      fs.mkdirSync(globalUploadsDir, { recursive: true });
+    }
+    fs.writeFileSync(deletedUsersIndexPath, JSON.stringify(updated, null, 2), "utf8");
+  } catch (e) {}
 }
 
 function recordDeletedUserIds(ids: string[]): void {
@@ -8533,6 +8588,9 @@ app.post("/api/videos/save-review", async (req, res) => {
         location: nextLocation,
         updatedAt: Date.now()
       };
+
+      // Un-blacklist user so re-registering or updating profiles is active immediately
+      unrecordDeletedUserIds([profileObj.id, profileObj.uid, profileObj.email, profileObj.name, profileObj.handle]);
 
       // Keep defaultCommunityUsers in memory in sync with updated location and profile details
       try {

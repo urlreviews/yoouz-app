@@ -646,109 +646,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
   };
 }
 
-export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {
-  "aouisesmee": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "aouisesmee@gmail.com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "usr_aouisesmee_gmail_com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "aouisesmee_gmail_com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "mLiO66HDR9TRvOFdGddGWm30rKu2": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "mlio66hdr9trvofdgddgwm30rku2": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "aouisesme": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "aouisesme@gmail.com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "biz riv": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "bizriv": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "louis42111": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "louis42111@gmail.com": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "avt ertuop": {
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "avr6566gd": {
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  },
-  "avr6566gd@gmail.com": {
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States"
-  }
-};
+export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {};
 
 /**
  * Deleted Users Helpers: Synchronized across localStorage, SSE, and server index
@@ -763,6 +661,29 @@ export function getDeletedUserIds(): string[] {
   } catch (e) {
     return [];
   }
+}
+
+export function unrecordDeletedUsersInLocalStorage(ids: string[]): void {
+  if (typeof window === "undefined" || !Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const current = getDeletedUserIds();
+    const set = new Set(current);
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).toLowerCase().trim();
+      const withoutAt = clean.replace(/^@+/, "");
+      const slugHyphens = withoutAt.replace(/[\s_]+/g, "-").trim();
+      const slugSpaces = withoutAt.replace(/[-_]+/g, " ").trim();
+      const username = clean.includes("@") ? clean.split("@")[0] : withoutAt;
+      const usrKey = clean.startsWith("usr_") ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
+      const variants = [clean, withoutAt, slugHyphens, slugSpaces, username, usrKey];
+      for (const v of variants) {
+        set.delete(v);
+      }
+    }
+    localStorage.setItem("yoouz_deleted_users", JSON.stringify(Array.from(set)));
+  } catch (e) {}
 }
 
 export function recordDeletedUsersInLocalStorage(ids: string[]): void {
@@ -1183,6 +1104,26 @@ export function isPlaceDeleted(placeOrId: any, deletedIds?: string[]): boolean {
   }
 
   return false;
+}
+
+export function unrecordDeletedPlacesInLocalStorage(variants: string[]): string[] {
+  try {
+    const current = getDeletedPlaceIds();
+    const set = new Set(current);
+    variants.forEach((v) => {
+      const clean = String(v).trim().toLowerCase();
+      const dot = clean.replace(/-/g, '.');
+      const hyphen = clean.replace(/\./g, '-');
+      set.delete(clean);
+      set.delete(dot);
+      set.delete(hyphen);
+    });
+    const updated = Array.from(set);
+    localStorage.setItem("copo_deleted_places", JSON.stringify(updated));
+    return updated;
+  } catch (e) {
+    return [];
+  }
 }
 
 /**
