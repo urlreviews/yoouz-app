@@ -473,6 +473,9 @@ export function useFeedPagination() {
             } else if (payload.type === "user_deleted") {
               const uIds = Array.isArray(payload.userIds) ? payload.userIds : [payload.userId, payload.email, payload.name, payload.handle].filter(Boolean);
               window.dispatchEvent(new CustomEvent("copo-user-deleted", { detail: { userIds: uIds, email: payload.email, name: payload.name, handle: payload.handle } }));
+            } else if (payload.type === "user_restored") {
+              const uIds = Array.isArray(payload.userIds) ? payload.userIds : [payload.userId, payload.email].filter(Boolean);
+              window.dispatchEvent(new CustomEvent("copo-user-restored", { detail: { ids: uIds } }));
             } else if (payload.type === "users_purged") {
               window.dispatchEvent(new CustomEvent("copo-users-purged"));
             } else if (payload.type === "init") {

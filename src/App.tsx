@@ -1731,17 +1731,42 @@ export function App() {
           if (!isCancelled && Array.isArray(list)) {
             let deletedList: string[] = [];
             try {
-              const stored = localStorage.getItem("yoouz_deleted_users");
+              const stored = localStorage.getItem("yoouz_deleted_users") || localStorage.getItem("copo_deleted_users");
               if (stored) deletedList = JSON.parse(stored);
             } catch (e) {}
             const deletedSet = new Set(deletedList.map((k) => String(k).toLowerCase()));
+
+            // Self-healing check: if an active user profile was returned by the DB,
+            // they are currently active and cannot be considered deleted.
+            const restoredIds: string[] = [];
+            list.forEach((u: any) => {
+              if (!u) return;
+              const uEmail = (u.email || "").toLowerCase().trim();
+              const uName = (u.name || "").toLowerCase().trim();
+              const uId = (u.id || u.uid || u.userId || "").toLowerCase().trim();
+
+              if (uEmail && deletedSet.has(uEmail)) restoredIds.push(uEmail);
+              if (uName && deletedSet.has(uName)) restoredIds.push(uName);
+              if (uId && deletedSet.has(uId)) restoredIds.push(uId);
+            });
+
+            if (restoredIds.length > 0) {
+              unrecordDeletedUsersInLocalStorage(restoredIds);
+              try {
+                const stored = localStorage.getItem("yoouz_deleted_users") || localStorage.getItem("copo_deleted_users");
+                if (stored) deletedList = JSON.parse(stored);
+                else deletedList = [];
+              } catch (e) {}
+              deletedSet.clear();
+              deletedList.forEach(k => deletedSet.add(String(k).toLowerCase()));
+            }
 
             const validUsers = list.filter((u: any) => {
               if (!u) return false;
               const uEmail = (u.email || "").toLowerCase().trim();
               if (uEmail.includes("undefined")) return false;
               const uName = (u.name || "").toLowerCase().trim();
-              const uId = (u.id || u.uid || "").toLowerCase().trim();
+              const uId = (u.id || u.uid || u.userId || "").toLowerCase().trim();
               // Do not exclude admin users or default placeholders unless explicitly deleted by the admin
               if (deletedSet.has(uEmail) || (uName && deletedSet.has(uName)) || (uId && deletedSet.has(uId))) return false;
               return true;
@@ -1866,21 +1891,23 @@ export function App() {
   };
 
   const handleDeleteProfile = async () => {
-    const userUid = auth.currentUser?.uid || (currentUser?.email ? currentUser.email.replace(/[^a-zA-Z0-9]/g, '_') : null);
-    if (userUid) {
-      // Delete from BunnyDB
-      fetch(`/api/nosql/users/${userUid}`, {
-        method: "DELETE"
-      }).catch(() => {});
-    }
+    const userToPurge = {
+      id: currentUser?.uid || currentUser?.id || auth.currentUser?.uid || "",
+      uid: currentUser?.uid || currentUser?.id || auth.currentUser?.uid || "",
+      email: currentUser?.email || "",
+      name: currentUser?.name || "",
+      handle: currentUser?.handle || ""
+    };
 
-    if (auth.currentUser) {
-      try {
-        const uid = auth.currentUser.uid;
-
-      } catch (err) {
-        console.warn("Failed to delete user document from BunnyDB:", err);
-      }
+    // Trigger full backend purge of all databases, files, and caches
+    try {
+      await fetch('/api/user/delete-account', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userToPurge)
+      });
+    } catch (err) {
+      console.warn("Backend purge request failed:", err);
     }
 
     try {
@@ -1889,9 +1916,14 @@ export function App() {
       console.warn("Failed to log out user during profile deletion:", e);
     }
 
+    // Completely clear all authentication, profile, and session local storage keys
     setCurrentUser(null);
     try {
       localStorage.removeItem("copo_user_profile");
+      localStorage.removeItem("copo_user");
+      localStorage.removeItem("copo_business_verified_session");
+      sessionStorage.removeItem("copo_temp_user");
+      sessionStorage.removeItem("copo_business_session");
     } catch (e) {}
 
     setDeleteSuccessToast(true);

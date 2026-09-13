@@ -846,6 +846,14 @@ export function updateUserRegistry(users: any[] | any): void {
     if (nameKey) memoryUserRegistry[nameKey] = entry;
     if (handleKey) memoryUserRegistry[handleKey] = entry;
     if (uidKey) memoryUserRegistry[uidKey] = entry;
+
+    // Remove from local storage deleted list since we received active data
+    try {
+      const idsToRestore = [emailKey, nameKey, handleKey, uidKey].filter(Boolean);
+      if (idsToRestore.length > 0) {
+        unrecordDeletedUsersInLocalStorage(idsToRestore);
+      }
+    } catch (err) {}
   });
 
   if (typeof window !== "undefined") {

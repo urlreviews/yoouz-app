@@ -379,6 +379,13 @@ function unrecordDeletedUserIds(ids: string[]): void {
       fs.mkdirSync(globalUploadsDir, { recursive: true });
     }
     fs.writeFileSync(deletedUsersIndexPath, JSON.stringify(updated, null, 2), "utf8");
+    try {
+      broadcastSseEvent({
+        type: "user_restored",
+        userIds: ids,
+        email: ids.find(id => id.includes('@')) || ""
+      });
+    } catch (sseErr) {}
   } catch (e) {}
 }
 
