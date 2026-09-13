@@ -36,9 +36,19 @@ export const db: any = new Proxy({}, {
   get(target, prop) {
     const realDb = getDb();
     if (!realDb) {
-      return () => {
-        return Promise.resolve([]);
-      };
+      const noop = () => noop;
+      (noop as any).then = (resolve: any) => resolve([]);
+      (noop as any).catch = () => noop;
+      (noop as any).where = () => noop;
+      (noop as any).values = () => noop;
+      (noop as any).set = () => noop;
+      (noop as any).from = () => noop;
+      (noop as any).select = () => noop;
+      (noop as any).insert = () => noop;
+      (noop as any).update = () => noop;
+      (noop as any).delete = () => noop;
+      (noop as any).execute = () => Promise.resolve([]);
+      return noop;
     }
     return (realDb as any)[prop];
   }

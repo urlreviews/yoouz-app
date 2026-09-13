@@ -508,15 +508,39 @@ export const CopoAuthPrompt: React.FC<{
         verifiedAt: new Date().toISOString()
       };
 
-      await fetch("/api/auth/update-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedUser)
-      });
+      // Add a 30s timeout to the fetch call to prevent permanent loading spinner
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      // Send real one-time welcome notification for newly registered user
-      sendWelcomeNotificationForNewUser(updatedUser);
-      completeLogin(updatedUser);
+      try {
+        const response = await fetch("/api/auth/update-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedUser),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Server error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        // Use the server-returned user object if available, as it may have been normalized
+        const finalUser = result.user || updatedUser;
+
+        // Send real one-time welcome notification for newly registered user
+        sendWelcomeNotificationForNewUser(finalUser);
+        completeLogin(finalUser);
+      } catch (fetchErr: any) {
+        if (fetchErr.name === 'AbortError') {
+          throw new Error("The request timed out. Please check your connection and try again.");
+        }
+        throw fetchErr;
+      }
     } catch (err: any) {
       console.error("Profile save error:", err);
       setErrorMessage(err.message || "Failed to save profile. Please try again.");

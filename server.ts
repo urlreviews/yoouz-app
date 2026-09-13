@@ -8988,45 +8988,66 @@ app.post("/api/videos/save-review", async (req, res) => {
       };
 
       // Un-blacklist user so re-registering or profile setup is immediately active
+      console.log(`[Auth] Updating profile for ${cleanEmail} (UID: ${uid})`);
       unrecordDeletedUserIds([uid, cleanEmail, fullName]);
 
       const bunnyDb = getBunnyDb();
+      const persistencePromises = [];
+
       if (bunnyDb) {
-        await bunnyDb.execute({
-          sql: `INSERT INTO users (id, email, name, data, updatedAt) 
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
-                ON CONFLICT(id) DO UPDATE SET name = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-          args: [
-            uid,
-            cleanEmail,
-            fullName,
-            JSON.stringify(profile),
-            fullName,
-            JSON.stringify(profile)
-          ]
-        });
+        console.log(`[Auth] Queueing BunnyDB persistence for ${cleanEmail}`);
+        const bunnyPromise = (async () => {
+          try {
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
+            await Promise.race([
+              bunnyDb.execute({
+                sql: `INSERT INTO users (id, email, name, data, updatedAt) 
+                      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
+                      ON CONFLICT(id) DO UPDATE SET name = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                args: [uid, cleanEmail, fullName, JSON.stringify(profile), fullName, JSON.stringify(profile)]
+              }),
+              timeout
+            ]);
+            console.log(`[Auth] BunnyDB successful for ${cleanEmail}`);
+          } catch (e) {
+            console.warn(`[Auth] BunnyDB skip/timeout for ${cleanEmail}`);
+          }
+        })();
+        persistencePromises.push(bunnyPromise);
       }
 
-      // Also persist to Drizzle SQL DB
-      try {
-        const existingSql = await db.select().from(users).where(eq(users.uid, uid));
-        if (existingSql.length === 0) {
-          await db.insert(users).values({
-            uid,
-            email: cleanEmail,
-            name: fullName,
-            avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`
-          });
-        } else {
-          await db.update(users).set({
-            name: fullName,
-            avatar: profile.avatar || existingSql[0].avatar
-          }).where(eq(users.uid, uid));
+      console.log(`[Auth] Queueing SQL DB persistence for ${cleanEmail}`);
+      const sqlPromise = (async () => {
+        try {
+          const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
+          const op = (async () => {
+            const existingSql = await db.select().from(users).where(eq(users.uid, uid));
+            if (existingSql.length === 0) {
+              await db.insert(users).values({
+                uid,
+                email: cleanEmail,
+                name: fullName,
+                avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`
+              });
+            } else {
+              await db.update(users).set({
+                name: fullName,
+                avatar: profile.avatar || existingSql[0].avatar
+              }).where(eq(users.uid, uid));
+            }
+          })();
+          await Promise.race([op, timeout]);
+          console.log(`[Auth] SQL DB successful for ${cleanEmail}`);
+        } catch (e) {
+          console.warn(`[Auth] SQL DB skip/timeout for ${cleanEmail}`);
         }
-      } catch (sqlErr) {
-        console.warn("Could not save profile to SQL DB:", sqlErr);
-      }
+      })();
+      persistencePromises.push(sqlPromise);
 
+      // Wait for all database operations to settle before responding
+      await Promise.allSettled(persistencePromises);
+
+      console.log(`[Auth] Profile update complete for ${cleanEmail}`);
       return res.json({
         success: true,
         user: profile,
