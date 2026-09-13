@@ -514,11 +514,6 @@ export const CopoAuthPrompt: React.FC<{
     }
   };
 
-  const hasName = firstName && firstName.trim().length > 0;
-  const seedName = hasName ? firstName.trim() : 'User';
-  const previewLetter = hasName ? getFirstLetter(seedName) : '';
-  const previewColor = hasName ? getAvatarColor(seedName) : { bg: '#27272a', text: '#ffffff' };
-
   return (
     <div className={`w-full ${isFullPage ? "min-h-full flex flex-col justify-between pt-[max(12px,env(safe-area-inset-top,12px))]" : "flex flex-col items-center"} p-4 sm:p-7 select-none bg-[#09090b] text-white`}>
       {isFullPage && (
@@ -802,13 +797,6 @@ export const CopoAuthPrompt: React.FC<{
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         referrerPolicy="no-referrer"
                       />
-                    ) : previewLetter ? (
-                      <div
-                        className="w-full h-full flex items-center justify-center font-bold text-2xl sm:text-3xl font-['Google_Sans',sans-serif] select-none"
-                        style={{ backgroundColor: previewColor.bg, color: previewColor.text }}
-                      >
-                        {previewLetter}
-                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-zinc-850 text-zinc-400">
                         <User className="w-8 h-8 text-zinc-500" />
