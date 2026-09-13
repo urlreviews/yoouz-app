@@ -79,6 +79,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
   // Audio Context for hardware unlocking
   const audioContextRef = useRef<any>(null);
+  const voiceDetectedRef = useRef<boolean>(false);
+  const [isSpeakingDetected, setIsSpeakingDetected] = useState<boolean>(false);
 
   // Camera settings (Front / Rear camera flip)
   const [cameraActive, setCameraActive] = useState(false);
@@ -591,6 +593,80 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setFaceWarning(null);
   };
 
+  const startVoiceMonitoring = (stream: MediaStream) => {
+    try {
+      voiceDetectedRef.current = false;
+      setIsSpeakingDetected(false);
+
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) {
+        // Fallback if audio context not supported
+        voiceDetectedRef.current = true;
+        setIsSpeakingDetected(true);
+        return;
+      }
+
+      const audioCtx = audioContextRef.current || new AudioContextClass();
+      audioContextRef.current = audioCtx;
+
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+      }
+
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        console.warn("No audio tracks found in stream");
+        // Fallback if no audio track (e.g. simulation or fallback mock camera)
+        voiceDetectedRef.current = true;
+        setIsSpeakingDetected(true);
+        return;
+      }
+
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      let consecutiveVoiceHits = 0;
+      const checkAudio = () => {
+        if (!isRecordingRef.current) {
+          try {
+            source.disconnect();
+            analyser.disconnect();
+          } catch (e) {}
+          return;
+        }
+
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / bufferLength;
+
+        // Threshold for human speech/sound (avg level above background noise)
+        if (avg > 15) {
+          consecutiveVoiceHits++;
+          if (consecutiveVoiceHits > 5) {
+            voiceDetectedRef.current = true;
+            setIsSpeakingDetected(true);
+          }
+        }
+
+        requestAnimationFrame(checkAudio);
+      };
+
+      requestAnimationFrame(checkAudio);
+    } catch (e) {
+      console.error("Error setting up voice monitoring:", e);
+      voiceDetectedRef.current = true;
+      setIsSpeakingDetected(true);
+    }
+  };
+
   // Instant Shutter Record Start (Desktop & Mobile) - Immediate response in 1 click/tap
   const isStartingRecordingRef = useRef(false);
 
@@ -668,6 +744,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           setRecordingTime(0);
           return;
         }
+        if (!voiceDetectedRef.current) {
+          chunksRef.current = [];
+          setErrorMessage("No active voice or speech was recognized. Authentic reviews require you to speak and share your real experience. Please speak clearly into your microphone.");
+          setIsRecording(false);
+          isRecordingRef.current = false;
+          setRecordingTime(0);
+          return;
+        }
         if (chunksRef.current.length === 0) {
           console.warn("No video chunks collected");
           setErrorMessage("Recording was empty. Please try recording again.");
@@ -694,6 +778,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       mediaRecorder.start(250);
       setIsRecording(true); isRecordingRef.current = true;
       setRecordingTime(0);
+      startVoiceMonitoring(stream);
 
       // Max 60 seconds (1 minute) strict limit
       timerRef.current = setInterval(() => {
@@ -834,9 +919,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const placeDomain = extractCleanDomain(selectedPlace.website || selectedPlace.name || selectedPlace.id);
     const cleanPlaceName = formatBusinessName(selectedPlace.name || placeDomain) || selectedPlace.name;
-    const resolvedPlaceLogo = (selectedPlace.logoUrl && !selectedPlace.logoUrl.startsWith("data:;"))
+    const resolvedPlaceLogo = (selectedPlace.logoUrl && !selectedPlace.logoUrl.startsWith("data:;") && !selectedPlace.logoUrl.includes("gstatic.com") && !selectedPlace.logoUrl.includes("faviconV2"))
       ? selectedPlace.logoUrl
-      : (selectedPlace.avatarUrl && !selectedPlace.avatarUrl.startsWith("data:;"))
+      : (selectedPlace.avatarUrl && !selectedPlace.avatarUrl.startsWith("data:;") && !selectedPlace.avatarUrl.includes("gstatic.com") && !selectedPlace.avatarUrl.includes("faviconV2"))
       ? selectedPlace.avatarUrl
       : (placeDomain && KNOWN_BRAND_LOGOS[placeDomain])
       ? KNOWN_BRAND_LOGOS[placeDomain]
@@ -1005,8 +1090,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           if (foundPlace) {
             foundPlace = {
               ...foundPlace,
-              logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;")) ? foundPlace.logoUrl : (fetchedLogo || ""),
-              avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
+              logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;") && !foundPlace.logoUrl.includes("gstatic.com") && !foundPlace.logoUrl.includes("faviconV2")) ? foundPlace.logoUrl : (fetchedLogo || ""),
+              avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;") && !foundPlace.avatarUrl.includes("gstatic.com") && !foundPlace.avatarUrl.includes("faviconV2")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
               bannerUrl: foundPlace.bannerUrl || fetchedBanner || "",
               description: foundPlace.description || data.description || "",
             };
@@ -1587,9 +1672,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 {isRecording && (
                   <div className="absolute bottom-8 inset-x-0 flex flex-col items-center gap-4 z-30 pointer-events-auto">
                     {/* Live REC Timer badge */}
-                    <div className="bg-red-600/90 backdrop-blur-md text-white px-4 py-1.5 rounded-full font-bold text-xs tracking-wider shadow-2xl border border-red-400 flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
-                      <span>REC {recordingTime < 10 ? `00:0${recordingTime}` : `00:${recordingTime}`} / 01:00</span>
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="bg-red-600/90 backdrop-blur-md text-white px-4 py-1.5 rounded-full font-bold text-xs tracking-wider shadow-2xl border border-red-400 flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                        <span>REC {recordingTime < 10 ? `00:0${recordingTime}` : `00:${recordingTime}`} / 01:00</span>
+                      </div>
+                      
+                      <div className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md transition-all duration-300 ${
+                        isSpeakingDetected 
+                          ? "bg-green-500/20 text-green-400 border border-green-500/30 shadow-[0_0_12px_rgba(34,197,94,0.2)] animate-pulse" 
+                          : "bg-zinc-800/60 text-zinc-400 border border-zinc-700/30"
+                      }`}>
+                        {isSpeakingDetected ? "🎤 Voice Recognized" : "🎤 Speak into Mic"}
+                      </div>
                     </div>
 
                     {/* Circular 60s Progress Ring with Stop Recording Shutter Button */}

@@ -590,14 +590,14 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     ""
   );
   const reviewLogo =
-    video.placeLogoUrl ||
-    (domain && KNOWN_BRAND_LOGOS[domain]) ||
-    (domain ? getCleanLogoUrl(null, domain) || "" : "");
+    (video.placeLogoUrl && !video.placeLogoUrl.includes("gstatic.com") && !video.placeLogoUrl.includes("faviconV2")) ? video.placeLogoUrl :
+    ((domain && KNOWN_BRAND_LOGOS[domain]) ||
+     (domain ? getCleanLogoUrl(null, domain) || "" : ""));
 
   if (existing) {
     const rawBanner = existing.bannerUrl || existing.ogImage || reviewBanner || (domain && KNOWN_BRAND_BANNERS[domain]) || "";
     const banner = sanitizeBanner(rawBanner);
-    const logo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) ? existing.avatarUrl : (reviewLogo || (domain && KNOWN_BRAND_LOGOS[domain]) || ""));
+    const logo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("gstatic.com") && !existing.logoUrl.includes("faviconV2")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !existing.avatarUrl.includes("gstatic.com") && !existing.avatarUrl.includes("faviconV2")) ? existing.avatarUrl : (reviewLogo || (domain && KNOWN_BRAND_LOGOS[domain]) || ""));
     const website = (existing.website && !existing.website.includes("maps.google.com")) 
       ? existing.website 
       : (video.placeWebsite || (domain ? `https://${domain}` : ""));

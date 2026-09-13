@@ -2398,13 +2398,13 @@ export function App() {
           // If existing place is missing banner, logo, or website, enrich it from the video review or known metadata!
           const existing = next[idx];
           const reviewBanner = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage || knownBanner;
-          const reviewLogo = v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") ? v.placeLogoUrl : (knownLogo || existing.logoUrl);
+          const reviewLogo = v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") && !v.placeLogoUrl.includes("gstatic.com") && !v.placeLogoUrl.includes("faviconV2") ? v.placeLogoUrl : (knownLogo || existing.logoUrl);
           const reviewWebsite = v.placeWebsite || (reviewDomain && reviewDomain.includes(".") ? `https://${reviewDomain}` : "");
           const currentWebsite = existing.website && existing.website.trim() !== "" && !existing.website.includes("maps.google.com") ? existing.website : "";
           const effectiveWeb = currentWebsite || reviewWebsite || (existing.brandDomain && existing.brandDomain.includes(".") ? `https://${existing.brandDomain}` : "");
 
           const effectiveBanner = knownBanner || existing.bannerUrl || existing.ogImage || reviewBanner || "";
-          const effectiveLogo = knownLogo || ((existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;")) ? existing.avatarUrl : (reviewLogo || "")));
+          const effectiveLogo = knownLogo || ((existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310") && !existing.logoUrl.includes("gstatic.com") && !existing.logoUrl.includes("faviconV2")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !existing.avatarUrl.includes("gstatic.com") && !existing.avatarUrl.includes("faviconV2")) ? existing.avatarUrl : (reviewLogo || "")));
           const effectiveDescription = v.placeDescription || (existing.description && !existing.description.includes("Verified video review destination") && !existing.description.includes("Verified Yoouz business listing") ? existing.description : "");
 
           if (

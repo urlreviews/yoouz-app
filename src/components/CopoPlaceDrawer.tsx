@@ -340,7 +340,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       place.name.toLowerCase() === "website";
 
     const needsBanner = !reviewBannerUrl && !place.bannerUrl && !place.ogImage;
-    const needsLogo = !place.logoUrl || place.logoUrl.startsWith("data:;") || place.logoUrl.includes("760X310");
+    const needsLogo = !place.logoUrl || 
+      place.logoUrl.startsWith("data:;") || 
+      place.logoUrl.includes("760X310") || 
+      place.logoUrl.includes("gstatic.com") || 
+      place.logoUrl.includes("faviconV2") || 
+      place.logoUrl.includes("fallback");
 
     if (targetUrl && (isGenericDesc || isGenericName || needsBanner || needsLogo)) {
       fetchedTargetUrlRef.current = targetUrl;
@@ -359,8 +364,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
                 bannerUrl: place.bannerUrl || data.image || "",
                 ogImage: place.ogImage || data.image || "",
-                logoUrl: (place.logoUrl && !place.logoUrl.startsWith("data:;")) ? place.logoUrl : (data.logo || ""),
-                avatarUrl: (place.avatarUrl && !place.avatarUrl.startsWith("data:;")) ? place.avatarUrl : (data.logo || ""),
+                logoUrl: (place.logoUrl && !place.logoUrl.startsWith("data:;") && !place.logoUrl.includes("gstatic.com") && !place.logoUrl.includes("faviconV2")) ? place.logoUrl : (data.logo || ""),
+                avatarUrl: (place.avatarUrl && !place.avatarUrl.startsWith("data:;") && !place.avatarUrl.includes("gstatic.com") && !place.avatarUrl.includes("faviconV2")) ? place.avatarUrl : (data.logo || ""),
                 brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
                 photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
               });
