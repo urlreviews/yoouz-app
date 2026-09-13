@@ -8954,17 +8954,27 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       const cleanEmail = email.trim().toLowerCase();
       let uid = bodyUid || bodyId;
+
       if (!uid) {
-        // Find existing profile regardless of deletion status to ensure we reuse the same UID and avoid UNIQUE constraints
-        const existingProfile = await resolveUserProfileFromAnySource(cleanEmail, true);
-        uid = existingProfile?.uid || existingProfile?.id || crypto.randomUUID();
+        try {
+           const existing = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
+           if (existing.length > 0) {
+              uid = existing[0].uid;
+           } else {
+              uid = `usr_${crypto.randomUUID().replace(/-/g, '')}`;
+           }
+        } catch (e) {
+           uid = `usr_${crypto.randomUUID().replace(/-/g, '')}`;
+        }
       }
+
       const fName = (firstName || '').trim();
       const lName = (lastName || '').trim();
       const fullName = (name || (fName && lName ? `${fName} ${lName}` : (fName || cleanEmail.split('@')[0]))).trim();
       const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
       const locParts = [city?.trim(), country?.trim()].filter(Boolean);
       const combinedLocation = location || locParts.join(', ');
+      const finalAvatar = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`;
 
       const profile = {
         uid,
@@ -8976,7 +8986,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         city: (city || '').trim(),
         country: (country || '').trim(),
         location: combinedLocation,
-        avatar: avatar || '',
+        avatar: finalAvatar,
         banner: banner || '',
         bio: bio || '',
         handle: `@${fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
@@ -8987,72 +8997,29 @@ app.post("/api/videos/save-review", async (req, res) => {
         updatedAt: new Date().toISOString()
       };
 
-      // Un-blacklist user so re-registering or profile setup is immediately active
       console.log(`[Auth] Updating profile for ${cleanEmail} (UID: ${uid})`);
       unrecordDeletedUserIds([uid, cleanEmail, fullName]);
 
-      const bunnyDb = getBunnyDb();
-      const persistencePromises = [];
-
-      const withTimeout = <T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
-        let timeoutId: NodeJS.Timeout;
-        const timeoutPromise = new Promise<T>((resolve) => {
-          timeoutId = setTimeout(() => resolve(fallback), ms);
-        });
-        return Promise.race([
-          promise.finally(() => clearTimeout(timeoutId)),
-          timeoutPromise
-        ]);
-      };
-
-      if (bunnyDb) {
-        console.log(`[Auth] Queueing BunnyDB persistence for ${cleanEmail}`);
-        const bunnyPromise = async () => {
-          try {
-            const op = bunnyDb.execute({
-              sql: `INSERT INTO users (id, email, name, data, updatedAt) 
-                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
-                    ON CONFLICT(id) DO UPDATE SET name = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-              args: [uid, cleanEmail, fullName, JSON.stringify(profile), fullName, JSON.stringify(profile)]
-            });
-            await withTimeout(op, 8000, null);
-            console.log(`[Auth] BunnyDB successful for ${cleanEmail}`);
-          } catch (e) {
-            console.warn(`[Auth] BunnyDB skip/timeout for ${cleanEmail}`);
-          }
-        };
-        persistencePromises.push(bunnyPromise());
-      }
-
-      console.log(`[Auth] Queueing SQL DB persistence for ${cleanEmail}`);
-      const sqlPromise = async () => {
-        try {
-          const op = (async () => {
-            const existingSql = await db.select().from(users).where(eq(users.uid, uid));
-            if (existingSql.length === 0) {
-              await db.insert(users).values({
-                uid,
-                email: cleanEmail,
-                name: fullName,
-                avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`
-              });
-            } else {
-              await db.update(users).set({
-                name: fullName,
-                avatar: profile.avatar || existingSql[0].avatar
-              }).where(eq(users.uid, uid));
-            }
-          })();
-          await withTimeout(op, 8000, null);
-          console.log(`[Auth] SQL DB successful for ${cleanEmail}`);
-        } catch (e) {
-          console.warn(`[Auth] SQL DB skip/timeout for ${cleanEmail}`);
+      // Simple, Fast, SQL-Only Persistence
+      try {
+        const existingSql = await db.select().from(users).where(eq(users.uid, uid)).limit(1);
+        if (existingSql.length === 0) {
+          await db.insert(users).values({
+            uid,
+            email: cleanEmail,
+            name: fullName,
+            avatar: finalAvatar
+          });
+        } else {
+          await db.update(users).set({
+            name: fullName,
+            avatar: finalAvatar
+          }).where(eq(users.uid, uid));
         }
-      };
-      persistencePromises.push(sqlPromise());
-
-      // Wait for all database operations to settle before responding
-      await Promise.allSettled(persistencePromises);
+        console.log(`[Auth] SQL DB successful for ${cleanEmail}`);
+      } catch (sqlErr) {
+        console.error("[Auth] SQL DB persistence failed:", sqlErr);
+      }
 
       console.log(`[Auth] Profile update complete for ${cleanEmail}`);
       return res.json({
