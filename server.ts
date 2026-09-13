@@ -8941,6 +8941,9 @@ app.post("/api/videos/save-review", async (req, res) => {
         verifiedAt: new Date().toISOString()
       };
 
+      // Un-blacklist this email and user identifiers immediately so re-registration/signing in works seamlessly from scratch
+      unrecordDeletedUserIds([userSession.uid, userSession.id, cleanEmail, userSession.name, userSession.handle]);
+
       // Save/update user session in Bunny Database & Drizzle SQL
       if (!userSession.isNewUser) {
         try {
@@ -9019,6 +9022,9 @@ app.post("/api/videos/save-review", async (req, res) => {
         role: 'user',
         updatedAt: new Date().toISOString()
       };
+
+      // Un-blacklist user so re-registering or profile setup is immediately active
+      unrecordDeletedUserIds([uid, cleanEmail, fullName]);
 
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {

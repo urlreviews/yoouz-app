@@ -1557,63 +1557,6 @@ export function App() {
     return () => unsubscribe();
   }, [currentUser]);
 
-  // Account validity checker (logs out if admin deleted user from database)
-  useEffect(() => {
-    if (!currentUser || !currentUser.email) return;
-    const cleanEmail = currentUser.email.trim().toLowerCase();
-    if (cleanEmail === "4samet@gmail.com" || cleanEmail === "aouisesmee@gmail.com" || cleanEmail.includes("aouisesmee")) return;
-
-    let isSubscribed = true;
-    const generatedUid = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    const expectedUid = currentUser.id || currentUser.uid || generatedUid;
-
-    const checkUserBanStatus = async () => {
-      try {
-        const res = await fetch(`/api/nosql/users/${expectedUid}`);
-        if (res.status === 404 && isSubscribed) {
-          // Double-check with email as fallback before concluding user is deleted
-          try {
-            const emailRes = await fetch(`/api/nosql/users/${encodeURIComponent(cleanEmail)}`);
-            if (emailRes.ok) return; // User is active and verified by email
-          } catch (e) {}
-
-          // Also verify against active registered users list in state
-          if (allRegisteredUsers && allRegisteredUsers.some((u) => {
-            const ue = (u.email || "").toLowerCase().trim();
-            const ui = (u.id || u.uid || "").toLowerCase().trim();
-            return ue === cleanEmail || ui === expectedUid.toLowerCase() || ui === `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          })) {
-            return;
-          }
-
-          console.warn("User account deleted or banned by admin. Logging out automatically.");
-          setCurrentUser(null);
-          localStorage.removeItem("copo_user");
-          localStorage.removeItem("copo_user_profile");
-          alert("Your account has been deleted by an administrator.");
-          if (activeSection !== "home") setActiveSection("home");
-          
-          if (auth && auth.signOut) {
-            try { await auth.signOut(); } catch (e) {}
-          }
-        }
-      } catch (err) {}
-    };
-
-    // Check immediately on mount/login
-    checkUserBanStatus();
-    
-    // Poll to catch mid-session deletions
-    const intervalId = setInterval(() => {
-      if (isSubscribed) checkUserBanStatus();
-    }, 30000);
-
-    return () => {
-      isSubscribed = false;
-      clearInterval(intervalId);
-    };
-  }, [currentUser, activeSection, allRegisteredUsers]);
-
   const effectiveMessagingUser = useMemo(() => {
     let effective = currentUser;
     if (activeSection === 'business') {

@@ -666,8 +666,22 @@ export function getDeletedUserIds(): string[] {
 export function unrecordDeletedUsersInLocalStorage(ids: string[]): void {
   if (typeof window === "undefined" || !Array.isArray(ids) || ids.length === 0) return;
   try {
-    const current = getDeletedUserIds();
-    const set = new Set(current);
+    const rawYoouz = localStorage.getItem("yoouz_deleted_users");
+    const rawCopo = localStorage.getItem("copo_deleted_users");
+    const set = new Set<string>();
+    if (rawYoouz) {
+      try {
+        const arr = JSON.parse(rawYoouz);
+        if (Array.isArray(arr)) arr.forEach(s => set.add(String(s).toLowerCase().trim()));
+      } catch (e) {}
+    }
+    if (rawCopo) {
+      try {
+        const arr = JSON.parse(rawCopo);
+        if (Array.isArray(arr)) arr.forEach(s => set.add(String(s).toLowerCase().trim()));
+      } catch (e) {}
+    }
+
     for (const rawId of ids) {
       if (!rawId) continue;
       const clean = String(rawId).toLowerCase().trim();
@@ -682,7 +696,10 @@ export function unrecordDeletedUsersInLocalStorage(ids: string[]): void {
         set.delete(v);
       }
     }
-    localStorage.setItem("yoouz_deleted_users", JSON.stringify(Array.from(set)));
+    const result = Array.from(set);
+    localStorage.setItem("yoouz_deleted_users", JSON.stringify(result));
+    localStorage.setItem("copo_deleted_users", JSON.stringify(result));
+    window.dispatchEvent(new CustomEvent("copo-user-restored", { detail: { ids } }));
   } catch (e) {}
 }
 
