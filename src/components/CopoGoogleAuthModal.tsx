@@ -788,7 +788,7 @@ export const CopoAuthPrompt: React.FC<{
               {/* Avatar Overlap Container */}
               <div className="px-4 pb-3.5 pt-0 -mt-10 sm:-mt-11 flex items-end justify-between relative z-10">
                 
-                {/* Avatar Wrapper (Fixes the clipped corner badge) */}
+                {/* Avatar Wrapper */}
                 <div 
                   onClick={() => avatarInputRef.current?.click()}
                   className="relative cursor-pointer group shrink-0 transition-all hover:scale-[1.03] active:scale-95 select-none"
@@ -817,13 +817,8 @@ export const CopoAuthPrompt: React.FC<{
 
                     {/* Dark hover overlay with camera */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[1px]">
-                      <Camera className="w-6 h-6" />
+                      <Camera className="w-6 h-6 animate-pulse" />
                     </div>
-                  </div>
-                  
-                  {/* Corner Camera Badge (Now safely outside overflow-hidden) */}
-                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg ring-2 ring-[#09090b] group-hover:scale-110 group-active:scale-90 transition-transform">
-                    <Camera className="w-3.5 h-3.5 text-zinc-900" />
                   </div>
                 </div>
 
