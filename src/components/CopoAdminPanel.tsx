@@ -480,7 +480,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
          if (u.avatar && !u.avatar.includes("ui-avatars") && (!existing.avatar || existing.avatar.includes("ui-avatars"))) existing.avatar = u.avatar;
        }
     });
-    // Filter out incomplete signups (e.g. no reviews, name matches email prefix)
+    // Do not filter out incomplete signups; keep all registered users in the admin view so the admin can always find them!
     return finalList.filter(u => {
        if (
          isKeyDeleted(u.id) ||
@@ -491,15 +491,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
        ) {
          return false;
        }
-       if (u.role === "Creator") return true; // Keep creators
-       
-       const emailPrefix = u.email ? u.email.split('@')[0].toLowerCase() : "";
-       const nameClean = (u.name || "").toLowerCase().trim();
-       
-       // If they have no name, or their name is just their email prefix, consider them incomplete
-       const isIncomplete = !nameClean || nameClean === emailPrefix || nameClean === "registered user";
-       
-       return !isIncomplete;
+       return true;
     });
   }, [allUsers, videos, deletedUserKeys]);
 

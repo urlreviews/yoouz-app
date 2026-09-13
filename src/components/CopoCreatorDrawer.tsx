@@ -432,9 +432,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     ? currentUser.location
     : (liveUserProfile?.location || safeCreator.location || author.location || (KNOWN_COMMUNITY_USERS[(author.name || "").replace(/^@+/, "").trim().toLowerCase()]?.location));
 
-  const displayBio = isOwner && currentUser?.bio
+  const displayBio = isOwner && typeof currentUser?.bio === 'string'
     ? currentUser.bio
-    : (liveUserProfile?.bio || safeCreator.bio || author.bio || "Food and lifestyle explorer sharing verified reviews and authentic experiences.");
+    : (liveUserProfile?.bio || safeCreator.bio || author?.bio || "");
 
   const handleShare = () => {
     setIsShareModalOpen(true);

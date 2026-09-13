@@ -214,7 +214,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
             name: rawName,
             handle: safeHandle,
             avatar: bestAvatar,
-            bio: candidate.bio || candidate.author?.bio || "Community reviewer on Yoouz.",
+            bio: candidate.bio || candidate.author?.bio || "",
             location: candidateLoc,
             isVerified: candidate.isVerified ?? candidate.author?.isVerified ?? true,
             isFollowed: Boolean(candidate.isFollowed || candidate.author?.isFollowed),

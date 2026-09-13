@@ -161,6 +161,7 @@ export const CopoAuthPrompt: React.FC<{
   const [banner, setBanner] = useState<string>(currentUser?.banner || "");
   const [avatarError, setAvatarError] = useState<string>("");
   const [bannerError, setBannerError] = useState<string>("");
+  const [bio, setBio] = useState<string>(currentUser?.bio || "");
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const [otpCode, setOtpCode] = useState<string>("");
@@ -401,6 +402,7 @@ export const CopoAuthPrompt: React.FC<{
         if (returnedUser?.banner) setBanner(returnedUser.banner);
         if (returnedUser?.city) setCity(returnedUser.city);
         if (returnedUser?.country) setCountry(returnedUser.country || "");
+        if (returnedUser?.bio) setBio(returnedUser.bio);
         setStep('profile');
       }
     } catch (err: any) {
@@ -475,6 +477,7 @@ export const CopoAuthPrompt: React.FC<{
       location: combinedLocation,
       avatar: finalAvatar,
       banner: banner || tempUser?.banner || currentUser?.banner || "",
+      bio: bio.trim(),
       role: 'user',
       isNewUser: false,
       isVerified: true,
@@ -742,83 +745,75 @@ export const CopoAuthPrompt: React.FC<{
               className="hidden"
             />
 
-            {/* Integrated Cover & Profile Photo Hero */}
-            <div className="relative w-full rounded-2xl overflow-hidden bg-zinc-900/90 border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.4)]">
-              {/* Cover Banner Area */}
-              <div
-                onClick={() => bannerInputRef.current?.click()}
-                className="relative w-full h-26 sm:h-30 bg-gradient-to-br from-zinc-850 via-zinc-900 to-zinc-950 overflow-hidden cursor-pointer group transition-all select-none"
-                title="Click to set cover photo"
+            {/* Profile Photo Uploader */}
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <div 
+                className="relative group cursor-pointer select-none" 
+                onClick={() => avatarInputRef.current?.click()}
+                title={t("profile.profilePicture", "Profile Picture")}
               >
-                {banner ? (
-                  <>
-                    <img
-                      src={banner}
-                      alt="Cover preview"
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                      <div className="px-4 py-2 rounded-full bg-black/60 text-white text-[11px] font-semibold flex items-center gap-1.5 backdrop-blur-md shadow-[0_4px_14px_rgba(0,0,0,0.7)]">
-                         <Camera className="w-3.5 h-3.5 text-zinc-200" />
-                         <span>{t("profile.changeCover", "Change Cover")}</span>
-                      </div>
+                <div className="w-22 h-22 rounded-full overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950">
+                  {avatar ? (
+                    <img 
+                      src={avatar} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                      referrerPolicy="no-referrer" 
+                    /> 
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-850 text-zinc-400">
+                      <User className="w-8 h-8 text-zinc-500" />
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.08),transparent_70%)]" />
-                    <div className="absolute inset-0 flex items-center justify-center group-hover:bg-zinc-800/20 transition-colors">
-                      <div className="flex flex-col items-center gap-1.5 text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                        <div className="w-9 h-9 rounded-full bg-zinc-800/80 flex items-center justify-center group-hover:scale-110 active:scale-95 transition-transform shadow-lg border border-white/5">
-                          <Camera className="w-4 h-4 text-zinc-400" />
-                        </div>
-                        <span className="text-[10px] font-semibold tracking-wide uppercase">{t("profile.addCover", "Add Cover")}</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Avatar Overlap Container */}
-              <div className="px-4 pb-3.5 pt-0 -mt-10 sm:-mt-11 flex items-end justify-between relative z-10">
-                
-                {/* Avatar Wrapper */}
-                <div 
-                  onClick={() => avatarInputRef.current?.click()}
-                  className="relative cursor-pointer group shrink-0 transition-all hover:scale-[1.03] active:scale-95 select-none"
-                  title="Click to choose profile picture"
-                >
-                  <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full ring-4 ring-[#09090b] bg-zinc-950 overflow-hidden shadow-[0_10px_25px_rgba(0,0,0,0.8)] relative">
-                    {avatar ? (
-                      <img
-                        src={avatar}
-                        alt="Avatar preview"
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-zinc-850 text-zinc-400">
-                        <User className="w-8 h-8 text-zinc-500" />
-                      </div>
-                    )}
-
-                    {/* Dark hover overlay with camera */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-[1px]">
-                      <Camera className="w-6 h-6 animate-pulse" />
-                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                    <Camera className="w-5 h-5" />
                   </div>
                 </div>
+                <button 
+                  type="button" 
+                  className="absolute bottom-0 right-0 p-1.5 bg-zinc-850 hover:bg-zinc-750 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-750"
+                >
+                  <Camera className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="text-center">
+                <span className="text-xs font-bold text-zinc-200">{t("profile.profilePicture", "Profile Picture")}</span>
+                <p className="text-[10px] text-zinc-400">{t("profile.uploadCustomPhoto", "Click to upload a custom JPG or PNG")}</p>
+              </div>
+            </div>
 
-                {/* Account info pill on the right */}
-                <div className="min-w-0 flex-1 pl-3.5 pb-1">
-                  <p className="text-sm font-bold text-white truncate leading-snug">
-                    {firstName || lastName ? `${firstName} ${lastName}`.trim() : (email ? email.split('@')[0] : "New Member")}
-                  </p>
-                  <p className="text-[11.5px] text-zinc-400 truncate">
-                    {email || "Personal account"}
-                  </p>
+            {/* Banner Photo Uploader */}
+            <div className="flex flex-col items-center gap-2">
+              <div 
+                className="relative group cursor-pointer w-full select-none" 
+                onClick={() => bannerInputRef.current?.click()}
+                title={t("profile.coverBanner", "Cover Banner")}
+              >
+                <div className="w-full h-26 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950">
+                  {banner ? (
+                    <img 
+                      src={banner} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                      referrerPolicy="no-referrer" 
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-500 font-medium text-xs">
+                      <span className="text-[11px] font-bold text-zinc-500">{t("profile.noBannerSelected", "No banner selected")}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                    <Camera className="w-5 h-5" />
+                  </div>
                 </div>
+                <button 
+                  type="button" 
+                  className="absolute bottom-2.5 right-2.5 p-1.5 bg-zinc-850 hover:bg-zinc-750 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-750"
+                >
+                  <Camera className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="text-center">
+                <span className="text-xs font-bold text-zinc-200">{t("profile.coverBanner", "Cover Banner")}</span>
+                <p className="text-[10px] text-zinc-400">{t("profile.uploadCustomBanner", "Click to upload a custom JPG or PNG")}</p>
               </div>
             </div>
 
@@ -854,6 +849,25 @@ export const CopoAuthPrompt: React.FC<{
                   className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-medium"
                 />
               </div>
+            </div>
+
+            {/* Bio Field */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="block text-[11px] font-semibold text-zinc-200 tracking-wider uppercase">
+                  {t("profile.bio", "Bio")}
+                </label>
+                <span className="text-[10px] font-semibold text-zinc-400">
+                  {bio.length} / 160
+                </span>
+              </div>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value.slice(0, 160))}
+                rows={3}
+                placeholder={t("profile.bioPlaceholder", "Introduce yourself! What are your favorite places, foods, or hobbies?")}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all placeholder-zinc-500 resize-none font-medium"
+              />
             </div>
 
             <div>
