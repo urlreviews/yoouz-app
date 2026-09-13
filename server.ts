@@ -11,6 +11,7 @@ async function fetchBase64(url: string): Promise<string> {
   }
 }
 import express from "express";
+import { execSync } from "child_process";
 import { v2 as cloudinary } from 'cloudinary';
 import * as cheerio from 'cheerio';
 import path from "path";
@@ -173,6 +174,8 @@ async function sendResendEmail(params: {
 const globalUploadsDir = path.join(process.cwd(), "uploads");
 const reviewsIndexPath = path.join(globalUploadsDir, "reviews_index.json");
 const deletedReviewsIndexPath = path.join(globalUploadsDir, "deleted_reviews_index.json");
+const deletedPlacesIndexPath = path.join(globalUploadsDir, "deleted_places_index.json");
+const deletedUsersIndexPath = path.join(globalUploadsDir, "deleted_users_index.json");
 
 function readDeletedReviewsIndex(): string[] {
   try {
@@ -198,6 +201,99 @@ function recordDeletedReviewId(id: string): void {
         }
       } catch (e) {}
       fs.writeFileSync(deletedReviewsIndexPath, JSON.stringify(list, null, 2), "utf8");
+    }
+  } catch (e) {}
+}
+
+function readDeletedPlacesIndex(): string[] {
+  try {
+    if (fs.existsSync(deletedPlacesIndexPath)) {
+      const raw = fs.readFileSync(deletedPlacesIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function recordDeletedPlaceIds(ids: string[]): void {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const list = readDeletedPlacesIndex();
+    let changed = false;
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).trim();
+      const lower = clean.toLowerCase();
+      const dot = lower.replace(/-/g, '.');
+      const hyphen = lower.replace(/\./g, '-');
+      const noWww = lower.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '');
+      const withWww = `www.${noWww}`;
+      const candidates = [clean, lower, dot, hyphen, noWww, withWww];
+      for (const cand of candidates) {
+        if (cand && !list.includes(cand)) {
+          list.push(cand);
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      if (!fs.existsSync(globalUploadsDir)) {
+        fs.mkdirSync(globalUploadsDir, { recursive: true });
+      }
+      fs.writeFileSync(deletedPlacesIndexPath, JSON.stringify(list, null, 2), "utf8");
+    }
+  } catch (e) {}
+}
+
+function isDeletedPlaceServer(itemOrId: any, deletedSet?: Set<string>): boolean {
+  if (!itemOrId) return false;
+  const set = deletedSet || new Set(readDeletedPlacesIndex().map(s => s.toLowerCase().trim()));
+  if (set.size === 0) return false;
+
+  const id = typeof itemOrId === 'string' ? itemOrId.toLowerCase().trim() : String(itemOrId.id || '').toLowerCase().trim();
+  const dotId = id.replace(/-/g, '.');
+  const hyphenId = id.replace(/\./g, '-');
+  const domain = typeof itemOrId === 'object'
+    ? String(itemOrId.brandDomain || itemOrId.website || itemOrId.address || '').toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '').trim()
+    : id.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '').trim();
+  const name = typeof itemOrId === 'object' ? String(itemOrId.name || '').toLowerCase().trim() : '';
+
+  if (set.has(id) || set.has(dotId) || set.has(hyphenId)) return true;
+  if (domain && (set.has(domain) || Array.from(set).some(d => d.length > 3 && (domain === d || domain.includes(d) || d.includes(domain))))) return true;
+  if (name && (set.has(name) || Array.from(set).some(d => d.length > 3 && (name === d || (name.length > 4 && d.length > 4 && (name.includes(d) || d.includes(name))))))) return true;
+
+  return false;
+}
+
+function readDeletedUsersIndex(): string[] {
+  try {
+    if (fs.existsSync(deletedUsersIndexPath)) {
+      const raw = fs.readFileSync(deletedUsersIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function recordDeletedUserIds(ids: string[]): void {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const list = readDeletedUsersIndex();
+    let changed = false;
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).trim();
+      const lower = clean.toLowerCase();
+      if (!list.includes(clean)) { list.push(clean); changed = true; }
+      if (!list.includes(lower)) { list.push(lower); changed = true; }
+    }
+    if (changed) {
+      if (!fs.existsSync(globalUploadsDir)) {
+        fs.mkdirSync(globalUploadsDir, { recursive: true });
+      }
+      fs.writeFileSync(deletedUsersIndexPath, JSON.stringify(list, null, 2), "utf8");
     }
   } catch (e) {}
 }
@@ -3145,6 +3241,122 @@ async function purgeVideoFromAllStores(videoId: string) {
   return { success: true, videoId };
 }
 
+async function purgePlaceFromAllStores(placeId: string, additionalVariants: string[] = []) {
+  if (!placeId) return { success: false, error: "Missing placeId" };
+
+  console.log(`🗑️ [Server] Live purging business place ${placeId} from all databases and storage...`);
+
+  const rawId = String(placeId).trim();
+  const lowerId = rawId.toLowerCase();
+  const dotId = lowerId.replace(/-/g, '.');
+  const hyphenId = lowerId.replace(/\./g, '-');
+  const noWww = lowerId.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '');
+  const withWww = `www.${noWww}`;
+
+  const allVariants = Array.from(new Set([
+    rawId,
+    lowerId,
+    dotId,
+    hyphenId,
+    noWww,
+    withWww,
+    ...additionalVariants.map(v => String(v).trim())
+  ])).filter(Boolean);
+
+  // 1. Record in persistent blacklist index
+  recordDeletedPlaceIds(allVariants);
+
+  // 2. Delete from Bunny Cloud Database (libSQL)
+  const bunnyClient = getBunnyDb();
+  if (bunnyClient) {
+    for (const v of allVariants) {
+      try {
+        await bunnyClient.execute({
+          sql: `DELETE FROM places WHERE id = ? OR id = ? OR address = ?`,
+          args: [v, v.toLowerCase(), v]
+        });
+      } catch (e) {}
+    }
+    // Also delete any matching JSON data or IDs containing domain
+    try {
+      if (noWww && noWww.length > 3) {
+        await bunnyClient.execute({
+          sql: `DELETE FROM places WHERE id LIKE ? OR address LIKE ? OR data LIKE ?`,
+          args: [`%${noWww}%`, `%${noWww}%`, `%"${noWww}"%`]
+        });
+      }
+    } catch (e) {}
+  }
+
+  // 3. Delete from Drizzle if active
+  const dbInstance = getDb();
+  if (dbInstance) {
+    try {
+      const table = getNoSqlTable('places');
+      if (table) {
+        for (const v of allVariants) {
+          await dbInstance.delete(table).where(eq(table.id, v));
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 4. Broadcast real-time SSE event to all connected clients
+  broadcastSseEvent({
+    type: "place_deleted",
+    placeId: rawId,
+    variants: allVariants
+  });
+
+  return { success: true, placeId: rawId, variants: allVariants };
+}
+
+async function purgeAllPlacesFromAllStores() {
+  console.log(`🗑️ [Server] LIVE PURGING ALL BUSINESS PLACES from BunnyDB and server stores...`);
+
+  const bunnyClient = getBunnyDb();
+  const collectedIds: string[] = [];
+
+  if (bunnyClient) {
+    try {
+      const allRows = await bunnyClient.execute("SELECT id, name, data FROM places");
+      if (allRows && allRows.rows) {
+        for (const row of allRows.rows) {
+          if (row.id) collectedIds.push(String(row.id));
+          if (row.name) collectedIds.push(String(row.name));
+          try {
+            const parsed = JSON.parse(String(row.data || '{}'));
+            if (parsed.brandDomain) collectedIds.push(parsed.brandDomain);
+            if (parsed.website) collectedIds.push(parsed.website);
+          } catch (e) {}
+        }
+      }
+      await bunnyClient.execute("DELETE FROM places");
+    } catch (e) {
+      console.warn("Failed to delete all places from BunnyDB:", e);
+    }
+  }
+
+  // Also purge from Drizzle if active
+  const dbInstance = getDb();
+  if (dbInstance) {
+    try {
+      const table = getNoSqlTable('places');
+      if (table) {
+        await dbInstance.delete(table);
+      }
+    } catch (e) {}
+  }
+
+  if (collectedIds.length > 0) {
+    recordDeletedPlaceIds(collectedIds);
+  }
+
+  broadcastSseEvent({ type: "places_purged" });
+
+  return { success: true, count: collectedIds.length };
+}
+
 app.get('/api/nosql/:collection', async (req, res) => {
   try {
     const colName = req.params.collection;
@@ -3422,6 +3634,29 @@ app.get('/api/nosql/:collection', async (req, res) => {
       items = items.filter((item: any) => item && item.id && !deletedIds.includes(String(item.id)));
     }
 
+    if (colName === 'places') {
+      items = items.filter((item: any) => !isDeletedPlaceServer(item));
+    }
+
+    if (colName === 'users') {
+      const deletedUserIds = readDeletedUsersIndex();
+      if (deletedUserIds.length > 0) {
+        const deletedSet = new Set(deletedUserIds.map(u => u.toLowerCase().trim()));
+        items = items.filter((u: any) => {
+          if (!u) return false;
+          const uId = String(u.id || u.uid || '').toLowerCase().trim();
+          const uEmail = String(u.email || '').toLowerCase().trim();
+          const uHandle = String(u.handle || '').replace(/^@+/, '').toLowerCase().trim();
+          const uName = String(u.name || '').toLowerCase().trim();
+          if (uId && deletedSet.has(uId)) return false;
+          if (uEmail && deletedSet.has(uEmail)) return false;
+          if (uHandle && deletedSet.has(uHandle)) return false;
+          if (uName && deletedSet.has(uName)) return false;
+          return true;
+        });
+      }
+    }
+
     res.json(items);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -3429,6 +3664,10 @@ app.get('/api/nosql/:collection', async (req, res) => {
 app.get('/api/nosql/:collection/:id', async (req, res) => {
   try {
     const { collection: colName, id } = req.params;
+
+    if (colName === 'places' && isDeletedPlaceServer(id)) {
+      return res.status(404).json({ error: "Place not found (deleted)" });
+    }
 
     // Special handler for users collection: use multi-layer resolver first for consistent attributes
     if (colName === 'users') {
@@ -3457,6 +3696,9 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           } catch (e) {}
           
           if (colName === 'places') {
+            if (isDeletedPlaceServer(row.id) || isDeletedPlaceServer(parsedData)) {
+              return res.status(404).json({ error: "Place not found (deleted)" });
+            }
             if (parsedData.bannerUrl && (parsedData.bannerUrl.includes('unsplash.com') || parsedData.bannerUrl.includes('placeholder') || parsedData.bannerUrl.includes('mock'))) {
               parsedData.bannerUrl = "";
             }
@@ -3488,7 +3730,12 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
         const table = getNoSqlTable(colName);
         if (table) {
           const [record] = await db.select().from(table).where(eq(table.id, id));
-          if (record) return res.json({ id: record.id, ...record.data });
+          if (record) {
+            if (colName === 'places' && (isDeletedPlaceServer(record.id) || isDeletedPlaceServer(record.data))) {
+              return res.status(404).json({ error: "Place not found (deleted)" });
+            }
+            return res.json({ id: record.id, ...record.data });
+          }
         }
       } catch (sqlErr) {}
     }
@@ -3501,6 +3748,10 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
 
     // 6. Try synthesizing/enriching place if collection is places and id is domain-like
     if (colName === 'places') {
+      if (isDeletedPlaceServer(id)) {
+        return res.status(404).json({ error: "Place not found (deleted)" });
+      }
+
       const rawSlug = id.toLowerCase().trim();
       let derivedDomain = rawSlug
         .replace(/^place-custom-/, '')
@@ -3516,6 +3767,9 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
 
       if (derivedDomain.includes('.')) {
         const cleanDomain = derivedDomain.replace(/^www\./, '');
+        if (isDeletedPlaceServer(cleanDomain)) {
+          return res.status(404).json({ error: "Place not found (deleted)" });
+        }
         const autoPlaceId = cleanDomain;
         const logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
         const banner = KNOWN_PLACE_METADATA[cleanDomain]?.bannerUrl || KNOWN_PLACE_METADATA[`www.${cleanDomain}`]?.bannerUrl || "";
@@ -3540,6 +3794,10 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           description: `Official profile and customer video reviews for ${capitalizedTitle}.`,
           brandDomain: cleanDomain
         };
+
+        if (isDeletedPlaceServer(autoPlaceDoc)) {
+          return res.status(404).json({ error: "Place not found (deleted)" });
+        }
 
         try {
           if (bunnyDb) {
@@ -3927,6 +4185,14 @@ app.post('/api/admin/users/delete', express.json(), async (req, res) => {
       }
     }
 
+    const extraUserIdentifiers = [
+      ...Array.from(idsToDelete),
+      email ? String(email).trim().toLowerCase() : "",
+      name ? String(name).trim() : "",
+      handle ? String(handle).replace(/^@+/, "").trim().toLowerCase() : ""
+    ].filter(Boolean);
+    recordDeletedUserIds(extraUserIdentifiers);
+
     res.json({ success: true, deletedIds: Array.from(idsToDelete) });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -3940,6 +4206,11 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     if (colName === 'videoReviews' || colName === 'videos') {
       await purgeVideoFromAllStores(id);
       return res.json({ success: true, id, message: "Video permanently purged live." });
+    }
+
+    if (colName === 'places') {
+      const purgeResult = await purgePlaceFromAllStores(id);
+      return res.json({ success: true, id, message: "Place permanently purged live.", ...purgeResult });
     }
 
     // 1. Delete from Bunny Database (Cloud libSQL) if configured
@@ -3968,6 +4239,44 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
     res.json({ success: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/admin/places/delete', express.json(), async (req, res) => {
+  try {
+    const { id, variants } = req.body || {};
+    if (!id) return res.status(400).json({ error: "Missing place id" });
+    const result = await purgePlaceFromAllStores(id, Array.isArray(variants) ? variants : []);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/places/bulk-delete', express.json(), async (req, res) => {
+  try {
+    const { ids, variants } = req.body || {};
+    const targetIds = Array.isArray(ids) ? ids : [];
+    const extraVariants = Array.isArray(variants) ? variants : [];
+    for (const id of targetIds) {
+      await purgePlaceFromAllStores(id);
+    }
+    if (extraVariants.length > 0) {
+      recordDeletedPlaceIds(extraVariants);
+    }
+    broadcastSseEvent({ type: "bulk_places_deleted", placeIds: targetIds });
+    res.json({ success: true, count: targetIds.length });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
+  try {
+    const result = await purgeAllPlacesFromAllStores();
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 
@@ -4207,10 +4516,44 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         cleanFileName = path.basename(filePath);
       }
 
-      
+      const base = cleanFileName.replace(/\.[^.]+$/, "");
+      const mp4FileName = `${base}.mp4`;
+      const mp4FilePath = path.join(serverUploadsDir, mp4FileName);
+      let finalVideoPath = filePath;
+
+      // 1. Fast, universal transcoding to standard H.264 + AAC MP4 with faststart flags for 0ms instant playback
+      try {
+        if (filePath !== mp4FilePath || cleanFileName.endsWith(".webm") || cleanFileName.endsWith(".mov")) {
+          console.log(`🎬 [Server] Transcoding ${cleanFileName} to universal faststart MP4...`);
+          execSync(`ffmpeg -i "${filePath}" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { stdio: 'ignore' });
+          finalVideoPath = mp4FilePath;
+          cleanFileName = mp4FileName;
+          mimeType = "video/mp4";
+        }
+      } catch (ffErr) {
+        console.warn("FFmpeg transcode notice (using source file):", ffErr);
+      }
+
+      // 2. High-speed poster thumbnail extraction or conversion to crisp JPEG
+      const thumbFileName = `${base}.jpg`;
+      const thumbFilePath = path.join(serverUploadsDir, thumbFileName);
+      let hasThumb = false;
+      try {
+        if (req.body && req.body.thumbnailData && typeof req.body.thumbnailData === "string" && req.body.thumbnailData.startsWith("data:image")) {
+          const b64 = req.body.thumbnailData.split("base64,")[1];
+          fs.writeFileSync(thumbFilePath, Buffer.from(b64, "base64"));
+          hasThumb = true;
+        } else {
+          execSync(`ffmpeg -ss 00:00:00.500 -i "${finalVideoPath}" -vframes 1 -q:v 2 "${thumbFilePath}" -y`, { stdio: 'ignore' });
+          hasThumb = true;
+        }
+      } catch (thumbErr) {
+        console.warn("Thumbnail generation notice:", thumbErr);
+      }
+
       let publicUrl = `/api/videos/stream/${cleanFileName}`;
       let thumbnailUrl = "";
-      console.log(`✅ [Server] Stored video ${cleanFileName} (${fs.statSync(filePath).size} bytes) at ${filePath}`);
+      console.log(`✅ [Server] Stored video ${cleanFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
 
       // 🐰 Bunny CDN Integration
       const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
@@ -4219,37 +4562,57 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
 
       if (bunnyAccessKey && bunnyStorageZone && bunnyPullZoneUrl) {
-        console.log("🐰 [Server] Uploading to Bunny CDN...");
+        console.log("🐰 [Server] Uploading video and thumbnail to Bunny CDN...");
         try {
           const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-          const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${cleanFileName}`;
-          
-          const fileBuffer = fs.readFileSync(filePath);
-          const response = await fetch(bunnyUrl, {
+          const pullZoneDomain = bunnyPullZoneUrl.replace(/\/$/, '');
+
+          // 1. Upload Video MP4
+          const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${cleanFileName}`;
+          const fileBuffer = fs.readFileSync(finalVideoPath);
+          const response = await fetch(videoBunnyUrl, {
             method: 'PUT',
             headers: {
               'AccessKey': bunnyAccessKey,
-              'Content-Type': mimeType,
+              'Content-Type': 'video/mp4',
             },
             body: fileBuffer
           });
 
           if (response.ok) {
-            console.log("🐰 [Server] Successfully uploaded to Bunny CDN!");
-            const pullZoneDomain = bunnyPullZoneUrl.replace(/\/$/, '');
             publicUrl = `${pullZoneDomain}/videos/${cleanFileName}`;
+            console.log("🐰 [Server] Successfully uploaded video to Bunny CDN:", publicUrl);
           } else {
-            console.error("🐰 [Server] Failed to upload to Bunny CDN:", await response.text());
+            console.error("🐰 [Server] Failed to upload video to Bunny CDN:", await response.text());
+          }
+
+          // 2. Upload Thumbnail JPG
+          if (hasThumb && fs.existsSync(thumbFilePath)) {
+            const thumbBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${thumbFileName}`;
+            const thumbBuffer = fs.readFileSync(thumbFilePath);
+            const thumbRes = await fetch(thumbBunnyUrl, {
+              method: 'PUT',
+              headers: {
+                'AccessKey': bunnyAccessKey,
+                'Content-Type': 'image/jpeg',
+              },
+              body: thumbBuffer
+            });
+            if (thumbRes.ok) {
+              thumbnailUrl = `${pullZoneDomain}/videos/${thumbFileName}`;
+              console.log("🐰 [Server] Successfully uploaded thumbnail to Bunny CDN:", thumbnailUrl);
+            }
           }
         } catch (bunnyErr) {
           console.error("🐰 [Server] Error uploading to Bunny CDN:", bunnyErr);
         }
       }
 
-      // Mirror to BunnyDB Storage if bucket is configured
-      
+      if (!thumbnailUrl && publicUrl.includes("b-cdn.net") && bunnyPullZoneUrl) {
+        thumbnailUrl = `${bunnyPullZoneUrl.replace(/\/$/, '')}/videos/${base}.jpg`;
+      }
 
-      return res.json({ success: true, url: publicUrl, thumbnailUrl, fileName: cleanFileName });
+      return res.json({ success: true, url: publicUrl, thumbnailUrl, fileName: cleanFileName, bunnyVideoId: base });
     } catch (err: any) {
       console.error("Video upload error:", err);
       return res.status(500).json({ error: err.message });
@@ -5259,8 +5622,9 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
     // Initial handshake payload
     const deletedIds = readDeletedReviewsIndex();
+    const deletedPlaceIds = readDeletedPlacesIndex();
     try {
-      res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, timestamp: Date.now() })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, deletedPlaceIds, timestamp: Date.now() })}\n\n`);
     } catch (e) {}
 
     // Heartbeat to keep connection alive indefinitely
@@ -7675,6 +8039,12 @@ app.post("/api/videos/save-review", async (req, res) => {
         return res.status(400).json({ error: "Missing review object or review.id" });
       }
       const review = enrichReviewPlaceAssets(rawReview);
+      
+      // Ensure clean thumbnail URL: prevent bloated base64 data URIs from polluting database
+      if (!review.thumbnailUrl || review.thumbnailUrl.startsWith("data:image")) {
+        const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+        review.thumbnailUrl = `${pullZoneDomain}/videos/${review.id}.jpg`;
+      }
       
       // 1. Save to local server JSON index
       const list = readReviewsIndex();

@@ -107,18 +107,23 @@ export function resolvePlayableVideoSourcesCascade(
   if (!video) return ["/default-review.mp4"];
 
   const sources: string[] = [];
+  const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
 
   // 1. Fresh active session IndexedDB blob URL (instant local playback for creator)
   if (cachedLocalBlobUrl && cachedLocalBlobUrl.startsWith("blob:")) {
     sources.push(cachedLocalBlobUrl);
   }
 
-  // 2. Base64 data URI
-  if (video.videoData && video.videoData.startsWith("data:video/")) {
-    sources.push(video.videoData);
+  // 2. Prioritize Bunny CDN global edge delivery for maximum speed (0ms startup)
+  if (video.videoUrl && video.videoUrl.includes("b-cdn.net")) {
+    const norm = normalizeVideoUrl(video.videoUrl);
+    if (norm && !sources.includes(norm)) sources.push(norm);
+  } else if (video.id && video.id.startsWith("rev-")) {
+    const cdnUrlMp4 = `${cleanZone}/videos/${video.id}.mp4`;
+    if (!sources.includes(cdnUrlMp4)) sources.push(cdnUrlMp4);
   }
 
-  // 3. Prioritize fully qualified remote CDN URLs (Direct edge CDN delivery - 0ms startup)
+  // 3. Any other remote CDN or HTTPS URLs
   if (video.videoUrl && (video.videoUrl.startsWith("http://") || video.videoUrl.startsWith("https://"))) {
     const norm = normalizeVideoUrl(video.videoUrl);
     if (norm && !sources.includes(norm)) {
@@ -126,35 +131,18 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 4. Fallback video URLs from document
+  // 4. Base64 data URI (if present)
+  if (video.videoData && video.videoData.startsWith("data:video/")) {
+    sources.push(video.videoData);
+  }
+
+  // 5. Fallback video URLs from document
   if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
     for (const fb of video.fallbackVideoUrls) {
       const norm = normalizeVideoUrl(fb);
       if (norm && !sources.includes(norm)) {
         sources.push(norm);
       }
-    }
-  }
-
-  // 5. Direct Bunny CDN Pull Zone Edge URLs Fallback
-  if (activeBunnyPullZone) {
-    const cleanZone = activeBunnyPullZone.replace(/\/+$/, "");
-    
-    if (video.videoUrl) {
-      const match = video.videoUrl.match(/rev-[a-zA-Z0-9_\-\.]+/);
-      if (match && match[0]) {
-        let fn = match[0];
-        if (!fn.includes(".")) fn += ".mp4";
-        const cdnUrl = `${cleanZone}/videos/${fn}`;
-        if (!sources.includes(cdnUrl)) sources.push(cdnUrl);
-      }
-    }
-
-    if (video.id) {
-      const cdnUrlMp4 = `${cleanZone}/videos/${video.id}.mp4`;
-      const cdnUrlWebm = `${cleanZone}/videos/${video.id}.webm`;
-      if (!sources.includes(cdnUrlMp4)) sources.push(cdnUrlMp4);
-      if (!sources.includes(cdnUrlWebm)) sources.push(cdnUrlWebm);
     }
   }
 
@@ -182,47 +170,46 @@ export function resolvePlayableVideoSource(
   cachedLocalBlobUrl?: string | null
 ): string {
   const cascade = resolvePlayableVideoSourcesCascade(video, cachedLocalBlobUrl);
-  return cascade[0] || "/api/videos/stream/default-review.mp4";
+  return cascade[0] || "/default-review.mp4";
 }
 
 /**
  * Resolves the best available cover thumbnail poster for a VideoReview.
- * Guarantees a high-contrast, polished visual poster so video cards are never black.
+ * Never falls back to place logos or brand avatars to avoid screen flash before playback.
  */
 export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   if (!video) return "";
 
+  const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
   const rawThumb = video.thumbnailUrl;
+
   if (rawThumb && typeof rawThumb === "string" && rawThumb.trim()) {
     const trimmed = rawThumb.trim();
-    // Exclude mp4/video URLs and tiny icons from being treated as <img> sources
     const isVideoFile = trimmed.endsWith(".mp4") || trimmed.endsWith(".webm") || trimmed.endsWith(".mov") || trimmed.includes("/api/videos/stream/");
     const isTinyLogo =
       trimmed.includes("favicon") ||
       trimmed.includes("google.com/s2") ||
       trimmed.includes("clearbit.com") ||
       trimmed.includes("logo.png") ||
-      trimmed.includes("logo.jpg");
+      trimmed.includes("logo.jpg") ||
+      trimmed.includes("brandfetch.io");
     
-    if (!isVideoFile && !isTinyLogo && (trimmed.startsWith("http") || trimmed.startsWith("data:") || trimmed.startsWith("/"))) {
+    // Direct Bunny CDN image
+    if (trimmed.includes("b-cdn.net") && !isVideoFile) {
+      return trimmed;
+    }
+
+    if (!isVideoFile && !isTinyLogo && (trimmed.startsWith("http") || trimmed.startsWith("/"))) {
       return trimmed;
     }
   }
 
-  // Fallback to reviewer avatar (the person speaking)
-  if (video.author?.avatar && (video.author.avatar.startsWith("http") || video.author.avatar.startsWith("data:") || video.author.avatar.startsWith("/"))) {
-    return video.author.avatar;
+  // Canonical Bunny CDN video frame poster
+  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
+    return `${cleanZone}/videos/${video.id}.jpg`;
   }
 
-  // Fallback to place banner if available
-  if (video.placeBannerUrl && (video.placeBannerUrl.startsWith("http") || video.placeBannerUrl.startsWith("/"))) {
-    return video.placeBannerUrl;
-  }
-
-  // Safe SVG branded poster fallback with dark gradient backdrop
-  const title = encodeURIComponent(video.placeName || "Authentic Video Review");
-  const author = encodeURIComponent(video.author?.name || "Verified Reviewer");
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#18181b"/><stop offset="100%" stop-color="#09090b"/></linearGradient></defs><rect width="720" height="1280" fill="url(#g)"/><circle cx="360" cy="540" r="44" fill="#27272a"/><polygon points="352,520 376,540 352,560" fill="#1a73e8"/><text x="360" y="650" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle">${decodeURIComponent(title)}</text><text x="360" y="695" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#9ca3af" text-anchor="middle">Review by ${decodeURIComponent(author)}</text></svg>`)}`;
+  return "";
 }
 
 /**

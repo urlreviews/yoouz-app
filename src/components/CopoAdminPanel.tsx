@@ -127,6 +127,7 @@ interface CopoAdminPanelProps {
   onUpdateVideo?: (updatedVideo: VideoReview) => void;
   onDeletePlace: (id: string) => void;
   onBulkDeletePlaces?: (ids: string[]) => void;
+  onPurgeAllPlaces?: () => void;
   onUpdatePlace?: (updatedPlace: Place) => void;
   onAddPlace?: (newPlace: Place) => void;
   onDeleteComment?: (videoId: string, commentId: string, replyId?: string) => void;
@@ -148,6 +149,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   onUpdateVideo,
   onDeletePlace,
   onBulkDeletePlaces,
+  onPurgeAllPlaces,
   onUpdatePlace,
   onAddPlace,
   onDeleteComment,
@@ -216,6 +218,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [confirmBulkDeleteVideos, setConfirmBulkDeleteVideos] = useState(false);
   const [confirmPurgeAllVideos, setConfirmPurgeAllVideos] = useState(false);
   const [confirmBulkDeletePlaces, setConfirmBulkDeletePlaces] = useState(false);
+  const [confirmPurgeAllPlaces, setConfirmPurgeAllPlaces] = useState(false);
   const [confirmDeleteCommentInfo, setConfirmDeleteCommentInfo] = useState<{ videoId: string; commentId: string } | null>(null);
 
   const [deletedUserKeys, setDeletedUserKeys] = useState<Set<string>>(() => {
@@ -732,6 +735,19 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     showToast(`Deleted ${count} selected business pages.`);
   };
 
+  const executePurgeAllPlaces = () => {
+    if (onPurgeAllPlaces) {
+      onPurgeAllPlaces();
+    } else if (onBulkDeletePlaces && places.length > 0) {
+      onBulkDeletePlaces(places.map(p => p.id));
+    } else {
+      places.forEach(p => onDeletePlace(p.id));
+    }
+    setSelectedPlaceIds([]);
+    setConfirmPurgeAllPlaces(false);
+    showToast("All business records purged completely from database.");
+  };
+
   const handleSavePlaceEdits = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editPlaceModal) return;
@@ -932,7 +948,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         <div className="flex items-center gap-3">
           <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-            Firestore Cloud Synced
+            Bunny Database Synced
           </div>
 
           <button
@@ -1950,8 +1966,38 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </select>
                 </div>
 
-                {/* Right Buttons */}
+                  {/* Right Buttons */}
                 <div className="flex items-center gap-3">
+                  {places.length > 0 && (
+                    <div>
+                      {confirmPurgeAllPlaces ? (
+                        <div className="flex items-center gap-2 bg-red-950/60 border border-red-700 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
+                          <span className="text-xs font-bold text-red-300">Purge ALL {places.length} businesses permanently?</span>
+                          <button
+                            onClick={executePurgeAllPlaces}
+                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer shadow"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Purge All
+                          </button>
+                          <button
+                            onClick={() => setConfirmPurgeAllPlaces(false)}
+                            className="p-1 text-zinc-200 hover:text-white cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmPurgeAllPlaces(true)}
+                          className="px-3 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          title="Purge all business places permanently from database"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Purge All Businesses
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {selectedPlaceIds.length > 0 && (
                     <div>
                       {confirmBulkDeletePlaces ? (
@@ -2121,7 +2167,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
                   >
                     <option value="all">All User Accounts ({uniqueUsers.length})</option>
-                    <option value="registered">Registered Firestore Accounts</option>
+                    <option value="registered">Registered Cloud Accounts</option>
                     <option value="creators">Video Creators Only</option>
                     <option value="business">Business Owners</option>
                   </select>
@@ -2418,7 +2464,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
                     <div>
                       <h3 className="font-bold text-white text-base">Cloud Sync & NoSQL Active</h3>
-                      <p className="text-xs text-zinc-200">Firestore Cloud + Bunny.net Edge libSQL & Video Storage</p>
+                      <p className="text-xs text-zinc-200">Cloud SQL (PostgreSQL) + Bunny.net Edge libSQL & Video Storage</p>
                     </div>
                   </div>
                   <span className="text-xs font-mono bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 text-emerald-400 font-bold">

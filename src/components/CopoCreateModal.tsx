@@ -742,36 +742,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     let finalThumbnail = videoThumbnail || "";
 
-    // 0. AI Content Safety Moderation Verification (Zero tolerance for nudity/adult/dangerous content)
-    const visualPayload = finalThumbnail || videoThumbnail;
-    if (visualPayload && visualPayload.startsWith("data:image")) {
-      try {
-        const modRes = await fetch("/api/videos/moderate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            imageData: visualPayload,
-            placeName: selectedPlace.name
-          })
-        });
-        if (modRes.ok) {
-          const modData = await modRes.json();
-          if (modData.flagged || modData.isSafe === false) {
-            setIsPublishing(false);
-            setUploadProgress(0);
-            setRecordedVideoBlob(null);
-            setRecordedVideoUrl(null);
-            setVideoThumbnail(null);
-            setErrorMessage("Content Safety Violation: Inappropriate, sexually explicit, or unsafe content was detected. Video reviews on Yoouz must comply with Community Safety Guidelines. This recording has been blocked and discarded.");
-            triggerHaptic("heavy");
-            return;
-          }
-        }
-      } catch (modErr) {
-        console.warn("Safety check request notice:", modErr);
-      }
-    }
-
     const reviewId = `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const mime = recordedVideoBlob?.type || "video/mp4";
     const ext = mime.includes("webm") ? "webm" : "mp4";
@@ -787,35 +757,76 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       }
     }
 
-    // 2. Upload video binary to streaming server & cloud storage with progress tracking
+    // Run AI content moderation and video upload concurrently for maximum speed
+    const visualPayload = finalThumbnail || videoThumbnail;
+    const moderationPromise = (async () => {
+      if (visualPayload && visualPayload.startsWith("data:image")) {
+        try {
+          const modRes = await fetch("/api/videos/moderate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              imageData: visualPayload,
+              placeName: selectedPlace.name
+            })
+          });
+          if (modRes.ok) {
+            const modData = await modRes.json();
+            if (modData.flagged || modData.isSafe === false) {
+              return { isSafe: false };
+            }
+          }
+        } catch (modErr) {
+          console.warn("Safety check request notice:", modErr);
+        }
+      }
+      return { isSafe: true };
+    })();
+
+    const uploadPromise = (async () => {
+      if (!recordedVideoBlob) return null;
+      return await uploadVideoResumableWithProgress(
+        recordedVideoBlob,
+        reviewId,
+        (progress: any) => {
+          const pct = typeof progress === "number" ? progress : progress.percent;
+          setUploadProgress(Math.max(15, Math.min(95, pct)));
+        },
+        visualPayload || undefined
+      );
+    })();
+
     let uploadedPublicUrl = defaultStreamUrl;
     let finalBunnyId: string | undefined = undefined;
-    if (recordedVideoBlob) {
-      try {
-        const result = await uploadVideoResumableWithProgress(
-          recordedVideoBlob,
-          reviewId,
-          (progress: any) => {
-            const pct = typeof progress === "number" ? progress : progress.percent;
-            setUploadProgress(Math.max(15, Math.min(95, pct)));
-          }
-        );
-        if (result && result.downloadUrl) {
-          uploadedPublicUrl = result.downloadUrl;
-          if (result.thumbnailUrl) {
-            finalThumbnail = result.thumbnailUrl;
-          }
-          if (result.bunnyVideoId) {
-            finalBunnyId = result.bunnyVideoId;
-          }
-        }
-      } catch (uploadErr) {
-        console.warn("Server video upload notice:", uploadErr);
+
+    try {
+      const [modResult, uploadResult] = await Promise.all([moderationPromise, uploadPromise]);
+      if (modResult && !modResult.isSafe) {
         setIsPublishing(false);
         setUploadProgress(0);
-        alert("Video upload failed. Please check your connection and try again.");
-        return; // Stop the publish process!
+        setRecordedVideoBlob(null);
+        setRecordedVideoUrl(null);
+        setVideoThumbnail(null);
+        setErrorMessage("Content Safety Violation: Inappropriate, sexually explicit, or unsafe content was detected. Video reviews on Yoouz must comply with Community Safety Guidelines. This recording has been blocked and discarded.");
+        triggerHaptic("heavy");
+        return;
       }
+
+      if (uploadResult && uploadResult.downloadUrl) {
+        uploadedPublicUrl = uploadResult.downloadUrl;
+        if (uploadResult.thumbnailUrl) {
+          finalThumbnail = uploadResult.thumbnailUrl;
+        }
+        if (uploadResult.bunnyVideoId) {
+          finalBunnyId = uploadResult.bunnyVideoId;
+        }
+      }
+    } catch (uploadErr) {
+      console.warn("Server video upload notice:", uploadErr);
+      setIsPublishing(false);
+      setUploadProgress(0);
+      alert("Video upload failed. Please check your connection and try again.");
+      return;
     }
 
 
@@ -886,7 +897,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       sharesCount: 0,
       tags: [selectedPlace.category || "Review"],
       recordedAt: "Just now",
-      isLocalUpload: true
+      isLocalUpload: false
     };
 
     // 4. Save metadata locally first so it is immune to network dropouts or reloads

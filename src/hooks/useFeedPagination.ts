@@ -107,32 +107,48 @@ function normalizeReview(v: any): VideoReview {
   }
 }
 
+const HARD_DELETED_IDS = [
+  "rev-1787774080951-vuu2k",
+  "rev-1788295000000-hertz",
+  "rev-1788294000000-avis",
+  "rev-12345",
+  "rev-test-verify-123",
+  "rev-test-big-thumb"
+];
+
+export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) => {
+  if (!v || !v.id) return true;
+  const id = String(v.id);
+  if (HARD_DELETED_IDS.includes(id)) return true;
+  if (extraDeletedIds) {
+    if (extraDeletedIds instanceof Set && extraDeletedIds.has(id)) return true;
+    if (Array.isArray(extraDeletedIds) && extraDeletedIds.includes(id)) return true;
+  }
+  if (id === "rev-12345" || id.startsWith("rev-test") || id.startsWith("rev-err-")) return true;
+  if (v.placeId === "yoouz.com" || v.placeId === "avis.com" || v.placeId === "hertz.com" || v.placeId === "test" || v.placeId === "testplace.com") return true;
+  const placeNameLower = (v.placeName || "").toLowerCase();
+  if (placeNameLower === "yoouz" || placeNameLower === "hertz" || placeNameLower === "car rentals from avis" || placeNameLower.includes("test place") || placeNameLower.includes("test user") || placeNameLower.includes("culver")) return true;
+  const authorNameLower = (v.author?.name || v.authorName || "").toLowerCase();
+  if (authorNameLower === "reviewer" || authorNameLower.includes("test user") || authorNameLower.includes("culver")) return true;
+  const dishLower = (v.dishOrItem || "").toLowerCase();
+  if (dishLower.includes("test user") || dishLower.includes("test place") || dishLower.includes("culver")) return true;
+  return false;
+};
+
 export function useFeedPagination() {
   const [videos, setVideos] = useState<VideoReview[]>(() => {
     const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
     let deletedIds: string[] = [];
     try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
 
-    const hardDeleted = [
-      "rev-1787774080951-vuu2k",
-      "rev-1788295000000-hertz",
-      "rev-1788294000000-avis"
-    ];
-    hardDeleted.forEach(id => {
+    HARD_DELETED_IDS.forEach(id => {
       if (!deletedIds.includes(id)) deletedIds.push(id);
     });
 
-    const isPurgedItem = (v: any) => {
-      if (!v || !v.id) return true;
-      const id = String(v.id);
-      if (deletedIds.includes(id)) return true;
-      if (v.placeId === "yoouz.com" || v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
-      if (v.placeName === "Yoouz" || v.placeName === "Hertz" || v.placeName === "Car Rentals from Avis") return true;
-      return false;
-    };
-
     try {
       // Purge legacy caches to eliminate corrupted counts and stale sort
+      localStorage.removeItem("yoouz_cached_videos_v27");
+      localStorage.removeItem("yoouz_cached_videos_v26");
       localStorage.removeItem("yoouz_cached_videos_v25");
       localStorage.removeItem("yoouz_cached_videos_v24");
       localStorage.removeItem("yoouz_cached_videos_v23");
@@ -157,12 +173,14 @@ export function useFeedPagination() {
         if (localPubStr) {
           const parsedLp = JSON.parse(localPubStr);
           if (Array.isArray(parsedLp)) {
-            localPublished = parsedLp.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
+            const cleanedLp = parsedLp.filter((v: any) => !isPurgedItem(v));
+            localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(cleanedLp));
+            localPublished = cleanedLp.map(normalizeReview);
           }
         }
       } catch (e) {}
 
-      const cached = localStorage.getItem("yoouz_cached_videos_v26");
+      const cached = localStorage.getItem("yoouz_cached_videos_v28");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -288,14 +306,16 @@ export function useFeedPagination() {
                 }
               });
 
-              // Keep any fresh local pending uploads that haven't hit the server feed yet
+              // Keep only real, non-purged local pending uploads created in the last 10 minutes
               const pendingLocalVideos = prev.filter(
                 (v) =>
                   v &&
                   v.id &&
+                  !isPurgedItem(v) &&
                   !allDeletedSet.has(String(v.id)) &&
                   (v as any).isLocalUpload &&
-                  !valid.some((sv) => sv.id === v.id)
+                  !valid.some((sv) => sv.id === v.id) &&
+                  (Date.now() - ((v as any).createdAtMs || 0) < 600000)
               );
 
               // Server videos are authoritative: if a video was deleted on server, it is dropped here!
@@ -355,8 +375,10 @@ export function useFeedPagination() {
               
               // Persist fresh feed to cache
               try { 
+                localStorage.removeItem("yoouz_cached_videos_v27");
+                localStorage.removeItem("yoouz_cached_videos_v26");
                 localStorage.removeItem("yoouz_cached_videos_v25");
-                localStorage.setItem("yoouz_cached_videos_v26", JSON.stringify(merged.slice(0, 50))); 
+                localStorage.setItem("yoouz_cached_videos_v28", JSON.stringify(merged.slice(0, 50))); 
               } catch(e){}
               
               return merged;
@@ -404,6 +426,17 @@ export function useFeedPagination() {
               recordClientDeletedId(targetId);
               setVideos((prev) => prev.filter((v) => v.id !== targetId));
               window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: targetId } }));
+            } else if (payload.type === "place_deleted" && (payload.placeId || payload.variants)) {
+              const vars = Array.isArray(payload.variants) ? payload.variants : [payload.placeId];
+              window.dispatchEvent(new CustomEvent("copo-place-deleted", { detail: { placeId: payload.placeId, variants: vars } }));
+            } else if (payload.type === "bulk_places_deleted" && Array.isArray(payload.placeIds)) {
+              payload.placeIds.forEach((pid: string) => {
+                window.dispatchEvent(new CustomEvent("copo-place-deleted", { detail: { placeId: pid, variants: [pid] } }));
+              });
+            } else if (payload.type === "places_purged") {
+              window.dispatchEvent(new CustomEvent("copo-places-purged"));
+            } else if (payload.type === "init" && Array.isArray(payload.deletedPlaceIds)) {
+              window.dispatchEvent(new CustomEvent("copo-init-deleted-places", { detail: { deletedPlaceIds: payload.deletedPlaceIds } }));
             } else if (payload.type === "bulk_videos_deleted" && Array.isArray(payload.videoIds)) {
               const idSet = new Set(payload.videoIds.map(String));
               payload.videoIds.forEach((id: string) => recordClientDeletedId(id));

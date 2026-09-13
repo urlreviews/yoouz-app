@@ -151,7 +151,8 @@ export type ProgressCallback = (info: UploadProgressInfo) => void;
 export async function uploadVideoResumableWithProgress(
   blob: Blob,
   videoId: string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  thumbnailData?: string
 ): Promise<{ downloadUrl: string; thumbnailUrl?: string; provider: "server" | "bunny", bunnyVideoId?: string }> {
   try {
     // Send to our server to handle Bunny CDN upload
@@ -163,7 +164,7 @@ export async function uploadVideoResumableWithProgress(
         statusText: `Uploading video... ${pct}%`,
         stage: pct === 100 ? "complete" : "uploading"
       });
-    });
+    }, thumbnailData);
 
     if (result && result.url) {
       return { 
@@ -199,7 +200,8 @@ export async function uploadVideoToCloudStorage(blob: Blob, videoId: string): Pr
 export async function uploadVideoToServerWithProgress(
   blob: Blob,
   videoId: string,
-  onProgress: (percent: number) => void
+  onProgress: (percent: number) => void,
+  thumbnailData?: string
 ): Promise<{ url: string, thumbnailUrl?: string, bunnyVideoId?: string } | null> {
   return new Promise((resolve) => {
     let ext = "mp4";
@@ -212,6 +214,9 @@ export async function uploadVideoToServerWithProgress(
     formData.append("video", blob, fileName);
     formData.append("fileName", fileName);
     formData.append("mimeType", mime);
+    if (thumbnailData) {
+      formData.append("thumbnailData", thumbnailData);
+    }
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/videos/upload", true);

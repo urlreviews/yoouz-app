@@ -43,7 +43,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import {
@@ -93,24 +93,27 @@ export function App() {
   // 1. Core State with LocalStorage Persistence (Instant Logo & Banner Caching)
   const [places, setPlaces] = useState<Place[]>(() => {
     try {
+      const deletedPlaceIds = getDeletedPlaceIds();
       const cached = localStorage.getItem("yoouz_cached_places");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
-          return parsed.map((p: any) => {
-            // Strip any mock/fake/unsplash banners aggressively from the local cache on boot
-            if (p.bannerUrl && (p.bannerUrl.includes('unsplash.com') || p.bannerUrl.includes('placeholder') || p.bannerUrl.includes('mock'))) {
-              p.bannerUrl = "";
-            }
-            if (p.ogImage && (p.ogImage.includes('unsplash.com') || p.ogImage.includes('placeholder') || p.ogImage.includes('mock'))) {
-              p.ogImage = "";
-            }
-            return {
-              ...p,
-              rating: typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0),
-              totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0)
-            };
-          });
+          return parsed
+            .filter((p: any) => !isPlaceDeleted(p, deletedPlaceIds))
+            .map((p: any) => {
+              // Strip any mock/fake/unsplash banners aggressively from the local cache on boot
+              if (p.bannerUrl && (p.bannerUrl.includes('unsplash.com') || p.bannerUrl.includes('placeholder') || p.bannerUrl.includes('mock'))) {
+                p.bannerUrl = "";
+              }
+              if (p.ogImage && (p.ogImage.includes('unsplash.com') || p.ogImage.includes('placeholder') || p.ogImage.includes('mock'))) {
+                p.ogImage = "";
+              }
+              return {
+                ...p,
+                rating: typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0),
+                totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0)
+              };
+            });
         }
       }
     } catch(e){}
@@ -119,9 +122,7 @@ export function App() {
   
   useEffect(() => {
     try {
-      if (places.length > 0) {
-        localStorage.setItem("yoouz_cached_places", JSON.stringify(places));
-      }
+      localStorage.setItem("yoouz_cached_places", JSON.stringify(places));
     } catch (e) {}
   }, [places]);
 
@@ -847,51 +848,58 @@ export function App() {
   };
 
   const handleAdminDeletePlace = (id: string) => {
-    setPlaces(prev => {
-      const updated = prev.filter(p => p.id !== id);
-      try {
-        // Keep track of deleted place so it doesn't merge back from mock data
-        const deletedStr = localStorage.getItem("copo_deleted_places") || "[]";
-        let deletedPlaces = [];
-        try { deletedPlaces = JSON.parse(deletedStr); } catch(e){}
-        if (!deletedPlaces.includes(id)) {
-          deletedPlaces.push(id);
-          localStorage.setItem("copo_deleted_places", JSON.stringify(deletedPlaces));
-        }
-      } catch (e) {}
-      return updated;
+    const targetPlace = places.find(p => p.id === id);
+    const variants = targetPlace ? getPlaceVariants(targetPlace) : [id];
+    recordDeletedPlacesInLocalStorage([id, ...variants]);
+
+    setPlaces(prev => prev.filter(p => !isPlaceDeleted(p, [id, ...variants])));
+
+    fetch(`/api/admin/places/delete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, variants })
+    }).catch(() => {
+      fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
     });
-
-    fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
-
   };
 
   const handleAdminBulkDeletePlaces = async (ids: string[]) => {
-    setPlaces(prev => {
-      const updated = prev.filter(p => !ids.includes(p.id));
-      try {
-        const deletedStr = localStorage.getItem("copo_deleted_places") || "[]";
-        let deletedPlaces: string[] = [];
-        try { deletedPlaces = JSON.parse(deletedStr); } catch(e){}
-        ids.forEach(id => {
-          if (!deletedPlaces.includes(id)) {
-            deletedPlaces.push(id);
-          }
-        });
-        localStorage.setItem("copo_deleted_places", JSON.stringify(deletedPlaces));
-      } catch (e) {}
-      return updated;
+    const allVariants: string[] = [...ids];
+    ids.forEach(id => {
+      const targetPlace = places.find(p => p.id === id);
+      if (targetPlace) {
+        allVariants.push(...getPlaceVariants(targetPlace));
+      }
     });
-    
+    recordDeletedPlacesInLocalStorage(allVariants);
+
+    setPlaces(prev => prev.filter(p => !isPlaceDeleted(p, allVariants)));
+
     try {
+      await fetch('/api/admin/places/bulk-delete', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, variants: allVariants })
+      });
+    } catch (e) {
       await Promise.all(ids.map(id => fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {})));
+    }
+  };
+
+  const handleAdminPurgeAllPlaces = async () => {
+    const allPlaceIds = places.flatMap(p => getPlaceVariants(p));
+    recordDeletedPlacesInLocalStorage(allPlaceIds);
+    setPlaces([]);
+    try {
+      localStorage.setItem("yoouz_cached_places", "[]");
     } catch (e) {}
 
     try {
-
-    } catch (err) {
-      console.warn("Failed to bulk delete places from BunnyDB:", err);
-    }
+      await fetch('/api/admin/places/purge-all', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+    } catch (e) {}
   };
 
   const handleAdminDeleteUser = async (userToDelete: any) => {
@@ -2159,13 +2167,14 @@ export function App() {
           const res = await fetch(`/api/nosql/places?_t=${Date.now()}`);
           if (res.ok) {
             const serverList = await res.json();
-            if (Array.isArray(serverList) && serverList.length > 0) {
-              const filtered = serverList.filter((p: any) => !deletedIds.includes(p.id));
+            if (Array.isArray(serverList)) {
+              const currentDeletedIds = getDeletedPlaceIds();
+              const filtered = serverList.filter((p: any) => !isPlaceDeleted(p, currentDeletedIds));
               setPlaces((prev) => {
                 let followedPlaces = [];
                 try { followedPlaces = JSON.parse(localStorage.getItem("copo_followed_places") || "[]"); } catch(e){}
                 const map = new Map<string, Place>();
-                prev.forEach(p => map.set(p.id, p));
+                prev.filter(p => !isPlaceDeleted(p, currentDeletedIds)).forEach(p => map.set(p.id, p));
                 filtered.forEach((p: any) => {
                   const existing = map.get(p.id);
                   const isFollowed = followedPlaces.includes(p.id);
@@ -2189,13 +2198,14 @@ export function App() {
           list.push({ id: docSnap.id, ...docSnap.data() } as Place);
         });
 
-        const filtered = list.filter(p => !deletedIds.includes(p.id));
+        const currentDeletedIds = getDeletedPlaceIds();
+        const filtered = list.filter(p => !isPlaceDeleted(p, currentDeletedIds));
         setPlaces((prev) => {
           let followedPlaces = [];
           try { followedPlaces = JSON.parse(localStorage.getItem("copo_followed_places") || "[]"); } catch(e){}
 
           const map = new Map<string, Place>();
-          prev.forEach(p => map.set(p.id, p));
+          prev.filter(p => !isPlaceDeleted(p, currentDeletedIds)).forEach(p => map.set(p.id, p));
           filtered.forEach(p => {
              const existing = map.get(p.id);
              const isFollowed = followedPlaces.includes(p.id);
@@ -2214,13 +2224,52 @@ export function App() {
     }
   }, []);
 
-  // Auto-synthesize places from any published video review
+  // Real-time synchronization of place deletions across tabs and SSE
+  useEffect(() => {
+    const handlePlaceDeleted = (e: any) => {
+      const { placeId, variants } = e.detail || {};
+      const targetVariants = Array.isArray(variants) ? variants : (placeId ? [placeId] : []);
+      if (targetVariants.length > 0) {
+        recordDeletedPlacesInLocalStorage(targetVariants);
+        setPlaces(prev => prev.filter(p => !isPlaceDeleted(p, targetVariants)));
+      }
+    };
+
+    const handlePlacesPurged = () => {
+      setPlaces([]);
+      try { localStorage.setItem("yoouz_cached_places", "[]"); } catch(e){}
+    };
+
+    const handleInitDeletedPlaces = (e: any) => {
+      const serverDeleted = e.detail?.deletedPlaceIds;
+      if (Array.isArray(serverDeleted) && serverDeleted.length > 0) {
+        recordDeletedPlacesInLocalStorage(serverDeleted);
+        setPlaces(prev => prev.filter(p => !isPlaceDeleted(p, serverDeleted)));
+      }
+    };
+
+    window.addEventListener("copo-place-deleted", handlePlaceDeleted);
+    window.addEventListener("copo-places-purged", handlePlacesPurged);
+    window.addEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
+
+    return () => {
+      window.removeEventListener("copo-place-deleted", handlePlaceDeleted);
+      window.removeEventListener("copo-places-purged", handlePlacesPurged);
+      window.removeEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
+    };
+  }, []);
+
+  // Auto-synthesize places from any published video review (strictly ignoring deleted places)
   useEffect(() => {
     if (videos.length === 0) return;
+    const currentDeleted = getDeletedPlaceIds();
     setPlaces((prev) => {
       let modified = false;
-      const next = [...prev];
+      const next = prev.filter(p => !isPlaceDeleted(p, currentDeleted));
       videos.forEach((v) => {
+        if (isPlaceDeleted(v.placeId || v.placeWebsite || v.placeName, currentDeleted)) {
+          return;
+        }
         const idx = next.findIndex((p) => isPlaceReviewMatch(v, p));
         const reviewDomain = extractCleanDomain(v.placeWebsite || v.placeName || v.placeId);
         const knownBanner = reviewDomain && KNOWN_BRAND_BANNERS[reviewDomain] ? KNOWN_BRAND_BANNERS[reviewDomain] : "";
@@ -2228,8 +2277,10 @@ export function App() {
 
         if (idx === -1) {
           const newPlace = synthesizePlaceFromReview(v, next);
-          next.push(newPlace);
-          modified = true;
+          if (!isPlaceDeleted(newPlace, currentDeleted)) {
+            next.push(newPlace);
+            modified = true;
+          }
         } else {
           // If existing place is missing banner, logo, or website, enrich it from the video review or known metadata!
           const existing = next[idx];
@@ -4891,6 +4942,7 @@ export function App() {
                 }}
                 onDeletePlace={handleAdminDeletePlace}
                 onBulkDeletePlaces={handleAdminBulkDeletePlaces}
+                onPurgeAllPlaces={handleAdminPurgeAllPlaces}
                 onUpdatePlace={(updatedPlace) => {
                   handleUpdatePlace(updatedPlace);
                 }}

@@ -1009,3 +1009,107 @@ export function formatCityCountry(creator?: {
 
   return "";
 }
+
+/**
+ * Reads blacklisted/deleted place IDs from localStorage
+ */
+export function getDeletedPlaceIds(): string[] {
+  try {
+    const raw = localStorage.getItem("copo_deleted_places") || "[]";
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.map(String).filter(Boolean) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Returns all variants of a place (slug, dot, domain, name, www, without www)
+ */
+export function getPlaceVariants(placeOrId: any): string[] {
+  if (!placeOrId) return [];
+  const variants = new Set<string>();
+
+  const rawId = typeof placeOrId === "string" ? placeOrId.trim() : (placeOrId.id || "").trim();
+  if (rawId) {
+    variants.add(rawId);
+    variants.add(rawId.toLowerCase());
+    variants.add(rawId.replace(/-/g, "."));
+    variants.add(rawId.replace(/\./g, "-"));
+  }
+
+  const domainSource = typeof placeOrId === "object"
+    ? (placeOrId.brandDomain || placeOrId.website || placeOrId.address || placeOrId.placeWebsite || "")
+    : rawId;
+
+  const cleanDomain = extractCleanDomain(domainSource);
+  if (cleanDomain) {
+    variants.add(cleanDomain);
+    variants.add(cleanDomain.toLowerCase());
+    variants.add(`www.${cleanDomain}`);
+    variants.add(cleanDomain.replace(/\./g, "-"));
+  }
+
+  if (typeof placeOrId === "object") {
+    if (placeOrId.name) {
+      const name = String(placeOrId.name).trim().toLowerCase();
+      if (name.length > 2) variants.add(name);
+    }
+    if (placeOrId.brandDomain) {
+      const bd = extractCleanDomain(placeOrId.brandDomain);
+      if (bd) variants.add(bd);
+    }
+    if (placeOrId.website) {
+      const ws = extractCleanDomain(placeOrId.website);
+      if (ws) variants.add(ws);
+    }
+  }
+
+  return Array.from(variants).filter(Boolean);
+}
+
+/**
+ * Checks if a place or ID matches the blacklist of deleted places
+ */
+export function isPlaceDeleted(placeOrId: any, deletedIds?: string[]): boolean {
+  if (!placeOrId) return false;
+  const list = deletedIds || getDeletedPlaceIds();
+  if (!list || list.length === 0) return false;
+
+  const variants = getPlaceVariants(placeOrId).map((v) => v.toLowerCase().trim());
+  const deletedSet = new Set(list.map((s) => String(s).toLowerCase().trim()));
+
+  for (const v of variants) {
+    if (deletedSet.has(v)) return true;
+  }
+
+  // Also check domain substring match
+  for (const d of deletedSet) {
+    if (!d || d.length < 3) continue;
+    for (const v of variants) {
+      if (v === d) return true;
+      if (v.includes(".") && d.includes(".") && (v === d || v.includes(d) || d.includes(v))) return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Stores newly deleted place variants into localStorage
+ */
+export function recordDeletedPlacesInLocalStorage(variants: string[]): string[] {
+  try {
+    const current = getDeletedPlaceIds();
+    const set = new Set(current);
+    variants.forEach((v) => {
+      const clean = String(v).trim();
+      if (clean) set.add(clean);
+    });
+    const updated = Array.from(set);
+    localStorage.setItem("copo_deleted_places", JSON.stringify(updated));
+    return updated;
+  } catch (e) {
+    return variants;
+  }
+}
