@@ -935,7 +935,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder="Enter admin password"
                   autoFocus
-                  className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500 pr-12 text-base transition-all font-medium"
+                  className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500 pr-12 text-base transition-all font-medium select-text"
                 />
                 <button
                   type="button"
@@ -960,12 +960,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               Access Dashboard
             </button>
 
-            <div className="pt-2 flex items-center justify-between text-xs text-zinc-200">
-              <span>Default Key: <code className="text-zinc-200 font-mono">1234567890</code></span>
+            <div className="pt-2 flex items-center justify-center text-xs text-zinc-400">
               <button
                 type="button"
                 onClick={onExit}
-                className="text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                className="text-zinc-400 hover:text-white transition-colors cursor-pointer text-center font-medium"
               >
                 Return to App
               </button>
