@@ -571,10 +571,10 @@ const defaultCommunityUsers: Array<{
 const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {};
 
 // Global Multi-Layer User Profile Resolver (Checks memory, BunnyDB, SQL, BunnyDB, and Review Indexes)
-async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any | null> {
+async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted: boolean = false): Promise<any | null> {
   if (!emailOrId || typeof emailOrId !== 'string') return null;
   const clean = emailOrId.trim().toLowerCase();
-  if (isDeletedUserServer(emailOrId) || isDeletedUserServer(clean)) {
+  if (!includeDeleted && (isDeletedUserServer(emailOrId) || isDeletedUserServer(clean))) {
     return null;
   }
   const cleanWithoutAt = clean.replace(/^@+/, '');
@@ -587,7 +587,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
     ? strippedUsr.replace(/_([a-z0-9-]+)_([a-z]{2,})$/, '@$1.$2')
     : '';
 
-  if (isDeletedUserServer(cleanWithoutAt) || isDeletedUserServer(slugWithSpaces) || isDeletedUserServer(username) || isDeletedUserServer(uid)) {
+  if (!includeDeleted && (isDeletedUserServer(cleanWithoutAt) || isDeletedUserServer(slugWithSpaces) || isDeletedUserServer(username) || isDeletedUserServer(uid))) {
     return null;
   }
 
@@ -8955,7 +8955,8 @@ app.post("/api/videos/save-review", async (req, res) => {
       const cleanEmail = email.trim().toLowerCase();
       let uid = bodyUid || bodyId;
       if (!uid) {
-        const existingProfile = await resolveUserProfileFromAnySource(cleanEmail);
+        // Find existing profile regardless of deletion status to ensure we reuse the same UID and avoid UNIQUE constraints
+        const existingProfile = await resolveUserProfileFromAnySource(cleanEmail, true);
         uid = existingProfile?.uid || existingProfile?.id || crypto.randomUUID();
       }
       const fName = (firstName || '').trim();
