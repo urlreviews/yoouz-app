@@ -435,8 +435,18 @@ export function useFeedPagination() {
               });
             } else if (payload.type === "places_purged") {
               window.dispatchEvent(new CustomEvent("copo-places-purged"));
-            } else if (payload.type === "init" && Array.isArray(payload.deletedPlaceIds)) {
-              window.dispatchEvent(new CustomEvent("copo-init-deleted-places", { detail: { deletedPlaceIds: payload.deletedPlaceIds } }));
+            } else if (payload.type === "user_deleted") {
+              const uIds = Array.isArray(payload.userIds) ? payload.userIds : [payload.userId, payload.email, payload.name, payload.handle].filter(Boolean);
+              window.dispatchEvent(new CustomEvent("copo-user-deleted", { detail: { userIds: uIds, email: payload.email, name: payload.name, handle: payload.handle } }));
+            } else if (payload.type === "users_purged") {
+              window.dispatchEvent(new CustomEvent("copo-users-purged"));
+            } else if (payload.type === "init") {
+              if (Array.isArray(payload.deletedPlaceIds)) {
+                window.dispatchEvent(new CustomEvent("copo-init-deleted-places", { detail: { deletedPlaceIds: payload.deletedPlaceIds } }));
+              }
+              if (Array.isArray(payload.deletedUserIds)) {
+                window.dispatchEvent(new CustomEvent("copo-init-deleted-users", { detail: { deletedUserIds: payload.deletedUserIds } }));
+              }
             } else if (payload.type === "bulk_videos_deleted" && Array.isArray(payload.videoIds)) {
               const idSet = new Set(payload.videoIds.map(String));
               payload.videoIds.forEach((id: string) => recordClientDeletedId(id));

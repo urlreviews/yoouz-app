@@ -43,7 +43,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, getDeletedUserIds } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import {
@@ -277,6 +277,12 @@ export function App() {
       const saved = localStorage.getItem("copo_user_profile");
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (isUserDeleted(parsed)) {
+          localStorage.removeItem("copo_user_profile");
+          localStorage.removeItem("copo_user");
+          localStorage.removeItem("copo_business_verified_session");
+          return null;
+        }
         const storedNotifs = localStorage.getItem("copo_notification_settings");
         if (storedNotifs) {
           try {
@@ -348,10 +354,41 @@ export function App() {
   const [comparisonCompetitor, setComparisonCompetitor] = useState<string>('yelp');
   const [deleteSuccessToast, setDeleteSuccessToast] = useState<boolean>(false);
 
+  const forceLogoutUser = (reason?: string) => {
+    try {
+      localStorage.removeItem("copo_user_profile");
+      localStorage.removeItem("copo_user");
+      localStorage.removeItem("copo_business_verified_session");
+      sessionStorage.removeItem("copo_temp_user");
+      sessionStorage.removeItem("copo_business_session");
+    } catch (e) {}
+
+    setCurrentUser(null);
+    setIsCreateModalOpen(false);
+    setIsAuthModalOpen(false);
+
+    try {
+      logOutUser().catch(() => {});
+    } catch (e) {}
+
+    try {
+      window.dispatchEvent(new CustomEvent("copo_auth_changed", { detail: null }));
+    } catch (e) {}
+
+    if (reason) {
+      console.warn("[Yoouz Auth] Session terminated:", reason);
+    }
+  };
+
   const videosRef = useRef(videos);
   useEffect(() => {
     videosRef.current = videos;
   }, [videos]);
+
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   // Parse URL on initial load and handle browser back/forward navigation
   useEffect(() => {
@@ -929,20 +966,22 @@ export function App() {
 
     // Save to local storage blacklist
     try {
-      const stored = localStorage.getItem("yoouz_deleted_users") || "[]";
-      let arr: string[] = [];
-      try { arr = JSON.parse(stored); } catch (e) {}
-      if (!Array.isArray(arr)) arr = [];
-      if (uId && !arr.includes(uId)) arr.push(uId);
-      if (uUid && !arr.includes(uUid)) arr.push(uUid);
-      if (uEmail && !arr.includes(uEmail)) {
-        arr.push(uEmail);
-        arr.push(`usr_${uEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
-      }
-      if (uName && !arr.includes(uName)) arr.push(uName);
-      if (uHandle && !arr.includes(uHandle)) arr.push(uHandle);
-      localStorage.setItem("yoouz_deleted_users", JSON.stringify(arr));
+      recordDeletedUsersInLocalStorage([uId, uUid, uEmail, uName, uHandle]);
     } catch (e) {}
+
+    // Check if the deleted user is the current active session
+    if (currentUser && isUserDeleted(currentUser)) {
+      forceLogoutUser("User deleted by admin");
+    }
+
+    // Also close drawer if viewing this user
+    setSelectedAuthorForDrawer((prev) => {
+      if (prev && isUserDeleted(prev)) return null;
+      return prev;
+    });
+
+    // Remove their videos from the active feed
+    setVideos((prev) => prev.filter((v) => !isUserDeleted(v.author || v.userId || v.authorName)));
 
     // 2. Call backend admin API
     try {
@@ -2224,7 +2263,7 @@ export function App() {
     }
   }, []);
 
-  // Real-time synchronization of place deletions across tabs and SSE
+  // Real-time synchronization of place & user deletions across tabs and SSE
   useEffect(() => {
     const handlePlaceDeleted = (e: any) => {
       const { placeId, variants } = e.detail || {};
@@ -2248,14 +2287,93 @@ export function App() {
       }
     };
 
+    const handleUserDeleted = (e: any) => {
+      const detail = e.detail || {};
+      const userIdentifiers = [
+        detail.userId,
+        ...(Array.isArray(detail.userIds) ? detail.userIds : []),
+        detail.email,
+        detail.name,
+        detail.handle
+      ].filter(Boolean);
+
+      if (userIdentifiers.length > 0) {
+        recordDeletedUsersInLocalStorage(userIdentifiers);
+      }
+
+      // Check if active user session was deleted
+      const activeUser = currentUserRef.current;
+      if (activeUser && isUserDeleted(activeUser)) {
+        forceLogoutUser("User account deleted live");
+      }
+
+      // Remove from active registered users list
+      setAllRegisteredUsers(prev => prev.filter(u => !isUserDeleted(u)));
+
+      // Remove from feed videos live
+      setVideos(prev => prev.filter(v => !isUserDeleted(v.author || v.userId || v.authorName)));
+
+      // Close profile drawer if open on deleted user
+      setSelectedAuthorForDrawer(prev => {
+        if (prev && isUserDeleted(prev)) return null;
+        return prev;
+      });
+    };
+
+    const handleUsersPurged = () => {
+      forceLogoutUser("All user accounts purged");
+      setAllRegisteredUsers([]);
+    };
+
+    const handleInitDeletedUsers = (e: any) => {
+      const serverDeleted = e.detail?.deletedUserIds;
+      if (Array.isArray(serverDeleted) && serverDeleted.length > 0) {
+        recordDeletedUsersInLocalStorage(serverDeleted);
+        const activeUser = currentUserRef.current;
+        if (activeUser && isUserDeleted(activeUser)) {
+          forceLogoutUser("Account was deleted on server");
+        }
+        setAllRegisteredUsers(prev => prev.filter(u => !isUserDeleted(u)));
+        setVideos(prev => prev.filter(v => !isUserDeleted(v.author || v.userId || v.authorName)));
+      }
+    };
+
+    const checkActiveUserDeleted = () => {
+      const activeUser = currentUserRef.current;
+      if (activeUser && isUserDeleted(activeUser)) {
+        forceLogoutUser("Account deleted in background");
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "yoouz_deleted_users") {
+        checkActiveUserDeleted();
+        setAllRegisteredUsers(prev => prev.filter(u => !isUserDeleted(u)));
+        setVideos(prev => prev.filter(v => !isUserDeleted(v.author || v.userId || v.authorName)));
+      }
+    };
+
     window.addEventListener("copo-place-deleted", handlePlaceDeleted);
     window.addEventListener("copo-places-purged", handlePlacesPurged);
     window.addEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
+    window.addEventListener("copo-user-deleted", handleUserDeleted);
+    window.addEventListener("copo-users-purged", handleUsersPurged);
+    window.addEventListener("copo-init-deleted-users", handleInitDeletedUsers);
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("focus", checkActiveUserDeleted);
+
+    // Initial check on mount
+    checkActiveUserDeleted();
 
     return () => {
       window.removeEventListener("copo-place-deleted", handlePlaceDeleted);
       window.removeEventListener("copo-places-purged", handlePlacesPurged);
       window.removeEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
+      window.removeEventListener("copo-user-deleted", handleUserDeleted);
+      window.removeEventListener("copo-users-purged", handleUsersPurged);
+      window.removeEventListener("copo-init-deleted-users", handleInitDeletedUsers);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("focus", checkActiveUserDeleted);
     };
   }, []);
 
@@ -4922,6 +5040,10 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 clubs={clubs}
                 onDeleteUser={handleAdminDeleteUser}
+                onPurgeAllUsers={() => {
+                  forceLogoutUser("All users purged by admin");
+                  setAllRegisteredUsers([]);
+                }}
                 onDeleteVideo={handleAdminDeleteVideo}
                 onBulkDeleteVideos={handleAdminBulkDeleteVideos}
                 onPurgeAllVideos={handleAdminPurgeAllVideos}

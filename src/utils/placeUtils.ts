@@ -751,6 +751,89 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
 };
 
 /**
+ * Deleted Users Helpers: Synchronized across localStorage, SSE, and server index
+ */
+export function getDeletedUserIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("yoouz_deleted_users");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map((s) => String(s).toLowerCase().trim()).filter(Boolean) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function recordDeletedUsersInLocalStorage(ids: string[]): void {
+  if (typeof window === "undefined" || !Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const current = getDeletedUserIds();
+    const set = new Set(current);
+    let changed = false;
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).toLowerCase().trim();
+      const withoutAt = clean.replace(/^@+/, "");
+      const slugHyphens = withoutAt.replace(/[\s_]+/g, "-").trim();
+      const slugSpaces = withoutAt.replace(/[-_]+/g, " ").trim();
+      const username = clean.includes("@") ? clean.split("@")[0] : withoutAt;
+      const usrKey = clean.startsWith("usr_") ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
+      const variants = [clean, withoutAt, slugHyphens, slugSpaces, username, usrKey];
+      for (const v of variants) {
+        if (v && !set.has(v)) {
+          set.add(v);
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      localStorage.setItem("yoouz_deleted_users", JSON.stringify(Array.from(set)));
+    }
+  } catch (e) {}
+}
+
+export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): boolean {
+  if (!userOrIdOrEmail) return false;
+  const list = deletedIds || getDeletedUserIds();
+  if (!list || list.length === 0) return false;
+  const set = new Set(list.map((s) => String(s).toLowerCase().trim()).filter(Boolean));
+
+  const checkVal = (v: any): boolean => {
+    if (!v) return false;
+    const s = String(v).toLowerCase().trim();
+    if (!s) return false;
+    const withoutAt = s.replace(/^@+/, "");
+    const slugHyphens = withoutAt.replace(/[\s_]+/g, "-").trim();
+    const slugSpaces = withoutAt.replace(/[-_]+/g, " ").trim();
+    const username = s.includes("@") ? s.split("@")[0] : withoutAt;
+    const usrKey = s.startsWith("usr_") ? s : `usr_${s.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
+    return set.has(s) || set.has(withoutAt) || set.has(slugHyphens) || set.has(slugSpaces) || set.has(username) || set.has(usrKey);
+  };
+
+  if (typeof userOrIdOrEmail === "string") {
+    return checkVal(userOrIdOrEmail);
+  }
+
+  if (typeof userOrIdOrEmail === "object") {
+    const u = userOrIdOrEmail;
+    if (u.id && checkVal(u.id)) return true;
+    if (u.uid && checkVal(u.uid)) return true;
+    if (u.email && checkVal(u.email)) return true;
+    if (u.handle && checkVal(u.handle)) return true;
+    if (u.name && checkVal(u.name)) return true;
+    if (u.username && checkVal(u.username)) return true;
+    if (u.author && isUserDeleted(u.author, list)) return true;
+    if (u.authorName && checkVal(u.authorName)) return true;
+    if (u.authorHandle && checkVal(u.authorHandle)) return true;
+  }
+
+  return false;
+}
+
+/**
  * Global User Registry and in-memory cache for instant synchronous resolution across all views
  */
 let memoryUserRegistry: Record<string, any> = {};
@@ -887,13 +970,20 @@ export function resolveSafeAuthor(
     } catch (e) {}
   }
 
-  // 3. Match against known community users and user registry
+  // 3. Match against known community users and user registry (if not deleted)
   const nameKey = rawName.toLowerCase().replace(/^@+/, "");
   const userKey = (video?.userId || video?.userEmail || (authorObj as any).userId || (authorObj as any).email || "").toLowerCase().trim();
   const handleKey = (authorObj.handle || "").toLowerCase().replace(/^@+/, "");
 
-  const registryMatch = getUserFromRegistry(userKey) || getUserFromRegistry(nameKey) || getUserFromRegistry(handleKey);
-  const knownMatch = KNOWN_COMMUNITY_USERS[nameKey] || KNOWN_COMMUNITY_USERS[userKey] || KNOWN_COMMUNITY_USERS[handleKey];
+  let registryMatch = getUserFromRegistry(userKey) || getUserFromRegistry(nameKey) || getUserFromRegistry(handleKey);
+  let knownMatch = KNOWN_COMMUNITY_USERS[nameKey] || KNOWN_COMMUNITY_USERS[userKey] || KNOWN_COMMUNITY_USERS[handleKey];
+
+  if (isUserDeleted(registryMatch) || isUserDeleted(userKey) || isUserDeleted(nameKey) || isUserDeleted(handleKey)) {
+    registryMatch = undefined;
+  }
+  if (isUserDeleted(knownMatch) || isUserDeleted(userKey) || isUserDeleted(nameKey) || isUserDeleted(handleKey)) {
+    knownMatch = undefined;
+  }
 
   let finalName = registryMatch?.name || knownMatch?.name || (rawName && rawName.toLowerCase() !== "reviewer" ? rawName : "Yoouz Reviewer");
   let finalHandle = registryMatch?.handle || knownMatch?.handle || authorObj.handle || `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}`;

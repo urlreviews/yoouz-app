@@ -271,10 +271,60 @@ function readDeletedUsersIndex(): string[] {
     if (fs.existsSync(deletedUsersIndexPath)) {
       const raw = fs.readFileSync(deletedUsersIndexPath, "utf8");
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed.map(String);
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
     }
   } catch (e) {}
   return [];
+}
+
+function isDeletedUserServer(itemOrIdOrEmail: any, deletedSet?: Set<string>): boolean {
+  if (!itemOrIdOrEmail) return false;
+  const set = deletedSet || new Set(readDeletedUsersIndex().map(s => s.toLowerCase().trim()).filter(Boolean));
+  if (set.size === 0) return false;
+
+  const extractAndCheck = (val: string): boolean => {
+    if (!val || typeof val !== 'string') return false;
+    const clean = val.toLowerCase().trim();
+    if (!clean) return false;
+    const cleanWithoutAt = clean.replace(/^@+/, '');
+    const slugWithSpaces = cleanWithoutAt.replace(/[-_]+/g, ' ').trim();
+    const slugWithHyphens = cleanWithoutAt.replace(/[\s_]+/g, '-').trim();
+    const alphaOnly = cleanWithoutAt.replace(/[^a-z0-9]/g, '');
+    const username = clean.includes('@') ? clean.split('@')[0] : cleanWithoutAt;
+    const usrKey = clean.startsWith('usr_') ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    if (
+      set.has(clean) ||
+      set.has(cleanWithoutAt) ||
+      set.has(slugWithSpaces) ||
+      set.has(slugWithHyphens) ||
+      set.has(alphaOnly) ||
+      set.has(username) ||
+      set.has(usrKey)
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  if (typeof itemOrIdOrEmail === 'string') {
+    return extractAndCheck(itemOrIdOrEmail);
+  }
+
+  if (typeof itemOrIdOrEmail === 'object') {
+    const u = itemOrIdOrEmail;
+    if (u.id && extractAndCheck(String(u.id))) return true;
+    if (u.uid && extractAndCheck(String(u.uid))) return true;
+    if (u.email && extractAndCheck(String(u.email))) return true;
+    if (u.handle && extractAndCheck(String(u.handle))) return true;
+    if (u.name && extractAndCheck(String(u.name))) return true;
+    if (u.username && extractAndCheck(String(u.username))) return true;
+    if (u.author && isDeletedUserServer(u.author, set)) return true;
+    if (u.authorName && extractAndCheck(String(u.authorName))) return true;
+    if (u.authorHandle && extractAndCheck(String(u.authorHandle))) return true;
+  }
+
+  return false;
 }
 
 function recordDeletedUserIds(ids: string[]): void {
@@ -286,8 +336,20 @@ function recordDeletedUserIds(ids: string[]): void {
       if (!rawId) continue;
       const clean = String(rawId).trim();
       const lower = clean.toLowerCase();
-      if (!list.includes(clean)) { list.push(clean); changed = true; }
-      if (!list.includes(lower)) { list.push(lower); changed = true; }
+      const withoutAt = lower.replace(/^@+/, '');
+      const slugHyphens = withoutAt.replace(/[\s_]+/g, '-').trim();
+      const slugSpaces = withoutAt.replace(/[-_]+/g, ' ').trim();
+      const alphaOnly = withoutAt.replace(/[^a-z0-9]/g, '');
+      const username = lower.includes('@') ? lower.split('@')[0] : withoutAt;
+      const usrKey = lower.startsWith('usr_') ? lower : `usr_${lower.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+      const variations = [clean, lower, withoutAt, slugHyphens, slugSpaces, alphaOnly, username, usrKey];
+      for (const v of variations) {
+        if (v && !list.includes(v)) {
+          list.push(v);
+          changed = true;
+        }
+      }
     }
     if (changed) {
       if (!fs.existsSync(globalUploadsDir)) {
@@ -617,6 +679,9 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
 async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any | null> {
   if (!emailOrId || typeof emailOrId !== 'string') return null;
   const clean = emailOrId.trim().toLowerCase();
+  if (isDeletedUserServer(emailOrId) || isDeletedUserServer(clean)) {
+    return null;
+  }
   const cleanWithoutAt = clean.replace(/^@+/, '');
   const slugWithSpaces = cleanWithoutAt.replace(/[-_]+/g, ' ').trim();
   const alphaOnly = cleanWithoutAt.replace(/[^a-z0-9]/g, '');
@@ -627,6 +692,10 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
     ? strippedUsr.replace(/_([a-z0-9-]+)_([a-z]{2,})$/, '@$1.$2')
     : '';
 
+  if (isDeletedUserServer(cleanWithoutAt) || isDeletedUserServer(slugWithSpaces) || isDeletedUserServer(username) || isDeletedUserServer(uid)) {
+    return null;
+  }
+
   // Layer 1: Check Predefined Known Community Map
   const knownMatch = KNOWN_COMMUNITY_USERS_SERVER[clean] || 
                      KNOWN_COMMUNITY_USERS_SERVER[cleanWithoutAt] || 
@@ -635,7 +704,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
                      KNOWN_COMMUNITY_USERS_SERVER[username] ||
                      KNOWN_COMMUNITY_USERS_SERVER[strippedUsr] ||
                      (candidateEmailFromUsr ? KNOWN_COMMUNITY_USERS_SERVER[candidateEmailFromUsr] : null);
-  if (knownMatch) {
+  if (knownMatch && !isDeletedUserServer(knownMatch)) {
     const fName = knownMatch.name.split(' ')[0] || knownMatch.name;
     const lName = knownMatch.name.includes(' ') ? knownMatch.name.split(' ').slice(1).join(' ') : '';
     const resolvedEmail = clean.includes('@') ? clean : (candidateEmailFromUsr || `${username}@gmail.com`);
@@ -678,7 +747,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
            uHandleAlpha === alphaOnly ||
            (uEmail.includes('@') && uEmail.split('@')[0] === cleanWithoutAt);
   });
-  if (du) {
+  if (du && !isDeletedUserServer(du)) {
     const fName = du.name.split(' ')[0] || du.name;
     const lName = du.name.includes(' ') ? du.name.split(' ').slice(1).join(' ') : '';
     return {
@@ -728,7 +797,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
         const candidateName = parsed.name || row.name;
         if (candidateName && candidateName !== 'Registered User') {
           const resolvedAv = parsed.avatar || row.avatar || '';
-          return {
+          const candidateProfile = {
             uid: parsed.uid || row.id || uid,
             id: parsed.id || row.id || uid,
             email: parsed.email || row.email || (clean.includes('@') ? clean : candidateEmailFromUsr || ''),
@@ -745,6 +814,9 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
             role: parsed.role || 'user',
             isNewUser: false
           };
+          if (!isDeletedUserServer(candidateProfile)) {
+            return candidateProfile;
+          }
         }
       }
     }
@@ -756,7 +828,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
     if (sqlUsers && sqlUsers.length > 0) {
       const u = sqlUsers[0];
       if (u.name && u.name !== 'Registered User') {
-        return {
+        const candidateProfile = {
           uid: u.uid || uid,
           id: u.uid || uid,
           email: u.email,
@@ -767,6 +839,9 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
           handle: `@${u.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
           isNewUser: false
         };
+        if (!isDeletedUserServer(candidateProfile)) {
+          return candidateProfile;
+        }
       }
     }
   } catch (err) {}
@@ -778,12 +853,15 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
       const d: any = fsu.data;
       if (d && (d.email?.toLowerCase() === clean || fsu.id === clean || d.uid === clean || d.handle?.toLowerCase() === `@${cleanWithoutAt}` || d.name?.toLowerCase() === slugWithSpaces)) {
         if (d.name && d.name !== 'Registered User') {
-          return {
+          const candidateProfile = {
             ...d,
             uid: d.uid || fsu.id || uid,
             id: d.uid || fsu.id || uid,
             isNewUser: false
           };
+          if (!isDeletedUserServer(candidateProfile)) {
+            return candidateProfile;
+          }
         }
       }
     }
@@ -818,7 +896,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
       const authorAvatar = a.avatar || match.authorAvatar;
       const fName = authorName.split(' ')[0] || authorName;
       const lName = authorName.includes(' ') ? authorName.split(' ').slice(1).join(' ') : '';
-      return {
+      const candidateProfile = {
         uid: match.userId || uid,
         id: match.userId || uid,
         email: clean.includes('@') ? clean : (match.userEmail || `${clean}@gmail.com`),
@@ -832,6 +910,9 @@ async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any |
         role: 'user',
         isNewUser: false
       };
+      if (!isDeletedUserServer(candidateProfile)) {
+        return candidateProfile;
+      }
     }
   } catch (e) {}
 
@@ -3639,22 +3720,10 @@ app.get('/api/nosql/:collection', async (req, res) => {
     }
 
     if (colName === 'users') {
-      const deletedUserIds = readDeletedUsersIndex();
-      if (deletedUserIds.length > 0) {
-        const deletedSet = new Set(deletedUserIds.map(u => u.toLowerCase().trim()));
-        items = items.filter((u: any) => {
-          if (!u) return false;
-          const uId = String(u.id || u.uid || '').toLowerCase().trim();
-          const uEmail = String(u.email || '').toLowerCase().trim();
-          const uHandle = String(u.handle || '').replace(/^@+/, '').toLowerCase().trim();
-          const uName = String(u.name || '').toLowerCase().trim();
-          if (uId && deletedSet.has(uId)) return false;
-          if (uEmail && deletedSet.has(uEmail)) return false;
-          if (uHandle && deletedSet.has(uHandle)) return false;
-          if (uName && deletedSet.has(uName)) return false;
-          return true;
-        });
-      }
+      items = items.filter((u: any) => {
+        if (!u) return false;
+        return !isDeletedUserServer(u);
+      });
     }
 
     res.json(items);
@@ -3669,15 +3738,20 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
       return res.status(404).json({ error: "Place not found (deleted)" });
     }
 
+    if (colName === 'users' && isDeletedUserServer(id)) {
+      return res.status(404).json({ error: "User not found (deleted)" });
+    }
+
     // Special handler for users collection: use multi-layer resolver first for consistent attributes
     if (colName === 'users') {
       const resolved = await resolveUserProfileFromAnySource(id);
-      if (resolved) {
+      if (resolved && !isDeletedUserServer(resolved)) {
         return res.json({
           ...resolved,
           isNewUser: false
         });
       }
+      return res.status(404).json({ error: "User not found" });
     }
 
     // 1. Try Bunny Database (Cloud libSQL)
@@ -4193,7 +4267,96 @@ app.post('/api/admin/users/delete', express.json(), async (req, res) => {
     ].filter(Boolean);
     recordDeletedUserIds(extraUserIdentifiers);
 
+    // Broadcast instant kick/logout SSE event to all connected clients
+    broadcastSseEvent({
+      type: "user_deleted",
+      userId: id || uid || email,
+      userIds: extraUserIdentifiers,
+      email: email ? String(email).trim().toLowerCase() : "",
+      name: name ? String(name).trim() : "",
+      handle: handle ? String(handle).trim() : ""
+    });
+
     res.json({ success: true, deletedIds: Array.from(idsToDelete) });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Bulk Purge All Users endpoint
+app.post('/api/admin/users/purge-all', express.json(), async (req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    const dbInstance = getDb();
+    const idsToRecord = new Set<string>();
+
+    if (bunnyDb) {
+      try {
+        const rows = await bunnyDb.execute({ sql: "SELECT id, email, name, data FROM users" });
+        if (rows.rows) {
+          for (const r of rows.rows as any[]) {
+            if (r.id) idsToRecord.add(String(r.id));
+            if (r.email) idsToRecord.add(String(r.email).toLowerCase());
+            if (r.name) idsToRecord.add(String(r.name));
+            if (r.data) {
+              try {
+                const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+                if (d.id) idsToRecord.add(String(d.id));
+                if (d.uid) idsToRecord.add(String(d.uid));
+                if (d.email) idsToRecord.add(String(d.email).toLowerCase());
+                if (d.name) idsToRecord.add(String(d.name));
+                if (d.handle) idsToRecord.add(String(d.handle));
+              } catch (e) {}
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (dbInstance) {
+      try {
+        const table = getNoSqlTable('users');
+        if (table) {
+          const sqlRows = await dbInstance.select().from(table);
+          for (const r of sqlRows as any[]) {
+            if (r.id) idsToRecord.add(String(r.id));
+            if (r.data) {
+              const d: any = r.data;
+              if (d.id) idsToRecord.add(String(d.id));
+              if (d.uid) idsToRecord.add(String(d.uid));
+              if (d.email) idsToRecord.add(String(d.email).toLowerCase());
+              if (d.name) idsToRecord.add(String(d.name));
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    const recordedList = Array.from(idsToRecord);
+    if (recordedList.length > 0) {
+      recordDeletedUserIds(recordedList);
+    }
+
+    if (bunnyDb) {
+      try {
+        await bunnyDb.execute({ sql: "DELETE FROM users" });
+      } catch (e) {}
+    }
+    if (dbInstance) {
+      try {
+        const table = getNoSqlTable('users');
+        if (table) {
+          await dbInstance.delete(table);
+        }
+      } catch (e) {}
+    }
+
+    broadcastSseEvent({
+      type: "users_purged",
+      purgedCount: recordedList.length
+    });
+
+    res.json({ success: true, count: recordedList.length });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -4211,6 +4374,15 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     if (colName === 'places') {
       const purgeResult = await purgePlaceFromAllStores(id);
       return res.json({ success: true, id, message: "Place permanently purged live.", ...purgeResult });
+    }
+
+    if (colName === 'users') {
+      recordDeletedUserIds([id]);
+      broadcastSseEvent({
+        type: "user_deleted",
+        userId: id,
+        userIds: [id]
+      });
     }
 
     // 1. Delete from Bunny Database (Cloud libSQL) if configured
@@ -5623,8 +5795,9 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
     // Initial handshake payload
     const deletedIds = readDeletedReviewsIndex();
     const deletedPlaceIds = readDeletedPlacesIndex();
+    const deletedUserIds = readDeletedUsersIndex();
     try {
-      res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, deletedPlaceIds, timestamp: Date.now() })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, deletedPlaceIds, deletedUserIds, timestamp: Date.now() })}\n\n`);
     } catch (e) {}
 
     // Heartbeat to keep connection alive indefinitely

@@ -54,7 +54,7 @@ import {
   TrendingUp,
   Clock
 } from "lucide-react";
-import { isAuthorMatch } from "../utils/placeUtils";
+import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
 import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
 
@@ -121,6 +121,7 @@ interface CopoAdminPanelProps {
   allUsers?: any[];
   clubs?: Club[];
   onDeleteUser?: (user: any) => void;
+  onPurgeAllUsers?: () => void;
   onDeleteVideo: (id: string) => void;
   onBulkDeleteVideos?: (ids: string[]) => void;
   onPurgeAllVideos?: () => void;
@@ -143,6 +144,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   allUsers = [],
   clubs = [],
   onDeleteUser,
+  onPurgeAllUsers,
   onDeleteVideo,
   onBulkDeleteVideos,
   onPurgeAllVideos,
@@ -251,7 +253,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const targetName = (targetUser.name || "").trim();
     const targetHandle = (targetUser.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
-    // 1. Immediately update deleted keys
+    // 1. Immediately record in persistent deleted users local store and state
+    recordDeletedUsersInLocalStorage([targetId, targetUid, targetEmail, targetName, targetHandle]);
+
     setDeletedUserKeys((prev) => {
       const next = new Set(prev);
       if (targetId) next.add(targetId.toLowerCase());
@@ -297,6 +301,39 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     } catch (e) {
       showToast(`User deleted.`);
+    }
+  };
+
+  const [confirmPurgeAllUsers, setConfirmPurgeAllUsers] = useState(false);
+  const [isPurgingUsers, setIsPurgingUsers] = useState(false);
+
+  const handleExecutePurgeAllUsers = async () => {
+    setIsPurgingUsers(true);
+    try {
+      // Record all active user keys locally so current user session is cleaned
+      const allKeys: string[] = [];
+      uniqueUsers.forEach((u) => {
+        if (u.id) allKeys.push(u.id);
+        if (u.uid) allKeys.push(u.uid);
+        if (u.email) allKeys.push(u.email);
+        if (u.name) allKeys.push(u.name);
+        if (u.handle) allKeys.push(u.handle);
+      });
+      recordDeletedUsersInLocalStorage(allKeys);
+
+      const res = await fetch("/api/admin/users/purge-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (onPurgeAllUsers) {
+        onPurgeAllUsers();
+      }
+      showToast("All user accounts purged successfully.");
+    } catch (e) {
+      showToast("Error purging user accounts.");
+    } finally {
+      setIsPurgingUsers(false);
+      setConfirmPurgeAllUsers(false);
     }
   };
 
@@ -2171,6 +2208,33 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <option value="creators">Video Creators Only</option>
                     <option value="business">Business Owners</option>
                   </select>
+
+                  {confirmPurgeAllUsers ? (
+                    <div className="flex items-center gap-1.5 bg-red-950/80 border border-red-800 px-2 py-1 rounded-xl">
+                      <span className="text-xs text-red-200 font-bold">Purge ALL users & kick active logins?</span>
+                      <button
+                        onClick={handleExecutePurgeAllUsers}
+                        disabled={isPurgingUsers}
+                        className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isPurgingUsers ? "Purging..." : "Confirm Purge"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmPurgeAllUsers(false)}
+                        className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmPurgeAllUsers(true)}
+                      className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                      title="Delete all user accounts and force logouts"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-400" /> Purge All Users
+                    </button>
+                  )}
                 </div>
                 <div className="text-xs text-zinc-200 font-semibold">
                   Showing {filteredUsers.length} active users
