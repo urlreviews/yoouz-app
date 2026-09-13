@@ -1,5 +1,15 @@
 [
   {
+    "id": "rev-12345",
+    "placeName": "Test Place",
+    "videoUrl": "https://rev1.b-cdn.net/videos/package.json",
+    "placeBannerUrl": "",
+    "bannerUrl": "",
+    "ogImage": "",
+    "placeLogoUrl": "",
+    "placeWebsite": "https://testplace.com"
+  },
+  {
     "id": "rev-1788277000192-c9ypn",
     "userId": "aouisesmee@gmail.com",
     "userEmail": "aouisesmee@gmail.com",

@@ -172,14 +172,15 @@ export async function uploadVideoResumableWithProgress(
         provider: result.url.includes('b-cdn.net') ? "bunny" : "server",
         bunnyVideoId: result.bunnyVideoId
       };
+    } else {
+      throw new Error("Upload failed. Server returned no URL.");
     }
   } catch (err) {
     console.warn("Server upload failed:", err);
+    throw err; // Re-throw to prevent publishing broken videos
   }
-  
-  // Fallback to local server stream URL
-  return { downloadUrl: `/api/videos/stream/${videoId}.mp4`, provider: "server" };
 }
+
 
 
 // ==========================================
@@ -247,7 +248,7 @@ export async function uploadVideoToServerWithProgress(
     };
 
     xhr.onerror = () => resolve(null);
-    xhr.timeout = 60000;
+    xhr.timeout = 300000; // 5 minutes timeout for large video uploads
     xhr.ontimeout = () => resolve(null);
     xhr.send(formData);
   });

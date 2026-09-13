@@ -811,8 +811,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         }
       } catch (uploadErr) {
         console.warn("Server video upload notice:", uploadErr);
+        setIsPublishing(false);
+        setUploadProgress(0);
+        alert("Video upload failed. Please check your connection and try again.");
+        return; // Stop the publish process!
       }
     }
+
 
     setUploadProgress(100);
 
