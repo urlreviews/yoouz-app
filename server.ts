@@ -542,167 +542,20 @@ try {
   }
 } catch (e) {}
 
-const defaultCommunityUsers = [
-  {
-    id: "louis42111-user-id",
-    uid: "louis42111-user-id",
-    name: "Biz Riv",
-    handle: "@louis42111",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    email: "louis42111@gmail.com",
-    bio: "Food explorer linking real businesses and authentic video reviews.",
-    location: "Paris, France",
-    isVerified: true,
-    followersCount: 0
-  },
-  {
-    id: "mLiO66HDR9TRvOFdGddGWm30rKu2",
-    uid: "mLiO66HDR9TRvOFdGddGWm30rKu2",
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    email: "aouisesmee@gmail.com",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States",
-    isVerified: true,
-    followersCount: 1
-  },
-  {
-    id: "aouisesme-alias-user-id",
-    uid: "aouisesme-alias-user-id",
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    email: "aouisesme@gmail.com",
-    bio: "Community reviewer on Yoouz.",
-    location: "Los Angeles, California, United States",
-    isVerified: true,
-    followersCount: 1
-  },
-  {
-    id: "avr6566gd-user-id",
-    uid: "avr6566gd-user-id",
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    email: "avr6566gd@gmail.com",
-    bio: "Community reviewer on Yoouz.",
-    location: "New York, United States",
-    isVerified: true,
-    followersCount: 0
-  }
-];
+const defaultCommunityUsers: Array<{
+  id: string;
+  uid: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  email: string;
+  bio: string;
+  location: string;
+  isVerified: boolean;
+  followersCount: number;
+}> = [];
 
-const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; avatar: string; bio?: string }> = {
-  "aouisesmee": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "aouisesmee@gmail.com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "usr_aouisesmee_gmail_com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "aouisesmee_gmail_com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "mLiO66HDR9TRvOFdGddGWm30rKu2": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "mlio66hdr9trvofdgddgwm30rku2": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "aouisesme": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "aouisesme@gmail.com": {
-    name: "aouisesmee",
-    handle: "@aouisesmee",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJAq74cxWFFV90VchWmgEsIwjE0fPv5ee-9wK2r19lbDH7Ea9s=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "biz riv": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "bizriv": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "louis42111": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "louis42111@gmail.com": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "biz-riv": {
-    name: "Biz Riv",
-    handle: "@bizriv",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJDmKh2JyZy4i-XrVSPutEqOYbyS9itBJHYy0256cvAaHGTKg=s96-c",
-    bio: "Food explorer linking real businesses and authentic video reviews."
-  },
-  "avt ertuop": {
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "avt-ertuop": {
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "avtertuop": {
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "avr6566gd": {
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz."
-  },
-  "avr6566gd@gmail.com": {
-    name: "avt ertuop",
-    handle: "@avr6566gd",
-    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJcSBil87wKNy6vlkPQPGaAagu2GtFV1B5CLSXC9j7YTs70Cg=s96-c",
-    bio: "Community reviewer on Yoouz."
-  }
-};
+const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {};
 
 // Global Multi-Layer User Profile Resolver (Checks memory, BunnyDB, SQL, BunnyDB, and Review Indexes)
 async function resolveUserProfileFromAnySource(emailOrId: string): Promise<any | null> {
@@ -10342,7 +10195,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       }
 
       if (deletedIds.size > 0) {
-        recordDeletedReviews(Array.from(deletedIds));
+        for (const id of deletedIds) {
+          recordDeletedReviewId(id);
+        }
       }
 
       // 1. Clear reviews index

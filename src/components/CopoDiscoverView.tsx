@@ -207,10 +207,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
         const safeHandle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
         const bestAvatar = getAppropriateAvatar(rawName, safeHandle, candidate.avatar || candidate.author?.avatar);
 
-        const candidateLoc = candidate.location || candidate.author?.location || (
-          rawName.toLowerCase().includes("aouisesmee") ? "Los Angeles, California, United States" :
-          rawName.toLowerCase().includes("biz riv") ? "Paris, France" : ""
-        );
+        const candidateLoc = candidate.location || candidate.author?.location || "";
 
         found = {
           author: {
