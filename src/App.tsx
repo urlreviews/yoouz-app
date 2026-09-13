@@ -1737,11 +1737,11 @@ export function App() {
             const deletedSet = new Set(deletedList.map((k) => String(k).toLowerCase()));
 
             const validUsers = list.filter((u: any) => {
-              if (!u || !u.name || u.name === "Registered User" || u.name === "Reviewer" || !u.email || u.email.includes("undefined")) return false;
+              if (!u || !u.email || u.email.includes("undefined")) return false;
               const uEmail = (u.email || "").toLowerCase().trim();
               const uName = (u.name || "").toLowerCase().trim();
               const uId = (u.id || u.uid || "").toLowerCase().trim();
-              if (uEmail === "4samet@gmail.com" || uName === "samet" || uId === "4samet-user-id" || uId === "usr_4samet_gmail_com") return false;
+              // Do not exclude admin users (4samet@gmail.com) or default placeholders from the admin user views
               if (deletedSet.has(uEmail) || deletedSet.has(uName) || deletedSet.has(uId)) return false;
               return true;
             });

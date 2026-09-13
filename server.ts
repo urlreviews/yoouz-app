@@ -8836,42 +8836,40 @@ app.post("/api/videos/save-review", async (req, res) => {
         unrecordDeletedUserIds([userSession.uid, userSession.id, cleanEmail, userSession.name, userSession.handle]);
       }
 
-      // Save/update user session in Bunny Database & Drizzle SQL
-      if (!userSession.isNewUser) {
-        try {
-          const bunnyDb = getBunnyDb();
-          if (bunnyDb) {
-            await bunnyDb.execute({
-              sql: `INSERT INTO users (id, email, name, data, updatedAt) 
-                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
-                    ON CONFLICT(id) DO UPDATE SET name = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-              args: [
-                userSession.uid,
-                cleanEmail,
-                userSession.name,
-                JSON.stringify(userSession),
-                userSession.name,
-                JSON.stringify(userSession)
-              ]
-            });
-          }
-        } catch (saveErr) {
-          console.warn("Could not persist verified user to BunnyDB:", saveErr);
+      // Save/update user session in Bunny Database & Drizzle SQL unconditionally
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          await bunnyDb.execute({
+            sql: `INSERT INTO users (id, email, name, data, updatedAt) 
+                  VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
+                  ON CONFLICT(id) DO UPDATE SET name = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [
+              userSession.uid,
+              cleanEmail,
+              userSession.name,
+              JSON.stringify(userSession),
+              userSession.name,
+              JSON.stringify(userSession)
+            ]
+          });
         }
+      } catch (saveErr) {
+        console.warn("Could not persist verified user to BunnyDB:", saveErr);
+      }
 
-        try {
-          const existingSql = await db.select().from(users).where(eq(users.email, cleanEmail));
-          if (existingSql.length === 0) {
-            await db.insert(users).values({
-              uid: userSession.uid,
-              email: cleanEmail,
-              name: userSession.name,
-              avatar: userSession.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userSession.name)}&background=27272a&color=fff&bold=true&size=128`
-            });
-          }
-        } catch (sqlErr) {
-          console.warn("Could not save verified user to SQL DB:", sqlErr);
+      try {
+        const existingSql = await db.select().from(users).where(eq(users.email, cleanEmail));
+        if (existingSql.length === 0) {
+          await db.insert(users).values({
+            uid: userSession.uid,
+            email: cleanEmail,
+            name: userSession.name || cleanEmail.split('@')[0],
+            avatar: userSession.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userSession.name || cleanEmail.split('@')[0])}&background=27272a&color=fff&bold=true&size=128`
+          });
         }
+      } catch (sqlErr) {
+        console.warn("Could not save verified user to SQL DB:", sqlErr);
       }
 
       return res.json({
