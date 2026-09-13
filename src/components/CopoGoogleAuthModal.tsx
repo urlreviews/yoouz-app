@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Loader2, X, AlertCircle, HelpCircle, Mail, ArrowRight, ArrowLeft, CheckCircle2, User, Sparkles, MapPin, Camera } from "lucide-react";
 import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from "../lib/avatar";
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
 import { locationData } from "../utils/locationData";
 import { KNOWN_COMMUNITY_USERS, unrecordDeletedUsersInLocalStorage } from "../utils/placeUtils";
-import { Country, State, City } from "country-state-city";
+import { cachedCountry, cachedState, cachedCity } from "../utils/locationCache";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
 import { sendWelcomeNotificationForNewUser } from "../lib/socialSync";
@@ -168,6 +168,35 @@ export const CopoAuthPrompt: React.FC<{
   const [tempUser, setTempUser] = useState<any>(currentUser || null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  const locationOptions = useMemo(() => {
+    if (!country) return { isoCode: "", statesObj: [], stateOptions: [], hasStates: false, uniqueCityOptions: [] };
+    const selectedCountryObj = cachedCountry.getAllCountries().find(c => c.name === country);
+    const isoCode = selectedCountryObj?.isoCode || "";
+    if (!isoCode) return { isoCode: "", statesObj: [], stateOptions: [], hasStates: false, uniqueCityOptions: [] };
+
+    const statesObj = cachedState.getStatesOfCountry(isoCode);
+    const hasStates = statesObj.length > 0;
+    const stateOptions = statesObj.map(s => s.name);
+
+    let cityOptions: string[] = [];
+    if (stateRegion) {
+      const selectedState = statesObj.find(s => s.name === stateRegion);
+      if (selectedState) {
+        const stateCities = cachedCity.getCitiesOfState(isoCode, selectedState.isoCode).map(c => c.name);
+        cityOptions = stateCities.length > 0 ? stateCities : [];
+      }
+    }
+    if (cityOptions.length === 0) {
+      const rawCities = cachedCity.getCitiesOfCountry(isoCode);
+      if (rawCities && rawCities.length > 0) {
+        cityOptions = rawCities.map(c => c.name);
+      }
+    }
+
+    const uniqueCityOptions = Array.from(new Set(cityOptions));
+    return { isoCode, statesObj, stateOptions, hasStates, uniqueCityOptions };
+  }, [country, stateRegion]);
 
   const copy = getAuthContextCopy(intent, customTitle, customSubtitle);
 
@@ -884,63 +913,26 @@ export const CopoAuthPrompt: React.FC<{
               />
             </div>
 
-            {country && (() => {
-              const selectedCountryObj = Country.getAllCountries().find(c => c.name === country);
-              const isoCode = selectedCountryObj?.isoCode || "";
-              
-              const statesObj = State.getStatesOfCountry(isoCode);
-              const hasStates = statesObj.length > 0;
-              const stateOptions = statesObj.map(s => s.name);
-              const stateLabel = t("auth.regionProvince", "Region / Province");
-              
-              let cityOptions: string[] = [];
-              if (stateRegion) {
-                const selectedState = statesObj.find(s => s.name === stateRegion);
-                if (selectedState) {
-                   const stateCities = City.getCitiesOfState(isoCode, selectedState.isoCode).map(c => c.name);
-                   cityOptions = stateCities.length > 0 ? stateCities : (City.getCitiesOfCountry(isoCode)?.map(c => c.name) || []);
-                } else {
-                   cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
-                }
-              } else {
-                cityOptions = City.getCitiesOfCountry(isoCode)?.map(c => c.name) || [];
-              }
-              const uniqueCityOptions = Array.from(new Set(cityOptions));
-
-              return (
-                <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {hasStates ? (
-                    <>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between pl-1">
-                          <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide block">{stateLabel}</span>
-                          <span className="text-[9px] text-zinc-400 font-normal">{t("common.optional", "optional")}</span>
-                        </div>
-                        <SearchableComboSelector
-                          value={stateRegion}
-                          onChange={(val) => {
-                            setStateRegion(val);
-                            setCity("");
-                          }}
-                          options={stateOptions}
-                          placeholder={stateLabel}
-                        />
+            {country && (
+              <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                {locationOptions.hasStates ? (
+                  <>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between pl-1">
+                        <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide block">{t("auth.regionProvince", "Region / Province")}</span>
+                        <span className="text-[9px] text-zinc-400 font-normal">{t("common.optional", "optional")}</span>
                       </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between pl-1">
-                          <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide block">{t("auth.city", "City")}</span>
-                          <span className="text-[9px] text-zinc-400 font-normal">{t("common.optional", "optional")}</span>
-                        </div>
-                        <SearchableComboSelector
-                          value={city}
-                          onChange={setCity}
-                          options={uniqueCityOptions}
-                          placeholder={t("auth.selectCity", "Select City")}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="col-span-2 space-y-1">
+                      <SearchableComboSelector
+                        value={stateRegion}
+                        onChange={(val) => {
+                          setStateRegion(val);
+                          setCity("");
+                        }}
+                        options={locationOptions.stateOptions}
+                        placeholder={t("auth.regionProvince", "Region / Province")}
+                      />
+                    </div>
+                    <div className="space-y-1">
                       <div className="flex items-center justify-between pl-1">
                         <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide block">{t("auth.city", "City")}</span>
                         <span className="text-[9px] text-zinc-400 font-normal">{t("common.optional", "optional")}</span>
@@ -948,14 +940,27 @@ export const CopoAuthPrompt: React.FC<{
                       <SearchableComboSelector
                         value={city}
                         onChange={setCity}
-                        options={uniqueCityOptions}
+                        options={locationOptions.uniqueCityOptions}
                         placeholder={t("auth.selectCity", "Select City")}
                       />
                     </div>
-                  )}
-                </div>
-              );
-            })()}
+                  </>
+                ) : (
+                  <div className="col-span-2 space-y-1">
+                    <div className="flex items-center justify-between pl-1">
+                      <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide block">{t("auth.city", "City")}</span>
+                      <span className="text-[9px] text-zinc-400 font-normal">{t("common.optional", "optional")}</span>
+                    </div>
+                    <SearchableComboSelector
+                      value={city}
+                      onChange={setCity}
+                      options={locationOptions.uniqueCityOptions}
+                      placeholder={t("auth.selectCity", "Select City")}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {errorMessage && (
               <div className="p-3 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">

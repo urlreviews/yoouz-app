@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, Search, Check } from "lucide-react";
 
 interface SearchableComboSelectorProps {
@@ -32,10 +32,20 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
     };
   }, [isOpen]);
 
-  const uniqueOptions = Array.from(new Set(options));
-  const filteredOptions = uniqueOptions.filter((option) =>
-    option.toLowerCase().includes(search.toLowerCase())
-  );
+  const uniqueOptions = useMemo(() => {
+    if (!options || !Array.isArray(options)) return [];
+    return Array.from(new Set(options));
+  }, [options]);
+
+  const filteredOptions = useMemo(() => {
+    const cleanSearch = search.trim().toLowerCase();
+    if (!cleanSearch) {
+      return uniqueOptions.slice(0, 50);
+    }
+    return uniqueOptions
+      .filter((option) => option.toLowerCase().includes(cleanSearch))
+      .slice(0, 50);
+  }, [uniqueOptions, search]);
 
   return (
     <div className="relative w-full" ref={containerRef}>

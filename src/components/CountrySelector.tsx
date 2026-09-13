@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Search, Check, Globe } from "lucide-react";
 import { countries as oldCountries, getCountryDialInfo } from "../utils/countries";
-import { Country } from "country-state-city";
+import { cachedCountry } from "../utils/locationCache";
 
 interface CountrySelectorProps {
   value: string;
@@ -27,7 +27,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
     };
   }, [isOpen]);
 
-  const allCountryNames = Country.getAllCountries().map(c => c.name);
+  const allCountryNames = cachedCountry.getAllCountries().map(c => c.name);
   const filteredCountries = allCountryNames.filter((country) =>
     country.toLowerCase().includes(search.toLowerCase())
   );
