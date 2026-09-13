@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Loader2, X, AlertCircle, HelpCircle, Mail, ArrowRight, ArrowLeft, CheckCircle2, User, Sparkles, MapPin } from "lucide-react";
+import { Loader2, X, AlertCircle, HelpCircle, Mail, ArrowRight, ArrowLeft, CheckCircle2, User, Sparkles, MapPin, Camera } from "lucide-react";
 import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from "../lib/avatar";
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
@@ -137,17 +137,147 @@ export const CopoAuthPrompt: React.FC<{
     if (onStepChange) onStepChange(newStep);
   };
   const [email, setEmail] = useState<string>(currentUser?.email || "");
-  const [firstName, setFirstName] = useState<string>(currentUser?.firstName || (currentUser?.name && !currentUser.name.includes('@') ? currentUser.name.split(' ')[0] : ""));
-  const [lastName, setLastName] = useState<string>(currentUser?.lastName || (currentUser?.name && currentUser.name.includes(' ') ? currentUser.name.split(' ').slice(1).join(' ') : ""));
+  
+  // First & Last Name must start empty unless user already has a distinct, saved real name (never fill from email)
+  const [firstName, setFirstName] = useState<string>(() => {
+    const raw = (currentUser?.firstName || "").trim();
+    const emailPrefix = (currentUser?.email || "").split('@')[0].toLowerCase();
+    if (raw && raw.toLowerCase() !== emailPrefix && !raw.includes('@') && !raw.toLowerCase().startsWith('usr_')) {
+      return raw;
+    }
+    return "";
+  });
+  const [lastName, setLastName] = useState<string>(() => {
+    const raw = (currentUser?.lastName || "").trim();
+    if (raw && !raw.includes('@')) {
+      return raw;
+    }
+    return "";
+  });
   const [city, setCity] = useState<string>(currentUser?.city || "");
   const [country, setCountry] = useState<string>(currentUser?.country || "");
   const [stateRegion, setStateRegion] = useState<string>("");
+  const [avatar, setAvatar] = useState<string>(currentUser?.avatar || "");
+  const [banner, setBanner] = useState<string>(currentUser?.banner || "");
+  const [avatarError, setAvatarError] = useState<string>("");
+  const [bannerError, setBannerError] = useState<string>("");
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
   const [otpCode, setOtpCode] = useState<string>("");
   const [tempUser, setTempUser] = useState<any>(currentUser || null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const copy = getAuthContextCopy(intent, customTitle, customSubtitle);
+
+  // Avatar file upload & canvas compression
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setAvatarError(t("profile.invalidImage", "Please select a valid image file."));
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setAvatarError(t("profile.imageTooLarge", "Image file must be under 8MB."));
+      return;
+    }
+
+    setAvatarError("");
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 256;
+        const MAX_HEIGHT = 256;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          try {
+            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+            setAvatar(compressedBase64);
+          } catch (err) {
+            setAvatarError("Failed to process image.");
+          }
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Banner file upload & canvas compression
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setBannerError(t("profile.invalidImage", "Please select a valid image file."));
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setBannerError(t("profile.bannerTooLarge", "Banner file must be under 10MB."));
+      return;
+    }
+
+    setBannerError("");
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        if (height > MAX_HEIGHT) {
+          width = Math.round((width * MAX_HEIGHT) / height);
+          height = MAX_HEIGHT;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          try {
+            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+            setBanner(compressedBase64);
+          } catch (err) {
+            setBannerError("Failed to process banner.");
+          }
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   // STEP 1: Send Magic Link / OTP via Email only
   const handleSendMagicLink = async (e?: React.FormEvent) => {
@@ -255,9 +385,20 @@ export const CopoAuthPrompt: React.FC<{
         // Existing user recognized and fully activated -> log in immediately
         completeLogin(returnedUser);
       } else {
-        // Account not yet activated -> proceed to Step 3 to collect mandatory First & Last Name
-        if (returnedUser?.firstName) setFirstName(returnedUser.firstName);
-        if (returnedUser?.lastName) setLastName(returnedUser.lastName);
+        // Account not yet activated -> proceed to Step 3 to collect First & Last Name
+        const emailPrefix = cleanEmail.split('@')[0].toLowerCase();
+        if (returnedUser?.firstName && returnedUser.firstName.toLowerCase() !== emailPrefix && !returnedUser.firstName.includes('@') && !returnedUser.firstName.toLowerCase().startsWith('usr_')) {
+          setFirstName(returnedUser.firstName);
+        } else {
+          setFirstName("");
+        }
+        if (returnedUser?.lastName && !returnedUser.lastName.includes('@')) {
+          setLastName(returnedUser.lastName);
+        } else {
+          setLastName("");
+        }
+        if (returnedUser?.avatar) setAvatar(returnedUser.avatar);
+        if (returnedUser?.banner) setBanner(returnedUser.banner);
         if (returnedUser?.city) setCity(returnedUser.city);
         if (returnedUser?.country) setCountry(returnedUser.country || "");
         setStep('profile');
@@ -277,11 +418,11 @@ export const CopoAuthPrompt: React.FC<{
     const lName = lastName.trim();
 
     if (!fName) {
-      setErrorMessage(t("auth.enterFirstName", "Please enter your first name (mandatory)."));
+      setErrorMessage(t("auth.enterFirstName", "Please enter your first name."));
       return;
     }
     if (!lName) {
-      setErrorMessage(t("auth.enterLastName", "Please enter your last name (mandatory)."));
+      setErrorMessage(t("auth.enterLastName", "Please enter your last name."));
       return;
     }
     
@@ -295,7 +436,32 @@ export const CopoAuthPrompt: React.FC<{
     const locParts = [finalCity, finalState, finalCountry].filter(Boolean);
     const combinedLocation = locParts.join(", ");
 
-    const avatarSvg = generateGoogleLetterAvatarSvg(fName || email.split("@")[0] || "Y", 128, email);
+    let finalAvatar = avatar || tempUser?.avatar || currentUser?.avatar;
+
+    // If user uploaded a custom photo (data:image/jpeg/png...), upload to Bunny CDN / storage
+    if (avatar && avatar.startsWith('data:image/')) {
+      try {
+        const uploadRes = await fetch('/api/user/upload-avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: avatar,
+            userId: email.trim().toLowerCase()
+          })
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadData.avatarUrl) {
+          finalAvatar = uploadData.avatarUrl;
+        }
+      } catch (uploadErr) {
+        console.warn("Avatar upload to Bunny CDN notice:", uploadErr);
+      }
+    }
+
+    // If no custom avatar uploaded, auto-generate single-letter avatar from First Name
+    if (!finalAvatar || finalAvatar.includes('ui-avatars')) {
+      finalAvatar = generateGoogleLetterAvatarSvg(fName, 128, email);
+    }
 
     const updatedUser = {
       uid: tempUser?.uid || currentUser?.uid || `usr_${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
@@ -307,7 +473,8 @@ export const CopoAuthPrompt: React.FC<{
       city: finalCity,
       country: finalCountry,
       location: combinedLocation,
-      avatar: tempUser?.avatar || currentUser?.avatar || avatarSvg,
+      avatar: finalAvatar,
+      banner: banner || tempUser?.banner || currentUser?.banner || "",
       role: 'user',
       isNewUser: false,
       isVerified: true,
@@ -386,7 +553,7 @@ export const CopoAuthPrompt: React.FC<{
         
         {/* Step-Aware Brand / Profile Icon */}
         {step === 'profile' ? (
-          <div className="w-13 h-13 rounded-2xl flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-xl shrink-0">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-zinc-900 border border-zinc-800 shadow-xl shrink-0">
             <User className="w-6 h-6 text-zinc-200" />
           </div>
         ) : (
@@ -405,7 +572,7 @@ export const CopoAuthPrompt: React.FC<{
             {step === 'code' 
               ? `${t("auth.sentCodeTo", "We sent a 6-digit confirmation code to")} ${email}`
               : step === 'profile'
-                ? t("auth.enterNameMandatoryDesc", "First and last name are mandatory to activate your profile and start creating. Other details are optional.")
+                ? t("auth.enterNameSymbolDesc", "Enter your first and last name to activate your profile and start creating. Other details are optional.")
                 : copy.subtitle}
           </p>
         </div>
@@ -564,9 +731,130 @@ export const CopoAuthPrompt: React.FC<{
           </form>
         )}
 
-        {/* STEP 3: Profile Setup (First Name & Last Name Mandatory, Location Optional) */}
+        {/* STEP 3: Profile Setup (First Name & Last Name with asterisk *, Photo & Banner upload, Location Optional) */}
         {step === 'profile' && (
-          <form onSubmit={(e) => handleSaveProfile(e)} className="w-full max-w-sm space-y-3.5 pt-1 text-left">
+          <form onSubmit={(e) => handleSaveProfile(e)} className="w-full max-w-sm space-y-4 pt-1 text-left">
+            
+            {/* Hidden File Inputs */}
+            <input
+              type="file"
+              ref={avatarInputRef}
+              onChange={handleAvatarFileChange}
+              accept="image/png, image/jpeg, image/webp"
+              className="hidden"
+            />
+            <input
+              type="file"
+              ref={bannerInputRef}
+              onChange={handleBannerFileChange}
+              accept="image/png, image/jpeg, image/webp"
+              className="hidden"
+            />
+
+            {/* Profile Avatar & Banner Media Preview / Upload Area */}
+            <div className="w-full bg-zinc-900/80 border border-zinc-800/90 rounded-2xl p-3 space-y-3 shadow-inner">
+              {/* Cover Banner Uploader */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5 px-0.5">
+                  <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">
+                    {t("profile.coverBanner", "Cover Banner")}
+                  </span>
+                  <span className="text-[10px] text-zinc-400 font-normal">
+                    {t("common.optional", "optional")}
+                  </span>
+                </div>
+                <div
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="relative w-full h-20 rounded-xl overflow-hidden bg-zinc-950 border border-dashed border-zinc-700/80 hover:border-zinc-500 flex items-center justify-center cursor-pointer group transition-all"
+                >
+                  {banner ? (
+                    <>
+                      <img
+                        src={banner}
+                        alt="Cover preview"
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-xs text-white font-medium backdrop-blur-xs">
+                        <Camera className="w-4 h-4" />
+                        <span>{t("profile.changeBanner", "Change Cover")}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-1 text-zinc-400 group-hover:text-zinc-200 transition-colors">
+                      <Camera className="w-5 h-5" />
+                      <span className="text-[11px] font-medium">{t("profile.uploadBanner", "Upload Cover Photo")}</span>
+                    </div>
+                  )}
+                </div>
+                {bannerError && <p className="text-[11px] text-red-400 mt-1 px-1">{bannerError}</p>}
+              </div>
+
+              {/* Profile Avatar Uploader & Dynamic Letter Preview */}
+              <div className="flex items-center gap-3.5 pt-1 px-0.5">
+                <div
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="relative w-16 h-16 rounded-full cursor-pointer group shrink-0 ring-2 ring-zinc-700 hover:ring-zinc-400 transition-all overflow-hidden bg-zinc-950 shadow-md"
+                >
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      alt="Avatar preview"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : previewLetter ? (
+                    <div
+                      className="w-full h-full flex items-center justify-center font-bold text-2xl font-['Google_Sans',sans-serif] select-none"
+                      style={{ backgroundColor: previewColor.bg, color: previewColor.text }}
+                    >
+                      {previewLetter}
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-400">
+                      <Camera className="w-6 h-6" />
+                    </div>
+                  )}
+                  
+                  {/* Camera overlay icon */}
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                    <Camera className="w-5 h-5" />
+                  </div>
+                  
+                  <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center shadow">
+                    <Camera className="w-3 h-3 text-zinc-200" />
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-white tracking-tight">
+                      {t("profile.profilePhoto", "Profile Picture")}
+                    </p>
+                    <span className="text-[10px] text-zinc-400 font-normal">
+                      {t("common.optional", "optional")}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-tight mt-0.5">
+                    {avatar
+                      ? t("profile.customPhotoUploaded", "Custom photo selected. Click to change.")
+                      : previewLetter
+                      ? t("profile.autoLetterGenerated", `Auto-generates "${previewLetter}" avatar if no photo is uploaded.`)
+                      : t("profile.uploadPhotoOrLetter", "Upload your photo or system will generate an avatar.")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="text-[11px] text-blue-400 hover:text-blue-300 font-medium underline mt-1 cursor-pointer block"
+                  >
+                    {avatar ? t("profile.changePhoto", "Change photo") : t("profile.uploadPhoto", "Upload photo")}
+                  </button>
+                </div>
+              </div>
+              {avatarError && <p className="text-[11px] text-red-400 px-1">{avatarError}</p>}
+            </div>
+
+            {/* First & Last Name */}
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-200 mb-1 tracking-wider uppercase">

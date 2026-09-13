@@ -8772,12 +8772,15 @@ app.post("/api/videos/save-review", async (req, res) => {
       // Resolve existing user across all memory, database, and review sources
       let existingUser: any = await resolveUserProfileFromAnySource(cleanEmail);
 
-      const fName = storedFirstName ? String(storedFirstName).trim() : (existingUser?.firstName || '');
-      const lName = storedLastName ? String(storedLastName).trim() : (existingUser?.lastName || '');
+      const emailPrefix = cleanEmail.split('@')[0].toLowerCase();
+      const rawFName = storedFirstName ? String(storedFirstName).trim() : (existingUser?.firstName || '');
+      const rawLName = storedLastName ? String(storedLastName).trim() : (existingUser?.lastName || '');
+      const fName = (rawFName && rawFName.toLowerCase() !== emailPrefix && !rawFName.includes('@') && !rawFName.toLowerCase().startsWith('usr_')) ? rawFName : '';
+      const lName = (rawLName && !rawLName.includes('@')) ? rawLName : '';
       const hasBothNames = Boolean(fName && lName);
       const fullName = hasBothNames
         ? `${fName} ${lName}`
-        : (existingUser?.name && !existingUser.name.includes('@') && existingUser.name.includes(' ') ? existingUser.name : (fName || cleanEmail.split('@')[0]));
+        : (existingUser?.name && !existingUser.name.includes('@') && existingUser.name.includes(' ') ? existingUser.name : '');
       const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
 
       const isKnown = Boolean(existingUser) && hasBothNames;
