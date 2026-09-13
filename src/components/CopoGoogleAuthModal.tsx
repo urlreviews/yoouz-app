@@ -565,9 +565,6 @@ export const CopoAuthPrompt: React.FC<{
       }
       localStorage.setItem("copo_user", JSON.stringify(userObj));
       localStorage.setItem("copo_user_profile", JSON.stringify(userObj));
-      window.dispatchEvent(new CustomEvent("copo_auth_changed", { detail: userObj }));
-      window.dispatchEvent(new Event("user_logged_in"));
-      window.dispatchEvent(new Event("storage"));
     } catch {}
 
     if (onSuccess) {
