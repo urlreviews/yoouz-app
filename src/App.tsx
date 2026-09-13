@@ -298,6 +298,19 @@ export function App() {
     return null;
   });
 
+  // Helper to verify if user profile is activated with mandatory First & Last name
+  const isProfileComplete = (user: UserProfile | null) => {
+    if (!user) return false;
+    const fName = (user.firstName || "").trim();
+    const lName = (user.lastName || "").trim();
+    if (fName && lName) return true;
+    const fullName = (user.name || "").trim();
+    if (fullName && !fullName.includes('@') && fullName !== 'Registered User' && fullName !== 'User' && fullName.includes(' ') && !fullName.toLowerCase().startsWith('usr_') && !fullName.toLowerCase().startsWith('user_')) {
+      return true;
+    }
+    return false;
+  };
+
   const handleSaveNotificationSettings = async (newSettings: NotificationPreferences) => {
     // 1. Instant synchronous local persistence
     try {
@@ -4213,7 +4226,7 @@ export function App() {
 
   // Handle Opening the Create Review Modal
   const handleOpenCreateReview = (place: Place | null = null) => {
-    if (!currentUser) {
+    if (!currentUser || !isProfileComplete(currentUser)) {
       setAuthIntent('record');
       setPreselectedPlaceForRecording(place);
       setIsAuthModalOpen(true);
@@ -4806,7 +4819,7 @@ export function App() {
           unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
           onOpenSearch={() => setIsSearchModalOpen(true)}
           onOpenCreateModal={() => {
-            if (!currentUser) {
+            if (!currentUser || !isProfileComplete(currentUser)) {
               setAuthIntent('record');
               setIsAuthModalOpen(true);
             } else {
@@ -4830,7 +4843,7 @@ export function App() {
               )}
               contextKey={currentFeedContextKey}
               onOpenCreateModal={() => {
-                if (!currentUser) {
+                if (!currentUser || !isProfileComplete(currentUser)) {
                   setAuthIntent('record');
                   setIsAuthModalOpen(true);
                 } else {
@@ -5608,6 +5621,7 @@ export function App() {
       <CopoGoogleAuthModal
         isOpen={isAuthModalOpen}
         intent={authIntent}
+        currentUser={currentUser}
         onClose={() => setIsAuthModalOpen(false)}
         onOpenHelp={() => {
           setIsAuthModalOpen(false);
@@ -5619,6 +5633,9 @@ export function App() {
         onSuccess={(user) => {
           setCurrentUser(user);
           setIsAuthModalOpen(false);
+          if (authIntent === 'record') {
+            setIsCreateModalOpen(true);
+          }
           setAuthIntent('general');
         }}
       />
@@ -5644,7 +5661,7 @@ export function App() {
         onClose={() => setIsComparisonModalOpen(false)}
         initialCompetitor={comparisonCompetitor}
         onStartReview={() => {
-          if (!currentUser) {
+          if (!currentUser || !isProfileComplete(currentUser)) {
             setAuthIntent('record');
             setIsAuthModalOpen(true);
           } else {

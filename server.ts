@@ -8772,27 +8772,28 @@ app.post("/api/videos/save-review", async (req, res) => {
       // Resolve existing user across all memory, database, and review sources
       let existingUser: any = await resolveUserProfileFromAnySource(cleanEmail);
 
-      const fName = storedFirstName ? String(storedFirstName).trim() : (existingUser?.firstName || (existingUser?.name ? existingUser.name.split(' ')[0] : ''));
-      const lName = storedLastName ? String(storedLastName).trim() : (existingUser?.lastName || (existingUser?.name && existingUser.name.includes(' ') ? existingUser.name.split(' ').slice(1).join(' ') : ''));
-      const fullName = (existingUser?.name && !existingUser.name.includes('@')) 
-        ? existingUser.name 
-        : (fName && lName ? `${fName} ${lName}` : (fName || cleanEmail.split('@')[0]));
+      const fName = storedFirstName ? String(storedFirstName).trim() : (existingUser?.firstName || '');
+      const lName = storedLastName ? String(storedLastName).trim() : (existingUser?.lastName || '');
+      const hasBothNames = Boolean(fName && lName);
+      const fullName = hasBothNames
+        ? `${fName} ${lName}`
+        : (existingUser?.name && !existingUser.name.includes('@') && existingUser.name.includes(' ') ? existingUser.name : (fName || cleanEmail.split('@')[0]));
       const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
 
-      const isKnown = Boolean(existingUser) && Boolean(existingUser?.name) && existingUser.name !== 'Registered User' && existingUser.name !== 'User';
+      const isKnown = Boolean(existingUser) && hasBothNames;
 
       const userSession = {
         uid: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
         id: existingUser?.uid || existingUser?.id || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
         email: cleanEmail,
         name: fullName,
-        firstName: fName || fullName.split(' ')[0] || fullName,
+        firstName: fName,
         lastName: lName,
         city: existingUser?.city || '',
         country: existingUser?.country || '',
         location: existingUser?.location || '',
         avatar: existingUser?.avatar || '',
-        handle: existingUser?.handle || `@${(existingUser?.name || cleanEmail.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+        handle: existingUser?.handle || `@${(fullName || cleanEmail.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '')}`,
         bio: existingUser?.bio || "Community reviewer on Yoouz.",
         initial,
         role: existingUser?.role || 'user',
@@ -8857,7 +8858,7 @@ app.post("/api/videos/save-review", async (req, res) => {
   // Update User Profile Endpoint (Directly into Bunny Cloud Database)
   app.post("/api/auth/update-profile", async (req, res) => {
     try {
-      const { email, firstName, lastName, city, country, avatar, name } = req.body;
+      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name } = req.body;
       if (!email) {
         return res.status(400).json({ error: "Missing email address." });
       }
@@ -8866,8 +8867,10 @@ app.post("/api/videos/save-review", async (req, res) => {
       const uid = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
       const fName = (firstName || '').trim();
       const lName = (lastName || '').trim();
-      const fullName = (name || (lName ? `${fName} ${lName}` : fName) || cleanEmail.split('@')[0]).trim();
+      const fullName = (name || (fName && lName ? `${fName} ${lName}` : (fName || cleanEmail.split('@')[0]))).trim();
       const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
+      const locParts = [city?.trim(), country?.trim()].filter(Boolean);
+      const combinedLocation = location || locParts.join(', ');
 
       const profile = {
         uid,
@@ -8878,9 +8881,15 @@ app.post("/api/videos/save-review", async (req, res) => {
         lastName: lName,
         city: (city || '').trim(),
         country: (country || '').trim(),
+        location: combinedLocation,
         avatar: avatar || '',
+        banner: banner || '',
+        bio: bio || 'Community reviewer on Yoouz.',
+        handle: `@${fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
         initial,
         role: 'user',
+        isNewUser: false,
+        isVerified: true,
         updatedAt: new Date().toISOString()
       };
 

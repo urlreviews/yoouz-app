@@ -9,6 +9,7 @@ import { Country, State, City } from "country-state-city";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
 import { sendWelcomeNotificationForNewUser } from "../lib/socialSync";
+import { UserProfile } from "../types";
 
 export type AuthIntent = 
   | 'general' 
@@ -29,6 +30,7 @@ export interface CopoGoogleAuthModalProps {
   intent?: AuthIntent | string;
   customTitle?: string;
   customSubtitle?: string;
+  currentUser?: UserProfile | null;
   onOpenHelp?: () => void;
   onOpenLegal?: (tab: 'terms' | 'privacy') => void;
 }
@@ -95,6 +97,7 @@ export const CopoAuthPrompt: React.FC<{
   intent?: AuthIntent | string;
   customTitle?: string;
   customSubtitle?: string;
+  currentUser?: UserProfile | null;
   onSuccess?: (userData: { name: string; email: string; avatar: string; uid?: string; firstName?: string; lastName?: string; city?: string; country?: string }) => void;
   onOpenHelp?: () => void;
   onOpenLegal?: (tab: 'terms' | 'privacy') => void;
@@ -106,6 +109,7 @@ export const CopoAuthPrompt: React.FC<{
   intent = "general",
   customTitle,
   customSubtitle,
+  currentUser,
   onSuccess,
   onOpenHelp,
   onOpenLegal,
@@ -115,8 +119,12 @@ export const CopoAuthPrompt: React.FC<{
   onRequestBack
 }) => {
   const { t } = useLanguage();
-  // Steps: 'email' -> 'code' -> 'profile' (if new user)
-  const [step, setStepState] = useState<'email' | 'code' | 'profile'>(currentStep || 'email');
+
+  const isProfileIncomplete = currentUser && (!currentUser.firstName || !currentUser.lastName || !currentUser.name || currentUser.name.includes('@'));
+  const initialStep = currentStep || (isProfileIncomplete ? 'profile' : 'email');
+
+  // Steps: 'email' -> 'code' -> 'profile' (if new user or incomplete profile)
+  const [step, setStepState] = useState<'email' | 'code' | 'profile'>(initialStep);
 
   useEffect(() => {
     if (currentStep && currentStep !== step) {
@@ -128,14 +136,14 @@ export const CopoAuthPrompt: React.FC<{
     setStepState(newStep);
     if (onStepChange) onStepChange(newStep);
   };
-  const [email, setEmail] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [city, setCity] = useState<string>("");
-  const [country, setCountry] = useState<string>("");
+  const [email, setEmail] = useState<string>(currentUser?.email || "");
+  const [firstName, setFirstName] = useState<string>(currentUser?.firstName || (currentUser?.name && !currentUser.name.includes('@') ? currentUser.name.split(' ')[0] : ""));
+  const [lastName, setLastName] = useState<string>(currentUser?.lastName || (currentUser?.name && currentUser.name.includes(' ') ? currentUser.name.split(' ').slice(1).join(' ') : ""));
+  const [city, setCity] = useState<string>(currentUser?.city || "");
+  const [country, setCountry] = useState<string>(currentUser?.country || "");
   const [stateRegion, setStateRegion] = useState<string>("");
   const [otpCode, setOtpCode] = useState<string>("");
-  const [tempUser, setTempUser] = useState<any>(null);
+  const [tempUser, setTempUser] = useState<any>(currentUser || null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
@@ -225,15 +233,29 @@ export const CopoAuthPrompt: React.FC<{
 
       setTempUser(returnedUser);
 
-      // Determine if user is already registered and complete
-      const hasValidName = Boolean(returnedUser?.name && returnedUser.name.trim().length > 0 && returnedUser.name !== 'Registered User' && returnedUser.name !== 'User');
-      const isExistingUser = !returnedUser?.isNewUser || Boolean(knownCommunity) || (hasValidName && !returnedUser?.name?.includes('@'));
+      // Determine if user is already registered with mandatory First and Last Name
+      const hasFirstName = Boolean(returnedUser?.firstName && returnedUser.firstName.trim().length > 0);
+      const hasLastName = Boolean(returnedUser?.lastName && returnedUser.lastName.trim().length > 0);
+      const hasBothNames = hasFirstName && hasLastName;
 
-      if (isExistingUser && (hasValidName || returnedUser?.firstName)) {
-        // Existing user recognized -> log in immediately
+      const hasFullRealName = Boolean(
+        returnedUser?.name &&
+        returnedUser.name.trim().length > 0 &&
+        returnedUser.name !== 'Registered User' &&
+        returnedUser.name !== 'User' &&
+        !returnedUser.name.includes('@') &&
+        returnedUser.name.includes(' ') &&
+        !returnedUser.name.toLowerCase().startsWith('usr_') &&
+        !returnedUser.name.toLowerCase().startsWith('user_')
+      );
+
+      const isFullyActivated = (!returnedUser?.isNewUser || Boolean(knownCommunity)) && (hasBothNames || hasFullRealName);
+
+      if (isFullyActivated) {
+        // Existing user recognized and fully activated -> log in immediately
         completeLogin(returnedUser);
       } else {
-        // Genuine new user -> proceed to Step 3 (Profile Setup)
+        // Account not yet activated -> proceed to Step 3 to collect mandatory First & Last Name
         if (returnedUser?.firstName) setFirstName(returnedUser.firstName);
         if (returnedUser?.lastName) setLastName(returnedUser.lastName);
         if (returnedUser?.city) setCity(returnedUser.city);
@@ -251,17 +273,22 @@ export const CopoAuthPrompt: React.FC<{
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (!country.trim()) {
-      setErrorMessage("Please select your country to continue.");
+    const fName = firstName.trim();
+    const lName = lastName.trim();
+
+    if (!fName) {
+      setErrorMessage(t("auth.enterFirstName", "Please enter your first name (mandatory)."));
+      return;
+    }
+    if (!lName) {
+      setErrorMessage(t("auth.enterLastName", "Please enter your last name (mandatory)."));
       return;
     }
     
     setIsLoading(true);
     setErrorMessage("");
 
-    const fName = firstName.trim() || email.split('@')[0];
-    const lName = lastName.trim();
-    const fullName = lName ? `${fName} ${lName}` : fName;
+    const fullName = `${fName} ${lName}`;
     const finalCity = city.trim();
     const finalState = stateRegion.trim();
     const finalCountry = country.trim();
@@ -271,8 +298,8 @@ export const CopoAuthPrompt: React.FC<{
     const avatarSvg = generateGoogleLetterAvatarSvg(fName || email.split("@")[0] || "Y", 128, email);
 
     const updatedUser = {
-      uid: tempUser?.uid || `usr_${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      id: tempUser?.uid || `usr_${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      uid: tempUser?.uid || currentUser?.uid || `usr_${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      id: tempUser?.uid || currentUser?.id || `usr_${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
       email: email.trim().toLowerCase(),
       name: fullName,
       firstName: fName,
@@ -280,8 +307,10 @@ export const CopoAuthPrompt: React.FC<{
       city: finalCity,
       country: finalCountry,
       location: combinedLocation,
-      avatar: tempUser?.avatar || avatarSvg,
+      avatar: tempUser?.avatar || currentUser?.avatar || avatarSvg,
       role: 'user',
+      isNewUser: false,
+      isVerified: true,
       verifiedAt: new Date().toISOString()
     };
 
@@ -376,7 +405,7 @@ export const CopoAuthPrompt: React.FC<{
             {step === 'code' 
               ? `${t("auth.sentCodeTo", "We sent a 6-digit confirmation code to")} ${email}`
               : step === 'profile'
-                ? t("auth.enterNameLocationDesc", "Enter your name and location for verified reviews.")
+                ? t("auth.enterNameMandatoryDesc", "First and last name are mandatory to activate your profile and start creating. Other details are optional.")
                 : copy.subtitle}
           </p>
         </div>
@@ -535,13 +564,13 @@ export const CopoAuthPrompt: React.FC<{
           </form>
         )}
 
-        {/* STEP 3: Profile Setup (First Name, Last Name, City, Country) */}
+        {/* STEP 3: Profile Setup (First Name & Last Name Mandatory, Location Optional) */}
         {step === 'profile' && (
           <form onSubmit={(e) => handleSaveProfile(e)} className="w-full max-w-sm space-y-3.5 pt-1 text-left">
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-200 mb-1 tracking-wider uppercase">
-                  {t("auth.firstName", "First Name")} <span className="text-red-400">*</span>
+                  {t("auth.firstName", "First Name")} <span className="text-red-400 font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -549,29 +578,34 @@ export const CopoAuthPrompt: React.FC<{
                   autoFocus
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Alex"
+                  placeholder="e.g. Alex"
                   className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
                 />
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-200 mb-1 tracking-wider uppercase">
-                  {t("auth.lastName", "Last Name")} <span className="text-red-400">*</span>
+                  {t("auth.lastName", "Last Name")} <span className="text-red-400 font-bold">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Taylor"
+                  placeholder="e.g. Taylor"
                   className="w-full h-11 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-200 mb-1 tracking-wider uppercase">
-                {t("auth.country", "Country")} <span className="text-red-400">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-semibold text-zinc-200 tracking-wider uppercase">
+                  {t("auth.country", "Country")}
+                </label>
+                <span className="text-[10px] text-zinc-400 font-normal">
+                  {t("common.optional", "optional")}
+                </span>
+              </div>
               <CountrySelector
                 value={country}
                 onChange={(c) => {
@@ -610,7 +644,10 @@ export const CopoAuthPrompt: React.FC<{
                   {hasStates ? (
                     <>
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">{stateLabel}</span>
+                        <div className="flex items-center justify-between pl-1">
+                          <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide block">{stateLabel}</span>
+                          <span className="text-[9px] text-zinc-400 font-normal">{t("common.optional", "optional")}</span>
+                        </div>
                         <SearchableComboSelector
                           value={stateRegion}
                           onChange={(val) => {
@@ -622,7 +659,10 @@ export const CopoAuthPrompt: React.FC<{
                         />
                       </div>
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">{t("auth.city", "City")}</span>
+                        <div className="flex items-center justify-between pl-1">
+                          <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide block">{t("auth.city", "City")}</span>
+                          <span className="text-[9px] text-zinc-400 font-normal">{t("common.optional", "optional")}</span>
+                        </div>
                         <SearchableComboSelector
                           value={city}
                           onChange={setCity}
@@ -633,7 +673,10 @@ export const CopoAuthPrompt: React.FC<{
                     </>
                   ) : (
                     <div className="col-span-2 space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">{t("auth.city", "City")}</span>
+                      <div className="flex items-center justify-between pl-1">
+                        <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide block">{t("auth.city", "City")}</span>
+                        <span className="text-[9px] text-zinc-400 font-normal">{t("common.optional", "optional")}</span>
+                      </div>
                       <SearchableComboSelector
                         value={city}
                         onChange={setCity}
@@ -655,7 +698,7 @@ export const CopoAuthPrompt: React.FC<{
 
             <button
               type="submit"
-              disabled={isLoading || !firstName.trim()}
+              disabled={isLoading || !firstName.trim() || !lastName.trim()}
               className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 active:bg-zinc-300 text-black font-bold text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
@@ -663,7 +706,7 @@ export const CopoAuthPrompt: React.FC<{
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-black" />
-                  <span>{t("auth.completeAndEnter", "Complete Profile & Enter")}</span>
+                  <span>{t("auth.activateProfileAndContinue", "Activate Profile & Continue")}</span>
                 </>
               )}
             </button>
@@ -707,11 +750,23 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
   intent = "general",
   customTitle,
   customSubtitle,
+  currentUser,
   onOpenHelp,
   onOpenLegal
 }) => {
-  const [currentStep, setCurrentStep] = useState<'email' | 'code' | 'profile'>('email');
+  const isProfileIncomplete = currentUser && (!currentUser.firstName || !currentUser.lastName || !currentUser.name || currentUser.name.includes('@'));
+  const [currentStep, setCurrentStep] = useState<'email' | 'code' | 'profile'>(isProfileIncomplete ? 'profile' : 'email');
   const authPromptRef = useRef<{ goBack?: () => void } | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (currentUser && (!currentUser.firstName || !currentUser.lastName || !currentUser.name || currentUser.name.includes('@'))) {
+        setCurrentStep('profile');
+      } else {
+        setCurrentStep('email');
+      }
+    }
+  }, [isOpen, currentUser]);
 
   const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
     onDismiss: onClose,
@@ -795,6 +850,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
             intent={intent}
             customTitle={customTitle}
             customSubtitle={customSubtitle}
+            currentUser={currentUser}
             currentStep={currentStep}
             onStepChange={setCurrentStep}
             onSuccess={(user) => {
