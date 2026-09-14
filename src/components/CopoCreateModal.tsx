@@ -1366,7 +1366,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                           website={selectedPlace?.website}
                           logoUrl={selectedPlace?.logoUrl || selectedPlace?.avatarUrl}
                           bannerUrl={selectedPlace?.bannerUrl || selectedPlace?.ogImage}
-                          className="w-6 h-6 rounded-md bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm"
+                          className="w-6 h-6 rounded-md bg-zinc-900 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm ring-1 ring-white/10"
                           imageClassName="w-full h-full object-contain rounded-[3px]"
                           fallbackTextClassName="font-extrabold text-[10px] text-white"
                         />
@@ -1538,7 +1538,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                           website={selectedPlace?.website}
                           logoUrl={selectedPlace?.logoUrl || selectedPlace?.avatarUrl}
                           bannerUrl={selectedPlace?.bannerUrl || selectedPlace?.ogImage}
-                          className="w-6 h-6 rounded-md bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm"
+                          className="w-6 h-6 rounded-md bg-zinc-900 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm ring-1 ring-white/10"
                           imageClassName="w-full h-full object-contain rounded-[3px]"
                           fallbackTextClassName="font-extrabold text-[10px] text-white"
                         />
