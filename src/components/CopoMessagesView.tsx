@@ -269,6 +269,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const i = (cand.id || "").toLowerCase().trim();
       const h = (cand.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
+      // Admin account is private and must never appear as a public contact or recipient in user directories
+      if (e === "4samet@gmail.com" || n === "samet" || i === "usr_4samet_gmail_com" || i === "4samet-user-id") {
+        return true;
+      }
+
       return (
         (e && deletedSet.has(e)) ||
         (n && deletedSet.has(n)) ||

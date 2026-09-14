@@ -4530,6 +4530,50 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
   }
 });
 
+app.post('/api/admin/chats/purge-all', express.json(), async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        await bunnyDb.execute("DELETE FROM chats");
+      } catch (e) {}
+    }
+    const dbInstance = getDb();
+    if (dbInstance) {
+      try {
+        const table = getNoSqlTable('chats');
+        if (table) await dbInstance.delete(table);
+      } catch (e) {}
+    }
+    broadcastSseEvent({ type: "chats_purged" });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/comments/purge-all', express.json(), async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        await bunnyDb.execute("DELETE FROM comments");
+      } catch (e) {}
+    }
+    const dbInstance = getDb();
+    if (dbInstance) {
+      try {
+        const table = getNoSqlTable('comments');
+        if (table) await dbInstance.delete(table);
+      } catch (e) {}
+    }
+    broadcastSseEvent({ type: "comments_purged" });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 
