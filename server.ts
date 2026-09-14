@@ -5287,12 +5287,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       // 🐰 Bunny CDN Integration
       const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
-      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME;
-      const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL;
+      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
+      const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL || `https://${bunnyStorageZone}.b-cdn.net`;
       const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
 
-      if (bunnyAccessKey && bunnyStorageZone && bunnyPullZoneUrl) {
-        console.log("🐰 [Server] Uploading video and thumbnail to Bunny CDN...");
+      if (bunnyAccessKey && bunnyStorageZone) {
+        console.log("🐰 [Server] Uploading video and thumbnail to Bunny CDN Storage...");
         try {
           const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
           const pullZoneDomain = bunnyPullZoneUrl.replace(/\/$/, '');
