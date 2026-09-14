@@ -1035,14 +1035,17 @@ export function resolveSafeAuthor(
     ? activeUser.location
     : (registryMatch?.location || authorObj.location);
 
+  const reviewCount = authorObj.videoReviewCount !== undefined ? authorObj.videoReviewCount : (registryMatch?.videoReviewCount ?? 0);
+  const isVerifiedUser = authorObj.isVerified !== undefined ? authorObj.isVerified : (reviewCount > 0 || !!registryMatch?.isVerified);
+
   return {
     name: finalName,
     handle: finalHandle,
     avatar: finalAvatar,
-    isVerified: authorObj.isVerified ?? true,
-    isLocalGuide: authorObj.isLocalGuide ?? true,
-    localGuideLevel: authorObj.localGuideLevel ?? 7,
-    videoReviewCount: authorObj.videoReviewCount ?? 1,
+    isVerified: isVerifiedUser,
+    isLocalGuide: authorObj.isLocalGuide !== undefined ? authorObj.isLocalGuide : (reviewCount > 0),
+    localGuideLevel: authorObj.localGuideLevel ?? (reviewCount > 0 ? 7 : 1),
+    videoReviewCount: reviewCount,
     photosCount: authorObj.photosCount ?? 0,
     isFollowed: authorObj.isFollowed ?? false,
     bio: finalBio,

@@ -393,11 +393,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     );
   });
 
+  const isVerifiedReviewer = authorVideos.length > 0 || (author?.isVerified === true && (author?.videoReviewCount ?? 0) > 0);
   const totalLikes = authorVideos.reduce((acc, v) => acc + v.likes + (v.isLiked ? 1 : 0), 0);
   const avgRating =
     authorVideos.length > 0
       ? (authorVideos.reduce((acc, v) => acc + v.rating, 0) / authorVideos.length).toFixed(1)
-      : "5.0";
+      : "—";
 
   // Resolve genuine profile author & avatar with unified resolver (guarantees 100% parity with video feed)
   const safeCreator = resolveSafeAuthor(
@@ -678,7 +679,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.15),transparent_70%)]" />
               <div className="px-3.5 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm z-10 shadow-sm">
                 <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase select-none">
-                  {author.isLocalGuide ? t("profile.verifiedTopReviewer", "Verified Top Reviewer") : t("profile.verifiedReviewer", "Verified Reviewer")}
+                  {isVerifiedReviewer
+                    ? (author.isLocalGuide ? t("profile.verifiedTopReviewer", "Verified Top Reviewer") : t("profile.verifiedReviewer", "Verified Reviewer"))
+                    : t("profile.communityMember", "Community Member")}
                 </span>
               </div>
             </div>
@@ -806,9 +809,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       {words.length > 0 && <span>{words.join(" ")} </span>}
                       <span className="whitespace-nowrap inline-flex items-center gap-1.5 align-bottom">
                         <span className="break-words max-w-full" style={{ wordBreak: 'break-word' }}>{lastWord}</span>
-                        <span title={t("profile.verifiedReviewer", "Verified Reviewer")} className="inline-flex">
-                          <CheckCircle className="w-5 h-5 fill-white text-black shrink-0" />
-                        </span>
+                        {isVerifiedReviewer && (
+                          <span title={t("profile.verifiedReviewer", "Verified Reviewer")} className="inline-flex">
+                            <CheckCircle className="w-5 h-5 fill-white text-black shrink-0" />
+                          </span>
+                        )}
                       </span>
                     </>
                   );
@@ -995,9 +1000,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[9px] font-bold text-zinc-200 uppercase tracking-wider block mb-0.5">{t("profile.avgRatingGiven", "Average Rating Given")}</span>
                     <span className="text-sm font-black text-white flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                      <span>{avgRating}</span>
-                      <span className="text-zinc-200 text-xs font-normal">/ 5.0</span>
+                      {avgRating !== "—" ? (
+                        <>
+                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                          <span>{avgRating}</span>
+                          <span className="text-zinc-200 text-xs font-normal">/ 5.0</span>
+                        </>
+                      ) : (
+                        <span className="text-zinc-300 font-semibold">—</span>
+                      )}
                     </span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
@@ -1011,9 +1022,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
                 <div className="pt-2 flex items-center gap-2 text-zinc-200">
                   <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700">
-                    <ShieldCheck className="w-3.5 h-3.5 text-zinc-200" />
+                    {isVerifiedReviewer ? (
+                      <ShieldCheck className="w-3.5 h-3.5 text-zinc-200" />
+                    ) : (
+                      <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
+                    )}
                   </div>
-                  <span className="text-xs font-bold text-zinc-200">{t("profile.verifiedTopContributor", "Yoouz Verified Top Contributor")}</span>
+                  <span className="text-xs font-bold text-zinc-200">
+                    {isVerifiedReviewer
+                      ? t("profile.verifiedTopContributor", "Yoouz Verified Top Contributor")
+                      : t("profile.communityMemberStatus", "Yoouz Community Member")}
+                  </span>
                 </div>
               </div>
 
@@ -1184,7 +1203,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
-                    <span className="text-base font-black text-white">{avgRating} ⭐</span>
+                    <span className="text-base font-black text-white">{avgRating !== "—" ? `${avgRating} ⭐` : "—"}</span>
                   </div>
                 </div>
               </div>

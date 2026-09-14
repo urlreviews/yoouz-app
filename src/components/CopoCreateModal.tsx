@@ -26,7 +26,6 @@ import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
 import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
-import { initFaceDetection, detectFaceInVideo } from "../utils/faceDetector";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { triggerHaptic } from "../utils/haptics";
@@ -72,20 +71,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownTimerRef = useRef<any>(null);
 
-  // Face recognition & verification
-  const [isFaceDetected, setIsFaceDetected] = useState(false);
-  const [faceWarning, setFaceWarning] = useState<string | null>(null);
-  const [faceConfidence, setFaceConfidence] = useState<number>(0);
-  const faceIntervalRef = useRef<any>(null);
-  const faceMissingSinceRef = useRef<number | null>(null);
-
   // Audio Context for hardware unlocking
   const audioContextRef = useRef<any>(null);
   const voiceDetectedRef = useRef<boolean>(true);
   const [isSpeakingDetected, setIsSpeakingDetected] = useState<boolean>(true);
 
-  // Camera settings (Front / Rear camera flip)
-  const [cameraActive, setCameraActive] = useState(false);
+  // Camera settings (Strict Front Camera Only)
+  const [cameraActive, setCameraActive] = useState(true);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -149,7 +141,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setStep(1);
     } else {
       setRating(0);
-      initFaceDetection().catch(() => {});
     }
     return () => {
       stopCamera();
@@ -158,6 +149,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
   useEffect(() => {
     if (step === 2 && isOpen && !recordedVideoUrl) {
+      setCameraActive(true);
       startCamera();
     } else {
       stopCamera();
@@ -185,8 +177,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setErrorMessage(null);
     setIsPublishing(false);
     setUploadProgress(0);
-    setIsFaceDetected(false);
-    setFaceWarning(null);
   };
 
   const extractThumbnailFromVideo = (videoSource: string | Blob): Promise<string> => {
@@ -368,46 +358,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     startCamera();
   };
 
-  // Continuous face detection scanner loop
-  const startFaceDetectionLoop = useCallback(() => {
-    if (faceIntervalRef.current) clearInterval(faceIntervalRef.current);
-
-    faceIntervalRef.current = setInterval(async () => {
-      if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) {
-        return;
-      }
-
-      try {
-        const result = await detectFaceInVideo(videoRef.current);
-        if (result.detected) {
-          setIsFaceDetected(true);
-          setFaceConfidence(result.confidence || 0.9);
-          setFaceWarning(null);
-          faceMissingSinceRef.current = null;
-        } else {
-          setIsFaceDetected(false);
-          setFaceConfidence(0);
-
-          // If recording is active and face is missing for over 3 seconds, show alert
-          if (isRecordingRef.current) {
-            if (!faceMissingSinceRef.current) {
-              faceMissingSinceRef.current = Date.now();
-            } else if (Date.now() - faceMissingSinceRef.current > 3000) {
-              setFaceWarning("Face not detected. Recording stopped automatically to ensure authenticity. Please try again.");
-              isRecordingAbortedRef.current = true;
-              handleStopRecording();
-              faceMissingSinceRef.current = null;
-            }
-          } else {
-            faceMissingSinceRef.current = null;
-          }
-        }
-      } catch (err) {
-        // Fail quietly on frame scan
-      }
-    }, 400);
-  }, [isRecording]);
-
   // Camera Access (Strict Front Camera Only)
   const startCamera = async () => {
     setCameraActive(true);
@@ -447,15 +397,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       try {
         await videoRef.current.play();
       } catch (playErr: any) {
-        // Ignore AbortError which happens if play() is interrupted by a new load request
         if (playErr.name !== "AbortError") {
           console.warn("Camera playback non-abort error:", playErr);
         }
       }
-
-      startFaceDetectionLoop();
     } catch (err: any) {
-      // If it's an AbortError from play(), we don't necessarily want to treat it as a camera failure
       if (err.name === "AbortError") return;
 
       console.warn("Camera access error (expected if denied):", err);
@@ -483,8 +429,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             console.warn("Fallback camera playback error:", playErr);
           }
         }
-        
-        startFaceDetectionLoop();
       } catch (fallbackErr) {
         console.warn("Fallback camera access error (expected if denied):", fallbackErr);
         
@@ -503,13 +447,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               ctx.fillStyle = `hsl(${hue}, 45%, 12%)`;
               ctx.fillRect(0, 0, canvas.width, canvas.height);
               
-              // Draw studio branding & face guide outline
-              ctx.strokeStyle = 'rgba(59, 130, 246, 0.7)';
-              ctx.lineWidth = 6;
-              ctx.beginPath();
-              ctx.ellipse(canvas.width / 2, canvas.height / 2 - 60, 180, 240, 0, 0, Math.PI * 2);
-              ctx.stroke();
-
               ctx.fillStyle = '#ffffff';
               ctx.font = 'bold 36px system-ui, sans-serif';
               ctx.textAlign = 'center';
@@ -517,7 +454,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               
               ctx.font = '22px system-ui, sans-serif';
               ctx.fillStyle = '#93c5fd';
-              ctx.fillText('Simulated Camera Mode (Ready)', canvas.width / 2, canvas.height / 2 + 150);
+              ctx.fillText('Front Camera Active', canvas.width / 2, canvas.height / 2 + 150);
 
               requestAnimationFrame(drawFrame);
             };
@@ -544,18 +481,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             await videoRef.current.play().catch(() => {});
           }
 
-          setIsFaceDetected(true);
-          setFaceConfidence(0.99);
-          setFaceWarning(null);
           setErrorMessage(null);
-          startFaceDetectionLoop();
           return;
         } catch (simErr) {
           console.error("Simulation fallback error:", simErr);
         }
 
         setErrorMessage("Please allow camera & microphone permissions to record your video review.");
-        setCameraActive(false);
       }
     }
   };
@@ -565,10 +497,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   };
 
   const stopCamera = () => {
-    if (faceIntervalRef.current) {
-      clearInterval(faceIntervalRef.current);
-      faceIntervalRef.current = null;
-    }
     if (audioContextRef.current) {
       try {
         if (audioContextRef.current.state !== "closed") {
@@ -596,8 +524,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     }
     if (timerRef.current) clearInterval(timerRef.current);
     setCameraActive(false);
-    setIsFaceDetected(false);
-    setFaceWarning(null);
   };
 
   const playCountdownTone = (count: number) => {
@@ -633,12 +559,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   };
 
   // 3-2-1 Countdown Trigger & Shutter Record Start (Desktop & Mobile)
-  const isStartingRecordingRef = useRef(false);
-
   const handleStartRecordingInstant = (e?: React.SyntheticEvent) => {
     if (e) {
-      e.preventDefault();
-      e.stopPropagation();
+      try {
+        e.preventDefault();
+        e.stopPropagation();
+      } catch (err) {}
     }
 
     if (isRecording || isRecordingRef.current || countdown !== null) {
@@ -660,9 +586,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     // Clear any previous transient warning
     setErrorMessage(null);
-    setFaceWarning(null);
 
-    // Start 3-2-1 Countdown
+    // If camera hasn't spun up yet, kick it off immediately
+    if (!activeStreamRef.current && (!videoRef.current || !videoRef.current.srcObject)) {
+      startCamera();
+    }
+
+    // Start 3-2-1 Countdown immediately
     let currentCount = 3;
     setCountdown(currentCount);
     playCountdownTone(currentCount);
@@ -1620,25 +1550,16 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </div>
                 )}
 
-                {/* Camera Inactive Placeholder */}
-                {!cameraActive && !recordedVideoUrl && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-black z-20">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm font-bold tracking-wide">Starting secure camera...</p>
-                    </div>
-                  </div>
-                )}
-
                 {/* Bottom Camera Controls Bar (When NOT recording and NOT counting down) */}
-                {cameraActive && !isRecording && countdown === null && !recordedVideoUrl && (
+                {!isRecording && countdown === null && !recordedVideoUrl && (
                   <div className="absolute bottom-10 inset-x-0 flex flex-col items-center justify-center z-30 pointer-events-auto gap-4 select-none">
-                    {/* Simplified: Only Big Shutter Record Button - Instant Response */}
+                    {/* Big Shutter Record Button - Instant Response on Desktop & Mobile */}
                     <button
                       id="record-shutter-button"
                       type="button"
                       onClick={handleStartRecordingInstant}
-                      className="w-22 h-22 rounded-full border-[6px] border-white/40 p-1.5 flex items-center justify-center bg-transparent transition-transform active:scale-90 cursor-pointer group touch-manipulation select-none"
+                      onTouchStart={handleStartRecordingInstant}
+                      className="w-22 h-22 rounded-full border-[6px] border-white/50 p-1.5 flex items-center justify-center bg-transparent transition-transform active:scale-90 cursor-pointer group touch-manipulation select-none pointer-events-auto"
                       title="Tap to start 3-2-1 countdown"
                       aria-label="Tap to start 3-2-1 countdown"
                     >
