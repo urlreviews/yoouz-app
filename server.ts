@@ -3689,6 +3689,86 @@ async function purgeUserFromAllStores(targetId?: string, targetEmail?: string, t
   return { success: true, deletedIds: idsArray, purgedVideosCount };
 }
 
+async function ensureWelcomeNotificationForUser(userEmail: string, userName?: string): Promise<void> {
+  if (!userEmail || typeof userEmail !== 'string' || !userEmail.includes('@')) return;
+  const cleanEmail = userEmail.trim().toLowerCase();
+  const notifId = `welcome_notif_${cleanEmail}`;
+
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return;
+
+  try {
+    const existing = await bunnyDb.execute({
+      sql: `SELECT id FROM notifications WHERE (recipientEmail = ? OR id = ?) AND (id LIKE 'welcome_notif_%' OR text LIKE '%Welcome to Yoouz%') LIMIT 1`,
+      args: [cleanEmail, notifId]
+    });
+
+    if (existing && existing.rows && existing.rows.length > 0) {
+      return;
+    }
+
+    const payload = {
+      id: notifId,
+      recipientEmail: cleanEmail,
+      recipientHandle: (userName || cleanEmail.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, ''),
+      recipientId: cleanEmail,
+      type: "follow",
+      user: {
+        name: "Yoouz Team",
+        avatar: "/yoouz-avatar-white.png",
+        email: "team@yoouz.com"
+      },
+      text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review.",
+      timestamp: "Just now",
+      createdAt: Date.now(),
+      videoId: "",
+      videoThumbnail: "/yoouz-avatar-white.png",
+      placeName: "",
+      isRead: false
+    };
+
+    const jsonStr = JSON.stringify(payload);
+
+    await bunnyDb.execute({
+      sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
+            VALUES (?, ?, 'follow', ?, 0, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(id) DO UPDATE SET recipientEmail = ?, type = 'follow', text = ?, isRead = 0, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+      args: [notifId, cleanEmail, payload.text, jsonStr, cleanEmail, payload.text, jsonStr]
+    });
+
+    console.log(`⚡ [Welcome Notification] Auto-created welcome notification for ${cleanEmail}`);
+  } catch (err: any) {
+    console.warn(`Notice ensuring welcome notification for ${cleanEmail}:`, err?.message || err);
+  }
+}
+
+async function ensureWelcomeNotificationsForAllUsers(): Promise<void> {
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return;
+
+  try {
+    const res = await bunnyDb.execute({ sql: `SELECT id, email, name, data FROM users` });
+    if (res && res.rows && Array.isArray(res.rows)) {
+      for (const row of res.rows as any[]) {
+        let email = row.email;
+        let name = row.name;
+        if ((!email || !email.includes('@')) && row.data) {
+          try {
+            const parsed = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            email = email || parsed.email;
+            name = name || parsed.name;
+          } catch (e) {}
+        }
+        if (email && email.includes('@')) {
+          await ensureWelcomeNotificationForUser(email, name);
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn("Notice backfilling welcome notifications:", err?.message || err);
+  }
+}
+
 app.get('/api/nosql/:collection', async (req, res) => {
   try {
     const colName = req.params.collection;
@@ -4001,10 +4081,15 @@ app.get('/api/nosql/:collection', async (req, res) => {
     }
 
     if (colName === 'users') {
+      ensureWelcomeNotificationsForAllUsers().catch(() => {});
       items = items.filter((u: any) => {
         if (!u) return false;
         return !isDeletedUserServer(u);
       });
+    }
+
+    if (colName === 'notifications') {
+      ensureWelcomeNotificationsForAllUsers().catch(() => {});
     }
 
     res.json(items);
@@ -4456,6 +4541,9 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
 
         if (changed) {
           writeReviewsIndex(list);
+        }
+        if (data && data.email) {
+          ensureWelcomeNotificationForUser(data.email, data.name).catch(() => {});
         }
       } catch (syncErr) {
         console.warn("Notice updating reviews author info on user profile change:", syncErr);
@@ -9615,6 +9703,8 @@ app.post("/api/videos/save-review", async (req, res) => {
         console.warn("Could not save verified user to SQL DB:", sqlErr);
       }
 
+      ensureWelcomeNotificationForUser(cleanEmail, userSession.name).catch(() => {});
+
       return res.json({
         success: true,
         user: userSession,
@@ -9707,6 +9797,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
 
       console.log(`[Auth] Profile update complete for ${cleanEmail}`);
+      ensureWelcomeNotificationForUser(cleanEmail, fullName).catch(() => {});
       return res.json({
         success: true,
         user: profile,
@@ -12859,6 +12950,7 @@ Return JSON:
         }).where(eq(users.uid, uid)).returning();
         userRecord = updated[0];
       }
+      ensureWelcomeNotificationForUser(email, name).catch(() => {});
       return res.json({ success: true, user: userRecord });
     } catch (err: any) {
       console.error("User sync error:", err);
@@ -16475,6 +16567,7 @@ function injectOpenGraphTags(html: string, meta: any) {
   }
 
   await initBunnyDbSchema().catch(() => {});
+  await ensureWelcomeNotificationsForAllUsers().catch(() => {});
 
   try {
     const bunnyDb = getBunnyDb();

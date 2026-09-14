@@ -455,22 +455,24 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
  */
 export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile): Promise<void> {
   if (!currentUser) return;
-  const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+  const userEmail = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+  if (!userEmail || !userEmail.includes("@")) return;
+
+  const userKey = userEmail;
   const welcomeKey = `yoouz_welcome_sent_${userKey}`;
   const deletedSet = getDeletedNotifIds(userKey);
 
-  // Strictly check if already sent or deleted
-  if (localStorage.getItem(welcomeKey) || deletedSet.has(`welcome_notif_${userKey}`) || deletedSet.has("all_cleared")) {
+  // Skip if permanently deleted by user
+  if (deletedSet.has(`welcome_notif_${userKey}`) || deletedSet.has("all_cleared")) {
     return;
   }
 
-  localStorage.setItem(welcomeKey, "true");
   try {
     await sendSocialNotification({
       customId: `welcome_notif_${userKey}`,
-      recipientEmail: currentUser.email || userKey,
-      recipientHandle: currentUser.name || userKey,
-      recipientId: currentUser.userId || userKey,
+      recipientEmail: userEmail,
+      recipientHandle: currentUser.name || userEmail.split("@")[0],
+      recipientId: currentUser.userId || userEmail,
       type: "follow",
       user: {
         name: "Yoouz Team",
@@ -479,6 +481,7 @@ export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile
       },
       text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review."
     });
+    localStorage.setItem(welcomeKey, "true");
   } catch {}
 }
 
@@ -494,6 +497,9 @@ export function subscribeToNotifications(
     onUpdate([]);
     return () => {};
   }
+
+  // Ensure welcome notification exists on server and client for logged in user
+  sendWelcomeNotificationForNewUser(currentUser);
 
   let isDisposed = false;
   let cachedNotifs: CopoNotification[] = [];
