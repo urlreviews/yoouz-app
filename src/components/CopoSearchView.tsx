@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, isWhiteOrInvertedLogo } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -149,7 +149,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              const isValidLogo = (l?: string | null): boolean => {
                if (!l || typeof l !== "string") return false;
                if (l.startsWith("data:;") || l.includes("brandfetch.io")) return false;
-               if (isWhiteOrInvertedLogo(l)) return false;
                return true;
              };
 
@@ -408,9 +407,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 website={searchedPlace.website}
                 logoUrl={searchedPlace.logoUrl}
                 bannerUrl={searchedPlace.bannerUrl || searchedPlace.ogImage}
-                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 bg-white shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-2.5 z-30 ring-1 ring-white/20"
-                imageClassName="w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]"
-                fallbackTextClassName="font-extrabold text-2xl sm:text-3xl text-zinc-900"
+                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 bg-zinc-900 shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-2.5 z-30 ring-1 ring-white/15"
+                imageClassName="w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
+                fallbackTextClassName="font-extrabold text-2xl sm:text-3xl text-white"
               />
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">

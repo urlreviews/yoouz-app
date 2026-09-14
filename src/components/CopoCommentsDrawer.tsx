@@ -553,7 +553,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
             <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2.5 shadow-2xs animate-in fade-in slide-in-from-top-1 duration-250">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg overflow-hidden bg-white shadow-xs border border-black/10 flex items-center justify-center shrink-0 p-0.5 ring-1 ring-white/10">
+                  <div className="w-7 h-7 rounded-lg overflow-hidden bg-zinc-900 shadow-xs border border-zinc-800 flex items-center justify-center shrink-0 p-0.5 ring-1 ring-white/10">
                     <CopoBrandLogo
                       domain={video.placeWebsite}
                       name={video.placeName}
@@ -561,8 +561,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       logoUrl={video.placeLogoUrl}
                       bannerUrl={video.placeBannerUrl}
                       className="w-full h-full flex items-center justify-center overflow-hidden"
-                      imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
-                      fallbackTextClassName="text-[10px] font-black text-zinc-900"
+                      imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
+                      fallbackTextClassName="text-[10px] font-black text-white"
                     />
                   </div>
                   <div className="min-w-0">

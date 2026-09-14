@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, generateBrandMonogramSvg, isWhiteOrInvertedLogo } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, generateBrandMonogramSvg } from "../utils/logoUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -20,13 +20,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   website,
   logoUrl,
   bannerUrl,
-  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-black/10 bg-white shadow-xl overflow-hidden flex items-center justify-center p-1 z-30 ring-1 ring-white/10",
-  imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]",
-  fallbackTextClassName = "font-black text-2xl sm:text-3xl text-zinc-900 drop-shadow-sm",
+  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl overflow-hidden flex items-center justify-center p-2 z-30 ring-1 ring-white/10",
+  imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]",
+  fallbackTextClassName = "font-black text-2xl sm:text-3xl text-white drop-shadow-sm",
   loading = "lazy",
   fetchPriority = "auto"
 }) => {
   const [triedFallback, setTriedFallback] = useState(false);
+  const [triedDuckFallback, setTriedDuckFallback] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   // Extract clean domain from any source
@@ -42,6 +43,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   useEffect(() => {
     setHasError(false);
     setTriedFallback(false);
+    setTriedDuckFallback(false);
   }, [resolvedDomain, logoUrl, name]);
 
   const monogramSvg = useMemo(() => {
@@ -55,16 +57,22 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [resolvedDomain]);
 
+  const duckFaviconUrl = useMemo(() => {
+    if (resolvedDomain && resolvedDomain.includes(".")) {
+      return `https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`;
+    }
+    return null;
+  }, [resolvedDomain]);
+
   const effectiveSrc = useMemo(() => {
     // 1. Known high quality vector logo by domain
     if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
       return KNOWN_BRAND_LOGOS[resolvedDomain];
     }
 
-    // 2. Explicit clean Logo URL (not white/inverted)
+    // 2. Explicit clean Logo URL from authentic metadata or API
     if (
       logoUrl &&
-      !isWhiteOrInvertedLogo(logoUrl) &&
       !logoUrl.includes("brandfetch.io") &&
       logoUrl !== "data:;" &&
       !logoUrl.startsWith("data:;") &&
@@ -94,7 +102,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [resolvedDomain, logoUrl, name, googleFaviconUrl]);
 
-  const currentSrc = triedFallback ? googleFaviconUrl : (effectiveSrc || googleFaviconUrl);
+  const currentSrc = useMemo(() => {
+    if (hasError) return null;
+    if (triedDuckFallback) return duckFaviconUrl;
+    if (triedFallback) return googleFaviconUrl || duckFaviconUrl;
+    return effectiveSrc || googleFaviconUrl || duckFaviconUrl;
+  }, [hasError, triedDuckFallback, triedFallback, duckFaviconUrl, googleFaviconUrl, effectiveSrc]);
 
   if (hasError || !currentSrc) {
     return (
@@ -124,6 +137,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         onError={() => {
           if (!triedFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
             setTriedFallback(true);
+          } else if (!triedDuckFallback && duckFaviconUrl && currentSrc !== duckFaviconUrl) {
+            setTriedDuckFallback(true);
           } else {
             setHasError(true);
           }

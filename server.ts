@@ -12202,28 +12202,8 @@ Return JSON:
     
               logo = '';
 
-              const isCandidateWhiteOrInverted = (src: string): boolean => {
-                const s = src.toLowerCase();
-                return (
-                  s.includes("-white") ||
-                  s.includes("_white") ||
-                  s.includes("/white") ||
-                  s.includes("white-") ||
-                  s.includes("white_") ||
-                  s.includes("white.") ||
-                  s.includes("white@") ||
-                  s.includes("whitelogo") ||
-                  s.includes("logo-white") ||
-                  s.includes("logo_white") ||
-                  s.includes("logo-light") ||
-                  s.includes("logo_light") ||
-                  s.includes("light-logo") ||
-                  s.includes("monochrome") ||
-                  s.includes("inverted") ||
-                  s.includes("negative") ||
-                  s.includes("dark-mode") ||
-                  s.includes("darkmode")
-                );
+              const isCandidateWhiteOrInverted = (_src: string): boolean => {
+                return false;
               };
 
               const isValidCandidateLogo = (src: string): boolean => {

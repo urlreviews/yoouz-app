@@ -30,7 +30,7 @@ const SearchBusinessBadge: React.FC<{
   if (isBusinessOrDomain) {
     const domain = cleanDomain || term;
     return (
-      <div className="w-8 h-8 rounded-lg bg-white shadow-sm ring-1 ring-white/15 border border-black/10 flex items-center justify-center shrink-0 p-1 overflow-hidden">
+      <div className="w-8 h-8 rounded-lg bg-zinc-900 shadow-sm ring-1 ring-white/10 border border-zinc-800 flex items-center justify-center shrink-0 p-1 overflow-hidden">
         <CopoBrandLogo
           domain={domain}
           name={domain}
@@ -38,8 +38,8 @@ const SearchBusinessBadge: React.FC<{
           logoUrl={logoUrl || place?.logoUrl || place?.avatarUrl}
           bannerUrl={place?.bannerUrl || place?.ogImage}
           className="w-full h-full flex items-center justify-center p-0 overflow-hidden"
-          imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
-          fallbackTextClassName="font-black text-xs text-zinc-900 uppercase"
+          imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
+          fallbackTextClassName="font-black text-xs text-white uppercase"
         />
       </div>
     );

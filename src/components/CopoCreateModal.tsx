@@ -1263,9 +1263,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     website={selectedPlace.website}
                     logoUrl={selectedPlace.logoUrl || selectedPlace.avatarUrl}
                     bannerUrl={selectedPlace.bannerUrl || selectedPlace.ogImage}
-                    className="w-14 h-14 rounded-xl border border-zinc-800 bg-white overflow-hidden flex items-center justify-center p-1 shrink-0"
-                    imageClassName="w-full h-full object-contain rounded-lg"
-                    fallbackTextClassName="font-bold text-xl text-zinc-900"
+                    className="w-14 h-14 rounded-xl border border-zinc-800 bg-zinc-900 ring-1 ring-white/10 overflow-hidden flex items-center justify-center p-1.5 shrink-0"
+                    imageClassName="w-full h-full object-contain rounded-lg [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
+                    fallbackTextClassName="font-bold text-xl text-white"
                   />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-white text-sm truncate">{formatBusinessName(selectedPlace.name)}</h4>

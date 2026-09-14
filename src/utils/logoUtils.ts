@@ -381,31 +381,11 @@ export const KNOWN_BRAND_BANNERS: Record<string, string> = {
 };
 
 /**
- * Checks if a logo URL is a white/monochrome/inverted variant that would become
- * invisible or have unreadable contrast on light avatar badges.
+ * Checks if a logo URL is broken or invalid.
  */
 export function isWhiteOrInvertedLogo(url: string | null | undefined): boolean {
   if (!url || typeof url !== "string") return false;
-  const lower = url.toLowerCase();
-  return (
-    lower.includes("-white") ||
-    lower.includes("_white") ||
-    lower.includes("white-") ||
-    lower.includes("white_") ||
-    lower.includes("/white.") ||
-    lower.includes("white@") ||
-    lower.includes("logo-white") ||
-    lower.includes("logo_white") ||
-    lower.includes("whitelogo") ||
-    lower.includes("logo-light") ||
-    lower.includes("logo_light") ||
-    lower.includes("light-logo") ||
-    lower.includes("monochrome") ||
-    lower.includes("inverted") ||
-    lower.includes("negative") ||
-    lower.includes("dark-mode") ||
-    lower.includes("darkmode")
-  );
+  return false;
 }
 
 export function extractDomain(str: string | null | undefined): string | null {
