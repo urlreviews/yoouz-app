@@ -2258,17 +2258,15 @@ export function App() {
             if (Array.isArray(serverList)) {
               const currentDeletedIds = getDeletedPlaceIds();
               const filtered = serverList.filter((p: any) => !isPlaceDeleted(p, currentDeletedIds));
-              setPlaces((prev) => {
+              setPlaces(() => {
                 let followedPlaces = [];
                 try { followedPlaces = JSON.parse(localStorage.getItem("copo_followed_places") || "[]"); } catch(e){}
                 const map = new Map<string, Place>();
-                prev.filter(p => !isPlaceDeleted(p, currentDeletedIds)).forEach(p => map.set(p.id, p));
                 filtered.forEach((p: any) => {
-                  const existing = map.get(p.id);
                   const isFollowed = followedPlaces.includes(p.id);
-                  const rating = typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || existing?.rating || 5.0);
-                  const totalReviews = typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || existing?.totalReviews || 0);
-                  map.set(p.id, { ...existing, ...p, rating, totalReviews, isFollowed });
+                  const rating = typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0);
+                  const totalReviews = typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0);
+                  map.set(p.id, { ...p, rating, totalReviews, isFollowed });
                 });
                 return Array.from(map.values());
               });

@@ -813,7 +813,9 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
     const u = userOrIdOrEmail;
     if (u.id && checkVal(u.id)) return true;
     if (u.uid && checkVal(u.uid)) return true;
+    if (u.userId && checkVal(u.userId)) return true;
     if (u.email && checkVal(u.email)) return true;
+    if (u.userEmail && checkVal(u.userEmail)) return true;
     if (u.handle && checkVal(u.handle)) return true;
     if (u.name && checkVal(u.name)) return true;
     if (u.username && checkVal(u.username)) return true;

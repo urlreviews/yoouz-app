@@ -3104,6 +3104,17 @@ async function purgeVideoFromAllStores(videoId: string) {
 
   console.log(`🗑️ [Server] Live purging video review ${videoId} from all databases and storage...`);
 
+  // Attempt to locate video object first to obtain accurate filenames for storage purge
+  let existingVideoObj: any = null;
+  try {
+    const list = readReviewsIndex();
+    existingVideoObj = list.find((item: any) => item && item.id === videoId);
+  } catch (e) {}
+
+  if (!existingVideoObj && feedCache.videos) {
+    existingVideoObj = feedCache.videos.find((item: any) => item && item.id === videoId);
+  }
+
   // 1. Record in persistent blacklist index
   recordDeletedReviewId(videoId);
 
@@ -3128,6 +3139,10 @@ async function purgeVideoFromAllStores(videoId: string) {
     try {
       await bunnyClient.execute({
         sql: `DELETE FROM videoReviews WHERE id = ?`,
+        args: [videoId]
+      });
+      await bunnyClient.execute({
+        sql: `DELETE FROM video_reviews WHERE id = ?`,
         args: [videoId]
       });
       await bunnyClient.execute({
@@ -3192,13 +3207,13 @@ async function purgeVideoFromAllStores(videoId: string) {
     }
   });
 
-  // 8. Purge from Bunny CDN storage
+  // 8. Purge from Bunny CDN storage (videos and thumbnail files)
   const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
   const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME;
   const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
   if (bunnyAccessKey && bunnyStorageZone) {
     const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-    const extensions = ['.mp4', '.webm', '.mov', ''];
+    const extensions = ['.mp4', '.webm', '.mov', '.jpg', '.jpeg', '.png', ''];
     for (const ext of extensions) {
       try {
         const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${videoId}${ext}`;
@@ -3207,6 +3222,26 @@ async function purgeVideoFromAllStores(videoId: string) {
           headers: { 'AccessKey': bunnyAccessKey }
         }).catch(() => {});
       } catch (err) {}
+    }
+    // Also if videoUrl or thumbnailUrl has a custom filename, extract and delete it
+    if (existingVideoObj) {
+      const candidatesFromObj = [
+        existingVideoObj.videoUrl,
+        existingVideoObj.thumbnailUrl,
+        existingVideoObj.videoUrlClean
+      ].filter(Boolean);
+      for (const uri of candidatesFromObj) {
+        try {
+          const fileName = String(uri).split('?')[0].split('/').pop();
+          if (fileName && fileName.length > 3 && !fileName.includes('ui-avatars')) {
+            const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${fileName}`;
+            fetch(bunnyUrl, {
+              method: 'DELETE',
+              headers: { 'AccessKey': bunnyAccessKey }
+            }).catch(() => {});
+          }
+        } catch (e) {}
+      }
     }
   }
 
@@ -3477,6 +3512,21 @@ async function purgeUserFromAllStores(targetId?: string, targetEmail?: string, t
           });
           if (bRows && bRows.rows) {
             for (const row of bRows.rows as any[]) {
+              if (row.id) {
+                await purgeVideoFromAllStores(String(row.id));
+                purgedVideosCount++;
+              }
+            }
+          }
+        } catch (e) {}
+
+        try {
+          const bRows2 = await bunnyDb.execute({
+            sql: `SELECT id FROM video_reviews WHERE userId = ? OR authorName = ? OR data LIKE ?`,
+            args: [uidStr, uidStr, `%"${uidStr}"%`]
+          });
+          if (bRows2 && bRows2.rows) {
+            for (const row of bRows2.rows as any[]) {
               if (row.id) {
                 await purgeVideoFromAllStores(String(row.id));
                 purgedVideosCount++;
@@ -4461,14 +4511,41 @@ app.post('/api/admin/users/purge-all', express.json(), async (req, res) => {
       try {
         await bunnyDb.execute({ sql: "DELETE FROM users" });
       } catch (e) {}
+      try {
+        await bunnyDb.execute({ sql: "DELETE FROM follows" });
+      } catch (e) {}
+      try {
+        await bunnyDb.execute({ sql: "DELETE FROM comments" });
+      } catch (e) {}
+      try {
+        await bunnyDb.execute({ sql: "DELETE FROM likes" });
+      } catch (e) {}
+      try {
+        await bunnyDb.execute({ sql: "DELETE FROM bookmarks" });
+      } catch (e) {}
+      try {
+        await bunnyDb.execute({ sql: "DELETE FROM notifications" });
+      } catch (e) {}
+      try {
+        await bunnyDb.execute({ sql: "DELETE FROM chats" });
+      } catch (e) {}
     }
     if (dbInstance) {
+      try {
+        await dbInstance.delete(users);
+      } catch (e) {}
       try {
         const table = getNoSqlTable('users');
         if (table) {
           await dbInstance.delete(table);
         }
       } catch (e) {}
+    }
+
+    // Clear in-memory community users and caches
+    defaultCommunityUsers.length = 0;
+    for (const k of Object.keys(KNOWN_COMMUNITY_USERS_SERVER)) {
+      delete KNOWN_COMMUNITY_USERS_SERVER[k];
     }
 
     // Also purge all videos created by users
