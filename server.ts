@@ -31,7 +31,7 @@ import { getBunnyDb, initBunnyDbSchema } from "./src/lib/bunny-db.ts";
 
 import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
-import { eq, desc, or } from "drizzle-orm";
+import { eq, desc, or, like } from "drizzle-orm";
 
 dotenv.config();
 
@@ -3115,6 +3115,27 @@ async function purgeVideoFromAllStores(videoId: string) {
     existingVideoObj = feedCache.videos.find((item: any) => item && item.id === videoId);
   }
 
+  // Also query BunnyDB videoReviews table directly if not found in memory
+  if (!existingVideoObj) {
+    const bDb = getBunnyDb();
+    if (bDb) {
+      try {
+        const bRes = await bDb.execute({
+          sql: "SELECT data, videoUrl, thumbnailUrl FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (bRes && bRes.rows && bRes.rows[0]) {
+          const row: any = bRes.rows[0];
+          let parsed = null;
+          try { parsed = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) {}
+          existingVideoObj = parsed || row;
+          if (!existingVideoObj.videoUrl && row.videoUrl) existingVideoObj.videoUrl = row.videoUrl;
+          if (!existingVideoObj.thumbnailUrl && row.thumbnailUrl) existingVideoObj.thumbnailUrl = row.thumbnailUrl;
+        }
+      } catch (e) {}
+    }
+  }
+
   // 1. Record in persistent blacklist index
   recordDeletedReviewId(videoId);
 
@@ -3149,7 +3170,7 @@ async function purgeVideoFromAllStores(videoId: string) {
         sql: `DELETE FROM videos WHERE id = ?`,
         args: [videoId]
       });
-      // Cascade delete comments, likes, and bookmarks for this video
+      // Cascade delete comments, likes, bookmarks, and shares for this video
       try {
         await bunnyClient.execute({
           sql: `DELETE FROM comments WHERE videoId = ?`,
@@ -3168,22 +3189,23 @@ async function purgeVideoFromAllStores(videoId: string) {
           args: [videoId]
         });
       } catch (e) {}
+      try {
+        await bunnyClient.execute({
+          sql: `DELETE FROM shares WHERE videoId = ?`,
+          args: [videoId]
+        });
+      } catch (e) {}
       console.log(`🐰 [Server] BunnyDB successfully purged review ${videoId}`);
     } catch (bErr: any) {
       console.warn("BunnyDB video purge error:", bErr?.message || bErr);
     }
   }
 
-  // 5. Delete from BunnyDB Admin if active
-  
-
-  // 6. Delete from PostgreSQL (Drizzle) if active
+  // 5. Cascade delete related records in PostgreSQL (Drizzle) if active
   if (getDb()) {
     try {
       const table = getNoSqlTable('videoReviews');
       if (table) await (db as any).delete(table).where(eq(table.id, videoId));
-      const vTable = getNoSqlTable('videos');
-      if (vTable) await (db as any).delete(vTable).where(eq(vTable.id, videoId));
     } catch (sqlErr: any) {
       console.warn("Postgres video delete error:", sqlErr?.message || sqlErr);
     }
@@ -3213,16 +3235,14 @@ async function purgeVideoFromAllStores(videoId: string) {
   const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
   if (bunnyAccessKey && bunnyStorageZone) {
     const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-    const extensions = ['.mp4', '.webm', '.mov', '.jpg', '.jpeg', '.png', ''];
+    const deleteFiles = new Set<string>();
+
+    const extensions = ['.mp4', '.webm', '.mov', '.jpg', '.jpeg', '.png'];
     for (const ext of extensions) {
-      try {
-        const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${videoId}${ext}`;
-        fetch(bunnyUrl, {
-          method: 'DELETE',
-          headers: { 'AccessKey': bunnyAccessKey }
-        }).catch(() => {});
-      } catch (err) {}
+      deleteFiles.add(`${videoId}${ext}`);
     }
+    deleteFiles.add(videoId);
+
     // Also if videoUrl or thumbnailUrl has a custom filename, extract and delete it
     if (existingVideoObj) {
       const candidatesFromObj = [
@@ -3234,15 +3254,28 @@ async function purgeVideoFromAllStores(videoId: string) {
         try {
           const fileName = String(uri).split('?')[0].split('/').pop();
           if (fileName && fileName.length > 3 && !fileName.includes('ui-avatars')) {
-            const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${fileName}`;
-            fetch(bunnyUrl, {
-              method: 'DELETE',
-              headers: { 'AccessKey': bunnyAccessKey }
-            }).catch(() => {});
+            deleteFiles.add(fileName);
           }
         } catch (e) {}
       }
     }
+
+    const deletePromises = Array.from(deleteFiles).map(async (fileName) => {
+      try {
+        const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${fileName}`;
+        const res = await fetch(bunnyUrl, {
+          method: 'DELETE',
+          headers: { 'AccessKey': bunnyAccessKey }
+        });
+        if (res.ok || res.status === 404) {
+          console.log(`🐰 [Bunny Storage] Deleted/purged /videos/${fileName} (Status: ${res.status})`);
+        }
+      } catch (err: any) {
+        console.warn(`Bunny Storage delete error for ${fileName}:`, err?.message || err);
+      }
+    });
+
+    await Promise.allSettled(deletePromises);
   }
 
   // 9. Instant Live Real-Time Broadcast to all connected clients & devices
@@ -3385,6 +3418,10 @@ async function purgeAllPlacesFromAllStores() {
   if (collectedIds.length > 0) {
     recordDeletedPlaceIds(collectedIds);
   }
+
+  try {
+    fs.writeFileSync(path.join(serverUploadsDir, 'all_places_purged.flag'), String(Date.now()));
+  } catch (e) {}
 
   // Also purge all video reviews associated with places
   try {
@@ -3564,6 +3601,24 @@ async function purgeUserFromAllStores(targetId?: string, targetEmail?: string, t
         } catch (e) {}
         try {
           await bunnyDb.execute({
+            sql: `DELETE FROM shares WHERE userId = ?`,
+            args: [uidStr]
+          });
+        } catch (e) {}
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM businessClaims WHERE userEmail = ? OR userId = ? OR data LIKE ?`,
+            args: [uidStr, uidStr, `%"${uidStr}"%`]
+          });
+        } catch (e) {}
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM contact_requests WHERE senderEmail = ? OR recipientEmail = ? OR data LIKE ?`,
+            args: [uidStr, uidStr, `%"${uidStr}"%`]
+          });
+        } catch (e) {}
+        try {
+          await bunnyDb.execute({
             sql: `DELETE FROM notifications WHERE recipientEmail = ? OR data LIKE ?`,
             args: [uidStr, `%"${uidStr}"%`]
           });
@@ -3573,6 +3628,18 @@ async function purgeUserFromAllStores(targetId?: string, targetEmail?: string, t
             sql: `DELETE FROM chats WHERE participants LIKE ? OR lastSenderEmail = ?`,
             args: [`%"${uidStr}"%`, uidStr]
           });
+        } catch (e) {}
+      }
+    }
+
+    // Cascade delete from PostgreSQL if active
+    if (dbInstance) {
+      for (const uidStr of idsArray) {
+        try {
+          const chatTbl = getNoSqlTable('chats');
+          if (chatTbl) {
+            await (dbInstance as any).delete(chatTbl).where(like(chatTbl.data, `%"${uidStr}"%`));
+          }
         } catch (e) {}
       }
     }
@@ -4213,6 +4280,10 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
             data: { id, ...finalDataObj }
           }, targets);
         } else if (colName === 'places') {
+          try {
+            const flagPath = path.join(serverUploadsDir, 'all_places_purged.flag');
+            if (fs.existsSync(flagPath)) fs.unlinkSync(flagPath);
+          } catch(e) {}
           const placeName = finalDataObj.name || id;
           const address = finalDataObj.address || '';
           const category = finalDataObj.category || 'Website';
@@ -4694,6 +4765,130 @@ app.post('/api/admin/comments/purge-all', express.json(), async (_req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Authoritative Live Stats Endpoint directly querying Bunny Database tables & Bunny CDN Storage
+app.get('/api/admin/live-stats', async (_req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  const bunnyDb = getBunnyDb();
+  const startTime = Date.now();
+  const tables = ['users', 'places', 'videoReviews', 'comments', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows'];
+  const counts: Record<string, number> = {};
+
+  if (bunnyDb) {
+    for (const tbl of tables) {
+      try {
+        const queryRes = await bunnyDb.execute(`SELECT COUNT(*) as c FROM ${tbl}`);
+        counts[tbl] = Number(queryRes.rows?.[0]?.c || 0);
+      } catch (err) {
+        counts[tbl] = 0;
+      }
+    }
+  } else {
+    for (const tbl of tables) {
+      counts[tbl] = 0;
+    }
+    try {
+      const dbInstance = getDb();
+      if (dbInstance) {
+        for (const tbl of tables) {
+          const table = getNoSqlTable(tbl);
+          if (table) {
+            const rows = await dbInstance.select().from(table);
+            counts[tbl] = rows.length;
+          }
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Calculate interaction sums
+  let totalLikesSum = counts.likes || 0;
+  let totalSharesSum = counts.shares || 0;
+  let totalCommentsSum = counts.comments || 0;
+  let totalBookmarksSum = counts.bookmarks || 0;
+
+  if (bunnyDb) {
+    try {
+      const sumRes = await bunnyDb.execute(`
+        SELECT 
+          SUM(COALESCE(likesCount, 0)) as likesSum,
+          SUM(COALESCE(sharesCount, 0)) as sharesSum,
+          SUM(COALESCE(commentsCount, 0)) as commentsSum,
+          SUM(COALESCE(bookmarksCount, 0)) as bookmarksSum
+        FROM videoReviews
+      `);
+      if (sumRes.rows?.[0]) {
+        const row: any = sumRes.rows[0];
+        totalLikesSum = Math.max(totalLikesSum, Number(row.likesSum || 0));
+        totalSharesSum = Math.max(totalSharesSum, Number(row.sharesSum || 0));
+        totalCommentsSum = Math.max(totalCommentsSum, Number(row.commentsSum || 0));
+        totalBookmarksSum = Math.max(totalBookmarksSum, Number(row.bookmarksSum || 0));
+      }
+    } catch (e) {}
+  }
+
+  // Storage Stats from Bunny CDN Storage API
+  const storageStats = {
+    filesCount: 0,
+    totalBytes: 0,
+    formattedSize: "0.00 MB",
+    zoneName: process.env.BUNNY_STORAGE_ZONE_NAME || "rev1",
+    folder: "/videos/",
+    connected: false,
+    error: null as string | null
+  };
+
+  const bunnyApiKey = process.env.BUNNY_STORAGE_API_KEY;
+  const bunnyZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
+  const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
+  const host = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
+
+  if (bunnyApiKey && bunnyZone) {
+    try {
+      const sRes = await fetch(`https://${host}/${bunnyZone}/videos/`, {
+        headers: { AccessKey: bunnyApiKey }
+      });
+      if (sRes.ok) {
+        const files: any = await sRes.json();
+        if (Array.isArray(files)) {
+          storageStats.filesCount = files.length;
+          storageStats.totalBytes = files.reduce((acc: number, f: any) => acc + (f.Length || 0), 0);
+          storageStats.formattedSize = (storageStats.totalBytes / (1024 * 1024)).toFixed(2) + " MB";
+          storageStats.connected = true;
+        }
+      } else {
+        storageStats.error = `HTTP ${sRes.status}`;
+      }
+    } catch (sErr: any) {
+      storageStats.error = sErr?.message || "Connection error";
+    }
+  }
+
+  res.json({
+    success: true,
+    timestamp: Date.now(),
+    latencyMs: Date.now() - startTime,
+    database: {
+      engine: "Bunny.net libSQL Edge",
+      connected: Boolean(bunnyDb),
+      counts
+    },
+    totals: {
+      users: counts.users || 0,
+      places: counts.places || 0,
+      videoReviews: counts.videoReviews || 0,
+      comments: totalCommentsSum,
+      likes: totalLikesSum,
+      shares: totalSharesSum,
+      bookmarks: totalBookmarksSum,
+      chats: counts.chats || 0,
+      notifications: counts.notifications || 0,
+      businessClaims: counts.businessClaims || 0,
+      follows: counts.follows || 0
+    },
+    storage: storageStats
+  });
 });
 
 
@@ -5461,6 +5656,12 @@ app.post('/api/admin/comments/purge-all', express.json(), async (_req, res) => {
     const bunnyDb = getBunnyDb();
     if (!bunnyDb) return;
 
+    if (fs.existsSync(path.join(serverUploadsDir, 'all_places_purged.flag'))) {
+      console.log("ℹ️ [BunnyDB] Places were marked as purged by admin - skipping auto-seeding");
+      return;
+    }
+    const deletedPlaceIds = new Set(readDeletedPlacesIndex().map(p => p.toLowerCase()));
+
     const KNOWN_PREVIOUS_SEARCHES = [
       {
         domain: "yoouz.com",
@@ -5625,6 +5826,9 @@ app.post('/api/admin/comments/purge-all', express.json(), async (_req, res) => {
       for (const item of KNOWN_PREVIOUS_SEARCHES) {
         const cleanDomain = item.domain.replace(/^www\./i, "").toLowerCase();
         const autoPlaceId = cleanDomain.replace(/[^a-zA-Z0-9]/g, '-');
+        if (deletedPlaceIds.has(autoPlaceId.toLowerCase()) || deletedPlaceIds.has(cleanDomain) || deletedPlaceIds.has(item.title.toLowerCase())) {
+          continue;
+        }
         const logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
         const autoPlaceDoc = {
           id: autoPlaceId,

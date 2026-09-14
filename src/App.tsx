@@ -1920,7 +1920,35 @@ export function App() {
       handle: currentUser?.handle || ""
     };
 
-    // Trigger full backend purge of all databases, files, and caches
+    const userIdentifiers = [userToPurge.id, userToPurge.uid, userToPurge.email, userToPurge.name, userToPurge.handle].filter(Boolean);
+
+    // 1. Permanently record in local blacklist so profile can never be re-read or restored
+    recordDeletedUsersInLocalStorage(userIdentifiers);
+
+    // 2. Immediately strip all videos authored by this user from application state
+    setVideos((prev) => prev.filter((v) => !isAuthorMatch(v, userToPurge)));
+
+    // 3. Immediately strip all reviews authored by this user from places state
+    setPlaces((prev) =>
+      prev.map((p) => ({
+        ...p,
+        reviews: (p.reviews || []).filter((r) => !isAuthorMatch(r, userToPurge))
+      }))
+    );
+
+    // 4. Dispatch instant local event for real-time reactivity across all components and drawers
+    window.dispatchEvent(
+      new CustomEvent("copo-user-deleted", {
+        detail: {
+          userIds: userIdentifiers,
+          email: userToPurge.email,
+          name: userToPurge.name,
+          handle: userToPurge.handle
+        }
+      })
+    );
+
+    // 5. Trigger full backend purge of all databases, Bunny CDN storage, and caches
     try {
       await fetch('/api/user/delete-account', {
         method: "POST",
@@ -1937,7 +1965,7 @@ export function App() {
       console.warn("Failed to log out user during profile deletion:", e);
     }
 
-    // Completely clear all authentication, profile, and session local storage keys
+    // 6. Completely clear all authentication, profile, cache, and session local storage keys
     setCurrentUser(null);
     try {
       localStorage.removeItem("copo_user_profile");
