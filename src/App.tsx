@@ -5181,6 +5181,7 @@ export function App() {
             {/* Admin View */}
             {activeSection === "admin" && (
               <CopoAdminPanel
+                currentUser={currentUser}
                 videos={videos}
                 places={places}
                 allUsers={allRegisteredUsers}

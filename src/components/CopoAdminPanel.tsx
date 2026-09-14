@@ -58,7 +58,8 @@ import {
   HardDrive,
   Server,
   Zap,
-  Radio
+  Radio,
+  Loader2
 } from "lucide-react";
 import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
@@ -102,6 +103,7 @@ export const AdminPlaceLogo: React.FC<{
 };
 
 interface CopoAdminPanelProps {
+  currentUser?: any;
   videos: VideoReview[];
   places: Place[];
   allUsers?: any[];
@@ -126,6 +128,7 @@ interface CopoAdminPanelProps {
 type AdminTab = "overview" | "creators" | "users" | "places" | "subscriptions" | "videos" | "comments" | "broadcast" | "database";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
+  currentUser,
   videos = [],
   places = [],
   allUsers = [],
@@ -149,6 +152,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
+      const email = currentUser?.email?.toLowerCase().trim();
+      const role = currentUser?.role?.toLowerCase();
+      if (role === 'admin' || email === '4samet@gmail.com' || email === 'aouisesmee@gmail.com' || email === 'admin@yoouz.com') {
+        return true;
+      }
       return sessionStorage.getItem("yoouz_admin_auth") === "true";
     } catch {
       return false;

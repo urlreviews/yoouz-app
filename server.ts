@@ -9531,6 +9531,9 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       userVerificationStore.delete(cleanEmail);
 
+      // Instantly unrecord any lingering deleted user ID status for this email on verification
+      unrecordDeletedUserIds([cleanEmail, `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`, cleanEmail.split('@')[0]]);
+
       // Resolve existing user across all memory, database, and review sources
       let existingUser: any = await resolveUserProfileFromAnySource(cleanEmail);
 
@@ -9545,14 +9548,18 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       const isKnown = Boolean(existingUser) && hasBothNames && !isDeletedUserServer(existingUser);
 
+      // Check for Admin status based on email
+      const isAdminEmail = cleanEmail === '4samet@gmail.com' || cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@');
+      const assignedRole = isAdminEmail ? 'admin' : (existingUser?.role || 'user');
+
       const freshUuid = crypto.randomUUID();
       const userSession = {
         uid: existingUser?.uid || existingUser?.id || freshUuid,
         id: existingUser?.uid || existingUser?.id || freshUuid,
         email: cleanEmail,
-        name: isKnown ? fullName : '',
-        firstName: isKnown ? fName : '',
-        lastName: isKnown ? lName : '',
+        name: isKnown ? fullName : (fullName || cleanEmail.split('@')[0]),
+        firstName: isKnown ? fName : fName,
+        lastName: isKnown ? lName : lName,
         city: isKnown ? (existingUser?.city || '') : '',
         country: isKnown ? (existingUser?.country || '') : '',
         location: isKnown ? (existingUser?.location || '') : '',
@@ -9561,31 +9568,31 @@ app.post("/api/videos/save-review", async (req, res) => {
         handle: isKnown ? (existingUser?.handle || `@${(fullName || cleanEmail.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '')}`) : `@${cleanEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`,
         bio: isKnown ? (existingUser?.bio || "") : "",
         initial,
-        role: existingUser?.role || 'user',
+        role: assignedRole,
         isNewUser: !isKnown,
         authProvider: 'resend_magic_link',
         token: `usr_sess_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`,
         verifiedAt: new Date().toISOString()
       };
 
-      if (isKnown) {
-        unrecordDeletedUserIds([userSession.uid, userSession.id, cleanEmail, userSession.name, userSession.handle]);
-      }
+      unrecordDeletedUserIds([userSession.uid, userSession.id, cleanEmail, userSession.name, userSession.handle]);
 
       // Save/update user session in Bunny Database & Drizzle SQL unconditionally
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
           await bunnyDb.execute({
-            sql: `INSERT INTO users (id, email, name, data, updatedAt) 
-                  VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) 
-                  ON CONFLICT(id) DO UPDATE SET name = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            sql: `INSERT INTO users (id, email, name, role, data, updatedAt) 
+                  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP) 
+                  ON CONFLICT(id) DO UPDATE SET name = ?, role = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
             args: [
               userSession.uid,
               cleanEmail,
               userSession.name,
+              userSession.role,
               JSON.stringify(userSession),
               userSession.name,
+              userSession.role,
               JSON.stringify(userSession)
             ]
           });
@@ -9611,7 +9618,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       return res.json({
         success: true,
         user: userSession,
-        message: `Welcome, ${fullName}!`
+        message: `Welcome, ${userSession.name || fullName}!`
       });
     } catch (err: any) {
       console.error("verify user magic-link error:", err);
@@ -9622,7 +9629,7 @@ app.post("/api/videos/save-review", async (req, res) => {
   // Update User Profile Endpoint (Directly into Bunny Cloud Database)
   app.post("/api/auth/update-profile", async (req, res) => {
     try {
-      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name, uid: bodyUid, id: bodyId } = req.body;
+      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name, uid: bodyUid, id: bodyId, role: bodyRole } = req.body;
       if (!email) {
         return res.status(400).json({ error: "Missing email address." });
       }
@@ -9651,6 +9658,9 @@ app.post("/api/videos/save-review", async (req, res) => {
       const combinedLocation = location || locParts.join(', ');
       const finalAvatar = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`;
 
+      const isAdminEmail = cleanEmail === '4samet@gmail.com' || cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@');
+      const assignedRole = isAdminEmail ? 'admin' : (bodyRole || 'user');
+
       const profile = {
         uid,
         id: uid,
@@ -9666,14 +9676,14 @@ app.post("/api/videos/save-review", async (req, res) => {
         bio: bio || '',
         handle: `@${fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
         initial,
-        role: 'user',
+        role: assignedRole,
         isNewUser: false,
         isVerified: true,
         updatedAt: new Date().toISOString()
       };
 
-      console.log(`[Auth] Updating profile for ${cleanEmail} (UID: ${uid})`);
-      unrecordDeletedUserIds([uid, cleanEmail, fullName]);
+      console.log(`[Auth] Updating profile for ${cleanEmail} (UID: ${uid}, Role: ${assignedRole})`);
+      unrecordDeletedUserIds([uid, cleanEmail, fullName, profile.handle]);
 
       // Simple, Fast, SQL-Only Persistence
       try {
@@ -16462,64 +16472,15 @@ function injectOpenGraphTags(html: string, meta: any) {
 
   await initBunnyDbSchema().catch(() => {});
 
-  // Automatically wipe all databases, tables, and uploads from scratch on startup as requested
   try {
-    console.log("🔥 [Server] AUTOMATIC STARTUP MASTER RESET: Wiping all tables and files from scratch...");
-    
-    // Explicitly delete SQLite database files so the database is created completely empty from scratch
-    try {
-      const bunnyDbPath = path.resolve(process.cwd(), "bunny.db");
-      if (fs.existsSync(bunnyDbPath)) {
-        fs.unlinkSync(bunnyDbPath);
-        console.log("🗑️ Deleted root bunny.db");
-      }
-      const edgeDbPath = path.resolve(uploadsDir, "bunny_edge.db");
-      if (fs.existsSync(edgeDbPath)) {
-        fs.unlinkSync(edgeDbPath);
-        console.log("🗑️ Deleted uploads/bunny_edge.db");
-      }
-    } catch (e) {
-      console.warn("Notice deleting db files:", e);
-    }
-
     const bunnyDb = getBunnyDb();
-    const tables = [
-      'users', 'places', 'videoReviews', 'comments', 'likes', 
-      'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 
-      'follows', 'contact_requests', 'bunnydb_video_reviews', 'bunnydb_users', 
-      'bunnydb_places', 'bunnydb_chats', 'nosql_items', 'agency_inquiries', 'moderation_reports'
-    ];
-    
     if (bunnyDb) {
-      for (const tbl of tables) {
-        try {
-          await bunnyDb.execute(`DELETE FROM ${tbl}`);
-        } catch (e) {}
-      }
+      console.log("⚡ [Server] Connected to persistent Bunny Cloud Database and initialized schema.");
+    } else {
+      console.log("⚡ [Server] Connected to persistent edge database.");
     }
-
-    try {
-      if (fs.existsSync(uploadsDir)) {
-        const files = fs.readdirSync(uploadsDir);
-        for (const file of files) {
-          try {
-            const filePath = path.join(uploadsDir, file);
-            if (fs.statSync(filePath).isFile() && !filePath.includes('bunny_edge.db')) {
-              fs.unlinkSync(filePath);
-            }
-          } catch (e) {}
-        }
-      }
-    } catch (e) {}
-
-    try {
-      feedCache.lastFetched = 0;
-      feedCache.videos = [];
-    } catch (e) {}
-
-    console.log("✨ [Server] Automatic startup master reset complete. Database and files completely rebuilt empty from scratch.");
-  } catch (resetErr) {
-    console.warn("Startup reset notice:", resetErr);
+  } catch (initErr) {
+    console.warn("Database startup notice:", initErr);
   }
 
   app.listen(PORT, "0.0.0.0", () => {
