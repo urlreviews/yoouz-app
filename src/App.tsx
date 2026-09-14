@@ -4525,14 +4525,6 @@ export function App() {
 
     } catch (e) {}
 
-    // Auto-grab place to profile
-    setSavedPlaceIds((prev) => {
-      if (!prev.includes(newReview.placeId)) {
-        return [newReview.placeId, ...prev];
-      }
-      return prev;
-    });
-
     // Ensure place exists in places list or update its rating/review count and persist to DB
     setPlaces((prev) => {
       const exists = prev.some((p) => isPlaceReviewMatch(newReview, p));

@@ -782,8 +782,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               onClick={handleOpenDirections}
               className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md">
-                <Navigation className="w-5 h-5 fill-zinc-950" />
+              <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
+                <Navigation className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-[11px] text-white">{t("place.directions", "Directions")}</span>
             </button>
@@ -793,14 +793,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors ${
                   isSaved
-                    ? "bg-white text-zinc-950"
-                    : "bg-zinc-800 text-white border border-zinc-700"
+                    ? "bg-amber-500 text-zinc-950"
+                    : "bg-zinc-800 text-white border border-zinc-700 group-hover:bg-zinc-700"
                 }`}
               >
                 {isSaved ? (
-                  <BookmarkCheck className="w-5 h-5 fill-zinc-950" />
+                  <BookmarkCheck className="w-5 h-5 fill-zinc-950 text-zinc-950" />
                 ) : (
                   <Bookmark className="w-5 h-5 text-white" />
                 )}
