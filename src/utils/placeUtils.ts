@@ -728,8 +728,6 @@ export function unrecordDeletedUsersInLocalStorage(ids: string[]): void {
       localStorage.removeItem("yoouz_cached_videos_v25");
       localStorage.removeItem("yoouz_local_created_reviews");
     } catch (err) {}
-
-    window.dispatchEvent(new CustomEvent("copo-user-restored", { detail: { ids } }));
   } catch (e) {}
 }
 
