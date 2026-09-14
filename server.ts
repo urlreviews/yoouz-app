@@ -5187,52 +5187,70 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       const mp4FilePath = path.join(serverUploadsDir, mp4FileName);
       let finalVideoPath = filePath;
 
-      // 1. Audio Silence Detection & Universal Transcoding with Auto-Trim for dead leading/trailing air
+      // 1. Audio Silence Detection & Universal Transcoding with Auto-Trim for dead leading, middle, and trailing air
       try {
-        let startOffset = 0;
-        let endOffset: number | null = null;
         let totalDuration = 0;
+        const speechSegments: { start: number; end: number }[] = [];
 
         try {
           const durRaw = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`).toString().trim();
           totalDuration = parseFloat(durRaw) || 0;
 
-          // Detect silence periods with -32dB threshold (minimum silence 0.35s)
-          const detectOut = execSync(`ffmpeg -i "${filePath}" -af "silencedetect=noise=-32dB:d=0.35" -f null - 2>&1`).toString();
+          // Detect silence periods with -32dB threshold (minimum silence 0.4s)
+          const detectOut = execSync(`ffmpeg -i "${filePath}" -af "silencedetect=noise=-32dB:d=0.4" -f null - 2>&1`).toString();
 
-          // Check for dead air at start
-          const startMatch = detectOut.match(/silence_start:\s*0(?:\.0+)?[\s\S]*?silence_end:\s*([\d\.]+)/);
-          if (startMatch && startMatch[1]) {
-            const endOfInitialSilence = parseFloat(startMatch[1]);
-            // If more than 0.3s of dead silence before speech starts, trim it with 0.15s margin
-            if (endOfInitialSilence > 0.3) {
-              startOffset = Math.max(0, endOfInitialSilence - 0.15);
+          const silenceBlocks: { start: number; end: number }[] = [];
+          const startMatches = Array.from(detectOut.matchAll(/silence_start:\s*([\d\.]+)/g));
+          const endMatches = Array.from(detectOut.matchAll(/silence_end:\s*([\d\.]+)/g));
+
+          for (let i = 0; i < startMatches.length; i++) {
+            const s = parseFloat(startMatches[i][1]);
+            const e = endMatches[i] ? parseFloat(endMatches[i][1]) : totalDuration;
+            if (!isNaN(s) && !isNaN(e) && e > s) {
+              silenceBlocks.push({ start: s, end: e });
             }
           }
 
-          // Check for trailing silence at the end of recording
-          const matches = Array.from(detectOut.matchAll(/silence_start:\s*([\d\.]+)/g));
-          if (matches.length > 0) {
-            const lastSilenceStart = parseFloat(matches[matches.length - 1][1]);
-            if (totalDuration > 0 && lastSilenceStart > 0 && (totalDuration - lastSilenceStart) >= 0.4) {
-              endOffset = lastSilenceStart + 0.15;
+          if (silenceBlocks.length > 0 && totalDuration > 0) {
+            let cursor = 0;
+            for (const sb of silenceBlocks) {
+              const segEnd = Math.min(totalDuration, sb.start + 0.08);
+              const segStart = Math.max(0, cursor);
+              if (segEnd - segStart >= 0.3) {
+                speechSegments.push({ start: segStart, end: segEnd });
+              }
+              cursor = Math.max(0, sb.end - 0.08);
+            }
+            if (totalDuration - cursor >= 0.3) {
+              speechSegments.push({ start: Math.max(0, cursor), end: totalDuration });
             }
           }
         } catch (detectErr) {
           console.warn("Silence scan notice:", detectErr);
         }
 
-        console.log(`🎬 [Server] Transcoding & Trimming ${cleanFileName} (startOffset=${startOffset.toFixed(2)}s, endOffset=${endOffset ? endOffset.toFixed(2) + 's' : 'none'}, duration=${totalDuration.toFixed(2)}s)...`);
+        console.log(`🎬 [Server] Transcoding & Smart Jump-Cut Silence Removal for ${cleanFileName} (duration=${totalDuration.toFixed(2)}s, speechSegments=${speechSegments.length})...`);
 
-        let trimArgs = "";
-        if (startOffset > 0) {
-          trimArgs += ` -ss ${startOffset.toFixed(3)}`;
-        }
-        if (endOffset && endOffset > (startOffset + 1.0)) {
-          trimArgs += ` -to ${endOffset.toFixed(3)}`;
+        if (speechSegments.length === 1) {
+          // Single continuous segment: trim start and end silence
+          const seg = speechSegments[0];
+          execSync(`ffmpeg -i "${filePath}" -ss ${seg.start.toFixed(3)} -to ${seg.end.toFixed(3)} -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { stdio: 'ignore' });
+        } else if (speechSegments.length > 1) {
+          // Multiple speech segments: cut out middle dead pauses and stitch speech segments seamlessly
+          const filterParts: string[] = [];
+          const concatInputs: string[] = [];
+          speechSegments.forEach((seg, idx) => {
+            filterParts.push(`[0:v]trim=start=${seg.start.toFixed(3)}:end=${seg.end.toFixed(3)},setpts=PTS-STARTPTS[v${idx}]`);
+            filterParts.push(`[0:a]atrim=start=${seg.start.toFixed(3)}:end=${seg.end.toFixed(3)},asetpts=PTS-STARTPTS[a${idx}]`);
+            concatInputs.push(`[v${idx}][a${idx}]`);
+          });
+          const filterComplex = `${filterParts.join(';')};${concatInputs.join('')}concat=n=${speechSegments.length}:v=1:a=1[outv][outa]`;
+          execSync(`ffmpeg -i "${filePath}" -filter_complex "${filterComplex}" -map "[outv]" -map "[outa]" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { stdio: 'ignore' });
+        } else {
+          // Standard transcoding pass if no pauses found
+          execSync(`ffmpeg -i "${filePath}" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { stdio: 'ignore' });
         }
 
-        execSync(`ffmpeg -i "${filePath}" ${trimArgs} -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { stdio: 'ignore' });
         finalVideoPath = mp4FilePath;
         cleanFileName = mp4FileName;
         mimeType = "video/mp4";

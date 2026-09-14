@@ -176,7 +176,7 @@ export function resolvePlayableVideoSource(
 
 /**
  * Resolves the best available cover thumbnail poster for a VideoReview.
- * Never falls back to place logos or brand avatars to avoid screen flash before playback.
+ * Never falls back to place logos, user avatars, or letter graphics to avoid screen flash before playback.
  */
 export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   if (!video) return "";
@@ -187,7 +187,10 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   if (rawThumb && typeof rawThumb === "string" && rawThumb.trim()) {
     const trimmed = rawThumb.trim();
     const isVideoFile = trimmed.endsWith(".mp4") || trimmed.endsWith(".webm") || trimmed.endsWith(".mov") || trimmed.includes("/api/videos/stream/");
-    const isTinyLogo =
+    const isAvatarOrLogo =
+      trimmed.includes("/api/avatar") ||
+      trimmed.includes("ui-avatars") ||
+      trimmed.includes("dicebear") ||
       trimmed.includes("favicon") ||
       trimmed.includes("google.com/s2") ||
       trimmed.includes("clearbit.com") ||
@@ -196,11 +199,11 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
       trimmed.includes("brandfetch.io");
     
     // Direct Bunny CDN image
-    if (trimmed.includes("b-cdn.net") && !isVideoFile) {
+    if (trimmed.includes("b-cdn.net") && !isVideoFile && !isAvatarOrLogo) {
       return trimmed;
     }
 
-    if (!isVideoFile && !isTinyLogo && (trimmed.startsWith("http") || trimmed.startsWith("/"))) {
+    if (!isVideoFile && !isAvatarOrLogo && (trimmed.startsWith("http") || trimmed.startsWith("/uploads/") || trimmed.startsWith("/videos/"))) {
       return trimmed;
     }
   }
