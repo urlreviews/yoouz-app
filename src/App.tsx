@@ -2010,6 +2010,7 @@ export function App() {
       localStorage.removeItem("copo_user_profile");
       localStorage.removeItem("copo_user");
       localStorage.removeItem("copo_business_verified_session");
+      localStorage.removeItem("yoouz_users_registry_cache");
       sessionStorage.removeItem("copo_temp_user");
       sessionStorage.removeItem("copo_business_session");
     } catch (e) {}
