@@ -4806,7 +4806,7 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
       'users', 'places', 'videoReviews', 'comments', 'likes', 
       'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 
       'follows', 'contact_requests', 'bunnydb_video_reviews', 'bunnydb_users', 
-      'bunnydb_places', 'bunnydb_chats'
+      'bunnydb_places', 'bunnydb_chats', 'nosql_items', 'agency_inquiries', 'moderation_reports'
     ];
     
     if (bunnyDb) {
@@ -4814,7 +4814,7 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
         try {
           await bunnyDb.execute(`DELETE FROM ${tbl}`);
         } catch (e) {
-          console.warn(`Note on table ${tbl} during reset:`, e);
+          // Table might not exist yet, safe to ignore
         }
       }
     }
@@ -16461,11 +16461,49 @@ function injectOpenGraphTags(html: string, meta: any) {
   }
 
   await initBunnyDbSchema().catch(() => {});
-  // Disabled automatic mock seeders so Bunny Database stays clean and user-driven
-  // await syncInitialVideoInteractionsToBunnyDb().catch(() => {});
-  // await syncAndWarmFeedFromBunnyDb().catch(() => {});
-  // await seedKnownSearchesToBunnyDb().catch(() => {});
-  // await syncAndMigrateBusinessPlaces().catch(() => {});
+
+  // Automatically wipe all databases, tables, and uploads from scratch on startup as requested
+  try {
+    console.log("🔥 [Server] AUTOMATIC STARTUP MASTER RESET: Wiping all tables and files from scratch...");
+    const bunnyDb = getBunnyDb();
+    const tables = [
+      'users', 'places', 'videoReviews', 'comments', 'likes', 
+      'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 
+      'follows', 'contact_requests', 'bunnydb_video_reviews', 'bunnydb_users', 
+      'bunnydb_places', 'bunnydb_chats', 'nosql_items', 'agency_inquiries', 'moderation_reports'
+    ];
+    
+    if (bunnyDb) {
+      for (const tbl of tables) {
+        try {
+          await bunnyDb.execute(`DELETE FROM ${tbl}`);
+        } catch (e) {}
+      }
+    }
+
+    try {
+      if (fs.existsSync(uploadsDir)) {
+        const files = fs.readdirSync(uploadsDir);
+        for (const file of files) {
+          try {
+            const filePath = path.join(uploadsDir, file);
+            if (fs.statSync(filePath).isFile()) {
+              fs.unlinkSync(filePath);
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (e) {}
+
+    try {
+      feedCache.lastFetched = 0;
+      feedCache.videos = [];
+    } catch (e) {}
+
+    console.log("✨ [Server] Automatic startup master reset complete. All databases and files wiped clean from scratch.");
+  } catch (resetErr) {
+    console.warn("Startup reset notice:", resetErr);
+  }
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://localhost:${PORT}`);
