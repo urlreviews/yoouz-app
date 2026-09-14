@@ -969,6 +969,34 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     showToast("Database backup JSON downloaded successfully.");
   };
 
+  const [isMasterResetting, setIsMasterResetting] = useState(false);
+  const handleMasterReset = async () => {
+    if (!window.confirm("⚠️ EXTREME WARNING: This will permanently wipe ALL tables (users, videoReviews, places, comments, etc.) and ALL files from scratch! Are you 100% sure you want to reset everything?")) {
+      return;
+    }
+    setIsMasterResetting(true);
+    try {
+      const res = await fetch("/api/admin/system/master-reset", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (e) {}
+        showToast("System master reset complete! All databases and files wiped clean from scratch.");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        showToast(data.error || "Failed to execute master reset.");
+      }
+    } catch (err: any) {
+      showToast("Error executing master reset.");
+    } finally {
+      setIsMasterResetting(false);
+    }
+  };
+
   // Login Screen
   if (!isAuthenticated) {
     return (
@@ -3139,6 +3167,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     className="px-5 py-3 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-2xl text-sm transition-all flex items-center gap-2 shadow-lg cursor-pointer"
                   >
                     <Download className="w-4 h-4" /> Download Complete JSON Backup
+                  </button>
+
+                  <button
+                    onClick={handleMasterReset}
+                    disabled={isMasterResetting}
+                    className="px-5 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-2xl text-sm transition-all flex items-center gap-2 shadow-lg cursor-pointer disabled:opacity-50"
+                  >
+                    {isMasterResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    Master System Reset (Wipe All From Scratch)
                   </button>
                 </div>
               </div>

@@ -4797,6 +4797,64 @@ app.post('/api/admin/comments/purge-all', express.json(), async (_req, res) => {
   }
 });
 
+// Master System Reset: Wipe all databases, tables, and uploads from scratch
+app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => {
+  try {
+    console.log("🔥 [Server] EXECUTING MASTER SYSTEM RESET: Wiping all tables and files from scratch...");
+    const bunnyDb = getBunnyDb();
+    const tables = ['users', 'places', 'videoReviews', 'comments', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows', 'contact_requests'];
+    
+    if (bunnyDb) {
+      for (const tbl of tables) {
+        try {
+          await bunnyDb.execute(`DELETE FROM ${tbl}`);
+        } catch (e) {
+          console.warn(`Failed to truncate BunnyDB table ${tbl}:`, e);
+        }
+      }
+    }
+
+    // Clear PostgreSQL tables if any
+    const dbInstance = getDb();
+    if (dbInstance) {
+      for (const tbl of tables) {
+        try {
+          const table = getNoSqlTable(tbl);
+          if (table) await dbInstance.delete(table);
+        } catch (e) {}
+      }
+    }
+
+    // Clear upload JSON indexes and files
+    try {
+      if (fs.existsSync(globalUploadsDir)) {
+        const files = fs.readdirSync(globalUploadsDir);
+        for (const file of files) {
+          try {
+            const filePath = path.join(globalUploadsDir, file);
+            if (fs.statSync(filePath).isFile()) {
+              fs.unlinkSync(filePath);
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (e) {}
+
+    // Reset memory cache
+    try {
+      feedCache.lastFetched = 0;
+      feedCache.videos = [];
+    } catch (e) {}
+
+    broadcastSseEvent({ type: "system_reset" });
+    console.log("✨ [Server] Master system reset complete. All databases and files wiped clean from scratch.");
+    res.json({ success: true, message: "System master reset complete. All databases and files wiped clean from scratch." });
+  } catch (err: any) {
+    console.error("Master reset error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Authoritative Live Stats Endpoint directly querying Bunny Database tables & Bunny CDN Storage
 app.get('/api/admin/live-stats', async (_req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
