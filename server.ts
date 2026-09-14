@@ -307,22 +307,36 @@ function readDeletedUsersIndex(): string[] {
 function isDeletedUserServer(itemOrIdOrEmail: any, deletedSet?: Set<string>): boolean {
   if (!itemOrIdOrEmail) return false;
   
-  // Extract identifiers to check if this user is currently active (active status takes absolute precedence over past deletions)
   const checkEmail = typeof itemOrIdOrEmail === 'string' ? itemOrIdOrEmail.toLowerCase().trim() : (itemOrIdOrEmail?.email || itemOrIdOrEmail?.id || itemOrIdOrEmail?.uid || '').toLowerCase().trim();
+  const checkName = typeof itemOrIdOrEmail === 'object' ? (itemOrIdOrEmail?.name || itemOrIdOrEmail?.handle || '').toLowerCase().trim() : '';
+  
+  // If email is present, check if it exists in active community users or known users
   if (checkEmail && checkEmail.includes('@')) {
     const isCurrentlyActive = defaultCommunityUsers.some(u => (u.email || '').toLowerCase().trim() === checkEmail) ||
                               Object.values(KNOWN_COMMUNITY_USERS_SERVER).some((u: any) => (u?.email || '').toLowerCase().trim() === checkEmail);
     if (isCurrentlyActive) {
-      // Auto-unrecord if active account exists with this email
       try {
-        unrecordDeletedUserIds([checkEmail]);
+        unrecordDeletedUserIds([checkEmail, checkName]);
       } catch (e) {}
       return false;
     }
   }
 
-  const set = deletedSet || new Set(readDeletedUsersIndex().map(s => s.toLowerCase().trim()).filter(Boolean));
+  const list = readDeletedUsersIndex();
+  const set = deletedSet || new Set(list.map(s => s.toLowerCase().trim()).filter(Boolean));
   if (set.size === 0) return false;
+
+  // If checkEmail's username prefix (before @) matches any deleted entry, but the user is active or creating a new profile, let's make sure we don't block them if they have a valid active session or record
+  if (checkEmail && checkEmail.includes('@')) {
+    const usernamePart = checkEmail.split('@')[0];
+    // If the exact email or usernamePart is in deleted index, but this is a new login/profile request, unrecord it
+    if (set.has(checkEmail) || set.has(usernamePart)) {
+      try {
+        unrecordDeletedUserIds([checkEmail, usernamePart]);
+      } catch (e) {}
+      return false;
+    }
+  }
 
   const extractAndCheck = (val: string): boolean => {
     if (!val || typeof val !== 'string') return false;
