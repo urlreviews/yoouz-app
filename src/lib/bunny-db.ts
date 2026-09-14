@@ -1,11 +1,14 @@
 import { createClient, type Client } from "@libsql/client";
+import path from "path";
+import fs from "fs";
 
 let bunnyDbClient: Client | null = null;
 let isInitialized = false;
 
 /**
- * Initializes and returns the Bunny Database (libSQL) connection
- * Reads BUNNY_DATABASE_URL and BUNNY_DATABASE_AUTH_TOKEN from environment.
+ * Initializes and returns the Bunny Database (libSQL) connection.
+ * Reads BUNNY_DATABASE_URL and BUNNY_DATABASE_AUTH_TOKEN from environment if set,
+ * or seamlessly defaults to persistent local libSQL database storage.
  */
 export function getBunnyDb(): Client | null {
   const rawUrl = process.env.BUNNY_DATABASE_URL || process.env.LIBSQL_URL;
@@ -14,22 +17,26 @@ export function getBunnyDb(): Client | null {
   const url = rawUrl ? rawUrl.trim() : "";
   const authToken = rawAuthToken ? rawAuthToken.trim() : "";
 
-  // Both URL and Auth Token are required for Bunny Database authentication
-  if (!url || !authToken) {
-    if (url && !authToken) {
-      // Only log once to avoid console noise
-      if (!isInitialized) {
-      }
-    }
-    return null;
-  }
-
   if (!bunnyDbClient) {
     try {
-      bunnyDbClient = createClient({
-        url,
-        authToken
-      });
+      if (url && authToken) {
+        bunnyDbClient = createClient({
+          url,
+          authToken
+        });
+        console.log("🐰 [BunnyDB] Connected to remote Bunny Cloud Database.");
+      } else {
+        // Ensure uploads directory exists
+        const uploadsDir = path.resolve(process.cwd(), "uploads");
+        if (!fs.existsSync(uploadsDir)) {
+          try { fs.mkdirSync(uploadsDir, { recursive: true }); } catch (e) {}
+        }
+        const dbPath = path.resolve(uploadsDir, "bunny_edge.db");
+        bunnyDbClient = createClient({
+          url: `file:${dbPath}`
+        });
+        console.log("🐰 [BunnyDB] Initialized persistent edge libSQL database at", dbPath);
+      }
     } catch (err: any) {
       console.error("❌ [BunnyDB] Error initializing database client:", err?.message || err);
       return null;
