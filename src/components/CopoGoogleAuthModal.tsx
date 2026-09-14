@@ -806,7 +806,7 @@ export const CopoAuthPrompt: React.FC<{
                 onClick={() => avatarInputRef.current?.click()}
                 title={t("profile.profilePicture", "Profile Picture")}
               >
-                <div className="w-22 h-22 rounded-full overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950">
+                <div className="w-22 h-22 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950">
                   {avatar ? (
                     <img 
                       src={avatar} 

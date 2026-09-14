@@ -1258,7 +1258,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               {/* Profile Photo Uploader */}
               <div className="flex flex-col items-center gap-3">
                 <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-700 shadow-md relative">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative">
                     <img src={editAvatar || currentUser?.avatar || `/api/avatar?name=${encodeURIComponent(currentUser?.name || "User")}&background=27272a&color=fff`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" referrerPolicy="no-referrer" onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(currentUser?.name || "User")}&background=27272a&color=fff`; }} /> 
  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                       <Camera className="w-6 h-6" />
