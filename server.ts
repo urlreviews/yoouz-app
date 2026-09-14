@@ -306,6 +306,21 @@ function readDeletedUsersIndex(): string[] {
 
 function isDeletedUserServer(itemOrIdOrEmail: any, deletedSet?: Set<string>): boolean {
   if (!itemOrIdOrEmail) return false;
+  
+  // Extract identifiers to check if this user is currently active (active status takes absolute precedence over past deletions)
+  const checkEmail = typeof itemOrIdOrEmail === 'string' ? itemOrIdOrEmail.toLowerCase().trim() : (itemOrIdOrEmail?.email || itemOrIdOrEmail?.id || itemOrIdOrEmail?.uid || '').toLowerCase().trim();
+  if (checkEmail && checkEmail.includes('@')) {
+    const isCurrentlyActive = defaultCommunityUsers.some(u => (u.email || '').toLowerCase().trim() === checkEmail) ||
+                              Object.values(KNOWN_COMMUNITY_USERS_SERVER).some((u: any) => (u?.email || '').toLowerCase().trim() === checkEmail);
+    if (isCurrentlyActive) {
+      // Auto-unrecord if active account exists with this email
+      try {
+        unrecordDeletedUserIds([checkEmail]);
+      } catch (e) {}
+      return false;
+    }
+  }
+
   const set = deletedSet || new Set(readDeletedUsersIndex().map(s => s.toLowerCase().trim()).filter(Boolean));
   if (set.size === 0) return false;
 
