@@ -8794,6 +8794,20 @@ app.post("/api/videos/save-review", async (req, res) => {
           const sqlReview = { ...review };
           delete sqlReview.videoData; // Prevent libSQL request body too large error
           const jsonStr = JSON.stringify(sqlReview);
+          
+          const reviewPlaceId = review.placeId || (review.place && review.place.id) || '';
+          const reviewPlaceName = review.placeName || (review.place && review.place.name) || '';
+          const reviewAuthorName = review.authorName || (review.author && review.author.name) || 'Verified Reviewer';
+          const reviewAuthorAvatar = review.authorAvatar || (review.author && review.author.avatar) || '';
+          const reviewUserId = review.userId || review.authorEmail || (review.author && review.author.email) || `usr_${(reviewAuthorName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+          const reviewRating = typeof review.rating === 'number' ? review.rating : 5;
+          const reviewVideoUrl = review.videoUrl || '';
+          const reviewThumbUrl = review.thumbnailUrl || '';
+          const reviewDuration = review.durationSeconds || review.duration || 60;
+          const reviewLikes = review.likesCount || review.likes || 0;
+          const reviewViews = review.viewsCount || review.views || 0;
+
+          // 2a. Insert/Update Video Review in BunnyDB
           await bunnyDb.execute({
             sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, data, createdAt, updatedAt)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -8801,34 +8815,123 @@ app.post("/api/videos/save-review", async (req, res) => {
                     placeId = ?, placeName = ?, authorName = ?, authorAvatar = ?, userId = ?, rating = ?, videoUrl = ?, thumbnailUrl = ?, duration = ?, likesCount = ?, viewsCount = ?, data = ?, createdAt = COALESCE(videoReviews.createdAt, CURRENT_TIMESTAMP), updatedAt = CURRENT_TIMESTAMP`,
             args: [
               review.id,
-              review.placeId || (review.place && review.place.id) || '',
-              review.placeName || (review.place && review.place.name) || '',
-              review.authorName || (review.author && review.author.name) || '',
-              review.authorAvatar || (review.author && review.author.avatar) || '',
-              review.userId || review.authorEmail || (review.author && review.author.email) || '',
-              review.rating || 5,
-              review.videoUrl || '',
-              review.thumbnailUrl || '',
-              review.duration || 60,
-              review.likesCount || review.likes || 0,
-              review.viewsCount || review.views || 0,
+              reviewPlaceId,
+              reviewPlaceName,
+              reviewAuthorName,
+              reviewAuthorAvatar,
+              reviewUserId,
+              reviewRating,
+              reviewVideoUrl,
+              reviewThumbUrl,
+              reviewDuration,
+              reviewLikes,
+              reviewViews,
               jsonStr,
               // Update args
-              review.placeId || (review.place && review.place.id) || '',
-              review.placeName || (review.place && review.place.name) || '',
-              review.authorName || (review.author && review.author.name) || '',
-              review.authorAvatar || (review.author && review.author.avatar) || '',
-              review.userId || review.authorEmail || (review.author && review.author.email) || '',
-              review.rating || 5,
-              review.videoUrl || '',
-              review.thumbnailUrl || '',
-              review.duration || 60,
-              review.likesCount || review.likes || 0,
-              review.viewsCount || review.views || 0,
+              reviewPlaceId,
+              reviewPlaceName,
+              reviewAuthorName,
+              reviewAuthorAvatar,
+              reviewUserId,
+              reviewRating,
+              reviewVideoUrl,
+              reviewThumbUrl,
+              reviewDuration,
+              reviewLikes,
+              reviewViews,
               jsonStr
             ]
           });
           console.log(`🐰 [Server] BunnyDB successfully permanently saved video review ${review.id}`);
+
+          // 2b. Automatically ensure creator is upserted into BunnyDB users table
+          try {
+            const authorData = {
+              id: reviewUserId,
+              uid: reviewUserId,
+              name: reviewAuthorName,
+              email: review.authorEmail || (review.author && review.author.email) || '',
+              avatar: reviewAuthorAvatar,
+              role: "Creator",
+              bio: review.author?.bio || `Verified Yoouz Creator in ${review.author?.location || 'Miami Beach, Florida'}`,
+              location: review.author?.location || 'Miami Beach, Florida',
+              handle: (review.author?.handle || `@${reviewAuthorName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`).replace(/^@+/, ''),
+              isVerified: true,
+              totalReviews: 1
+            };
+            await bunnyDb.execute({
+              sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    ON CONFLICT(id) DO UPDATE SET
+                      name = COALESCE(?, users.name),
+                      avatar = COALESCE(?, users.avatar),
+                      bio = COALESCE(?, users.bio),
+                      role = 'Creator',
+                      data = ?,
+                      updatedAt = CURRENT_TIMESTAMP`,
+              args: [
+                reviewUserId,
+                authorData.email || null,
+                reviewAuthorName,
+                reviewAuthorAvatar,
+                authorData.bio,
+                'Creator',
+                JSON.stringify(authorData),
+                // Update args
+                reviewAuthorName,
+                reviewAuthorAvatar,
+                authorData.bio,
+                JSON.stringify(authorData)
+              ]
+            });
+            console.log(`🐰 [Server] BunnyDB creator user profile synced for ${reviewAuthorName} (${reviewUserId})`);
+          } catch (userUpsertErr: any) {
+            console.warn("Notice syncing creator to BunnyDB users table:", userUpsertErr?.message || userUpsertErr);
+          }
+
+          // 2c. Automatically ensure place is upserted into BunnyDB places table
+          if (reviewPlaceId || reviewPlaceName) {
+            try {
+              const placeDocId = reviewPlaceId || reviewPlaceName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+              const placeData = {
+                id: placeDocId,
+                name: reviewPlaceName,
+                website: review.placeWebsite || (review.place && review.place.website) || '',
+                brandDomain: review.placeWebsite || (review.place && review.place.brandDomain) || '',
+                rating: reviewRating,
+                totalReviews: 1,
+                city: review.place?.city || 'Online',
+                country: review.place?.country || 'USA',
+                category: review.place?.category || 'Services'
+              };
+              await bunnyDb.execute({
+                sql: `INSERT INTO places (id, name, address, category, city, country, logoUrl, data, createdAt, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO UPDATE SET
+                        name = COALESCE(?, places.name),
+                        category = COALESCE(?, places.category),
+                        data = ?,
+                        updatedAt = CURRENT_TIMESTAMP`,
+                args: [
+                  placeDocId,
+                  reviewPlaceName,
+                  placeData.website,
+                  placeData.category,
+                  placeData.city,
+                  placeData.country,
+                  review.placeLogoUrl || '',
+                  JSON.stringify(placeData),
+                  // Update args
+                  reviewPlaceName,
+                  placeData.category,
+                  JSON.stringify(placeData)
+                ]
+              });
+              console.log(`🐰 [Server] BunnyDB place synced for ${reviewPlaceName} (${placeDocId})`);
+            } catch (placeUpsertErr: any) {
+              console.warn("Notice syncing place to BunnyDB places table:", placeUpsertErr?.message || placeUpsertErr);
+            }
+          }
         } catch (bunnySaveErr: any) {
           console.warn("BunnyDB sync in save-review notice:", bunnySaveErr?.message || bunnySaveErr);
         }
