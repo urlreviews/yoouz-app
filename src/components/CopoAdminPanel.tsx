@@ -2680,24 +2680,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
           )}
 
-          {/* TAB: COMMUNITY MEMBERS */}
+          {/* TAB: USERS & COMMUNITY MEMBERS */}
           {activeTab === "users" && (
             <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-zinc-200" />
-                    <span className="text-sm font-bold text-white">Community Members</span>
+                    <span className="text-sm font-bold text-white">All Users & Community Members</span>
                   </div>
 
                   <select
-                    value={userFilter}
-                    onChange={(e) => setUserFilter(e.target.value as any)}
+                    value={userTypeFilter}
+                    onChange={(e) => setUserTypeFilter(e.target.value as any)}
                     className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
                   >
-                    <option value="all">All Members ({standardUsersList.length})</option>
-                    <option value="verified">Verified Members ({standardUsersList.filter((u) => u.isVerified).length})</option>
-                    <option value="unverified">Standard Members</option>
+                    <option value="all">All Users ({uniqueUsers.length})</option>
+                    <option value="registered">Registered Accounts</option>
+                    <option value="creators">Creators ({creatorsList.length})</option>
                   </select>
 
                   {confirmPurgeAllUsers ? (
@@ -2729,12 +2729,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
 
                 <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
-                  Showing <span className="text-white font-bold">{filteredStandardUsers.length}</span> active members
+                  Showing <span className="text-white font-bold">{filteredUsers.length}</span> active users
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredStandardUsers.map((user) => {
+                {filteredUsers.map((user) => {
                   return (
                     <div
                       key={user.name || user.email || user.id}
@@ -2772,7 +2772,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-xs flex items-center justify-between">
                         <div>
                           <span className="text-zinc-400">Account Type: </span>
-                          <span className="font-bold text-white">Community Member</span>
+                          <span className="font-bold text-white">{user.role || "Community Member"}</span>
                         </div>
                         <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700 font-semibold text-[10px]">
                           {user.role || "Member"}
