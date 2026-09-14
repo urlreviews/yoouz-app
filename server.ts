@@ -4802,14 +4802,19 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
   try {
     console.log("🔥 [Server] EXECUTING MASTER SYSTEM RESET: Wiping all tables and files from scratch...");
     const bunnyDb = getBunnyDb();
-    const tables = ['users', 'places', 'videoReviews', 'comments', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows', 'contact_requests'];
+    const tables = [
+      'users', 'places', 'videoReviews', 'comments', 'likes', 
+      'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 
+      'follows', 'contact_requests', 'bunnydb_video_reviews', 'bunnydb_users', 
+      'bunnydb_places', 'bunnydb_chats'
+    ];
     
     if (bunnyDb) {
       for (const tbl of tables) {
         try {
           await bunnyDb.execute(`DELETE FROM ${tbl}`);
         } catch (e) {
-          console.warn(`Failed to truncate BunnyDB table ${tbl}:`, e);
+          console.warn(`Note on table ${tbl} during reset:`, e);
         }
       }
     }
