@@ -806,19 +806,28 @@ export const CopoAuthPrompt: React.FC<{
                 onClick={() => avatarInputRef.current?.click()}
                 title={t("profile.profilePicture", "Profile Picture")}
               >
-                <div className="w-22 h-22 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950">
-                  {avatar ? (
-                    <img 
-                      src={avatar} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
-                      referrerPolicy="no-referrer" 
-                    /> 
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-zinc-850 text-zinc-400">
-                      <User className="w-8 h-8 text-zinc-500" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                <div className="w-24 h-24 rounded-[24px] border-[4px] border-zinc-950 bg-zinc-900 shadow-xl flex items-center justify-center relative p-2 ring-1 ring-white/15 overflow-hidden group">
+                  {(() => {
+                    const isCustom = avatar && !avatar.includes("/api/avatar") && !avatar.startsWith("data:image/svg+xml") && !avatar.includes("ui-avatars");
+                    const displayName = `${firstName} ${lastName}`.trim() || "User";
+                    return isCustom ? (
+                      <img 
+                        src={avatar} 
+                        className="w-full h-full object-cover rounded-[16px] group-hover:scale-105 transition-transform duration-200" 
+                        referrerPolicy="no-referrer" 
+                      /> 
+                    ) : (
+                      <div
+                        className="w-full h-full rounded-[16px] flex items-center justify-center shadow-inner select-none"
+                        style={{ backgroundColor: getAvatarColor(displayName).bg }}
+                      >
+                        <span className="font-black text-3xl text-white drop-shadow-md font-sans">
+                          {getFirstLetter(displayName)}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white rounded-[24px]">
                     <Camera className="w-5 h-5" />
                   </div>
                 </div>

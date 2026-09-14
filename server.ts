@@ -11988,14 +11988,18 @@ Return JSON:
         '#1E88E5', '#039BE5', '#00ACC1', '#00897B', '#43A047', 
         '#7CB342', '#FB8C00', '#F4511E', '#6D4C41', '#546E7A'
       ];
+      let seed = cleanName.toLowerCase().trim();
+      if (seed.includes('@')) {
+        seed = seed.split('@')[0].trim();
+      }
       let hash = 0;
-      for (let i = 0; i < cleanName.length; i++) {
-        hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
+      for (let i = 0; i < seed.length; i++) {
+        hash = seed.charCodeAt(i) + ((hash << 5) - hash);
       }
       const bg = PALETTE[Math.abs(hash) % PALETTE.length];
       
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-        <rect width="128" height="128" rx="64" fill="${bg}"/>
+        <rect width="128" height="128" rx="28" fill="${bg}"/>
         <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="64px">${char}</text>
       </svg>`;
       

@@ -54,7 +54,10 @@ export function getFirstLetter(nameOrEmail?: string): string {
  * Returns Google-style palette style for a given name or seed
  */
 export function getAvatarColor(nameOrSeed?: string): { bg: string; text: string } {
-  const seed = (nameOrSeed || 'user').trim().toLowerCase();
+  let seed = (nameOrSeed || 'user').trim().toLowerCase();
+  if (seed.includes('@')) {
+    seed = seed.split('@')[0].trim();
+  }
   const index = hashString(seed) % GOOGLE_AVATAR_PALETTE.length;
   return GOOGLE_AVATAR_PALETTE[index];
 }
@@ -63,9 +66,9 @@ export function getAvatarColor(nameOrSeed?: string): { bg: string; text: string 
  * Generate a standalone SVG Data URI for an initial avatar
  * Compatible everywhere as an <img> src or CSS background
  */
-export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string, isSquircle = false): string {
+export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string, isSquircle = true): string {
   const letter = getFirstLetter(nameOrSeed);
-  const color = getAvatarColor(colorSeed || nameOrSeed);
+  const color = getAvatarColor(nameOrSeed || colorSeed);
   const fontSize = Math.round(size * 0.52);
   const rx = isSquircle ? Math.round(size * 0.22) : Math.round(size / 2);
 

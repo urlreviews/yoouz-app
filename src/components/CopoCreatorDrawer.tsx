@@ -1285,29 +1285,41 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               {/* Profile Photo Uploader */}
               <div className="flex flex-col items-center gap-3">
                 <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <div className="w-24 h-24 rounded-[20px] overflow-hidden border-2 border-zinc-700 bg-zinc-900 shadow-md relative flex items-center justify-center p-1.5 ring-1 ring-white/10">
-                    {editAvatar || (currentUser?.avatar && !currentUser.avatar.includes("/api/avatar") && !currentUser.avatar.startsWith("data:image/svg+xml")) ? (
-                      <img
-                        src={editAvatar || currentUser?.avatar}
-                        alt="Profile avatar preview"
-                        className="w-full h-full object-cover rounded-[14px] group-hover:scale-105 transition-transform duration-200"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full rounded-[14px] flex items-center justify-center shadow-inner select-none"
-                        style={{ backgroundColor: getAvatarColor(editName || currentUser?.name || "User").bg }}
-                      >
-                        <span className="font-black text-3xl text-white drop-shadow-md font-sans">
-                          {getFirstLetter(editName || currentUser?.name || "User")}
-                        </span>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white rounded-[20px]">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] border-[4px] border-zinc-950 md:border-zinc-800 bg-zinc-900 shadow-2xl flex items-center justify-center relative p-2 ring-1 ring-white/15 overflow-hidden group">
+                    {(() => {
+                      const isCustomImage = (url?: string) => Boolean(
+                        url &&
+                        typeof url === "string" &&
+                        !url.includes("/api/avatar") &&
+                        !url.startsWith("data:image/svg+xml") &&
+                        !url.includes("ui-avatars")
+                      );
+                      const activePhoto = isCustomImage(editAvatar) ? editAvatar : isCustomImage(currentUser?.avatar) ? currentUser?.avatar : isCustomImage(effectiveAvatar) ? effectiveAvatar : null;
+                      const activeName = editName || displayName || currentUser?.name || author.name || "User";
+
+                      return activePhoto ? (
+                        <img
+                          src={activePhoto}
+                          alt="Profile avatar preview"
+                          className="w-full h-full object-cover rounded-[16px] sm:rounded-[18px] group-hover:scale-105 transition-transform duration-200"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full rounded-[16px] sm:rounded-[18px] flex items-center justify-center shadow-inner select-none"
+                          style={{ backgroundColor: getAvatarColor(activeName).bg }}
+                        >
+                          <span className="font-black text-3xl sm:text-4xl text-white drop-shadow-md font-sans">
+                            {getFirstLetter(activeName)}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white rounded-[24px] sm:rounded-[28px]">
                       <Camera className="w-6 h-6" />
                     </div>
                   </div>
-                  <button type="button" className="absolute -bottom-1 -right-1 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"><Camera className="w-3.5 h-3.5" /></button>
+                  <button type="button" className="absolute -bottom-1 -right-1 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700 z-10"><Camera className="w-3.5 h-3.5" /></button>
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
                 <div className="text-center">
