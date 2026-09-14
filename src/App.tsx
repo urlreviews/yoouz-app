@@ -2186,9 +2186,9 @@ export function App() {
         targetEmail ? targetEmail.split("@")[0] : "",
         senderId,
         senderName.toLowerCase(),
-        ...(sName === "avt ertuop" || targetEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop"] : []),
-        ...(sName === "biz riv" || targetEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv"] : []),
-        ...(sName.includes("aouisesmee") || targetEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee"] : [])
+        ...(sName === "avt ertuop" || targetEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop"] : []),
+        ...(sName === "biz riv" || targetEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv"] : []),
+        ...(sName.includes("aouisesmee") || targetEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee"] : [])
       ].filter(Boolean))
     );
 

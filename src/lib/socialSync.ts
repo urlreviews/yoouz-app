@@ -870,17 +870,17 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111") || userEmail.includes("biz") || userName.includes("biz");
 
     const matchesAvtErtuop = isAvtErtuop && (
-      participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("canon_user_avtertuop") || p.includes("avt")) ||
+      participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
       senderEmail.includes("avr6566gd") || senderEmail.includes("avt") || recipientEmail.includes("avr6566gd") || recipientEmail.includes("avt") ||
       senderName.includes("avt") || recipientName.includes("avt")
     );
     const matchesAouisesmee = isAouisesmee && (
-      participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("aouisesme") || p.includes("aouiseme") || p.includes("4samet") || p.includes("canon_user_aouisesmee")) ||
+      participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("aouisesme") || p.includes("aouiseme") || p.includes("4samet")) ||
       senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderEmail.includes("aouisesme") || senderEmail.includes("aouiseme") || senderEmail.includes("4samet") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientEmail.includes("aouisesme") || recipientEmail.includes("aouiseme") || recipientEmail.includes("4samet") ||
       senderName.includes("aouisesmee") || senderName.includes("aouisemee") || senderName.includes("aouisesme") || senderName.includes("aouiseme") || senderName.includes("4samet") || recipientName.includes("aouisesmee") || recipientName.includes("aouisemee") || recipientName.includes("aouisesme") || recipientName.includes("aouiseme") || recipientName.includes("4samet")
     );
     const matchesBizRiv = isBizRiv && (
-      participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("canon_user_bizriv") || p.includes("biz")) ||
+      participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("biz")) ||
       senderEmail.includes("louis42111") || senderEmail.includes("biz") || recipientEmail.includes("louis42111") || recipientEmail.includes("biz") ||
       senderName.includes("biz") || recipientName.includes("biz")
     );
@@ -1347,22 +1347,22 @@ export async function sendChatMessage(
 
   const canonicalAliases: string[] = [];
   if (recipientName.toLowerCase() === "avt ertuop" || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientId.includes("avt")) {
-    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
+    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
   }
   if (recipientName.toLowerCase() === "biz riv" || recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientId.includes("biz")) {
-    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv", "biz");
+    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
   }
   if (recipientName.toLowerCase().includes("aouisesmee") || recipientEmail === "aouisesmee@gmail.com" || recipientEmail.includes("4samet") || recipientId.includes("aouisesmee") || recipientId.includes("4samet")) {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "4samet@gmail.com", "4samet");
   }
   if (userName.toLowerCase() === "avt ertuop" || userEmail === "avr6566gd@gmail.com" || userEmail.includes("avt") || userName.toLowerCase().includes("avt")) {
-    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
+    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
   }
   if (userName.toLowerCase() === "biz riv" || userEmail === "louis42111@gmail.com" || userEmail.includes("biz") || userName.toLowerCase().includes("biz")) {
-    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv", "biz");
+    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
   }
   if (userName.toLowerCase().includes("aouisesmee") || userEmail === "aouisesmee@gmail.com" || userEmail.includes("4samet") || userName.toLowerCase().includes("4samet")) {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "4samet@gmail.com", "4samet");
   }
 
   const participantsList = Array.from(

@@ -37,6 +37,7 @@ import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
 import { deduplicateChatHistory } from "../lib/socialSync";
+import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
 interface CopoMessagesViewProps {
   messages: CopoMessage[];
@@ -277,65 +278,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     };
 
     const getCanonicalKey = (cand: { email?: string; name?: string; id?: string; handle?: string }): string => {
-      const e = (cand.email || "").toLowerCase().trim();
-      const n = (cand.name || "").toLowerCase().trim();
-      const i = (cand.id || "").toLowerCase().trim();
-      const h = (cand.handle || "").replace(/^@+/, "").toLowerCase().trim();
-
-      // 1. Group all aliases for aouisesmee
-      if (
-        e.includes("aouisesmee") || e.includes("aouisesme") ||
-        n.includes("aouisesmee") || n.includes("aouisesme") ||
-        h.includes("aouisesmee") || h.includes("aouisesme") ||
-        i.includes("aouisesmee") || i.includes("aouisesme") || i === "mlio66hdr9trvofdgddgwm30rku2"
-      ) {
-        return "canon_user_aouisesmee";
-      }
-
-      // 2. Group all aliases for Biz Riv
-      if (
-        n === "biz riv" || n.replace(/[^a-z0-9]/g, "") === "bizriv" ||
-        e.includes("louis42111") || h.includes("louis42111") || i.includes("louis42111")
-      ) {
-        return "canon_user_bizriv";
-      }
-
-      // 3. Group all aliases for avt ertuop
-      if (
-        n === "avt ertuop" || n.replace(/[^a-z0-9]/g, "") === "avtertuop" ||
-        e.includes("avr6566gd") || h.includes("avr6566gd") || i.includes("avr6566gd")
-      ) {
-        return "canon_user_avtertuop";
-      }
-
-      // 4. Normalized non-generic clean name
-      const cleanName = n.replace(/[^a-z0-9]/g, "");
-      const isGeneric = (str: string) => !str || str === "reviewer" || str === "user" || str === "registereduser" || str === "communityreviewer";
-      if (cleanName && !isGeneric(cleanName) && cleanName.length >= 2) {
-        return `canon_name_${cleanName}`;
-      }
-
-      // 5. Normalized clean handle
-      const cleanHandle = h.replace(/[^a-z0-9]/g, "");
-      if (cleanHandle && !isGeneric(cleanHandle) && cleanHandle.length >= 2) {
-        return `canon_handle_${cleanHandle}`;
-      }
-
-      // 6. Normalized email prefix
-      if (e && e.includes("@")) {
-        const prefix = e.split("@")[0].replace(/[^a-z0-9]/g, "");
-        if (prefix && prefix.length >= 2 && !isGeneric(prefix)) {
-          return `canon_email_${prefix}`;
-        }
-      }
-
-      // 7. Clean ID
-      if (i) {
-        const cleanId = i.replace(/^usr_/, "").replace(/[^a-z0-9]/g, "");
-        if (cleanId) return `canon_id_${cleanId}`;
-      }
-
-      return "";
+      return getCanonicalUserKey(cand);
     };
 
     // 1. Ingest from allUsers
@@ -496,9 +439,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         finalEmail ? finalEmail.split("@")[0] : "",
         recipient.id,
         recipient.name.toLowerCase(),
-        ...(rName === "avt ertuop" || finalEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop"] : []),
-        ...(rName === "biz riv" || finalEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv"] : []),
-        ...(rName.includes("aouisesmee") || finalEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee"] : [])
+        ...(rName === "avt ertuop" || finalEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop"] : []),
+        ...(rName === "biz riv" || finalEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv"] : []),
+        ...(rName.includes("aouisesmee") || finalEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee"] : [])
       ].filter(Boolean))
     );
 

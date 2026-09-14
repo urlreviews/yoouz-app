@@ -18,6 +18,7 @@ import {
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
 interface CopoFollowingViewProps {
   places: Place[];
@@ -40,46 +41,7 @@ interface CopoFollowingViewProps {
 const getCanonicalAuthorKey = (raw: string | { name?: string; email?: string; id?: string; handle?: string }): string => {
   if (!raw) return "";
   const obj = typeof raw === "string" ? { name: raw } : raw;
-  const n = (obj.name || "").toLowerCase().trim();
-  const e = (obj.email || "").toLowerCase().trim();
-  const h = (obj.handle || "").replace(/^@+/, "").toLowerCase().trim();
-  const i = (obj.id || (obj as any).uid || "").toLowerCase().trim();
-
-  // Group known alias clusters
-  if (
-    n.includes("aouisesmee") || n.includes("aouisesme") ||
-    e.includes("aouisesmee") || e.includes("aouisesme") ||
-    h.includes("aouisesmee") || h.includes("aouisesme") ||
-    i.includes("aouisesmee") || i.includes("aouisesme") || i === "mlio66hdr9trvofdgddgwm30rku2"
-  ) {
-    return "canon_user_aouisesmee";
-  }
-
-  if (
-    n === "biz riv" || n.replace(/[^a-z0-9]/g, "") === "bizriv" ||
-    e.includes("louis42111") || h.includes("louis42111") || i.includes("louis42111")
-  ) {
-    return "canon_user_bizriv";
-  }
-
-  if (
-    n === "avt ertuop" || n.replace(/[^a-z0-9]/g, "") === "avtertuop" ||
-    e.includes("avr6566gd") || h.includes("avr6566gd") || i.includes("avr6566gd")
-  ) {
-    return "canon_user_avtertuop";
-  }
-
-  const cleanName = n.replace(/[^a-z0-9]/g, "");
-  const isGeneric = (s: string) => !s || s === "reviewer" || s === "user" || s === "registereduser" || s === "communityreviewer";
-  if (cleanName && !isGeneric(cleanName) && cleanName.length >= 2) {
-    return `canon_name_${cleanName}`;
-  }
-
-  if (h && !isGeneric(h) && h.length >= 2) return `canon_handle_${h.replace(/[^a-z0-9]/g, "")}`;
-  if (e && e.includes("@")) return `canon_email_${e.split("@")[0].replace(/[^a-z0-9]/g, "")}`;
-  if (i) return `canon_id_${i.replace(/[^a-z0-9]/g, "")}`;
-
-  return n || "";
+  return getCanonicalUserKey(obj);
 };
 
 export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({

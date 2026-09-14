@@ -540,9 +540,9 @@ function broadcastSseEvent(event: { type: string; [key: string]: any }, targetUs
 
         const isMatch = targets.some(t => {
           if (!t) return false;
-          if (isAvtErtuop && (t.includes("avr6566gd") || t === "avtertuop" || t === "avt ertuop" || t.includes("canon_user_avtertuop") || t.includes("avt"))) return true;
-          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme") || t.includes("canon_user_aouisesmee") || t.includes("4samet"))) return true;
-          if (isBizRiv && (t.includes("louis42111") || t === "bizriv" || t === "biz riv" || t.includes("canon_user_bizriv"))) return true;
+          if (isAvtErtuop && (t.includes("avr6566gd") || t === "avtertuop" || t === "avt ertuop" || t.includes("avt"))) return true;
+          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme") || t.includes("4samet"))) return true;
+          if (isBizRiv && (t.includes("louis42111") || t === "bizriv" || t === "biz riv")) return true;
 
           return (
             t === cEmail ||
@@ -4064,13 +4064,13 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
           ].filter(Boolean);
 
           if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop" || (t || "").toLowerCase().includes("avt"))) {
-            targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
+            targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
           }
           if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
-            targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+            targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv");
           }
           if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("4samet"))) {
-            targets.push("aouisesmee@gmail.com", "aouisesmee", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+            targets.push("aouisesmee@gmail.com", "aouisesmee", "4samet@gmail.com", "4samet");
           }
 
           broadcastSseEvent({
@@ -6347,13 +6347,13 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
 
       const lowerTargets = targets.map(t => String(t).toLowerCase());
       if (lowerTargets.some(t => t.includes("avr6566gd") || t.includes("avtertuop") || t === "avt ertuop" || t.includes("avt"))) {
-        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
+        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
       }
       if (lowerTargets.some(t => t.includes("louis42111") || t.includes("bizriv") || t === "biz riv")) {
-        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv");
       }
       if (lowerTargets.some(t => t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme") || t.includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "4samet@gmail.com", "4samet");
       }
 
       broadcastSseEvent({
@@ -7763,13 +7763,13 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
       ].filter(Boolean);
 
       if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop" || (t || "").toLowerCase().includes("avt"))) {
-        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
+        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
       }
       if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
-        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv");
+        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv");
       }
       if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme") || (t || "").toLowerCase().includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "4samet@gmail.com", "4samet");
       }
 
       broadcastSseEvent({
@@ -7902,13 +7902,13 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
 
       const targets = [...rawTargets];
       if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop" || (t || "").toLowerCase().includes("avt"))) {
-        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "canon_user_avtertuop", "avt");
+        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
       }
       if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv" || (t || "").toLowerCase().includes("biz"))) {
-        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "canon_user_bizriv", "biz");
+        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
       }
       if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme") || (t || "").toLowerCase().includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "canon_user_aouisesmee", "4samet@gmail.com", "4samet");
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "4samet@gmail.com", "4samet");
       }
 
       broadcastSseEvent({
