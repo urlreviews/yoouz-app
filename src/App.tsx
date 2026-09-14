@@ -659,6 +659,27 @@ export function App() {
     };
   }, []);
 
+  // Self-healing synchronization: push any locally cached/created user reviews to server & BunnyDB on boot
+  useEffect(() => {
+    try {
+      const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
+      if (localPubStr) {
+        const list = JSON.parse(localPubStr);
+        if (Array.isArray(list) && list.length > 0) {
+          list.forEach((rev: any) => {
+            if (rev && rev.id) {
+              fetch("/api/videos/save-review", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(rev)
+              }).catch(() => {});
+            }
+          });
+        }
+      }
+    } catch (e) {}
+  }, []);
+
   const handleAdminDeleteVideo = async (id: string) => {
     if (!id) return;
     const targetId = String(id);
