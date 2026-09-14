@@ -26,6 +26,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   loading = "lazy",
   fetchPriority = "auto"
 }) => {
+  const [fetchedLogo, setFetchedLogo] = useState<string | null>(null);
+  const [triedProxy, setTriedProxy] = useState(false);
   const [triedFallback, setTriedFallback] = useState(false);
   const [triedDuckFallback, setTriedDuckFallback] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -42,9 +44,28 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   // Reset error & fallback ONLY if the incoming source itself fundamentally changes
   useEffect(() => {
     setHasError(false);
+    setTriedProxy(false);
     setTriedFallback(false);
     setTriedDuckFallback(false);
   }, [resolvedDomain, logoUrl, name]);
+
+  // Background auto-enrichment from live url-metadata if logoUrl was not directly provided
+  useEffect(() => {
+    if (!logoUrl && resolvedDomain && resolvedDomain.includes(".")) {
+      let isMounted = true;
+      fetch(`/api/url-metadata?url=${encodeURIComponent(resolvedDomain)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (isMounted && data && data.logo && typeof data.logo === "string" && data.logo.trim() !== "") {
+            setFetchedLogo(data.logo);
+          }
+        })
+        .catch(() => {});
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [resolvedDomain, logoUrl]);
 
   const monogramSvg = useMemo(() => {
     return generateBrandMonogramSvg(name || resolvedDomain || "Place", 128);
@@ -71,21 +92,22 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     // 2. Explicit clean Logo URL from authentic metadata or API
+    const targetLogo = logoUrl || fetchedLogo;
     if (
-      logoUrl &&
-      !logoUrl.includes("brandfetch.io") &&
-      logoUrl !== "data:;" &&
-      !logoUrl.startsWith("data:;") &&
-      (logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("/api/") || logoUrl.startsWith("data:image"))
+      targetLogo &&
+      !targetLogo.includes("brandfetch.io") &&
+      targetLogo !== "data:;" &&
+      !targetLogo.startsWith("data:;") &&
+      (targetLogo.startsWith("http://") || targetLogo.startsWith("https://") || targetLogo.startsWith("/api/") || targetLogo.startsWith("data:image"))
     ) {
-      if (logoUrl.startsWith("/api/proxy-image?url=")) {
+      if (targetLogo.startsWith("/api/proxy-image?url=")) {
         try {
-          return decodeURIComponent(logoUrl.replace("/api/proxy-image?url=", ""));
+          return decodeURIComponent(targetLogo.replace("/api/proxy-image?url=", ""));
         } catch (e) {
-          return logoUrl;
+          return targetLogo;
         }
       }
-      return logoUrl;
+      return targetLogo;
     }
 
     // 3. Known domain lookup by name
@@ -100,14 +122,17 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     return null;
-  }, [resolvedDomain, logoUrl, name, googleFaviconUrl]);
+  }, [resolvedDomain, logoUrl, fetchedLogo, name, googleFaviconUrl]);
 
   const currentSrc = useMemo(() => {
     if (hasError) return null;
     if (triedDuckFallback) return duckFaviconUrl;
     if (triedFallback) return googleFaviconUrl || duckFaviconUrl;
+    if (triedProxy && effectiveSrc && (effectiveSrc.startsWith("http://") || effectiveSrc.startsWith("https://"))) {
+      return `/api/proxy-image?url=${encodeURIComponent(effectiveSrc)}`;
+    }
     return effectiveSrc || googleFaviconUrl || duckFaviconUrl;
-  }, [hasError, triedDuckFallback, triedFallback, duckFaviconUrl, googleFaviconUrl, effectiveSrc]);
+  }, [hasError, triedDuckFallback, triedFallback, triedProxy, duckFaviconUrl, googleFaviconUrl, effectiveSrc]);
 
   if (hasError || !currentSrc) {
     return (
@@ -135,7 +160,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         className={imageClassName}
         referrerPolicy="no-referrer"
         onError={() => {
-          if (!triedFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
+          if (!triedProxy && effectiveSrc && (effectiveSrc.startsWith("http://") || effectiveSrc.startsWith("https://")) && !effectiveSrc.startsWith("/api/")) {
+            setTriedProxy(true);
+          } else if (!triedFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
             setTriedFallback(true);
           } else if (!triedDuckFallback && duckFaviconUrl && currentSrc !== duckFaviconUrl) {
             setTriedDuckFallback(true);

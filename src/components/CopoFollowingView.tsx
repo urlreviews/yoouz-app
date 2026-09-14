@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
@@ -605,27 +606,16 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                       >
                         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                           {/* Modern Squircle Business Logo */}
-                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white p-1 border border-zinc-800 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
-                            {resolvedLogo ? (
-                              <img
-                                src={resolvedLogo}
-                                alt={formattedTitle}
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.style.display = "none";
-                                  const fallback = target.nextElementSibling as HTMLElement;
-                                  if (fallback) fallback.style.display = "flex";
-                                }}
-                              />
-                            ) : null}
-                            <div
-                              style={{ display: resolvedLogo ? "none" : "flex" }}
-                              className="w-full h-full items-center justify-center bg-zinc-950 text-white rounded-lg"
-                            >
-                              <Building2 className="w-5 h-5 text-white" />
-                            </div>
-                          </div>
+                          <CopoBrandLogo
+                            domain={cleanDomain}
+                            name={formattedTitle}
+                            website={place.website}
+                            logoUrl={place.logoUrl || place.avatarUrl}
+                            bannerUrl={place.bannerUrl || place.ogImage}
+                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-zinc-900 p-1.5 border border-zinc-800 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform ring-1 ring-white/10"
+                            imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
+                            fallbackTextClassName="font-extrabold text-xs text-white"
+                          />
 
                           {/* Business Info: Streamlined 2-Line Layout */}
                           <div className="min-w-0 flex-1 text-left">

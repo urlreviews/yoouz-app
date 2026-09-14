@@ -867,9 +867,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
               loading={isActive || isNear ? "eager" : "lazy"}
               fetchPriority={isActive ? "high" : "auto"}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-black/10 overflow-hidden flex items-center justify-center shrink-0 p-1 sm:p-1.5 shadow-md group-hover:scale-105 transition-transform ring-1 ring-white/20"
-              imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
-              fallbackTextClassName="font-extrabold text-xs text-zinc-900"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center shrink-0 p-1.5 sm:p-2 shadow-md group-hover:scale-105 transition-transform ring-1 ring-white/15"
+              imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
+              fallbackTextClassName="font-extrabold text-xs text-white"
             />
             <div className="min-w-0 flex-1 py-0.5">
               <span className="line-clamp-2 [overflow-wrap:anywhere] leading-snug font-extrabold text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:text-white transition-colors">
