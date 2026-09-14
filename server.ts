@@ -287,8 +287,8 @@ function isDeletedPlaceServer(itemOrId: any, deletedSet?: Set<string>): boolean 
   const name = typeof itemOrId === 'object' ? String(itemOrId.name || '').toLowerCase().trim() : '';
 
   if (set.has(id) || set.has(dotId) || set.has(hyphenId)) return true;
-  if (domain && (set.has(domain) || Array.from(set).some(d => d.length > 3 && (domain === d || domain.includes(d) || d.includes(domain))))) return true;
-  if (name && (set.has(name) || Array.from(set).some(d => d.length > 3 && (name === d || (name.length > 4 && d.length > 4 && (name.includes(d) || d.includes(name))))))) return true;
+  if (domain && set.has(domain)) return true;
+  if (name && set.has(name)) return true;
 
   return false;
 }
@@ -3935,7 +3935,36 @@ app.get('/api/nosql/:collection', async (req, res) => {
         } catch (err) {}
       }
 
-      // 4. Add author profiles from local reviews_index.json
+      // 4. Add author profiles from BunnyDB videoReviews and local reviews_index.json
+      if (bunnyDb) {
+        try {
+          const revRows = await bunnyDb.execute("SELECT id, placeName, authorName, authorAvatar, userId, data FROM videoReviews LIMIT 100");
+          if (revRows && revRows.rows) {
+            revRows.rows.forEach((r: any) => {
+              const parsed = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+              const author = parsed.author || {};
+              const authorName = r.authorName || author.name || parsed.authorName || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId);
+              const authorHandle = author.handle || `@${(authorName || 'reviewer').toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+              const authorAvatar = r.authorAvatar || author.avatar || parsed.authorAvatar || '';
+              const userEmail = (r.userId && r.userId.includes('@')) ? r.userId : (parsed.userEmail || '');
+              if (authorName) {
+                mergeUserIntoMap({
+                  id: r.userId || authorHandle,
+                  uid: r.userId || authorHandle,
+                  name: authorName,
+                  handle: authorHandle,
+                  avatar: authorAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`,
+                  email: userEmail,
+                  bio: author.bio || "Creator & Reviewer on Yoouz.",
+                  role: "Creator",
+                  isVerified: true
+                });
+              }
+            });
+          }
+        } catch (e) {}
+      }
+
       try {
         const localList = readReviewsIndex();
         localList.forEach((vr: any) => {
@@ -3949,9 +3978,10 @@ app.get('/api/nosql/:collection', async (req, res) => {
               uid: vr.userId || authorHandle,
               name: authorName,
               handle: authorHandle?.startsWith("@") ? authorHandle : `@${authorHandle}`,
-              avatar: authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a73e8&color=fff`,
-              email: vr.userEmail || "",
+              avatar: authorAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`,
+              email: vr.userEmail || (vr.userId?.includes('@') ? vr.userId : ""),
               location: author?.location || vr.location,
+              role: "Creator",
               isVerified: true
             });
           }
@@ -4784,6 +4814,22 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         counts[tbl] = 0;
       }
     }
+
+    // If counts.videoReviews is 0 in BunnyDB, augment with local reviews index
+    try {
+      const localRevCount = readReviewsIndex().length;
+      counts.videoReviews = Math.max(counts.videoReviews || 0, localRevCount);
+    } catch (e) {}
+
+    // Ensure total users accurately reflects active accounts and creators
+    try {
+      const activeUserIds = new Set<string>();
+      readReviewsIndex().forEach((r: any) => {
+        if (r && r.userId) activeUserIds.add(String(r.userId).toLowerCase());
+        if (r && r.author?.name) activeUserIds.add(String(r.author.name).toLowerCase());
+      });
+      counts.users = Math.max(counts.users || 0, activeUserIds.size, 1);
+    } catch (e) {}
   } else {
     for (const tbl of tables) {
       counts[tbl] = 0;
@@ -16185,10 +16231,11 @@ function injectOpenGraphTags(html: string, meta: any) {
   }
 
   await initBunnyDbSchema().catch(() => {});
-  await syncInitialVideoInteractionsToBunnyDb().catch(() => {});
-  await syncAndWarmFeedFromBunnyDb().catch(() => {});
-  await seedKnownSearchesToBunnyDb().catch(() => {});
-  await syncAndMigrateBusinessPlaces().catch(() => {});
+  // Disabled automatic mock seeders so Bunny Database stays clean and user-driven
+  // await syncInitialVideoInteractionsToBunnyDb().catch(() => {});
+  // await syncAndWarmFeedFromBunnyDb().catch(() => {});
+  // await seedKnownSearchesToBunnyDb().catch(() => {});
+  // await syncAndMigrateBusinessPlaces().catch(() => {});
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://localhost:${PORT}`);

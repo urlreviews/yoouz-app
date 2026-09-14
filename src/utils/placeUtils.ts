@@ -1175,15 +1175,6 @@ export function isPlaceDeleted(placeOrId: any, deletedIds?: string[]): boolean {
     if (deletedSet.has(v)) return true;
   }
 
-  // Also check domain substring match
-  for (const d of deletedSet) {
-    if (!d || d.length < 3) continue;
-    for (const v of variants) {
-      if (v === d) return true;
-      if (v.includes(".") && d.includes(".") && (v === d || v.includes(d) || d.includes(v))) return true;
-    }
-  }
-
   return false;
 }
 

@@ -1782,7 +1782,7 @@ export function App() {
               deletedList.forEach(k => deletedSet.add(String(k).toLowerCase()));
             }
 
-            const validUsers = list.filter((u: any) => {
+            let validUsers = list.filter((u: any) => {
               if (!u) return false;
               const uEmail = (u.email || "").toLowerCase().trim();
               if (uEmail.includes("undefined")) return false;
@@ -1792,6 +1792,29 @@ export function App() {
               if (deletedSet.has(uEmail) || (uName && deletedSet.has(uName)) || (uId && deletedSet.has(uId))) return false;
               return true;
             });
+
+            // Ensure current active user is integrated into the user directory
+            if (currentUser && (currentUser.email || currentUser.uid)) {
+              const currentEmail = (currentUser.email || "").toLowerCase().trim();
+              const currentUid = (currentUser.uid || currentUser.id || "").toLowerCase().trim();
+              const exists = validUsers.some((u: any) => {
+                const e = (u.email || "").toLowerCase().trim();
+                const id = (u.id || u.uid || "").toLowerCase().trim();
+                return (currentEmail && e === currentEmail) || (currentUid && id === currentUid);
+              });
+              if (!exists) {
+                validUsers = [
+                  {
+                    ...currentUser,
+                    id: currentUser.uid || currentUser.id || currentEmail,
+                    role: currentUser.role || (currentUser.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
+                    isVerified: true
+                  },
+                  ...validUsers
+                ];
+              }
+            }
+
             setAllRegisteredUsers(validUsers);
             updateUserRegistry(validUsers);
 
@@ -1850,6 +1873,22 @@ export function App() {
       document.removeEventListener("visibilitychange", handleUsersRefresh);
     };
   }, []);
+
+  // Synchronize current user to remote BunnyDB so admin live stats and user list always reflect active users
+  useEffect(() => {
+    if (currentUser && (currentUser.email || currentUser.uid)) {
+      const docId = currentUser.uid || currentUser.email?.replace(/[^a-zA-Z0-9]/g, "_") || "user_me";
+      fetch(`/api/nosql/users/${encodeURIComponent(docId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...currentUser,
+          role: currentUser.role || (currentUser.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
+          updatedAt: new Date().toISOString()
+        })
+      }).catch(() => {});
+    }
+  }, [currentUser]);
 
   const handleUpdateProfile = (updated: { name?: string; bio?: string; avatar?: string; banner?: string; location?: string; handle?: string }) => {
     setCurrentUser((prev) => {

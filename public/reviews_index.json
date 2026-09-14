@@ -1,1 +1,34 @@
-[]
+[
+  {
+    "id": "test_rev_123",
+    "placeId": "kpbimmigrationlawfirm.com",
+    "placeName": "KPB Immigration Law",
+    "author": {
+      "name": "Abe We",
+      "handle": "@abewe",
+      "avatar": ""
+    },
+    "userId": "4samet@gmail.com",
+    "rating": 5,
+    "videoUrl": "https://rev1.b-cdn.net/videos/test.mp4",
+    "thumbnailUrl": "https://rev1.b-cdn.net/videos/test.jpg",
+    "placeBannerUrl": "",
+    "bannerUrl": "",
+    "ogImage": "",
+    "placeLogoUrl": "",
+    "placeWebsite": "https://kpbimmigrationlawfirm.com",
+    "likesCount": 0,
+    "likes": 0,
+    "bookmarksCount": 0,
+    "bookmarks": 0,
+    "sharesCount": 0,
+    "shares": 0,
+    "commentsCount": 0,
+    "authorName": "Abe We",
+    "authorAvatar": "",
+    "duration": 60,
+    "viewsCount": 0,
+    "views": 0,
+    "comments": []
+  }
+]

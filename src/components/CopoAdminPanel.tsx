@@ -63,19 +63,13 @@ import {
 import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
 import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 
 export const AdminPlaceLogo: React.FC<{
   place: Partial<Place> | null | undefined;
   size?: "sm" | "md" | "lg";
   className?: string;
 }> = ({ place, size = "md", className = "" }) => {
-  const [hasError, setHasError] = useState(false);
-
-  const resolvedUrl = useMemo(() => {
-    if (!place) return null;
-    return getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl || null;
-  }, [place]);
-
   const sizeClasses =
     size === "sm"
       ? "w-9 h-9"
@@ -83,41 +77,27 @@ export const AdminPlaceLogo: React.FC<{
       ? "w-14 h-14"
       : "w-12 h-12";
 
-  const iconSize = size === "sm" ? "w-4 h-4" : size === "lg" ? "w-6 h-6" : "w-5 h-5";
+  const resolvedUrl = useMemo(() => {
+    if (!place) return null;
+    return getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl || null;
+  }, [place]);
 
-  const placeName = (place?.name || "Place").trim();
-  const firstLetter = (placeName[0] || "P").toUpperCase();
-
-  useEffect(() => {
-    setHasError(false);
-  }, [resolvedUrl]);
-
-  if (!resolvedUrl || hasError) {
-    return (
-      <div
-        className={`${sizeClasses} rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 font-black text-sm text-zinc-200 shadow-inner ${className}`}
-      >
-        {place?.name ? (
-          <span className="font-black text-xs tracking-tight text-zinc-200">{firstLetter}</span>
-        ) : (
-          <Building2 className={`${iconSize} text-zinc-200`} />
-        )}
-      </div>
-    );
-  }
+  const domain = useMemo(() => {
+    if (!place) return null;
+    return place.brandDomain || place.website || (place.id && place.id.includes(".") ? place.id : null);
+  }, [place]);
 
   return (
-    <div
-      className={`${sizeClasses} rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-sm ${className}`}
-    >
-      <img
-        src={resolvedUrl}
-        alt={place?.name || ""}
-        onError={() => setHasError(true)}
-        className="w-full h-full object-contain rounded-lg"
-        loading="lazy"
-      />
-    </div>
+    <CopoBrandLogo
+      domain={domain}
+      name={place?.name}
+      website={place?.website}
+      logoUrl={resolvedUrl}
+      bannerUrl={place?.bannerUrl || place?.ogImage}
+      className={`${sizeClasses} rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-sm ring-1 ring-white/10 ${className}`}
+      imageClassName="w-full h-full object-contain rounded-lg [image-rendering:-webkit-optimize-contrast]"
+      fallbackTextClassName="font-black text-xs text-white"
+    />
   );
 };
 

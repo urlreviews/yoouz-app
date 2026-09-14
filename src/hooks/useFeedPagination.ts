@@ -131,11 +131,12 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
     const deletedPlacesStr = localStorage.getItem("copo_deleted_places") || localStorage.getItem("yoouz_deleted_places") || "[]";
     const deletedPlaces: string[] = JSON.parse(deletedPlacesStr);
     if (Array.isArray(deletedPlaces) && deletedPlaces.length > 0) {
-      const pId = (v.placeId || "").toLowerCase();
-      const pName = (v.placeName || "").toLowerCase();
+      const pId = (v.placeId || "").toLowerCase().trim();
+      const pName = (v.placeName || "").toLowerCase().trim();
+      const pWebsite = (v.placeWebsite || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
       if (deletedPlaces.some(dp => {
-        const dpLow = String(dp).toLowerCase();
-        return dpLow === pId || dpLow === pName || pName.includes(dpLow);
+        const dpLow = String(dp).toLowerCase().trim();
+        return dpLow === pId || dpLow === pName || (pWebsite && dpLow === pWebsite);
       })) {
         return true;
       }
@@ -341,17 +342,34 @@ export function useFeedPagination() {
                 }
               });
 
-              // Keep only real, non-purged local pending uploads created in the last 10 minutes
-              const pendingLocalVideos = prev.filter(
-                (v) =>
+              // Keep only real, non-purged local pending uploads or recently created reviews
+              let localSavedReviews: any[] = [];
+              try {
+                const ls = localStorage.getItem("yoouz_local_created_reviews");
+                if (ls) {
+                  const parsed = JSON.parse(ls);
+                  if (Array.isArray(parsed)) localSavedReviews = parsed;
+                }
+              } catch (e) {}
+
+              const pendingCandidateList = [
+                ...prev.filter((v) => v && (v as any).isLocalUpload),
+                ...localSavedReviews
+              ];
+
+              const pendingLocalVideosMap = new Map<string, any>();
+              pendingCandidateList.forEach((v) => {
+                if (
                   v &&
                   v.id &&
                   !isPurgedItem(v) &&
                   !allDeletedSet.has(String(v.id)) &&
-                  (v as any).isLocalUpload &&
-                  !valid.some((sv) => sv.id === v.id) &&
-                  (Date.now() - ((v as any).createdAtMs || 0) < 600000)
-              );
+                  !valid.some((sv) => sv.id === v.id)
+                ) {
+                  pendingLocalVideosMap.set(v.id, normalizeReview(v));
+                }
+              });
+              const pendingLocalVideos = Array.from(pendingLocalVideosMap.values());
 
               // Server videos are authoritative: if a video was deleted on server, it is dropped here!
               const mergedServerVideos = valid.map((v) => {
