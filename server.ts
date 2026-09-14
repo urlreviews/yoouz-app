@@ -3134,6 +3134,25 @@ async function purgeVideoFromAllStores(videoId: string) {
         sql: `DELETE FROM videos WHERE id = ?`,
         args: [videoId]
       });
+      // Cascade delete comments, likes, and bookmarks for this video
+      try {
+        await bunnyClient.execute({
+          sql: `DELETE FROM comments WHERE videoId = ?`,
+          args: [videoId]
+        });
+      } catch (e) {}
+      try {
+        await bunnyClient.execute({
+          sql: `DELETE FROM likes WHERE videoId = ?`,
+          args: [videoId]
+        });
+      } catch (e) {}
+      try {
+        await bunnyClient.execute({
+          sql: `DELETE FROM bookmarks WHERE videoId = ?`,
+          args: [videoId]
+        });
+      } catch (e) {}
       console.log(`🐰 [Server] BunnyDB successfully purged review ${videoId}`);
     } catch (bErr: any) {
       console.warn("BunnyDB video purge error:", bErr?.message || bErr);
@@ -3464,6 +3483,46 @@ async function purgeUserFromAllStores(targetId?: string, targetEmail?: string, t
               }
             }
           }
+        } catch (e) {}
+      }
+
+      // Cascade purge user social records (follows, comments, likes, bookmarks, notifications, chats) from BunnyDB
+      for (const uidStr of idsArray) {
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM follows WHERE followerId = ? OR followingId = ?`,
+            args: [uidStr, uidStr]
+          });
+        } catch (e) {}
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM comments WHERE userId = ? OR userName = ?`,
+            args: [uidStr, uidStr]
+          });
+        } catch (e) {}
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM likes WHERE userId = ?`,
+            args: [uidStr]
+          });
+        } catch (e) {}
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM bookmarks WHERE userId = ?`,
+            args: [uidStr]
+          });
+        } catch (e) {}
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM notifications WHERE recipientEmail = ? OR data LIKE ?`,
+            args: [uidStr, `%"${uidStr}"%`]
+          });
+        } catch (e) {}
+        try {
+          await bunnyDb.execute({
+            sql: `DELETE FROM chats WHERE participants LIKE ? OR lastSenderEmail = ?`,
+            args: [`%"${uidStr}"%`, uidStr]
+          });
         } catch (e) {}
       }
     }
@@ -4446,22 +4505,8 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     }
 
     if (colName === 'users') {
-      recordDeletedUserIds([id]);
-      // Purge all video reviews authored by this user
-      try {
-        const allVideos = readReviewsIndex();
-        for (const v of allVideos) {
-          if (v && isDeletedUserServer(v, new Set([id.toLowerCase()]))) {
-            await purgeVideoFromAllStores(String(v.id));
-          }
-        }
-      } catch (e) {}
-
-      broadcastSseEvent({
-        type: "user_deleted",
-        userId: id,
-        userIds: [id]
-      });
+      const purgeResult = await purgeUserFromAllStores(id);
+      return res.json({ success: true, id, message: "User permanently purged live.", ...purgeResult });
     }
 
     // 1. Delete from Bunny Database (Cloud libSQL) if configured
