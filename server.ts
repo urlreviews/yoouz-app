@@ -16465,6 +16465,23 @@ function injectOpenGraphTags(html: string, meta: any) {
   // Automatically wipe all databases, tables, and uploads from scratch on startup as requested
   try {
     console.log("🔥 [Server] AUTOMATIC STARTUP MASTER RESET: Wiping all tables and files from scratch...");
+    
+    // Explicitly delete SQLite database files so the database is created completely empty from scratch
+    try {
+      const bunnyDbPath = path.resolve(process.cwd(), "bunny.db");
+      if (fs.existsSync(bunnyDbPath)) {
+        fs.unlinkSync(bunnyDbPath);
+        console.log("🗑️ Deleted root bunny.db");
+      }
+      const edgeDbPath = path.resolve(uploadsDir, "bunny_edge.db");
+      if (fs.existsSync(edgeDbPath)) {
+        fs.unlinkSync(edgeDbPath);
+        console.log("🗑️ Deleted uploads/bunny_edge.db");
+      }
+    } catch (e) {
+      console.warn("Notice deleting db files:", e);
+    }
+
     const bunnyDb = getBunnyDb();
     const tables = [
       'users', 'places', 'videoReviews', 'comments', 'likes', 
@@ -16487,7 +16504,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         for (const file of files) {
           try {
             const filePath = path.join(uploadsDir, file);
-            if (fs.statSync(filePath).isFile()) {
+            if (fs.statSync(filePath).isFile() && !filePath.includes('bunny_edge.db')) {
               fs.unlinkSync(filePath);
             }
           } catch (e) {}
@@ -16500,7 +16517,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       feedCache.videos = [];
     } catch (e) {}
 
-    console.log("✨ [Server] Automatic startup master reset complete. All databases and files wiped clean from scratch.");
+    console.log("✨ [Server] Automatic startup master reset complete. Database and files completely rebuilt empty from scratch.");
   } catch (resetErr) {
     console.warn("Startup reset notice:", resetErr);
   }
