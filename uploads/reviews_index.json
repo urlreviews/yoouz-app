@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "rev-http-verify-1789394675838",
+    "placeId": "yoouz.com",
+    "placeName": "Yoouz",
+    "author": {
+      "name": "Samet",
+      "handle": "@samet",
+      "avatar": "https://yoouz.b-cdn.net/avatars/samet.jpg",
+      "email": "4samet@gmail.com"
+    },
+    "userId": "4samet@gmail.com",
+    "authorName": "Samet",
+    "authorAvatar": "https://yoouz.b-cdn.net/avatars/samet.jpg",
+    "rating": 5,
+    "videoUrl": "https://yoouz.b-cdn.net/videos/sample.mp4",
+    "thumbnailUrl": "https://yoouz.b-cdn.net/videos/sample.jpg",
+    "duration": 30,
+    "text": "Testing HTTP endpoint live save to BunnyDB",
+    "placeBannerUrl": "",
+    "bannerUrl": "",
+    "ogImage": "",
+    "placeLogoUrl": "",
+    "placeWebsite": "https://yoouz.com"
+  }
+]

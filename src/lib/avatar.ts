@@ -63,14 +63,15 @@ export function getAvatarColor(nameOrSeed?: string): { bg: string; text: string 
  * Generate a standalone SVG Data URI for an initial avatar
  * Compatible everywhere as an <img> src or CSS background
  */
-export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string): string {
+export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string, isSquircle = false): string {
   const letter = getFirstLetter(nameOrSeed);
   const color = getAvatarColor(colorSeed || nameOrSeed);
   const fontSize = Math.round(size * 0.52);
+  const rx = isSquircle ? Math.round(size * 0.22) : Math.round(size / 2);
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" rx="${size / 2}" fill="${color.bg}"/>
-    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${color.text}" font-family="-apple-system, BlinkMacSystemFont, 'Google Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="${fontSize}px">${letter}</text>
+    <rect width="${size}" height="${size}" rx="${rx}" fill="${color.bg}"/>
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${color.text}" font-family="-apple-system, BlinkMacSystemFont, 'Google Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="${fontSize}px">${letter}</text>
   </svg>`;
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

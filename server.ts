@@ -5187,17 +5187,63 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       const mp4FilePath = path.join(serverUploadsDir, mp4FileName);
       let finalVideoPath = filePath;
 
-      // 1. Fast, universal transcoding to standard H.264 + AAC MP4 with faststart flags for 0ms instant playback
+      // 1. Audio Silence Detection & Universal Transcoding with Auto-Trim for dead leading/trailing air
       try {
-        if (filePath !== mp4FilePath || cleanFileName.endsWith(".webm") || cleanFileName.endsWith(".mov")) {
-          console.log(`🎬 [Server] Transcoding ${cleanFileName} to universal faststart MP4...`);
+        let startOffset = 0;
+        let endOffset: number | null = null;
+        let totalDuration = 0;
+
+        try {
+          const durRaw = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`).toString().trim();
+          totalDuration = parseFloat(durRaw) || 0;
+
+          // Detect silence periods with -32dB threshold (minimum silence 0.35s)
+          const detectOut = execSync(`ffmpeg -i "${filePath}" -af "silencedetect=noise=-32dB:d=0.35" -f null - 2>&1`).toString();
+
+          // Check for dead air at start
+          const startMatch = detectOut.match(/silence_start:\s*0(?:\.0+)?[\s\S]*?silence_end:\s*([\d\.]+)/);
+          if (startMatch && startMatch[1]) {
+            const endOfInitialSilence = parseFloat(startMatch[1]);
+            // If more than 0.3s of dead silence before speech starts, trim it with 0.15s margin
+            if (endOfInitialSilence > 0.3) {
+              startOffset = Math.max(0, endOfInitialSilence - 0.15);
+            }
+          }
+
+          // Check for trailing silence at the end of recording
+          const matches = Array.from(detectOut.matchAll(/silence_start:\s*([\d\.]+)/g));
+          if (matches.length > 0) {
+            const lastSilenceStart = parseFloat(matches[matches.length - 1][1]);
+            if (totalDuration > 0 && lastSilenceStart > 0 && (totalDuration - lastSilenceStart) >= 0.4) {
+              endOffset = lastSilenceStart + 0.15;
+            }
+          }
+        } catch (detectErr) {
+          console.warn("Silence scan notice:", detectErr);
+        }
+
+        console.log(`🎬 [Server] Transcoding & Trimming ${cleanFileName} (startOffset=${startOffset.toFixed(2)}s, endOffset=${endOffset ? endOffset.toFixed(2) + 's' : 'none'}, duration=${totalDuration.toFixed(2)}s)...`);
+
+        let trimArgs = "";
+        if (startOffset > 0) {
+          trimArgs += ` -ss ${startOffset.toFixed(3)}`;
+        }
+        if (endOffset && endOffset > (startOffset + 1.0)) {
+          trimArgs += ` -to ${endOffset.toFixed(3)}`;
+        }
+
+        execSync(`ffmpeg -i "${filePath}" ${trimArgs} -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { stdio: 'ignore' });
+        finalVideoPath = mp4FilePath;
+        cleanFileName = mp4FileName;
+        mimeType = "video/mp4";
+      } catch (ffErr) {
+        console.warn("FFmpeg transcode/trim notice (using standard pass):", ffErr);
+        try {
           execSync(`ffmpeg -i "${filePath}" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { stdio: 'ignore' });
           finalVideoPath = mp4FilePath;
           cleanFileName = mp4FileName;
           mimeType = "video/mp4";
-        }
-      } catch (ffErr) {
-        console.warn("FFmpeg transcode notice (using source file):", ffErr);
+        } catch (e2) {}
       }
 
       // 2. High-speed poster thumbnail extraction or conversion to crisp JPEG

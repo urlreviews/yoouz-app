@@ -1,34 +1,26 @@
 [
   {
-    "id": "test_rev_123",
-    "placeId": "kpbimmigrationlawfirm.com",
-    "placeName": "KPB Immigration Law",
+    "id": "rev-http-verify-1789394675838",
+    "placeId": "yoouz.com",
+    "placeName": "Yoouz",
     "author": {
-      "name": "Abe We",
-      "handle": "@abewe",
-      "avatar": ""
+      "name": "Samet",
+      "handle": "@samet",
+      "avatar": "https://yoouz.b-cdn.net/avatars/samet.jpg",
+      "email": "4samet@gmail.com"
     },
     "userId": "4samet@gmail.com",
+    "authorName": "Samet",
+    "authorAvatar": "https://yoouz.b-cdn.net/avatars/samet.jpg",
     "rating": 5,
-    "videoUrl": "https://rev1.b-cdn.net/videos/test.mp4",
-    "thumbnailUrl": "https://rev1.b-cdn.net/videos/test.jpg",
+    "videoUrl": "https://yoouz.b-cdn.net/videos/sample.mp4",
+    "thumbnailUrl": "https://yoouz.b-cdn.net/videos/sample.jpg",
+    "duration": 30,
+    "text": "Testing HTTP endpoint live save to BunnyDB",
     "placeBannerUrl": "",
     "bannerUrl": "",
     "ogImage": "",
     "placeLogoUrl": "",
-    "placeWebsite": "https://kpbimmigrationlawfirm.com",
-    "likesCount": 0,
-    "likes": 0,
-    "bookmarksCount": 0,
-    "bookmarks": 0,
-    "sharesCount": 0,
-    "shares": 0,
-    "commentsCount": 0,
-    "authorName": "Abe We",
-    "authorAvatar": "",
-    "duration": 60,
-    "viewsCount": 0,
-    "views": 0,
-    "comments": []
+    "placeWebsite": "https://yoouz.com"
   }
 ]
