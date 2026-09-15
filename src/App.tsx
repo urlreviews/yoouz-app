@@ -4727,8 +4727,15 @@ export function App() {
           places={places}
           videos={videos}
           currentUser={currentUser}
+          allUsers={allRegisteredUsers}
           onOpenComments={(video) => setActiveCommentVideo(video)}
           onOpenShare={(video) => setActiveShareVideo(video)}
+          onOpenPlace={handleOpenPlaceDrawer}
+          onOpenCreator={handleOpenCreatorDrawer}
+          onToggleLike={handleToggleLike}
+          onToggleBookmark={handleToggleBookmark}
+          onToggleFollow={handleToggleFollow}
+          onOpenReport={(v) => handleOpenReport({ type: "video", video: v })}
           onRecordReview={(place) => {
             setPreselectedPlaceForRecording(place || null);
             setIsCreateModalOpen(true);
@@ -4738,6 +4745,54 @@ export function App() {
             setIsAuthModalOpen(true);
           }}
         />
+
+        {/* Place Drawer */}
+        {selectedPlaceIdForDrawer && drawerPlace && (
+          <CopoPlaceDrawer
+            place={drawerPlace}
+            allVideos={videos}
+            onClose={handleCloseDrawers}
+            onSelectVideo={(videoId) => handleSelectVideoById(videoId, "place")}
+            onToggleGrabPlace={handleToggleGrabPlace}
+            onUpdatePlace={handleUpdatePlace}
+            onToggleFollowPlace={handleToggleFollowPlace}
+            onOpenReport={handleOpenReport}
+            isSaved={savedPlaceIds.includes(drawerPlace.id)}
+            reviewSort={placeReviewSort}
+            onSortChange={(sort) => {
+              setPlaceReviewSort(sort);
+              setCurrentVideoIndex(0);
+            }}
+            starFilter={placeStarFilter}
+            onStarFilterChange={(stars) => {
+              setPlaceStarFilter(stars);
+              setCurrentVideoIndex(0);
+            }}
+            currentUser={currentUser}
+            onRecordForPlace={handleOpenCreateReview}
+            onStartChat={handleStartChat}
+            onClaimBusiness={(place) => {
+              setBusinessClaimTargetPlace(place);
+              setBusinessInitialMode('claim');
+              handleCloseDrawers();
+              setActiveSection('business');
+            }}
+          />
+        )}
+
+        {/* Creator Drawer */}
+        {selectedAuthorForDrawer && (
+          <CopoCreatorDrawer
+            author={selectedAuthorForDrawer}
+            allVideos={videos}
+            currentUser={currentUser}
+            allUsers={allRegisteredUsers}
+            activeVideoId={videos[currentVideoIndex]?.id}
+            onClose={handleCloseDrawers}
+            onSelectVideo={(videoId) => handleSelectVideoById(videoId, "creator")}
+            onToggleFollow={handleToggleFollow}
+          />
+        )}
 
         {activeCommentVideo && (
           <CopoCommentsDrawer
@@ -4750,8 +4805,46 @@ export function App() {
             }}
             onAddComment={handleAddComment}
             onToggleCommentLike={handleToggleCommentLike}
+            onToggleCreatorHeart={handleToggleCreatorHeart}
+            onDeleteComment={handleDeleteComment}
+            onAddOwnerResponse={handleSaveOwnerResponse}
+            onDeleteOwnerResponse={handleDeleteOwnerResponse}
+            isUserOwner={isUserOwnerOfCommentPlace}
+            placeName={activeCommentVideo?.placeName}
+            onSelectAuthor={(handle, name, avatar) => {
+              setActiveCommentVideo(null);
+              handleOpenCreatorDrawer({
+                name: name || handle,
+                avatar: avatar || `/api/avatar?name=${encodeURIComponent(name || handle || "User")}&background=27272a&color=fff&bold=true&size=128`,
+                isVerified: false,
+                isFollowed: false
+              });
+            }}
           />
         )}
+
+        {/* Share Video Modal */}
+        <CopoShareModal
+          video={activeShareVideo}
+          onClose={() => setActiveShareVideo(null)}
+          onOpenReport={(v) => {
+            setActiveShareVideo(null);
+            handleOpenReport({ type: "video", video: v });
+          }}
+          onShareIncrement={handleShareIncrement}
+        />
+
+        {/* Report Modal */}
+        <CopoReportModal
+          isOpen={isReportModalOpen}
+          target={activeReportTarget}
+          currentUser={currentUser}
+          onClose={() => {
+            setIsReportModalOpen(false);
+            setActiveReportTarget(null);
+          }}
+          onBlockOrHide={handleBlockOrHide}
+        />
 
         <CopoCreateModal
           isOpen={isCreateModalOpen}
