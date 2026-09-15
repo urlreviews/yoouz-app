@@ -135,6 +135,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const lastLoadedVideoIdRef = useRef<string | null>(null);
   const activeVideoRef = useRef<VideoReview | null>(null);
 
+  // Grace period state: prevents brief 1-frame pop-up of "No Video Reviews Yet" during feed hydration
+  const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!currentVideo) {
+      const timer = setTimeout(() => {
+        setShowEmptyState(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowEmptyState(false);
+    }
+  }, [currentVideo]);
+
   // Initialize pool of 3 hardware-accelerated video elements once
   useLayoutEffect(() => {
     if (typeof document === "undefined") return;
@@ -1216,7 +1230,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [handleNext, handlePrev, handleTogglePlayPause, toggleMute, moreMenuVideo]);
 
   if (!currentVideo) {
-    if (isLoading) {
+    // On the main home feed (!feedContextTitle), always show the sleek loading skeleton when videos are hydrating.
+    // Never show the "No Video Reviews Yet" empty box on the home feed.
+    if (isLoading || !showEmptyState || !feedContextTitle) {
       return (
         <main
           id="copo-loading-feed-container"
