@@ -460,6 +460,12 @@ export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile
 
   const userKey = userEmail;
   const welcomeKey = `yoouz_welcome_sent_${userKey}`;
+  
+  // Skip if already sent strictly once for this user account
+  if (typeof window !== "undefined" && localStorage.getItem(welcomeKey) === "true") {
+    return;
+  }
+
   const deletedSet = getDeletedNotifIds(userKey);
 
   // Skip if permanently deleted by user
@@ -497,9 +503,6 @@ export function subscribeToNotifications(
     onUpdate([]);
     return () => {};
   }
-
-  // Ensure welcome notification exists on server and client for logged in user
-  sendWelcomeNotificationForNewUser(currentUser);
 
   let isDisposed = false;
   let cachedNotifs: CopoNotification[] = [];

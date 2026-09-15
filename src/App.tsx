@@ -3858,6 +3858,8 @@ export function App() {
     }
 
     let updatedComments: ReviewComment[] = [];
+    let targetIsLiked = false;
+    let targetLikesCount = 0;
 
     setVideos((prev) =>
       prev.map((v) => {
@@ -3875,6 +3877,8 @@ export function App() {
                       const nextCount = nextLiked
                         ? (r.likesCount || 0) + 1
                         : Math.max(0, (r.likesCount || 0) - 1);
+                      targetIsLiked = nextLiked;
+                      targetLikesCount = nextCount;
                       return { ...r, isLiked: nextLiked, likesCount: nextCount };
                     }
                     return r;
@@ -3891,6 +3895,8 @@ export function App() {
                 const nextCount = nextLiked
                   ? (c.likesCount || 0) + 1
                   : Math.max(0, (c.likesCount || 0) - 1);
+                targetIsLiked = nextLiked;
+                targetLikesCount = nextCount;
                 return { ...c, isLiked: nextLiked, likesCount: nextCount };
               }
               return c;
@@ -3933,10 +3939,8 @@ export function App() {
           commentId,
           replyId,
           userId: currentUser?.email || auth.currentUser?.uid,
-          isLiked: updatedComments.some((c) => {
-            if (replyId) return c.replies?.some((r) => r.id === replyId && r.isLiked);
-            return c.id === commentId && c.isLiked;
-          })
+          isLiked: targetIsLiked,
+          likesCount: targetLikesCount
         })
       }).catch(() => {});
     } catch (err) {

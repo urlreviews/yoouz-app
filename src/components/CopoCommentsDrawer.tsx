@@ -100,6 +100,23 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   const [editingOwnerResponse, setEditingOwnerResponse] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const likingPendingRef = useRef<Set<string>>(new Set());
+
+  const handleCommentLikeClick = (commentId: string, replyId?: string) => {
+    const targetId = replyId || commentId;
+    if (likingPendingRef.current.has(targetId)) return;
+    likingPendingRef.current.add(targetId);
+    setTimeout(() => {
+      likingPendingRef.current.delete(targetId);
+    }, 350);
+
+    if (!currentUser) {
+      onRequireAuth?.();
+    } else if (video) {
+      triggerHaptic("light");
+      onToggleCommentLike(video.id, commentId, replyId);
+    }
+  };
 
   // Resolve authentic avatar avoiding fake stock model photos
   const getAuthorAvatar = (
@@ -231,14 +248,14 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   replies: c.replies.map((r) => r.id === detail.replyId ? {
                     ...r,
                     isLiked: detail.isLiked !== undefined ? Boolean(detail.isLiked) : !r.isLiked,
-                    likesCount: typeof detail.likesCount === 'number' ? detail.likesCount : (r.isLiked ? (r.likesCount || 0) - 1 : (r.likesCount || 0) + 1)
+                    likesCount: typeof detail.likesCount === 'number' ? detail.likesCount : (detail.isLiked !== undefined ? (detail.isLiked ? (r.likesCount || 0) + 1 : Math.max(0, (r.likesCount || 0) - 1)) : (!r.isLiked ? (r.likesCount || 0) + 1 : Math.max(0, (r.likesCount || 0) - 1)))
                   } : r)
                 };
               }
               return {
                 ...c,
                 isLiked: detail.isLiked !== undefined ? Boolean(detail.isLiked) : !c.isLiked,
-                likesCount: typeof detail.likesCount === 'number' ? detail.likesCount : (c.isLiked ? (c.likesCount || 0) - 1 : (c.likesCount || 0) + 1)
+                likesCount: typeof detail.likesCount === 'number' ? detail.likesCount : (detail.isLiked !== undefined ? (detail.isLiked ? (c.likesCount || 0) + 1 : Math.max(0, (c.likesCount || 0) - 1)) : (!c.isLiked ? (c.likesCount || 0) + 1 : Math.max(0, (c.likesCount || 0) - 1)))
               };
             }
             return c;
@@ -736,27 +753,23 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         <div className="flex items-center gap-4 mt-2 text-xs font-semibold text-zinc-200">
                           {/* Like Button */}
                           <button
-                            onClick={() => {
-                              if (!currentUser) {
-                                onRequireAuth?.();
-                              } else {
-                                onToggleCommentLike(video.id, comment.id);
-                              }
-                            }}
+                            type="button"
+                            onClick={() => handleCommentLikeClick(comment.id)}
                             className={`flex items-center gap-1 transition-colors hover:text-red-500 cursor-pointer ${
                               comment.isLiked ? "text-red-500 font-bold" : "text-zinc-200"
                             }`}
                           >
                             <Heart
-                              className={`w-3.5 h-3.5 ${
+                              className={`w-3.5 h-3.5 transition-transform active:scale-125 ${
                                 comment.isLiked ? "fill-red-500 text-red-500 scale-110" : ""
                               }`}
                             />
-                            <span className="text-[11px]">{comment.likesCount || 0}</span>
+                            <span className="text-[11px] font-bold">{comment.likesCount || 0}</span>
                           </button>
 
                           {/* Reply Button */}
                           <button
+                            type="button"
                             onClick={() => handleStartReply(comment)}
                             className="text-zinc-200 hover:text-white transition-colors text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                           >
@@ -766,23 +779,32 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
                           {/* Creator Hearted Indicator / Bestow Creator Heart */}
                           {comment.likedByCreator ? (
-                            <div
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-semibold border border-zinc-700/80 shadow-xs"
-                              title="Liked by the video creator"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isUserCreator && onToggleCreatorHeart && video) {
+                                  onToggleCreatorHeart(video.id, comment.id);
+                                }
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-950/70 text-red-400 text-[10px] font-bold border border-red-900/60 shadow-xs ${
+                                isUserCreator ? "cursor-pointer hover:bg-red-900/80" : ""
+                              }`}
+                              title={isUserCreator ? "Click to remove Creator Heart" : "Liked by creator"}
                             >
-                              <Heart className="w-2.5 h-2.5 fill-zinc-400 text-zinc-200" />
+                              <Heart className="w-2.5 h-2.5 fill-red-400 text-red-400" />
                               <span>{t("comments.likedByCreator", "Liked by creator")}</span>
-                            </div>
+                            </button>
                           ) : (
                             isUserCreator &&
                             onToggleCreatorHeart && (
                               <button
-                                onClick={() => onToggleCreatorHeart(video.id, comment.id)}
-                                className="text-zinc-200 hover:text-zinc-200 transition-colors text-[11px] flex items-center gap-0.5 font-medium"
+                                type="button"
+                                onClick={() => video && onToggleCreatorHeart(video.id, comment.id)}
+                                className="text-amber-400 hover:text-amber-300 transition-colors text-[11px] flex items-center gap-1 font-semibold cursor-pointer"
                                 title="Give Creator Heart"
                               >
-                                <Heart className="w-3 h-3" />
-                                <span>{t("comments.heart", "Heart")}</span>
+                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                <span>{t("comments.creatorHeart", "Creator Heart")}</span>
                               </button>
                             )
                           )}
@@ -896,19 +918,14 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                     {/* Reply Actions (Like & Delete) */}
                                     <div className="flex items-center gap-3 mt-1.5 text-[10px] font-semibold text-zinc-200">
                                       <button
-                                        onClick={() => {
-                                          if (!currentUser) {
-                                            onRequireAuth?.();
-                                          } else {
-                                            onToggleCommentLike(video.id, comment.id, reply.id);
-                                          }
-                                        }}
+                                        type="button"
+                                        onClick={() => handleCommentLikeClick(comment.id, reply.id)}
                                         className={`flex items-center gap-1 hover:text-red-500 transition-colors cursor-pointer ${
                                           reply.isLiked ? "text-red-500 font-bold" : "text-zinc-200"
                                         }`}
                                       >
                                         <Heart
-                                          className={`w-3 h-3 ${
+                                          className={`w-3 h-3 transition-transform active:scale-125 ${
                                             reply.isLiked ? "fill-red-500 text-red-500" : ""
                                           }`}
                                         />

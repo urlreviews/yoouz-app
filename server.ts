@@ -7511,14 +7511,14 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                     replies: c.replies.map((r: any) => r.id === replyId ? {
                       ...r,
                       isLiked: isLiked !== undefined ? Boolean(isLiked) : !r.isLiked,
-                      likesCount: typeof likesCount === 'number' ? likesCount : (r.isLiked ? (r.likesCount || 0) - 1 : (r.likesCount || 0) + 1)
+                      likesCount: typeof likesCount === 'number' ? likesCount : (isLiked !== undefined ? (isLiked ? (r.likesCount || 0) + 1 : Math.max(0, (r.likesCount || 0) - 1)) : (!r.isLiked ? (r.likesCount || 0) + 1 : Math.max(0, (r.likesCount || 0) - 1)))
                     } : r)
                   };
                 }
                 return {
                   ...c,
                   isLiked: isLiked !== undefined ? Boolean(isLiked) : !c.isLiked,
-                  likesCount: typeof likesCount === 'number' ? likesCount : (c.isLiked ? (c.likesCount || 0) - 1 : (c.likesCount || 0) + 1)
+                  likesCount: typeof likesCount === 'number' ? likesCount : (isLiked !== undefined ? (isLiked ? (c.likesCount || 0) + 1 : Math.max(0, (c.likesCount || 0) - 1)) : (!c.isLiked ? (c.likesCount || 0) + 1 : Math.max(0, (c.likesCount || 0) - 1)))
                 };
               }
               return c;
