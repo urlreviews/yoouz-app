@@ -75,33 +75,33 @@ html, body, #root {
 }
 
 .copo-video-scrubber-position {
-  bottom: max(4px, env(safe-area-inset-bottom, 4px));
+  bottom: max(6px, env(safe-area-inset-bottom, 6px));
 }
 
 .copo-video-bottom-metadata {
-  padding-bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 20px));
+  padding-bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 24px));
 }
 
 .copo-has-bottom-nav .copo-video-scrubber-position {
-  bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 3px) !important;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 .copo-has-bottom-nav .copo-video-bottom-metadata {
-  padding-bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 20px) !important;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 @media (min-width: 768px) {
   .copo-video-scrubber-position {
-    bottom: 0px !important;
+    bottom: 0px;
   }
   .copo-video-bottom-metadata {
-    padding-bottom: 1.25rem !important;
+    padding-bottom: 1.25rem;
   }
   .copo-has-bottom-nav .copo-video-scrubber-position {
-    bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 3px) !important;
+    bottom: 78px !important;
   }
   .copo-has-bottom-nav .copo-video-bottom-metadata {
-    padding-bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 20px) !important;
+    padding-bottom: 96px !important;
   }
 }
 

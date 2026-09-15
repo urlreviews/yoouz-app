@@ -5148,7 +5148,7 @@ export function App() {
       )}
 
       {/* 2. Main Stage Content Switcher */}
-      <div className="flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950">
+      <div className="copo-has-bottom-nav flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950">
         {/* If in Feed View (Home, Clubs) or Place / Creator drawer views: Display center video player */}
         {(isPlaceView || isCreatorView || activeSection === "home" || activeSection === "clubs") && (
             <CopoVideoPlayer
