@@ -772,7 +772,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
                 <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
                 <span>{(video.rating || 5.0).toFixed(1)}</span>
-                <span className="text-zinc-300 font-normal">({video.reviewsCount || 1} {t("common.reviews", "reviews")})</span>
+                <span className="text-zinc-300 font-normal">({(video as any).reviewsCount || 1} {t("common.reviews", "reviews")})</span>
               </div>
             </div>
           </button>

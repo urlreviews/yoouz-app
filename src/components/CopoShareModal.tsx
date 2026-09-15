@@ -909,12 +909,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                 {t("shareModal.embedLayout", "Embed Layout")}
               </span>
-              <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-850 border border-zinc-800 rounded-xl">
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-900 border border-zinc-800 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setEmbedLayout("reel")}
-                  className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1 ${
-                    embedLayout === "reel" ? "bg-white text-black shadow-xs" : "text-zinc-300 hover:text-white"
+                  className={`py-1.5 px-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
+                    embedLayout === "reel" ? "bg-zinc-800 text-white border border-zinc-700/80 shadow-md" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   <span>9:16 Reel</span>
@@ -922,8 +922,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setEmbedLayout("card")}
-                  className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1 ${
-                    embedLayout === "card" ? "bg-white text-black shadow-xs" : "text-zinc-300 hover:text-white"
+                  className={`py-1.5 px-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
+                    embedLayout === "card" ? "bg-zinc-800 text-white border border-zinc-700/80 shadow-md" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   <span>Card</span>
@@ -931,8 +931,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setEmbedLayout("widget")}
-                  className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1 ${
-                    embedLayout === "widget" ? "bg-white text-black shadow-xs" : "text-zinc-300 hover:text-white"
+                  className={`py-1.5 px-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
+                    embedLayout === "widget" ? "bg-zinc-800 text-white border border-zinc-700/80 shadow-md" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   <span>Full Width</span>
