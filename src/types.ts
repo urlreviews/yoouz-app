@@ -85,6 +85,7 @@ export interface UserProfile {
   firstName?: string;
   lastName?: string;
   city?: string;
+  state?: string;
   country?: string;
   handle?: string;
   role?: string;

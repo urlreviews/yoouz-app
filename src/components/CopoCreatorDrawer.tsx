@@ -595,13 +595,39 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       bio: editBio.trim(),
       avatar: finalAvatar,
       banner: editBanner || currentUser?.banner,
-      location: combinedLocation
+      location: combinedLocation,
+      city: editCity.trim(),
+      state: editState.trim(),
+      country: editCountry.trim()
     };
 
     setLiveUserProfile((prev) => ({
       ...(prev || {}),
       ...updatedProfile
     }));
+
+    // Instantly save to BunnyDB live for all users across the platform
+    const userDocId = currentUser?.uid || currentUser?.id || currentUser?.email?.replace(/[^a-zA-Z0-9]/g, "_") || "user_me";
+    const savePayload = {
+      ...currentUser,
+      ...updatedProfile,
+      uid: currentUser?.uid || currentUser?.id || userDocId,
+      id: currentUser?.uid || currentUser?.id || userDocId,
+      email: currentUser?.email || "",
+      updatedAt: new Date().toISOString()
+    };
+
+    fetch('/api/users/update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(savePayload)
+    }).catch((e) => console.warn("BunnyDB /api/users/update-profile notice:", e));
+
+    fetch(`/api/nosql/users/${encodeURIComponent(userDocId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: savePayload })
+    }).catch((e) => console.warn("BunnyDB /api/nosql/users notice:", e));
 
     if (onUpdateProfile) {
       onUpdateProfile(updatedProfile);
@@ -1486,10 +1512,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 >
                   <div className="flex items-center gap-2.5">
                     <Globe className="w-4 h-4 text-zinc-200 group-hover:text-white" />
-                    <div>
-                      <p className="text-xs font-bold text-zinc-200 group-hover:text-white">{t("profile.appLanguage", "App Language")}</p>
-                      <p className="text-[11px] text-zinc-200">{currentLanguageMeta.flag} {currentLanguageMeta.nativeName} ({currentLanguageMeta.name})</p>
-                    </div>
+                    <span className="text-xs font-medium text-zinc-200 group-hover:text-white">
+                      {currentLanguageMeta.flag} {currentLanguageMeta.nativeName} ({currentLanguageMeta.name})
+                    </span>
                   </div>
                   <span className="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-200 font-mono uppercase border border-zinc-700">
                     {currentLanguageMeta.code}

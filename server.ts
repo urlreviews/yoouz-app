@@ -4531,7 +4531,9 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
               avatar: data.avatar || itemAuthor.avatar,
               bio: data.bio !== undefined ? data.bio : itemAuthor.bio,
               banner: data.banner !== undefined ? data.banner : itemAuthor.banner,
-              location: data.location !== undefined ? data.location : itemAuthor.location
+              location: data.location !== undefined ? data.location : itemAuthor.location,
+              city: data.city !== undefined ? data.city : itemAuthor.city,
+              country: data.country !== undefined ? data.country : itemAuthor.country
             };
             if (data.avatar) item.authorAvatar = data.avatar;
             if (data.name) item.authorName = data.name;
@@ -9294,7 +9296,7 @@ app.post("/api/videos/save-review", async (req, res) => {
   // Live User Profile Update (propagates to users table, videoReviews authors, memory feed cache, and indexes for instant global updates)
   app.post(["/api/users/update-profile", "/api/users/profile"], async (req, res) => {
     try {
-      const { uid, id: bodyId, email, name, handle, avatar, bio, banner, location } = req.body || {};
+      const { uid, id: bodyId, email, name, handle, avatar, bio, banner, location, city, state, country } = req.body || {};
       const targetUserId = uid || bodyId;
       if (!targetUserId && !email && !name) {
         return res.status(400).json({ error: "Missing user identification (uid, email, or name)" });
@@ -9307,7 +9309,11 @@ app.post("/api/videos/save-review", async (req, res) => {
       const nextAvatar = (avatar || "").trim();
       const nextBio = (bio || "").trim();
       const nextBanner = (banner || "").trim();
-      const nextLocation = (location || "").trim();
+      const nextCity = (city || "").trim();
+      const nextState = (state || "").trim();
+      const nextCountry = (country || "").trim();
+      const locParts = [nextCity, nextState, nextCountry].filter(Boolean);
+      const nextLocation = (location || locParts.join(", ")).trim();
 
       const profileObj = {
         id: targetUserId || `usr-${Date.now()}`,
@@ -9319,6 +9325,9 @@ app.post("/api/videos/save-review", async (req, res) => {
         bio: nextBio,
         banner: nextBanner,
         location: nextLocation,
+        city: nextCity,
+        state: nextState,
+        country: nextCountry,
         updatedAt: Date.now()
       };
 
@@ -9339,6 +9348,8 @@ app.post("/api/videos/save-review", async (req, res) => {
           if (profileObj.handle) matchDu.handle = profileObj.handle;
           if (profileObj.bio) matchDu.bio = profileObj.bio;
           if (profileObj.location) matchDu.location = profileObj.location;
+          if (profileObj.city) (matchDu as any).city = profileObj.city;
+          if (profileObj.country) (matchDu as any).country = profileObj.country;
         }
       } catch (duErr) {}
 
@@ -9378,7 +9389,9 @@ app.post("/api/videos/save-review", async (req, res) => {
                 avatar: profileObj.avatar || rData.author?.avatar,
                 bio: profileObj.bio || rData.author?.bio,
                 banner: profileObj.banner || rData.author?.banner,
-                location: profileObj.location || rData.author?.location
+                location: profileObj.location || rData.author?.location,
+                city: profileObj.city || rData.author?.city,
+                country: profileObj.country || rData.author?.country
               };
 
               const newRowData = {
@@ -9421,6 +9434,8 @@ app.post("/api/videos/save-review", async (req, res) => {
             if (profileObj.bio && r.author) r.author.bio = profileObj.bio;
             if (profileObj.banner && r.author) r.author.banner = profileObj.banner;
             if (profileObj.location && r.author) r.author.location = profileObj.location;
+            if (profileObj.city && r.author) r.author.city = profileObj.city;
+            if (profileObj.country && r.author) r.author.country = profileObj.country;
           }
         });
         if (indexUpdated) {

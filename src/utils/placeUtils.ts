@@ -873,6 +873,8 @@ export function updateUserRegistry(users: any[] | any): void {
       bio: u.bio,
       banner: u.banner,
       location: u.location,
+      city: u.city,
+      country: u.country,
       email: u.email
     };
 
@@ -1059,6 +1061,14 @@ export function resolveSafeAuthor(
     ? activeUser.location
     : (registryMatch?.location || authorObj.location);
 
+  const finalCity = (isActiveUserMatch && activeUser?.city)
+    ? activeUser.city
+    : (registryMatch?.city || authorObj.city);
+
+  const finalCountry = (isActiveUserMatch && activeUser?.country)
+    ? activeUser.country
+    : (registryMatch?.country || authorObj.country);
+
   const reviewCount = authorObj.videoReviewCount !== undefined ? authorObj.videoReviewCount : (registryMatch?.videoReviewCount ?? 0);
   const isVerifiedUser = authorObj.isVerified !== undefined ? authorObj.isVerified : (reviewCount > 0 || !!registryMatch?.isVerified);
 
@@ -1074,7 +1084,9 @@ export function resolveSafeAuthor(
     isFollowed: authorObj.isFollowed ?? false,
     bio: finalBio,
     banner: finalBanner,
-    location: finalLocation
+    location: finalLocation,
+    city: finalCity,
+    country: finalCountry
   };
 }
 

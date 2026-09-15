@@ -1883,7 +1883,7 @@ export function App() {
     }
   }, [currentUser]);
 
-  const handleUpdateProfile = (updated: { name?: string; bio?: string; avatar?: string; banner?: string; location?: string; handle?: string }) => {
+  const handleUpdateProfile = (updated: { name?: string; bio?: string; avatar?: string; banner?: string; location?: string; handle?: string; city?: string; state?: string; country?: string }) => {
     setCurrentUser((prev) => {
       if (!prev) return null;
       const nextProfile: UserProfile = {
@@ -1893,6 +1893,9 @@ export function App() {
         avatar: updated.avatar !== undefined ? updated.avatar : prev.avatar,
         banner: updated.banner !== undefined ? updated.banner : (prev as any).banner,
         location: updated.location !== undefined ? updated.location : prev.location,
+        city: updated.city !== undefined ? updated.city : prev.city,
+        state: updated.state !== undefined ? updated.state : (prev as any).state,
+        country: updated.country !== undefined ? updated.country : prev.country,
         handle: updated.handle !== undefined ? updated.handle : (prev as any).handle
       };
       updateUserRegistry(nextProfile);
@@ -1918,6 +1921,8 @@ export function App() {
                 name: nextProfile.name,
                 avatar: nextProfile.avatar,
                 location: nextProfile.location,
+                city: nextProfile.city,
+                country: nextProfile.country,
                 bio: nextProfile.bio,
                 banner: (nextProfile as any).banner
               }
@@ -1934,6 +1939,8 @@ export function App() {
           name: nextProfile.name,
           avatar: nextProfile.avatar,
           location: nextProfile.location,
+          city: nextProfile.city,
+          country: nextProfile.country,
           bio: nextProfile.bio,
           banner: (nextProfile as any).banner
         };
