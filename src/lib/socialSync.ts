@@ -834,6 +834,12 @@ export async function clearAllNotifications(notificationIds: string[], currentUs
   }
 }
 
+export function getDeletedThreadsKey(currentUser?: UserProfile | null): string {
+  if (!currentUser) return "yoouz_deleted_threads";
+  const id = (currentUser.userId || currentUser.id || (currentUser as any).uid || (currentUser as any).placeId || currentUser.email || "").toLowerCase().trim();
+  return id ? `yoouz_deleted_threads_${id}` : "yoouz_deleted_threads";
+}
+
 /**
  * Filter and format chat threads for the current user
  */
@@ -847,7 +853,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
   let deletedThreadsSet = new Set<string>();
   try {
-    const storedDel = localStorage.getItem("yoouz_deleted_threads");
+    const userDelKey = getDeletedThreadsKey(currentUser);
+    const storedDel = localStorage.getItem(userDelKey);
     if (storedDel) {
       const parsedDel = JSON.parse(storedDel);
       if (Array.isArray(parsedDel)) {
@@ -862,6 +869,16 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     if (!data) continue;
     const threadId = String(data.id || "").trim();
     if (threadId && deletedThreadsSet.has(threadId)) continue;
+
+    const deletedForUsers: string[] = Array.isArray(data.deletedForUsers)
+      ? data.deletedForUsers.map((u: string) => String(u || '').toLowerCase().trim())
+      : [];
+    if (
+      (userId && deletedForUsers.includes(userId)) ||
+      (userEmail && deletedForUsers.includes(userEmail))
+    ) {
+      continue;
+    }
     const participants: string[] = Array.isArray(data.participants)
       ? data.participants.map((p: string) => (p || "").toLowerCase().trim().replace(/^@/, ""))
       : [];
@@ -1152,9 +1169,10 @@ export function subscribeToChats(
 
   // 0. Immediate load from LocalStorage cache so messages never disappear on refresh
   try {
+    const userDelKey = getDeletedThreadsKey(currentUser);
     let deletedThreadsSet = new Set<string>();
     try {
-      const storedDel = localStorage.getItem("yoouz_deleted_threads");
+      const storedDel = localStorage.getItem(userDelKey);
       if (storedDel) {
         JSON.parse(storedDel).forEach((id: string) => deletedThreadsSet.add(String(id).trim()));
       }
@@ -1183,9 +1201,10 @@ export function subscribeToChats(
         const json = await res.json();
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
         if (Array.isArray(items) && !isDisposed) {
+          const userDelKey = getDeletedThreadsKey(currentUser);
           let deletedThreadsSet = new Set<string>();
           try {
-            const storedDel = localStorage.getItem("yoouz_deleted_threads");
+            const storedDel = localStorage.getItem(userDelKey);
             if (storedDel) {
               JSON.parse(storedDel).forEach((id: string) => deletedThreadsSet.add(String(id).trim()));
             }
@@ -1603,43 +1622,76 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
 }
 
 /**
- * Delete a chat thread from Bunny Cloud Database and local caches
+ * Delete a chat thread from Bunny Cloud Database and local caches for a specific user or business
  */
-export async function deleteChatThread(threadId: string): Promise<void> {
+export async function deleteChatThread(threadId: string, currentUser?: UserProfile | null): Promise<void> {
   if (!threadId) return;
 
-  // 0. Add to persistent deleted threads blacklist in localStorage
+  const userDelKey = getDeletedThreadsKey(currentUser);
+
+  // 0. Add to persistent deleted threads blacklist in localStorage for this specific user/business
   try {
     let deletedList: string[] = [];
-    const stored = localStorage.getItem("yoouz_deleted_threads");
+    const stored = localStorage.getItem(userDelKey);
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) deletedList = parsed;
     }
     if (!deletedList.includes(threadId)) {
       deletedList.push(threadId);
-      localStorage.setItem("yoouz_deleted_threads", JSON.stringify(deletedList));
+      localStorage.setItem(userDelKey, JSON.stringify(deletedList));
     }
   } catch (e) {}
   
-  // 1. Remove from all local storage chat caches immediately so it never resurrects on refresh
+  // 1. Remove from local storage chat cache for this user/business profile
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('copo_cached_chats_')) {
-        const rawCache = localStorage.getItem(key);
-        if (rawCache) {
-          const parsed = JSON.parse(rawCache);
-          if (Array.isArray(parsed)) {
-            const filtered = parsed.filter((t: any) => t.id !== threadId);
-            localStorage.setItem(key, JSON.stringify(filtered));
-          }
+    const uKey = currentUser
+      ? (currentUser.userId || currentUser.id || (currentUser as any).uid || (currentUser as any).placeId || currentUser.email || "").toLowerCase().trim()
+      : null;
+    const cacheKeys = uKey
+      ? [`copo_cached_chats_${uKey}`]
+      : Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i) || "").filter(k => k.startsWith('copo_cached_chats_'));
+
+    for (const key of cacheKeys) {
+      if (!key) continue;
+      const rawCache = localStorage.getItem(key);
+      if (rawCache) {
+        const parsed = JSON.parse(rawCache);
+        if (Array.isArray(parsed)) {
+          const filtered = parsed.filter((t: any) => t.id !== threadId);
+          localStorage.setItem(key, JSON.stringify(filtered));
         }
       }
     }
   } catch (e) {}
 
-  // 2. Primary delete in BunnyDB
+  // 2. Soft delete on BunnyDB by adding user to deletedForUsers array
+  if (currentUser) {
+    const uId = (currentUser.userId || currentUser.id || (currentUser as any).uid || (currentUser as any).placeId || currentUser.email || "").toLowerCase().trim();
+    try {
+      const res = await fetch(`/api/nosql/chats/${threadId}`);
+      if (res.ok) {
+        const threadData = await res.json();
+        if (threadData) {
+          const deletedForUsers = Array.isArray(threadData.deletedForUsers) ? threadData.deletedForUsers : [];
+          if (!deletedForUsers.includes(uId)) {
+            deletedForUsers.push(uId);
+          }
+          await fetch(`/api/nosql/chats/${threadId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...threadData,
+              deletedForUsers
+            })
+          });
+          return;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Fallback: Primary delete in BunnyDB if no user context provided
   fetch(`/api/nosql/chats/${threadId}`, {
     method: "DELETE"
   }).catch(() => {});

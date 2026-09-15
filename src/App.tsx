@@ -5501,7 +5501,7 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onDeleteThread={(threadId) => {
-                  deleteChatThreadFromBunnyDB(threadId);
+                  deleteChatThreadFromBunnyDB(threadId, currentUser);
                   setMessages((prev) => prev.filter((m) => m.id !== threadId));
                 }}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt) => {
@@ -5671,7 +5671,7 @@ export function App() {
                   );
                 }}
                 onDeleteThread={(threadId) => {
-                  deleteChatThreadFromBunnyDB(threadId);
+                  deleteChatThreadFromBunnyDB(threadId, effectiveMessagingUser as any);
                   setMessages((prev) => prev.filter((m) => m.id !== threadId));
                 }}
                 onMarkThreadRead={(threadId) => {
