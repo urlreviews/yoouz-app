@@ -68,6 +68,7 @@ interface VideoFeedCardProps {
   onGoBack?: () => void;
   feedContextTitle?: string;
   onGoHome?: () => void;
+  businessName?: string | null;
   businessLogoUrl?: string | null;
   businessBannerUrl?: string | null;
   cardRef: (el: HTMLDivElement | null) => void;
@@ -114,6 +115,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onOpenMenu,
   onGoBack,
   feedContextTitle,
+  businessName,
   businessLogoUrl,
   businessBannerUrl,
   cardRef,
@@ -871,7 +873,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           >
             <CopoBrandLogo
               domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
-              name={formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
+              name={businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
               website={video.placeWebsite}
               logoUrl={businessLogoUrl || video?.placeLogoUrl}
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
@@ -883,7 +885,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             />
             <div className="min-w-0 flex-1 py-0.5">
               <span className="line-clamp-2 [overflow-wrap:anywhere] leading-snug font-extrabold text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:text-white transition-colors">
-                {formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
+                {businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
                 <CheckCircle className="inline-block w-3.5 h-3.5 ml-1 align-text-bottom fill-white text-black shrink-0 relative -top-[1px] drop-shadow-sm" />
               </span>
             </div>

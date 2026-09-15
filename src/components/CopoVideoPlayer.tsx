@@ -873,6 +873,46 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     [places]
   );
 
+  const getBusinessNameForVideo = useCallback(
+    (vid: VideoReview | undefined): string => {
+      if (!vid) return "Business Place";
+
+      if (places && places.length > 0) {
+        const vidCleanId = extractCleanDomain(vid.placeId || "");
+        const vidCleanWeb = extractCleanDomain(vid.placeWebsite || "");
+        const vidCleanName = extractCleanDomain(vid.placeName || "");
+
+        const p = places.find((place) => {
+          if (!place) return false;
+          if (vid.placeId && (place.id === vid.placeId || place.id === vidCleanId)) return true;
+          const pDomain = extractCleanDomain(place.id || place.website || place.brandDomain || "");
+          if (pDomain && pDomain !== "home" && (pDomain === vidCleanId || pDomain === vidCleanWeb || pDomain === vidCleanName)) return true;
+          if (place.website && vid.placeWebsite && extractCleanDomain(place.website) === extractCleanDomain(vid.placeWebsite)) return true;
+          return false;
+        });
+
+        if (p && p.name && !isGenericPlaceName(p.name)) {
+          const formatted = formatBusinessName(p.name);
+          if (formatted && formatted.trim() !== "") return formatted;
+        }
+      }
+
+      if (vid.placeName && !isGenericPlaceName(vid.placeName)) {
+        const formatted = formatBusinessName(vid.placeName);
+        if (formatted && formatted.trim() !== "") return formatted;
+      }
+
+      const fallbackDomain = extractCleanDomain(vid.placeWebsite || vid.placeId || (vid.placeName?.includes(".") ? vid.placeName : ""));
+      if (fallbackDomain && fallbackDomain.includes(".") && fallbackDomain !== "home.com") {
+        const formatted = formatBusinessName(fallbackDomain);
+        if (formatted && formatted.trim() !== "") return formatted;
+      }
+
+      return formatBusinessName(vid.dishOrItem || vid.placeName) || "Business Place";
+    },
+    [places]
+  );
+
   const getBannerForVideo = useCallback(
     (vid: VideoReview | undefined): string | null => {
       if (!vid) return null;
@@ -1382,6 +1422,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 onGoBack={onGoBack}
                 feedContextTitle={feedContextTitle}
                 onGoHome={onGoHome}
+                businessName={getBusinessNameForVideo(vid)}
                 businessLogoUrl={getLogoForVideo(vid)}
                 businessBannerUrl={getBannerForVideo(vid)}
                 cardRef={(el) => {

@@ -316,9 +316,13 @@ export function isGenericPlaceName(name?: string | null): boolean {
     "website",
     "page",
     "business",
-    "verified business"
+    "business place",
+    "verified business",
+    "verified business place"
   ]);
-  return genericWords.has(lower);
+  if (genericWords.has(lower)) return true;
+  if (/^(home|welcome|index|default|main page|official site)\s*[|\-–—:•]/i.test(lower)) return true;
+  return false;
 }
 
 export function formatBusinessName(name?: string | null): string {
@@ -344,25 +348,20 @@ export function formatBusinessName(name?: string | null): string {
     trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
   }
 
-  // 3. Clean up scraped SEO titles (e.g., "Home - Van Law Firm" or "BrandName – The Clients Guide...")
-  const seoDelimiters = [" | ", " – ", " — ", " - ", " : ", " • "];
-  for (const delimiter of seoDelimiters) {
-    if (trimmed.includes(delimiter)) {
-      const parts = trimmed.split(delimiter).map(p => p.trim()).filter(Boolean);
-      if (parts.length > 0) {
-        // Pick the first part that is NOT a generic page title like "Home", "Welcome", etc.
-        const nonGeneric = parts.find(p => !isGenericPlaceName(p) && p.length >= 2 && p.length <= 50);
-        if (nonGeneric) {
-          trimmed = nonGeneric;
-          break;
-        } else if (parts[0] && parts[0].length >= 2 && parts[0].length <= 50 && !isGenericPlaceName(parts[0])) {
-          trimmed = parts[0];
-          break;
-        } else if (parts[1] && parts[1].length >= 2 && parts[1].length <= 50) {
-          trimmed = parts[1];
-          break;
-        }
+  // 3. Clean up scraped SEO titles (e.g., "Home | Van Law Firm : Nevada's Premiere...")
+  const rawParts = trimmed.split(/\s*(?:[|\-–—•]|:)\s*/).map(p => p.trim()).filter(Boolean);
+  if (rawParts.length > 1) {
+    const nonGenericParts = rawParts.filter(p => !isGenericPlaceName(p));
+    if (nonGenericParts.length > 0) {
+      const validCandidates = nonGenericParts.filter(p => p.length >= 2 && p.length <= 45);
+      if (validCandidates.length > 0) {
+        const best = validCandidates.find(p => !/^(the best|official site|welcome to|premiere|leading|top rated|personal injury|attorneys at law)/i.test(p)) || validCandidates[0];
+        trimmed = best;
+      } else {
+        trimmed = nonGenericParts[0];
       }
+    } else {
+      trimmed = "";
     }
   }
 
