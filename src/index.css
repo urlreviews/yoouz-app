@@ -82,26 +82,36 @@ html, body, #root {
   padding-bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 24px));
 }
 
-.copo-has-bottom-nav .copo-video-scrubber-position {
+/* Mobile screens (< 768px): Apply bottom nav offset */
+@media (max-width: 767px) {
+  .copo-has-bottom-nav .copo-video-scrubber-position {
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .copo-has-bottom-nav .copo-video-bottom-metadata {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* Embed view (even on desktop): Apply bottom nav offset inside embed frame */
+#copo-embed-root .copo-has-bottom-nav .copo-video-scrubber-position {
   bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
-.copo-has-bottom-nav .copo-video-bottom-metadata {
+#copo-embed-root .copo-has-bottom-nav .copo-video-bottom-metadata {
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
+/* Desktop screens (>= 768px) in main app: Reset to standard bottom positioning without bottom nav offset */
 @media (min-width: 768px) {
-  .copo-video-scrubber-position {
-    bottom: 0px;
+  #copo-app-root:not(#copo-embed-root) .copo-video-scrubber-position,
+  #copo-app-root:not(#copo-embed-root) .copo-has-bottom-nav .copo-video-scrubber-position {
+    bottom: 0px !important;
   }
-  .copo-video-bottom-metadata {
-    padding-bottom: 1.25rem;
-  }
-  .copo-has-bottom-nav .copo-video-scrubber-position {
-    bottom: 78px !important;
-  }
-  .copo-has-bottom-nav .copo-video-bottom-metadata {
-    padding-bottom: 96px !important;
+
+  #copo-app-root:not(#copo-embed-root) .copo-video-bottom-metadata,
+  #copo-app-root:not(#copo-embed-root) .copo-has-bottom-nav .copo-video-bottom-metadata {
+    padding-bottom: 1.25rem !important;
   }
 }
 
