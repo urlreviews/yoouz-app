@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
-import { VideoReview, Place, VideoAuthor, UserProfile } from "../types";
+import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
 import { getPlaceSlug } from "../utils/placeUtils";
 import { CopoVideoPlayer } from "./CopoVideoPlayer";
+import { CopoMobileBottomNav } from "./CopoMobileBottomNav";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -19,6 +20,11 @@ export interface CopoEmbedViewProps {
   onOpenReport?: (video: VideoReview) => void;
   onRecordReview?: (place?: Place) => void;
   onOpenAuth?: () => void;
+  onOpenMenu?: () => void;
+  onOpenSearch?: () => void;
+  onSelectSection?: (section: NavSection) => void;
+  unreadNotifsCount?: number;
+  unreadMessagesCount?: number;
 }
 
 export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
@@ -37,8 +43,14 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   onOpenReport,
   onRecordReview,
   onOpenAuth: _onOpenAuth,
+  onOpenMenu,
+  onOpenSearch,
+  onSelectSection,
+  unreadNotifsCount = 0,
+  unreadMessagesCount = 0,
 }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [activeTabSection, setActiveTabSection] = useState<NavSection | string>("home");
   const [localLikedMap, setLocalLikedMap] = useState<Record<string, boolean>>({});
   const [localBookmarkedMap, setLocalBookmarkedMap] = useState<Record<string, boolean>>({});
   const [localFollowedMap, setLocalFollowedMap] = useState<Record<string, boolean>>({});
@@ -175,28 +187,51 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       id="copo-embed-root"
       className="w-full h-full min-h-screen h-[100dvh] bg-black text-white flex items-center justify-center relative overflow-hidden font-sans select-none antialiased p-0"
     >
-      <div className="w-full h-full max-w-full sm:max-w-[440px] h-full relative bg-black flex flex-col overflow-hidden">
-        <CopoVideoPlayer
-          videos={matchingVideos}
-          places={places}
-          currentIndex={currentIndex}
-          onSelectVideoIndex={setCurrentIndex}
-          activeSubTab="discover"
-          onSelectSubTab={() => {}}
-          onOpenComments={onOpenComments || (() => {})}
-          onOpenPlace={handleOpenPlaceLink}
-          onOpenCreator={handleOpenCreatorLink}
-          onOpenShare={onOpenShare || (() => {})}
-          onToggleLike={handleLike}
-          onToggleBookmark={handleBookmark}
-          onToggleFollow={handleFollow}
-          onOpenReport={onOpenReport}
-          onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
+      <div className="copo-has-bottom-nav w-full h-full max-w-full sm:max-w-[440px] h-full relative bg-black flex flex-col overflow-hidden">
+        <div className="w-full h-full relative overflow-hidden flex-1">
+          <CopoVideoPlayer
+            videos={matchingVideos}
+            places={places}
+            currentIndex={currentIndex}
+            onSelectVideoIndex={setCurrentIndex}
+            activeSubTab="discover"
+            onSelectSubTab={() => {}}
+            onOpenComments={onOpenComments || (() => {})}
+            onOpenPlace={handleOpenPlaceLink}
+            onOpenCreator={handleOpenCreatorLink}
+            onOpenShare={onOpenShare || (() => {})}
+            onToggleLike={handleLike}
+            onToggleBookmark={handleBookmark}
+            onToggleFollow={handleFollow}
+            onOpenReport={onOpenReport}
+            onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
+            currentUser={currentUser}
+            allUsers={allUsers}
+            feedContextTitle={targetPlace?.name}
+            onOpenMenu={onOpenMenu}
+            isEmbed={true}
+            hideFloatingNav={true}
+          />
+        </div>
+
+        {/* Mobile App Native 5-Tab Bottom Navigation Bar */}
+        <CopoMobileBottomNav
+          activeSection={activeTabSection}
+          onSelectSection={(section) => {
+            setActiveTabSection(section);
+            if (section === "home") {
+              setCurrentIndex(0);
+            }
+            if (onSelectSection) {
+              onSelectSection(section);
+            }
+          }}
           currentUser={currentUser}
-          allUsers={allUsers}
-          feedContextTitle={targetPlace?.name}
-          isEmbed={true}
-          hideFloatingNav={true}
+          unreadNotifsCount={unreadNotifsCount}
+          unreadMessagesCount={unreadMessagesCount}
+          onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
+          onOpenSearch={onOpenSearch}
+          className="absolute bottom-0 left-0 right-0"
         />
       </div>
     </div>

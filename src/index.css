@@ -74,10 +74,6 @@ html, body, #root {
   --mobile-nav-height: calc(71px + max(10px, env(safe-area-inset-bottom, 10px)));
 }
 
-:root {
-  --mobile-nav-height: 0px;
-}
-
 .copo-video-scrubber-position {
   bottom: max(4px, env(safe-area-inset-bottom, 4px));
 }
@@ -87,11 +83,11 @@ html, body, #root {
 }
 
 .copo-has-bottom-nav .copo-video-scrubber-position {
-  bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 3px);
+  bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 3px) !important;
 }
 
 .copo-has-bottom-nav .copo-video-bottom-metadata {
-  padding-bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 20px);
+  padding-bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 20px) !important;
 }
 
 @media (min-width: 768px) {

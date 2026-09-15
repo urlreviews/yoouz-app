@@ -697,7 +697,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-50 to stay above everything */}
       <div 
-        className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 [padding-top:max(16px,calc(env(safe-area-inset-top,16px)+6px))] md:pt-4 pointer-events-none"
+        className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 [padding-top:max(22px,calc(env(safe-area-inset-top,22px)+8px))] md:pt-4 pointer-events-none"
       >
         {/* Left side: Navigation / Menu + Top Business Badge */}
         <div className="pointer-events-auto flex items-center gap-2 max-w-[calc(100%-60px)]">
