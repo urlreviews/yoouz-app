@@ -4744,30 +4744,6 @@ export function App() {
             setAuthIntent('record');
             setIsAuthModalOpen(true);
           }}
-          onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
-          onOpenSearch={() => setIsSearchModalOpen(true)}
-          onSelectSection={(section) => {
-            if (section === "home") {
-              // stay on embed feed
-            } else if (section === "search") {
-              setIsSearchModalOpen(true);
-            } else if (section === "record_review") {
-              setIsCreateModalOpen(true);
-            } else if (section === "messages" || section === "profile" || section === "notifications") {
-              if (!currentUser) {
-                setAuthIntent(section as AuthIntent);
-                setIsAuthModalOpen(true);
-              } else {
-                setEmbedTargetId(null);
-                setActiveSection(section);
-              }
-            } else {
-              setEmbedTargetId(null);
-              setActiveSection(section);
-            }
-          }}
-          unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
-          unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
         />
 
         {/* Place Drawer */}

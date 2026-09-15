@@ -68,6 +68,8 @@ interface CopoVideoPlayerProps {
   onRecordView?: (videoId: string) => void;
   unreadCount?: number;
   forceShowMenu?: boolean;
+  hideFloatingNav?: boolean;
+  isEmbed?: boolean;
 }
 
 const safeSetVolume = (v: HTMLVideoElement | null, vol: number = 1) => {
@@ -111,7 +113,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   contextKey,
   onRecordView,
   unreadCount = 0,
-  forceShowMenu = false
+  forceShowMenu = false,
+  hideFloatingNav = false,
+  isEmbed = false
 }) => {
   const { t } = useLanguage();
   const currentVideo = videos[Math.min(currentIndex, Math.max(0, videos.length - 1))] || videos[0];
@@ -1433,6 +1437,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 onRecordView={onRecordView}
                 unreadCount={unreadCount}
                 forceShowMenu={forceShowMenu}
+                isEmbed={isEmbed}
               />
             );
           })}
@@ -1445,7 +1450,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               ref={(el) => {
                 cardRefs.current[videos.length] = el;
               }}
-              className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 pb-[calc(var(--mobile-nav-height,calc(71px+max(10px,env(safe-area-inset-bottom,10px))))+24px)] md:pb-8 bg-black md:bg-zinc-950 md:rounded-3xl border-0 md:border md:border-white/10 text-center select-none relative"
+              className={`w-full h-full min-h-full max-h-full ${
+                isEmbed
+                  ? "aspect-[9/16] max-w-[440px] rounded-none border-0 shadow-none md:min-h-full md:max-h-full md:h-full md:w-full md:max-w-none md:rounded-none md:border-0 md:shadow-none"
+                  : "md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] md:rounded-3xl border-0 md:border md:border-white/10"
+              } snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 bg-black text-center select-none relative`}
             >
               {/* Checkmark circle - natural dark mode */}
               <div className="w-16 h-16 rounded-full bg-zinc-850 border border-zinc-700/80 flex items-center justify-center mb-5 text-zinc-100 shadow-md">
@@ -1506,38 +1515,40 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         </div>
 
         {/* Floating Up/Down Navigation Buttons (Desktop) */}
-        <div
-          id="copo-floating-nav-buttons"
-          className="hidden sm:flex flex-col gap-3 z-30"
-        >
-          <button
-            id="btn-scroll-prev-video"
-            onClick={handlePrev}
-            disabled={currentIndex <= 0}
-            className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-              currentIndex <= 0
-                ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
-                : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
-            }`}
-            title="Previous Video (Up Arrow)"
+        {!hideFloatingNav && !isEmbed && (
+          <div
+            id="copo-floating-nav-buttons"
+            className="hidden sm:flex flex-col gap-3 z-30"
           >
-            <ChevronUp className="w-6 h-6 stroke-[2.5]" />
-          </button>
+            <button
+              id="btn-scroll-prev-video"
+              onClick={handlePrev}
+              disabled={currentIndex <= 0}
+              className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
+                currentIndex <= 0
+                  ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
+                  : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
+              }`}
+              title="Previous Video (Up Arrow)"
+            >
+              <ChevronUp className="w-6 h-6 stroke-[2.5]" />
+            </button>
 
-          <button
-            id="btn-scroll-next-video"
-            onClick={handleNext}
-            disabled={currentIndex >= (videos.length > 0 ? videos.length - 1 : 0)}
-            className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-              currentIndex >= (videos.length > 0 ? videos.length - 1 : 0)
-                ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
-                : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
-            }`}
-            title="Next Video (Down Arrow)"
-          >
-            <ChevronDown className="w-6 h-6 stroke-[2.5]" />
-          </button>
-        </div>
+            <button
+              id="btn-scroll-next-video"
+              onClick={handleNext}
+              disabled={currentIndex >= (videos.length > 0 ? videos.length - 1 : 0)}
+              className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
+                currentIndex >= (videos.length > 0 ? videos.length - 1 : 0)
+                  ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
+                  : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
+              }`}
+              title="Next Video (Down Arrow)"
+            >
+              <ChevronDown className="w-6 h-6 stroke-[2.5]" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* More Options Modal */}

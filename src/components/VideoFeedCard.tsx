@@ -82,6 +82,7 @@ interface VideoFeedCardProps {
   onSeekDelta?: (deltaSeconds: number) => void;
   onScrubEnd?: (percent: number) => void;
   forceShowMenu?: boolean;
+  isEmbed?: boolean;
 }
 
 export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
@@ -129,7 +130,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onSeekToPercent,
   onSeekDelta,
   onScrubEnd,
-  forceShowMenu = false
+  forceShowMenu = false,
+  isEmbed = false
 }) => {
   const { t } = useLanguage();
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
@@ -615,7 +617,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       ref={cardRef}
       data-video-index={index}
       id={`copo-video-card-${video.id}`}
-      className="snap-start snap-always shrink-0 relative w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] bg-black md:rounded-[24px] overflow-hidden md:shadow-2xl md:border md:border-zinc-800/90 select-none flex flex-col justify-end group"
+      className={`snap-start snap-always shrink-0 relative w-full h-full min-h-full max-h-full bg-black select-none flex flex-col justify-end group overflow-hidden ${
+        isEmbed
+          ? "aspect-[9/16] max-w-[440px] rounded-none border-0 shadow-none md:min-h-full md:max-h-full md:h-full md:w-full md:max-w-none md:rounded-none md:border-0 md:shadow-none"
+          : "md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
+      }`}
     >
       {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
       <div
