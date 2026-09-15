@@ -74,17 +74,23 @@ html, body, #root {
   --mobile-nav-height: calc(71px + max(10px, env(safe-area-inset-bottom, 10px)));
 }
 
-@media (min-width: 768px) {
-  :root {
-    --mobile-nav-height: 0px;
-  }
+:root {
+  --mobile-nav-height: 0px;
 }
 
 .copo-video-scrubber-position {
-  bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 3px);
+  bottom: max(4px, env(safe-area-inset-bottom, 4px));
 }
 
 .copo-video-bottom-metadata {
+  padding-bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 20px));
+}
+
+.copo-has-bottom-nav .copo-video-scrubber-position {
+  bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 3px);
+}
+
+.copo-has-bottom-nav .copo-video-bottom-metadata {
   padding-bottom: calc(var(--mobile-nav-height, calc(71px + max(10px, env(safe-area-inset-bottom, 10px)))) + 20px);
 }
 

@@ -619,7 +619,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       id={`copo-video-card-${video.id}`}
       className={`snap-start snap-always shrink-0 relative w-full h-full min-h-full max-h-full bg-black select-none flex flex-col justify-end group overflow-hidden ${
         isEmbed
-          ? "aspect-[9/16] max-w-[440px] rounded-none border-0 shadow-none md:min-h-full md:max-h-full md:h-full md:w-full md:max-w-none md:rounded-none md:border-0 md:shadow-none"
+          ? "w-full h-full min-h-full max-h-full rounded-none border-0 shadow-none md:min-h-full md:max-h-full md:h-full md:w-full md:max-w-none md:rounded-none md:border-0 md:shadow-none"
           : "md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
       }`}
     >
@@ -697,7 +697,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-50 to stay above everything */}
       <div 
-        className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 [padding-top:max(8px,calc(env(safe-area-inset-top,0px)+2px))] md:[padding-top:14px] pointer-events-none"
+        className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 [padding-top:max(16px,calc(env(safe-area-inset-top,16px)+6px))] md:pt-4 pointer-events-none"
       >
         {/* Left side: Navigation / Menu + Top Business Badge */}
         <div className="pointer-events-auto flex items-center gap-2 max-w-[calc(100%-60px)]">
