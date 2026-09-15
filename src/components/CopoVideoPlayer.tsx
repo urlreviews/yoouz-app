@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { VideoReview, FeedSubTab, VideoAuthor, Place } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { isAuthorMatch, formatBusinessName } from "../utils/placeUtils";
+import { isAuthorMatch, formatBusinessName, isGenericPlaceName, extractCleanDomain } from "../utils/placeUtils";
 
 interface CopoVideoPlayerProps {
   videos: VideoReview[];
@@ -832,19 +832,36 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     (vid: VideoReview | undefined): string | null => {
       if (!vid) return null;
 
-      if (places && vid.placeId) {
-        const p = places.find((place) => place.id === vid.placeId);
+      if (places && places.length > 0) {
+        const vidCleanId = extractCleanDomain(vid.placeId || "");
+        const vidCleanWeb = extractCleanDomain(vid.placeWebsite || "");
+        const vidCleanName = extractCleanDomain(vid.placeName || "");
+
+        const p = places.find((place) => {
+          if (!place) return false;
+          if (vid.placeId && (place.id === vid.placeId || place.id === vidCleanId)) return true;
+          const pDomain = extractCleanDomain(place.id || place.website || place.brandDomain || "");
+          if (pDomain && pDomain !== "home" && (pDomain === vidCleanId || pDomain === vidCleanWeb || pDomain === vidCleanName)) return true;
+          if (place.website && vid.placeWebsite && extractCleanDomain(place.website) === extractCleanDomain(vid.placeWebsite)) return true;
+          return false;
+        });
+
         if (p) {
-          const logo = getPlaceLogoUrl(p);
-          if (logo) return logo;
+          const logo = getPlaceLogoUrl(p) || p.logoUrl || p.avatarUrl;
+          if (logo && logo.trim() !== "" && !logo.startsWith("data:;")) return logo;
         }
       }
 
-      if (vid.placeLogoUrl || vid.placeWebsite) {
+      if (vid.placeLogoUrl && vid.placeLogoUrl.trim() !== "" && !vid.placeLogoUrl.startsWith("data:;")) {
         return getCleanLogoUrl(vid.placeLogoUrl, vid.placeWebsite);
       }
 
-      if (vid.placeName) {
+      const fallbackDomain = extractCleanDomain(vid.placeWebsite || vid.placeId || (vid.placeName?.includes(".") ? vid.placeName : ""));
+      if (fallbackDomain && fallbackDomain.includes(".") && fallbackDomain !== "home.com") {
+        return getPlaceLogoUrl({ name: fallbackDomain, brandDomain: fallbackDomain });
+      }
+
+      if (vid.placeName && !isGenericPlaceName(vid.placeName)) {
         return getPlaceLogoUrl({
           name: vid.placeName,
           website: vid.placeName.includes(".") ? vid.placeName : undefined

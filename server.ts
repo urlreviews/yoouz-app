@@ -15718,6 +15718,30 @@ function splitCompoundWords(str: string): string {
   return s;
 }
 
+function isGenericPlaceNameServer(name?: string | null): boolean {
+  if (!name) return true;
+  const lower = name.trim().toLowerCase();
+  const genericWords = new Set([
+    "home",
+    "home page",
+    "homepage",
+    "welcome",
+    "welcome to",
+    "index",
+    "index page",
+    "main",
+    "main page",
+    "default",
+    "official site",
+    "official website",
+    "website",
+    "page",
+    "business",
+    "verified business"
+  ]);
+  return genericWords.has(lower);
+}
+
 function formatBusinessName(name?: string | null): string {
   if (!name) return "";
   let trimmed = name.trim();
@@ -15740,17 +15764,20 @@ function formatBusinessName(name?: string | null): string {
     trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
   }
 
-  // 3. Clean up scraped SEO titles (e.g., "BrandName | The Best Service in Town" or "BrandName – The Clients Guide...")
+  // 3. Clean up scraped SEO titles (e.g., "Home - Van Law Firm" or "BrandName – The Clients Guide...")
   const seoDelimiters = [" | ", " – ", " — ", " - ", " : ", " • "];
   for (const delimiter of seoDelimiters) {
     if (trimmed.includes(delimiter)) {
       const parts = trimmed.split(delimiter).map(p => p.trim()).filter(Boolean);
       if (parts.length > 0) {
-        const first = parts[0];
-        if (first.length >= 2 && first.length <= 40) {
-          trimmed = first;
+        const nonGeneric = parts.find(p => !isGenericPlaceNameServer(p) && p.length >= 2 && p.length <= 50);
+        if (nonGeneric) {
+          trimmed = nonGeneric;
           break;
-        } else if (parts[1] && parts[1].length >= 2 && parts[1].length <= 40) {
+        } else if (parts[0] && parts[0].length >= 2 && parts[0].length <= 50 && !isGenericPlaceNameServer(parts[0])) {
+          trimmed = parts[0];
+          break;
+        } else if (parts[1] && parts[1].length >= 2 && parts[1].length <= 50) {
           trimmed = parts[1];
           break;
         }
@@ -15758,8 +15785,13 @@ function formatBusinessName(name?: string | null): string {
     }
   }
 
+  // If the resulting trimmed string is generic (e.g. "Home"), clear it
+  if (isGenericPlaceNameServer(trimmed)) {
+    trimmed = "";
+  }
+
   const strippedKey = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (KNOWN_OFFICIAL_NAMES[strippedKey]) {
+  if (strippedKey && KNOWN_OFFICIAL_NAMES[strippedKey]) {
     return KNOWN_OFFICIAL_NAMES[strippedKey];
   }
 

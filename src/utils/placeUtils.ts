@@ -297,6 +297,30 @@ export function splitCompoundWords(str: string): string {
  * e.g., "thecapitalavenue.com" -> "The Capital Avenue"
  * e.g., "https://www.freecancellations.com" -> "Free Cancellations"
  */
+export function isGenericPlaceName(name?: string | null): boolean {
+  if (!name) return true;
+  const lower = name.trim().toLowerCase();
+  const genericWords = new Set([
+    "home",
+    "home page",
+    "homepage",
+    "welcome",
+    "welcome to",
+    "index",
+    "index page",
+    "main",
+    "main page",
+    "default",
+    "official site",
+    "official website",
+    "website",
+    "page",
+    "business",
+    "verified business"
+  ]);
+  return genericWords.has(lower);
+}
+
 export function formatBusinessName(name?: string | null): string {
   if (!name) return "";
   let trimmed = name.trim();
@@ -320,17 +344,21 @@ export function formatBusinessName(name?: string | null): string {
     trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
   }
 
-  // 3. Clean up scraped SEO titles (e.g., "BrandName | The Best Service in Town" or "BrandName – The Clients Guide...")
+  // 3. Clean up scraped SEO titles (e.g., "Home - Van Law Firm" or "BrandName – The Clients Guide...")
   const seoDelimiters = [" | ", " – ", " — ", " - ", " : ", " • "];
   for (const delimiter of seoDelimiters) {
     if (trimmed.includes(delimiter)) {
       const parts = trimmed.split(delimiter).map(p => p.trim()).filter(Boolean);
       if (parts.length > 0) {
-        const first = parts[0];
-        if (first.length >= 2 && first.length <= 40) {
-          trimmed = first;
+        // Pick the first part that is NOT a generic page title like "Home", "Welcome", etc.
+        const nonGeneric = parts.find(p => !isGenericPlaceName(p) && p.length >= 2 && p.length <= 50);
+        if (nonGeneric) {
+          trimmed = nonGeneric;
           break;
-        } else if (parts[1] && parts[1].length >= 2 && parts[1].length <= 40) {
+        } else if (parts[0] && parts[0].length >= 2 && parts[0].length <= 50 && !isGenericPlaceName(parts[0])) {
+          trimmed = parts[0];
+          break;
+        } else if (parts[1] && parts[1].length >= 2 && parts[1].length <= 50) {
           trimmed = parts[1];
           break;
         }
@@ -338,9 +366,14 @@ export function formatBusinessName(name?: string | null): string {
     }
   }
 
+  // If the resulting trimmed string is still generic (e.g. "Home"), clear it
+  if (isGenericPlaceName(trimmed)) {
+    trimmed = "";
+  }
+
   // Re-check normalized key after SEO title strip
   const strippedKey = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (KNOWN_OFFICIAL_NAMES[strippedKey]) {
+  if (strippedKey && KNOWN_OFFICIAL_NAMES[strippedKey]) {
     return KNOWN_OFFICIAL_NAMES[strippedKey];
   }
 
@@ -595,8 +628,9 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
       : (video.placeWebsite || (domain ? `https://${domain}` : ""));
     const description = video.placeDescription || (existing.description && !existing.description.includes("Verified video review destination") && !existing.description.includes("Verified Yoouz business listing") ? existing.description : "") || existing.description || "";
     
-    // Automatically promote clean formatted business name if existing name was a raw domain or slug
+    // Automatically promote clean formatted business name if existing name was generic, a raw domain, or slug
     const isGenericOrDomainName = !existing.name ||
+      isGenericPlaceName(existing.name) ||
       existing.name.toLowerCase() === (existing.id || "").toLowerCase() ||
       existing.name.toLowerCase() === (existing.brandDomain || "").toLowerCase() ||
       existing.name.includes(".") ||
@@ -604,9 +638,8 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
       existing.name.toLowerCase() === "website" ||
       existing.name.toLowerCase().includes("bensonbingham");
 
-    const updatedName = (video.placeName && (isGenericOrDomainName || !video.placeName.includes(".")))
-      ? (formatBusinessName(video.placeName) || formatBusinessName(existing.name) || existing.name)
-      : (formatBusinessName(existing.name) || existing.name);
+    const candidateName = (video.placeName && !isGenericPlaceName(video.placeName)) ? video.placeName : (domain ? domain : existing.name);
+    const updatedName = formatBusinessName(candidateName) || formatBusinessName(existing.name) || formatBusinessName(domain) || "Verified Business";
 
     return {
       ...existing,
