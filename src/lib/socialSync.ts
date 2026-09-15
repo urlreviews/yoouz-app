@@ -840,9 +840,10 @@ export async function clearAllNotifications(notificationIds: string[], currentUs
 function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): CopoMessage[] {
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
-  const userHandle = (currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+  const userHandle = (currentUser.name || currentUser.handle || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
   const userName = (currentUser.name || "").toLowerCase().trim();
-  const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
+  const userId = (currentUser.userId || (currentUser as any).id || (currentUser as any).uid || "").toLowerCase().trim();
+  const isBusinessUser = Boolean((currentUser as any).isBusiness || userId.startsWith("place_") || (currentUser as any).placeId);
 
   let deletedThreadsSet = new Set<string>();
   try {
@@ -872,66 +873,82 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const recipientId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
     const recipientName = (data.recipientName || "").toLowerCase().trim();
 
-    const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
+    let isParticipant = false;
 
-    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avt");
-    const isAouisesmee = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userEmail.includes("aouisesme") || userEmail.includes("aouiseme") || userName.includes("aouisesmee") || userName.includes("aouisemee") || userName.includes("aouisesme") || userName.includes("aouiseme") || userHandle.includes("aouisesmee") || userHandle.includes("aouisemee") || userHandle.includes("aouisesme") || userHandle.includes("aouiseme") || userId.includes("aouisesmee") || userId.includes("aouisemee") || userId.includes("aouisesme") || userId.includes("aouiseme") || userEmail.includes("4samet") || userName.includes("4samet") || userHandle.includes("4samet") || userId.includes("4samet");
-    const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111") || userEmail.includes("biz") || userName.includes("biz");
+    if (isBusinessUser) {
+      // For Business Profiles: ONLY include threads where this specific business entity is an explicit participant or recipient
+      const bizMatch =
+        (userId && (participants.some(p => p.includes(userId)) || senderId === userId || recipientId === userId)) ||
+        (userEmail && (participants.some(p => p.includes(userEmail)) || senderEmail === userEmail || recipientEmail === userEmail)) ||
+        (userHandle && userHandle.length > 2 && (participants.some(p => p.includes(userHandle)) || senderId === userHandle || recipientId === userHandle));
 
-    const matchesAvtErtuop = isAvtErtuop && (
-      participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
-      senderEmail.includes("avr6566gd") || senderEmail.includes("avt") || recipientEmail.includes("avr6566gd") || recipientEmail.includes("avt") ||
-      senderName.includes("avt") || recipientName.includes("avt")
-    );
-    const matchesAouisesmee = isAouisesmee && (
-      participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("aouisesme") || p.includes("aouiseme") || p.includes("4samet")) ||
-      senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderEmail.includes("aouisesme") || senderEmail.includes("aouiseme") || senderEmail.includes("4samet") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientEmail.includes("aouisesme") || recipientEmail.includes("aouiseme") || recipientEmail.includes("4samet") ||
-      senderName.includes("aouisesmee") || senderName.includes("aouisemee") || senderName.includes("aouisesme") || senderName.includes("aouiseme") || senderName.includes("4samet") || recipientName.includes("aouisesmee") || recipientName.includes("aouisemee") || recipientName.includes("aouisesme") || recipientName.includes("aouiseme") || recipientName.includes("4samet")
-    );
-    const matchesBizRiv = isBizRiv && (
-      participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("biz")) ||
-      senderEmail.includes("louis42111") || senderEmail.includes("biz") || recipientEmail.includes("louis42111") || recipientEmail.includes("biz") ||
-      senderName.includes("biz") || recipientName.includes("biz")
-    );
+      if (!bizMatch) {
+        continue;
+      }
+      isParticipant = true;
+    } else {
+      const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
 
-    const historyHasUser = Array.isArray(data.history) && data.history.some((m: any) => {
-      if (!m) return false;
-      const mSE = (m.senderEmail || "").toLowerCase().trim();
-      const mSI = (m.senderId || "").toLowerCase().trim().replace(/^@/, "");
-      const mSN = (m.senderName || "").toLowerCase().trim();
-      return (
-        (userEmail && (mSE === userEmail || mSI === userEmail || mSE.includes(userEmail))) ||
-        (emailPrefix && (mSE.startsWith(emailPrefix) || mSI === emailPrefix)) ||
-        (userHandle && (mSI === userHandle || mSN === userHandle)) ||
-        (!isGenericName && mSN === userName) ||
-        (userId && mSI === userId) ||
-        (isAouisesmee && (mSE.includes("aouisesmee") || mSE.includes("aouisemee") || mSE.includes("aouisesme") || mSE.includes("aouiseme") || mSE.includes("4samet") || mSN.includes("aouisesmee") || mSN.includes("aouisemee") || mSN.includes("aouisesme") || mSN.includes("aouiseme") || mSN.includes("4samet"))) ||
-        (isAvtErtuop && (mSE.includes("avr6566gd") || mSN.includes("avt") || mSI.includes("avt"))) ||
-        (isBizRiv && (mSE.includes("louis42111") || mSN.includes("biz") || mSI.includes("biz")))
+      const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avt");
+      const isAouisesmee = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userEmail.includes("aouisesme") || userEmail.includes("aouiseme") || userName.includes("aouisesmee") || userName.includes("aouisemee") || userName.includes("aouisesme") || userName.includes("aouiseme") || userHandle.includes("aouisesmee") || userHandle.includes("aouisemee") || userHandle.includes("aouisesme") || userHandle.includes("aouiseme") || userId.includes("aouisesmee") || userId.includes("aouisemee") || userId.includes("aouisesme") || userId.includes("aouiseme") || userEmail.includes("4samet") || userName.includes("4samet") || userHandle.includes("4samet") || userId.includes("4samet");
+      const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111") || userEmail.includes("biz") || userName.includes("biz");
+
+      const matchesAvtErtuop = isAvtErtuop && (
+        participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
+        senderEmail.includes("avr6566gd") || senderEmail.includes("avt") || recipientEmail.includes("avr6566gd") || recipientEmail.includes("avt") ||
+        senderName.includes("avt") || recipientName.includes("avt")
       );
-    });
+      const matchesAouisesmee = isAouisesmee && (
+        participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("aouisesme") || p.includes("aouiseme") || p.includes("4samet")) ||
+        senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderEmail.includes("aouisesme") || senderEmail.includes("aouiseme") || senderEmail.includes("4samet") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientEmail.includes("aouisesme") || recipientEmail.includes("aouiseme") || recipientEmail.includes("4samet") ||
+        senderName.includes("aouisesmee") || senderName.includes("aouisemee") || senderName.includes("aouisesme") || senderName.includes("aouiseme") || senderName.includes("4samet") || recipientName.includes("aouisesmee") || recipientName.includes("aouisemee") || recipientName.includes("aouisesme") || recipientName.includes("aouiseme") || recipientName.includes("4samet")
+      );
+      const matchesBizRiv = isBizRiv && (
+        participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("biz")) ||
+        senderEmail.includes("louis42111") || senderEmail.includes("biz") || recipientEmail.includes("louis42111") || recipientEmail.includes("biz") ||
+        senderName.includes("biz") || recipientName.includes("biz")
+      );
 
-    const threadIdStr = String(data.id || "").toLowerCase();
-    const threadIdMatchesUser = Boolean(
-      (userEmail && threadIdStr.includes(userEmail)) ||
-      (emailPrefix && threadIdStr.includes(emailPrefix)) ||
-      (userHandle && threadIdStr.includes(userHandle)) ||
-      (isAouisesmee && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("aouisemee") || threadIdStr.includes("aouisesme") || threadIdStr.includes("aouiseme") || threadIdStr.includes("4samet"))) ||
-      (isAvtErtuop && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("avt"))) ||
-      (isBizRiv && (threadIdStr.includes("louis42111") || threadIdStr.includes("biz")))
-    );
+      const historyHasUser = Array.isArray(data.history) && data.history.some((m: any) => {
+        if (!m) return false;
+        const mSE = (m.senderEmail || "").toLowerCase().trim();
+        const mSI = (m.senderId || "").toLowerCase().trim().replace(/^@/, "");
+        const mSN = (m.senderName || "").toLowerCase().trim();
+        return (
+          (userEmail && (mSE === userEmail || mSI === userEmail || mSE.includes(userEmail))) ||
+          (emailPrefix && (mSE.startsWith(emailPrefix) || mSI === emailPrefix)) ||
+          (userHandle && (mSI === userHandle || mSN === userHandle)) ||
+          (!isGenericName && mSN === userName) ||
+          (userId && mSI === userId) ||
+          (isAouisesmee && (mSE.includes("aouisesmee") || mSE.includes("aouisemee") || mSE.includes("aouisesme") || mSE.includes("aouiseme") || mSE.includes("4samet") || mSN.includes("aouisesmee") || mSN.includes("aouisemee") || mSN.includes("aouisesme") || mSN.includes("aouiseme") || mSN.includes("4samet"))) ||
+          (isAvtErtuop && (mSE.includes("avr6566gd") || mSN.includes("avt") || mSI.includes("avt"))) ||
+          (isBizRiv && (mSE.includes("louis42111") || mSN.includes("biz") || mSI.includes("biz")))
+        );
+      });
 
-    const isParticipant =
-      matchesAvtErtuop ||
-      matchesAouisesmee ||
-      matchesBizRiv ||
-      historyHasUser ||
-      threadIdMatchesUser ||
-      (userEmail && (participants.some(p => p.includes(userEmail)) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
-      (emailPrefix && (participants.some(p => p.includes(emailPrefix)) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
-      (userHandle && (participants.some(p => p.includes(userHandle)) || senderId === userHandle || recipientId === userHandle)) ||
-      (!isGenericName && (participants.includes(userName) || senderName === userName || recipientName === userName)) ||
-      (userId && (participants.some(p => p.includes(userId)) || senderId === userId || recipientId === userId));
+      const threadIdStr = String(data.id || "").toLowerCase();
+      const threadIdMatchesUser = Boolean(
+        (userEmail && threadIdStr.includes(userEmail)) ||
+        (emailPrefix && threadIdStr.includes(emailPrefix)) ||
+        (userHandle && threadIdStr.includes(userHandle)) ||
+        (isAouisesmee && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("aouisemee") || threadIdStr.includes("aouisesme") || threadIdStr.includes("aouiseme") || threadIdStr.includes("4samet"))) ||
+        (isAvtErtuop && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("avt"))) ||
+        (isBizRiv && (threadIdStr.includes("louis42111") || threadIdStr.includes("biz")))
+      );
+
+      isParticipant = Boolean(
+        matchesAvtErtuop ||
+        matchesAouisesmee ||
+        matchesBizRiv ||
+        historyHasUser ||
+        threadIdMatchesUser ||
+        (userEmail && (participants.some(p => p.includes(userEmail)) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
+        (emailPrefix && (participants.some(p => p.includes(emailPrefix)) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
+        (userHandle && (participants.some(p => p.includes(userHandle)) || senderId === userHandle || recipientId === userHandle)) ||
+        (!isGenericName && (participants.includes(userName) || senderName === userName || recipientName === userName)) ||
+        (userId && (participants.some(p => p.includes(userId)) || senderId === userId || recipientId === userId))
+      );
+    }
 
     if (isParticipant) {
       let otherName = data.senderName || data.recipientName || "Yoouz Member";

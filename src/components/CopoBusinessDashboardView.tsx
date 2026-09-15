@@ -1447,10 +1447,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Business Notifications computed from props and active notification preferences
   const businessNotifications = useMemo(() => {
     if (!notifications || notifications.length === 0) return [];
-    const pName = (currentPlace.name || '').toLowerCase();
+    const pName = (currentPlace?.name || '').toLowerCase().trim();
+    const pId = (currentPlace?.id || '').toLowerCase().trim();
     const placeVideoIds = new Set(placeVideos.map(v => v.id));
 
+    // Claim timestamp of this place (if claimed)
+    const claimedAtMs = (currentPlace as any)?.claimedAtMs || (verifiedBusinessSession?.verifiedAt ? new Date(verifiedBusinessSession.verifiedAt).getTime() : 0);
+
     return notifications.filter(n => {
+      if (!n) return false;
+
       // 1. Master toggle: If disabled in settings, pause all notifications
       if (!businessNotificationSettings.enabled) return false;
 
@@ -1461,12 +1467,39 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       if (n.type === 'follow' && !businessNotificationSettings.follows) return false;
       if ((n.type === 'bookmark' || n.type === 'repost') && !businessNotificationSettings.bookmarks) return false;
 
-      // 3. Relevance to this business venue
-      if (n.placeName && n.placeName.toLowerCase() === pName) return true;
-      if (n.videoId && placeVideoIds.has(n.videoId)) return true;
+      // 3. Welcome notification check (e.g. system welcome for the claimed business)
+      const isWelcome = Boolean(
+        n.id?.includes('welcome') ||
+        n.text?.toLowerCase().includes('welcome to yoouz') ||
+        n.text?.toLowerCase().includes('welcome')
+      );
+
+      if (isWelcome) {
+        return true;
+      }
+
+      // 4. Strict venue match: Must match THIS specific business place ID, Name, or Video ID
+      const notifPlaceName = (n.placeName || '').toLowerCase().trim();
+      const notifPlaceId = (n.placeId || '').toLowerCase().trim();
+
+      const matchesThisPlace = Boolean(
+        (pId && notifPlaceId && notifPlaceId === pId) ||
+        (pName && notifPlaceName && notifPlaceName === pName) ||
+        (n.videoId && placeVideoIds.has(n.videoId))
+      );
+
+      if (!matchesThisPlace) {
+        return false;
+      }
+
+      // 5. Timing filter: If business was newly claimed, ignore older pre-claim history/mock data
+      if (claimedAtMs > 0 && n.createdAtMs && n.createdAtMs < (claimedAtMs - 120000)) {
+        return false;
+      }
+
       return true;
     });
-  }, [notifications, currentPlace, placeVideos, businessNotificationSettings]);
+  }, [notifications, currentPlace, placeVideos, businessNotificationSettings, verifiedBusinessSession]);
 
   const unreadBusinessNotifsCount = useMemo(() => {
     return businessNotifications.filter(n => !n.isRead).length;

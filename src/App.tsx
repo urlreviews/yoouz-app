@@ -1631,11 +1631,14 @@ export function App() {
             effective = {
               id: session.placeId,
               uid: session.placeId,
+              userId: session.placeId,
+              placeId: session.placeId,
               name: session.placeName || 'Business Manager',
-              email: session.businessEmail || 'business@yoouz.com',
+              email: session.businessEmail || `biz_${session.placeId}@business.yoouz.com`,
               avatar: session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
               handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
-              isVerified: true
+              isVerified: true,
+              isBusiness: true
             } as any;
           }
         }
