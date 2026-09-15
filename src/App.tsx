@@ -2126,6 +2126,24 @@ export function App() {
   // Video View Recording Session State
   const recordedViewsInSessionRef = useRef<Set<string>>(new Set());
 
+  const handleShareIncrement = (videoId: string, nextSharesCount?: number) => {
+    if (!videoId) return;
+    setVideos((prev) =>
+      prev.map((v) => {
+        if (v.id === videoId) {
+          const currentShares = v.sharesCount || v.shares || 0;
+          const updated = nextSharesCount !== undefined ? nextSharesCount : currentShares + 1;
+          return {
+            ...v,
+            sharesCount: updated,
+            shares: updated
+          };
+        }
+        return v;
+      })
+    );
+  };
+
   const handleRecordVideoView = (videoId: string) => {
     if (!videoId) return;
 
@@ -2157,14 +2175,7 @@ export function App() {
       return next;
     });
 
-    // 2. Persist to BunnyDB database using increment(1)
-    try {
-
-    } catch (err) {
-      console.warn("BunnyDB view tracking error:", err);
-    }
-
-    // 3. Persist to backend server API
+    // 2. Persist to backend server API (which updates BunnyDB & reviews index)
     try {
       fetch(`/api/videos/${encodeURIComponent(videoId)}/view`, {
         method: "POST",
@@ -4740,12 +4751,6 @@ export function App() {
           />
         )}
 
-        <CopoShareModal
-          isOpen={!!activeShareVideo}
-          video={activeShareVideo}
-          onClose={() => setActiveShareVideo(null)}
-        />
-
         <CopoCreateModal
           isOpen={isCreateModalOpen}
           onClose={() => {
@@ -5563,6 +5568,7 @@ export function App() {
           setActiveShareVideo(null);
           handleOpenReport({ type: "video", video: v });
         }}
+        onShareIncrement={handleShareIncrement}
       />
 
       {/* Special Yoouz In-App Reporting Flow (TikTok / FB / YouTube style -> report@yoouz.com) */}

@@ -46,6 +46,7 @@ interface CopoShareModalProps {
   video?: VideoReview | null;
   onClose: () => void;
   onOpenReport?: (review: VideoReview) => void;
+  onShareIncrement?: (videoId: string, nextSharesCount?: number) => void;
 }
 
 export const CopoShareModal: React.FC<CopoShareModalProps> = ({
@@ -60,7 +61,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   bannerUrl: propBannerUrl,
   video,
   onClose,
-  onOpenReport
+  onOpenReport,
+  onShareIncrement
 }) => {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -85,6 +87,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Image loading & fallback states
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+
+  // Unconditional ref hook for share deduplication
+  const recordedSharesSet = useRef<Set<string>>(new Set());
 
   // Reset copied states and view on open
   useEffect(() => {
@@ -188,8 +193,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   const iframeEmbedCode = `<iframe src="${embedUrl}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
 
-  const recordedSharesSet = useRef<Set<string>>(new Set());
-
   // Record share interaction to Bunny.net backend storage
   const recordShareAction = (platform: string = "general") => {
     const targetVideoId = video?.id;
@@ -199,12 +202,22 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       recordedSharesSet.current.add(shareKey);
       setTimeout(() => recordedSharesSet.current.delete(shareKey), 3000);
 
+      // Optimistic local state update
+      onShareIncrement?.(targetVideoId);
+
       try {
         fetch("/api/interactions/share", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId: targetVideoId, platform })
-        }).catch(() => {});
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && typeof data.shares === "number") {
+              onShareIncrement?.(targetVideoId, data.shares);
+            }
+          })
+          .catch(() => {});
       } catch (e) {}
     }
   };

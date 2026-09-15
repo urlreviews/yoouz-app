@@ -580,7 +580,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       );
       const isCreator = userVideos.length > 0 || u.role === "Creator";
       const totalLikes = userVideos.reduce((acc, v) => acc + (v.likes || 0), 0);
-      const totalViews = userVideos.reduce((acc, v) => acc + (v.sharesCount || 0) * 10 + (v.likes || 0) * 5 + 15, 0);
+      const totalViews = userVideos.reduce((acc, v) => acc + (v.viewsCount || v.views || 0), 0);
       const avgRating = userVideos.length > 0 ? (userVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / userVideos.length).toFixed(1) : "5.0";
 
       const enriched = {
@@ -749,7 +749,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const totalLikes = videos.reduce((acc, v) => acc + (v.likes || 0), 0);
     const totalShares = videos.reduce((acc, v) => acc + (v.sharesCount || 0), 0);
     const totalBookmarks = videos.reduce((acc, v) => acc + (v.bookmarksCount || 0), 0);
-    const totalViews = videos.reduce((acc, v) => acc + (v.sharesCount || 0) * 10 + (v.likes || 0) * 5 + 15, 0);
+    const totalViews = videos.reduce((acc, v) => acc + (v.viewsCount || v.views || 0), 0);
     const totalComm = allComments.length;
     const totalPlaces = places.length;
     const claimedPlaces = places.filter((p) => p.isClaimed || Boolean(p.claimedByEmail)).length;

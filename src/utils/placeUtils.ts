@@ -155,21 +155,11 @@ export function getDisplayViews(video?: Partial<VideoReview> | null): number {
   if (!video) return 0;
   
   const explicitViews = video.views ?? video.viewsCount;
-  if (typeof explicitViews === "number" && explicitViews > 0) {
+  if (typeof explicitViews === "number" && !isNaN(explicitViews) && explicitViews >= 0) {
     return explicitViews;
   }
 
-  // Generate a deterministic comfortable baseline view count based on the video ID/title
-  const idStr = video.id || video.placeId || video.placeName || video.caption || "yoouz_video";
-  let hash = 0;
-  for (let i = 0; i < idStr.length; i++) {
-    hash = (hash << 5) - hash + idStr.charCodeAt(i);
-    hash |= 0;
-  }
-  const positiveHash = Math.abs(hash);
-  // Returns a comfortable number between 135 and 1,880
-  const comfortableBase = 135 + (positiveHash % 1745);
-  return comfortableBase;
+  return 0;
 }
 
 /**

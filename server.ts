@@ -9461,21 +9461,47 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       let updatedViews = 1;
 
-      // 1. Update local JSON index
+      // 1. Sync to BunnyDB if configured
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          const vRow = await bunnyDb.execute({
+            sql: "SELECT data, viewsCount FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          if (vRow && vRow.rows && vRow.rows.length > 0) {
+            let vData: any = {};
+            try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+            const existingViews = typeof (vRow.rows[0] as any).viewsCount === 'number'
+              ? (vRow.rows[0] as any).viewsCount
+              : (vData.viewsCount || vData.views || 0);
+            updatedViews = existingViews + 1;
+            vData.views = updatedViews;
+            vData.viewsCount = updatedViews;
+            await bunnyDb.execute({
+              sql: "UPDATE videoReviews SET viewsCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+              args: [updatedViews, JSON.stringify(vData), videoId]
+            });
+          }
+        } catch (dbErr: any) {
+          console.warn("[ViewCount] BunnyDB update notice:", dbErr?.message || dbErr);
+        }
+      }
+
+      // 2. Update local JSON index
       const list = readReviewsIndex();
       const existingIdx = list.findIndex((item: any) => item.id === videoId);
       if (existingIdx !== -1) {
-        const curr = list[existingIdx].views || list[existingIdx].viewsCount || 0;
-        updatedViews = curr + 1;
+        if (!bunnyDb) {
+          const curr = list[existingIdx].views || list[existingIdx].viewsCount || 0;
+          updatedViews = curr + 1;
+        }
         list[existingIdx].views = updatedViews;
         list[existingIdx].viewsCount = updatedViews;
         writeReviewsIndex(list);
       }
 
-      // 2. Sync to BunnyDB Admin if configured
-      
-
-      return res.json({ success: true, videoId, views: updatedViews });
+      return res.json({ success: true, videoId, views: updatedViews, viewsCount: updatedViews });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

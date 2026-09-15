@@ -178,6 +178,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     return resolvePlayableVideoSource(video);
   }, [video]);
 
+  // Record view when active and playing for at least 1s
+  useEffect(() => {
+    if (isActive && isPlaying && video?.id) {
+      const timer = setTimeout(() => {
+        onRecordView?.(video.id);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isActive, isPlaying, video?.id, onRecordView]);
+
   const calculatePctFromClientX = useCallback((clientX: number) => {
     let rect = scrubberRectRef.current;
     if (!rect && scrubberRef.current) {
