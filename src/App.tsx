@@ -4744,6 +4744,30 @@ export function App() {
             setAuthIntent('record');
             setIsAuthModalOpen(true);
           }}
+          onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
+          onOpenSearch={() => setIsSearchModalOpen(true)}
+          onSelectSection={(section) => {
+            if (section === "home") {
+              // stay on embed feed
+            } else if (section === "search") {
+              setIsSearchModalOpen(true);
+            } else if (section === "record_review") {
+              setIsCreateModalOpen(true);
+            } else if (section === "messages" || section === "profile" || section === "notifications") {
+              if (!currentUser) {
+                setAuthIntent(section as AuthIntent);
+                setIsAuthModalOpen(true);
+              } else {
+                setEmbedTargetId(null);
+                setActiveSection(section);
+              }
+            } else {
+              setEmbedTargetId(null);
+              setActiveSection(section);
+            }
+          }}
+          unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
+          unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
         />
 
         {/* Place Drawer */}
@@ -4871,6 +4895,85 @@ export function App() {
             setIsAuthModalOpen(false);
           }}
         />
+
+        {/* Mobile Navigation Drawer (Hamburger Menu) */}
+        <CopoMobileNavDrawer
+          isOpen={isMobileNavDrawerOpen}
+          onClose={() => setIsMobileNavDrawerOpen(false)}
+          activeSection="home"
+          onSelectSection={(section) => {
+            setIsMobileNavDrawerOpen(false);
+            if (section === "home") {
+              // Stay on embed
+            } else if (section === "search") {
+              setIsSearchModalOpen(true);
+            } else if (section === "record_review") {
+              setIsCreateModalOpen(true);
+            } else if (section === "business") {
+              setEmbedTargetId(null);
+              setActiveSection("business");
+              window.history.pushState(null, "", "/business");
+            } else {
+              setEmbedTargetId(null);
+              setActiveSection(section);
+            }
+          }}
+          currentUser={currentUser}
+          unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
+          unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
+          onOpenCreateModal={() => {
+            setIsMobileNavDrawerOpen(false);
+            setIsCreateModalOpen(true);
+          }}
+          onOpenSearch={() => {
+            setIsMobileNavDrawerOpen(false);
+            setIsSearchModalOpen(true);
+          }}
+          onOpenAuth={(intent) => {
+            setIsMobileNavDrawerOpen(false);
+            setAuthIntent((intent as AuthIntent) || 'general');
+            setIsAuthModalOpen(true);
+          }}
+          onOpenLegal={handleOpenLegal}
+          onSignOut={async () => {
+            await logOutUser();
+            setCurrentUser(null);
+            try {
+              localStorage.removeItem("copo_user_profile");
+            } catch (e) {}
+          }}
+          onOpenEditProfile={handleGoToProfile}
+          onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
+        />
+
+        {/* Mobile Search Overlay */}
+        {isSearchModalOpen && (
+          <CopoMobileSearchView
+            key={searchResetKey}
+            places={places}
+            videos={videos}
+            onSelectVideo={(id) => {
+              setIsSearchModalOpen(false);
+              handleSelectVideoById(id);
+            }}
+            onOpenPlace={(id) => {
+              setIsSearchModalOpen(false);
+              handleOpenPlaceDrawer(id);
+            }}
+            onRecordForPlace={(place) => {
+              setIsSearchModalOpen(false);
+              if (!currentUser) {
+                setAuthIntent('record');
+                setPreselectedPlaceForRecording(place);
+                setIsAuthModalOpen(true);
+              } else {
+                setPreselectedPlaceForRecording(place);
+                setIsCreateModalOpen(true);
+              }
+            }}
+            onClose={() => setIsSearchModalOpen(false)}
+          />
+        )}
       </div>
     );
   }

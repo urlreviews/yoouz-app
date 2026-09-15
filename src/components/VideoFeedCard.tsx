@@ -81,6 +81,7 @@ interface VideoFeedCardProps {
   onSeekToPercent?: (percent: number) => void;
   onSeekDelta?: (deltaSeconds: number) => void;
   onScrubEnd?: (percent: number) => void;
+  forceShowMenu?: boolean;
 }
 
 export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
@@ -127,7 +128,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onScrubStart,
   onSeekToPercent,
   onSeekDelta,
-  onScrubEnd
+  onScrubEnd,
+  forceShowMenu = false
 }) => {
   const { t } = useLanguage();
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
@@ -720,7 +722,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
                 onTouchEnd={(e) => e.stopPropagation()}
-                className="relative flex md:hidden w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 items-center justify-center text-white shadow-xl transition-all cursor-pointer select-none shrink-0"
+                className={`relative flex ${forceShowMenu ? '' : 'md:hidden'} w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 items-center justify-center text-white shadow-xl transition-all cursor-pointer select-none shrink-0`}
                 aria-label={t("nav.openMenu", "Open menu")}
                 title={t("nav.openMenu", "Open menu")}
               >

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
-import { VideoReview, Place, VideoAuthor, UserProfile } from "../types";
+import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
 import { getPlaceSlug } from "../utils/placeUtils";
 import { CopoVideoPlayer } from "./CopoVideoPlayer";
+import { CopoMobileBottomNav } from "./CopoMobileBottomNav";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -19,6 +20,11 @@ export interface CopoEmbedViewProps {
   onOpenReport?: (video: VideoReview) => void;
   onRecordReview?: (place?: Place) => void;
   onOpenAuth?: () => void;
+  onOpenMenu?: () => void;
+  onOpenSearch?: () => void;
+  onSelectSection?: (section: NavSection) => void;
+  unreadNotifsCount?: number;
+  unreadMessagesCount?: number;
 }
 
 export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
@@ -36,7 +42,12 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   onToggleFollow,
   onOpenReport,
   onRecordReview,
-  onOpenAuth: _onOpenAuth
+  onOpenAuth: _onOpenAuth,
+  onOpenMenu,
+  onOpenSearch,
+  onSelectSection,
+  unreadNotifsCount = 0,
+  unreadMessagesCount = 0
 }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [localLikedMap, setLocalLikedMap] = useState<Record<string, boolean>>({});
@@ -173,28 +184,54 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   return (
     <div
       id="copo-embed-root"
-      className="w-full h-full min-h-screen bg-black text-white flex flex-col items-center justify-center relative overflow-hidden font-sans select-none antialiased"
+      className="w-full h-full min-h-screen bg-zinc-950 text-white flex flex-col items-center justify-center relative overflow-hidden font-sans select-none antialiased p-0 md:py-2"
     >
-      <CopoVideoPlayer
-        videos={matchingVideos}
-        places={places}
-        currentIndex={currentIndex}
-        onSelectVideoIndex={setCurrentIndex}
-        activeSubTab="discover"
-        onSelectSubTab={() => {}}
-        onOpenComments={onOpenComments || (() => {})}
-        onOpenPlace={handleOpenPlaceLink}
-        onOpenCreator={handleOpenCreatorLink}
-        onOpenShare={onOpenShare || (() => {})}
-        onToggleLike={handleLike}
-        onToggleBookmark={handleBookmark}
-        onToggleFollow={handleFollow}
-        onOpenReport={onOpenReport}
-        onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
-        currentUser={currentUser}
-        allUsers={allUsers}
-        feedContextTitle={targetPlace?.name}
-      />
+      {/* Mobile Phone Viewport (Centers mobile view on desktop with sleek border/shadow, responsive 100% on phones) */}
+      <div className="copo-has-bottom-nav w-full max-w-[430px] h-[100dvh] md:h-[min(96vh,880px)] relative bg-black flex flex-col overflow-hidden md:border md:border-zinc-800/80 md:shadow-[0_0_80px_rgba(0,0,0,0.95)] md:rounded-3xl">
+        <div className="w-full h-full relative overflow-hidden flex-1">
+          <CopoVideoPlayer
+            videos={matchingVideos}
+            places={places}
+            currentIndex={currentIndex}
+            onSelectVideoIndex={setCurrentIndex}
+            activeSubTab="discover"
+            onSelectSubTab={() => {}}
+            onOpenComments={onOpenComments || (() => {})}
+            onOpenPlace={handleOpenPlaceLink}
+            onOpenCreator={handleOpenCreatorLink}
+            onOpenShare={onOpenShare || (() => {})}
+            onToggleLike={handleLike}
+            onToggleBookmark={handleBookmark}
+            onToggleFollow={handleFollow}
+            onOpenReport={onOpenReport}
+            onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
+            currentUser={currentUser}
+            allUsers={allUsers}
+            feedContextTitle={targetPlace?.name}
+            onOpenMenu={onOpenMenu}
+            forceShowMenu={true}
+          />
+        </div>
+
+        {/* Mobile Native 5-Tab Bottom Navigation Bar (Copied directly from mobile app) */}
+        <CopoMobileBottomNav
+          activeSection="home"
+          onSelectSection={(section) => {
+            if (section === "home") {
+              setCurrentIndex(0);
+            }
+            if (onSelectSection) {
+              onSelectSection(section);
+            }
+          }}
+          currentUser={currentUser}
+          unreadNotifsCount={unreadNotifsCount}
+          unreadMessagesCount={unreadMessagesCount}
+          onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
+          onOpenSearch={onOpenSearch}
+          className="absolute bottom-0 left-0 right-0"
+        />
+      </div>
     </div>
   );
 };

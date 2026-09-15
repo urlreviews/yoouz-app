@@ -67,6 +67,7 @@ interface CopoVideoPlayerProps {
   contextKey?: string;
   onRecordView?: (videoId: string) => void;
   unreadCount?: number;
+  forceShowMenu?: boolean;
 }
 
 const safeSetVolume = (v: HTMLVideoElement | null, vol: number = 1) => {
@@ -109,7 +110,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   initialAutoplayPaused = false,
   contextKey,
   onRecordView,
-  unreadCount = 0
+  unreadCount = 0,
+  forceShowMenu = false
 }) => {
   const { t } = useLanguage();
   const currentVideo = videos[Math.min(currentIndex, Math.max(0, videos.length - 1))] || videos[0];
@@ -1430,6 +1432,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 }}
                 onRecordView={onRecordView}
                 unreadCount={unreadCount}
+                forceShowMenu={forceShowMenu}
               />
             );
           })}
