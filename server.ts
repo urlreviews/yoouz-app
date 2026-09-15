@@ -5111,6 +5111,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
   // Serve static public assets with CORS and byte-range support
   app.use(express.static(path.join(process.cwd(), "public"), {
+    index: false,
     setHeaders: (res, filePath) => {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Accept-Ranges", "bytes");
@@ -16526,6 +16527,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     });
 
     app.use(express.static(distPath, {
+      index: false,
       setHeaders: (res, filePath) => {
         if (filePath.endsWith('.html') || filePath.endsWith('sw.js') || filePath.endsWith('.json')) {
           res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
