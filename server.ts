@@ -14603,6 +14603,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
     app.all(['/api/og', '/api/og.png', '/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
     try {
+      const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
+      const protocol = (!host.includes('localhost') && !host.includes('127.0.0.1')) ? 'https' : (req.protocol || 'http');
+      const baseUrl = `${protocol}://${host}`;
       const ogBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
       let type = (req.query.type as string) || "";
       if (!type) {
@@ -14619,7 +14622,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
 
       if (type === 'video') {
-         const videoId = req.query.id || req.query.reviewId;
+         const videoId = req.query.id || req.query.reviewId || req.query.review_id || req.query.video || req.query.v || req.query.r;
          let thumbBuf;
          
          if (videoId) {
@@ -14637,6 +14640,21 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 if (rec) foundVideo = { id: rec.id, ...rec.data };
               } catch (e) {}
             }
+            if (!foundVideo) {
+              const bunnyDb = getBunnyDb();
+              if (bunnyDb) {
+                try {
+                  const bRes = await bunnyDb.execute({
+                    sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+                    args: [videoId]
+                  });
+                  if (bRes.rows && bRes.rows.length > 0 && (bRes.rows[0] as any).data) {
+                    const raw = (bRes.rows[0] as any).data;
+                    foundVideo = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                  }
+                } catch (e) {}
+              }
+            }
             
             if (foundVideo) {
               let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
@@ -14647,8 +14665,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
                  } catch(e) {}
               } else if (thumbArg) {
                  try {
-                    const tr = await fetch(thumbArg);
-                    thumbBuf = Buffer.from(await tr.arrayBuffer());
+                    const fetchUrl = thumbArg.startsWith('http') ? thumbArg : `${baseUrl}${thumbArg.startsWith('/') ? '' : '/'}${thumbArg}`;
+                    const tr = await fetch(fetchUrl);
+                    if (tr.ok) thumbBuf = Buffer.from(await tr.arrayBuffer());
                  } catch(e) {}
               }
             }
@@ -14658,8 +14677,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
            const tUrl = req.query.thumbUrl as string;
            if (!tUrl.startsWith('data:image')) {
              try {
-                const tr = await fetch(tUrl);
-                thumbBuf = Buffer.from(await tr.arrayBuffer());
+                const fetchUrl = tUrl.startsWith('http') ? tUrl : `${baseUrl}${tUrl.startsWith('/') ? '' : '/'}${tUrl}`;
+                const tr = await fetch(fetchUrl);
+                if (tr.ok) thumbBuf = Buffer.from(await tr.arrayBuffer());
              } catch(e) {}
            } else {
              try {
@@ -14667,6 +14687,25 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 if (b64) thumbBuf = Buffer.from(b64, 'base64');
              } catch(e) {}
            }
+         }
+
+         if (!thumbBuf && videoId) {
+            try {
+               const directBunnyUrl = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
+               const tr = await fetch(directBunnyUrl);
+               if (tr.ok) {
+                  thumbBuf = Buffer.from(await tr.arrayBuffer());
+               }
+            } catch(e) {}
+         }
+
+         if (!thumbBuf && videoId) {
+            const localJpg = path.join(process.cwd(), 'uploads', 'videos', `${videoId}.jpg`);
+            if (fs.existsSync(localJpg)) {
+               try {
+                  thumbBuf = fs.readFileSync(localJpg);
+               } catch(e) {}
+            }
          }
          
          if (!thumbBuf) {
@@ -15970,13 +16009,14 @@ function injectOpenGraphTags(html: string, meta: any) {
       robots = "noindex, nofollow";
     }
 
-    const videoIdMatch = pathname.match(/\/video\/(rev-[a-zA-Z0-9-]+)/);
+    const videoIdMatch = pathname.match(/\/(?:video|review|r)\/([a-zA-Z0-9_-]+)/) || pathname.match(/\/(rev-[a-zA-Z0-9-]+)/);
     const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9-]+)/);
     const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/);
 
-    const videoId = videoIdMatch ? videoIdMatch[1] : (params.get('video') || params.get('v') || params.get('id'));
+    const rawVideoId = params.get('reviewId') || params.get('review_id') || params.get('review') || params.get('video') || params.get('v') || params.get('id') || params.get('r');
+    const videoId = videoIdMatch ? videoIdMatch[1] : (rawVideoId && (rawVideoId.startsWith('rev-') || rawVideoId.length > 3) ? rawVideoId : null);
     let placeId = placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null);
     if (placeId && placeId.startsWith('www-')) {
       placeId = placeId.replace(/^www-/, '');
@@ -15998,121 +16038,137 @@ function injectOpenGraphTags(html: string, meta: any) {
                 if (rec) foundVideo = { id: rec.id, ...rec.data };
             } catch (e) {}
         }
-        
-        if (foundVideo) {
-            const authorName = foundVideo.author?.name || foundVideo.authorName || "Verified Customer";
-            const authorHandle = foundVideo.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
-            const placeName = cleanDomainName(foundVideo.placeName || "") || foundVideo.placeName || "Local Business";
-            const rating = foundVideo.rating || 5.0;
-            const caption = foundVideo.caption || "";
-
-            title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
-            description = caption 
-              ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
-              : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
-            
-            let queryParams = `type=video&id=${encodeURIComponent(foundVideo.id)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&caption=${encodeURIComponent(caption)}&v=11`;
-            
-            let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
-            if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
-               thumbArg = "";
-            }
-            if (thumbArg.startsWith('data:image')) {
-               thumbArg = ""; // Prevent massive URLs
-            }
-            if (thumbArg) {
-               queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
-            }
-            
-            imageUrl = `${baseUrl}/api/og-image.png?${queryParams}`;
-            videoUrl = foundVideo.videoUrl || "";
-            type = "video.other";
-            twitterCard = "player";
-            embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(foundVideo.id)}`;
-            
-            structuredData = {
-              "@context": "https://schema.org",
-              "@graph": [
-                {
-                  "@type": "VideoObject",
-                  "name": title,
-                  "description": description,
-                  "thumbnailUrl": [imageUrl, foundVideo.videoThumbnail || foundVideo.thumbnailUrl || imageUrl].filter(Boolean),
-                  "uploadDate": foundVideo.createdAt || new Date().toISOString(),
-                  "duration": "PT60S",
-                  "contentUrl": videoUrl,
-                  "embedUrl": embedUrl,
-                  "author": {
-                    "@type": "Person",
-                    "name": authorName,
-                    "url": `${baseUrl}/@${encodeURIComponent(authorHandle)}`
-                  },
-                  "aggregateRating": {
-                    "@type": "AggregateRating",
-                    "ratingValue": (rating).toFixed(1),
-                    "bestRating": "5",
-                    "worstRating": "1",
-                    "ratingCount": "1"
-                  },
-                  "publisher": {
-                    "@type": "Organization",
-                    "name": "Yoouz",
-                    "logo": {
-                      "@type": "ImageObject",
-                      "url": `${baseUrl}/favicon.svg`
+        if (!foundVideo) {
+            const bunnyDb = getBunnyDb();
+            if (bunnyDb) {
+                try {
+                    const bRes = await bunnyDb.execute({
+                        sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+                        args: [videoId]
+                    });
+                    if (bRes.rows && bRes.rows.length > 0 && (bRes.rows[0] as any).data) {
+                        const raw = (bRes.rows[0] as any).data;
+                        foundVideo = typeof raw === 'string' ? JSON.parse(raw) : raw;
                     }
+                } catch (e) {}
+            }
+        }
+        
+        const authorName = foundVideo?.author?.name || foundVideo?.authorName || "Verified Customer";
+        const authorHandle = foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
+        const rawPlace = foundVideo?.placeName || "";
+        const placeName = formatBusinessName(rawPlace || cleanDomainName(rawPlace)) || "Local Business";
+        const rating = foundVideo?.rating || 5.0;
+        const caption = foundVideo?.caption || "";
+
+        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+        description = caption 
+          ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
+          : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
+        
+        let thumbArg = foundVideo?.videoThumbnail || foundVideo?.videoPreviewUrl || foundVideo?.coverUrl || foundVideo?.thumbnailUrl || "";
+        if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
+           thumbArg = "";
+        }
+        if (thumbArg.startsWith('data:image')) {
+           thumbArg = ""; // Prevent massive URLs
+        }
+        if (!thumbArg && videoId.startsWith('rev-')) {
+           thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
+        }
+
+        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=12`;
+        if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
+        if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
+
+        imageUrl = `${baseUrl}/api/og-image.png?${queryParams}`;
+        videoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
+        type = "video.other";
+        twitterCard = "player";
+        embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(videoId)}`;
+            
+        structuredData = {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "VideoObject",
+              "name": title,
+              "description": description,
+              "thumbnailUrl": [imageUrl, foundVideo?.videoThumbnail || foundVideo?.thumbnailUrl || imageUrl].filter(Boolean),
+              "uploadDate": foundVideo?.createdAt || new Date().toISOString(),
+              "duration": "PT60S",
+              "contentUrl": videoUrl,
+              "embedUrl": embedUrl,
+              "author": {
+                "@type": "Person",
+                "name": authorName,
+                "url": `${baseUrl}/@${encodeURIComponent(authorHandle)}`
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": (rating).toFixed(1),
+                "bestRating": "5",
+                "worstRating": "1",
+                "ratingCount": "1"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Yoouz",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": `${baseUrl}/favicon.svg`
+                }
+              }
+            },
+            {
+              "@type": "Review",
+              "itemReviewed": {
+                "@type": "LocalBusiness",
+                "name": foundVideo?.placeName || placeName,
+                "url": fullUrl
+              },
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": (rating).toFixed(1),
+                "bestRating": "5"
+              },
+              "author": {
+                "@type": "Person",
+                "name": authorName
+              },
+              "reviewBody": caption || `Verified 60-second video review of ${foundVideo?.placeName || placeName}.`
+            },
+            {
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": `What is ${authorName}'s rating of ${foundVideo?.placeName || placeName}?`,
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": `${authorName} gave ${foundVideo?.placeName || placeName} a rating of ${rating.toFixed(1)} out of 5 stars in a verified 60-second video review on Yoouz.`
                   }
                 },
                 {
-                  "@type": "Review",
-                  "itemReviewed": {
-                    "@type": "LocalBusiness",
-                    "name": foundVideo.placeName || "Business",
-                    "url": fullUrl
-                  },
-                  "reviewRating": {
-                    "@type": "Rating",
-                    "ratingValue": (rating).toFixed(1),
-                    "bestRating": "5"
-                  },
-                  "author": {
-                    "@type": "Person",
-                    "name": authorName
-                  },
-                  "reviewBody": foundVideo.caption || `Verified 60-second video review of ${foundVideo.placeName || "Business"}.`
+                  "@type": "Question",
+                  "name": `How can I embed this video review of ${foundVideo?.placeName || placeName}?`,
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": `You can embed this 60-second video on any website or store using oEmbed or the iframe embed code: <iframe src="${embedUrl}" width="360" height="640" allowfullscreen></iframe>.`
+                  }
                 },
                 {
-                  "@type": "FAQPage",
-                  "mainEntity": [
-                    {
-                      "@type": "Question",
-                      "name": `What is ${authorName}'s rating of ${foundVideo.placeName || "this business"}?`,
-                      "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": `${authorName} gave ${foundVideo.placeName || "this business"} a rating of ${rating.toFixed(1)} out of 5 stars in a verified 60-second video review on Yoouz.`
-                      }
-                    },
-                    {
-                      "@type": "Question",
-                      "name": `How can I embed this video review of ${foundVideo.placeName || "this business"}?`,
-                      "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": `You can embed this 60-second video on any website or store using oEmbed or the iframe embed code: <iframe src="${embedUrl}" width="360" height="640" allowfullscreen></iframe>.`
-                      }
-                    },
-                    {
-                      "@type": "Question",
-                      "name": `Is this video review of ${foundVideo.placeName || "this business"} verified?`,
-                      "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": `Yes. This review was recorded live face-to-camera by a verified human customer on Yoouz. Zero bot spam or fake text reviews are allowed.`
-                      }
-                    }
-                  ]
+                  "@type": "Question",
+                  "name": `Is this video review of ${foundVideo?.placeName || placeName} verified?`,
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": `Yes. This review was recorded live face-to-camera by a verified human customer on Yoouz. Zero bot spam or fake text reviews are allowed.`
+                  }
                 }
               ]
-            };
-        }
+            }
+          ]
+        };
     } else if (placeId) {
         let domain = cleanDomainName(placeId);
         let placeName = formatBusinessName(placeId);
