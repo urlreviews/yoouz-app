@@ -466,12 +466,12 @@ export function useFeedPagination() {
         sse = new EventSource("/api/videos/stream");
 
         sse.onopen = () => {
-          sseRetryDelay = 2000;
+          sseRetryDelay = 5000;
         };
 
         sse.onmessage = (event) => {
           if (!active) return;
-          sseRetryDelay = 2000;
+          sseRetryDelay = 5000;
           try {
             const payload = JSON.parse(event.data);
             if (payload.type === "video_deleted" && payload.videoId) {

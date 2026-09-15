@@ -6496,9 +6496,23 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     res.setHeader("Cache-Control", "no-cache, no-transform");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Accel-Buffering", "no");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.status(200);
+
+    if (req.socket) {
+      req.socket.setTimeout(0);
+      req.socket.setNoDelay(true);
+      req.socket.setKeepAlive(true, 10000);
+    }
+
     if (typeof (res as any).flushHeaders === "function") {
       (res as any).flushHeaders();
     }
+
+    // Flush immediate connection acknowledgement to establish 200 stream
+    try {
+      res.write(": ok\n\n");
+    } catch (e) {}
 
     const clientId = `sse-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const client: SseClient = {
@@ -6518,7 +6532,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, deletedPlaceIds, deletedUserIds, timestamp: Date.now() })}\n\n`);
     } catch (e) {}
 
-    // Heartbeat to keep connection alive indefinitely
+    // Heartbeat every 15 seconds to keep Cloud Run / reverse proxy connection alive
     const heartbeat = setInterval(() => {
       try {
         res.write(`: heartbeat\n\n`);
@@ -6526,12 +6540,17 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         clearInterval(heartbeat);
         sseClients.delete(client);
       }
-    }, 20000);
+    }, 15000);
 
-    req.on("close", () => {
+    const cleanup = () => {
       clearInterval(heartbeat);
       sseClients.delete(client);
-    });
+    };
+
+    req.on("close", cleanup);
+    req.on("end", cleanup);
+    res.on("close", cleanup);
+    res.on("error", cleanup);
   });
 
   // Get Video Feed endpoint (combines server index with BunnyDB and uploaded videos with memory caching & write-back resiliency)
@@ -8274,7 +8293,9 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         const list = readReviewsIndex();
         const vid = list.find((v: any) => v.id === videoId);
         if (vid) {
-          nextShares = Math.max(nextShares, (vid.sharesCount || vid.shares || 0) + 1);
+          if (!bunnyDb) {
+            nextShares = (vid.sharesCount || vid.shares || 0) + 1;
+          }
           vid.shares = nextShares;
           vid.sharesCount = nextShares;
           writeReviewsIndex(list);

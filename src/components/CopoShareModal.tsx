@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // Yoouz Share Modal - Authentic iOS/Android Dark Mode Share Sheet System
 import { createPortal } from "react-dom";
 import {
@@ -188,10 +188,17 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   const iframeEmbedCode = `<iframe src="${embedUrl}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
 
+  const recordedSharesSet = useRef<Set<string>>(new Set());
+
   // Record share interaction to Bunny.net backend storage
   const recordShareAction = (platform: string = "general") => {
     const targetVideoId = video?.id;
     if (targetVideoId) {
+      const shareKey = `${targetVideoId}_${platform}_${Math.floor(Date.now() / 3000)}`;
+      if (recordedSharesSet.current.has(shareKey)) return;
+      recordedSharesSet.current.add(shareKey);
+      setTimeout(() => recordedSharesSet.current.delete(shareKey), 3000);
+
       try {
         fetch("/api/interactions/share", {
           method: "POST",

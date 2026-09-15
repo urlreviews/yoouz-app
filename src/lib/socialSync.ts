@@ -98,11 +98,11 @@ function setupRealtimeStream(user: UserProfile) {
     activeEventSource = es;
 
     es.onopen = () => {
-      sseRetryDelay = 2000;
+      sseRetryDelay = 5000;
     };
 
     es.onmessage = (e) => {
-      sseRetryDelay = 2000;
+      sseRetryDelay = 5000;
       try {
         if (!e.data || e.data.trim() === "heartbeat") return;
         const parsed = JSON.parse(e.data);

@@ -3435,49 +3435,6 @@ export function App() {
   // Handle Share
   const handleOpenShare = async (video: VideoReview) => {
     setActiveShareVideo(video);
-    const newSharesCount = (video.sharesCount || video.shares || 0) + 1;
-    setVideos(prev => prev.map(v => {
-      if (v.id === video.id) {
-        return { ...v, shares: newSharesCount, sharesCount: newSharesCount };
-      }
-      return v;
-    }));
-    try {
-      fetch("/api/interactions/share", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId: video.id, userId: currentUser?.email || auth.currentUser?.uid })
-      }).catch(() => {});
-
-      const shareData = { shares: newSharesCount, sharesCount: newSharesCount };
-
-      fetch(`/api/nosql/videoReviews/${video.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: shareData, merge: true })
-      }).catch(() => {});
-    } catch (e) {}
-
-    // Send social notification for share
-    if (currentUser && video) {
-      const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(video);
-
-      sendSocialNotification({
-        recipientEmail,
-        recipientId,
-        recipientHandle,
-        type: "repost",
-        user: {
-          name: currentUser.name,
-          avatar: currentUser.avatar,
-          email: currentUser.email
-        },
-        text: `shared your video review of ${video.placeName || "a place"}`,
-        videoId: video.id,
-        videoThumbnail: resolveVideoPosterUrl(video) || video.author?.avatar,
-        placeName: video.placeName
-      }).catch(() => {});
-    }
   };
 
   const handleToggleFollow = async (authorHandle: string) => {
