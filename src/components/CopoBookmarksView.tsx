@@ -12,8 +12,9 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { VideoReview, UserProfile, Place } from "../types";
-import { getDisplayUrlAsDomain, formatCityCountry } from "../utils/placeUtils";
+import { getDisplayUrlAsDomain, formatCityCountry, formatBusinessName, extractCleanDomain } from "../utils/placeUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -279,48 +280,55 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
         {activeTab === "places" && (
           savedPlaces.length > 0 ? (
             <div className="space-y-3">
-              {savedPlaces.map((place) => (
-                <div
-                  key={`saved-place-list-${place.id}`}
-                  onClick={() => onSelectPlace && onSelectPlace(place.id)}
-                  className="group bg-zinc-900 rounded-2xl border border-zinc-800 p-4 hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-zinc-800">
-                      <img
-                        src={place.photos?.[0] || place.bannerUrl || place.avatarUrl || `/api/placeholder?w=100&h=100&text=${encodeURIComponent(place.name)}`}
-                        alt={place.name}
-                        className="w-full h-full object-cover"
+              {savedPlaces.map((place) => {
+                const cleanDomain = extractCleanDomain(place.id || place.website || place.brandDomain || place.name);
+                const formattedTitle = formatBusinessName(place.name || cleanDomain) || t("common.businessPlace", "Business Place");
+
+                return (
+                  <div
+                    key={`saved-place-list-${place.id}`}
+                    onClick={() => onSelectPlace && onSelectPlace(place.id)}
+                    className="group bg-zinc-900 rounded-2xl border border-zinc-800 p-4 hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <CopoBrandLogo
+                        domain={cleanDomain}
+                        name={formattedTitle}
+                        website={place.website}
+                        logoUrl={place.logoUrl || place.avatarUrl}
+                        bannerUrl={place.bannerUrl}
+                        className="w-12 h-12 rounded-xl bg-zinc-900 p-1.5 border border-zinc-800 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform ring-1 ring-white/10"
+                        imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
                       />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-white text-sm truncate leading-snug">{place.name}</h4>
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
-                          {place.category}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
-                        <div className="flex items-center text-amber-400 font-bold shrink-0">
-                          <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
-                          <span>{place.rating?.toFixed(1) || "5.0"} ({place.totalReviews || 0})</span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-white text-sm truncate leading-snug">{formattedTitle}</h4>
+                          <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
+                            {place.category}
+                          </span>
                         </div>
-                        <span className="text-zinc-750">|</span>
-                        <span className="truncate">{place.address || place.city}</span>
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
+                          <div className="flex items-center text-amber-400 font-bold shrink-0">
+                            <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
+                            <span>{place.rating?.toFixed(1) || "5.0"} ({place.totalReviews || 0})</span>
+                          </div>
+                          <span className="text-zinc-750">|</span>
+                          <span className="truncate">{place.address || place.city}</span>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={(e) => handleUnsavePlace(place, e)}
+                        className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
+                        title="Unsave Place"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={(e) => handleUnsavePlace(place, e)}
-                      className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
-                      title="Unsave Place"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">
