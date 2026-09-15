@@ -1656,6 +1656,10 @@ export function App() {
       return;
     }
 
+    setMessages([]);
+    prevChatHistoryLengthRef.current.clear();
+    isFirstChatLoadRef.current = true;
+
     const unsubscribe = subscribeToChats(effectiveMessagingUser, (threads) => {
       setMessages((prev) => {
         const prevMap = new Map<string, CopoMessage>();
@@ -1678,10 +1682,35 @@ export function App() {
           };
         });
 
+        const currentUserEmail = (effectiveMessagingUser.email || "").toLowerCase().trim();
+        const currentUserId = (effectiveMessagingUser.userId || (effectiveMessagingUser as any).id || "").toLowerCase().trim();
+        const isBiz = Boolean((effectiveMessagingUser as any).isBusiness);
+
         const serverIds = new Set(threads.map((t) => t.id));
-        const pendingLocal = prev.filter(
-          (m) => !serverIds.has(m.id) && (m.id === activeThreadId || (m.history && m.history.length > 0))
-        );
+        const pendingLocal = prev.filter((m) => {
+          if (!m || serverIds.has(m.id)) return false;
+          if (m.id !== activeThreadId && (!m.history || m.history.length === 0)) return false;
+
+          const participants = Array.isArray(m.participants)
+            ? m.participants.map(p => (p || "").toLowerCase().trim().replace(/^@/, ''))
+            : [];
+          const sId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
+          const rId = (m.recipientId || "").toLowerCase().trim().replace(/^@/, '');
+          const sEmail = (m.senderEmail || m.lastSenderEmail || "").toLowerCase().trim();
+          const rEmail = (m.recipientEmail || "").toLowerCase().trim();
+
+          if (isBiz) {
+            return Boolean(
+              (currentUserId && (participants.some(p => p.includes(currentUserId)) || sId === currentUserId || rId === currentUserId)) ||
+              (currentUserEmail && (participants.some(p => p.includes(currentUserEmail)) || sEmail === currentUserEmail || rEmail === currentUserEmail))
+            );
+          } else {
+            return Boolean(
+              (currentUserEmail && (participants.some(p => p.includes(currentUserEmail)) || sEmail === currentUserEmail || rEmail === currentUserEmail)) ||
+              (currentUserId && (participants.some(p => p.includes(currentUserId)) || sId === currentUserId || rId === currentUserId))
+            );
+          }
+        });
 
         return [...pendingLocal, ...mergedThreads];
       });

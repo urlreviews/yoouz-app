@@ -1287,19 +1287,29 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     const base = verifiedBusinessSession ? {
       id: verifiedBusinessSession.placeId,
       uid: verifiedBusinessSession.placeId,
+      userId: verifiedBusinessSession.placeId,
+      placeId: verifiedBusinessSession.placeId,
       name: verifiedBusinessSession.placeName || currentPlace?.name || 'Business Manager',
-      email: verifiedBusinessSession.businessEmail || (currentPlace as any)?.claimedByEmail || 'business@yoouz.com',
+      email: verifiedBusinessSession.businessEmail || (currentPlace as any)?.claimedByEmail || `biz_${verifiedBusinessSession.placeId}@business.yoouz.com`,
       avatar: currentPlace?.logoUrl || currentPlace?.avatarUrl || verifiedBusinessSession.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
       handle: (verifiedBusinessSession.domain || currentPlace?.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
-      isVerified: true
-    } : currentUser ? { ...currentUser } : {
+      isVerified: true,
+      isBusiness: true
+    } : currentUser ? {
+      ...currentUser,
+      isBusiness: true,
+      placeId: currentPlace?.id || (currentUser as any).placeId
+    } : {
       id: currentPlace?.id || 'unknown',
       uid: currentPlace?.id || 'unknown',
+      userId: currentPlace?.id || 'unknown',
+      placeId: currentPlace?.id || 'unknown',
       name: currentPlace?.name || 'Business Portal',
       email: (currentPlace as any)?.claimedByEmail || 'business@yoouz.com',
       avatar: currentPlace?.logoUrl || currentPlace?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
       handle: (currentPlace?.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
-      isVerified: true
+      isVerified: true,
+      isBusiness: true
     };
 
     return {
@@ -1440,9 +1450,34 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     );
   }, [businessFollowers, followerSearchQuery]);
 
+  // Business Messages strictly scoped to this business entity (placeId, business email, or business handle)
+  const businessMessages = useMemo(() => {
+    if (!messages || messages.length === 0) return [];
+    const bizId = (effectiveUser.id || effectiveUser.userId || currentPlace?.id || '').toLowerCase().trim();
+    const bizEmail = (effectiveUser.email || '').toLowerCase().trim();
+    const bizHandle = (effectiveUser.handle || '').toLowerCase().trim();
+
+    return messages.filter(m => {
+      if (!m) return false;
+      const participants = Array.isArray(m.participants)
+        ? m.participants.map(p => (p || '').toLowerCase().trim().replace(/^@/, ''))
+        : [];
+      const senderEmail = (m.senderEmail || m.lastSenderEmail || '').toLowerCase().trim();
+      const recipientEmail = (m.recipientEmail || '').toLowerCase().trim();
+      const senderId = (m.senderId || '').toLowerCase().trim().replace(/^@/, '');
+      const recipientId = (m.recipientId || '').toLowerCase().trim().replace(/^@/, '');
+
+      const matchesId = Boolean(bizId && (participants.some(p => p.includes(bizId)) || senderId === bizId || recipientId === bizId));
+      const matchesEmail = Boolean(bizEmail && (participants.some(p => p.includes(bizEmail)) || senderEmail === bizEmail || recipientEmail === bizEmail));
+      const matchesHandle = Boolean(bizHandle && bizHandle.length > 2 && (participants.some(p => p.includes(bizHandle)) || senderId === bizHandle || recipientId === bizHandle));
+
+      return matchesId || matchesEmail || matchesHandle;
+    });
+  }, [messages, effectiveUser, currentPlace]);
+
   const unreadMessagesCount = useMemo(() => {
-    return (messages || []).reduce((acc, m) => acc + (m.unreadCount || 0), 0);
-  }, [messages]);
+    return businessMessages.reduce((acc, m) => acc + (m.unreadCount || 0), 0);
+  }, [businessMessages]);
 
   // Business Notifications computed from props and active notification preferences
   const businessNotifications = useMemo(() => {
@@ -2880,7 +2915,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             {activeTab === 'inbox' && (
               <div className="w-full max-w-5xl h-[calc(100dvh-130px)] md:h-[calc(100vh-140px)] bg-zinc-950 sm:bg-zinc-900 rounded-none sm:rounded-3xl border-0 sm:border border-zinc-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
                 <CopoMessagesView
-                  messages={messages}
+                  messages={businessMessages}
                   currentUser={effectiveUser}
                   places={places}
                   userVideos={placeVideos}
