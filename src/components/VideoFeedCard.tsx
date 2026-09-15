@@ -689,10 +689,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-50 to stay above everything */}
       <div 
-        className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between px-3 md:px-5 [padding-top:max(8px,calc(env(safe-area-inset-top,0px)+2px))] md:[padding-top:16px] pointer-events-none"
+        className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 [padding-top:max(8px,calc(env(safe-area-inset-top,0px)+2px))] md:[padding-top:14px] pointer-events-none"
       >
-        {/* Left side: Navigation or Mobile Hamburger Drawer Pill */}
-        <div className="pointer-events-auto flex items-center gap-2">
+        {/* Left side: Navigation / Menu + Top Business Badge */}
+        <div className="pointer-events-auto flex items-center gap-2 max-w-[calc(100%-60px)]">
           {onGoBack ? (
             <button
               type="button"
@@ -704,10 +704,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               }}
               onTouchStart={(e) => e.stopPropagation()}
               onTouchEnd={(e) => e.stopPropagation()}
-              className="w-11 h-11 rounded-full bg-black/85 hover:bg-black backdrop-blur-xl border border-white/35 flex items-center justify-center text-white active:scale-90 transition-all shadow-2xl cursor-pointer"
+              className="w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all shadow-xl cursor-pointer shrink-0"
               title={t("common.goBack", "Go back")}
             >
-              <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+              <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
             </button>
           ) : (
             onOpenMenu && (
@@ -720,7 +720,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
                 onTouchEnd={(e) => e.stopPropagation()}
-                className="relative flex md:hidden w-11 h-11 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 items-center justify-center text-white shadow-2xl transition-all cursor-pointer select-none"
+                className="relative flex md:hidden w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 items-center justify-center text-white shadow-xl transition-all cursor-pointer select-none shrink-0"
                 aria-label={t("nav.openMenu", "Open menu")}
                 title={t("nav.openMenu", "Open menu")}
               >
@@ -733,6 +733,49 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               </button>
             )
           )}
+
+          {/* Top Business Header Badge */}
+          <button
+            id={`pill-top-place-${video.placeId || video.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPauseVideo?.();
+              const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
+              onOpenPlace(targetPlaceId);
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              onPauseVideo?.();
+              const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
+              onOpenPlace(targetPlaceId);
+            }}
+            className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[210px] sm:max-w-[270px] text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0"
+          >
+            <CopoBrandLogo
+              domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
+              name={businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
+              website={video.placeWebsite}
+              logoUrl={businessLogoUrl || video?.placeLogoUrl}
+              bannerUrl={businessBannerUrl || video.placeBannerUrl}
+              loading={isActive || isNear ? "eager" : "lazy"}
+              fetchPriority={isActive ? "high" : "auto"}
+              className="w-7 h-7 rounded-full bg-zinc-900 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm"
+              imageClassName="w-full h-full object-cover rounded-full"
+              fallbackTextClassName="font-extrabold text-[10px] text-white"
+            />
+            <div className="min-w-0 flex-1 py-0.5">
+              <span className="truncate block leading-tight font-extrabold text-[12px] sm:text-[13px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                {businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
+                <CheckCircle className="inline-block w-3 h-3 ml-1 align-text-bottom fill-white text-black shrink-0 relative -top-[1px]" />
+              </span>
+              <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
+                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                <span>{(video.rating || 5.0).toFixed(1)}</span>
+                <span className="text-zinc-300 font-normal">({video.reviewsCount || 1} {t("common.reviews", "reviews")})</span>
+              </div>
+            </div>
+          </button>
         </div>
 
         {/* Right side: Sound Mute / Unmute Toggle Button (Positioned at top right) */}
@@ -749,7 +792,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               handleToggleMute(e);
             }}
-            className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/85 md:hover:bg-black active:scale-90 backdrop-blur-2xl border border-white/35 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl"
+            className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 flex items-center justify-center text-white transition-all cursor-pointer shadow-xl"
             title={isMuted || !isSessionAudioUnlocked || isActualMuted ? t("video.unmuteSound", "Unmute sound") : t("video.muteSound", "Mute sound")}
             aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? t("video.unmuteSound", "Unmute sound") : t("video.muteSound", "Mute sound")}
           >
@@ -810,13 +853,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         }`}
       >
         
-        {/* Bottom Video Metadata & Place Badge */}
+        {/* Bottom Video Metadata */}
         <footer
           id={`copo-video-bottom-info-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1"
+          className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1 mb-1 sm:mb-2"
         >
-          <div className="flex flex-col gap-0.5 w-full">
+          <div className="flex flex-col gap-1 w-full">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -838,7 +881,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   <Star
                     key={i}
                     className={`w-3.5 h-3.5 ${
-                      i < Math.round(video.rating)
+                      i < Math.round(video.rating || 5)
                         ? "fill-amber-400 text-amber-400 drop-shadow-sm"
                         : "fill-zinc-600/70 text-zinc-200/80"
                     }`}
@@ -846,51 +889,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 ))}
               </div>
               {(video.recordedAt || video.createdAtMs) && (
-                <span className="text-white text-[11.5px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-white shrink-0" />
+                <span className="text-white/90 text-[11.5px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-white/80 shrink-0" />
                   <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
                 </span>
               )}
             </div>
-          </div>
 
-          <button
-            id={`pill-place-${video.placeId || video.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onPauseVideo?.();
-              const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
-              onOpenPlace(targetPlaceId);
-            }}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              onPauseVideo?.();
-              const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
-              onOpenPlace(targetPlaceId);
-            }}
-            className="self-start flex items-center gap-2.5 sm:gap-3 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/85 hover:bg-black/95 backdrop-blur-2xl border border-white/35 hover:border-white/60 text-white transition-all w-fit max-w-[calc(100%-8px)] sm:max-w-[280px] md:max-w-[320px] text-left group cursor-pointer shadow-2xl active:scale-[0.98]"
-          >
-            <CopoBrandLogo
-              domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
-              name={businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
-              website={video.placeWebsite}
-              logoUrl={businessLogoUrl || video?.placeLogoUrl}
-              bannerUrl={businessBannerUrl || video.placeBannerUrl}
-              loading={isActive || isNear ? "eager" : "lazy"}
-              fetchPriority={isActive ? "high" : "auto"}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center shrink-0 p-1.5 sm:p-2 shadow-md group-hover:scale-105 transition-transform ring-1 ring-white/15"
-              imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
-              fallbackTextClassName="font-extrabold text-xs text-white"
-            />
-            <div className="min-w-0 flex-1 py-0.5">
-              <span className="line-clamp-2 [overflow-wrap:anywhere] leading-snug font-extrabold text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:text-white transition-colors">
-                {businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
-                <CheckCircle className="inline-block w-3.5 h-3.5 ml-1 align-text-bottom fill-white text-black shrink-0 relative -top-[1px] drop-shadow-sm" />
-              </span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-white/80 stroke-[2.5] shrink-0 ml-0.5 group-hover:translate-x-0.5 group-hover:text-white transition-all" />
-          </button>
+            {video.caption && video.caption.trim().length > 0 && (
+              <p className="text-white/95 text-xs font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-0.5">
+                {video.caption}
+              </p>
+            )}
+          </div>
         </footer>
 
         {/* Right Side Action Column */}
@@ -907,7 +918,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border-2 border-white/70 hover:border-white overflow-hidden bg-black transition-colors cursor-pointer shadow-xl"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border border-white/30 hover:border-white/60 overflow-hidden bg-black transition-colors cursor-pointer shadow-xl"
               title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
             >
               <img
