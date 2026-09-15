@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { VideoReview, Place, VideoAuthor } from "../types";
-import { getPlaceSlug, formatBusinessName } from "../utils/placeUtils";
+import { getPlaceSlug, formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl } from "../utils/placeUtils";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "../utils/videoUtils";
+import { formatRecordedDate } from "../utils/dateUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import {
   CheckCircle,
   Star,
@@ -15,10 +17,17 @@ import {
   MessageCircle,
   Share2,
   Heart,
+  Bookmark,
+  MoreHorizontal,
   ChevronUp,
   ChevronDown,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Check,
+  Clock,
+  X,
+  Flag
 } from "lucide-react";
 
 interface CopoEmbedViewProps {
@@ -46,8 +55,11 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+  const [bookmarkedMap, setBookmarkedMap] = useState<Record<string, boolean>>({});
+  const [followedMap, setFollowedMap] = useState<Record<string, boolean>>({});
   const [progressPct, setProgressPct] = useState<number>(0);
   const [showHeartBurst, setShowHeartBurst] = useState<boolean>(false);
+  const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
   const lastTapRef = useRef<number>(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -214,7 +226,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         )}
 
         {/* TOP OVERLAY HEADER: Business Profile Pill & Controls */}
-        <div className="absolute top-0 left-0 right-0 z-30 p-3 pt-3.5 bg-gradient-to-b from-black/85 via-black/45 to-transparent flex items-center justify-between gap-2.5 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 z-40 p-3 pt-3.5 bg-gradient-to-b from-black/85 via-black/45 to-transparent flex items-center justify-between gap-2.5 pointer-events-none">
           <a
             href={targetPlace.website || "https://yoouz.com"}
             target="_blank"
@@ -243,156 +255,241 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           </a>
 
           <div className="pointer-events-auto flex items-center gap-2">
-            {/* Top Right Mute Button */}
+            {/* Top Right Sound Mute / Unmute Button */}
             <button
+              type="button"
               onClick={() => {
                 ensureSharedAudioContextUnlocked();
                 toggleMute();
               }}
-              className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center transition-all active:scale-90 shadow-lg text-white cursor-pointer"
-              title={isMuted ? "Unmute" : "Mute"}
+              className="w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 flex items-center justify-center text-white transition-all cursor-pointer shadow-xl"
+              title={isMuted ? "Unmute sound" : "Mute sound"}
             >
-              {isMuted ? <VolumeX className="w-5 h-5 text-amber-400" /> : <Volume2 className="w-5 h-5 text-white" />}
-            </button>
-
-            {/* Record Review CTA */}
-            <button
-              onClick={() => onRecordReview?.(targetPlace)}
-              className="px-3 py-2 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-xl border border-white/20 hover:border-white/50 text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer"
-            >
-              <Video className="w-3.5 h-3.5 text-white shrink-0 stroke-[2.5]" />
-              <span>Review</span>
+              {isMuted ? (
+                <VolumeX className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
+              ) : (
+                <Volume2 className="w-5 h-5 text-white stroke-[2.2]" />
+              )}
             </button>
           </div>
         </div>
 
         {/* MAIN MEDIA CONTENT AREA */}
-        {currentVideo ? (
-          <div className="relative flex-1 w-full h-full bg-black flex items-center justify-center overflow-hidden">
-            <video
-              ref={videoRef}
-              src={resolvePlayableVideoSource(currentVideo)}
-              poster={resolveVideoPosterUrl(currentVideo)}
-              playsInline
-              loop
-              muted={isMuted}
-              onClick={handleVideoTap}
-              onTimeUpdate={(e) => {
-                const el = e.currentTarget;
-                if (el.duration) {
-                  setProgressPct((el.currentTime / el.duration) * 100);
-                }
-              }}
-              className="w-full h-full object-cover cursor-pointer"
-            />
+        {currentVideo ? (() => {
+          const safeAuthor = resolveSafeAuthor(currentVideo, currentUser);
+          const isFollowed = followedMap[safeAuthor.name] || safeAuthor.isFollowed;
 
-            {/* Play / Pause Center Indicator Overlay */}
-            {!isPlaying && (
-              <button
-                onClick={handleTogglePlay}
-                className="absolute inset-0 m-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-2xl bg-black/50 hover:bg-black/75 backdrop-blur-xl border border-white/20 z-20"
-              >
-                <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-white translate-x-0.5" />
-              </button>
-            )}
+          return (
+            <div className="relative flex-1 w-full h-full bg-black flex items-center justify-center overflow-hidden">
+              <video
+                ref={videoRef}
+                src={resolvePlayableVideoSource(currentVideo)}
+                poster={resolveVideoPosterUrl(currentVideo)}
+                playsInline
+                loop
+                muted={isMuted}
+                onClick={handleVideoTap}
+                onTimeUpdate={(e) => {
+                  const el = e.currentTarget;
+                  if (el.duration) {
+                    setProgressPct((el.currentTime / el.duration) * 100);
+                  }
+                }}
+                className="w-full h-full object-cover cursor-pointer"
+              />
 
-            {/* Double Tap Heart Burst Animation */}
-            {showHeartBurst && (
-              <div className="absolute inset-0 m-auto w-24 h-24 flex items-center justify-center z-30 pointer-events-none animate-ping">
-                <Heart className="w-20 h-20 fill-rose-500 text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.8)]" />
-              </div>
-            )}
-
-            {/* RIGHT SIDE CONTROLS OVERLAY */}
-            <div className="absolute right-3 bottom-16 z-30 flex flex-col items-center gap-3">
-              {/* Like Button */}
-              <button
-                onClick={() => handleToggleLike(currentVideo.id)}
-                className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
-              >
-                <div
-                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center shadow-lg transition ${
-                    likedMap[currentVideo.id]
-                      ? "bg-rose-500/20 text-rose-500 border-rose-500/40"
-                      : "text-white"
-                  }`}
+              {/* Center Play Indicator */}
+              {!isPlaying && (
+                <button
+                  type="button"
+                  onClick={handleTogglePlay}
+                  className="absolute inset-0 m-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-90 hover:scale-105 transition-all duration-200 relative group shadow-2xl bg-black/50 hover:bg-black/75 backdrop-blur-xl border border-white/20 z-20"
                 >
-                  <Heart className={`w-5 h-5 ${likedMap[currentVideo.id] ? "fill-rose-500 text-rose-500" : ""}`} />
-                </div>
-                <span className="text-[11px] font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
-                  {(currentVideo.likes || 0) + (likedMap[currentVideo.id] ? 1 : 0)}
-                </span>
-              </button>
+                  <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-white translate-x-0.5" />
+                </button>
+              )}
 
-              {/* Comments Button */}
-              <button
-                onClick={() => onOpenComments?.(currentVideo)}
-                className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
-              >
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center shadow-lg text-white transition">
-                  <MessageCircle className="w-5 h-5" />
-                </div>
-                <span className="text-[11px] font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
-                  {currentVideo.commentsCount || currentVideo.comments?.length || 0}
-                </span>
-              </button>
-
-              {/* Share Button */}
-              <button
-                onClick={() => onOpenShare?.(currentVideo)}
-                className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
-              >
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center shadow-lg text-white transition">
-                  <Share2 className="w-5 h-5" />
-                </div>
-                <span className="text-[11px] font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">Share</span>
-              </button>
-
-              {/* Prev / Next Video Carousel Navigation */}
-              {matchingVideos.length > 1 && (
-                <div className="flex flex-col gap-1.5 pt-1">
-                  <button
-                    onClick={handlePrevVideo}
-                    className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
-                    title="Previous Video"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={handleNextVideo}
-                    className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
-                    title="Next Video"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
+              {/* Double Tap Heart Burst Animation */}
+              {showHeartBurst && (
+                <div className="absolute inset-0 m-auto w-24 h-24 flex items-center justify-center z-30 pointer-events-none animate-ping">
+                  <Heart className="w-20 h-20 fill-rose-500 text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.8)]" />
                 </div>
               )}
-            </div>
 
-            {/* BOTTOM LEFT AUTHOR & CAPTION OVERLAY */}
-            <div className="absolute left-3 bottom-10 right-16 z-30 space-y-1.5 text-left bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2 rounded-2xl pointer-events-auto">
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm text-white tracking-tight drop-shadow-md">
-                  By {currentVideo.author?.name || "Verified Customer"}
-                </span>
-                <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
+              {/* RIGHT SIDE ACTION COLUMN (Matches Main App Video Feed Card) */}
+              <aside className="absolute right-3 bottom-14 z-40 flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-1">
+                {/* Creator Avatar with Follow Badge */}
+                <div className="relative group/avatar mb-0.5">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border border-white/30 overflow-hidden bg-black shadow-xl">
+                    <img
+                      src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle)}
+                      alt={safeAuthor.name}
+                      className="w-full h-full object-cover rounded-full"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.src = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128, safeAuthor.handle || safeAuthor.name);
+                      }}
+                    />
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFollowedMap((prev) => ({ ...prev, [safeAuthor.name]: !prev[safeAuthor.name] }));
+                    }}
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md hover:scale-110 active:scale-90 transition-transform cursor-pointer border-2 border-zinc-950"
+                    title={isFollowed ? "Following" : "Follow"}
+                  >
+                    {isFollowed ? (
+                      <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                    ) : (
+                      <Plus className="w-3 h-3 text-black stroke-[3]" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Like Button */}
+                <button
+                  onClick={() => handleToggleLike(currentVideo.id)}
+                  className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
+                >
+                  <div
+                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 hover:border-white/50 flex items-center justify-center shadow-lg transition ${
+                      likedMap[currentVideo.id]
+                        ? "bg-rose-500/20 text-rose-500 border-rose-500/40"
+                        : "text-white"
+                    }`}
+                  >
+                    <Heart className={`w-5 h-5 ${likedMap[currentVideo.id] ? "fill-rose-500 text-rose-500" : ""}`} />
+                  </div>
+                  <span className="text-[11px] font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                    {(currentVideo.likes || 0) + (likedMap[currentVideo.id] ? 1 : 0)}
+                  </span>
+                </button>
+
+                {/* Comments Button */}
+                <button
+                  onClick={() => onOpenComments?.(currentVideo)}
+                  className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
+                >
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 hover:border-white/50 flex items-center justify-center shadow-lg text-white transition">
+                    <MessageCircle className="w-5 h-5" />
+                  </div>
+                  <span className="text-[11px] font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                    {currentVideo.commentsCount || currentVideo.comments?.length || 0}
+                  </span>
+                </button>
+
+                {/* Bookmark / Save Button */}
+                <button
+                  onClick={() => setBookmarkedMap((prev) => ({ ...prev, [currentVideo.id]: !prev[currentVideo.id] }))}
+                  className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
+                >
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 hover:border-white/50 flex items-center justify-center shadow-lg text-white transition">
+                    <Bookmark className={`w-5 h-5 ${bookmarkedMap[currentVideo.id] ? "fill-amber-400 text-amber-400" : ""}`} />
+                  </div>
+                  <span className="text-[11px] font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                    {(currentVideo.bookmarksCount || 0) + (bookmarkedMap[currentVideo.id] ? 1 : 0)}
+                  </span>
+                </button>
+
+                {/* Share Button */}
+                <button
+                  onClick={() => onOpenShare?.(currentVideo)}
+                  className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition"
+                >
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 hover:border-white/50 flex items-center justify-center shadow-lg text-white transition">
+                    <Share2 className="w-5 h-5" />
+                  </div>
+                  <span className="text-[11px] font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                    {(currentVideo.sharesCount || 0)}
+                  </span>
+                </button>
+
+                {/* More Options (...) Button */}
+                <button
+                  onClick={() => setMoreMenuVideo(currentVideo)}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 hover:border-white/50 flex items-center justify-center shadow-lg text-white transition active:scale-90 cursor-pointer"
+                  title="More options"
+                >
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+
+                {/* Prev / Next Carousel Navigation Arrows */}
+                {matchingVideos.length > 1 && (
+                  <div className="flex flex-col gap-1.5 pt-1">
+                    <button
+                      onClick={handlePrevVideo}
+                      className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
+                      title="Previous Video"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleNextVideo}
+                      className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
+                      title="Next Video"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </aside>
+
+              {/* BOTTOM LEFT AUTHOR & CAPTION METADATA */}
+              <footer className="absolute left-3 bottom-12 right-16 z-40 flex flex-col gap-1 pointer-events-auto text-left">
+                <div className="flex items-center gap-1.5 font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+                  <span className="whitespace-nowrap truncate leading-tight">By {safeAuthor.name}</span>
+                  {safeAuthor.isVerified && (
+                    <CheckCircle className="w-4 h-4 fill-white text-black inline shrink-0" />
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3.5 h-3.5 ${
+                          i < Math.round(currentVideo.rating || 5)
+                            ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                            : "fill-zinc-600/70 text-zinc-200/80"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  {(currentVideo.recordedAt || currentVideo.createdAtMs) && (
+                    <span className="text-white/90 text-[11.5px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-white/80 shrink-0" />
+                      <span>{formatRecordedDate(currentVideo.recordedAt, currentVideo.createdAtMs)}</span>
+                    </span>
+                  )}
+                </div>
+
+                {currentVideo.caption && (
+                  <p className="text-white/95 text-xs font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-0.5">
+                    {currentVideo.caption}
+                  </p>
+                )}
+
+                {currentVideo.dishOrItem && (
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-[10px] font-semibold text-white w-fit mt-0.5">
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    <span>{currentVideo.dishOrItem}</span>
+                  </div>
+                )}
+              </footer>
+
+              {/* BOTTOM PROGRESS SCRUBBER BAR */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 z-40">
+                <div
+                  className="h-full bg-white transition-all duration-100 ease-linear shadow-[0_0_8px_rgba(255,255,255,0.9)]"
+                  style={{ width: `${progressPct}%` }}
+                />
               </div>
-
-              {currentVideo.caption && (
-                <p className="text-xs text-zinc-200 line-clamp-2 leading-snug drop-shadow-md font-medium">
-                  {currentVideo.caption}
-                </p>
-              )}
-
-              {currentVideo.dishOrItem && (
-                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-[10px] font-semibold text-white">
-                  <Sparkles className="w-3 h-3 text-amber-300" />
-                  <span>{currentVideo.dishOrItem}</span>
-                </div>
-              )}
             </div>
-          </div>
-        ) : (
+          );
+        })() : (
           /* EMPTY STATE WHEN NO VIDEO REVIEWS ARE FOUND FOR THIS BUSINESS */
           <div className="flex-1 w-full h-full bg-zinc-950 flex flex-col items-center justify-center p-6 text-center space-y-5">
             <div className="w-20 h-20 rounded-2xl bg-zinc-900 border border-zinc-800 p-2.5 shadow-2xl flex items-center justify-center">
@@ -444,6 +541,57 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           </a>
         </div>
       </div>
+
+      {/* MORE OPTIONS BOTTOM MODAL */}
+      {moreMenuVideo && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-zinc-800 p-4 space-y-3 text-white shadow-2xl">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+              <span className="text-sm font-bold text-white">Review Options</span>
+              <button
+                onClick={() => setMoreMenuVideo(null)}
+                className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  onOpenShare?.(moreMenuVideo);
+                  setMoreMenuVideo(null);
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 flex items-center gap-3 text-sm font-semibold text-white transition cursor-pointer"
+              >
+                <Share2 className="w-4 h-4 text-zinc-300" />
+                <span>Share Review</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setBookmarkedMap((prev) => ({ ...prev, [moreMenuVideo.id]: !prev[moreMenuVideo.id] }));
+                  setMoreMenuVideo(null);
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 flex items-center gap-3 text-sm font-semibold text-white transition cursor-pointer"
+              >
+                <Bookmark className="w-4 h-4 text-zinc-300" />
+                <span>{bookmarkedMap[moreMenuVideo.id] ? "Remove Bookmark" : "Save / Bookmark"}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setMoreMenuVideo(null);
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 flex items-center gap-3 text-sm font-semibold text-rose-400 transition cursor-pointer"
+              >
+                <Flag className="w-4 h-4 text-rose-400" />
+                <span>Report Review</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
