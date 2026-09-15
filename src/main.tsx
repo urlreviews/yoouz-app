@@ -15,9 +15,15 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-// Dismiss initial HTML splash loader immediately once React takes over
+// Dismiss initial HTML splash loader once React has painted its initial frame
 if (typeof (window as any).__dismissAppSplash === 'function') {
-  (window as any).__dismissAppSplash();
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      if (typeof (window as any).__dismissAppSplash === 'function') {
+        (window as any).__dismissAppSplash();
+      }
+    }, 50);
+  });
 }
 
 // Proactively purge ALL stale service workers and cache storage to completely prevent stale mobile code

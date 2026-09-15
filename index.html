@@ -241,13 +241,9 @@
         }
       }
       window.__dismissAppSplash = hideSplash;
-      if (document.readyState === 'complete') {
-        setTimeout(hideSplash, 50);
-      } else {
-        window.addEventListener('DOMContentLoaded', hideSplash);
-        window.addEventListener('load', hideSplash);
-      }
-      setTimeout(hideSplash, 1500); // Fail-safe max timeout
+      // Dismiss splash via window.__dismissAppSplash when React mounts in main.tsx
+      // Fail-safe max timeout of 2.5s in case of unexpected JS error
+      setTimeout(hideSplash, 2500);
     </script>
   </body>
 </html>

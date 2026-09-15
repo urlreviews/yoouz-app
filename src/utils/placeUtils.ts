@@ -2,6 +2,8 @@ import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./logoUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
+export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v30";
+
 /**
  * Cleanly extracts domain name from URL or text string
  * e.g., "https://www.tajhotels.com/categories" -> "tajhotels.com"

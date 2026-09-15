@@ -43,7 +43,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, YOOUZ_VIDEOS_CACHE_KEY } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import {
@@ -714,14 +714,11 @@ export function App() {
 
       // Clean active and legacy local storage caches
       const cacheKeys = [
+        YOOUZ_VIDEOS_CACHE_KEY,
+        "yoouz_cached_videos_v28",
+        "yoouz_cached_videos_v27",
         "yoouz_cached_videos_v26",
         "yoouz_cached_videos_v25",
-        "yoouz_cached_videos_v22",
-        "yoouz_cached_videos_v21",
-        "yoouz_cached_videos_v20",
-        "yoouz_cached_videos_v19",
-        "yoouz_cached_videos_v18",
-        "yoouz_cached_videos_v16",
         "copo_videos"
       ];
       cacheKeys.forEach(k => {
@@ -813,14 +810,11 @@ export function App() {
 
       // Clean active and legacy local storage caches
       const cacheKeys = [
+        YOOUZ_VIDEOS_CACHE_KEY,
+        "yoouz_cached_videos_v28",
+        "yoouz_cached_videos_v27",
         "yoouz_cached_videos_v26",
         "yoouz_cached_videos_v25",
-        "yoouz_cached_videos_v22",
-        "yoouz_cached_videos_v21",
-        "yoouz_cached_videos_v20",
-        "yoouz_cached_videos_v19",
-        "yoouz_cached_videos_v18",
-        "yoouz_cached_videos_v16",
         "copo_videos"
       ];
       cacheKeys.forEach(k => {
@@ -893,12 +887,11 @@ export function App() {
     try {
       localStorage.removeItem("copo_videos");
       localStorage.removeItem("copo_deleted_videos");
+      localStorage.removeItem(YOOUZ_VIDEOS_CACHE_KEY);
+      localStorage.removeItem("yoouz_cached_videos_v28");
+      localStorage.removeItem("yoouz_cached_videos_v27");
       localStorage.removeItem("yoouz_cached_videos_v26");
       localStorage.removeItem("yoouz_cached_videos_v25");
-      localStorage.removeItem("yoouz_cached_videos_v22");
-      localStorage.removeItem("yoouz_cached_videos_v21");
-      localStorage.removeItem("yoouz_cached_videos_v20");
-      localStorage.removeItem("yoouz_cached_videos_v16");
     } catch (e) {}
 
     clearAllVideoBlobsFromIndexedDB().catch(() => {});
@@ -2095,8 +2088,7 @@ export function App() {
 
       // Update local storage cache immediately
       try {
-        localStorage.removeItem("yoouz_cached_videos_v25");
-        const cachedStr = localStorage.getItem("yoouz_cached_videos_v26");
+        const cachedStr = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
         if (cachedStr) {
           const cached = JSON.parse(cachedStr);
           if (Array.isArray(cached)) {
@@ -2111,7 +2103,7 @@ export function App() {
                   }
                 : c
             );
-            localStorage.setItem("yoouz_cached_videos_v26", JSON.stringify(updated));
+            localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated));
           }
         }
       } catch (e) {}
@@ -2168,8 +2160,7 @@ export function App() {
 
       // Update local storage cache
       try {
-        localStorage.removeItem("yoouz_cached_videos_v25");
-        localStorage.setItem("yoouz_cached_videos_v26", JSON.stringify(next.slice(0, 50)));
+        localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(next.slice(0, 50)));
       } catch (e) {}
 
       return next;

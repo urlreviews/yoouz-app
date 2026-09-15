@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { VideoReview } from '../types';
-import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage } from '../utils/placeUtils';
+import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage, YOOUZ_VIDEOS_CACHE_KEY } from '../utils/placeUtils';
 import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
 import { buildCommentTree } from '../utils/commentUtils';
 
@@ -23,12 +23,12 @@ function recordClientDeletedId(id: string) {
 
     // Immediately remove from cached feed and local reviews
     try {
-      const cached = localStorage.getItem("yoouz_cached_videos_v25");
+      const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
           const filtered = parsed.filter((v: any) => v && v.id !== strId);
-          localStorage.setItem("yoouz_cached_videos_v25", JSON.stringify(filtered));
+          localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(filtered));
         }
       }
     } catch (e) {}
@@ -182,18 +182,10 @@ export function useFeedPagination() {
     });
 
     try {
-      // Purge legacy caches to eliminate corrupted counts and stale sort
-      localStorage.removeItem("yoouz_cached_videos_v27");
-      localStorage.removeItem("yoouz_cached_videos_v26");
-      localStorage.removeItem("yoouz_cached_videos_v25");
-      localStorage.removeItem("yoouz_cached_videos_v24");
-      localStorage.removeItem("yoouz_cached_videos_v23");
-      localStorage.removeItem("yoouz_cached_videos_v22");
-      localStorage.removeItem("yoouz_cached_videos_v21");
-      localStorage.removeItem("yoouz_cached_videos_v20");
-      localStorage.removeItem("yoouz_cached_videos_v19");
-      localStorage.removeItem("yoouz_cached_videos_v18");
-      localStorage.removeItem("yoouz_cached_videos_v16");
+      // Purge legacy caches
+      ["yoouz_cached_videos_v28", "yoouz_cached_videos_v27", "yoouz_cached_videos_v26", "yoouz_cached_videos_v25"].forEach(k => {
+        try { localStorage.removeItem(k); } catch (e) {}
+      });
 
       const getReviewTime = (v: any) => {
         if (!v) return 0;
@@ -216,7 +208,7 @@ export function useFeedPagination() {
         }
       } catch (e) {}
 
-      const cached = localStorage.getItem("yoouz_cached_videos_v28");
+      const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -300,12 +292,12 @@ export function useFeedPagination() {
             try {
               localStorage.setItem("copo_deleted_videos", JSON.stringify(Array.from(allDeletedSet)));
               localStorage.removeItem("yoouz_cached_videos_v25");
-              const cached = localStorage.getItem("yoouz_cached_videos_v26");
+              const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
               if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed)) {
                   const filtered = parsed.filter((v: any) => !isPurgedVideo(v));
-                  localStorage.setItem("yoouz_cached_videos_v26", JSON.stringify(filtered));
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(filtered));
                 }
               }
               const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
@@ -428,10 +420,7 @@ export function useFeedPagination() {
               
               // Persist fresh feed to cache
               try { 
-                localStorage.removeItem("yoouz_cached_videos_v27");
-                localStorage.removeItem("yoouz_cached_videos_v26");
-                localStorage.removeItem("yoouz_cached_videos_v25");
-                localStorage.setItem("yoouz_cached_videos_v28", JSON.stringify(merged.slice(0, 50))); 
+                localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(merged.slice(0, 50))); 
               } catch(e){}
               
               return merged;
