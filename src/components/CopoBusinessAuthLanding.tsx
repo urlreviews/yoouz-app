@@ -535,18 +535,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                   </>
                 )}
               </button>
-
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  id="btn-business-reset-signup"
-                  onClick={() => handleResetAccount('info@yoouz.com')}
-                  className="text-[11px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer inline-flex items-center gap-1.5 underline decoration-zinc-800 underline-offset-4"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Start Sign-Up From Scratch (Delete Saved Session)</span>
-                </button>
-              </div>
             </form>
           )}
 
@@ -642,12 +630,6 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
             </div>
           )}
 
-        </div>
-
-        {/* Reassurance Footer Badge */}
-        <div className="mt-8 flex items-center justify-center gap-2 text-zinc-300 text-xs font-medium text-center">
-          <ShieldCheck className="w-4 h-4 text-zinc-300 shrink-0" />
-          <span>Yoouz Merchant Trust Protocol • Anti-conflict review protection</span>
         </div>
 
       </main>
