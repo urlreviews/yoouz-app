@@ -765,9 +765,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               fallbackTextClassName="font-extrabold text-[11px] text-white"
             />
             <div className="min-w-0 flex-1 py-0.5">
-              <span className="truncate block leading-tight font-extrabold text-[12px] sm:text-[13px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                {businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
-                <CheckCircle className="inline-block w-3 h-3 ml-1 align-text-bottom fill-white text-black shrink-0 relative -top-[1px]" />
+              <span className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                <span className="truncate">{businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}</span>
+                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
               </span>
               <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
                 <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
