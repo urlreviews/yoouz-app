@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -491,13 +491,25 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       alt={video.caption || "Thumbnail"}
                       className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300 pointer-events-none"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3">
-                       <div className="flex items-center gap-1 mb-1">
-                          {[...Array(5)].map((_, i) => (
-                             <Star key={i} className={`w-3 h-3 ${i < video.rating ? "text-amber-400 fill-amber-400" : "text-zinc-600"}`} />
-                          ))}
-                       </div>
-                       <p className="text-white text-xs font-medium line-clamp-2">{video.caption}</p>
+                    {/* Top-Left Star Badge */}
+                    <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[10px] font-black text-white flex items-center gap-0.5 shadow-xs border border-white/10 z-10">
+                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                      <span>{video.rating ? video.rating.toFixed(1) : "5.0"}</span>
+                    </div>
+                    {/* Bottom Gradient Overlay & Meta */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex flex-col justify-end p-3 pointer-events-none">
+                      <div className="flex items-start gap-1.5 mb-1">
+                        <CopoBrandLogo
+                          domain={video.placeWebsite || video.placeName}
+                          name={video.placeName}
+                          className="w-4 h-4 rounded-xs border border-white/20 bg-zinc-900 overflow-hidden shrink-0 mt-0.5"
+                          imageClassName="w-full h-full object-contain"
+                        />
+                        <span className="text-xs text-white font-bold drop-shadow-md leading-tight line-clamp-2 break-all">
+                          {getDisplayUrlAsDomain(video)}
+                        </span>
+                      </div>
+                      <p className="text-zinc-200 text-xs line-clamp-1">{video.caption}</p>
                     </div>
                   </div>
                 ))}

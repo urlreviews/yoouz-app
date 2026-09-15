@@ -28,6 +28,7 @@ import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoShareModal } from "./CopoShareModal";
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
@@ -1084,12 +1085,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                             <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                           </div>
-                          <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
-                            <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
-                              {getDisplayUrlAsDomain(v)}
+                          {/* Bottom Meta Info (Logo + 2-Line Domain + Views) */}
+                          <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-1 pointer-events-none z-10">
+                            <div className="flex items-start gap-1 min-w-0">
+                              <CopoBrandLogo
+                                domain={v.placeWebsite || v.placeName}
+                                name={v.placeName}
+                                className="w-3.5 h-3.5 rounded-xs border border-white/20 bg-zinc-900 overflow-hidden shrink-0 mt-0.5"
+                                imageClassName="w-full h-full object-contain"
+                              />
+                              <span className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-[1.15] line-clamp-2 break-all">
+                                {getDisplayUrlAsDomain(v)}
+                              </span>
                             </div>
                             <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
-                              <Play className="w-2.5 h-2.5 fill-white" />
+                              <Play className="w-2.5 h-2.5 fill-white shrink-0" />
                               <span>{formattedViews}</span>
                             </div>
                           </div>
@@ -1155,12 +1165,21 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             <Trash2 className="w-2.5 h-2.5" />
                           </button>
                         )}
-                        <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none">
-                          <div className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-tight truncate">
-                            {getDisplayUrlAsDomain(v)}
+                        {/* Bottom Meta Info (Logo + 2-Line Domain + Views) */}
+                        <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-1 pointer-events-none z-10">
+                          <div className="flex items-start gap-1 min-w-0">
+                            <CopoBrandLogo
+                              domain={v.placeWebsite || v.placeName}
+                              name={v.placeName}
+                              className="w-3.5 h-3.5 rounded-xs border border-white/20 bg-zinc-900 overflow-hidden shrink-0 mt-0.5"
+                              imageClassName="w-full h-full object-contain"
+                            />
+                            <span className="text-[9px] text-zinc-100 font-bold drop-shadow-md leading-[1.15] line-clamp-2 break-all">
+                              {getDisplayUrlAsDomain(v)}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
-                            <Play className="w-2.5 h-2.5 fill-white" />
+                            <Play className="w-2.5 h-2.5 fill-white shrink-0" />
                             <span>{formattedViews}</span>
                           </div>
                         </div>
