@@ -489,8 +489,19 @@ function writeReviewsIndex(list: any[]): void {
     }
     fs.writeFileSync(reviewsIndexPath, JSON.stringify(sanitized, null, 2), "utf8");
 
-    // Keep memory feedCache instantly synchronized
-    feedCache.videos = sanitized;
+    // Keep memory feedCache instantly synchronized without dropping existing videos
+    const existingMap = new Map<string, any>();
+    (feedCache.videos || []).forEach((v: any) => {
+      if (v && v.id && !deletedSet.has(String(v.id))) {
+        existingMap.set(String(v.id), v);
+      }
+    });
+    sanitized.forEach((v: any) => {
+      if (v && v.id && !deletedSet.has(String(v.id))) {
+        existingMap.set(String(v.id), v);
+      }
+    });
+    feedCache.videos = Array.from(existingMap.values());
     feedCache.lastFetched = Date.now();
 
     const seedCandidates = [
@@ -5405,13 +5416,72 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         testInstruction: "Tap Discover tab, filter by Food or Services, verify feed filters immediately."
       };
 
+      // 25. Video Review Retention & Feed Disappearance Guard
+      const retentionStart = Date.now();
+      const deletedSet = new Set(readDeletedReviewsIndex());
+      const storedReviews = readReviewsIndex().filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+      const cachedReviews = (feedCache.videos || []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+
+      let retentionStatus: "ok" | "degraded" | "error" = "ok";
+      let retentionDetails = "";
+
+      // 1. Check if any reviews stored on disk are missing from memory feedCache
+      const cachedIds = new Set(cachedReviews.map((r: any) => String(r.id)));
+      const missingFromCache = storedReviews.filter((r: any) => !cachedIds.has(String(r.id)));
+
+      // 2. Check for reviews missing critical video playback media URLs
+      const corruptedReviews = storedReviews.filter((r: any) => !r.videoUrl && !r.hlsUrl && !r.bunnyVideoId);
+
+      // 3. Check for recently created reviews (last 2 hours) to ensure they didn't drop
+      const nowMs = Date.now();
+      const recentReviews = storedReviews.filter((r: any) => {
+        const time = r.createdAtMs || (r.createdAt ? new Date(r.createdAt).getTime() : 0);
+        return (nowMs - time) < (2 * 60 * 60 * 1000);
+      });
+      const missingRecent = recentReviews.filter((r: any) => !cachedIds.has(String(r.id)));
+
+      // 4. Check if error logs mention review drop or disappearance
+      const hasRecentDisappearError = systemErrorLogs.some((l: any) =>
+        l.status === "unresolved" &&
+        (l.message?.toLowerCase().includes("disappear") ||
+         l.message?.toLowerCase().includes("review_lost") ||
+         l.component === "VideoRetention")
+      );
+
+      if (corruptedReviews.length > 0) {
+        retentionStatus = "error";
+        retentionDetails = `ERROR: ${corruptedReviews.length} review(s) detected with missing or invalid video playback URLs. Immediate media repair required.`;
+      } else if (missingFromCache.length > 0 || missingRecent.length > 0) {
+        retentionStatus = "error";
+        retentionDetails = `ERROR: Feed cache dropped ${missingFromCache.length} stored review(s). Newly submitted reviews will disappear on feed re-fetch.`;
+      } else if (hasRecentDisappearError) {
+        retentionStatus = "error";
+        retentionDetails = `ERROR: Active unresolved error log detected regarding review disappearance in the feed.`;
+      } else if (storedReviews.length === 0) {
+        retentionStatus = "degraded";
+        retentionDetails = `WARNING: Zero reviews found in persistent storage. Submit a 60s video review to populate and verify active feed retention.`;
+      } else {
+        retentionStatus = "ok";
+        const latestReview = storedReviews[0];
+        const latestPlace = latestReview?.placeName || latestReview?.placeId || "verified place";
+        retentionDetails = `All ${storedReviews.length} video reviews securely retained across persistent storage and active feedCache. Zero disappearing reviews detected (Latest: "${latestPlace}").`;
+      }
+
+      diagnostics["video_review_feed_retention"] = {
+        status: retentionStatus,
+        latencyMs: Math.max(1, Date.now() - retentionStart),
+        details: retentionDetails,
+        testInstruction: "Record and submit a 60s video review, verify it stays at index 0 on Discover feed without disappearing after 1s."
+      };
+
       const unresolvedLogs = systemErrorLogs.filter(l => l.status === "unresolved");
-      const isOverallHealthy = unresolvedLogs.length === 0 && Object.values(diagnostics).every(d => d.status !== "error");
+      const degradedOrErrorCount = Object.values(diagnostics).filter(d => d.status === "error" || d.status === "degraded").length;
+      const isOverallHealthy = unresolvedLogs.length === 0 && Object.values(diagnostics).every(d => d.status === "ok");
 
       return res.json({
         success: true,
         overallStatus: isOverallHealthy ? "healthy" : "issues_detected",
-        unresolvedCount: unresolvedLogs.length,
+        unresolvedCount: unresolvedLogs.length + degradedOrErrorCount,
         totalLogsCount: systemErrorLogs.length,
         timestamp: new Date().toISOString(),
         subsystems: diagnostics,

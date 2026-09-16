@@ -4526,21 +4526,14 @@ export function App() {
     setVideos((prev) => {
       return [newReview, ...prev.filter((v) => v.id !== newReview.id)];
     });
-    setActiveSection("home");
-    setActiveSubTab("discover");
+    setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
     setFullscreenFeedContext(null);
+    setActiveSection("home");
+    setActiveSubTab("discover");
     setCurrentVideoIndex(0);
+    savedHomeVideoIndexRef.current = 0;
     setPendingVideoId(newReview.id);
-
-    // Land directly on the specific Business Page for this review
-    const placeIdToOpen = newReview.placeId || (newReview as any).place?.id;
-    if (placeIdToOpen) {
-      handleOpenPlaceDrawer(placeIdToOpen);
-      // Force the background feed index to 0 so when the user closes the drawer,
-      // they instantly see their newly published video at the top of the homepage feed.
-      savedHomeVideoIndexRef.current = 0;
-    }
 
     // Persist to local durable backup store so it is never dropped across reload or navigation
     try {

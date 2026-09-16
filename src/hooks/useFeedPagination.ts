@@ -161,13 +161,9 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
     }
   } catch (e) {}
 
-  if (v.placeId === "yoouz.com" || v.placeId === "avis.com" || v.placeId === "hertz.com" || v.placeId === "test" || v.placeId === "testplace.com") return true;
+  if (v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
   const placeNameLower = (v.placeName || "").toLowerCase();
-  if (placeNameLower === "yoouz" || placeNameLower === "hertz" || placeNameLower === "car rentals from avis" || placeNameLower.includes("test place") || placeNameLower.includes("test user") || placeNameLower.includes("culver")) return true;
-  const authorNameLower = (v.author?.name || v.authorName || "").toLowerCase();
-  if (authorNameLower.includes("test user") || authorNameLower.includes("culver")) return true;
-  const dishLower = (v.dishOrItem || "").toLowerCase();
-  if (dishLower.includes("test user") || dishLower.includes("test place") || dishLower.includes("culver")) return true;
+  if (placeNameLower === "hertz" || placeNameLower === "car rentals from avis") return true;
   return false;
 };
 
@@ -283,8 +279,8 @@ export function useFeedPagination() {
             if (!v || !v.id) return true;
             const id = String(v.id);
             if (allDeletedSet.has(id)) return true;
-            if (v.placeId === "yoouz.com" || v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
-            if (v.placeName === "Yoouz" || v.placeName === "Hertz" || v.placeName === "Car Rentals from Avis") return true;
+            if (v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
+            if (v.placeName === "Hertz" || v.placeName === "Car Rentals from Avis") return true;
             return false;
           };
 
