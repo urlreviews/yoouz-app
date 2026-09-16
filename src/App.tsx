@@ -1230,6 +1230,40 @@ export function App() {
     };
     window.addEventListener("copo_auth_changed", handleCustomAuth);
 
+    // 2b. Business authentication & claim synchronization listener
+    const handleBusinessAuthChanged = (e: any) => {
+      const session = e?.detail;
+      if (session && (session.placeId || session.domain)) {
+        setPlaces((prev) =>
+          prev.map((p) => {
+            const matches =
+              p.id === session.placeId ||
+              (session.domain &&
+                (p.id.includes(session.domain) ||
+                  p.brandDomain === session.domain ||
+                  (p.website && p.website.includes(session.domain))));
+            if (matches) {
+              const updated = {
+                ...p,
+                isClaimed: true,
+                isVerified: true,
+                claimedByEmail: session.businessEmail || p.claimedByEmail,
+                ownerId: session.businessEmail || p.ownerId,
+              };
+              fetch(`/api/nosql/places/${encodeURIComponent(updated.id)}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: updated, merge: true }),
+              }).catch(() => {});
+              return updated;
+            }
+            return p;
+          })
+        );
+      }
+    };
+    window.addEventListener("copo_business_auth_changed", handleBusinessAuthChanged);
+
     // 3. Multi-tab storage synchronization
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "copo_user_profile") {
@@ -1551,6 +1585,7 @@ export function App() {
     return () => {
       unsubscribe();
       window.removeEventListener("copo_auth_changed", handleCustomAuth);
+      window.removeEventListener("copo_business_auth_changed", handleBusinessAuthChanged);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
@@ -2391,14 +2426,73 @@ export function App() {
               const currentDeletedIds = getDeletedPlaceIds();
               const filtered = serverList.filter((p: any) => !isPlaceDeleted(p, currentDeletedIds));
               setPlaces(() => {
-                let followedPlaces = [];
+                let followedPlaces: string[] = [];
                 try { followedPlaces = JSON.parse(localStorage.getItem("copo_followed_places") || "[]"); } catch(e){}
+                let claimedPlaces: string[] = [];
+                try { claimedPlaces = JSON.parse(localStorage.getItem("copo_claimed_places") || "[]"); } catch(e){}
+                let businessSession: any = null;
+                try { businessSession = JSON.parse(localStorage.getItem("copo_business_verified_session") || "null"); } catch(e){}
+
                 const map = new Map<string, Place>();
                 filtered.forEach((p: any) => {
-                  const isFollowed = followedPlaces.includes(p.id);
+                  if (!p || !p.id) return;
+                  const rawId = String(p.id).toLowerCase().trim();
+                  let canonId = rawId
+                    .replace(/^place-custom-/, '')
+                    .replace(/^www-/, '')
+                    .replace(/^www\./, '')
+                    .replace(/-co-nz$/, '.co.nz')
+                    .replace(/-co-uk$/, '.co.uk')
+                    .replace(/-com$/, '.com')
+                    .replace(/-org$/, '.org')
+                    .replace(/-net$/, '.net')
+                    .replace(/-io$/, '.io')
+                    .replace(/-ai$/, '.ai')
+                    .replace(/-ae$/, '.ae')
+                    .replace(/-de$/, '.de')
+                    .replace(/-fr$/, '.fr')
+                    .replace(/-nl$/, '.nl')
+                    .replace(/-us$/, '.us');
+
+                  if (!canonId.includes('.') && canonId.includes('-')) {
+                    const parts = canonId.split('-');
+                    if (parts.length >= 2) canonId = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
+                  }
+
+                  const domain = (p.brandDomain || (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || canonId).toLowerCase().trim();
+                  const key = domain || canonId;
+
+                  const isFollowed = followedPlaces.includes(p.id) || followedPlaces.includes(canonId);
+                  const isClaimedLocally = claimedPlaces.includes(p.id) || claimedPlaces.includes(canonId) || claimedPlaces.includes(domain) ||
+                    Boolean(businessSession && (businessSession.placeId === p.id || businessSession.placeId === canonId || businessSession.domain === domain));
+                  
+                  const isYoouz = key === 'yoouz.com' || canonId === 'yoouz.com' || p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz');
+                  const isClaimed = Boolean(p.isClaimed || (p.claimedByEmail && p.claimedByEmail.trim() !== '') || isClaimedLocally || isYoouz);
+                  const isVerified = Boolean(p.isVerified || isClaimed || isYoouz);
+                  const claimedByEmail = p.claimedByEmail || (isYoouz ? "4samet@gmail.com" : (businessSession?.businessEmail || ""));
                   const rating = typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0);
                   const totalReviews = typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0);
-                  map.set(p.id, { ...p, rating, totalReviews, isFollowed });
+
+                  const placeObj: Place = {
+                    ...p,
+                    id: canonId.includes('.') ? canonId : p.id,
+                    name: isYoouz ? "Yoouz" : p.name,
+                    rating,
+                    totalReviews,
+                    isFollowed,
+                    isClaimed,
+                    isVerified,
+                    claimedByEmail: claimedByEmail || p.claimedByEmail,
+                    ownerId: isYoouz ? "4samet@gmail.com" : (p.ownerId || claimedByEmail || undefined)
+                  };
+
+                  const existing = map.get(key);
+                  if (!existing) {
+                    map.set(key, placeObj);
+                  } else {
+                    const preferNew = (!existing.id.includes('.') && placeObj.id.includes('.')) || (!existing.isClaimed && placeObj.isClaimed);
+                    map.set(key, preferNew ? { ...existing, ...placeObj } : { ...placeObj, ...existing });
+                  }
                 });
                 return Array.from(map.values());
               });

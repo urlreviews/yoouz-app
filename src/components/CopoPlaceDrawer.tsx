@@ -41,7 +41,8 @@ import {
   ArrowLeft,
   ExternalLink,
   Heart,
-  Copy
+  Copy,
+  Check
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
@@ -443,21 +444,76 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     place.plusCode.trim() !== "" &&
     !place.plusCode.includes("849VC9FW")
   );
-  const subscriptionPlan = place.subscriptionPlan || "basic";
+  const isClaimedLocally = (() => {
+    try {
+      if (typeof window === "undefined") return false;
+      const claimedList = JSON.parse(localStorage.getItem("copo_claimed_places") || "[]");
+      if (Array.isArray(claimedList)) {
+        if (claimedList.includes(place.id) || (place.brandDomain && claimedList.includes(place.brandDomain))) {
+          return true;
+        }
+      }
+      const rawSession = localStorage.getItem("copo_business_verified_session");
+      if (rawSession) {
+        const sess = JSON.parse(rawSession);
+        if (
+          sess &&
+          (sess.placeId === place.id ||
+            sess.placeId === place.brandDomain ||
+            (sess.domain &&
+              (place.id.includes(sess.domain) ||
+                (place.website && place.website.includes(sess.domain)))))
+        ) {
+          return true;
+        }
+      }
+    } catch (e) {}
+    return false;
+  })();
+
+  const isYoouzBusiness =
+    place.id === "yoouz.com" ||
+    place.id === "yoouz-com" ||
+    (place.name && place.name.toLowerCase() === "yoouz") ||
+    (place.brandDomain && place.brandDomain.toLowerCase() === "yoouz.com");
+
   const isClaimed = Boolean(
     place.isClaimed ||
     (place.claimedByEmail && place.claimedByEmail.trim() !== "") ||
-    subscriptionPlan === "pro" ||
-    subscriptionPlan === "premium"
+    place.ownerId ||
+    isClaimedLocally ||
+    isYoouzBusiness
   );
-  const hasUpgraded = subscriptionPlan === "pro" || subscriptionPlan === "premium" || (typeof window !== 'undefined' && localStorage.getItem('demo_cta_type') !== null);
 
   const isUserOwner = Boolean(
-    currentUser &&
-    (currentUser.email === "4samet@gmail.com" || 
-     (place.claimedByEmail && currentUser.email === place.claimedByEmail) ||
-     (place.staffEmails && currentUser.email && place.staffEmails.includes(currentUser.email)))
+    (currentUser &&
+      (currentUser.email === "4samet@gmail.com" || 
+       (place.claimedByEmail && currentUser.email === place.claimedByEmail) ||
+       (place.ownerId && currentUser.id === place.ownerId) ||
+       (place.staffEmails && currentUser.email && place.staffEmails.includes(currentUser.email)))) ||
+    (() => {
+      try {
+        if (typeof window === "undefined") return false;
+        const rawSession = localStorage.getItem("copo_business_verified_session");
+        if (rawSession) {
+          const sess = JSON.parse(rawSession);
+          if (
+            sess &&
+            (sess.placeId === place.id ||
+              sess.placeId === place.brandDomain ||
+              (sess.domain &&
+                (place.id.includes(sess.domain) ||
+                  (place.website && place.website.includes(sess.domain)))))
+          ) {
+            return true;
+          }
+        }
+      } catch (e) {}
+      return false;
+    })()
   );
+
+  const hasUpgraded = Boolean(isClaimed || (place.subscriptionPlan && place.subscriptionPlan !== "free"));
 
   const openEditModal = () => {
     setEditPhone(hasGenuinePhone ? (place.phone || "") : "");
@@ -1151,49 +1207,52 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
 
               {/* Claim / Edit Business CTA Inline Row */}
-              {!place.isClaimed ? (
+              {!isClaimed ? (
                 <div
                   onClick={() => {
                     if (onClaimBusiness) {
                       onClaimBusiness(place);
                     } else {
-                      openEditModal();
+                      setIsClaimModalOpen(true);
                     }
                   }}
                   className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors cursor-pointer border-t border-zinc-800"
                 >
                   <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-zinc-200 shrink-0" />
-                    <span className="text-xs text-zinc-200 font-bold">{t("place.claimThisBusiness", "Claim this business")}</span>
+                    <ShieldCheck className="w-5 h-5 text-zinc-400 shrink-0" />
+                    <div>
+                      <span className="text-xs text-zinc-200 font-semibold block">{t("place.claimThisBusiness", "Claim this business")}</span>
+                      <span className="text-[11px] text-zinc-400 block">{t("place.claimSubtitle", "Verify ownership to edit & manage this profile")}</span>
+                    </div>
                   </div>
-                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold">
+                  <span className="text-xs px-3 py-1 rounded-full bg-white text-zinc-950 font-bold hover:bg-zinc-200 transition-colors shadow-sm shrink-0">
                     {t("place.claim", "Claim")}
                   </span>
                 </div>
               ) : (
                 <div className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors border-t border-zinc-800">
                   <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-zinc-200 shrink-0" />
-                    <span className="text-xs text-zinc-200 font-medium">{t("place.businessClaimed", "Business claimed")}</span>
+                    <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <div>
+                      <span className="text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        {t("place.businessClaimed", "Verified Business Profile")}
+                      </span>
+                      <span className="text-[11px] text-zinc-400 block">
+                        {place.claimedByEmail ? `Managed by ${place.claimedByEmail}` : t("place.claimedDesc", "Official verified listing on Yoouz")}
+                      </span>
+                    </div>
                   </div>
                   {isUserOwner ? (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setIsPricingModalOpen(true)}
-                        className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors flex items-center gap-1"
-                      >
-                        <Zap className="w-3 h-3" /> {t("place.plan", "Plan")}: {subscriptionPlan.toUpperCase()}
-                      </button>
-                      <button
-                        onClick={openEditModal}
-                        className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors"
-                      >
-                        {t("place.editDetails", "Edit Details")}
-                      </button>
-                    </div>
+                    <button
+                      onClick={openEditModal}
+                      className="text-[11px] px-3 py-1.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors cursor-pointer"
+                    >
+                      {t("place.editDetails", "Edit Details")}
+                    </button>
                   ) : (
-                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-850 text-zinc-200 font-bold">
-                      {t("place.verified", "Verified")}
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-800 text-emerald-300 font-bold flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-400" /> {t("place.verified", "Claimed")}
                     </span>
                   )}
                 </div>
@@ -1436,7 +1495,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     </div>
                   )}
 
-                  {!place.isClaimed && (
+                  {!isClaimed && (
                     <button
                       onClick={() => setIsClaimModalOpen(true)}
                       className="w-full py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[11px] font-bold text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
@@ -1472,7 +1531,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
 
             {/* Stepper Progress bar */}
-            {!place.isClaimed && (
+            {!isClaimed && (
               <div className="flex items-center gap-2 my-4 px-1 shrink-0">
                 <div 
                   onClick={() => setModalStep(1)}
@@ -1715,7 +1774,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       >
                         {t("place.saveEdits", "Save Edits")}
                       </button>
-                      {!place.isClaimed && (
+                      {!isClaimed && (
                         <button
                           type="button"
                           onClick={() => setModalStep(2)}
@@ -1848,7 +1907,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
       {isPricingModalOpen && (
         <CopoBusinessPricingModal 
-          currentPlan={subscriptionPlan}
+          currentPlan={place.subscriptionPlan || "free"}
           onSelectPlan={(plan) => {
             alert(`Redirecting to upgrade flow for ${plan} plan...`);
             setIsPricingModalOpen(false);

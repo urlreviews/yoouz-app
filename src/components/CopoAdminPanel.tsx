@@ -59,7 +59,8 @@ import {
   Server,
   Zap,
   Radio,
-  Loader2
+  Loader2,
+  ShieldCheck
 } from "lucide-react";
 import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
@@ -125,7 +126,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "health" | "creators" | "users" | "places" | "subscriptions" | "videos" | "comments" | "broadcast" | "database";
+type AdminTab = "overview" | "health" | "creators" | "users" | "places" | "videos" | "comments" | "broadcast" | "database";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,
@@ -179,8 +180,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [creatorFilter, setCreatorFilter] = useState<"all" | "verified" | "top" | "unverified">("all");
   const [userFilter, setUserFilter] = useState<"all" | "verified" | "unverified">("all");
   const [userTypeFilter, setUserTypeFilter] = useState<"all" | "registered" | "creators" | "business">("all");
-  const [subscriptionPlanFilter, setSubscriptionPlanFilter] = useState<string>("all");
-  const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState<string>("all");
 
   // Multi-Selection
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
@@ -660,10 +659,91 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     });
   }, [videos, searchQuery, videoRatingFilter]);
 
-  // Filtered Places List
+  // Deduplicated Places (Guarantees every business appears exactly once with merged claim and video state)
+  const deduplicatedPlaces = useMemo(() => {
+    const canonicalMap = new Map<string, Place>();
+    
+    // Check local storage for verified business claims as fallback
+    let localVerifiedPlaceId = "";
+    let localVerifiedEmail = "";
+    try {
+      const sessStr = localStorage.getItem("copo_business_verified_session");
+      if (sessStr) {
+        const sess = JSON.parse(sessStr);
+        if (sess && sess.placeId) {
+          localVerifiedPlaceId = String(sess.placeId).toLowerCase();
+          localVerifiedEmail = sess.email || "";
+        }
+      }
+    } catch (e) {}
+
+    places.forEach((p) => {
+      if (!p || !p.id) return;
+      const rawId = String(p.id).toLowerCase().trim();
+      let canonId = rawId
+        .replace(/^place-custom-/, '')
+        .replace(/^www-/, '')
+        .replace(/^www\./, '')
+        .replace(/-co-nz$/, '.co.nz')
+        .replace(/-co-uk$/, '.co.uk')
+        .replace(/-com$/, '.com')
+        .replace(/-org$/, '.org')
+        .replace(/-net$/, '.net')
+        .replace(/-io$/, '.io')
+        .replace(/-ai$/, '.ai')
+        .replace(/-ae$/, '.ae')
+        .replace(/-de$/, '.de')
+        .replace(/-fr$/, '.fr')
+        .replace(/-nl$/, '.nl')
+        .replace(/-us$/, '.us');
+
+      if (!canonId.includes('.') && canonId.includes('-')) {
+        const parts = canonId.split('-');
+        if (parts.length >= 2) {
+          canonId = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
+        }
+      }
+
+      const domain = (p.brandDomain || (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || canonId).toLowerCase().trim();
+      const key = domain || canonId;
+
+      const isYoouz = key === 'yoouz.com' || canonId === 'yoouz.com' || rawId === 'yoouz.com' || rawId === 'yoouz-com' || (p.name && p.name.toLowerCase() === 'yoouz');
+      const isLocalClaimed = Boolean(localVerifiedPlaceId && (localVerifiedPlaceId === rawId || localVerifiedPlaceId === canonId || localVerifiedPlaceId === key));
+
+      const isClaimed = Boolean(p.isClaimed || p.claimedByEmail || isYoouz || isLocalClaimed);
+      const claimedEmail = p.claimedByEmail || (isYoouz ? "4samet@gmail.com" : (isLocalClaimed ? localVerifiedEmail : undefined));
+
+      const existing = canonicalMap.get(key);
+      if (!existing) {
+        canonicalMap.set(key, {
+          ...p,
+          id: canonId.includes('.') ? canonId : p.id,
+          isClaimed,
+          isVerified: Boolean(p.isVerified || isClaimed),
+          claimedByEmail: claimedEmail
+        });
+      } else {
+        const preferNew = (!existing.id.includes('.') && canonId.includes('.')) || (!existing.isClaimed && isClaimed);
+        const base = preferNew ? p : existing;
+        const other = preferNew ? existing : p;
+        canonicalMap.set(key, {
+          ...other,
+          ...base,
+          id: (base.id.includes('.') ? base.id : (other.id.includes('.') ? other.id : base.id)),
+          isClaimed: Boolean(base.isClaimed || other.isClaimed || isClaimed),
+          isVerified: Boolean(base.isVerified || other.isVerified || isClaimed),
+          claimedByEmail: base.claimedByEmail || other.claimedByEmail || claimedEmail
+        });
+      }
+    });
+
+    return Array.from(canonicalMap.values());
+  }, [places]);
+
+  // Filtered Places List (Single entry per business)
   const filteredPlaces = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    return places.filter((p) => {
+    return deduplicatedPlaces.filter((p) => {
       const matchQuery =
         !q ||
         (p.name && p.name.toLowerCase().includes(q)) ||
@@ -680,29 +760,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
       return matchQuery && matchCategory && matchClaim;
     });
-  }, [places, searchQuery, placeCategoryFilter, placeClaimFilter]);
+  }, [deduplicatedPlaces, searchQuery, placeCategoryFilter, placeClaimFilter]);
 
-  // Filtered Subscribed & Paid Places List (for Financial Tracking & Subscriptions tab)
-  const filteredSubscribedPlaces = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    return places.filter((p) => {
-      const matchQuery =
-        !q ||
-        (p.name && p.name.toLowerCase().includes(q)) ||
-        (p.website && p.website.toLowerCase().includes(q)) ||
-        (p.claimedByEmail && p.claimedByEmail.toLowerCase().includes(q)) ||
-        (p.subscriptionTransactionId && p.subscriptionTransactionId.toLowerCase().includes(q)) ||
-        (p.id && p.id.toLowerCase().includes(q));
+  // Helper to get all video reviews matching a place across canonical aliases
+  const getPlaceVideos = (place: Place) => {
+    const rawId = String(place.id).toLowerCase();
+    const canonId = rawId.replace(/^place-custom-/, '').replace(/^www-/, '').replace(/^www\./, '');
+    const domain = (place.brandDomain || (place.website ? place.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '')).toLowerCase();
+    const pName = (place.name || "").toLowerCase().trim();
 
-      const plan = p.subscriptionPlan || "free";
-      const status = p.subscriptionStatus || (plan !== "free" ? "active" : "free");
-
-      const matchPlan = subscriptionPlanFilter === "all" || plan === subscriptionPlanFilter;
-      const matchStatus = subscriptionStatusFilter === "all" || status === subscriptionStatusFilter;
-
-      return matchQuery && matchPlan && matchStatus;
+    return videos.filter((v) => {
+      const vPlaceId = String(v.placeId || "").toLowerCase();
+      const vPlaceName = String(v.placeName || "").toLowerCase().trim();
+      return (
+        vPlaceId === rawId ||
+        vPlaceId === canonId ||
+        vPlaceId === domain ||
+        (domain && vPlaceId.includes(domain)) ||
+        (pName && vPlaceName === pName)
+      );
     });
-  }, [places, searchQuery, subscriptionPlanFilter, subscriptionStatusFilter]);
+  };
 
   // Filtered Creators List
   const filteredCreators = useMemo(() => {
@@ -793,37 +871,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const totalBookmarks = videos.reduce((acc, v) => acc + (v.bookmarksCount || 0), 0);
     const totalViews = videos.reduce((acc, v) => acc + (v.viewsCount || v.views || 0), 0);
     const totalComm = allComments.length;
-    const totalPlaces = places.length;
-    const claimedPlaces = places.filter((p) => p.isClaimed || Boolean(p.claimedByEmail)).length;
+    const totalPlaces = deduplicatedPlaces.length;
+    const claimedPlaces = deduplicatedPlaces.filter((p) => p.isClaimed || Boolean(p.claimedByEmail)).length;
+    const unclaimedPlaces = totalPlaces - claimedPlaces;
     const avgRating = totalVids > 0 ? (videos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalVids).toFixed(1) : "5.0";
-
-    // Subscription & Revenue Metrics (Merchant Tiers & Agency Managed)
-    let mrr = 0;
-    let paidPlacesCount = 0;
-    let basicCount = 0;
-    let proCount = 0;
-    let premiumCount = 0;
-
-    places.forEach((p) => {
-      const plan = p.subscriptionPlan;
-      const status = p.subscriptionStatus || (plan && plan !== "free" && plan !== "basic" ? "active" : "free");
-      const isPaid = (plan === "pro" || plan === "premium") && status !== "canceled" && status !== "unpaid";
-      
-      if (plan === "basic" || p.isClaimed || p.claimedByEmail) {
-        basicCount++;
-      }
-
-      if (isPaid) {
-        paidPlacesCount++;
-        if (plan === "pro") {
-          proCount++;
-          mrr += p.subscriptionAmount !== undefined ? p.subscriptionAmount : 149;
-        } else if (plan === "premium") {
-          premiumCount++;
-          mrr += p.subscriptionAmount !== undefined ? p.subscriptionAmount : 299;
-        }
-      }
-    });
 
     return {
       totalVideos: totalVids,
@@ -834,20 +885,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       totalComments: totalComm,
       totalPlaces,
       claimedPlaces,
-      unclaimedPlaces: totalPlaces - claimedPlaces,
+      unclaimedPlaces,
       totalUsers: uniqueUsers.length,
       totalCreators: creatorsList.length,
       totalCommunityUsers: standardUsersList.length,
-      avgRating,
-      mrr,
-      arr: mrr * 12,
-      paidPlacesCount,
-      freePlacesCount: totalPlaces - paidPlacesCount,
-      basicCount,
-      proCount,
-      premiumCount
+      avgRating
     };
-  }, [videos, places, uniqueUsers, creatorsList, standardUsersList, allComments]);
+  }, [videos, deduplicatedPlaces, uniqueUsers, creatorsList, standardUsersList, allComments]);
 
   // Multi-select handlers
   const handleSelectAllVideos = () => {
@@ -1293,25 +1337,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <Building2 className="w-4 h-4" />
                 Places & Businesses
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "places" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
-                {places.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("subscriptions")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "subscriptions"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-4 h-4" />
-                Subscriptions & Billing
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "subscriptions" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
-                {metrics.paidPlacesCount} paid
+              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "places" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+                {metrics.totalPlaces}
               </span>
             </button>
 
@@ -1400,8 +1427,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["health", "Health 🟢"],
                 ["creators", `Creators (${metrics.totalCreators})`],
                 ["users", `Users (${metrics.totalCommunityUsers})`],
-                ["places", `Places (${places.length})`],
-                ["subscriptions", `Billing (${metrics.paidPlacesCount})`],
+                ["places", `Places (${metrics.totalPlaces})`],
                 ["videos", `Videos (${videos.length})`],
                 ["comments", "Moderation"],
                 ["broadcast", "Broadcast"],
@@ -1837,18 +1863,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Metric Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 <div 
-                  onClick={() => setActiveTab("subscriptions")}
+                  onClick={() => {
+                    setPlaceClaimFilter("claimed");
+                    setActiveTab("places");
+                  }}
                   className="p-5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:border-zinc-700"
                 >
                   <div className="flex items-center justify-between text-zinc-200 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Revenue (MRR)</span>
-                    <DollarSign className="w-5 h-5 text-zinc-200" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Claimed Profiles</span>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <div className="text-3xl font-black text-white">${metrics.mrr.toLocaleString()}</div>
-                  <div className="flex items-center gap-2 text-xs text-zinc-200 mt-2">
-                    <span className="text-zinc-200 font-semibold">{metrics.paidPlacesCount} Paid</span>
+                  <div className="text-3xl font-black text-white">{metrics.claimedPlaces}</div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-300 mt-2">
+                    <span className="text-emerald-400 font-semibold">{metrics.totalPlaces > 0 ? Math.round((metrics.claimedPlaces / metrics.totalPlaces) * 100) : 0}% Verified</span>
                     <span>•</span>
-                    <span className="text-zinc-200">${metrics.arr.toLocaleString()} ARR</span>
+                    <span className="text-zinc-400">Direct Agency Model</span>
                   </div>
                 </div>
 
@@ -2061,251 +2090,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: SUBSCRIPTIONS & FINANCIAL TRACKING */}
-          {activeTab === "subscriptions" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
-              {/* Header & Financial Overview */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-                    <CreditCard className="w-6 h-6 text-zinc-200" />
-                    Business Subscriptions & Revenue
-                  </h2>
-                  <p className="text-sm text-zinc-200">
-                    Monitor paying merchant accounts, recurring subscriptions, URLs, and payment transaction statuses
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      const csvContent = "data:text/csv;charset=utf-8," + [
-                        ["Business Name", "Website URL", "Owner Email", "Plan", "Status", "Amount", "Transaction ID"].join(","),
-                        ...filteredSubscribedPlaces.map(p => [
-                          `"${p.name || ''}"`,
-                          `"${p.website || ''}"`,
-                          `"${p.claimedByEmail || ''}"`,
-                          `"${p.subscriptionPlan || 'free'}"`,
-                          `"${p.subscriptionStatus || 'free'}"`,
-                          `"$${p.subscriptionAmount || 0}"`,
-                          `"${p.subscriptionTransactionId || ''}"`
-                        ].join(","))
-                      ].join("\n");
-                      const encodedUri = encodeURI(csvContent);
-                      const link = document.createElement("a");
-                      link.setAttribute("href", encodedUri);
-                      link.setAttribute("download", `yoouz_subscriptions_${Date.now()}.csv`);
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      showToast("Exported subscriptions CSV report.");
-                    }}
-                    className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 font-bold rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" /> Export CSV
-                  </button>
-                </div>
-              </div>
-
-              {/* Financial KPI Highlights */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Monthly Recurring Revenue</span>
-                  <div className="text-3xl font-black text-white mt-1">${metrics.mrr.toLocaleString()}</div>
-                  <div className="text-xs text-zinc-200 mt-2">${metrics.arr.toLocaleString()} Annualized Run Rate</div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Paying Businesses</span>
-                  <div className="text-3xl font-black text-white mt-1">{metrics.paidPlacesCount} / {places.length}</div>
-                  <div className="text-xs text-zinc-200 mt-2">
-                    {places.length > 0 ? ((metrics.paidPlacesCount / places.length) * 100).toFixed(1) : 0}% Conversion Rate
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Tier Breakdown</span>
-                  <div className="flex items-center gap-2 mt-2 font-bold text-sm text-zinc-100">
-                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-xs border border-zinc-700">Basic: {metrics.basicCount}</span>
-                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-xs border border-zinc-700">Pro: {metrics.proCount}</span>
-                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-xs border border-zinc-700">Elite: {metrics.premiumCount}</span>
-                  </div>
-                  <div className="text-xs text-zinc-200 mt-2">{metrics.freePlacesCount} Free Tier Businesses</div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">Merchant Model</span>
-                  <div className="text-lg font-bold text-white mt-1 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Agency Reseller Network
-                  </div>
-                  <div className="text-xs text-zinc-400 mt-1">100% Free venue onboarding • Agency B2B accounts</div>
-                </div>
-              </div>
-
-              {/* Filter & Search Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-                <div className="flex flex-wrap items-center gap-3">
-                  <select
-                    value={subscriptionPlanFilter}
-                    onChange={(e) => setSubscriptionPlanFilter(e.target.value)}
-                    className="px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none cursor-pointer"
-                  >
-                    <option value="all">All Merchant Plans</option>
-                    <option value="premium">Premium Elite ($299/mo)</option>
-                    <option value="pro">Pro ($149/mo)</option>
-                    <option value="basic">Basic Claimed ($0/mo)</option>
-                    <option value="free">Unclaimed Free ($0)</option>
-                  </select>
-
-                  <select
-                    value={subscriptionStatusFilter}
-                    onChange={(e) => setSubscriptionStatusFilter(e.target.value)}
-                    className="px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none cursor-pointer"
-                  >
-                    <option value="all">All Payment Statuses</option>
-                    <option value="active">Active (Paid)</option>
-                    <option value="trialing">Trialing</option>
-                    <option value="past_due">Past Due</option>
-                    <option value="canceled">Canceled</option>
-                    <option value="free">Free / Unpaid</option>
-                  </select>
-                </div>
-
-                <div className="text-xs text-zinc-300 font-mono">
-                  Showing {filteredSubscribedPlaces.length} of {places.length} businesses
-                </div>
-              </div>
-
-              {/* Subscriptions Data Table */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-md">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-zinc-200">
-                    <thead className="bg-zinc-950 text-xs font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-800">
-                      <tr>
-                        <th className="p-4">Business & Identity</th>
-                        <th className="p-4">Website URL</th>
-                        <th className="p-4">Merchant Email</th>
-                        <th className="p-4">Plan & Tier</th>
-                        <th className="p-4">Payment Status</th>
-                        <th className="p-4">Amount / Cycle</th>
-                        <th className="p-4">Invoice / Tx ID</th>
-                        <th className="p-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/80 font-medium">
-                      {filteredSubscribedPlaces.map((place) => {
-                        const savedPlan = typeof window !== 'undefined' ? localStorage.getItem(`yoouz_plan_${place.id}`) : null;
-                        const plan = savedPlan || place.subscriptionPlan || (place.isClaimed ? "basic" : "free");
-                        const status = place.subscriptionStatus || (plan === "pro" || plan === "premium" ? "active" : "free");
-                        const amount = place.subscriptionAmount !== undefined 
-                          ? place.subscriptionAmount 
-                          : (plan === "premium" ? 299 : plan === "pro" ? 149 : 0);
-
-                        return (
-                          <tr key={place.id} className="hover:bg-zinc-850/50 transition-colors">
-                            <td className="p-4">
-                              <div className="flex items-center gap-3">
-                                <AdminPlaceLogo place={place} size="sm" />
-                                <div className="min-w-0">
-                                  <div className="font-bold text-white flex items-center gap-1.5">
-                                    {place.name}
-                                    {place.isClaimed && <BadgeCheck className="w-4 h-4 text-white shrink-0" />}
-                                  </div>
-                                  <div className="text-xs text-zinc-400 truncate">{place.city || place.address}</div>
-                                </div>
-                              </div>
-                            </td>
-
-                            <td className="p-4">
-                              {place.website ? (
-                                <a
-                                  href={place.website.startsWith("http") ? place.website : `https://${place.website}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-zinc-300 hover:text-white hover:underline flex items-center gap-1 max-w-[180px] truncate"
-                                >
-                                  <Globe className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
-                                  <span className="truncate">{place.website.replace(/^https?:\/\//, "")}</span>
-                                  <ExternalLink className="w-3 h-3 shrink-0 opacity-60" />
-                                </a>
-                              ) : (
-                                <span className="text-xs text-zinc-500 italic">No URL set</span>
-                              )}
-                            </td>
-
-                            <td className="p-4">
-                              {place.claimedByEmail ? (
-                                <div className="flex items-center gap-1.5 text-xs text-zinc-200">
-                                  <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                                  <span className="truncate max-w-[160px] font-mono">{place.claimedByEmail}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-zinc-500">Unclaimed</span>
-                              )}
-                            </td>
-
-                            <td className="p-4">
-                              <span
-                                className={`text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider border ${
-                                  plan === 'premium'
-                                    ? 'bg-amber-950/40 text-amber-300 border-amber-800/60'
-                                    : plan === 'pro'
-                                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/60'
-                                    : 'bg-zinc-800 text-zinc-300 border-zinc-700'
-                                }`}
-                              >
-                                {plan === 'premium' ? 'Premium ($299)' : plan === 'pro' ? 'Pro ($149)' : plan === 'basic' ? 'Basic ($0)' : 'Free Tier'}
-                              </span>
-                            </td>
-
-                            <td className="p-4">
-                              <span
-                                className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border ${
-                                  status === 'active'
-                                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/60'
-                                    : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                                }`}
-                              >
-                                <span className={`w-1.5 h-1.5 rounded-full ${status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
-                                {status.toUpperCase()}
-                              </span>
-                            </td>
-
-                            <td className="p-4">
-                              <div className="font-bold text-white">${amount} <span className="text-xs text-zinc-400 font-normal">/mo</span></div>
-                            </td>
-
-                            <td className="p-4">
-                              <span className="text-xs font-mono text-zinc-400">
-                                {place.subscriptionTransactionId || (plan === "pro" || plan === "premium" ? `AGY-INV-${place.id.slice(0, 4)}` : "—")}
-                              </span>
-                            </td>
-
-                            <td className="p-4 text-right">
-                              <button
-                                onClick={() => setEditPlaceModal(place)}
-                                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ml-auto cursor-pointer"
-                              >
-                                <Edit className="w-3.5 h-3.5" /> Manage
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {filteredSubscribedPlaces.length === 0 && (
-                  <div className="p-12 text-center text-zinc-200 space-y-2">
-                    <CreditCard className="w-8 h-8 mx-auto text-zinc-600" />
-                    <p className="font-bold text-zinc-200">No businesses match the subscription criteria.</p>
-                    <p className="text-xs">Adjust your search or filter settings to view all businesses.</p>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -2738,7 +2522,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Places List Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredPlaces.map((place) => {
-                  const placeVideos = videos.filter((v) => v.placeId === place.id || v.placeName === place.name);
+                  const placeVideos = getPlaceVideos(place);
                   const isClaimed = place.isClaimed || Boolean(place.claimedByEmail);
 
                   return (
@@ -2764,30 +2548,54 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             >
                               {place.name}
                             </h3>
-                            <p className="text-xs text-zinc-200 truncate mt-0.5">
+                            <p className="text-xs text-zinc-400 truncate mt-0.5">
                               {place.category} • {place.city || place.address}
                             </p>
                           </div>
                         </div>
 
                         {/* Place Stats & Claim Info */}
-                        <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2 text-xs">
+                        <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2.5 text-xs">
                           <div className="flex items-center justify-between">
-                            <span className="text-zinc-200">Merchant Status:</span>
+                            <span className="text-zinc-400 font-medium">Claim Status:</span>
                             <span
-                              className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
                                 isClaimed
-                                  ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
-                                  : "bg-zinc-900 text-zinc-200 border border-zinc-800"
+                                  ? "bg-emerald-950/60 border border-emerald-700/80 text-emerald-300"
+                                  : "bg-zinc-850 border border-zinc-700 text-zinc-300"
                               }`}
                             >
-                              {isClaimed ? `Claimed (${place.claimedByEmail || "Verified"})` : "Unclaimed"}
+                              {isClaimed ? (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  Claimed
+                                </>
+                              ) : (
+                                <>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                  Unclaimed
+                                </>
+                              )}
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between text-zinc-200">
-                            <span>Video Reviews:</span>
-                            <span className="font-bold text-white">{placeVideos.length} recorded</span>
+                          {place.claimedByEmail && (
+                            <div className="text-[11px] text-zinc-400 font-mono flex items-center gap-1.5 bg-zinc-900/60 px-2.5 py-1 rounded-lg border border-zinc-800">
+                              <Mail className="w-3 h-3 text-zinc-400 shrink-0" />
+                              <span className="truncate">{place.claimedByEmail}</span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between text-zinc-300">
+                            <span className="text-zinc-400 font-medium">Video Reviews:</span>
+                            <span className="font-bold text-white flex items-center gap-1.5">
+                              <Video className="w-3.5 h-3.5 text-zinc-400" />
+                              {placeVideos.length > 0 ? (
+                                <span className="text-emerald-400 font-bold">{placeVideos.length} recorded</span>
+                              ) : (
+                                <span className="text-zinc-500 font-normal">0 reviews</span>
+                              )}
+                            </span>
                           </div>
 
                           {place.phone && (
@@ -3772,84 +3580,57 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 />
               </div>
 
-              {/* Subscription & Billing Controls */}
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-4">
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-200">
-                  <CreditCard className="w-4 h-4" /> Subscription & Monetization Controls
+              {/* Merchant Claim & Verification Controls */}
+              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-300">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" /> Merchant Claim & Verification
+                  </div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                    editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail)
+                      ? "bg-emerald-950/60 text-emerald-300 border border-emerald-800"
+                      : "bg-zinc-850 text-zinc-400 border border-zinc-700"
+                  }`}>
+                    {editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "Profile Claimed" : "Unclaimed"}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block text-xs font-bold text-zinc-200 mb-1">Plan Tier</label>
+                    <label className="block text-xs font-bold text-zinc-400 mb-1">Claim Status</label>
                     <select
-                      value={editPlaceModal.subscriptionPlan || "free"}
+                      value={editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "claimed" : "unclaimed"}
                       onChange={(e) => {
-                        const newPlan = e.target.value as any;
-                        const price = newPlan === "basic" ? 29 : newPlan === "pro" ? 79 : newPlan === "premium" ? 199 : 0;
+                        const isNowClaimed = e.target.value === "claimed";
                         setEditPlaceModal({
                           ...editPlaceModal,
-                          subscriptionPlan: newPlan,
-                          subscriptionStatus: newPlan === "free" ? "free" : (editPlaceModal.subscriptionStatus && editPlaceModal.subscriptionStatus !== "free" ? editPlaceModal.subscriptionStatus : "active"),
-                          subscriptionAmount: price,
-                          subscriptionPaidAt: newPlan !== "free" ? (editPlaceModal.subscriptionPaidAt || Date.now()) : undefined,
-                          subscriptionTransactionId: newPlan !== "free" ? (editPlaceModal.subscriptionTransactionId || `tx_${Date.now().toString(36)}`) : undefined
+                          isClaimed: isNowClaimed,
+                          isVerified: isNowClaimed ? true : editPlaceModal.isVerified,
+                          claimedByEmail: isNowClaimed ? (editPlaceModal.claimedByEmail || "merchant@business.com") : ""
                         });
                       }}
                       className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white font-bold text-xs focus:outline-none"
                     >
-                      <option value="free">Free / None ($0)</option>
-                      <option value="basic">Basic ($29/mo)</option>
-                      <option value="pro">Pro ($79/mo)</option>
-                      <option value="premium">Premium Elite ($199/mo)</option>
+                      <option value="unclaimed">Unclaimed Listing</option>
+                      <option value="claimed">Claimed & Verified</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-zinc-200 mb-1">Payment Status</label>
-                    <select
-                      value={editPlaceModal.subscriptionStatus || (editPlaceModal.subscriptionPlan && editPlaceModal.subscriptionPlan !== "free" ? "active" : "free")}
-                      onChange={(e) => setEditPlaceModal({ ...editPlaceModal, subscriptionStatus: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white font-bold text-xs focus:outline-none"
-                    >
-                      <option value="active">Active (Paid)</option>
-                      <option value="trialing">Free Trialing</option>
-                      <option value="past_due">Past Due</option>
-                      <option value="canceled">Canceled</option>
-                      <option value="unpaid">Unpaid</option>
-                      <option value="free">Free Tier</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-200 mb-1">Monthly Price ($)</label>
+                    <label className="block text-xs font-bold text-zinc-400 mb-1">Owner Email</label>
                     <input
-                      type="number"
-                      value={editPlaceModal.subscriptionAmount ?? (editPlaceModal.subscriptionPlan === "basic" ? 29 : editPlaceModal.subscriptionPlan === "pro" ? 79 : editPlaceModal.subscriptionPlan === "premium" ? 199 : 0)}
-                      onChange={(e) => setEditPlaceModal({ ...editPlaceModal, subscriptionAmount: Number(e.target.value) })}
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white font-bold text-xs focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-200 mb-1">Payment Method / Gateway</label>
-                    <input
-                      type="text"
-                      value={editPlaceModal.subscriptionPaymentMethod || "Credit Card (Stripe)"}
-                      onChange={(e) => setEditPlaceModal({ ...editPlaceModal, subscriptionPaymentMethod: e.target.value })}
-                      placeholder="e.g. Visa ending in 4242"
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white text-xs focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-200 mb-1">Transaction / Invoice ID</label>
-                    <input
-                      type="text"
-                      value={editPlaceModal.subscriptionTransactionId || ""}
-                      onChange={(e) => setEditPlaceModal({ ...editPlaceModal, subscriptionTransactionId: e.target.value })}
-                      placeholder="e.g. in_1Qabcd..."
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white font-mono text-xs focus:outline-none"
+                      type="email"
+                      value={editPlaceModal.claimedByEmail || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditPlaceModal({
+                          ...editPlaceModal,
+                          claimedByEmail: val,
+                          isClaimed: Boolean(val.trim())
+                        });
+                      }}
+                      placeholder="owner@company.com"
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white text-xs font-mono focus:outline-none"
                     />
                   </div>
                 </div>
@@ -4099,14 +3880,12 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
   const [logoUrl, setLogoUrl] = useState("");
   const [claimedByEmail, setClaimedByEmail] = useState("");
   const [rating, setRating] = useState(5.0);
-  const [subscriptionPlan, setSubscriptionPlan] = useState<"free" | "basic" | "pro" | "premium">("free");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     const id = `place_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-    const price = subscriptionPlan === "basic" ? 29 : subscriptionPlan === "pro" ? 79 : subscriptionPlan === "premium" ? 199 : 0;
 
     const newPlace: Place = {
       id,
@@ -4136,12 +3915,8 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
       amenities: ["Free Wi-Fi", "Credit Cards Accepted"],
       topDishes: [],
       isClaimed: Boolean(claimedByEmail.trim()),
-      claimedByEmail: claimedByEmail.trim() || undefined,
-      subscriptionPlan: subscriptionPlan,
-      subscriptionStatus: subscriptionPlan === "free" ? "free" : "active",
-      subscriptionAmount: price,
-      subscriptionPaidAt: subscriptionPlan !== "free" ? Date.now() : undefined,
-      subscriptionTransactionId: subscriptionPlan !== "free" ? `tx_new_${Date.now().toString(36)}` : undefined
+      isVerified: Boolean(claimedByEmail.trim()),
+      claimedByEmail: claimedByEmail.trim() || undefined
     };
 
     onSave(newPlace);
@@ -4249,20 +4024,6 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
                 className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-zinc-200 mb-1">Initial Subscription Tier</label>
-            <select
-              value={subscriptionPlan}
-              onChange={(e) => setSubscriptionPlan(e.target.value as any)}
-              className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white font-bold text-sm focus:outline-none focus:border-zinc-600"
-            >
-              <option value="free">Free / None ($0/mo)</option>
-              <option value="basic">Basic Tier ($29/mo)</option>
-              <option value="pro">Pro Tier ($79/mo)</option>
-              <option value="premium">Premium Elite Tier ($199/mo)</option>
-            </select>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">

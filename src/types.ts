@@ -259,6 +259,8 @@ export interface Place {
   ogImage?: string;
   brandDomain?: string;
   isClaimed?: boolean;
+  isVerified?: boolean;
+  ownerId?: string;
   claimedByEmail?: string;
   email?: string;
   staffEmails?: string[];
