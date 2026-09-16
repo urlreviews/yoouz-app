@@ -100,9 +100,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }, [resolvedDomain, isYoouz]);
 
   const effectiveSrc = useMemo(() => {
-    // 0. Yoouz official dark emblem
+    // 0. Yoouz official dark emblem with white star
     if (isYoouz) {
-      return "/icon-512.png";
+      return "/favicon.svg";
     }
 
     // 1. Explicit clean Logo URL from place record, database, or API
@@ -144,7 +144,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }, [isYoouz, resolvedDomain, logoUrl, fetchedLogo, name, googleFaviconUrl]);
 
   const currentSrc = useMemo(() => {
-    if (isYoouz) return "/icon-512.png";
+    if (isYoouz) return "/favicon.svg";
     if (hasError) return null;
     if (triedDuckFallback) return duckFaviconUrl;
     if (triedFallback) return googleFaviconUrl || duckFaviconUrl;

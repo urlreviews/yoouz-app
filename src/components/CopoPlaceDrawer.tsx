@@ -414,7 +414,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const hasAuthenticPhoto = allPhotos.length > 0;
 
   const primaryLogoUrl = React.useMemo(() => {
-    if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/icon-512.png";
+    if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
     if (place.logoUrl && !place.logoUrl.startsWith("data:;")) return getCleanLogoUrl(place.logoUrl, drawerDomain);
     if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);

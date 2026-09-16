@@ -13293,9 +13293,9 @@ Return JSON:
               };
 
               const knownBrandLogosMap: Record<string, string> = {
-                "yoouz.com": "https://yoouz.com/icon-512.png",
-                "www.yoouz.com": "https://yoouz.com/icon-512.png",
-                "yoouz": "https://yoouz.com/icon-512.png",
+                "yoouz.com": "https://yoouz.com/favicon.svg",
+                "www.yoouz.com": "https://yoouz.com/favicon.svg",
+                "yoouz": "https://yoouz.com/favicon.svg",
                 "zoom.com": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
                 "zoom.us": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
                 "apple.com": "https://www.apple.com/ac/structured-data/images/open_graph_logo.png",
