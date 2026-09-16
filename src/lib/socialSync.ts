@@ -890,6 +890,10 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const recipientId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
     const recipientName = (data.recipientName || "").toLowerCase().trim();
 
+    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avt");
+    const isAouisesmee = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userEmail.includes("aouisesme") || userEmail.includes("aouiseme") || userName.includes("aouisesmee") || userName.includes("aouisemee") || userName.includes("aouisesme") || userName.includes("aouiseme") || userHandle.includes("aouisesmee") || userHandle.includes("aouisemee") || userHandle.includes("aouisesme") || userHandle.includes("aouiseme") || userId.includes("aouisesmee") || userId.includes("aouisemee") || userId.includes("aouisesme") || userId.includes("aouiseme") || userEmail.includes("4samet") || userName.includes("4samet") || userHandle.includes("4samet") || userId.includes("4samet");
+    const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111") || userEmail.includes("biz") || userName.includes("biz");
+
     let isParticipant = false;
 
     if (isBusinessUser) {
@@ -905,10 +909,6 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       isParticipant = true;
     } else {
       const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
-
-      const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avt");
-      const isAouisesmee = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userEmail.includes("aouisesme") || userEmail.includes("aouiseme") || userName.includes("aouisesmee") || userName.includes("aouisemee") || userName.includes("aouisesme") || userName.includes("aouiseme") || userHandle.includes("aouisesmee") || userHandle.includes("aouisemee") || userHandle.includes("aouisesme") || userHandle.includes("aouiseme") || userId.includes("aouisesmee") || userId.includes("aouisemee") || userId.includes("aouisesme") || userId.includes("aouiseme") || userEmail.includes("4samet") || userName.includes("4samet") || userHandle.includes("4samet") || userId.includes("4samet");
-      const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111") || userEmail.includes("biz") || userName.includes("biz");
 
       const matchesAvtErtuop = isAvtErtuop && (
         participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||

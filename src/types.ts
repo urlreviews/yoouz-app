@@ -299,6 +299,7 @@ export interface CopoNotification {
   createdAtMs?: number;
   videoThumbnail?: string;
   videoId?: string;
+  placeId?: string;
   placeName?: string;
   isRead: boolean;
 }
@@ -309,7 +310,10 @@ export interface CopoMessage {
   senderName: string;
   senderAvatar: string;
   senderEmail?: string;
+  lastSenderEmail?: string;
   recipientEmail?: string;
+  recipientId?: string;
+  participants?: string[];
   lastMessage: string;
   timestamp: string;
   createdAtMs?: number;

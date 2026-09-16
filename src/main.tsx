@@ -6,9 +6,9 @@ import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { LanguageProvider } from './i18n/LanguageContext.tsx';
 import './index.css';
 
-// Initialize Sentry Monitoring
+// Initialize Sentry Monitoring with exact project DSN
 Sentry.init({
-  dsn: "https://a157fe76e41983b0b082124a3adc128e@o4512096517292032.ingest.us.sentry.io/4512096517292032",
+  dsn: "https://a157fe76e41983b0b082124a3adc128e@o4512096517292032.ingest.us.sentry.io/4512096535576576",
   tracesSampleRate: 1.0,
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,

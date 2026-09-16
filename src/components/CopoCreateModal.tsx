@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import * as Sentry from "@sentry/react";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import {
   X,
@@ -640,6 +641,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         }
       };
 
+      mediaRecorder.onerror = (e: any) => {
+        Sentry.captureException(e?.error || new Error("MediaRecorder capture error"), {
+          extra: { mimeType: mediaRecorder.mimeType }
+        });
+        console.warn("MediaRecorder error:", e);
+      };
+
       mediaRecorder.onstop = () => {
         if (chunksRef.current.length === 0) {
           console.warn("No video chunks collected");
@@ -873,8 +881,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       viewsCount: 1,
       sharesCount: 0,
       tags: [selectedPlace.category || "Review"],
-      recordedAt: "Just now",
-      isLocalUpload: true
+      recordedAt: "Just now"
     };
 
     // 4. Save metadata locally first so it is immune to network dropouts or reloads
