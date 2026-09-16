@@ -5574,7 +5574,14 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                 const parts = canonId.split('-');
                 if (parts.length >= 2) canonId = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
               }
-              const domain = (pData.brandDomain || (pData.website ? pData.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || canonId).toLowerCase().trim();
+              const rawDomain = pData.brandDomain || pData.website || canonId;
+              const domain = String(rawDomain)
+                .replace(/^https?:\/\//i, '')
+                .replace(/^www\./i, '')
+                .split('/')[0]
+                .split('?')[0]
+                .toLowerCase()
+                .trim();
               const key = domain || canonId;
 
               if (seenKeys.has(key)) {
@@ -6751,6 +6758,11 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon.png", JSON.stringify(yoouzDoc)]
       }).catch(() => {});
 
+      // Clean up any legacy or duplicate yoouz aliases
+      await bunnyDb.execute({
+        sql: `DELETE FROM places WHERE id IN ('yoouz-com', 'place-custom-yoouz-com', 'yoouz', '@yoouz')`
+      }).catch(() => {});
+
       // 2. Ensure Legal 500 place exists with canonical ID 'legal500.com' and rich metadata
       const legal500Logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://legal500.com&size=256`;
       const legal500Banner = "";
@@ -6876,28 +6888,48 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           }
 
           if (dotId.includes('.') && dotId !== rawId) {
-            let parsedData: any = {};
-            try {
-              parsedData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {});
-            } catch (e) {}
-            parsedData.id = dotId;
-            if (parsedData.address === rawId) parsedData.address = dotId;
-
+            // Re-point any videoReviews from legacy rawId to canonical dotId
             await bunnyDb.execute({
-              sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-              args: [
-                dotId, pRow.name, dotId, pRow.category, pRow.city, pRow.country, pRow.latitude, pRow.longitude, pRow.logoUrl, JSON.stringify(parsedData),
-                pRow.name, dotId, pRow.category, pRow.city, pRow.country, pRow.latitude, pRow.longitude, pRow.logoUrl, JSON.stringify(parsedData)
-              ]
+              sql: `UPDATE videoReviews SET placeId = ? WHERE placeId = ?`,
+              args: [dotId, rawId]
             }).catch(() => {});
 
-            // Delete legacy hyphenated row so each place only exists once
-            await bunnyDb.execute({
-              sql: `DELETE FROM places WHERE id = ?`,
-              args: [rawId]
-            }).catch(() => {});
+            // Check if canonical dotId record already exists
+            const existingDot = await bunnyDb.execute({
+              sql: `SELECT id, data FROM places WHERE id = ?`,
+              args: [dotId]
+            }).catch(() => null);
+
+            if (existingDot && existingDot.rows && existingDot.rows.length > 0) {
+              // Canonical record already exists; safely delete the legacy hyphenated duplicate
+              await bunnyDb.execute({
+                sql: `DELETE FROM places WHERE id = ?`,
+                args: [rawId]
+              }).catch(() => {});
+            } else {
+              // Canonical record does not exist yet; migrate data and delete legacy row
+              let parsedData: any = {};
+              try {
+                parsedData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {});
+              } catch (e) {}
+              parsedData.id = dotId;
+              if (parsedData.address === rawId) parsedData.address = dotId;
+
+              await bunnyDb.execute({
+                sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                args: [
+                  dotId, pRow.name, dotId, pRow.category, pRow.city, pRow.country, pRow.latitude, pRow.longitude, pRow.logoUrl, JSON.stringify(parsedData),
+                  pRow.name, dotId, pRow.category, pRow.city, pRow.country, pRow.latitude, pRow.longitude, pRow.logoUrl, JSON.stringify(parsedData)
+                ]
+              }).catch(() => {});
+
+              await bunnyDb.execute({
+                sql: `DELETE FROM places WHERE id = ?`,
+                args: [rawId]
+              }).catch(() => {});
+            }
           }
         }
       }
@@ -17313,6 +17345,7 @@ function injectOpenGraphTags(html: string, meta: any) {
   }
 
   await initBunnyDbSchema().catch(() => {});
+  await syncAndMigrateBusinessPlaces().catch(() => {});
   await ensureWelcomeNotificationsForAllUsers().catch(() => {});
 
   try {

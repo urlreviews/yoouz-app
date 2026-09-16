@@ -46,6 +46,7 @@ import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVid
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, YOOUZ_VIDEOS_CACHE_KEY } from "./utils/placeUtils";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
+import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
 import {
   sendSocialNotification,
   subscribeToNotifications,
@@ -2505,7 +2506,7 @@ export function App() {
                     id: 'yoouz.com',
                     name: 'Yoouz',
                     category: 'Video Reviews & Discovery Platform',
-                    categoryType: 'business',
+                    categoryType: 'all',
                     address: 'Global Headquarters • yoouz.com',
                     city: 'Brussels',
                     website: 'https://yoouz.com',
