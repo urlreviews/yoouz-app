@@ -817,6 +817,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       ? KNOWN_BRAND_LOGOS[placeDomain]
       : getPlaceLogoUrl(selectedPlace) || "";
     const resolvedPlaceBanner = selectedPlace.bannerUrl || selectedPlace.ogImage || (placeDomain && KNOWN_BRAND_BANNERS[placeDomain]) || "";
+    const safeThumbnail = finalThumbnail || videoThumbnail || recordedVideoUrl || resolvedPlaceBanner || resolvedPlaceLogo || `/api/avatar?name=${encodeURIComponent(cleanPlaceName)}&background=18181b&color=fff`;
 
     const resolvedAuthor = resolveSafeAuthor({
       author: {
@@ -858,7 +859,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       videoUrl: uploadedPublicUrl,
       bunnyVideoId: finalBunnyId,
       fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean),
-      thumbnailUrl: finalThumbnail,
+      thumbnailUrl: safeThumbnail,
       caption: `Video review for ${getDisplayUrlAsDomain(selectedPlace) || cleanPlaceName}`,
       dishOrItem: cleanPlaceName,
       likes: 1,
