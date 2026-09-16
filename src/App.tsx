@@ -1,6 +1,7 @@
 import { forceMute } from "./hooks/useGlobalMute";
 import { useFeedPagination } from "./hooks/useFeedPagination";
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import * as Sentry from "@sentry/react";
 import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, Club, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
 import { CopoSidebar } from "./components/CopoSidebar";
@@ -6093,7 +6094,8 @@ export function App() {
       <button
         id="sentry-test-button"
         onClick={() => {
-          throw new Error("Sentry Test Error");
+          Sentry.captureException(new Error("Sentry Test Error"));
+          console.log("[Sentry] Test error captured and sent via captureException!");
         }}
         className="fixed top-3 right-3 z-[99999] bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg transition-transform active:scale-95 flex items-center gap-2 cursor-pointer border border-purple-400/30"
       >
