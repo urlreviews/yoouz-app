@@ -380,7 +380,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     }
   }, [place.id, place.website, place.description, place.name, drawerDomain, reviewBannerUrl, onUpdatePlace, place]);
 
+  const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
+
   const effectiveBanner =
+    (isYoouzPlace ? "https://yoouz.com/og-banner.png?v=8" : "") ||
     fetchedBannerUrl ||
     reviewBannerUrl ||
     place.bannerUrl ||
@@ -411,6 +414,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const hasAuthenticPhoto = allPhotos.length > 0;
 
   const primaryLogoUrl = React.useMemo(() => {
+    if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/icon-512.png";
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
     if (place.logoUrl && !place.logoUrl.startsWith("data:;")) return getCleanLogoUrl(place.logoUrl, drawerDomain);
     if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);

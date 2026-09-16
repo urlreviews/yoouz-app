@@ -365,6 +365,9 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 export const KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "yoouz.com": "https://yoouz.com/og-banner.png?v=8",
+  "www.yoouz.com": "https://yoouz.com/og-banner.png?v=8",
+  "yoouz": "https://yoouz.com/og-banner.png?v=8",
   "zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
   "www.zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
   "zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
@@ -447,6 +450,14 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
   const raw = (nameOrDomain || "Place").replace(/^https?:\/\//i, "").replace(/^www\./i, "").trim();
   const clean = raw.replace(/\.(com|org|net|io|co|ai|be|ae|uk|co\.uk)$/i, "").trim();
   
+  if (clean.toLowerCase() === "yoouz" || clean.toLowerCase() === "yoouz.com") {
+    const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+      <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="#09090b"/>
+      <path d="M64 24 L74 52 L104 54 L80 72 L88 100 L64 82 L40 100 L48 72 L24 54 L54 52 Z" transform="scale(${size / 128})" fill="#fbbf24"/>
+    </svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(starSvg)}`;
+  }
+
   let letters = "";
   if (clean.toLowerCase().startsWith("l500") || clean.toLowerCase() === "legal500" || clean.toLowerCase() === "legal 500") {
     letters = "L500";
@@ -494,6 +505,9 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
 
 export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null): string | null {
   const cleanDomain = extractDomain(domain || url);
+  if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz")) {
+    return "/icon-512.png";
+  }
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
     return KNOWN_BRAND_LOGOS[cleanDomain];
   }
@@ -502,7 +516,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
   if (
     url &&
     !isWhiteOrInvertedLogo(url) &&
-    (url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
+    (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
       if (url.startsWith("/api/proxy-image")) return url;
@@ -538,6 +552,10 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   const cleanDomain = domain?.trim().replace(/^www\./, "").toLowerCase();
+
+  if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) {
+    return "/icon-512.png";
+  }
 
   // 1. Direct match for known high-quality brand vector logos
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {

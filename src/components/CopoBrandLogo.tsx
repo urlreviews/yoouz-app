@@ -47,9 +47,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       resolvedDomain === "yoouz.com" ||
       resolvedDomain === "www.yoouz.com" ||
       resolvedDomain === "yoouz" ||
-      (name && name.toLowerCase().trim() === "yoouz")
+      (typeof name === "string" && name.toLowerCase().trim().includes("yoouz")) ||
+      (typeof domain === "string" && domain.toLowerCase().trim().includes("yoouz")) ||
+      (typeof website === "string" && website.toLowerCase().trim().includes("yoouz"))
     );
-  }, [resolvedDomain, name]);
+  }, [resolvedDomain, name, domain, website]);
 
   // Reset error & fallback ONLY if the incoming source itself fundamentally changes
   useEffect(() => {
