@@ -832,6 +832,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       userId: currentUser?.email || "guest@yoouz.com",
       userEmail: currentUser?.email || "guest@yoouz.com",
       createdAtMs: Date.now(),
+      isLocalUpload: true,
       placeId: selectedPlace.id,
       placeName: cleanPlaceName,
       placeCategory: selectedPlace.category || "General",

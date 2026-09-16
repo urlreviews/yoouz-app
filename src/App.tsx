@@ -4518,6 +4518,11 @@ export function App() {
   const handlePublishVideoReview = (newReview: VideoReview) => {
     setIsCreateModalOpen(false);
     setPreselectedPlaceForRecording(null);
+    
+    // Ensure flags for feed pagination persistence
+    (newReview as any).isLocalUpload = true;
+    if (!newReview.createdAtMs) newReview.createdAtMs = Date.now();
+
     setVideos((prev) => {
       return [newReview, ...prev.filter((v) => v.id !== newReview.id)];
     });
@@ -4564,11 +4569,6 @@ export function App() {
       }).catch(() => {});
     } catch (e) {}
 
-    // Persist to BunnyDB database so all viewers across any browser/device see it immediately
-    try {
-
-    } catch (e) {}
-
     // Ensure place exists in places list or update its rating/review count and persist to DB
     setPlaces((prev) => {
       const exists = prev.some((p) => isPlaceReviewMatch(newReview, p));
@@ -4577,6 +4577,10 @@ export function App() {
 
       if (!exists) {
         targetPlace = synthesizePlaceFromReview(newReview, prev);
+        targetPlace = {
+          ...targetPlace,
+          reviews: [newReview, ...(targetPlace.reviews || [])]
+        };
         nextList = [targetPlace, ...prev];
       } else {
         nextList = prev.map((p) => {
@@ -4585,8 +4589,11 @@ export function App() {
             const newRating = Number(
               (((p.rating || 5) * (p.totalReviews || 1) + newReview.rating) / newTotalReviews).toFixed(1)
             );
+            const existingReviews = Array.isArray(p.reviews) ? p.reviews : [];
+            const newReviews = [newReview, ...existingReviews.filter((r) => r.id !== newReview.id)];
             targetPlace = {
               ...p,
+              reviews: newReviews,
               rating: newRating,
               totalReviews: newTotalReviews,
               videoReviewCount: (p.videoReviewCount || 0) + 1,
