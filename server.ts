@@ -6657,19 +6657,21 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     try {
       console.log(`🐰 [BunnyDB] Seeding/Updating ${KNOWN_PREVIOUS_SEARCHES.length} previous searches and brand metadata...`);
       for (const item of KNOWN_PREVIOUS_SEARCHES) {
-        const cleanDomain = item.domain.replace(/^www\./i, "").toLowerCase();
-        const autoPlaceId = cleanDomain.replace(/[^a-zA-Z0-9]/g, '-');
+        const cleanDomain = item.domain.replace(/^www\./i, "").toLowerCase().trim();
+        const autoPlaceId = cleanDomain;
         if (deletedPlaceIds.has(autoPlaceId.toLowerCase()) || deletedPlaceIds.has(cleanDomain) || deletedPlaceIds.has(item.title.toLowerCase())) {
           continue;
         }
-        const logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+        const isYoouz = cleanDomain === "yoouz.com";
+        const logo = isYoouz ? "/icon.png" : `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
         const autoPlaceDoc = {
           id: autoPlaceId,
-          name: item.title,
-          category: "Website",
+          name: isYoouz ? "Yoouz" : item.title,
+          category: isYoouz ? "Video Reviews Platform" : "Website",
           categoryType: "all",
-          address: "",
-          city: "Online",
+          address: autoPlaceId,
+          city: isYoouz ? "Worldwide" : "Online",
+          country: isYoouz ? "Global" : "",
           lat: 0,
           lng: 0,
           rating: 5,
@@ -6679,26 +6681,27 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           logoUrl: logo,
           bannerUrl: item.banner,
           ogImage: item.banner,
-          photos: [item.banner],
+          photos: item.banner ? [item.banner] : [],
           openingHours: "Available 24/7",
           isOpen: true,
           phone: "",
           website: `https://${cleanDomain}`,
-          priceRange: "N/A",
+          priceRange: isYoouz ? "Free" : "N/A",
           plusCode: "",
           description: item.description,
-          popularKeywords: [],
-          amenities: [],
+          popularKeywords: isYoouz ? [{ tag: "Authentic", count: 1 }, { tag: "Video Reviews", count: 1 }] : [],
+          amenities: isYoouz ? ["Verified Merchant", "Live Camera Only", "Instant Sync"] : [],
           topDishes: [],
-          brandDomain: cleanDomain
+          brandDomain: cleanDomain,
+          ...(isYoouz ? { isClaimed: true, claimedByEmail: "info@yoouz.com", ownerId: "info@yoouz.com", isVerified: true } : {})
         };
         const jsonStr = JSON.stringify(autoPlaceDoc);
         await bunnyDb.execute({
           sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-          args: [autoPlaceId, item.title, "", "Website", "Online", "", 0, 0, logo, jsonStr,
-                 item.title, "", "Website", "Online", "", 0, 0, logo, jsonStr]
+          args: [autoPlaceId, autoPlaceDoc.name, autoPlaceId, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr,
+                 autoPlaceDoc.name, autoPlaceId, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr]
         }).catch(() => {});
       }
       console.log(`✅ [BunnyDB] Successfully synchronized all previous search metadata into Bunny Cloud Database!`);
@@ -13566,14 +13569,16 @@ Return JSON:
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
-          const autoPlaceId = cleanDomain.replace(/[^a-zA-Z0-9]/g, '-');
+          const autoPlaceId = cleanDomain;
+          const isYoouz = cleanDomain === "yoouz.com";
           const autoPlaceDoc = {
             id: autoPlaceId,
-            name: title,
-            category: "Website",
+            name: isYoouz ? "Yoouz" : (title || cleanDomain),
+            category: isYoouz ? "Video Reviews Platform" : "Website",
             categoryType: "all",
-            address: "",
-            city: "Online",
+            address: autoPlaceId,
+            city: isYoouz ? "Worldwide" : "Online",
+            country: isYoouz ? "Global" : "",
             lat: 0,
             lng: 0,
             rating: 5,
@@ -13588,22 +13593,23 @@ Return JSON:
             isOpen: true,
             phone: "",
             website: finalUrl || `https://${cleanDomain}`,
-            priceRange: "N/A",
+            priceRange: isYoouz ? "Free" : "N/A",
             plusCode: "",
             description: description || "",
-            popularKeywords: [],
-            amenities: [],
+            popularKeywords: isYoouz ? [{ tag: "Authentic", count: 1 }, { tag: "Video Reviews", count: 1 }] : [],
+            amenities: isYoouz ? ["Verified Merchant", "Live Camera Only", "Instant Sync"] : [],
             topDishes: [],
-            brandDomain: cleanDomain
+            brandDomain: cleanDomain,
+            ...(isYoouz ? { isClaimed: true, claimedByEmail: "info@yoouz.com", ownerId: "info@yoouz.com", isVerified: true } : {})
           };
           const jsonStr = JSON.stringify(autoPlaceDoc);
-          const autoPlaceName = title || cleanDomain;
+          const autoPlaceName = autoPlaceDoc.name;
           await bunnyDb.execute({
             sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [autoPlaceId, autoPlaceName, "", "Website", "Online", "", 0, 0, logo, jsonStr,
-                   autoPlaceName, "", "Website", "Online", "", 0, 0, logo, jsonStr]
+                  ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [autoPlaceId, autoPlaceName, autoPlaceId, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr,
+                   autoPlaceName, autoPlaceId, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo]
           });
         }
       } catch (bErr) {}
