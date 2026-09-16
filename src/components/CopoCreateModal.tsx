@@ -26,7 +26,7 @@ import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
 import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
-import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -858,7 +858,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       bunnyVideoId: finalBunnyId,
       fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean),
       thumbnailUrl: finalThumbnail,
-      caption: `Video review for ${cleanPlaceName}`,
+      caption: `Video review for ${getDisplayUrlAsDomain(selectedPlace) || cleanPlaceName}`,
       dishOrItem: cleanPlaceName,
       likes: 1,
       isLiked: true,

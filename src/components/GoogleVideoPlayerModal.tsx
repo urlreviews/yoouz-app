@@ -22,7 +22,7 @@ import { formatRecordedDate } from "../utils/dateUtils";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import { resolvePlayableVideoSource, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
-import { getSafeAvatarUrl } from "../utils/placeUtils";
+import { getSafeAvatarUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 interface GoogleVideoPlayerModalProps {
@@ -456,7 +456,14 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
 
             {/* Caption */}
             <p className="text-xs text-white/95 leading-relaxed font-normal drop-shadow">
-              {currentReview.caption}
+              {(() => {
+                const trimmed = (currentReview.caption || "").trim();
+                if (/^video review (for|of)\b/i.test(trimmed)) {
+                  const cleanDomain = getDisplayUrlAsDomain(currentReview);
+                  return `Video review for ${cleanDomain}`;
+                }
+                return currentReview.caption;
+              })()}
             </p>
           </div>
 

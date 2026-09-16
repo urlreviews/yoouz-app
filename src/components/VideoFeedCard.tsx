@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
@@ -906,7 +906,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
             {video.caption && video.caption.trim().length > 0 && (
               <p className="text-white/95 text-xs font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-0.5">
-                {video.caption}
+                {(() => {
+                  const trimmed = video.caption.trim();
+                  if (/^video review (for|of)\b/i.test(trimmed)) {
+                    const cleanDomain = getDisplayUrlAsDomain(video);
+                    return `Video review for ${cleanDomain}`;
+                  }
+                  return video.caption;
+                })()}
               </p>
             )}
           </div>
