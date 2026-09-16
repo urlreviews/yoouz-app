@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import * as Sentry from "@sentry/react";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import {
   X,
@@ -642,9 +641,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       };
 
       mediaRecorder.onerror = (e: any) => {
-        Sentry.captureException(e?.error || new Error("MediaRecorder capture error"), {
-          extra: { mimeType: mediaRecorder.mimeType }
-        });
         console.warn("MediaRecorder error:", e);
       };
 

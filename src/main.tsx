@@ -1,24 +1,9 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
-import * as Sentry from "@sentry/react";
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { LanguageProvider } from './i18n/LanguageContext.tsx';
 import './index.css';
-
-// Initialize Sentry Monitoring with exact project DSN
-Sentry.init({
-  dsn: "https://a157fe76e41983b0b082124a3adc128e@o4512096517292032.ingest.us.sentry.io/4512096535576576",
-  tracesSampleRate: 1.0,
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0,
-  environment: process.env.NODE_ENV || "production"
-});
-
-// Send an explicit test exception to satisfy Sentry's onboarding "Verify" check
-try {
-  Sentry.captureException(new Error("Yoouz Sentry verification test error"));
-} catch (e) {}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -57,11 +42,6 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('error', (event) => {
     try {
-      if (event.error) {
-        Sentry.captureException(event.error, { extra: { lastClicked: lastClickedInfo } });
-      } else {
-        Sentry.captureMessage(event.message || "Unhandled Window Error", { extra: { lastClicked: lastClickedInfo } });
-      }
       fetch("/api/system/report-error", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -79,11 +59,6 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('unhandledrejection', (event) => {
     try {
-      if (event.reason instanceof Error) {
-        Sentry.captureException(event.reason, { extra: { lastClicked: lastClickedInfo } });
-      } else {
-        Sentry.captureMessage(String(event.reason) || "Unhandled Promise Rejection", { extra: { lastClicked: lastClickedInfo } });
-      }
       fetch("/api/system/report-error", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

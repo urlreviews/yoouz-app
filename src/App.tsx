@@ -1,7 +1,6 @@
 import { forceMute } from "./hooks/useGlobalMute";
 import { useFeedPagination } from "./hooks/useFeedPagination";
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import * as Sentry from "@sentry/react";
 import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, Club, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
 import { CopoSidebar } from "./components/CopoSidebar";
@@ -6089,18 +6088,6 @@ export function App() {
 
       <GlobalUploadToast />
       <PWAInstallPrompt />
-
-      {/* Sentry Test Button for Sentry Onboarding Verification */}
-      <button
-        id="sentry-test-button"
-        onClick={() => {
-          Sentry.captureException(new Error("Sentry Test Error"));
-          console.log("[Sentry] Test error captured and sent via captureException!");
-        }}
-        className="fixed top-3 right-3 z-[99999] bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg transition-transform active:scale-95 flex items-center gap-2 cursor-pointer border border-purple-400/30"
-      >
-        <span>⚡ Test Sentry Error</span>
-      </button>
 
       {deleteSuccessToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white rounded-2xl px-5 py-4 border border-zinc-800 shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-300">

@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from "react";
-import * as Sentry from "@sentry/react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
@@ -243,10 +242,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             const active = activeVideoRef.current;
             if (active) {
               const currentSrc = vid.currentSrc || vid.src;
-              Sentry.captureMessage(`[Video Playback Error] Failed to play video ${active.id} (code: ${vid.error?.code}, src: ${currentSrc})`, {
-                level: "warning",
-                extra: { videoId: active.id, errorCode: vid.error?.code, src: currentSrc }
-              });
+              console.warn(`[Video Playback Error] Failed to play video ${active.id} (code: ${vid.error?.code}, src: ${currentSrc})`);
               const cascade = resolvePlayableVideoSourcesCascade(active);
               const nextCandidate = cascade.find(
                 (s) => s && s !== currentSrc && !currentSrc.endsWith(s)
