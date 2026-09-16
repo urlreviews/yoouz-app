@@ -125,7 +125,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "creators" | "users" | "places" | "subscriptions" | "videos" | "comments" | "broadcast" | "database";
+type AdminTab = "overview" | "health" | "creators" | "users" | "places" | "subscriptions" | "videos" | "comments" | "broadcast" | "database";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,
@@ -210,6 +210,48 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [editUserModal, setEditUserModal] = useState<any | null>(null);
   const [broadcastData, setBroadcastData] = useState({ title: "", message: "", targetUrl: "" });
   const [isBroadcastSending, setIsBroadcastSending] = useState(false);
+
+  // System Health & Bug Diagnostics State
+  const [healthData, setHealthData] = useState<any>(null);
+  const [isHealthLoading, setIsHealthLoading] = useState(false);
+
+  const fetchHealthDiagnostic = async () => {
+    setIsHealthLoading(true);
+    try {
+      const res = await fetch("/api/system/health-check");
+      const data = await res.json();
+      if (data && data.success) {
+        setHealthData(data);
+      }
+    } catch (e) {
+      console.warn("Health check fetch error:", e);
+    } finally {
+      setIsHealthLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHealthDiagnostic();
+    const interval = setInterval(fetchHealthDiagnostic, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleClearErrorLog = async (id?: string) => {
+    try {
+      const res = await fetch("/api/system/clear-error-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(id ? "Resolved error log entry." : "All error logs cleared.");
+        fetchHealthDiagnostic();
+      }
+    } catch (e) {
+      showToast("Failed to clear error logs.");
+    }
+  };
 
   // Deletion Confirmations
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
@@ -1185,6 +1227,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab("health")}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "health"
+                  ? "bg-white text-zinc-950 shadow-lg"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className={`w-4 h-4 ${healthData?.overallStatus === 'healthy' ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`} />
+                System Health & Bugs
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                healthData?.unresolvedCount > 0
+                  ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                  : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              }`}>
+                {healthData?.unresolvedCount > 0 ? `${healthData.unresolvedCount} issues` : "100% Green"}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("creators")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "creators"
@@ -1334,6 +1397,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             {(
               [
                 ["overview", "Overview"],
+                ["health", "Health 🟢"],
                 ["creators", `Creators (${metrics.totalCreators})`],
                 ["users", `Users (${metrics.totalCommunityUsers})`],
                 ["places", `Places (${places.length})`],
@@ -1355,6 +1419,211 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </button>
             ))}
           </div>
+
+          {/* TAB: SYSTEM HEALTH & BUG MONITOR */}
+          {activeTab === "health" && (
+            <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in">
+              {/* Header Title */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-white tracking-tight">System Health & Diagnostic Center</h2>
+                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                      healthData?.overallStatus === 'healthy'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${healthData?.overallStatus === 'healthy' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400 animate-ping'}`} />
+                      {healthData?.overallStatus === 'healthy' ? 'ALL SYSTEMS GREEN 🟢' : 'ATTENTION REQUIRED 🔴'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Automated sub-system diagnostics, real-time UI error tracing, and step-by-step testing instructions for all features.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={fetchHealthDiagnostic}
+                    disabled={isHealthLoading}
+                    className="px-4 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isHealthLoading ? 'animate-spin' : ''}`} />
+                    Run Diagnostic Suite
+                  </button>
+                  <button
+                    onClick={() => handleClearErrorLog()}
+                    className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Clear All Error Logs
+                  </button>
+                </div>
+              </div>
+
+              {/* Subsystems Health Grid (7 Core Modules) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {healthData?.subsystems && Object.entries(healthData.subsystems).map(([key, item]: [string, any]) => {
+                  const titles: Record<string, string> = {
+                    video_feed_engine: "1. Video Feed & Caching Engine",
+                    comments_system: "2. Comments & Double Message Guard",
+                    database_persistence: "3. BunnyDB Cloud & Storage Backup",
+                    video_streaming_cdn: "4. Video Range Streaming (HTTP 206)",
+                    business_auth_claims: "5. Business Auth & Magic Link",
+                    search_place_resolution: "6. Search & Domain Resolution",
+                    ai_content_safety: "7. Gemini Vision Safety Moderation",
+                    like_button_throttling: "8. Like Button Multi-Click Throttling",
+                    user_follow_sync: "9. Follow Button & Profile State Sync"
+                  };
+
+                  const icons: Record<string, string> = {
+                    video_feed_engine: "🎬",
+                    comments_system: "💬",
+                    database_persistence: "⚡",
+                    video_streaming_cdn: "📡",
+                    business_auth_claims: "🔐",
+                    search_place_resolution: "🔍",
+                    ai_content_safety: "🛡️",
+                    like_button_throttling: "❤️",
+                    user_follow_sync: "👤"
+                  };
+
+                  return (
+                    <div key={key} className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3 hover:border-zinc-700 transition-all">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl">{icons[key] || "⚙️"}</span>
+                          <span className="text-xs font-bold text-white">{titles[key] || key}</span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                          item.status === 'ok'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : item.status === 'degraded'
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                        }`}>
+                          {item.status === 'ok' ? 'PASSED 🟢' : item.status === 'degraded' ? 'WARNING 🟡' : 'ERROR 🔴'}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-zinc-300 leading-relaxed bg-zinc-950 p-2.5 rounded-xl border border-zinc-800/80 font-mono">
+                        {item.details}
+                      </p>
+
+                      <div className="pt-2 border-t border-zinc-800/80 space-y-1">
+                        <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                          <span>📋 How To Test This Feature:</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 leading-normal">
+                          {item.testInstruction}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono pt-1">
+                        <span>Latency: {item.latencyMs}ms</span>
+                        <span>Auto-Checked</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Real-Time Reported Error & Exception Log Section */}
+              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-xl space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+                  <div>
+                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                      <span>🐛</span> Real-Time Error & Exception Logs
+                    </h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      Every unhandled button click, network timeout, or component error is logged here automatically in real time.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-zinc-400 font-mono">
+                      {healthData?.logs?.length || 0} Total Logged Events
+                    </span>
+                  </div>
+                </div>
+
+                {(!healthData?.logs || healthData.logs.length === 0) ? (
+                  <div className="py-12 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-xl">
+                      ✓
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white">Zero Error Logs Detected</h4>
+                      <p className="text-xs text-zinc-400 max-w-md mx-auto mt-1">
+                        The system has logged zero runtime exceptions or broken interactions across all features. Everything is running smoothly!
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                    {healthData.logs.map((log: any) => (
+                      <div
+                        key={log.id}
+                        className={`p-4 rounded-2xl border text-xs space-y-2.5 transition-all ${
+                          log.status === 'resolved'
+                            ? 'bg-zinc-950/50 border-zinc-800/50 opacity-60'
+                            : 'bg-zinc-950 border-rose-500/30 shadow-lg'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
+                              log.status === 'resolved'
+                                ? 'bg-zinc-800 text-zinc-400'
+                                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                            }`}>
+                              {log.category || 'uncaught'}
+                            </span>
+                            <span className="font-bold text-white">{log.component}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-zinc-200 font-mono">
+                              {new Date(log.timestamp).toLocaleTimeString()}
+                            </span>
+                            {log.status !== 'resolved' && (
+                              <button
+                                onClick={() => handleClearErrorLog(log.id)}
+                                className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold cursor-pointer"
+                              >
+                                Mark Resolved
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="font-mono text-zinc-200 font-medium bg-zinc-900/80 p-2.5 rounded-xl border border-zinc-800/80 break-all">
+                          {log.message}
+                        </p>
+
+                        {log.stack && (
+                          <details className="text-[11px] text-zinc-200 font-mono">
+                            <summary className="cursor-pointer hover:text-white transition-colors">
+                              View Stack Trace
+                            </summary>
+                            <pre className="mt-2 p-2.5 bg-black/60 rounded-xl overflow-x-auto text-[10px] text-rose-300/90 leading-tight">
+                              {log.stack}
+                            </pre>
+                          </details>
+                        )}
+
+                        {log.testSteps && (
+                          <div className="p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-200/90">
+                            <span className="font-bold text-amber-400 block mb-1">How To Test & Reproduce:</span>
+                            <pre className="whitespace-pre-wrap font-sans text-zinc-300">
+                              {log.testSteps}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* TAB 1: OVERVIEW & KPIS */}
           {activeTab === "overview" && (

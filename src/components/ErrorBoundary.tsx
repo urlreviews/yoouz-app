@@ -24,6 +24,20 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught Error Boundary caught:", error, errorInfo);
+    try {
+      fetch("/api/system/report-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error?.message || "React Component Rendering Error",
+          stack: error?.stack || errorInfo?.componentStack,
+          component: "React ErrorBoundary",
+          category: "uncaught",
+          url: window.location.href,
+          userAgent: navigator.userAgent
+        })
+      }).catch(() => {});
+    } catch (e) {}
   }
 
   public render() {

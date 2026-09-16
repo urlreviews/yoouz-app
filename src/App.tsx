@@ -2156,6 +2156,9 @@ export function App() {
 
   // Video View Recording Session State
   const recordedViewsInSessionRef = useRef<Set<string>>(new Set());
+  const pendingLikeClickRef = useRef<Map<string, number>>(new Map());
+  const pendingFollowClickRef = useRef<Map<string, number>>(new Map());
+  const pendingCommentClickRef = useRef<Map<string, number>>(new Map());
 
   const handleShareIncrement = (videoId: string, nextSharesCount?: number) => {
     if (!videoId) return;
@@ -2211,7 +2214,27 @@ export function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoId })
-      }).catch(() => {});
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.viewsCount === "number") {
+            const serverViews = data.viewsCount;
+            setVideos((prev) =>
+              prev.map((v) => {
+                if (v.id === videoId) {
+                  const maxV = Math.max(v.views || 0, v.viewsCount || 0, serverViews);
+                  return {
+                    ...v,
+                    views: maxV,
+                    viewsCount: maxV
+                  };
+                }
+                return v;
+              })
+            );
+          }
+        })
+        .catch(() => {});
     } catch (e) {}
   };
 
@@ -3240,6 +3263,11 @@ export function App() {
       setIsAuthModalOpen(true);
       return;
     }
+    const now = Date.now();
+    const lastClick = pendingLikeClickRef.current.get(videoId) || 0;
+    if (now - lastClick < 350) return; // Prevent rapid multi-clicks
+    pendingLikeClickRef.current.set(videoId, now);
+
     let nextLikes = 0;
     let nextIsLiked = false;
 
@@ -3488,6 +3516,11 @@ export function App() {
     const cleanAuthorHandle = (authorHandle || "").trim();
     if (!cleanAuthorHandle) return;
 
+    const now = Date.now();
+    const lastClick = pendingFollowClickRef.current.get(cleanAuthorHandle.toLowerCase()) || 0;
+    if (now - lastClick < 350) return; // Throttles rapid multi-clicks
+    pendingFollowClickRef.current.set(cleanAuthorHandle.toLowerCase(), now);
+
     // Determine current follow state accurately from currentUser followedAuthors and localStorage
     let followedList: string[] = [];
     try {
@@ -3722,6 +3755,15 @@ export function App() {
       setIsAuthModalOpen(true);
       return;
     }
+
+    const cleanText = (text || "").trim();
+    if (!cleanText) return;
+
+    const now = Date.now();
+    const commentKey = `${videoId}:${cleanText}`;
+    const lastCommentTime = pendingCommentClickRef.current.get(commentKey) || 0;
+    if (now - lastCommentTime < 1500) return; // Deduplicates rapid double submissions
+    pendingCommentClickRef.current.set(commentKey, now);
 
     const targetVid =
       videos.find((v) => v.id === videoId) ||

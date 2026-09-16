@@ -165,7 +165,7 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   const placeNameLower = (v.placeName || "").toLowerCase();
   if (placeNameLower === "yoouz" || placeNameLower === "hertz" || placeNameLower === "car rentals from avis" || placeNameLower.includes("test place") || placeNameLower.includes("test user") || placeNameLower.includes("culver")) return true;
   const authorNameLower = (v.author?.name || v.authorName || "").toLowerCase();
-  if (authorNameLower === "reviewer" || authorNameLower.includes("test user") || authorNameLower.includes("culver")) return true;
+  if (authorNameLower.includes("test user") || authorNameLower.includes("culver")) return true;
   const dishLower = (v.dishOrItem || "").toLowerCase();
   if (dishLower.includes("test user") || dishLower.includes("test place") || dishLower.includes("culver")) return true;
   return false;
@@ -345,7 +345,7 @@ export function useFeedPagination() {
               } catch (e) {}
 
               const pendingCandidateList = [
-                ...prev.filter((v) => v && (v as any).isLocalUpload),
+                ...prev.filter((v) => v && (Boolean((v as any).isLocalUpload) || (v.createdAtMs ? (Date.now() - v.createdAtMs < 900000) : false))),
                 ...localSavedReviews
               ];
 

@@ -28,6 +28,40 @@ if (typeof (window as any).__dismissAppSplash === 'function') {
 
 // Proactively purge ALL stale service workers and cache storage to completely prevent stale mobile code
 if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    try {
+      fetch("/api/system/report-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: event.message || "Unhandled Window Error",
+          stack: event.error?.stack || `${event.filename}:${event.lineno}:${event.colno}`,
+          component: "Window Global",
+          category: "buttons",
+          url: window.location.href,
+          userAgent: navigator.userAgent
+        })
+      }).catch(() => {});
+    } catch (e) {}
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    try {
+      fetch("/api/system/report-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: event.reason?.message || String(event.reason) || "Unhandled Promise Rejection",
+          stack: event.reason?.stack,
+          component: "Promise Rejection",
+          category: "network",
+          url: window.location.href,
+          userAgent: navigator.userAgent
+        })
+      }).catch(() => {});
+    } catch (e) {}
+  });
+
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }

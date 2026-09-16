@@ -363,9 +363,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     setReplyingTo(null);
   };
 
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!video) return;
+    if (!video || isSubmittingComment) return;
     if (!currentUser) {
       onRequireAuth?.();
       return;
@@ -373,6 +375,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     const text = commentText.trim().slice(0, 300);
     if (!text) return;
 
+    setIsSubmittingComment(true);
     if (postAsOwner && !replyingTo && onAddOwnerResponse) {
       // Post as official pinned business owner response
       onAddOwnerResponse(video.id, text);
@@ -381,7 +384,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       // Post normal comment or reply
       onAddComment(video.id, text, {
         replyToId: replyingTo?.commentId,
-        //: replyingTo?.name,
         postAsOwner: isUserOwner && postAsOwner,
         postAsCreator: isUserCreator
       });
@@ -394,6 +396,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       }
     }
     setCommentText("");
+    setTimeout(() => setIsSubmittingComment(false), 600);
   };
 
   const [sheetHeight, setSheetHeight] = useState<"normal" | "expanded">("normal");

@@ -872,7 +872,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       sharesCount: 0,
       tags: [selectedPlace.category || "Review"],
       recordedAt: "Just now",
-      isLocalUpload: false
+      isLocalUpload: true
     };
 
     // 4. Save metadata locally first so it is immune to network dropouts or reloads
