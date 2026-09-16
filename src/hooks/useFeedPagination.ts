@@ -116,6 +116,29 @@ const HARD_DELETED_IDS = [
   "rev-test-big-thumb"
 ];
 
+const PROTECTED_FEED_PLACES = new Set([
+  "yoouz.com",
+  "yoouz",
+  "www.yoouz.com",
+  "nevadalegalservices.org",
+  "lernerandrowe.com",
+  "mcveaghfleming.co.nz",
+  "vanlawfirm.com"
+]);
+
+const PROTECTED_FEED_CREATORS = new Set([
+  "steven akan",
+  "stevenakan",
+  "@stevenakan",
+  "ben blue",
+  "benblue",
+  "@benblue",
+  "avr6566gd@gmail.com",
+  "aouisesmee@gmail.com",
+  "info@yoouz.com",
+  "yoouz"
+]);
+
 export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) => {
   if (!v || !v.id) return true;
   const id = String(v.id);
@@ -126,40 +149,50 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   }
   if (id === "rev-12345" || id.startsWith("rev-test") || id.startsWith("rev-err-")) return true;
 
+  const pId = (v.placeId || "").toLowerCase().trim();
+  const pName = (v.placeName || "").toLowerCase().trim();
+  const pWebsite = (v.placeWebsite || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
+
+  const isProtectedPlace = PROTECTED_FEED_PLACES.has(pId) || PROTECTED_FEED_PLACES.has(pName) || PROTECTED_FEED_PLACES.has(pWebsite);
+
   // Check deleted places from localStorage
-  try {
-    const deletedPlacesStr = localStorage.getItem("copo_deleted_places") || localStorage.getItem("yoouz_deleted_places") || "[]";
-    const deletedPlaces: string[] = JSON.parse(deletedPlacesStr);
-    if (Array.isArray(deletedPlaces) && deletedPlaces.length > 0) {
-      const pId = (v.placeId || "").toLowerCase().trim();
-      const pName = (v.placeName || "").toLowerCase().trim();
-      const pWebsite = (v.placeWebsite || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
-      if (deletedPlaces.some(dp => {
-        const dpLow = String(dp).toLowerCase().trim();
-        return dpLow === pId || dpLow === pName || (pWebsite && dpLow === pWebsite);
-      })) {
-        return true;
+  if (!isProtectedPlace) {
+    try {
+      const deletedPlacesStr = localStorage.getItem("copo_deleted_places") || localStorage.getItem("yoouz_deleted_places") || "[]";
+      const deletedPlaces: string[] = JSON.parse(deletedPlacesStr);
+      if (Array.isArray(deletedPlaces) && deletedPlaces.length > 0) {
+        if (deletedPlaces.some(dp => {
+          const dpLow = String(dp).toLowerCase().trim();
+          return dpLow === pId || dpLow === pName || (pWebsite && dpLow === pWebsite);
+        })) {
+          return true;
+        }
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
+
+  const uId = (v.userId || "").toLowerCase();
+  const uEmail = (v.userEmail || "").toLowerCase();
+  const uName = (v.author?.name || v.authorName || "").toLowerCase();
+  const uHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase();
+
+  const isProtectedCreator = PROTECTED_FEED_CREATORS.has(uId) || PROTECTED_FEED_CREATORS.has(uEmail) || PROTECTED_FEED_CREATORS.has(uName) || PROTECTED_FEED_CREATORS.has(uHandle);
 
   // Check deleted users from localStorage
-  try {
-    const deletedUsersStr = localStorage.getItem("copo_deleted_users") || localStorage.getItem("yoouz_deleted_users") || "[]";
-    const deletedUsers: string[] = JSON.parse(deletedUsersStr);
-    if (Array.isArray(deletedUsers) && deletedUsers.length > 0) {
-      const uId = (v.userId || "").toLowerCase();
-      const uEmail = (v.userEmail || "").toLowerCase();
-      const uName = (v.author?.name || v.authorName || "").toLowerCase();
-      const uHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase();
-      if (deletedUsers.some(du => {
-        const duLow = String(du).toLowerCase();
-        return duLow === uId || duLow === uEmail || duLow === uName || duLow === uHandle;
-      })) {
-        return true;
+  if (!isProtectedCreator) {
+    try {
+      const deletedUsersStr = localStorage.getItem("copo_deleted_users") || localStorage.getItem("yoouz_deleted_users") || "[]";
+      const deletedUsers: string[] = JSON.parse(deletedUsersStr);
+      if (Array.isArray(deletedUsers) && deletedUsers.length > 0) {
+        if (deletedUsers.some(du => {
+          const duLow = String(du).toLowerCase();
+          return duLow === uId || duLow === uEmail || duLow === uName || duLow === uHandle;
+        })) {
+          return true;
+        }
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
 
   if (v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
   const placeNameLower = (v.placeName || "").toLowerCase();

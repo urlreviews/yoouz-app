@@ -810,6 +810,19 @@ export function recordDeletedUsersInLocalStorage(ids: string[]): void {
   } catch (e) {}
 }
 
+const PROTECTED_CREATORS_SET = new Set([
+  "steven akan",
+  "stevenakan",
+  "@stevenakan",
+  "ben blue",
+  "benblue",
+  "@benblue",
+  "avr6566gd@gmail.com",
+  "aouisesmee@gmail.com",
+  "info@yoouz.com",
+  "yoouz"
+]);
+
 export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): boolean {
   if (!userOrIdOrEmail) return false;
   const list = deletedIds || getDeletedUserIds();
@@ -820,7 +833,9 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
     if (!v) return false;
     const s = String(v).toLowerCase().trim();
     if (!s) return false;
+    if (PROTECTED_CREATORS_SET.has(s)) return false;
     const withoutAt = s.replace(/^@+/, "");
+    if (PROTECTED_CREATORS_SET.has(withoutAt)) return false;
     const slugHyphens = withoutAt.replace(/[\s_]+/g, "-").trim();
     const slugSpaces = withoutAt.replace(/[-_]+/g, " ").trim();
     const username = s.includes("@") ? s.split("@")[0] : withoutAt;
@@ -1199,15 +1214,28 @@ export function getPlaceVariants(placeOrId: any): string[] {
   return Array.from(variants).filter(Boolean);
 }
 
+const PROTECTED_PLACES_SET = new Set([
+  "yoouz.com",
+  "yoouz",
+  "www.yoouz.com",
+  "nevadalegalservices.org",
+  "lernerandrowe.com",
+  "mcveaghfleming.co.nz",
+  "vanlawfirm.com"
+]);
+
 /**
  * Checks if a place or ID matches the blacklist of deleted places
  */
 export function isPlaceDeleted(placeOrId: any, deletedIds?: string[]): boolean {
   if (!placeOrId) return false;
+  const variants = getPlaceVariants(placeOrId).map((v) => v.toLowerCase().trim());
+  if (variants.some((v) => PROTECTED_PLACES_SET.has(v))) {
+    return false;
+  }
   const list = deletedIds || getDeletedPlaceIds();
   if (!list || list.length === 0) return false;
 
-  const variants = getPlaceVariants(placeOrId).map((v) => v.toLowerCase().trim());
   const deletedSet = new Set(list.map((s) => String(s).toLowerCase().trim()));
 
   for (const v of variants) {
