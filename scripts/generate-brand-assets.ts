@@ -43,6 +43,12 @@ async function generateBrandAssets() {
     .toFile(path.join(publicDir, 'icon-512.png'));
   console.log('✓ icon-512.png generated');
 
+  await sharp(svgBuffer)
+    .resize(512, 512)
+    .png({ quality: 100 })
+    .toFile(path.join(publicDir, 'icon.png'));
+  console.log('✓ icon.png generated');
+
   // 3. Generate 192x192 PNG
   await sharp(svgBuffer)
     .resize(192, 192)

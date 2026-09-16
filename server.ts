@@ -6662,7 +6662,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           continue;
         }
         const isYoouz = cleanDomain === "yoouz.com";
-        const logo = isYoouz ? "/icon.png" : `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+        const logo = isYoouz ? "/icon-512.png" : `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
         const autoPlaceDoc = {
           id: autoPlaceId,
           name: isYoouz ? "Yoouz" : item.title,
@@ -6731,15 +6731,15 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         rating: 5,
         totalReviews: 1,
         ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-        avatarUrl: "/icon.png",
-        logoUrl: "/icon.png",
-        bannerUrl: "",
-        ogImage: "",
-        photos: [""],
+        avatarUrl: "/icon-512.png",
+        logoUrl: "/icon-512.png",
+        bannerUrl: "https://yoouz.com/og-banner.png?v=8",
+        ogImage: "https://yoouz.com/og-banner.png?v=8",
+        photos: ["https://yoouz.com/og-banner.png?v=8"],
         openingHours: "Available 24/7",
         isOpen: true,
         phone: "",
-        website: "https://www.yoouz.com",
+        website: "https://yoouz.com",
         priceRange: "Free",
         plusCode: "",
         description: "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.",
@@ -6756,8 +6756,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
               ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-        args: ["yoouz.com", "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon.png", JSON.stringify(yoouzDoc),
-               "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon.png", JSON.stringify(yoouzDoc)]
+        args: ["yoouz.com", "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon-512.png", JSON.stringify(yoouzDoc),
+               "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon-512.png", JSON.stringify(yoouzDoc)]
       }).catch(() => {});
 
       // Clean up any legacy or duplicate yoouz aliases
@@ -6997,8 +6997,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               parsedData.placeId = "yoouz.com";
               parsedData.placeName = "Yoouz";
               parsedData.placeWebsite = "https://www.yoouz.com";
-              parsedData.placeLogoUrl = "/icon.png";
-              parsedData.placeBannerUrl = "";
+              parsedData.placeLogoUrl = "/icon-512.png";
+              parsedData.placeBannerUrl = "https://yoouz.com/og-banner.png?v=8";
               updated = true;
             }
           }
@@ -10902,7 +10902,7 @@ app.post("/api/videos/save-review", async (req, res) => {
             updatedDoc.verifiedAt = new Date().toISOString();
             if (isYoouz) {
               updatedDoc.name = "Yoouz";
-              updatedDoc.logoUrl = "/icon.png";
+              updatedDoc.logoUrl = "/icon-512.png";
             }
             await bunnyDb.execute({
               sql: `UPDATE places SET data = ?, updatedAt = datetime('now') WHERE id = ?`,
@@ -13779,6 +13779,7 @@ Return JSON:
     '/favicon-512x512.png',
     '/icon-512.png',
     '/icon-192.png',
+    '/icon.png',
     '/favicon.png'
   ], (req: any, res: any) => {
     const filename = req.path.replace('/', '') || 'favicon-48x48.png';

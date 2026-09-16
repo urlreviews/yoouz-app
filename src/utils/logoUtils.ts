@@ -2,8 +2,8 @@ import { Place } from "../types";
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
-  "yoouz.com": "https://www.yoouz.com/icon-512.png",
-  "www.yoouz.com": "https://www.yoouz.com/icon-512.png",
+  "yoouz.com": "/icon-512.png",
+  "www.yoouz.com": "/icon-512.png",
   "zoom.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="22" fill="#2D8CFF"/>
@@ -173,7 +173,7 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <rect width="100" height="100" rx="20" fill="#cc0000"/>
       <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
     </svg>`),
-  "yoouz": "https://www.yoouz.com/icon-512.png",
+  "yoouz": "/icon-512.png",
   "legal500.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#09090b"/>

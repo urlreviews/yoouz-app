@@ -654,7 +654,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       if (parsed) {
         const dom = (parsed.domain || parsed.businessEmail || '').toLowerCase();
         if (dom.includes('yoouz.com') || parsed.placeName?.toLowerCase() === 'yoouz') {
-          parsed.logoUrl = 'https://www.yoouz.com/icon-512.png';
+          parsed.logoUrl = '/icon-512.png';
           parsed.placeName = 'Yoouz';
           localStorage.setItem('copo_business_verified_session', JSON.stringify(parsed));
         } else if (parsed.logoUrl && (parsed.logoUrl.startsWith('<svg') || parsed.logoUrl.startsWith('data:image/svg+xml;utf8,'))) {
@@ -710,8 +710,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         derived.name === 'Yoouz';
         if (isYoouz) {
           derived.name = 'Yoouz';
-          derived.logoUrl = 'https://www.yoouz.com/icon-512.png';
-          derived.website = 'https://www.yoouz.com';
+          derived.logoUrl = '/icon-512.png';
+          derived.website = 'https://yoouz.com';
         }
         
         return derived as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
@@ -830,7 +830,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profileEmail, setProfileEmail] = useState((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
   const [profileHours, setProfileHours] = useState((currentPlace as any).hours || currentPlace.openingHours || 'Mon-Fri: 9:00 AM - 6:00 PM');
   const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || `Official verified business profile on Yoouz.`);
-  const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? 'https://www.yoouz.com/icon-512.png' : ''));
+  const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? '/icon-512.png' : ''));
   const [profileBannerUrl, setProfileBannerUrl] = useState((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement>(null);

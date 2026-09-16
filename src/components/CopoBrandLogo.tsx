@@ -41,6 +41,16 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [domain, website, logoUrl, name]);
 
+  // Check if target is Yoouz
+  const isYoouz = useMemo(() => {
+    return (
+      resolvedDomain === "yoouz.com" ||
+      resolvedDomain === "www.yoouz.com" ||
+      resolvedDomain === "yoouz" ||
+      (name && name.toLowerCase().trim() === "yoouz")
+    );
+  }, [resolvedDomain, name]);
+
   // Reset error & fallback ONLY if the incoming source itself fundamentally changes
   useEffect(() => {
     setHasError(false);
@@ -49,9 +59,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     setTriedDuckFallback(false);
   }, [resolvedDomain, logoUrl, name]);
 
-  // Background auto-enrichment from live url-metadata if logoUrl was not directly provided
+  // Background auto-enrichment from live url-metadata ONLY if logoUrl was not directly provided and domain is unknown
   useEffect(() => {
-    if (!logoUrl && resolvedDomain && resolvedDomain.includes(".")) {
+    if (!logoUrl && !isYoouz && resolvedDomain && resolvedDomain.includes(".") && !KNOWN_BRAND_LOGOS[resolvedDomain]) {
       let isMounted = true;
       fetch(`/api/url-metadata?url=${encodeURIComponent(resolvedDomain)}`)
         .then((res) => res.json())
@@ -65,40 +75,42 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         isMounted = false;
       };
     }
-  }, [resolvedDomain, logoUrl]);
+  }, [resolvedDomain, logoUrl, isYoouz]);
 
   const monogramSvg = useMemo(() => {
     return generateBrandMonogramSvg(name || resolvedDomain || "Place", 128);
   }, [name, resolvedDomain]);
 
   const googleFaviconUrl = useMemo(() => {
+    if (isYoouz) return null;
     if (resolvedDomain && resolvedDomain.includes(".")) {
       return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`;
     }
     return null;
-  }, [resolvedDomain]);
+  }, [resolvedDomain, isYoouz]);
 
   const duckFaviconUrl = useMemo(() => {
+    if (isYoouz) return null;
     if (resolvedDomain && resolvedDomain.includes(".")) {
       return `https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`;
     }
     return null;
-  }, [resolvedDomain]);
+  }, [resolvedDomain, isYoouz]);
 
   const effectiveSrc = useMemo(() => {
-    // 1. Known high quality vector logo by domain
-    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
-      return KNOWN_BRAND_LOGOS[resolvedDomain];
+    // 0. Yoouz official dark emblem
+    if (isYoouz) {
+      return "/icon-512.png";
     }
 
-    // 2. Explicit clean Logo URL from authentic metadata or API
+    // 1. Explicit clean Logo URL from place record, database, or API
     const targetLogo = logoUrl || fetchedLogo;
     if (
       targetLogo &&
       !targetLogo.includes("brandfetch.io") &&
       targetLogo !== "data:;" &&
       !targetLogo.startsWith("data:;") &&
-      (targetLogo.startsWith("http://") || targetLogo.startsWith("https://") || targetLogo.startsWith("/api/") || targetLogo.startsWith("data:image"))
+      (targetLogo.startsWith("/") || targetLogo.startsWith("http://") || targetLogo.startsWith("https://") || targetLogo.startsWith("data:image"))
     ) {
       if (targetLogo.startsWith("/api/proxy-image?url=")) {
         try {
@@ -108,6 +120,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         }
       }
       return targetLogo;
+    }
+
+    // 2. Known high quality vector logo by domain
+    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
+      return KNOWN_BRAND_LOGOS[resolvedDomain];
     }
 
     // 3. Known domain lookup by name
@@ -122,9 +139,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     return null;
-  }, [resolvedDomain, logoUrl, fetchedLogo, name, googleFaviconUrl]);
+  }, [isYoouz, resolvedDomain, logoUrl, fetchedLogo, name, googleFaviconUrl]);
 
   const currentSrc = useMemo(() => {
+    if (isYoouz) return "/icon-512.png";
     if (hasError) return null;
     if (triedDuckFallback) return duckFaviconUrl;
     if (triedFallback) return googleFaviconUrl || duckFaviconUrl;
@@ -132,7 +150,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return `/api/proxy-image?url=${encodeURIComponent(effectiveSrc)}`;
     }
     return effectiveSrc || googleFaviconUrl || duckFaviconUrl;
-  }, [hasError, triedDuckFallback, triedFallback, triedProxy, duckFaviconUrl, googleFaviconUrl, effectiveSrc]);
+  }, [isYoouz, hasError, triedDuckFallback, triedFallback, triedProxy, duckFaviconUrl, googleFaviconUrl, effectiveSrc]);
 
   if (hasError || !currentSrc) {
     return (
@@ -160,6 +178,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         className={imageClassName}
         referrerPolicy="no-referrer"
         onError={() => {
+          if (isYoouz) {
+            setHasError(true);
+            return;
+          }
           if (!triedProxy && effectiveSrc && (effectiveSrc.startsWith("http://") || effectiveSrc.startsWith("https://")) && !effectiveSrc.startsWith("/api/")) {
             setTriedProxy(true);
           } else if (!triedFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
