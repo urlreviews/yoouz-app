@@ -2699,18 +2699,6 @@ async function startServer() {
   const PORT = 3000;
   const isProd = process.env.NODE_ENV === "production";
 
-  // Canonical Domain & Redirect Normalizer (SEO & Google Search Console Fix)
-  // Ensures www.yoouz.com permanently 301 redirects to canonical apex https://yoouz.com
-  app.use((req, res, next) => {
-    const rawHost = req.headers['x-forwarded-host'] || req.headers.host || '';
-    const host = String(rawHost).split(':')[0].toLowerCase();
-    
-    if (host === 'www.yoouz.com') {
-      return res.redirect(301, `https://yoouz.com${req.originalUrl || req.url}`);
-    }
-    next();
-  });
-
   // Global Cross-Origin Resource Sharing (CORS) Middleware
   // Ensures flawless API, asset, and video streaming across all domains (yoouz.com, preview, dev, and mobile webviews)
   app.use((req, res, next) => {
