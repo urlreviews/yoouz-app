@@ -546,13 +546,13 @@ function broadcastSseEvent(event: { type: string; [key: string]: any }, targetUs
         const cId = (client.userId || "").toLowerCase().trim().replace(/^@/, "");
 
         const isAvtErtuop = (cEmail.includes("avr6566gd") || cHandle === "avtertuop" || cHandle === "avt ertuop" || cId.includes("avr6566gd") || cHandle.includes("avt") || cEmail.includes("avt"));
-        const isAouisesmee = (cEmail.includes("aouisesmee") || cEmail.includes("aouisemee") || cEmail.includes("aouisesme") || cEmail.includes("aouiseme") || cHandle.includes("aouisesmee") || cHandle.includes("aouisemee") || cHandle.includes("aouisesme") || cHandle.includes("aouiseme") || cId.includes("aouisesmee") || cId.includes("aouisemee") || cId.includes("aouisesme") || cId.includes("aouiseme") || cEmail.includes("4samet") || cHandle.includes("4samet") || cId.includes("4samet"));
+        const isAouisesmee = (cEmail.includes("aouisesmee") || cEmail.includes("aouisemee") || cEmail.includes("aouisesme") || cEmail.includes("aouiseme") || cHandle.includes("aouisesmee") || cHandle.includes("aouisemee") || cHandle.includes("aouisesme") || cHandle.includes("aouiseme") || cId.includes("aouisesmee") || cId.includes("aouisemee") || cId.includes("aouisesme") || cId.includes("aouiseme"));
         const isBizRiv = (cEmail.includes("louis42111") || cHandle === "bizriv" || cHandle === "biz riv" || cId.includes("louis42111"));
 
         const isMatch = targets.some(t => {
           if (!t) return false;
           if (isAvtErtuop && (t.includes("avr6566gd") || t === "avtertuop" || t === "avt ertuop" || t.includes("avt"))) return true;
-          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme") || t.includes("4samet"))) return true;
+          if (isAouisesmee && (t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme"))) return true;
           if (isBizRiv && (t.includes("louis42111") || t === "bizriv" || t === "biz riv")) return true;
 
           return (
@@ -4125,8 +4125,14 @@ app.get('/api/nosql/:collection', async (req, res) => {
         if (key === 'yoouz.com' || canonId === 'yoouz.com' || p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz')) {
           p.isClaimed = true;
           p.isVerified = true;
-          p.claimedByEmail = p.claimedByEmail || "4samet@gmail.com";
-          p.ownerId = p.ownerId || "4samet@gmail.com";
+          p.claimedByEmail = "info@yoouz.com";
+          p.ownerId = "info@yoouz.com";
+        } else {
+          // If any other place mistakenly has info@yoouz.com, clear it!
+          if (p.claimedByEmail === 'info@yoouz.com') {
+            p.claimedByEmail = undefined;
+            p.isClaimed = false;
+          }
         }
 
         const existing = canonicalMap.get(key);
@@ -4146,6 +4152,33 @@ app.get('/api/nosql/:collection', async (req, res) => {
             ownerId: base.ownerId || other.ownerId
           });
         }
+      }
+
+      // Guarantee that yoouz.com is always present as the official claimed business
+      if (!canonicalMap.has('yoouz.com')) {
+        canonicalMap.set('yoouz.com', {
+          id: 'yoouz.com',
+          name: 'Yoouz',
+          category: 'Video Reviews & Discovery Platform',
+          categoryType: 'business',
+          address: 'Global Headquarters • yoouz.com',
+          city: 'Brussels',
+          rating: 5.0,
+          totalReviews: 1,
+          website: 'https://yoouz.com',
+          brandDomain: 'yoouz.com',
+          logoUrl: 'https://www.yoouz.com/icon-512.png',
+          avatarUrl: 'https://www.yoouz.com/icon-512.png',
+          bannerUrl: '',
+          ogImage: '',
+          photos: [],
+          openingHours: 'Available 24/7',
+          isOpen: true,
+          description: 'Official claimed business profile for Yoouz. Real people, authentic 60-second video reviews.',
+          isClaimed: true,
+          isVerified: true,
+          claimedByEmail: 'info@yoouz.com'
+        });
       }
       items = Array.from(canonicalMap.values());
     }
@@ -4430,8 +4463,8 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
           if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
             targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv");
           }
-          if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("4samet"))) {
-            targets.push("aouisesmee@gmail.com", "aouisesmee", "4samet@gmail.com", "4samet");
+          if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee"))) {
+            targets.push("aouisesmee@gmail.com", "aouisesmee");
           }
 
           broadcastSseEvent({
@@ -6707,8 +6740,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         brandDomain: "yoouz.com",
         isClaimed: true,
         isVerified: true,
-        claimedByEmail: "4samet@gmail.com",
-        ownerId: "4samet@gmail.com"
+        claimedByEmail: "info@yoouz.com",
+        ownerId: "info@yoouz.com"
       };
       await bunnyDb.execute({
         sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
@@ -7428,7 +7461,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         email = "avr6566gd@gmail.com";
       } else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) {
         email = "louis42111@gmail.com";
-      } else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme") || lower.includes("4samet")) {
+      } else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme")) {
         email = "aouisesmee@gmail.com";
       }
     }
@@ -7527,8 +7560,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       if (lowerTargets.some(t => t.includes("louis42111") || t.includes("bizriv") || t === "biz riv")) {
         targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv");
       }
-      if (lowerTargets.some(t => t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme") || t.includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "4samet@gmail.com", "4samet");
+      if (lowerTargets.some(t => t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme"))) {
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme");
       }
 
       broadcastSseEvent({
@@ -7924,7 +7957,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                   const lower = String(parent.userName || "").toLowerCase();
                   if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) parentEmail = "avr6566gd@gmail.com";
                   else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) parentEmail = "louis42111@gmail.com";
-                  else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme") || lower.includes("4samet")) parentEmail = "aouisesmee@gmail.com";
+                  else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme")) parentEmail = "aouisesmee@gmail.com";
                 }
                 if (parentEmail) {
                   await createAndBroadcastBackendNotification({
@@ -8080,7 +8113,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                 const lower = String(c.userName || "").toLowerCase();
                 if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) cEmail = "avr6566gd@gmail.com";
                 else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) cEmail = "louis42111@gmail.com";
-                else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme") || lower.includes("4samet")) cEmail = "aouisesmee@gmail.com";
+                else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme")) cEmail = "aouisesmee@gmail.com";
               }
               if (cEmail) {
                 await createAndBroadcastBackendNotification({
@@ -8911,7 +8944,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           notifObj.recipientEmail = "avr6566gd@gmail.com";
         } else if (idLower.includes("louis42111") || idLower.includes("biz riv") || idLower.includes("bizriv") || handleLower.includes("bizriv")) {
           notifObj.recipientEmail = "louis42111@gmail.com";
-        } else if (idLower.includes("aouisesmee") || idLower.includes("aouisemee") || idLower.includes("aouisesme") || idLower.includes("aouiseme") || handleLower.includes("aouisesmee") || handleLower.includes("aouisemee") || handleLower.includes("aouisesme") || handleLower.includes("aouiseme") || idLower.includes("4samet") || handleLower.includes("4samet")) {
+        } else if (idLower.includes("aouisesmee") || idLower.includes("aouisemee") || idLower.includes("aouisesme") || idLower.includes("aouiseme") || handleLower.includes("aouisesmee") || handleLower.includes("aouisemee") || handleLower.includes("aouisesme") || handleLower.includes("aouiseme")) {
           notifObj.recipientEmail = "aouisesmee@gmail.com";
         }
       }
@@ -8945,8 +8978,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
         targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv");
       }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme") || (t || "").toLowerCase().includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "4samet@gmail.com", "4samet");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme"))) {
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme");
       }
 
       broadcastSseEvent({
@@ -9084,8 +9117,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv" || (t || "").toLowerCase().includes("biz"))) {
         targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
       }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme") || (t || "").toLowerCase().includes("4samet"))) {
-        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme", "4samet@gmail.com", "4samet");
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme"))) {
+        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme");
       }
 
       broadcastSseEvent({
@@ -9256,7 +9289,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               const lower = String(targetHandle || "").toLowerCase();
               if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) recEmail = "avr6566gd@gmail.com";
               else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) recEmail = "louis42111@gmail.com";
-              else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme") || lower.includes("4samet")) recEmail = "aouisesmee@gmail.com";
+              else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme")) recEmail = "aouisesmee@gmail.com";
             }
 
             await createAndBroadcastBackendNotification({
@@ -10232,7 +10265,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       const isKnown = Boolean(existingUser) && hasBothNames && !isDeletedUserServer(existingUser);
 
       // Check for Admin status based on email
-      const isAdminEmail = cleanEmail === '4samet@gmail.com' || cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@');
+      const isAdminEmail = cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@') || cleanEmail === 'info@yoouz.com';
       const assignedRole = isAdminEmail ? 'admin' : (existingUser?.role || 'user');
 
       const freshUuid = crypto.randomUUID();
@@ -10343,7 +10376,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       const combinedLocation = location || locParts.join(', ');
       const finalAvatar = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`;
 
-      const isAdminEmail = cleanEmail === '4samet@gmail.com' || cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@');
+      const isAdminEmail = cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@') || cleanEmail === 'info@yoouz.com';
       const assignedRole = isAdminEmail ? 'admin' : (bodyRole || 'user');
 
       const profile = {

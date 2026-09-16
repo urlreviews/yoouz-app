@@ -1168,7 +1168,7 @@ export function App() {
         if (Array.isArray(parsed)) {
           const cleaned = parsed.filter((item: string) => {
             const s = String(item).toLowerCase();
-            return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2" && !s.includes("4samet");
+            return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2";
           });
           if (cleaned.length !== parsed.length) {
             localStorage.setItem("yoouz_deleted_users", JSON.stringify(cleaned));
@@ -1867,7 +1867,7 @@ export function App() {
                   {
                     ...currentUser,
                     id: currentUser.uid || currentUser.id || currentEmail,
-                    role: currentUser.role || (currentUser.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
+                    role: currentUser.role || (currentUser.email === "admin@yoouz.com" ? "Super Admin" : "Member"),
                     isVerified: true
                   },
                   ...validUsers
@@ -1943,7 +1943,7 @@ export function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...currentUser,
-          role: currentUser.role || (currentUser.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
+          role: currentUser.role || (currentUser.email === "admin@yoouz.com" ? "Super Admin" : "Member"),
           updatedAt: new Date().toISOString()
         })
       }).catch(() => {});
@@ -2467,9 +2467,12 @@ export function App() {
                     Boolean(businessSession && (businessSession.placeId === p.id || businessSession.placeId === canonId || businessSession.domain === domain));
                   
                   const isYoouz = key === 'yoouz.com' || canonId === 'yoouz.com' || p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz');
-                  const isClaimed = Boolean(p.isClaimed || (p.claimedByEmail && p.claimedByEmail.trim() !== '') || isClaimedLocally || isYoouz);
+                  // Only yoouz.com, locally claimed for this place, or explicitly claimed place (not leaked info@yoouz.com)
+                  const isClaimed = Boolean(isYoouz || isClaimedLocally || (p.isClaimed && (isYoouz || (p.claimedByEmail && p.claimedByEmail !== 'info@yoouz.com'))));
                   const isVerified = Boolean(p.isVerified || isClaimed || isYoouz);
-                  const claimedByEmail = p.claimedByEmail || (isYoouz ? "4samet@gmail.com" : (businessSession?.businessEmail || ""));
+                  const claimedByEmail = isYoouz 
+                    ? "info@yoouz.com" 
+                    : (isClaimedLocally && businessSession?.placeId === p.id ? businessSession.businessEmail : (p.claimedByEmail && p.claimedByEmail !== "info@yoouz.com" ? p.claimedByEmail : undefined));
                   const rating = typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0);
                   const totalReviews = typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0);
 
@@ -2482,8 +2485,8 @@ export function App() {
                     isFollowed,
                     isClaimed,
                     isVerified,
-                    claimedByEmail: claimedByEmail || p.claimedByEmail,
-                    ownerId: isYoouz ? "4samet@gmail.com" : (p.ownerId || claimedByEmail || undefined)
+                    claimedByEmail: claimedByEmail,
+                    ownerId: isYoouz ? "info@yoouz.com" : (p.ownerId || claimedByEmail || undefined)
                   };
 
                   const existing = map.get(key);
@@ -2494,6 +2497,28 @@ export function App() {
                     map.set(key, preferNew ? { ...existing, ...placeObj } : { ...placeObj, ...existing });
                   }
                 });
+
+                if (!map.has('yoouz.com')) {
+                  const yoouzBase = derivePlaceFromEmailOrDomain('yoouz.com', []);
+                  map.set('yoouz.com', {
+                    ...yoouzBase,
+                    id: 'yoouz.com',
+                    name: 'Yoouz',
+                    category: 'Video Reviews & Discovery Platform',
+                    categoryType: 'business',
+                    address: 'Global Headquarters • yoouz.com',
+                    city: 'Brussels',
+                    website: 'https://yoouz.com',
+                    brandDomain: 'yoouz.com',
+                    logoUrl: 'https://www.yoouz.com/icon-512.png',
+                    avatarUrl: 'https://www.yoouz.com/icon-512.png',
+                    isClaimed: true,
+                    isVerified: true,
+                    claimedByEmail: 'info@yoouz.com',
+                    rating: 5.0,
+                    totalReviews: 1
+                  });
+                }
                 return Array.from(map.values());
               });
             }
@@ -3480,7 +3505,7 @@ export function App() {
         email = "avr6566gd@gmail.com";
       } else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) {
         email = "louis42111@gmail.com";
-      } else if (lower.includes("aouisesmee") || lower.includes("4samet")) {
+      } else if (lower.includes("aouisesmee")) {
         email = "aouisesmee@gmail.com";
       }
     }
@@ -3790,7 +3815,7 @@ export function App() {
         const lower = cleanAuthorHandle.toLowerCase();
         if (lower.includes("avtertuop") || lower.includes("avt ertuop") || lower.includes("avr6566gd") || lower.includes("avt")) recEmail = "avr6566gd@gmail.com";
         else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) recEmail = "louis42111@gmail.com";
-        else if (lower.includes("aouisesmee") || lower.includes("4samet")) recEmail = "aouisesmee@gmail.com";
+        else if (lower.includes("aouisesmee")) recEmail = "aouisesmee@gmail.com";
       }
 
       sendSocialNotification({
@@ -3995,7 +4020,7 @@ export function App() {
             let pEmail = parentComm.authorHandle?.includes("@") ? parentComm.authorHandle : "";
             if (!pEmail) {
               const lower = `${cleanP} ${parentComm.authorHandle || ""}`.toLowerCase();
-              if (lower.includes("aouisesmee") || lower.includes("4samet")) pEmail = "aouisesmee@gmail.com";
+              if (lower.includes("aouisesmee")) pEmail = "aouisesmee@gmail.com";
               else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) pEmail = "avr6566gd@gmail.com";
               else if (lower.includes("bizriv") || lower.includes("louis42111")) pEmail = "louis42111@gmail.com";
             }
@@ -4152,7 +4177,7 @@ export function App() {
           let authorEmail = likedComment.authorHandle?.includes("@") ? likedComment.authorHandle : (likedComment.user?.email || "");
           if (!authorEmail) {
             const lower = `${cleanH} ${likedComment.authorHandle || ""}`.toLowerCase();
-            if (lower.includes("aouisesmee") || lower.includes("4samet")) authorEmail = "aouisesmee@gmail.com";
+            if (lower.includes("aouisesmee")) authorEmail = "aouisesmee@gmail.com";
             else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) authorEmail = "avr6566gd@gmail.com";
             else if (lower.includes("bizriv") || lower.includes("louis42111")) authorEmail = "louis42111@gmail.com";
           }
@@ -4273,7 +4298,7 @@ export function App() {
           let aEmail = lovedComment.authorHandle?.includes("@") ? lovedComment.authorHandle : "";
           if (!aEmail) {
             const lower = `${cleanH} ${lovedComment.authorHandle || ""}`.toLowerCase();
-            if (lower.includes("aouisesmee") || lower.includes("4samet")) aEmail = "aouisesmee@gmail.com";
+            if (lower.includes("aouisesmee")) aEmail = "aouisesmee@gmail.com";
             else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) aEmail = "avr6566gd@gmail.com";
             else if (lower.includes("bizriv") || lower.includes("louis42111")) aEmail = "louis42111@gmail.com";
           }
@@ -4855,7 +4880,7 @@ export function App() {
     const place = places.find((p) => p.id === activeCommentVideo.placeId);
     if (!place) return false;
     return Boolean(
-      currentUser.email === "4samet@gmail.com" ||
+      (currentUser.role === "admin" || currentUser.role === "Super Admin") ||
       (place.claimedByEmail && currentUser.email === place.claimedByEmail) ||
       (place.staffEmails && currentUser.email && place.staffEmails.includes(currentUser.email))
     );

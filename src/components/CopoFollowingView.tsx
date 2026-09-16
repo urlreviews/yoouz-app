@@ -137,7 +137,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         if (Array.isArray(parsed)) {
           deletedList = parsed.filter((k: string) => {
             const s = String(k).toLowerCase();
-            return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2" && !s.includes("4samet");
+            return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2";
           });
         }
       }
@@ -149,7 +149,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
       const email = (u.email || "").toLowerCase().trim();
       const id = (u.id || u.uid || "").toLowerCase().trim();
       if (!name || name === "Registered User" || name === "Reviewer") return;
-      if (email === "4samet@gmail.com" || name.toLowerCase() === "samet" || id === "4samet-user-id" || id === "usr_4samet_gmail_com") return;
+      if (email === "admin@yoouz.com" || id === "admin-user-id") return;
       if (deletedSet.has(email) || deletedSet.has(name.toLowerCase()) || deletedSet.has(id)) return;
 
       const key = name.toLowerCase();
@@ -177,8 +177,6 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     if (currentUser?.email) {
       map.delete(currentUser.email.toLowerCase().trim());
     }
-    map.delete("samet");
-    map.delete("4samet@gmail.com");
 
     return map;
   }, [videos, allUsers, followedAuthorsSet, currentUser, profileSyncTick]);

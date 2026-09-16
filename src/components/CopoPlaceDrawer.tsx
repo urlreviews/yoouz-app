@@ -478,16 +478,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     (place.brandDomain && place.brandDomain.toLowerCase() === "yoouz.com");
 
   const isClaimed = Boolean(
-    place.isClaimed ||
-    (place.claimedByEmail && place.claimedByEmail.trim() !== "") ||
-    place.ownerId ||
+    isYoouzBusiness ||
     isClaimedLocally ||
-    isYoouzBusiness
+    (place.isClaimed && (isYoouzBusiness || (place.claimedByEmail && place.claimedByEmail !== "info@yoouz.com")))
   );
 
   const isUserOwner = Boolean(
     (currentUser &&
-      (currentUser.email === "4samet@gmail.com" || 
+      ((currentUser.role === "admin" || currentUser.role === "Super Admin") ||
        (place.claimedByEmail && currentUser.email === place.claimedByEmail) ||
        (place.ownerId && currentUser.id === place.ownerId) ||
        (place.staffEmails && currentUser.email && place.staffEmails.includes(currentUser.email)))) ||
@@ -907,7 +905,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     return;
                   }
 
-                  onStartChat(place.claimedByEmail || place.id, place.name, getPlaceLogoUrl(place));
+                  onStartChat(place.id, place.name, getPlaceLogoUrl(place));
                 }}
                 className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
                 title={`${t("place.chatWith", "Chat with")} ${displayedPlaceName}`}
@@ -1232,14 +1230,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               ) : (
                 <div className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors border-t border-zinc-800">
                   <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <ShieldCheck className="w-5 h-5 text-zinc-300 shrink-0" />
                     <div>
-                      <span className="text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        {t("place.businessClaimed", "Verified Business Profile")}
+                      <span className="text-xs text-zinc-100 font-semibold flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-zinc-300" />
+                        {t("place.businessClaimed", "Business Claimed")}
                       </span>
                       <span className="text-[11px] text-zinc-400 block">
-                        {place.claimedByEmail ? `Managed by ${place.claimedByEmail}` : t("place.claimedDesc", "Official verified listing on Yoouz")}
+                        {t("place.claimedDesc", "Official claimed listing on Yoouz")}
                       </span>
                     </div>
                   </div>
@@ -1251,8 +1249,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       {t("place.editDetails", "Edit Details")}
                     </button>
                   ) : (
-                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-800 text-emerald-300 font-bold flex items-center gap-1">
-                      <Check className="w-3 h-3 text-emerald-400" /> {t("place.verified", "Claimed")}
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800/80 border border-zinc-700 text-zinc-300 font-bold flex items-center gap-1">
+                      <Check className="w-3 h-3 text-zinc-300" /> {t("place.verified", "Claimed")}
                     </span>
                   )}
                 </div>

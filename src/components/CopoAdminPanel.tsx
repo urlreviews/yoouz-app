@@ -60,7 +60,8 @@ import {
   Zap,
   Radio,
   Loader2,
-  ShieldCheck
+  ShieldCheck,
+  Briefcase
 } from "lucide-react";
 import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
@@ -126,7 +127,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "health" | "creators" | "users" | "places" | "videos" | "comments" | "broadcast" | "database";
+type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "broadcast" | "database";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,
@@ -155,7 +156,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     try {
       const email = currentUser?.email?.toLowerCase().trim();
       const role = currentUser?.role?.toLowerCase();
-      if (role === 'admin' || email === '4samet@gmail.com' || email === 'aouisesmee@gmail.com' || email === 'admin@yoouz.com') {
+      if (role === 'admin' || email === 'admin@yoouz.com' || email === 'aouisesmee@gmail.com' || email?.endsWith('@yoouz.com')) {
         return true;
       }
       return sessionStorage.getItem("yoouz_admin_auth") === "true";
@@ -255,12 +256,19 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Deletion Confirmations
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
   const [confirmDeletePlaceId, setConfirmDeletePlaceId] = useState<string | null>(null);
+  const [confirmDeleteBusinessId, setConfirmDeleteBusinessId] = useState<string | null>(null);
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState<string | null>(null);
   const [confirmBulkDeleteVideos, setConfirmBulkDeleteVideos] = useState(false);
   const [confirmPurgeAllVideos, setConfirmPurgeAllVideos] = useState(false);
   const [confirmBulkDeletePlaces, setConfirmBulkDeletePlaces] = useState(false);
   const [confirmPurgeAllPlaces, setConfirmPurgeAllPlaces] = useState(false);
+  const [confirmBulkDeleteBusinesses, setConfirmBulkDeleteBusinesses] = useState(false);
+  const [confirmPurgeAllBusinesses, setConfirmPurgeAllBusinesses] = useState(false);
   const [confirmDeleteCommentInfo, setConfirmDeleteCommentInfo] = useState<{ videoId: string; commentId: string } | null>(null);
+
+  // Business Tab Specific State
+  const [selectedBusinessIds, setSelectedBusinessIds] = useState<string[]>([]);
+  const [businessCategoryFilter, setBusinessCategoryFilter] = useState<string>("all");
 
   const [deletedUserKeys, setDeletedUserKeys] = useState<Set<string>>(() => {
     try {
@@ -268,7 +276,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const arr = JSON.parse(stored);
       const filtered = (Array.isArray(arr) ? arr : []).filter((k: string) => {
         const s = String(k).toLowerCase();
-        return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2" && !s.includes("4samet");
+        return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2";
       });
       return new Set(filtered.map((k: string) => String(k).toLowerCase()));
     } catch {
@@ -494,7 +502,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           `/api/avatar?name=${encodeURIComponent(u.name || "User")}&background=27272a&color=fff&bold=true&size=128`,
         isVerified: u.isVerified !== false,
         isRegisteredAccount: true,
-        role: u.role || (u.email === "4samet@gmail.com" ? "Super Admin" : "Member"),
+        role: u.role || (u.email === "admin@yoouz.com" ? "Super Admin" : "Member"),
         memberSince: u.memberSince || "Active"
       });
     });
@@ -711,7 +719,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const isLocalClaimed = Boolean(localVerifiedPlaceId && (localVerifiedPlaceId === rawId || localVerifiedPlaceId === canonId || localVerifiedPlaceId === key));
 
       const isClaimed = Boolean(p.isClaimed || p.claimedByEmail || isYoouz || isLocalClaimed);
-      const claimedEmail = p.claimedByEmail || (isYoouz ? "4samet@gmail.com" : (isLocalClaimed ? localVerifiedEmail : undefined));
+      const claimedEmail = p.claimedByEmail || (isYoouz ? "info@yoouz.com" : (isLocalClaimed ? localVerifiedEmail : undefined));
 
       const existing = canonicalMap.get(key);
       if (!existing) {
@@ -737,10 +745,119 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     });
 
+    // Ensure yoouz.com is always present as the verified official platform business
+    if (!canonicalMap.has('yoouz.com')) {
+      canonicalMap.set('yoouz.com', {
+        id: 'yoouz.com',
+        name: 'Yoouz',
+        brandDomain: 'yoouz.com',
+        website: 'https://yoouz.com',
+        category: 'Technology & Video Review Platform',
+        categoryType: 'all',
+        address: 'Global Platform • yoouz.com',
+        city: 'Global',
+        country: 'Worldwide',
+        lat: 0,
+        lng: 0,
+        rating: 5.0,
+        totalReviews: 1,
+        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: '/icon.png',
+        bannerUrl: '/og-banner.png',
+        photos: [],
+        openingHours: '24/7',
+        isOpen: true,
+        phone: '',
+        priceRange: 'Free',
+        plusCode: '',
+        description: 'Authentic 60-Second Video Reviews Platform',
+        popularKeywords: [{ tag: 'authentic', count: 1 }, { tag: 'video reviews', count: 1 }],
+        amenities: ['Official Platform', 'Verified Brand'],
+        topDishes: [],
+        isClaimed: true,
+        isVerified: true,
+        claimedByEmail: 'info@yoouz.com',
+        logoUrl: '/icon.png'
+      });
+    } else {
+      const existingYoouz = canonicalMap.get('yoouz.com')!;
+      canonicalMap.set('yoouz.com', {
+        ...existingYoouz,
+        name: 'Yoouz',
+        brandDomain: 'yoouz.com',
+        website: existingYoouz.website || 'https://yoouz.com',
+        isClaimed: true,
+        isVerified: true,
+        claimedByEmail: existingYoouz.claimedByEmail || 'info@yoouz.com',
+        category: existingYoouz.category || 'Technology & Video Review Platform'
+      });
+    }
+
     return Array.from(canonicalMap.values());
   }, [places]);
 
-  // Filtered Places List (Single entry per business)
+  // Separate Businesses (Claimed / Merchant Corporate Entities) vs Physical Places (Local Directory Venues)
+  const { allBusinesses, allPhysicalPlaces } = useMemo(() => {
+    const businesses: Place[] = [];
+    const physicalPlaces: Place[] = [];
+
+    deduplicatedPlaces.forEach((p) => {
+      const rawId = String(p.id).toLowerCase();
+      const isYoouz = p.id === 'yoouz.com' || p.brandDomain === 'yoouz.com' || rawId === 'yoouz.com' || rawId === 'yoouz-com' || rawId === 'place-custom-yoouz-com' || (p.name && p.name.toLowerCase() === 'yoouz');
+      const isClaimedBusiness = Boolean(p.isClaimed || p.claimedByEmail || isYoouz);
+
+      if (isClaimedBusiness) {
+        businesses.push({
+          ...p,
+          isClaimed: true,
+          isVerified: true,
+          website: p.website || (isYoouz ? 'https://yoouz.com' : (p.brandDomain ? `https://${p.brandDomain}` : '')),
+          brandDomain: p.brandDomain || (isYoouz ? 'yoouz.com' : (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : p.id)),
+          claimedByEmail: isYoouz ? 'info@yoouz.com' : p.claimedByEmail
+        });
+      } else {
+        physicalPlaces.push(p);
+      }
+    });
+
+    return { allBusinesses: businesses, allPhysicalPlaces: physicalPlaces };
+  }, [deduplicatedPlaces]);
+
+  // Filtered Businesses List (Single entry per claimed business profile)
+  const filteredBusinesses = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return allBusinesses.filter((b) => {
+      const matchQuery =
+        !q ||
+        (b.name && b.name.toLowerCase().includes(q)) ||
+        (b.brandDomain && b.brandDomain.toLowerCase().includes(q)) ||
+        (b.website && b.website.toLowerCase().includes(q)) ||
+        (b.category && b.category.toLowerCase().includes(q)) ||
+        (b.id && b.id.toLowerCase().includes(q));
+
+      const matchCategory = businessCategoryFilter === "all" || b.category?.toLowerCase() === businessCategoryFilter.toLowerCase();
+      return matchQuery && matchCategory;
+    });
+  }, [allBusinesses, searchQuery, businessCategoryFilter]);
+
+  // Filtered Physical Places List (Community review venues directory)
+  const filteredPhysicalPlaces = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return allPhysicalPlaces.filter((p) => {
+      const matchQuery =
+        !q ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.city && p.city.toLowerCase().includes(q)) ||
+        (p.address && p.address.toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q)) ||
+        (p.id && p.id.toLowerCase().includes(q));
+
+      const matchCategory = placeCategoryFilter === "all" || p.category?.toLowerCase() === placeCategoryFilter.toLowerCase();
+      return matchQuery && matchCategory;
+    });
+  }, [allPhysicalPlaces, searchQuery, placeCategoryFilter]);
+
+  // Filtered Places List (Combined fallback if needed)
   const filteredPlaces = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return deduplicatedPlaces.filter((p) => {
@@ -855,6 +972,22 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   }, [allComments, searchQuery]);
 
   // Categories list
+  const uniqueBusinessCategories = useMemo(() => {
+    const set = new Set<string>();
+    allBusinesses.forEach((b) => {
+      if (b.category) set.add(b.category);
+    });
+    return Array.from(set).sort();
+  }, [allBusinesses]);
+
+  const uniquePlaceCategories = useMemo(() => {
+    const set = new Set<string>();
+    allPhysicalPlaces.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    return Array.from(set).sort();
+  }, [allPhysicalPlaces]);
+
   const uniqueCategories = useMemo(() => {
     const set = new Set<string>();
     places.forEach((p) => {
@@ -871,9 +1004,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const totalBookmarks = videos.reduce((acc, v) => acc + (v.bookmarksCount || 0), 0);
     const totalViews = videos.reduce((acc, v) => acc + (v.viewsCount || v.views || 0), 0);
     const totalComm = allComments.length;
+    const totalBusinesses = allBusinesses.length;
+    const totalPhysicalPlaces = allPhysicalPlaces.length;
     const totalPlaces = deduplicatedPlaces.length;
-    const claimedPlaces = deduplicatedPlaces.filter((p) => p.isClaimed || Boolean(p.claimedByEmail)).length;
-    const unclaimedPlaces = totalPlaces - claimedPlaces;
+    const claimedPlaces = totalBusinesses;
+    const unclaimedPlaces = totalPhysicalPlaces;
     const avgRating = totalVids > 0 ? (videos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalVids).toFixed(1) : "5.0";
 
     return {
@@ -883,6 +1018,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       totalBookmarks,
       totalViews,
       totalComments: totalComm,
+      totalBusinesses,
+      totalPhysicalPlaces,
       totalPlaces,
       claimedPlaces,
       unclaimedPlaces,
@@ -891,7 +1028,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       totalCommunityUsers: standardUsersList.length,
       avgRating
     };
-  }, [videos, deduplicatedPlaces, uniqueUsers, creatorsList, standardUsersList, allComments]);
+  }, [videos, deduplicatedPlaces, allBusinesses, allPhysicalPlaces, uniqueUsers, creatorsList, standardUsersList, allComments]);
+
+  // Multi-select handlers
+  const handleSelectAllBusinesses = () => {
+    if (selectedBusinessIds.length === filteredBusinesses.length) {
+      setSelectedBusinessIds([]);
+    } else {
+      setSelectedBusinessIds(filteredBusinesses.map((b) => b.id));
+    }
+  };
+
+  const handleToggleBusinessSelection = (id: string) => {
+    setSelectedBusinessIds((prev) => (prev.includes(id) ? prev.filter((bId) => bId !== id) : [...prev, id]));
+  };
 
   // Multi-select handlers
   const handleSelectAllVideos = () => {
@@ -986,6 +1136,44 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setSelectedPlaceIds([]);
     setConfirmPurgeAllPlaces(false);
     showToast("All business records purged completely from database.");
+    setTimeout(fetchLiveStats, 400);
+  };
+
+  const executeBulkDeleteBusinesses = () => {
+    if (selectedBusinessIds.length === 0) return;
+    const count = selectedBusinessIds.length;
+    if (onBulkDeletePlaces) {
+      onBulkDeletePlaces(selectedBusinessIds);
+    } else {
+      selectedBusinessIds.forEach((id) => onDeletePlace(id));
+    }
+    setSelectedBusinessIds([]);
+    setConfirmBulkDeleteBusinesses(false);
+    showToast(`Deleted ${count} selected businesses.`);
+    setTimeout(fetchLiveStats, 400);
+  };
+
+  const executePurgeAllBusinesses = () => {
+    allBusinesses.forEach((b) => onDeletePlace(b.id));
+    setSelectedBusinessIds([]);
+    setConfirmPurgeAllBusinesses(false);
+    showToast("Purged all claimed businesses.");
+    setTimeout(fetchLiveStats, 400);
+  };
+
+  const handleQuickClaimPlace = (place: Place) => {
+    const domain = (place.brandDomain || (place.website ? place.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || place.id).toLowerCase();
+    const updated: Place = {
+      ...place,
+      isClaimed: true,
+      isVerified: true,
+      claimedByEmail: "info@yoouz.com",
+      brandDomain: domain
+    };
+    if (onUpdatePlace) {
+      onUpdatePlace(updated);
+    }
+    showToast(`Claimed "${place.name}" as an official business.`);
     setTimeout(fetchLiveStats, 400);
   };
 
@@ -1326,6 +1514,23 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab("businesses")}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "businesses"
+                  ? "bg-white text-zinc-950 shadow-lg"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Briefcase className="w-4 h-4 text-zinc-300" />
+                Businesses
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "businesses" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+                {metrics.totalBusinesses}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("places")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "places"
@@ -1334,11 +1539,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <Building2 className="w-4 h-4" />
-                Places & Businesses
+                <Building2 className="w-4 h-4 text-zinc-400" />
+                Places Directory
               </div>
               <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "places" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
-                {metrics.totalPlaces}
+                {metrics.totalPhysicalPlaces}
               </span>
             </button>
 
@@ -1427,7 +1632,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["health", "Health 🟢"],
                 ["creators", `Creators (${metrics.totalCreators})`],
                 ["users", `Users (${metrics.totalCommunityUsers})`],
-                ["places", `Places (${metrics.totalPlaces})`],
+                ["businesses", `Businesses (${metrics.totalBusinesses})`],
+                ["places", `Places (${metrics.totalPhysicalPlaces})`],
                 ["videos", `Videos (${videos.length})`],
                 ["comments", "Moderation"],
                 ["broadcast", "Broadcast"],
@@ -1760,19 +1966,34 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <span className="text-[10px] text-zinc-500 mt-1 font-mono">BunnyDB videoReviews</span>
                   </div>
 
-                  {/* 2. Places / Businesses */}
+                  {/* 2. Claimed Businesses */}
+                  <div 
+                    onClick={() => setActiveTab("businesses")}
+                    className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition-all flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between text-zinc-400 mb-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Businesses</span>
+                      <Briefcase className="w-3.5 h-3.5 text-zinc-400" />
+                    </div>
+                    <div className="text-2xl font-black text-white">
+                      {metrics.totalBusinesses}
+                    </div>
+                    <span className="text-[10px] text-zinc-500 mt-1 font-mono">Claimed Entities</span>
+                  </div>
+
+                  {/* 2b. Places Directory */}
                   <div 
                     onClick={() => setActiveTab("places")}
                     className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition-all flex flex-col justify-between"
                   >
                     <div className="flex items-center justify-between text-zinc-400 mb-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Businesses</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Places Directory</span>
                       <Building2 className="w-3.5 h-3.5 text-zinc-400" />
                     </div>
                     <div className="text-2xl font-black text-white">
-                      {liveStats?.totals?.places ?? places.length}
+                      {metrics.totalPhysicalPlaces}
                     </div>
-                    <span className="text-[10px] text-zinc-500 mt-1 font-mono">BunnyDB places</span>
+                    <span className="text-[10px] text-zinc-500 mt-1 font-mono">Unclaimed Venues</span>
                   </div>
 
                   {/* 3. Community Users */}
@@ -1863,21 +2084,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Metric Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 <div 
-                  onClick={() => {
-                    setPlaceClaimFilter("claimed");
-                    setActiveTab("places");
-                  }}
+                  onClick={() => setActiveTab("businesses")}
                   className="p-5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:border-zinc-700"
                 >
                   <div className="flex items-center justify-between text-zinc-200 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Claimed Profiles</span>
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">Claimed Businesses</span>
+                    <Briefcase className="w-5 h-5 text-zinc-300" />
                   </div>
-                  <div className="text-3xl font-black text-white">{metrics.claimedPlaces}</div>
+                  <div className="text-3xl font-black text-white">{metrics.totalBusinesses}</div>
                   <div className="flex items-center gap-2 text-xs text-zinc-300 mt-2">
-                    <span className="text-emerald-400 font-semibold">{metrics.totalPlaces > 0 ? Math.round((metrics.claimedPlaces / metrics.totalPlaces) * 100) : 0}% Verified</span>
+                    <span className="text-zinc-200 font-semibold">Business Claimed</span>
                     <span>•</span>
-                    <span className="text-zinc-400">Direct Agency Model</span>
+                    <span className="text-zinc-400">Official Profiles</span>
                   </div>
                 </div>
 
@@ -1905,16 +2123,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   className="p-5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 shadow-sm relative overflow-hidden cursor-pointer transition-all hover:border-zinc-700"
                 >
                   <div className="flex items-center justify-between text-zinc-200 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider">Places / Businesses</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Places Directory</span>
                     <Building2 className="w-5 h-5 text-zinc-200" />
                   </div>
                   <div className="text-3xl font-black text-white">
-                    {liveStats?.totals?.places ?? metrics.totalPlaces}
+                    {metrics.totalPhysicalPlaces}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-zinc-200 mt-2">
-                    <span className="text-zinc-200 font-semibold">{metrics.claimedPlaces} Claimed</span>
+                    <span className="text-zinc-300 font-semibold">{metrics.totalPhysicalPlaces} Venues</span>
                     <span>•</span>
-                    <span className="text-zinc-200">{metrics.unclaimedPlaces} Unclaimed</span>
+                    <span className="text-zinc-400">Unclaimed Directory</span>
                   </div>
                 </div>
 
@@ -2404,44 +2622,33 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
           )}
 
-          {/* TAB 3: PLACES & BUSINESSES MANAGEMENT */}
-          {activeTab === "places" && (
+          {/* TAB: REGISTERED & CLAIMED BUSINESSES */}
+          {activeTab === "businesses" && (
             <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
               {/* Action Toolbar */}
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">
                   {/* Select All Checkbox */}
-                  {filteredPlaces.length > 0 && (
+                  {filteredBusinesses.length > 0 && (
                     <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-zinc-200 mr-2">
                       <input
                         type="checkbox"
-                        checked={selectedPlaceIds.length === filteredPlaces.length && filteredPlaces.length > 0}
-                        onChange={handleSelectAllPlaces}
+                        checked={selectedBusinessIds.length === filteredBusinesses.length && filteredBusinesses.length > 0}
+                        onChange={handleSelectAllBusinesses}
                         className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white"
                       />
-                      <span>Select All ({filteredPlaces.length})</span>
+                      <span>Select All ({filteredBusinesses.length})</span>
                     </label>
                   )}
 
-                  {/* Claim Status Filter */}
+                  {/* Business Category Filter */}
                   <select
-                    value={placeClaimFilter}
-                    onChange={(e) => setPlaceClaimFilter(e.target.value as any)}
+                    value={businessCategoryFilter}
+                    onChange={(e) => setBusinessCategoryFilter(e.target.value)}
                     className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
                   >
-                    <option value="all">All Ownership Status</option>
-                    <option value="claimed">Claimed by Merchant</option>
-                    <option value="unclaimed">Unclaimed Directory</option>
-                  </select>
-
-                  {/* Category Filter */}
-                  <select
-                    value={placeCategoryFilter}
-                    onChange={(e) => setPlaceCategoryFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
-                  >
-                    <option value="all">All Categories</option>
-                    {uniqueCategories.map((c) => (
+                    <option value="all">All Business Categories</option>
+                    {uniqueBusinessCategories.map((c) => (
                       <option key={c} value={c}>
                         {c}
                       </option>
@@ -2449,13 +2656,273 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </select>
                 </div>
 
-                  {/* Right Buttons */}
+                {/* Right Buttons */}
                 <div className="flex items-center gap-3">
-                  {places.length > 0 && (
+                  {allBusinesses.length > 0 && (
+                    <div>
+                      {confirmPurgeAllBusinesses ? (
+                        <div className="flex items-center gap-2 bg-red-950/60 border border-red-700 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
+                          <span className="text-xs font-bold text-red-300">Purge ALL {allBusinesses.length} claimed businesses?</span>
+                          <button
+                            onClick={executePurgeAllBusinesses}
+                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer shadow"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Purge All
+                          </button>
+                          <button
+                            onClick={() => setConfirmPurgeAllBusinesses(false)}
+                            className="p-1 text-zinc-200 hover:text-white cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmPurgeAllBusinesses(true)}
+                          className="px-3 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          title="Purge all claimed businesses permanently from database"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Purge Businesses
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedBusinessIds.length > 0 && (
+                    <div>
+                      {confirmBulkDeleteBusinesses ? (
+                        <div className="flex items-center gap-2 bg-red-950/40 border border-red-800/60 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
+                          <span className="text-xs font-bold text-red-300">Delete {selectedBusinessIds.length} businesses?</span>
+                          <button
+                            onClick={executeBulkDeleteBusinesses}
+                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Yes
+                          </button>
+                          <button
+                            onClick={() => setConfirmBulkDeleteBusinesses(false)}
+                            className="p-1 text-zinc-200 hover:text-white cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmBulkDeleteBusinesses(true)}
+                          className="px-3 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete Selected ({selectedBusinessIds.length})
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setIsAddPlaceOpen(true)}
+                    className="px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Register Business
+                  </button>
+                </div>
+              </div>
+
+              {/* Businesses List Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredBusinesses.map((biz) => {
+                  const bizVideos = getPlaceVideos(biz);
+                  const isYoouzOfficial = biz.id === 'yoouz.com' || biz.brandDomain === 'yoouz.com' || (biz.name && biz.name.toLowerCase() === 'yoouz');
+                  const domain = biz.brandDomain || (biz.website ? biz.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || (isYoouzOfficial ? 'yoouz.com' : '');
+                  const websiteUrl = biz.website || (domain ? `https://${domain}` : '');
+
+                  return (
+                    <div
+                      key={biz.id}
+                      className={`p-4 rounded-2xl bg-zinc-900 border transition-all flex flex-col justify-between space-y-4 ${
+                        isYoouzOfficial ? "border-zinc-700 ring-1 ring-zinc-700/50 shadow-md" : "border-zinc-800 hover:border-zinc-700"
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3 w-full">
+                          <input
+                            type="checkbox"
+                            checked={selectedBusinessIds.includes(biz.id)}
+                            onChange={() => handleToggleBusinessSelection(biz.id)}
+                            className="w-4 h-4 mt-1.5 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white shrink-0"
+                          />
+
+                          <AdminPlaceLogo place={biz} size="md" className="shrink-0 mt-0.5" />
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 
+                                className="font-bold text-white text-sm sm:text-base leading-snug break-words" 
+                                title={biz.name}
+                              >
+                                {biz.name}
+                              </h3>
+                              {isYoouzOfficial && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 border border-zinc-700 text-zinc-200">
+                                  Official Platform
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-zinc-400 truncate mt-0.5">
+                              {biz.category}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Domain / Website URL Pill */}
+                        {domain && (
+                          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800">
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-mono font-bold truncate">
+                              <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                              <span className="truncate">{domain}</span>
+                            </div>
+                            {websiteUrl && (
+                              <a
+                                href={websiteUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[11px] font-semibold text-zinc-400 hover:text-white flex items-center gap-1 shrink-0 ml-2"
+                              >
+                                Visit <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Business Claim & Metrics Info */}
+                        <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2.5 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-zinc-400 font-medium">Status:</span>
+                            {/* Neutral non-green badge per user guidelines */}
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[11px] bg-zinc-800 border border-zinc-700 text-zinc-200">
+                              <ShieldCheck className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                              Business Claimed
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-zinc-300">
+                            <span className="text-zinc-400 font-medium">Video Reviews:</span>
+                            <span className="font-bold text-white flex items-center gap-1.5">
+                              <Video className="w-3.5 h-3.5 text-zinc-400" />
+                              {bizVideos.length > 0 ? (
+                                <span className="text-zinc-200 font-bold">{bizVideos.length} recorded</span>
+                              ) : (
+                                <span className="text-zinc-500 font-normal">0 reviews</span>
+                              )}
+                            </span>
+                          </div>
+
+                          {biz.city && (
+                            <div className="flex items-center gap-1.5 text-zinc-400 truncate">
+                              <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                              <span>{biz.city}{biz.address ? ` • ${biz.address}` : ''}</span>
+                            </div>
+                          )}
+
+                          {biz.phone && (
+                            <div className="flex items-center gap-1.5 text-zinc-400 truncate">
+                              <Phone className="w-3 h-3 text-zinc-400 shrink-0" />
+                              <span>{biz.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Card Actions */}
+                      <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+                        <button
+                          onClick={() => setEditPlaceModal(biz)}
+                          className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Edit className="w-3.5 h-3.5" /> Edit Business
+                        </button>
+
+                        {confirmDeleteBusinessId === biz.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                executeDeletePlace(biz.id);
+                                setConfirmDeleteBusinessId(null);
+                              }}
+                              className="px-2.5 py-1 bg-red-600 text-white rounded-lg text-xs font-bold cursor-pointer"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteBusinessId(null)}
+                              className="p-1 text-zinc-200 hover:text-white cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteBusinessId(biz.id)}
+                            className="p-2 rounded-xl text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors cursor-pointer"
+                            title="Delete Business"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filteredBusinesses.length === 0 && (
+                <div className="py-16 text-center text-zinc-300 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800 space-y-2">
+                  <p className="font-bold">No businesses found matching criteria.</p>
+                  <p className="text-xs text-zinc-500">You can claim venues from the Places Directory tab or register a new business.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: PLACES & VENUES DIRECTORY */}
+          {activeTab === "places" && (
+            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+              {/* Action Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Select All Checkbox */}
+                  {filteredPhysicalPlaces.length > 0 && (
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-zinc-200 mr-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedPlaceIds.length === filteredPhysicalPlaces.length && filteredPhysicalPlaces.length > 0}
+                        onChange={handleSelectAllPlaces}
+                        className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white"
+                      />
+                      <span>Select All ({filteredPhysicalPlaces.length})</span>
+                    </label>
+                  )}
+
+                  {/* Category Filter */}
+                  <select
+                    value={placeCategoryFilter}
+                    onChange={(e) => setPlaceCategoryFilter(e.target.value)}
+                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
+                  >
+                    <option value="all">All Place Categories</option>
+                    {uniquePlaceCategories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Right Buttons */}
+                <div className="flex items-center gap-3">
+                  {allPhysicalPlaces.length > 0 && (
                     <div>
                       {confirmPurgeAllPlaces ? (
                         <div className="flex items-center gap-2 bg-red-950/60 border border-red-700 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
-                          <span className="text-xs font-bold text-red-300">Purge ALL {places.length} businesses permanently?</span>
+                          <span className="text-xs font-bold text-red-300">Purge ALL {allPhysicalPlaces.length} places permanently?</span>
                           <button
                             onClick={executePurgeAllPlaces}
                             className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer shadow"
@@ -2473,9 +2940,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <button
                           onClick={() => setConfirmPurgeAllPlaces(true)}
                           className="px-3 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                          title="Purge all business places permanently from database"
+                          title="Purge all directory places permanently from database"
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> Purge All Businesses
+                          <Trash2 className="w-3.5 h-3.5" /> Purge Places
                         </button>
                       )}
                     </div>
@@ -2485,7 +2952,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <div>
                       {confirmBulkDeletePlaces ? (
                         <div className="flex items-center gap-2 bg-red-950/40 border border-red-800/60 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
-                          <span className="text-xs font-bold text-red-300">Delete {selectedPlaceIds.length} businesses?</span>
+                          <span className="text-xs font-bold text-red-300">Delete {selectedPlaceIds.length} places?</span>
                           <button
                             onClick={executeBulkDeletePlaces}
                             className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
@@ -2521,9 +2988,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
               {/* Places List Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredPlaces.map((place) => {
+                {filteredPhysicalPlaces.map((place) => {
                   const placeVideos = getPlaceVideos(place);
-                  const isClaimed = place.isClaimed || Boolean(place.claimedByEmail);
 
                   return (
                     <div
@@ -2554,63 +3020,39 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </div>
                         </div>
 
-                        {/* Place Stats & Claim Info */}
+                        {/* Place Directory Info */}
                         <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-2.5 text-xs">
                           <div className="flex items-center justify-between">
-                            <span className="text-zinc-400 font-medium">Claim Status:</span>
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
-                                isClaimed
-                                  ? "bg-emerald-950/60 border border-emerald-700/80 text-emerald-300"
-                                  : "bg-zinc-850 border border-zinc-700 text-zinc-300"
-                              }`}
-                            >
-                              {isClaimed ? (
-                                <>
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                  Claimed
-                                </>
-                              ) : (
-                                <>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                  Unclaimed
-                                </>
-                              )}
+                            <span className="text-zinc-400 font-medium">Directory Status:</span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-medium text-[11px] bg-zinc-850 border border-zinc-750 text-zinc-400">
+                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+                              Unclaimed Venue
                             </span>
                           </div>
-
-                          {place.claimedByEmail && (
-                            <div className="text-[11px] text-zinc-400 font-mono flex items-center gap-1.5 bg-zinc-900/60 px-2.5 py-1 rounded-lg border border-zinc-800">
-                              <Mail className="w-3 h-3 text-zinc-400 shrink-0" />
-                              <span className="truncate">{place.claimedByEmail}</span>
-                            </div>
-                          )}
 
                           <div className="flex items-center justify-between text-zinc-300">
                             <span className="text-zinc-400 font-medium">Video Reviews:</span>
                             <span className="font-bold text-white flex items-center gap-1.5">
                               <Video className="w-3.5 h-3.5 text-zinc-400" />
                               {placeVideos.length > 0 ? (
-                                <span className="text-emerald-400 font-bold">{placeVideos.length} recorded</span>
+                                <span className="text-zinc-200 font-bold">{placeVideos.length} recorded</span>
                               ) : (
                                 <span className="text-zinc-500 font-normal">0 reviews</span>
                               )}
                             </span>
                           </div>
 
-                          {place.phone && (
-                            <div className="flex items-center gap-1.5 text-zinc-200 truncate">
-                              <Phone className="w-3 h-3 text-zinc-200 shrink-0" />
-                              <span>{place.phone}</span>
+                          {place.address && (
+                            <div className="flex items-center gap-1.5 text-zinc-400 truncate">
+                              <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                              <span className="truncate">{place.address}</span>
                             </div>
                           )}
 
-                          {place.website && (
-                            <div className="flex items-center gap-1.5 text-zinc-200 truncate">
-                              <Globe className="w-3 h-3 shrink-0" />
-                              <a href={place.website} target="_blank" rel="noreferrer" className="hover:underline hover:text-white truncate">
-                                {place.website.replace(/^https?:\/\//, "")}
-                              </a>
+                          {place.phone && (
+                            <div className="flex items-center gap-1.5 text-zinc-400 truncate">
+                              <Phone className="w-3 h-3 text-zinc-400 shrink-0" />
+                              <span>{place.phone}</span>
                             </div>
                           )}
                         </div>
@@ -2618,12 +3060,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                       {/* Card Actions */}
                       <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
-                        <button
-                          onClick={() => setEditPlaceModal(place)}
-                          className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                        >
-                          <Edit className="w-3.5 h-3.5" /> Edit Business
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleQuickClaimPlace(place)}
+                            className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer border border-zinc-700"
+                            title="Promote this place to an official claimed business profile"
+                          >
+                            <Briefcase className="w-3.5 h-3.5 text-zinc-300" /> Claim as Business
+                          </button>
+                          <button
+                            onClick={() => setEditPlaceModal(place)}
+                            className="px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer border border-zinc-800"
+                          >
+                            <Edit className="w-3 h-3" /> Edit
+                          </button>
+                        </div>
 
                         {confirmDeletePlaceId === place.id ? (
                           <div className="flex items-center gap-1">
@@ -2644,7 +3095,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           <button
                             onClick={() => setConfirmDeletePlaceId(place.id)}
                             className="p-2 rounded-xl text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors cursor-pointer"
-                            title="Delete Business"
+                            title="Delete Place"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -2655,9 +3106,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 })}
               </div>
 
-              {filteredPlaces.length === 0 && (
-                <div className="py-16 text-center text-zinc-200 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800">
-                  No places or businesses found.
+              {filteredPhysicalPlaces.length === 0 && (
+                <div className="py-16 text-center text-zinc-300 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800">
+                  No places found in directory.
                 </div>
               )}
             </div>
@@ -3611,8 +4062,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       }}
                       className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white font-bold text-xs focus:outline-none"
                     >
-                      <option value="unclaimed">Unclaimed Listing</option>
-                      <option value="claimed">Claimed & Verified</option>
+                      <option value="unclaimed">Unclaimed Venue</option>
+                      <option value="claimed">Business Claimed</option>
                     </select>
                   </div>
 
@@ -3910,8 +4361,8 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
       website: website.trim(),
       priceRange: "$$",
       plusCode: "",
-      description: "Verified business on Yoouz video platform.",
-      popularKeywords: [{ tag: "Verified", count: 1 }],
+      description: "Claimed business on Yoouz video platform.",
+      popularKeywords: [{ tag: "Authentic", count: 1 }],
       amenities: ["Free Wi-Fi", "Credit Cards Accepted"],
       topDishes: [],
       isClaimed: Boolean(claimedByEmail.trim()),

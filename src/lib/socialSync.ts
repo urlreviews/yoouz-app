@@ -169,7 +169,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
       targetEmail = "avr6566gd@gmail.com";
     } else if (targetId === "biz riv" || targetId.includes("bizriv") || targetHandle.includes("bizriv") || targetId.includes("louis42111")) {
       targetEmail = "louis42111@gmail.com";
-    } else if (targetId.includes("aouisesmee") || targetHandle.includes("aouisesmee") || targetId.includes("4samet") || targetHandle.includes("4samet")) {
+    } else if (targetId.includes("aouisesmee") || targetHandle.includes("aouisesmee")) {
       targetEmail = "aouisesmee@gmail.com";
     }
   }
@@ -181,7 +181,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
       canonSenderEmail = "avr6566gd@gmail.com";
     } else if (senderName === "biz riv" || senderName.includes("bizriv") || senderName.includes("louis42111")) {
       canonSenderEmail = "louis42111@gmail.com";
-    } else if (senderName.includes("aouisesmee") || senderName.includes("4samet")) {
+    } else if (senderName.includes("aouisesmee")) {
       canonSenderEmail = "aouisesmee@gmail.com";
     }
   }
@@ -310,11 +310,7 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     userId.includes("aouisesmee") ||
     userId.includes("aouisemee") ||
     userId.includes("aouisesme") ||
-    userId.includes("aouiseme") ||
-    userEmail.includes("4samet") ||
-    userName.includes("4samet") ||
-    userHandle.includes("4samet") ||
-    userId.includes("4samet");
+    userId.includes("aouiseme");
 
   const isBizRivUser =
     userEmail.includes("louis42111") ||
@@ -365,7 +361,6 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       recEmail.includes("aouisemee") ||
       recEmail.includes("aouisesme") ||
       recEmail.includes("aouiseme") ||
-      recEmail.includes("4samet") ||
       normRecHandle.includes("aouisesmee") ||
       normRecHandle.includes("aouisemee") ||
       normRecHandle.includes("aouisesme") ||
@@ -378,9 +373,6 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       recId.includes("aouisemee") ||
       recId.includes("aouisesme") ||
       recId.includes("aouiseme") ||
-      recId.includes("4samet") ||
-      normRecId.includes("4samet") ||
-      normRecHandle.includes("4samet") ||
       recHandle.includes("aouisesmee") ||
       recHandle.includes("aouisemee") ||
       recHandle.includes("aouisesme") ||
@@ -891,7 +883,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const recipientName = (data.recipientName || "").toLowerCase().trim();
 
     const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avt");
-    const isAouisesmee = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userEmail.includes("aouisesme") || userEmail.includes("aouiseme") || userName.includes("aouisesmee") || userName.includes("aouisemee") || userName.includes("aouisesme") || userName.includes("aouiseme") || userHandle.includes("aouisesmee") || userHandle.includes("aouisemee") || userHandle.includes("aouisesme") || userHandle.includes("aouiseme") || userId.includes("aouisesmee") || userId.includes("aouisemee") || userId.includes("aouisesme") || userId.includes("aouiseme") || userEmail.includes("4samet") || userName.includes("4samet") || userHandle.includes("4samet") || userId.includes("4samet");
+    const isAouisesmee = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userEmail.includes("aouisesme") || userEmail.includes("aouiseme") || userName.includes("aouisesmee") || userName.includes("aouisemee") || userName.includes("aouisesme") || userName.includes("aouiseme") || userHandle.includes("aouisesmee") || userHandle.includes("aouisemee") || userHandle.includes("aouisesme") || userHandle.includes("aouiseme") || userId.includes("aouisesmee") || userId.includes("aouisemee") || userId.includes("aouisesme") || userId.includes("aouiseme");
     const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111") || userEmail.includes("biz") || userName.includes("biz");
 
     let isParticipant = false;
@@ -916,9 +908,9 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         senderName.includes("avt") || recipientName.includes("avt")
       );
       const matchesAouisesmee = isAouisesmee && (
-        participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("aouisesme") || p.includes("aouiseme") || p.includes("4samet")) ||
-        senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderEmail.includes("aouisesme") || senderEmail.includes("aouiseme") || senderEmail.includes("4samet") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientEmail.includes("aouisesme") || recipientEmail.includes("aouiseme") || recipientEmail.includes("4samet") ||
-        senderName.includes("aouisesmee") || senderName.includes("aouisemee") || senderName.includes("aouisesme") || senderName.includes("aouiseme") || senderName.includes("4samet") || recipientName.includes("aouisesmee") || recipientName.includes("aouisemee") || recipientName.includes("aouisesme") || recipientName.includes("aouiseme") || recipientName.includes("4samet")
+        participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("aouisesme") || p.includes("aouiseme")) ||
+        senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderEmail.includes("aouisesme") || senderEmail.includes("aouiseme") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientEmail.includes("aouisesme") || recipientEmail.includes("aouiseme") ||
+        senderName.includes("aouisesmee") || senderName.includes("aouisemee") || senderName.includes("aouisesme") || senderName.includes("aouiseme") || recipientName.includes("aouisesmee") || recipientName.includes("aouisemee") || recipientName.includes("aouisesme") || recipientName.includes("aouiseme")
       );
       const matchesBizRiv = isBizRiv && (
         participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("biz")) ||
@@ -937,7 +929,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           (userHandle && (mSI === userHandle || mSN === userHandle)) ||
           (!isGenericName && mSN === userName) ||
           (userId && mSI === userId) ||
-          (isAouisesmee && (mSE.includes("aouisesmee") || mSE.includes("aouisemee") || mSE.includes("aouisesme") || mSE.includes("aouiseme") || mSE.includes("4samet") || mSN.includes("aouisesmee") || mSN.includes("aouisemee") || mSN.includes("aouisesme") || mSN.includes("aouiseme") || mSN.includes("4samet"))) ||
+          (isAouisesmee && (mSE.includes("aouisesmee") || mSE.includes("aouisemee") || mSE.includes("aouisesme") || mSE.includes("aouiseme") || mSN.includes("aouisesmee") || mSN.includes("aouisemee") || mSN.includes("aouisesme") || mSN.includes("aouiseme"))) ||
           (isAvtErtuop && (mSE.includes("avr6566gd") || mSN.includes("avt") || mSI.includes("avt"))) ||
           (isBizRiv && (mSE.includes("louis42111") || mSN.includes("biz") || mSI.includes("biz")))
         );
@@ -948,7 +940,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         (userEmail && threadIdStr.includes(userEmail)) ||
         (emailPrefix && threadIdStr.includes(emailPrefix)) ||
         (userHandle && threadIdStr.includes(userHandle)) ||
-        (isAouisesmee && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("aouisemee") || threadIdStr.includes("aouisesme") || threadIdStr.includes("aouiseme") || threadIdStr.includes("4samet"))) ||
+        (isAouisesmee && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("aouisemee") || threadIdStr.includes("aouisesme") || threadIdStr.includes("aouiseme"))) ||
         (isAvtErtuop && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("avt"))) ||
         (isBizRiv && (threadIdStr.includes("louis42111") || threadIdStr.includes("biz")))
       );
@@ -981,7 +973,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             normK === userHandle ||
             normK === userName ||
             normK === userId ||
-            (isAouisesmee && (normK.includes("aouisesmee") || normK.includes("aouisemee") || normK.includes("aouisesme") || normK.includes("aouiseme") || normK.includes("4samet"))) ||
+            (isAouisesmee && (normK.includes("aouisesmee") || normK.includes("aouisemee") || normK.includes("aouisesme") || normK.includes("aouiseme"))) ||
             (isAvtErtuop && (normK.includes("avr6566gd") || normK.includes("avt"))) ||
             (isBizRiv && (normK.includes("louis42111") || normK.includes("biz")))
           );
@@ -1020,7 +1012,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           data.unreadCounts[userName] ??
           data.unreadCounts[userId] ??
           (isAvtErtuop ? (data.unreadCounts["avr6566gd@gmail.com"] ?? data.unreadCounts["avr6566gd"] ?? data.unreadCounts["avt ertuop"] ?? data.unreadCounts["avtertuop"] ?? data.unreadCounts["avt"]) : undefined) ??
-          (isAouisesmee ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisemee@gmail.com"] ?? data.unreadCounts["aouisesmee"] ?? data.unreadCounts["aouisemee"] ?? data.unreadCounts["4samet@gmail.com"] ?? data.unreadCounts["4samet"]) : undefined) ??
+          (isAouisesmee ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisemee@gmail.com"] ?? data.unreadCounts["aouisesmee"] ?? data.unreadCounts["aouisemee"]) : undefined) ??
           (isBizRiv ? (data.unreadCounts["louis42111@gmail.com"] ?? data.unreadCounts["louis42111"] ?? data.unreadCounts["biz riv"] ?? data.unreadCounts["bizriv"]) : undefined) ??
           0;
       } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
@@ -1039,7 +1031,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           (userHandle && (msgSenderId === userHandle || msgSenderName === userHandle)) ||
           (userName && msgSenderName === userName) ||
           (userId && msgSenderId === userId) ||
-          (isAouisesmee && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderEmail.includes("aouisesme") || msgSenderEmail.includes("aouiseme") || msgSenderEmail.includes("4samet") || msgSenderName.includes("aouisesmee") || msgSenderName.includes("aouisemee") || msgSenderName.includes("aouisesme") || msgSenderName.includes("aouiseme") || msgSenderName.includes("4samet"))) ||
+          (isAouisesmee && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderEmail.includes("aouisesme") || msgSenderEmail.includes("aouiseme") || msgSenderName.includes("aouisesmee") || msgSenderName.includes("aouisemee") || msgSenderName.includes("aouisesme") || msgSenderName.includes("aouiseme"))) ||
           (isAvtErtuop && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("avt") || msgSenderId.includes("avt"))) ||
           (isBizRiv && (msgSenderEmail.includes("louis42111") || msgSenderName.includes("biz") || msgSenderId.includes("biz")));
 
@@ -1397,8 +1389,8 @@ export async function sendChatMessage(
   if (recipientName.toLowerCase() === "biz riv" || recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientId.includes("biz")) {
     canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
   }
-  if (recipientName.toLowerCase().includes("aouisesmee") || recipientEmail === "aouisesmee@gmail.com" || recipientEmail.includes("4samet") || recipientId.includes("aouisesmee") || recipientId.includes("4samet")) {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "4samet@gmail.com", "4samet");
+  if (recipientName.toLowerCase().includes("aouisesmee") || recipientEmail === "aouisesmee@gmail.com" || recipientId.includes("aouisesmee")) {
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee");
   }
   if (userName.toLowerCase() === "avt ertuop" || userEmail === "avr6566gd@gmail.com" || userEmail.includes("avt") || userName.toLowerCase().includes("avt")) {
     canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
@@ -1406,8 +1398,8 @@ export async function sendChatMessage(
   if (userName.toLowerCase() === "biz riv" || userEmail === "louis42111@gmail.com" || userEmail.includes("biz") || userName.toLowerCase().includes("biz")) {
     canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
   }
-  if (userName.toLowerCase().includes("aouisesmee") || userEmail === "aouisesmee@gmail.com" || userEmail.includes("4samet") || userName.toLowerCase().includes("4samet")) {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee", "4samet@gmail.com", "4samet");
+  if (userName.toLowerCase().includes("aouisesmee") || userEmail === "aouisesmee@gmail.com") {
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee");
   }
 
   const participantsList = Array.from(
@@ -1481,11 +1473,9 @@ export async function sendChatMessage(
         "bizriv": nextUnreadCount,
         "biz": nextUnreadCount
       } : {}),
-      ...((recipientEmail.includes("aouisesmee") || recipientEmail.includes("4samet") || recipientName.toLowerCase().includes("aouisesmee") || recipientName.toLowerCase().includes("4samet")) ? {
+      ...((recipientEmail.includes("aouisesmee") || recipientName.toLowerCase().includes("aouisesmee")) ? {
         "aouisesmee@gmail.com": nextUnreadCount,
-        "aouisesmee": nextUnreadCount,
-        "4samet@gmail.com": nextUnreadCount,
-        "4samet": nextUnreadCount
+        "aouisesmee": nextUnreadCount
       } : {})
     }
   });
@@ -1563,7 +1553,7 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
   const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
 
   const isAvt = userEmail.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avr6566gd");
-  const isAou = userEmail.includes("aouisesmee") || userEmail.includes("4samet") || userName.includes("aouisesmee") || userName.includes("4samet") || userId.includes("aouisesmee");
+  const isAou = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userId.includes("aouisesmee");
   const isBiz = userEmail.includes("louis42111") || userName.includes("biz") || userHandle.includes("biz") || userId.includes("louis42111");
 
   const unreadCountsUpdates: Record<string, number> = {};
@@ -1582,8 +1572,6 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
   if (isAou) {
     unreadCountsUpdates["aouisesmee@gmail.com"] = 0;
     unreadCountsUpdates["aouisesmee"] = 0;
-    unreadCountsUpdates["4samet@gmail.com"] = 0;
-    unreadCountsUpdates["4samet"] = 0;
   }
   if (isBiz) {
     unreadCountsUpdates["louis42111@gmail.com"] = 0;

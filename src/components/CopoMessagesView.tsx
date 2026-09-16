@@ -242,7 +242,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const myHandle = ((currentUser as any)?.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
     const isAvtErtuop = myEmail.includes("avr6566gd") || myName === "avt ertuop" || myHandle === "avtertuop" || myUid.includes("avr6566gd") || myName.includes("avt");
-    const isAouisesmee = myEmail.includes("aouisesmee") || myName.includes("aouisesmee") || myHandle.includes("aouisesmee") || myUid.includes("aouisesmee") || myEmail.includes("4samet") || myName.includes("4samet");
+    const isAouisesmee = myEmail.includes("aouisesmee") || myName.includes("aouisesmee") || myHandle.includes("aouisesmee") || myUid.includes("aouisesmee");
     const isBizRiv = myEmail.includes("louis42111") || myName === "biz riv" || myHandle === "bizriv" || myUid.includes("louis42111") || myEmail.includes("biz");
 
     const isMe = (cand: { email?: string; name?: string; id?: string; handle?: string }) => {
@@ -256,7 +256,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       if (i && myUid && (i === myUid || i === `usr_${myUid}` || myUid === `usr_${i}`)) return true;
       if (h && myHandle && h === myHandle) return true;
 
-      if (isAouisesmee && (e.includes("aouisesmee") || e.includes("4samet") || n.includes("aouisesmee") || h.includes("aouisesmee"))) return true;
+      if (isAouisesmee && (e.includes("aouisesmee") || n.includes("aouisesmee") || h.includes("aouisesmee"))) return true;
       if (isAvtErtuop && (e.includes("avr6566gd") || n.includes("avt") || h.includes("avt"))) return true;
       if (isBizRiv && (e.includes("louis42111") || n.includes("biz") || h.includes("biz"))) return true;
 
@@ -269,8 +269,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const i = (cand.id || "").toLowerCase().trim();
       const h = (cand.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
-      // Admin account is private and must never appear as a public contact or recipient in user directories
-      if (e === "4samet@gmail.com" || n === "samet" || i === "usr_4samet_gmail_com" || i === "4samet-user-id") {
+      // Exclude admin emails from public directory
+      if (e === "admin@yoouz.com" || i === "admin-user-id") {
         return true;
       }
 

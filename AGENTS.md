@@ -19,6 +19,9 @@
 
 - **Dark Mode First**: The mobile PWA experience should default to a high-quality dark theme for all recording and search overlays.
 
+## Privacy & Email Policy
+- **Strict Private Email Protection**: Never expose, display, or hardcode private user emails (specifically `4samet@gmail.com` or any personal email) anywhere on public/open profiles, drawers, badges, or client-facing views. Claimed business profiles must NEVER display owner personal emails to the public. All public profiles and claim badges must remain private and anonymous (e.g. "Business Claimed" without exposing personal email addresses).
+
 ## Communication & Git Exports
 - **Mandatory Commit Message**: At the end of every response where changes were made to the codebase, the AI MUST append a clear, concise Git commit message summarizing the changes. Format it exactly as:
 **Commit Message:**

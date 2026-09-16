@@ -44,7 +44,6 @@ export function getCanonicalUserKey(candidate: UserIdentityCandidate): string {
     email.includes("aouisesme") ||
     email.includes("aouisemee") ||
     email.includes("aouiseme") ||
-    email.includes("4samet") ||
     name.includes("aouisesmee") ||
     name.includes("aouisemee") ||
     handle.includes("aouisesmee") ||
