@@ -1472,7 +1472,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     search_place_resolution: "6. Search & Domain Resolution",
                     ai_content_safety: "7. Gemini Vision Safety Moderation",
                     like_button_throttling: "8. Like Button Multi-Click Throttling",
-                    user_follow_sync: "9. Follow Button & Profile State Sync"
+                    user_follow_sync: "9. Follow Button & Profile State Sync",
+                    video_playback_controls: "10. Video Controls & Speed Rate Toggle",
+                    camera_recording_modal: "11. Front Camera Selfie & 60s Countdown",
+                    bookmarks_and_saved_places: "12. Bookmarks & Saved Collections",
+                    notifications_and_badges: "13. Notifications & Activity Feed",
+                    i18n_language_engine: "14. Multi-Language i18n Translation"
                   };
 
                   const icons: Record<string, string> = {
@@ -1484,7 +1489,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     search_place_resolution: "🔍",
                     ai_content_safety: "🛡️",
                     like_button_throttling: "❤️",
-                    user_follow_sync: "👤"
+                    user_follow_sync: "👤",
+                    video_playback_controls: "⏯️",
+                    camera_recording_modal: "📷",
+                    bookmarks_and_saved_places: "🔖",
+                    notifications_and_badges: "🔔",
+                    i18n_language_engine: "🌐"
                   };
 
                   return (

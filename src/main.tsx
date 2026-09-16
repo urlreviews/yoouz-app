@@ -28,6 +28,18 @@ if (typeof (window as any).__dismissAppSplash === 'function') {
 
 // Proactively purge ALL stale service workers and cache storage to completely prevent stale mobile code
 if (typeof window !== 'undefined') {
+  let lastClickedInfo = "";
+  window.addEventListener('click', (e) => {
+    try {
+      const target = e.target as HTMLElement;
+      if (target) {
+        const btn = target.closest('button, a, input, [role="button"]');
+        const text = (btn?.textContent || target.textContent || "").trim().slice(0, 50);
+        lastClickedInfo = `Clicked <${target.tagName.toLowerCase()}> "${text}" on ${window.location.pathname}`;
+      }
+    } catch(err) {}
+  }, true);
+
   window.addEventListener('error', (event) => {
     try {
       fetch("/api/system/report-error", {
@@ -36,7 +48,7 @@ if (typeof window !== 'undefined') {
         body: JSON.stringify({
           message: event.message || "Unhandled Window Error",
           stack: event.error?.stack || `${event.filename}:${event.lineno}:${event.colno}`,
-          component: "Window Global",
+          component: lastClickedInfo ? lastClickedInfo : "Window Global",
           category: "buttons",
           url: window.location.href,
           userAgent: navigator.userAgent
@@ -53,7 +65,7 @@ if (typeof window !== 'undefined') {
         body: JSON.stringify({
           message: event.reason?.message || String(event.reason) || "Unhandled Promise Rejection",
           stack: event.reason?.stack,
-          component: "Promise Rejection",
+          component: lastClickedInfo ? lastClickedInfo : "Promise Rejection",
           category: "network",
           url: window.location.href,
           userAgent: navigator.userAgent
@@ -61,7 +73,7 @@ if (typeof window !== 'undefined') {
       }).catch(() => {});
     } catch (e) {}
   });
-
+}
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
@@ -80,5 +92,4 @@ if (typeof window !== 'undefined') {
       }
     }).catch(() => {});
   }
-}
 
