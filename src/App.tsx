@@ -65,17 +65,10 @@ import { buildCommentTree } from "./utils/commentUtils";
 export function App() {
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
-    // Current App Version Timestamp (Updated: 2026-09-04-V33-ULTRA-FAST-EDGE-PREFETCH-AND-ZERO-LATENCY-PLAYBACK)
-    const APP_VERSION = "2026-09-04-V33-ULTRA-FAST-EDGE-PREFETCH-AND-ZERO-LATENCY-PLAYBACK"; 
+    // Current App Version Timestamp
+    const APP_VERSION = "2026-09-16-V34-CANONICAL-SEO-AND-SEARCH-INDEXING"; 
     try {
-      const savedVersion = localStorage.getItem("yoouz_app_version");
-      if (savedVersion && savedVersion !== APP_VERSION) {
-        localStorage.setItem("yoouz_app_version", APP_VERSION);
-        window.location.reload();
-        return;
-      } else {
-        localStorage.setItem("yoouz_app_version", APP_VERSION);
-      }
+      localStorage.setItem("yoouz_app_version", APP_VERSION);
       
       // Safety: Purge old service workers to prevent aggressive caching
       if ('serviceWorker' in navigator) {

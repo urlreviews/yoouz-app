@@ -2699,6 +2699,18 @@ async function startServer() {
   const PORT = 3000;
   const isProd = process.env.NODE_ENV === "production";
 
+  // Canonical Domain & Redirect Normalizer (SEO & Google Search Console Fix)
+  // Ensures www.yoouz.com permanently 301 redirects to canonical apex https://yoouz.com
+  app.use((req, res, next) => {
+    const rawHost = req.headers['x-forwarded-host'] || req.headers.host || '';
+    const host = String(rawHost).split(':')[0].toLowerCase();
+    
+    if (host === 'www.yoouz.com') {
+      return res.redirect(301, `https://yoouz.com${req.originalUrl || req.url}`);
+    }
+    next();
+  });
+
   // Global Cross-Origin Resource Sharing (CORS) Middleware
   // Ensures flawless API, asset, and video streaming across all domains (yoouz.com, preview, dev, and mobile webviews)
   app.use((req, res, next) => {
@@ -2797,27 +2809,6 @@ async function startServer() {
     res.setHeader("Content-Security-Policy", "frame-ancestors *;");
     res.setHeader("Access-Control-Allow-Origin", "*");
     next();
-  });
-
-  app.get("/robots.txt", (req, res) => {
-    const robotsPath = path.join(process.cwd(), "public", "robots.txt");
-    if (fs.existsSync(robotsPath)) {
-      res.setHeader("Content-Type", "text/plain; charset=utf-8");
-      res.setHeader("Cache-Control", "public, max-age=3600");
-      return res.sendFile(robotsPath);
-    }
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.send("User-agent: *\nAllow: /\nSitemap: https://yoouz.com/sitemap.xml\n");
-  });
-
-  app.get("/sitemap.xml", (req, res) => {
-    const sitemapPath = path.join(process.cwd(), "public", "sitemap.xml");
-    if (fs.existsSync(sitemapPath)) {
-      res.setHeader("Content-Type", "application/xml; charset=utf-8");
-      res.setHeader("Cache-Control", "public, max-age=3600");
-      return res.sendFile(sitemapPath);
-    }
-    res.status(404).send("Not found");
   });
 
   app.get(["/llms.txt", "/.well-known/llms.txt"], (req, res) => {
@@ -5845,9 +5836,17 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     return streamVideoHandler(req, res);
   });
 
-  // Direct video ID streaming fallback (e.g., /rev-1787229691190-rqku6 or /rev-1787229691190-rqku6.mp4)
+  // Direct video ID streaming fallback (e.g., /rev-1787229691190-rqku6.mp4 or binary video streaming)
   app.get(/^\/(rev-[a-zA-Z0-9_\-\.]+)/, (req, res, next) => {
     const matched = req.params[0];
+    const acceptsHtml = req.headers.accept?.includes("text/html");
+    const isExplicitVideo = matched.endsWith(".mp4") || matched.endsWith(".webm") || matched.endsWith(".mov");
+
+    // If browser/Googlebot is navigating to a review page expecting HTML, let it pass to SSR metadata + SPA handler
+    if (acceptsHtml && !isExplicitVideo) {
+      return next();
+    }
+
     if (matched && !matched.endsWith(".html") && !matched.endsWith(".js") && !matched.endsWith(".css")) {
       return streamVideoHandler(req, res, matched);
     }
@@ -14010,22 +14009,45 @@ Return JSON:
   });
 
   // SEO Robots.txt
+  app.get('/robots.txt', (_req: any, res: any) => {
+    const content = `User-agent: *
+Allow: /
 
-  app.get('/robots.txt', (req: any, res: any) => {
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
-    const content = `User-agent: *\nAllow: /\n\nUser-agent: GPTBot\nAllow: /\n\nUser-agent: Google-Extended\nAllow: /\n\nUser-agent: PerplexityBot\nAllow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nSitemap: ${protocol}://${host}/sitemap.xml\n`;
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-Video
+Allow: /
+
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+Sitemap: https://yoouz.com/sitemap.xml
+`;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.send(content);
   });
 
-  // SEO Dynamic XML Sitemap with Google Video Sitemap Extensions
-  app.get('/sitemap.xml', async (req: any, res: any) => {
+  // SEO Dynamic XML Sitemap with Google Video & Image Sitemap Extensions
+  app.get('/sitemap.xml', async (_req: any, res: any) => {
     try {
-      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-      const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
-      const baseUrl = `${protocol}://${host}`;
+      const baseUrl = 'https://yoouz.com';
       const now = new Date().toISOString().split('T')[0];
 
       // Fetch all places & video reviews
@@ -14052,8 +14074,6 @@ Return JSON:
         console.warn('Sitemap generation data fetch warning:', err);
       }
 
-        
-
       const escapeXml = (unsafe: string) => {
         return (unsafe || '')
           .replace(/&/g, '&amp;')
@@ -14073,30 +14093,52 @@ Return JSON:
     <lastmod>${now}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>${baseUrl}/icon-512.png</image:loc>
+      <image:title>Yoouz Official Brand Logo</image:title>
+      <image:caption>Authentic 60-Second Video Reviews</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>${baseUrl}/og-banner.png</image:loc>
+      <image:title>Yoouz Video Reviews Banner</image:title>
+      <image:caption>Real People. Real Reviews.</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>${baseUrl}/?tab=discover</loc>
+    <loc>${baseUrl}/search</loc>
     <lastmod>${now}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>${baseUrl}/?tab=map</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/?tab=clubs</loc>
+    <loc>${baseUrl}/business</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/discover</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/about</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/categories</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 `;
 
       // Add Places / Local Businesses
       allPlaces.forEach((p) => {
-        const placeUrl = `${baseUrl}/?place=${encodeURIComponent(p.id)}`;
+        const placeUrl = `${baseUrl}/place/${encodeURIComponent(p.id)}`;
         const photo = p.avatarUrl || p.bannerUrl || (p.photos && p.photos[0]) || '';
         xml += `  <url>
     <loc>${escapeXml(placeUrl)}</loc>
@@ -14105,7 +14147,7 @@ Return JSON:
     <priority>0.9</priority>
     ${photo ? `<image:image>
       <image:loc>${escapeXml(photo)}</image:loc>
-      <image:title>${escapeXml(p.name)}</image:title>
+      <image:title>${escapeXml(p.name || 'Business Listing')}</image:title>
       <image:caption>${escapeXml(p.description || `Authentic video reviews for ${p.name}`)}</image:caption>
     </image:image>` : ''}
   </url>\n`;
@@ -14136,7 +14178,7 @@ Return JSON:
       <video:rating>${(v.rating || 5).toFixed(1)}</video:rating>
       <video:publication_date>${now}</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
-      <video:uploader info="${baseUrl}/?creator=${encodeURIComponent(v.author?.handle || authorName)}">${escapeXml(authorName)}</video:uploader>
+      <video:uploader info="${baseUrl}/@${encodeURIComponent(v.author?.handle || authorName)}">${escapeXml(authorName)}</video:uploader>
     </video:video>
   </url>\n`;
       });
@@ -16538,22 +16580,27 @@ function injectOpenGraphTags(html: string, meta: any) {
     const safeTitle = escapeHtml(meta.title);
     const safeDesc = escapeHtml(meta.description);
     let safeUrl = escapeHtml(meta.url);
-    if (safeUrl.startsWith("https://yoouz.com") || safeUrl.startsWith("http://yoouz.com")) {
-      safeUrl = safeUrl.replace(/^https?:\/\/yoouz\.com/, "https://www.yoouz.com");
+    if (safeUrl.startsWith("https://www.yoouz.com") || safeUrl.startsWith("http://www.yoouz.com")) {
+      safeUrl = safeUrl.replace(/^https?:\/\/www\.yoouz\.com/, "https://yoouz.com");
+    } else if (safeUrl.startsWith("http://yoouz.com")) {
+      safeUrl = safeUrl.replace(/^http:\/\/yoouz\.com/, "https://yoouz.com");
     }
-    let rawImage = meta.imageUrl || "https://www.yoouz.com/og-banner.png?v=8";
+    let rawImage = meta.imageUrl || "https://yoouz.com/og-banner.png?v=8";
     if (rawImage.includes("localhost") || rawImage.startsWith("/") || rawImage.includes("yoouz.com/")) {
-      rawImage = rawImage.replace(/^https?:\/\/(www\.)?yoouz\.com/, "https://www.yoouz.com").replace(/^https?:\/\/[^\/]+/, "https://www.yoouz.com").replace(/^\//, "https://www.yoouz.com/");
+      rawImage = rawImage.replace(/^https?:\/\/(www\.)?yoouz\.com/, "https://yoouz.com").replace(/^https?:\/\/[^\/]+/, "https://yoouz.com").replace(/^\//, "https://yoouz.com/");
     }
     const safeImage = escapeHtml(rawImage);
     const safeKeywords = escapeHtml(meta.keywords || "");
     const safeType = escapeHtml(meta.type || "website");
     const safeTwitterCard = escapeHtml(meta.twitterCard || "summary_large_image");
 
-    let baseUrl = "https://www.yoouz.com";
+    let baseUrl = "https://yoouz.com";
     try {
       if (meta.url) {
         baseUrl = new URL(meta.url).origin;
+        if (baseUrl.includes("www.yoouz.com")) {
+          baseUrl = "https://yoouz.com";
+        }
       }
     } catch (e) {}
 
@@ -16630,19 +16677,23 @@ function injectOpenGraphTags(html: string, meta: any) {
   }
 
   async function resolveMetadataForRequest(req: any) {
+    const userAgent = req.headers['user-agent'] || '';
+    const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+    
     let host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
     let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+    if (!host.includes('localhost') && !host.includes('127.0.0.1') || isCrawler) {
       protocol = 'https';
+      host = 'yoouz.com';
     }
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = (host.includes('localhost') && !isCrawler) ? `${protocol}://${host}` : 'https://yoouz.com';
     const fullUrl = `${baseUrl}${req.originalUrl || req.url}`;
 
     const urlObj = new URL(fullUrl);
     const params = urlObj.searchParams;
     const pathname = urlObj.pathname;
     
-    const publicBase = 'https://www.yoouz.com';
+    const publicBase = 'https://yoouz.com';
     let title = "Yoouz - Authentic 60-Second Video Reviews";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.";
     let imageUrl = `${publicBase}/og-banner.png?v=8`;
@@ -16657,8 +16708,8 @@ function injectOpenGraphTags(html: string, meta: any) {
       robots = "noindex, nofollow";
     }
 
-    const videoIdMatch = pathname.match(/\/(?:video|review|r)\/([a-zA-Z0-9_-]+)/) || pathname.match(/\/(rev-[a-zA-Z0-9-]+)/);
-    const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9-]+)/);
+    const videoIdMatch = pathname.match(/\/(?:video|review|r)\/([a-zA-Z0-9_\-\.]+)/) || pathname.match(/\/(rev-[a-zA-Z0-9_\-\.]+)/);
+    const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9_\-\.]+)/);
     const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/);
@@ -17134,7 +17185,8 @@ function injectOpenGraphTags(html: string, meta: any) {
       const userAgent = req.headers['user-agent'] || '';
       const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
       const acceptsHtml = req.headers.accept?.includes('text/html') || req.headers.accept?.includes('*' + '/' + '*') || isCrawler;
-      const isStaticFile = req.path.includes('.') && !req.path.endsWith('.html');
+      const STATIC_EXTENSIONS = /\.(js|jsx|ts|tsx|css|png|jpg|jpeg|gif|svg|ico|json|map|woff|woff2|ttf|eot|webp|avif|mp4|webm|mov|ogg|mp3|wav|txt|xml|pdf|webmanifest)$/i;
+      const isStaticFile = STATIC_EXTENSIONS.test(req.path);
       
       if (req.method === 'GET' && !req.path.startsWith('/api') && !isStaticFile && acceptsHtml) {
         try {
