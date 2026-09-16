@@ -1478,7 +1478,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     bookmarks_and_saved_places: "12. Bookmarks & Saved Collections",
                     notifications_and_badges: "13. Notifications & Activity Feed",
                     i18n_language_engine: "14. Multi-Language i18n Translation",
-                    video_review_persistence_sync: "15. Review Submission & Business Page Sync Guard"
+                    video_review_persistence_sync: "15. Review Submission & Business Page Sync Guard",
+                    business_owner_claims: "16. Business Claims & Verified Badge Engine",
+                    place_drawer_directions: "17. Google Maps Directions & Contact Actions",
+                    user_profiles_avatars: "18. Reviewer Profile Drawers & Avatars",
+                    video_cascade_deletion: "19. Review Deletion & Cascade Storage Cleanup",
+                    business_pricing_stripe: "20. Business Pricing Plans & Checkout Modal",
+                    content_moderation_reporting: "21. Content Flagging & Moderation Queue",
+                    pwa_service_worker_cache: "22. PWA Cache Eviction & Service Worker",
+                    video_sharing_deep_links: "23. Deep Links, Share & Embed Generator",
+                    category_clubs_discovery: "24. Category Filters & Community Clubs"
                   };
 
                   const icons: Record<string, string> = {
@@ -1496,7 +1505,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     bookmarks_and_saved_places: "🔖",
                     notifications_and_badges: "🔔",
                     i18n_language_engine: "🌐",
-                    video_review_persistence_sync: "📹"
+                    video_review_persistence_sync: "📹",
+                    business_owner_claims: "🏷️",
+                    place_drawer_directions: "🗺️",
+                    user_profiles_avatars: "🖼️",
+                    video_cascade_deletion: "🗑️",
+                    business_pricing_stripe: "💳",
+                    content_moderation_reporting: "🚩",
+                    pwa_service_worker_cache: "📲",
+                    video_sharing_deep_links: "🔗",
+                    category_clubs_discovery: "🧭"
                   };
 
                   return (
