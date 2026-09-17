@@ -83,8 +83,6 @@ import {
   Truck,
   Upload
 } from 'lucide-react';
-import { CopoBusinessPricingModal } from './CopoBusinessPricingModal';
-import { CopoAgencyUpgradeModal } from './CopoAgencyUpgradeModal';
 import { CopoAgencyInquiryModal } from './CopoAgencyInquiryModal';
 import { VERIFIED_PARTNER_AGENCIES, getAgencyById, PartnerAgency } from '../data/agencies';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -725,17 +723,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return derivePlaceFromEmailOrDomain('yoouz.com', places) as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
   }, [places, selectedPlaceId, initialPlace, verifiedBusinessSession]);
 
-  // Plan & Pricing State (defaults to basic free plan unless upgraded)
-  const [currentPlan, setCurrentPlan] = useState<'none' | 'basic' | 'pro' | 'premium'>(() => {
-    const savedPlan = localStorage.getItem(`yoouz_plan_${currentPlace?.id}`);
-    if (savedPlan === 'pro' || savedPlan === 'premium' || savedPlan === 'basic') return savedPlan;
-    if ((currentPlace as any)?.subscriptionPlan && (currentPlace as any).subscriptionPlan !== 'free') {
-      return (currentPlace as any).subscriptionPlan;
-    }
-    return 'basic';
-  });
-  const [showPricingModal, setShowPricingModal] = useState(false);
-  
   // Claiming Flow State (for onboarding new business)
   const [isClaiming, setIsClaiming] = useState(initialMode === 'claim');
   const [claimSearchQuery, setClaimSearchQuery] = useState('');
@@ -745,20 +732,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setIsClaiming(initialMode === 'claim');
   }, [initialMode]);
 
-  // Sync plan if place changes
-  useEffect(() => {
-    if (currentPlace?.id) {
-      const savedPlan = localStorage.getItem(`yoouz_plan_${currentPlace.id}`);
-      if (savedPlan === 'pro' || savedPlan === 'premium' || savedPlan === 'basic') {
-        setCurrentPlan(savedPlan);
-      } else if ((currentPlace as any)?.subscriptionPlan && (currentPlace as any).subscriptionPlan !== 'free') {
-        setCurrentPlan((currentPlace as any).subscriptionPlan);
-      } else {
-        setCurrentPlan('basic');
-      }
-    }
-  }, [currentPlace?.id]);
-
   // Listen to business auth changes
   useEffect(() => {
     const handleAuthChange = (e: CustomEvent<BusinessSession>) => {
@@ -766,12 +739,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         setVerifiedBusinessSession(e.detail);
         if (e.detail.placeId) {
           setSelectedPlaceId(e.detail.placeId);
-          const savedPlan = localStorage.getItem(`yoouz_plan_${e.detail.placeId}`);
-          if (savedPlan === 'pro' || savedPlan === 'premium') {
-            setCurrentPlan(savedPlan);
-          } else {
-            setCurrentPlan('basic');
-          }
         }
       }
     };
@@ -1145,53 +1112,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   }, [weeklySchedule]);
 
-  // Agency Partner & Subscription Billing State
-  const [showAgencyUpgradeModal, setShowAgencyUpgradeModal] = useState(false);
-  const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'premium'>('pro');
+  // Agency Partner State
   const [assignedAgencyId, setAssignedAgencyId] = useState<string>(() => {
     return localStorage.getItem(`yoouz_agency_${currentPlace?.id}`) || 'agency_london_apex';
   });
   const assignedAgency = getAgencyById(assignedAgencyId);
 
-  const [billingEmail, setBillingEmail] = useState(() => verifiedBusinessSession?.businessEmail || (currentPlace as any).claimedByEmail || 'billing@domain.com');
-  const [billingContactPhone, setBillingContactPhone] = useState(() => localStorage.getItem(`yoouz_phone_${currentPlace?.id}`) || '+1 (555) 019-2831');
-  const [renewalDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  });
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [invoicesList, setInvoicesList] = useState<Array<{ id: string; date: string; amount: string; agency: string }>>(() => {
-    try {
-      const stored = localStorage.getItem(`yoouz_invoices_${currentPlace?.id}`);
-      if (stored) return JSON.parse(stored);
-    } catch (e) {}
-    if (currentPlan === 'pro') {
-      return [{ id: 'AGENCY-INV-1049', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), amount: '$149.00 USD', agency: assignedAgency.name }];
-    } else if (currentPlan === 'premium') {
-      return [{ id: 'AGENCY-INV-2099', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), amount: '$299.00 USD', agency: assignedAgency.name }];
-    }
-    return [];
-  });
-
-  // Sync agency and invoices when place or plan changes
+  // Sync agency when place changes
   useEffect(() => {
     if (currentPlace?.id) {
       const storedAgency = localStorage.getItem(`yoouz_agency_${currentPlace.id}`);
       if (storedAgency) {
         setAssignedAgencyId(storedAgency);
       }
-
-      try {
-        const storedInvoices = localStorage.getItem(`yoouz_invoices_${currentPlace.id}`);
-        if (storedInvoices) {
-          setInvoicesList(JSON.parse(storedInvoices));
-        } else if (currentPlan === 'basic') {
-          setInvoicesList([]);
-        }
-      } catch (e) {}
     }
-  }, [currentPlace?.id, currentPlan]);
+  }, [currentPlace?.id]);
 
   // Reviews Moderation & Reply State
   const [reviewsFilter, setReviewsFilter] = useState<'all' | '5' | '4' | '3'>('all');
@@ -1655,17 +1590,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   }, [selectedChartMetric, placeVideos, totalViews, totalReviews, avgRating]);
 
   // Handlers
-  const handleSelectPlan = (plan: 'basic' | 'pro' | 'premium') => {
-    if (plan === 'pro' || plan === 'premium') {
-      setTargetUpgradePlan(plan);
-      setShowPricingModal(false);
-      setShowAgencyUpgradeModal(true);
-    } else {
-      setCurrentPlan(plan);
-      setShowPricingModal(false);
-    }
-  };
-
   const handleSaveCta = () => {
     localStorage.setItem('demo_cta_type', ctaType);
     localStorage.setItem('demo_cta_url', ctaUrl);
@@ -1890,7 +1814,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
     { id: 'qr_invites' as BusinessTab, label: t('business.qrCode', 'QR Code'), icon: QrCode },
     { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
-    { id: 'billing' as BusinessTab, label: t('business.planAgencies', 'Plan & Agency'), icon: ShieldCheck },
+    { id: 'billing' as BusinessTab, label: t('business.agencyPartners', 'Agency Partners'), icon: ShieldCheck },
   ];
 
   // If user hasn't signed in / claimed a business or is currently claiming
@@ -1912,7 +1836,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         onSuccessAuth={(session) => {
           setVerifiedBusinessSession(session);
           setSelectedPlaceId(session.placeId);
-          setCurrentPlan('pro');
           setIsClaiming(false);
         }}
       />
@@ -2087,9 +2010,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                         </div>
                       </div>
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                        {t("business.proTierActive", "Pro Tier Active")}
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 text-[10px] font-bold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        {t("business.verifiedBusinessActive", "Verified Business (100% Free)")}
                       </div>
                     </div>
                     
@@ -2121,7 +2044,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
                     >
                       <ShieldCheck className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.planAgencies", "Plan & Agency")}</span>
+                      <span>{t("business.agencyPartners", "Agency Partners")}</span>
                     </button>
                     <button 
                       onClick={() => {
@@ -4075,126 +3998,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         />
       )}
 
-      {/* Statement Modal */}
-      {showReceiptModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-6 max-w-md w-full shadow-2xl relative space-y-4">
-            <button
-              onClick={() => setShowReceiptModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-800 text-zinc-200 hover:text-zinc-200 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            
-            <div className="flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-white" />
-              <h3 className="font-bold text-white text-base">Agency Partner B2B Statement</h3>
-            </div>
-
-            <div className="bg-zinc-950 p-4 rounded-2xl space-y-2 text-xs font-mono border border-zinc-800 text-zinc-200">
-              <div className="flex justify-between"><span>Statement Ref:</span><strong className="text-white">{invoicesList[0]?.id || 'AGENCY-INV-9021'}</strong></div>
-              <div className="flex justify-between"><span>Issuing Agency:</span><span className="text-white font-bold">{assignedAgency.name}</span></div>
-              <div className="flex justify-between"><span>Merchant:</span><span>{currentPlace.name}</span></div>
-              <div className="flex justify-between"><span>Plan Tier:</span><span>Yoouz {currentPlan === 'premium' ? 'Premium Elite' : currentPlan === 'basic' ? 'Basic' : 'Pro'} Plan</span></div>
-              <div className="flex justify-between"><span>Settlement:</span><span>Agency Direct Invoice / Wire</span></div>
-              <div className="flex justify-between pt-2 border-t border-zinc-800 text-sm font-sans font-black text-white">
-                <span>Total:</span><span>{currentPlan === 'premium' ? '$299.00' : currentPlan === 'basic' ? '$0.00' : '$149.00'} USD/mo</span>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                id="btn-print-receipt"
-                onClick={() => window.print()}
-                className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold border border-zinc-700 flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md"
-              >
-                <Printer className="w-4 h-4" /> Print / PDF
-              </button>
-              <button
-                type="button"
-                id="btn-close-receipt-modal"
-                onClick={() => setShowReceiptModal(false)}
-                className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl text-xs font-bold cursor-pointer transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pricing Modal */}
-      {showPricingModal && (
-        <CopoBusinessPricingModal
-          onClose={() => setShowPricingModal(false)}
-          onSelectPlan={(plan) => {
-            setShowPricingModal(false);
-            if (plan === 'basic') {
-              handleSelectPlan('basic');
-            } else {
-              setTargetUpgradePlan(plan);
-              setShowAgencyUpgradeModal(true);
-            }
-          }}
-          currentPlan={currentPlan}
-        />
-      )}
-
-      {/* Agency Partner Upgrade Modal */}
-      {showAgencyUpgradeModal && (
-        <CopoAgencyUpgradeModal
-          plan={targetUpgradePlan}
-          placeName={currentPlace.name}
-          placeCity={currentPlace.city}
-          initialAgencyId={assignedAgencyId}
-          onClose={() => setShowAgencyUpgradeModal(false)}
-          onSuccess={(details) => {
-            const nextPlan = targetUpgradePlan;
-            setCurrentPlan(nextPlan);
-            
-            if (details.agency) {
-              setAssignedAgencyId(details.agency.id);
-            }
-            if (details.email) setBillingEmail(details.email);
-            if (details.phone) setBillingContactPhone(details.phone);
-
-            const newInv = {
-              id: `AGENCY-INV-${Math.floor(1000 + Math.random() * 9000)}`,
-              date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-              amount: nextPlan === 'premium' ? '$299.00 USD' : '$149.00 USD',
-              agency: details.agency.name
-            };
-            const updatedInvoices = [newInv, ...invoicesList];
-            setInvoicesList(updatedInvoices);
-
-            // Persist locally for place
-            if (currentPlace?.id) {
-              localStorage.setItem(`yoouz_plan_${currentPlace.id}`, nextPlan);
-              localStorage.setItem(`yoouz_agency_${currentPlace.id}`, details.agency.id);
-              localStorage.setItem(`yoouz_phone_${currentPlace.id}`, details.phone);
-              localStorage.setItem(`yoouz_invoices_${currentPlace.id}`, JSON.stringify(updatedInvoices));
-            }
-
-            // Dispatch global event for Admin Panel synchronisation
-            window.dispatchEvent(new CustomEvent('copo_business_plan_updated', {
-              detail: {
-                placeId: currentPlace?.id,
-                plan: nextPlan,
-                agencyId: details.agency.id,
-                agencyName: details.agency.name,
-                email: details.email,
-                phone: details.phone,
-                amount: nextPlan === 'premium' ? 299 : 149,
-                transactionId: newInv.id
-              }
-            }));
-
-            setShowAgencyUpgradeModal(false);
-          }}
-        />
-      )}
-
       {/* Help & FAQ Modal */}
       {showHelpModal && (
         <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
@@ -4329,7 +4132,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         onSuccess={(session) => {
           setVerifiedBusinessSession(session);
           setSelectedPlaceId(session.placeId);
-          setCurrentPlan('pro');
           setIsClaiming(false);
         }} />
 
@@ -4378,7 +4180,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     { id: 'embed', label: 'Embed', icon: Code, desc: 'Embed video review carousel on website' },
                     { id: 'qr_invites', label: 'Invites', icon: QrCode, desc: 'Download table standees & send email invites' },
                     { id: 'profile', label: 'Profile', icon: Building2, desc: 'Manage operating hours, address & phone' },
-                    { id: 'billing', label: 'Billing', icon: CreditCard, desc: 'Manage plan, receipts & merchant tier' },
+                    { id: 'billing', label: 'Agency Partners', icon: ShieldCheck, desc: 'Agency partnerships & dedicated campaign support' },
                   ]
                     .filter(item => !commandQuery || item.label.toLowerCase().includes(commandQuery.toLowerCase()) || item.desc.toLowerCase().includes(commandQuery.toLowerCase()))
                     .map(item => (
@@ -4472,9 +4274,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       action: () => setIsClaimModalOpen(true)
                     },
                     {
-                      label: 'Upgrade / Manage Subscription Plan',
-                      icon: Shield,
-                      action: () => setShowPricingModal(true)
+                      label: 'Agency Partnerships & Inquiry Form',
+                      icon: Building2,
+                      action: () => setShowAgencyInquiryModal(true)
                     }
                   ]
                     .filter(a => !commandQuery || a.label.toLowerCase().includes(commandQuery.toLowerCase()))

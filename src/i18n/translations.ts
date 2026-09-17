@@ -201,7 +201,8 @@ export interface TranslationSchema {
     manage_profile: string;
     dashboard: string;
     analytics: string;
-    upgrade: string;
+    agencyPartners?: string;
+    upgrade?: string;
   };
   trustCenter?: {
     hub?: string;
@@ -709,7 +710,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       manage_profile: "Manage Business",
       dashboard: "Owner Dashboard",
       analytics: "Video Insights",
-      upgrade: "Upgrade Plan"
+      agencyPartners: "Agency Partners"
     },
     trustCenter: {
       hub: "Yoouz Hub",

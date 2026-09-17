@@ -51,7 +51,6 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "../utils/logoUtils";
-import { CopoBusinessPricingModal } from "./CopoBusinessPricingModal";
 import { CopoShareModal } from "./CopoShareModal";
 import { CopoBusinessClaimModal } from "./CopoBusinessClaimModal";
 import { SEOTags } from "./SEOTags";
@@ -107,7 +106,6 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [showUnclaimedChatModal, setShowUnclaimedChatModal] = useState(false);
   const [claimAsOwner, setClaimAsOwner] = useState(false);
-  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [bannerError, setBannerError] = useState(false);
   
   // Instantly load the banner and logo into memory BEFORE rendering the UI
@@ -947,14 +945,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     </a>
                   );
                 })()
-              ) : isUserOwner ? (
-                <button 
-                  onClick={() => setIsPricingModalOpen(true)}
-                  className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-sm rounded-xl border border-zinc-800 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                >
-                  <Lock className="w-4 h-4 text-zinc-200" />
-                  <span>Unlock Call-To-Action (CTA) Button</span>
-                </button>
               ) : null}
             </div>
           )}
@@ -1906,17 +1896,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         website={place.website || undefined}
         bannerUrl={place.bannerUrl || place.ogImage || undefined}
       />
-
-      {isPricingModalOpen && (
-        <CopoBusinessPricingModal 
-          currentPlan={place.subscriptionPlan || "free"}
-          onSelectPlan={(plan) => {
-            alert(`Redirecting to upgrade flow for ${plan} plan...`);
-            setIsPricingModalOpen(false);
-          }}
-          onClose={() => setIsPricingModalOpen(false)}
-        />
-      )}
 
       {/* Business Claim & Verification Modal via Resend */}
       <CopoBusinessClaimModal

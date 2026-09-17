@@ -18,7 +18,6 @@ import { CopoCreatorDrawer } from "./components/CopoCreatorDrawer";
 import { CopoCommentsDrawer } from "./components/CopoCommentsDrawer";
 import { CopoShareModal } from "./components/CopoShareModal";
 import { CopoCreateModal } from "./components/CopoCreateModal";
-import { CopoBusinessPricingModal } from "./components/CopoBusinessPricingModal";
 import { CopoBusinessDashboardView } from "./components/CopoBusinessDashboardView";
 import { CopoMoreView } from "./components/CopoMoreView";
 import { CopoBookmarksView } from "./components/CopoBookmarksView";
