@@ -487,8 +487,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const isUserOwner = Boolean(
     (currentUser &&
-      ((currentUser.role === "admin" || currentUser.role === "Super Admin") ||
-       (place.claimedByEmail && currentUser.email === place.claimedByEmail) ||
+      ((place.claimedByEmail && currentUser.email === place.claimedByEmail) ||
        (place.ownerId && currentUser.id === place.ownerId) ||
        (place.staffEmails && currentUser.email && place.staffEmails.includes(currentUser.email)))) ||
     (() => {

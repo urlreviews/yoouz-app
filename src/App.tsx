@@ -4877,7 +4877,10 @@ export function App() {
   const isUserOwnerOfCommentPlace = useMemo(() => {
     if (!activeCommentVideo) return false;
 
-    // 1. Check verified business session or claimed places storage
+    // 1. In consumer view (Home, Discover, Search), users browse and comment as personal consumer accounts
+    if (activeSection !== 'business') return false;
+
+    // 2. Check verified business session or claimed places storage for active business view
     try {
       const rawSession = localStorage.getItem('copo_business_verified_session');
       if (rawSession) {
@@ -4895,16 +4898,16 @@ export function App() {
       }
     } catch (e) {}
 
-    // 2. Check logged-in user credentials against place
+    // 3. Check logged-in user credentials against place (EXCLUDE admin role check!)
     if (!currentUser) return false;
     const place = places.find((p) => p.id === activeCommentVideo.placeId);
     if (!place) return false;
     return Boolean(
-      (currentUser.role === "admin" || currentUser.role === "Super Admin") ||
       (place.claimedByEmail && currentUser.email === place.claimedByEmail) ||
+      (place.ownerId && currentUser.id === place.ownerId) ||
       (place.staffEmails && currentUser.email && place.staffEmails.includes(currentUser.email))
     );
-  }, [activeCommentVideo, places, currentUser]);
+  }, [activeCommentVideo, places, currentUser, activeSection]);
 
   const seoTitle = useMemo(() => {
     if (activeSection === 'business') return 'Yoouz for Business - Claim Your Profile & Leverage Video Reviews';
