@@ -81,13 +81,16 @@ import {
   UserMinus,
   Package,
   Truck,
-  Upload
+  Upload,
+  Trash2,
+  Edit2
 } from 'lucide-react';
 import { CopoAgencyInquiryModal } from './CopoAgencyInquiryModal';
 import { VERIFIED_PARTNER_AGENCIES, getAgencyById, PartnerAgency } from '../data/agencies';
 import { QRCodeCanvas } from 'qrcode.react';
 import { normalizeVideoUrl, releaseVideoHardwareDecoder } from '../utils/videoUtils';
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from '../hooks/useGlobalMute';
+import { getPlaceLogoUrl } from '../utils/logoUtils';
 import { CopoBrandLogo } from './CopoBrandLogo';
 import { formatRecordedDate } from '../utils/dateUtils';
 import { CountrySelector } from './CountrySelector';
@@ -150,22 +153,36 @@ interface BusinessVideoPlayerModalProps {
   video: VideoReview;
   placeName: string;
   placeId: string;
+  placeLogoUrl?: string;
   websiteUrl?: string;
+  ownerReply?: string;
+  isPinned?: boolean;
+  isHidden?: boolean;
+  onTogglePin?: () => void;
+  onToggleHide?: () => void;
+  onSaveReply?: (text: string) => void;
+  onDeleteReply?: () => void;
   onClose: () => void;
   onOpenPublicListing: () => void;
   onOpenCreator?: (author: VideoAuthor) => void;
-  onReply?: (video: VideoReview) => void;
 }
 
 const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({ 
   video, 
   placeName,
   placeId,
+  placeLogoUrl,
   websiteUrl,
+  ownerReply = '',
+  isPinned = false,
+  isHidden = false,
+  onTogglePin,
+  onToggleHide,
+  onSaveReply,
+  onDeleteReply,
   onClose,
   onOpenPublicListing,
-  onOpenCreator,
-  onReply 
+  onOpenCreator
 }) => {
   const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -176,8 +193,18 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showCenterFeedback, setShowCenterFeedback] = useState(false);
+  const [isScrubbing, setIsScrubbing] = useState(false);
 
-  // Release hardware video decoders on unmount to prevent 3-5 video decoder freezing
+  // In-player Verified Owner Reply Drawer State
+  const [showReplyDrawer, setShowReplyDrawer] = useState(false);
+  const [replyInput, setReplyInput] = useState(ownerReply || video.ownerResponse?.text || '');
+  const [isSavingReply, setIsSavingReply] = useState(false);
+
+  useEffect(() => {
+    setReplyInput(ownerReply || video.ownerResponse?.text || '');
+  }, [ownerReply, video.ownerResponse]);
+
+  // Release hardware video decoders on unmount to prevent video decoder freezing
   useEffect(() => {
     return () => {
       if (videoRef.current) {
@@ -227,35 +254,41 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
           });
         }
       } else {
-        try {
-          el.pause();
-        } catch (e) {}
-        setIsPlaying(false);
+        // Auto-play preview immediately when modal opens
+        setHasStarted(true);
+        const p = el.play();
+        if (p !== undefined) {
+          p.then(() => {
+            setIsPlaying(true);
+            setIsActualMuted(el.muted);
+          }).catch(() => {
+            el.muted = true;
+            setIsActualMuted(true);
+            el.play().then(() => setIsPlaying(true)).catch(() => {});
+          });
+        }
       }
     }
   }, [hasStarted, videoSrc, isMuted, isSessionAudioUnlocked]);
 
-  const sanitizedWebsiteUrl = useMemo(() => {
-    const raw = websiteUrl || (video as any).websiteUrl || (video as any).placeWebsite;
-    if (!raw) return '';
-    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-    return `https://${raw}`;
-  }, [websiteUrl, (video as any).websiteUrl, (video as any).placeWebsite]);
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
-      } else if (e.key === ' ') {
+        if (showReplyDrawer) {
+          setShowReplyDrawer(false);
+        } else {
+          onClose();
+        }
+      } else if (e.key === ' ' && !showReplyDrawer) {
         e.preventDefault();
         togglePlay();
-      } else if (e.key.toLowerCase() === 'm') {
+      } else if (e.key.toLowerCase() === 'm' && !showReplyDrawer) {
         handleToggleMute();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, isMuted, isSessionAudioUnlocked, isActualMuted]);
+  }, [onClose, isMuted, isSessionAudioUnlocked, isActualMuted, showReplyDrawer]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -311,13 +344,7 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
   };
 
   const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
-    
-    // Safety catch: force pause if it should be stopped but is moving
-    if ((!hasStarted || !isPlaying) && !videoRef.current.paused) {
-      videoRef.current.pause();
-    }
-    
+    if (!videoRef.current || isScrubbing) return;
     setCurrentTime(videoRef.current.currentTime);
   };
 
@@ -329,9 +356,9 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
     const time = parseFloat(e.target.value);
+    setCurrentTime(time);
     if (videoRef.current) {
       videoRef.current.currentTime = time;
-      setCurrentTime(time);
     }
   };
 
@@ -342,29 +369,109 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const handleSaveVerifiedReply = () => {
+    const text = replyInput.trim();
+    if (!text) return;
+    setIsSavingReply(true);
+    if (onSaveReply) {
+      onSaveReply(text);
+    }
+    setTimeout(() => {
+      setIsSavingReply(false);
+      setShowReplyDrawer(false);
+    }, 200);
+  };
+
+  const handleDeleteVerifiedReply = () => {
+    if (onDeleteReply) {
+      onDeleteReply();
+    }
+    setReplyInput('');
+    setShowReplyDrawer(false);
+  };
+
+  const quickTemplates = [
+    "Thank you for visiting and for the wonderful review! 🙏",
+    "We're thrilled you enjoyed your experience with us! ✨",
+    "Thanks for the kind words! Hope to welcome you back soon! 🍽️",
+    "Thank you for sharing your feedback with the community! ⭐️"
+  ];
+
+  const hasExistingReply = Boolean(ownerReply || video.ownerResponse?.text);
+
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 select-none"
       onClick={onClose}
     >
       <div 
-        className="video-modal-content bg-zinc-900 rounded-3xl overflow-hidden max-w-sm w-full shadow-2xl relative border border-zinc-800 flex flex-col max-h-[92vh] text-white"
+        className="relative w-full max-w-[420px] aspect-9/16 max-h-[92vh] bg-black rounded-[28px] overflow-hidden shadow-[0_25px_70px_rgba(0,0,0,0.95)] border border-white/15 flex flex-col justify-end select-none group"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Header Bar */}
-        <div className="absolute top-3 inset-x-3 z-20 flex items-center justify-between pointer-events-none">
-          <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-bold text-white/90 border border-white/10 flex items-center gap-1.5 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Customer Review • {placeName}</span>
+        {/* Background / Main Video Element */}
+        <div 
+          className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black"
+          onClick={togglePlay}
+        >
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            playsInline
+            loop
+            disablePictureInPicture
+            controlsList="nofullscreen nodownload noremoteplayback"
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => setIsPlaying(false)}
+            className="w-full h-full object-cover select-none cursor-pointer"
+          />
+
+          {/* Central Play/Pause Animation Feedback */}
+          {(!isPlaying || showCenterFeedback) && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-15 animate-in zoom-in-75 duration-200">
+              <div className="w-16 h-16 rounded-full bg-black/70 backdrop-blur-md flex items-center justify-center text-white shadow-2xl border border-white/20">
+                {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Top Vignette & Top Header Bar */}
+        <div className="absolute top-0 inset-x-0 z-30 p-3 sm:p-4 bg-gradient-to-b from-black/80 via-black/30 to-transparent flex items-center justify-between pointer-events-none">
+          {/* Left: Top Business Header Badge */}
+          <div className="px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/15 flex items-center gap-2 text-white shadow-lg pointer-events-auto max-w-[calc(100%-110px)] transition-all">
+            {placeLogoUrl ? (
+              <img 
+                src={placeLogoUrl} 
+                alt={placeName} 
+                className="w-6 h-6 rounded-full object-cover shrink-0 ring-1 ring-white/20"
+                referrerPolicy="no-referrer"
+                onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.style.display = 'none'; }}
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-zinc-800 text-white font-bold flex items-center justify-center text-[10px] shrink-0 border border-white/20">
+                {placeName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span className="font-bold text-xs truncate text-white">{placeName}</span>
+            <BadgeCheck className="w-3.5 h-3.5 text-white shrink-0" />
+            <div className="flex items-center gap-0.5 text-amber-400 text-[11px] font-bold shrink-0 ml-0.5">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <span>{video.rating || 5}</span>
+            </div>
           </div>
+
+          {/* Right: Audio Toggle & Close */}
           <div className="flex items-center gap-2 pointer-events-auto">
             <button
               type="button"
               onClick={handleToggleMute}
-              className={`h-8 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
+              className={`h-8.5 rounded-full bg-black/65 hover:bg-black/90 active:scale-95 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-xl ${
                 isMuted || !isSessionAudioUnlocked || isActualMuted
-                  ? "px-2.5 gap-1.5 border-white/50 animate-pulse-subtle bg-black/90"
-                  : "w-8 border-white/35"
+                  ? "px-2.5 gap-1.5 border-white/40 animate-pulse-subtle bg-black/80"
+                  : "w-8.5 border-white/20"
               }`}
               title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
               aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
@@ -373,71 +480,194 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
                 <>
                   <VolumeX className="w-3.5 h-3.5 text-white stroke-[2.2] shrink-0" />
                   <span className="text-[10px] font-bold tracking-wide select-none whitespace-nowrap">
-                    Tap to Unmute
+                    Unmute
                   </span>
                 </>
               ) : (
                 <Volume2 className="w-3.5 h-3.5 text-white stroke-[2.2]" />
               )}
             </button>
+
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black transition-colors pointer-events-auto border border-white/10 cursor-pointer"
+              className="w-8.5 h-8.5 rounded-full bg-black/65 hover:bg-black/90 active:scale-95 backdrop-blur-2xl border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-xl"
               aria-label="Close review"
+              title="Close"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Video Canvas with Tap-to-Play/Pause */}
-        <div 
-          className="aspect-9/16 bg-black relative overflow-hidden group cursor-pointer max-h-[55vh]"
-          onClick={togglePlay}
-        >
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            playsInline
-            disablePictureInPicture
-            controlsList="nofullscreen nodownload noremoteplayback"
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onCanPlay={() => {
-              if (!hasStarted && videoRef.current) {
-                videoRef.current.pause();
-                setIsPlaying(false);
+        {/* Right-Side Action Rail (Yoouz Vertical Layout) */}
+        <div className="absolute right-3 bottom-24 z-30 flex flex-col items-center gap-3.5 pointer-events-auto">
+          {/* Creator Profile Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenCreator && video.author) {
+                onClose();
+                onOpenCreator(video.author);
               }
             }}
-            onPlaying={() => {
-              if (!hasStarted && videoRef.current) {
-                videoRef.current.pause();
-                setIsPlaying(false);
-              } else {
-                setIsPlaying(true);
-              }
-            }}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
-            className="w-full h-full object-cover select-none"
-          />
-
-          {/* Central Play/Pause Animation Feedback */}
-          {(!hasStarted || showCenterFeedback) && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 animate-in zoom-in-75 duration-300">
-              <div className="w-16 h-16 rounded-full bg-black/75 backdrop-blur-md flex items-center justify-center text-white shadow-2xl border border-white/20">
-                {isPlaying && hasStarted ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
+            className="flex flex-col items-center gap-1 group cursor-pointer"
+            title={`View ${video.author?.name || 'Creator'}'s Profile`}
+          >
+            <div className="relative">
+              {video.author?.avatar ? (
+                <img
+                  src={video.author.avatar}
+                  alt={video.author.name}
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-white/40 group-hover:ring-white group-hover:scale-105 transition-all shadow-xl"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-zinc-800 ring-2 ring-white/40 group-hover:ring-white text-white font-bold flex items-center justify-center text-xs shadow-xl transition-all">
+                  {(video.author?.name || 'C').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white text-black flex items-center justify-center shadow-md">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
               </div>
+            </div>
+            <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
+              Creator
+            </span>
+          </button>
+
+          {/* Reply as Owner Action Button */}
+          <button
+            type="button"
+            onClick={() => setShowReplyDrawer(prev => !prev)}
+            className="flex flex-col items-center gap-1 group cursor-pointer"
+            title="Reply as Verified Business Owner"
+          >
+            <div className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-xl active:scale-90 ${
+              hasExistingReply 
+                ? "bg-white text-black border-white ring-2 ring-white/30" 
+                : "bg-black/60 hover:bg-black/85 text-white border-white/20 group-hover:border-white/50"
+            }`}>
+              <MessageSquare className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
+              {hasExistingReply ? "Replied" : "Reply"}
+            </span>
+          </button>
+
+          {/* Pin to Website Widget Action */}
+          {onTogglePin && (
+            <button
+              type="button"
+              onClick={onTogglePin}
+              className="flex flex-col items-center gap-1 group cursor-pointer"
+              title={isPinned ? "Unpin from website widget" : "Pin to top of website widget (Max 3)"}
+            >
+              <div className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-xl active:scale-90 ${
+                isPinned 
+                  ? "bg-amber-400 text-black border-amber-300 ring-2 ring-amber-400/40" 
+                  : "bg-black/60 hover:bg-black/85 text-white border-white/20 group-hover:border-white/50"
+              }`}>
+                <Pin className={`w-4 h-4 ${isPinned ? "fill-current" : ""}`} />
+              </div>
+              <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
+                {isPinned ? "Pinned" : "Pin"}
+              </span>
+            </button>
+          )}
+
+          {/* Hide / Moderate Video Action */}
+          {onToggleHide && (
+            <button
+              type="button"
+              onClick={onToggleHide}
+              className="flex flex-col items-center gap-1 group cursor-pointer"
+              title={isHidden ? "Restore video to public profile" : "Hide video from public profile"}
+            >
+              <div className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-xl active:scale-90 ${
+                isHidden 
+                  ? "bg-red-500/80 text-white border-red-400" 
+                  : "bg-black/60 hover:bg-black/85 text-white border-white/20 group-hover:border-white/50"
+              }`}>
+                {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </div>
+              <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
+                {isHidden ? "Hidden" : "Public"}
+              </span>
+            </button>
+          )}
+
+          {/* View on Public Listing Action */}
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onOpenPublicListing();
+            }}
+            className="flex flex-col items-center gap-1 group cursor-pointer"
+            title="Open on Yoouz Public Listing"
+          >
+            <div className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-xl border border-white/20 group-hover:border-white/50 text-white flex items-center justify-center transition-all shadow-xl active:scale-90">
+              <ExternalLink className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
+              Listing
+            </span>
+          </button>
+        </div>
+
+        {/* Bottom Details & Caption Overlay */}
+        <div className="relative z-25 p-4 pb-2.5 pt-16 bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col gap-2 pointer-events-none">
+          {/* Reviewer Header Row */}
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <span className="font-extrabold text-sm text-white drop-shadow-md truncate">
+              By {video.author?.name || 'Customer'}
+            </span>
+            <BadgeCheck className="w-3.5 h-3.5 text-white shrink-0" />
+            <span className="text-white/60 text-xs font-semibold">•</span>
+            <span className="text-white/70 text-xs font-medium shrink-0">
+              {formatRecordedDate(video.recordedAt, video.createdAtMs)}
+            </span>
+          </div>
+
+          {/* Dish / Item Tag if present */}
+          {video.dishOrItem && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/10 backdrop-blur-md border border-white/15 text-white text-[11px] font-semibold w-fit pointer-events-auto">
+              <span>{video.dishOrItem}</span>
             </div>
           )}
 
-          {/* Custom Controls */}
-          <div 
-            className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/95 via-black/50 to-transparent p-3.5 pt-8 flex flex-col gap-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Scrubber Progress Slider */}
+          {/* Caption text */}
+          {video.caption && (
+            <p className="text-xs text-white/95 leading-relaxed font-medium line-clamp-3 drop-shadow-sm pointer-events-auto pr-12">
+              "{video.caption}"
+            </p>
+          )}
+
+          {/* Verified Owner Response Preview Card (if reply exists and drawer is closed) */}
+          {hasExistingReply && !showReplyDrawer && (
+            <div className="p-2.5 rounded-xl bg-zinc-900/90 backdrop-blur-md border border-white/15 text-white space-y-1 pointer-events-auto pr-10 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-white">
+                  <BadgeCheck className="w-3.5 h-3.5 text-white shrink-0" />
+                  <span className="truncate">Verified Response from {placeName}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowReplyDrawer(true)}
+                  className="text-[10px] text-zinc-300 hover:text-white font-semibold underline underline-offset-2 cursor-pointer shrink-0"
+                >
+                  Edit
+                </button>
+              </div>
+              <p className="text-xs text-zinc-200 font-normal italic line-clamp-2">
+                "{ownerReply || video.ownerResponse?.text}"
+              </p>
+            </div>
+          )}
+
+          {/* Scrubber Progress Bar & Time */}
+          <div className="pt-2 flex flex-col gap-1 pointer-events-auto">
             <div className="flex items-center gap-2">
               <input
                 type="range"
@@ -445,160 +675,112 @@ const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({
                 max={duration || 100}
                 step={0.1}
                 value={currentTime}
+                onMouseDown={() => setIsScrubbing(true)}
+                onMouseUp={() => setIsScrubbing(false)}
+                onTouchStart={() => setIsScrubbing(true)}
+                onTouchEnd={() => setIsScrubbing(false)}
                 onChange={handleSeek}
-                className="w-full h-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-white"
+                className="w-full h-1 bg-white/20 hover:bg-white/40 rounded-lg appearance-none cursor-pointer accent-white"
               />
             </div>
+            <div className="flex items-center justify-between text-[10px] font-mono text-white/70">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+        </div>
 
-            {/* Controls Row */}
-            <div className="flex items-center justify-between text-white text-xs font-semibold">
-              <div className="flex items-center gap-2.5">
-                <button
-                  onClick={togglePlay}
-                  className="p-1 rounded-full hover:bg-zinc-800/40 transition-colors cursor-pointer text-white"
-                  title={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
-                </button>
-                
-                <span className="font-mono text-[11px] text-zinc-200">
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
+        {/* Interactive In-Player Verified Owner Reply Drawer */}
+        {showReplyDrawer && (
+          <div className="absolute inset-x-0 bottom-0 z-40 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800 p-4 rounded-t-3xl shadow-2xl flex flex-col gap-3 animate-in slide-in-from-bottom duration-200 text-white max-h-[75%] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center">
+                  <BadgeCheck className="w-3.5 h-3.5 fill-black text-white" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs text-white">Verified Business Reply</h4>
+                  <p className="text-[10px] text-zinc-400">{placeName} (Owner)</p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowReplyDrawer(false)}
+                className="w-7 h-7 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Fast Templates */}
+            <div className="space-y-1">
+              <span className="text-[10px] text-zinc-400 font-semibold block">Quick Responses:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {quickTemplates.map((tpl, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setReplyInput(tpl)}
+                    className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-[10px] text-zinc-300 hover:text-white border border-zinc-800 transition-colors cursor-pointer text-left truncate max-w-full"
+                  >
+                    {tpl}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input Textarea */}
+            <div className="space-y-1">
+              <textarea
+                value={replyInput}
+                onChange={(e) => setReplyInput(e.target.value)}
+                placeholder={`Write a verified reply as ${placeName}...`}
+                rows={3}
+                maxLength={500}
+                className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white transition-colors resize-none"
+                autoFocus
+              />
+              <div className="flex justify-end text-[10px] text-zinc-500 font-mono">
+                {replyInput.length} / 500
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between gap-2 pt-1">
+              {hasExistingReply && onDeleteReply ? (
+                <button
+                  type="button"
+                  onClick={handleDeleteVerifiedReply}
+                  className="px-3 py-2 rounded-xl bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800/60 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
+              ) : (
+                <div />
+              )}
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleToggleMute}
-                  className={`h-7 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all cursor-pointer border flex items-center justify-center ${
-                    isMuted || !isSessionAudioUnlocked || isActualMuted
-                      ? "px-2.5 gap-1 border-white/40 animate-pulse-subtle"
-                      : "w-7 border-white/15"
-                  }`}
-                  title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute"}
+                  onClick={() => setShowReplyDrawer(false)}
+                  className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition-colors cursor-pointer"
                 >
-                  {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
-                    <>
-                      <VolumeX className="w-3.5 h-3.5 text-white shrink-0" />
-                      <span className="text-[10px] font-bold">Unmute</span>
-                    </>
-                  ) : (
-                    <Volume2 className="w-3.5 h-3.5 text-white" />
-                  )}
+                  Cancel
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Details & Actions Section */}
-        <div className="p-4 bg-zinc-900 border-t border-zinc-800 text-white space-y-3 select-none overflow-y-auto">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                if (onOpenCreator && video.author) {
-                  onClose();
-                  onOpenCreator(video.author);
-                }
-              }}
-              className="flex items-center gap-2.5 truncate text-left group cursor-pointer hover:opacity-85 transition-opacity min-w-0"
-              title={`View ${video.author?.name || 'Customer'}'s Profile`}
-            >
-              {video.author?.avatar ? (
-                <img
-                  src={video.author.avatar}
-                  alt={video.author.name}
-                  className="w-8 h-8 rounded-full object-cover ring-1 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
-                  referrerPolicy="no-referrer"
-                 onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-200 font-bold flex items-center justify-center text-xs group-hover:bg-zinc-700 group-hover:text-white transition-colors shrink-0">
-                  {(video.author?.name || 'C').charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="truncate min-w-0">
-                <span className="font-bold text-xs text-white group-hover:text-zinc-200 transition-colors block truncate">
-                  {video.author?.name || 'Customer Review'}
-                </span>
-                <span className="text-[10px] text-zinc-200 block truncate">
-                  {formatRecordedDate(video.recordedAt, video.createdAtMs)}
-                </span>
-              </div>
-            </button>
-            <div className="flex items-center gap-1 text-white text-xs font-bold shrink-0 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span>{video.rating || 5}</span>
-            </div>
-          </div>
-
-          {video.dishOrItem && (
-            <div className="text-[11px] text-zinc-200 font-semibold flex items-center gap-1">
-              <span>Reviewed Item:</span>
-              <span className="text-zinc-200">{video.dishOrItem}</span>
-            </div>
-          )}
-
-          {video.caption && (
-            <p className="text-xs text-zinc-200 line-clamp-2 leading-relaxed italic bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
-              "{video.caption}"
-            </p>
-          )}
-
-          {/* Official Owner Response Card if present */}
-          {video.ownerResponse && (
-            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 space-y-1 text-zinc-200">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-white">
-                <BadgeCheck className="w-3.5 h-3.5 text-white" />
-                <span>{t("businessDashboard.verifiedResponseFrom", "Verified Response from")} {placeName} ({t("businessDashboard.owner", "Owner")})</span>
-              </div>
-              <p className="text-xs text-zinc-200 font-medium italic">
-                "{video.ownerResponse.text}"
-              </p>
-            </div>
-          )}
-
-          {/* Quick Hub Actions */}
-          <div className="pt-2 border-t border-zinc-800 flex flex-col gap-2">
-            <button
-              onClick={() => {
-                onClose();
-                onOpenPublicListing();
-              }}
-              className="w-full py-2.5 px-3 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>{t("businessDashboard.viewOnPublicListing", "View On Yoouz Public Listing")}</span>
-            </button>
-
-            <div className="flex gap-2">
-              {sanitizedWebsiteUrl && (
-                <a
-                  href={sanitizedWebsiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 py-2 px-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-[11px] font-bold transition-colors flex items-center justify-center gap-1 border border-zinc-700"
-                >
-                  <Globe className="w-3.5 h-3.5 text-zinc-200" />
-                  <span className="truncate">{t("businessDashboard.visitWebsite", "Visit Website")}</span>
-                  <ExternalLink className="w-3 h-3 text-zinc-200 shrink-0" />
-                </a>
-              )}
-              {onReply && (
                 <button
-                  onClick={() => {
-                    onClose();
-                    onReply(video);
-                  }}
-                  className="flex-1 py-2 px-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-[11px] font-bold transition-colors flex items-center justify-center gap-1 border border-zinc-700 cursor-pointer"
+                  type="button"
+                  disabled={!replyInput.trim() || isSavingReply}
+                  onClick={handleSaveVerifiedReply}
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
                 >
-                  <MessageSquare className="w-3.5 h-3.5 text-white" />
-                  <span>{t("businessDashboard.replyAsOwner", "Reply as Owner")}</span>
+                  {isSavingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  <span>{hasExistingReply ? "Update Reply" : "Publish Reply"}</span>
                 </button>
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -1825,8 +2007,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setOwnerReplies(prev => ({ ...map, ...prev }));
   }, [placeVideos, selectedPlaceId]);
 
-  const handleSaveReply = (id: string) => {
-    const text = replyText.trim();
+  const handleSaveReply = (id: string, textOverride?: string) => {
+    const text = (textOverride !== undefined ? textOverride : replyText).trim();
     if (!text) return;
     setOwnerReplies(prev => ({ ...prev, [id]: text }));
     if (onSaveOwnerResponse) {
@@ -4063,13 +4245,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         </main>
       </div>
 
-      {/* Video Playback Modal (No Fullscreen) */}
+      {/* Video Playback Modal (Unified Official Yoouz Vertical Player) */}
       {activeVideoModal && (
         <BusinessVideoPlayerModal
           video={activeVideoModal}
           placeName={currentPlace.name}
           placeId={currentPlace.id}
+          placeLogoUrl={getPlaceLogoUrl(currentPlace)}
           websiteUrl={currentPlace.website || (currentPlace as any).url}
+          ownerReply={ownerReplies[activeVideoModal.id] || activeVideoModal.ownerResponse?.text}
+          isPinned={pinnedVideoIds.includes(activeVideoModal.id)}
+          isHidden={hiddenVideoIds.includes(activeVideoModal.id)}
+          onTogglePin={() => togglePinVideo(activeVideoModal.id)}
+          onToggleHide={() => toggleHideVideo(activeVideoModal.id)}
+          onSaveReply={(text) => handleSaveReply(activeVideoModal.id, text)}
+          onDeleteReply={() => handleDeleteReply(activeVideoModal.id)}
           onClose={() => setActiveVideoModal(null)}
           onOpenPublicListing={() => {
             if (onOpenPlaceDrawer) {
@@ -4079,10 +4269,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             }
           }}
           onOpenCreator={onOpenCreator}
-          onReply={(v) => {
-            setActiveTab('reviews');
-            setActiveReplyId(v.id);
-          }}
         />
       )}
 
