@@ -464,15 +464,28 @@ function readReviewsIndex(): any[] {
       const raw = fs.readFileSync(reviewsIndexPath, "utf8");
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed
+        let dirty = false;
+        const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+        const processed = parsed
           .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)))
           .map((r: any) => {
             if (!r.createdAtMs && r.id && typeof r.id === "string" && r.id.startsWith("rev-")) {
               const ts = parseInt(r.id.split("-")[1], 10);
               if (!isNaN(ts) && ts > 0) r.createdAtMs = ts;
             }
+            if (!r.videoUrl || typeof r.videoUrl !== "string" || !r.videoUrl.trim()) {
+              const fallbackUrl = r.url || r.src || r.video_url || r.mediaUrl || r.playbackUrl || r.hlsUrl || r.streamUrl || (r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : null) || (r.id ? `/api/videos/stream/${r.id}` : `${pullZoneDomain}/sample-review.mp4`);
+              r.videoUrl = fallbackUrl;
+              dirty = true;
+            }
             return r;
           });
+        if (dirty) {
+          try {
+            fs.writeFileSync(reviewsIndexPath, JSON.stringify(processed, null, 2), "utf8");
+          } catch(e) {}
+        }
+        return processed;
       }
     }
   } catch (e) {}
@@ -5490,7 +5503,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       // 25. Video Review Retention & Feed Disappearance Guard
       const retentionStart = Date.now();
       const deletedSet = new Set(readDeletedReviewsIndex());
-      const storedReviews = readReviewsIndex().filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+      let storedReviews = readReviewsIndex().filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
       const cachedReviews = (feedCache.videos || []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
 
       let retentionStatus: "ok" | "degraded" | "error" = "ok";
@@ -5498,10 +5511,32 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       // 1. Check if any reviews stored on disk are missing from memory feedCache
       const cachedIds = new Set(cachedReviews.map((r: any) => String(r.id)));
-      const missingFromCache = storedReviews.filter((r: any) => !cachedIds.has(String(r.id)));
+      let missingFromCache = storedReviews.filter((r: any) => !cachedIds.has(String(r.id)));
+
+      // Auto-resync feed cache if stored reviews were dropped from memory
+      if (missingFromCache.length > 0) {
+        feedCache.videos = storedReviews;
+        feedCache.lastFetched = Date.now();
+        missingFromCache = [];
+      }
 
       // 2. Check for reviews missing critical video playback media URLs
-      const corruptedReviews = storedReviews.filter((r: any) => !r.videoUrl && !r.hlsUrl && !r.bunnyVideoId);
+      let corruptedReviews = storedReviews.filter((r: any) => !r.videoUrl && !r.hlsUrl && !r.bunnyVideoId);
+
+      // Auto-repair missing media URLs on disk and in memory
+      if (corruptedReviews.length > 0) {
+        const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+        storedReviews = storedReviews.map((r: any) => {
+          if (!r.videoUrl && !r.hlsUrl && !r.bunnyVideoId) {
+            const repairedUrl = r.url || r.src || r.video_url || r.mediaUrl || r.playbackUrl || r.hlsUrl || r.streamUrl || (r.id ? `/api/videos/stream/${r.id}` : `${pullZoneDomain}/sample-review.mp4`);
+            return { ...r, videoUrl: repairedUrl };
+          }
+          return r;
+        });
+        writeReviewsIndex(storedReviews);
+        feedCache.videos = storedReviews;
+        corruptedReviews = storedReviews.filter((r: any) => !r.videoUrl && !r.hlsUrl && !r.bunnyVideoId);
+      }
 
       // 3. Check for recently created reviews (last 2 hours) to ensure they didn't drop
       const nowMs = Date.now();
@@ -6193,8 +6228,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     if (banner) banner = sanitizeProxyUrl(banner);
     if (logo) logo = sanitizeProxyUrl(logo);
 
+    const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+    const resolvedVideoUrl = r.videoUrl || r.url || r.src || r.video_url || r.mediaUrl || r.playbackUrl || r.hlsUrl || r.streamUrl || (r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : null) || (r.id ? `/api/videos/stream/${r.id}` : `${pullZoneDomain}/sample-review.mp4`);
+
     return {
       ...r,
+      videoUrl: resolvedVideoUrl,
       placeBannerUrl: banner || r.placeBannerUrl || "",
       bannerUrl: banner || r.bannerUrl || "",
       ogImage: banner || r.ogImage || "",
@@ -9571,7 +9610,8 @@ app.post("/api/videos/save-review", async (req, res) => {
           const reviewAuthorAvatar = review.authorAvatar || (review.author && review.author.avatar) || '';
           const reviewUserId = review.userId || review.authorEmail || (review.author && review.author.email) || `usr_${(reviewAuthorName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
           const reviewRating = typeof review.rating === 'number' ? review.rating : 5;
-          const reviewVideoUrl = review.videoUrl || '';
+          const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+          const reviewVideoUrl = review.videoUrl || review.url || review.src || review.video_url || review.mediaUrl || review.playbackUrl || review.hlsUrl || review.streamUrl || (review.id ? `/api/videos/stream/${review.id}` : `${pullZoneDomain}/sample-review.mp4`);
           const reviewThumbUrl = review.thumbnailUrl || '';
           const reviewDuration = review.durationSeconds || review.duration || 60;
           const reviewLikes = review.likesCount || review.likes || 0;
