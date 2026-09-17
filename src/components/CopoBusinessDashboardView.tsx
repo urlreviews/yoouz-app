@@ -577,16 +577,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       }
     }
 
-    const selectedCountry = Country.getAllCountries().find(countryObj => countryObj.name === c);
-    if (selectedCountry) {
-      const statesObj = State.getStatesOfCountry(selectedCountry.isoCode);
+    const countryObjMatch = Country.getAllCountries().find(countryObj => countryObj.name === c);
+    if (countryObjMatch) {
+      const statesObj = State.getStatesOfCountry(countryObjMatch.isoCode);
       if (statesObj.length > 0) {
         setStateRegion(statesObj[0].name);
-        const citiesObj = City.getCitiesOfState(selectedCountry.isoCode, statesObj[0].isoCode);
+        const citiesObj = City.getCitiesOfState(countryObjMatch.isoCode, statesObj[0].isoCode);
         setCity(citiesObj[0]?.name || '');
       } else {
         setStateRegion('');
-        const citiesObj = City.getCitiesOfCountry(selectedCountry.isoCode);
+        const citiesObj = City.getCitiesOfCountry(countryObjMatch.isoCode);
         setCity(citiesObj[0]?.name || '');
       }
     } else {
@@ -691,6 +691,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [bizVideoSubTab, setBizVideoSubTab] = useState<FeedSubTab>('discover');
   const [activeCommentVideo, setActiveCommentVideo] = useState<VideoReview | null>(null);
   const [activeReplyModalVideo, setActiveReplyModalVideo] = useState<VideoReview | null>(null);
+
+  // Filter videos strictly for this verified place
+  const placeVideos = useMemo(() => {
+    return videos.filter(v => 
+      v.placeId === selectedPlaceId || 
+      (v.placeName && currentPlace.name && v.placeName.toLowerCase() === currentPlace.name.toLowerCase())
+    );
+  }, [videos, selectedPlaceId, currentPlace.name]);
 
   const handleOpenBusinessVideo = useCallback((video: VideoReview) => {
     const idx = placeVideos.findIndex((v) => v.id === video.id);
@@ -857,14 +865,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Filter videos strictly for this verified place
-  const placeVideos = useMemo(() => {
-    return videos.filter(v => 
-      v.placeId === selectedPlaceId || 
-      (v.placeName && currentPlace.name && v.placeName.toLowerCase() === currentPlace.name.toLowerCase())
-    );
-  }, [videos, selectedPlaceId, currentPlace.name]);
 
   // Real Business Followers List derived from all registered users and community reviewers
   const businessFollowers = useMemo(() => {

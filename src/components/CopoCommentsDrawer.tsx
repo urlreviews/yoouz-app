@@ -33,7 +33,7 @@ interface CopoCommentsDrawerProps {
   currentUser?: UserProfile | null;
   onClose: () => void;
   onRequireAuth?: () => void;
-  onAddComment: (
+  onAddComment?: (
     videoId: string,
     text: string,
     options?: {
@@ -43,7 +43,7 @@ interface CopoCommentsDrawerProps {
       postAsCreator?: boolean;
     }
   ) => void;
-  onToggleCommentLike: (videoId: string, commentId: string, replyId?: string) => void;
+  onToggleCommentLike?: (videoId: string, commentId: string, replyId?: string) => void;
   onToggleCreatorHeart?: (videoId: string, commentId: string, replyId?: string) => void;
   onDeleteComment?: (videoId: string, commentId: string, replyId?: string) => void;
   onAddOwnerResponse?: (videoId: string, text: string) => void;
@@ -77,8 +77,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   currentUser,
   onClose,
   onRequireAuth,
-  onAddComment,
-  onToggleCommentLike,
+  onAddComment = () => {},
+  onToggleCommentLike = () => {},
   onToggleCreatorHeart,
   onDeleteComment,
   onAddOwnerResponse,
