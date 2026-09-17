@@ -1049,35 +1049,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </span>
           </div>
 
-          {/* Business Owner Reply Button (Right Rail) */}
-          {isBusinessOwnerView && (
-            <div className="flex flex-col items-center">
-              <button
-                id={`btn-owner-reply-rail-${video.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPauseVideo?.();
-                  if (onOpenOwnerReply) {
-                    onOpenOwnerReply(video);
-                  } else {
-                    onOpenComments(video);
-                  }
-                }}
-                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all active:scale-90 shadow-lg cursor-pointer ${
-                  video.ownerResponse
-                    ? "bg-white text-zinc-950 border-white hover:bg-zinc-200"
-                    : "bg-black/50 text-white border-white/20 hover:border-white/50 hover:bg-black/75"
-                }`}
-                title={video.ownerResponse ? "Edit business reply" : "Reply to review"}
-              >
-                <CornerDownLeft className="w-5 h-5 stroke-[2.2]" />
-              </button>
-              <span className="text-[11px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-                {video.ownerResponse ? "Replied" : "Reply"}
-              </span>
-            </div>
-          )}
-
           {/* Save / Bookmark */}
           <div className="flex flex-col items-center">
             <button
