@@ -676,7 +676,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       return verifiedBusinessSession.placeId;
     }
     if (initialPlace) return initialPlace.id;
-    return places.length > 0 ? places[0].id : 'place-custom';
+    const yoouzPlace = places.find(p => p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz'));
+    if (yoouzPlace) return yoouzPlace.id;
+    return places.length > 0 ? places[0].id : 'yoouz.com';
   });
 
   // Current selected place
@@ -719,6 +721,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     const found = places.find(p => p.id === selectedPlaceId);
     if (found) return found;
     if (initialPlace && initialPlace.id === selectedPlaceId) return initialPlace;
+    const yoouzPlace = places.find(p => p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz'));
+    if (yoouzPlace) return yoouzPlace;
     if (places.length > 0) return places[0];
     return derivePlaceFromEmailOrDomain('yoouz.com', places) as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
   }, [places, selectedPlaceId, initialPlace, verifiedBusinessSession]);
@@ -3841,7 +3845,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-black text-white tracking-tight">Plan & Agency Partnerships</h2>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Agency Partnerships & Verified Access</h2>
                     <p className="text-sm text-zinc-400 mt-1">Yoouz is 100% free for verified businesses. No subscription or billing required.</p>
                   </div>
                   <button

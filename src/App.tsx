@@ -85,13 +85,32 @@ export function App() {
 
   // 1. Core State with LocalStorage Persistence (Instant Logo & Banner Caching)
   const [places, setPlaces] = useState<Place[]>(() => {
+    const defaultYoouzPlace: Place = {
+      ...derivePlaceFromEmailOrDomain('yoouz.com', []),
+      id: 'yoouz.com',
+      name: 'Yoouz',
+      category: 'Video Reviews & Discovery Platform',
+      categoryType: 'all',
+      address: 'Global Headquarters • yoouz.com',
+      city: 'Brussels',
+      website: 'https://yoouz.com',
+      brandDomain: 'yoouz.com',
+      logoUrl: '/favicon.svg',
+      avatarUrl: '/favicon.svg',
+      isClaimed: true,
+      isVerified: true,
+      claimedByEmail: 'info@yoouz.com',
+      rating: 5.0,
+      totalReviews: 1
+    } as Place;
+
     try {
       const deletedPlaceIds = getDeletedPlaceIds();
       const cached = localStorage.getItem("yoouz_cached_places");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
-          return parsed
+          const list = parsed
             .filter((p: any) => !isPlaceDeleted(p, deletedPlaceIds))
             .map((p: any) => {
               // Strip any mock/fake/unsplash banners aggressively from the local cache on boot
@@ -107,10 +126,14 @@ export function App() {
                 totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0)
               };
             });
+          if (!list.some(p => p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz'))) {
+            list.unshift(defaultYoouzPlace);
+          }
+          return list;
         }
       }
     } catch(e){}
-    return [];
+    return [defaultYoouzPlace];
   });
   
   useEffect(() => {
