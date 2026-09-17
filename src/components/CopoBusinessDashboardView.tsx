@@ -2052,9 +2052,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <CopoBrandLogo
                     domain={currentPlace.website || currentPlace.id}
                     name={currentPlace.name}
-                    logoUrl={currentPlace.logoUrl}
-                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg border border-zinc-700/80 bg-zinc-950 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-1"
-                    imageClassName="w-full h-full object-contain"
+                    logoUrl={profileLogoUrl || currentPlace.logoUrl}
+                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg border border-zinc-700/80 bg-zinc-950 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5"
+                    imageClassName="w-full h-full object-contain rounded-md"
                     fallbackTextClassName="font-black text-[11px] text-white"
                   />
 
@@ -2072,9 +2072,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <CopoBrandLogo
                           domain={currentPlace.website || currentPlace.id}
                           name={currentPlace.name}
-                          logoUrl={currentPlace.logoUrl}
+                          logoUrl={profileLogoUrl || currentPlace.logoUrl}
                           className="w-8 h-8 rounded-xl border border-zinc-700/80 bg-zinc-950 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs p-1"
-                          imageClassName="w-full h-full object-contain"
+                          imageClassName="w-full h-full object-contain rounded-lg"
                           fallbackTextClassName="font-black text-xs text-white"
                         />
                         <div className="min-w-0 flex-1">
