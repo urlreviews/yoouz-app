@@ -937,7 +937,7 @@ export function getUserFromRegistry(key: string): any {
  * and never replaced with generic fallback initial icons or placeholder names.
  */
 export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null, handle?: string | null): string {
-  if (!avatarUrl || avatarUrl === "data:;" || avatarUrl.trim() === "") {
+  if (!avatarUrl || avatarUrl === "data:;" || avatarUrl.trim() === "" || avatarUrl.includes("/api/avatar")) {
     return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
   }
 
