@@ -3697,7 +3697,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         <CopoCommentsDrawer
           video={activeCommentVideo}
           currentUser={currentUser || effectiveUser}
+          isUserOwner={true}
+          placeName={currentPlace.name}
           onClose={() => setActiveCommentVideo(null)}
+          onAddOwnerResponse={async (vidId, text) => {
+            await handleSaveReply(vidId, text);
+          }}
+          onDeleteOwnerResponse={async (vidId) => {
+            await handleDeleteReply(vidId);
+          }}
         />
       )}
 

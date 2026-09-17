@@ -125,6 +125,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     authorAvatar?: string,
     isOwner?: boolean
   ) => {
+    if (isOwner) {
+      return placeLogoUrl || video?.placeLogoUrl || "/favicon.svg";
+    }
+
     const isSelf =
       Boolean(currentUser) &&
       ((authorName && (authorName.toLowerCase() === "you" || (currentUser?.name && authorName.toLowerCase() === currentUser.name.toLowerCase()))) ||
@@ -168,14 +172,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     );
   }, [currentUser, video]);
 
-  // Auto-set postAsOwner mode if user is owner and no owner response exists
+  // Auto-set postAsOwner mode if user is owner
   useEffect(() => {
-    if (isUserOwner && !video?.ownerResponse) {
+    if (isUserOwner) {
       setPostAsOwner(true);
-    } else {
-      setPostAsOwner(false);
     }
-  }, [isUserOwner, video?.id, video?.ownerResponse]);
+  }, [isUserOwner, video?.id]);
 
   // Close on Escape key
   useEffect(() => {
@@ -1017,45 +1019,61 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 </div>
               )}
 
-              {/* Verified Business Owner Toggle (When user has claimed the business) */}
+              {/* Verified Business Owner Identity Badge */}
               {isUserOwner && (
                 <div className="flex items-center justify-between bg-amber-950/40 border border-amber-800/60 rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="relative shrink-0">
+                      <img
+                        src={placeLogoUrl || video?.placeLogoUrl || "/favicon.svg"}
+                        alt={placeName || video.placeName}
+                        className="w-7 h-7 rounded-full object-cover border border-amber-500/60 bg-black"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/favicon.svg'; }}
+                      />
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-400 absolute -bottom-1 -right-1 bg-black rounded-full" />
+                    </div>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-bold text-amber-200 truncate">
-                        {t("business.verifiedOwner", "Verified Business Owner")}
+                      <p className="text-[11px] font-bold text-amber-200 truncate flex items-center gap-1.5">
+                        <span>{placeName || video.placeName}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase tracking-wide">
+                          Verified Owner
+                        </span>
                       </p>
                       <p className="text-[10px] text-amber-300/80 truncate">
-                        {placeName || video.placeName}
+                        {t("comments.respondingAsOfficialBusiness", "Posting official response as business owner")}
                       </p>
                     </div>
                   </div>
-                  <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={postAsOwner}
-                      onChange={(e) => setPostAsOwner(e.target.checked)}
-                      className="rounded text-amber-600 focus:ring-amber-500 border-amber-700 w-3.5 h-3.5 cursor-pointer"
-                    />
-                    <span className="text-[11px] font-extrabold text-amber-300">{t("comments.replyAsOwner", "Reply as Owner")}</span>
-                  </label>
                 </div>
               )}
 
               {/* Input Form */}
               <form onSubmit={handleSubmit} className="flex items-center gap-2.5">
-                {/* User Avatar */}
+                {/* Author Avatar (Uses Business Logo when posting as owner) */}
                 <img
-                  src={getAuthorAvatar(
-                    currentUser?.name || "You",
-                    currentUser?.email?.split("@")[0],
-                    currentUser?.avatar,
-                    postAsOwner
-                  )}
-                  alt={currentUser?.name || "You"}
-                  className="w-8 h-8 rounded-full object-cover border border-zinc-800 shrink-0"
-                 onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+                  src={
+                    (isUserOwner || postAsOwner)
+                      ? (placeLogoUrl || video?.placeLogoUrl || "/favicon.svg")
+                      : getAuthorAvatar(
+                          currentUser?.name || "You",
+                          currentUser?.email?.split("@")[0],
+                          currentUser?.avatar,
+                          false
+                        )
+                  }
+                  alt={(isUserOwner || postAsOwner) ? (placeName || video.placeName) : (currentUser?.name || "You")}
+                  className={`w-8 h-8 rounded-full object-cover shrink-0 ${
+                    (isUserOwner || postAsOwner) ? "border-2 border-amber-500/80 bg-black shadow-md" : "border border-zinc-800"
+                  }`}
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    if (isUserOwner || postAsOwner) {
+                      target.src = '/favicon.svg';
+                    } else if (!target.src.includes('/api/avatar')) {
+                      target.src = '/api/avatar?name=User&background=27272a&color=fff';
+                    }
+                  }}
+                /> 
                  <div className="relative flex-1">
                   <input
                     ref={inputRef}

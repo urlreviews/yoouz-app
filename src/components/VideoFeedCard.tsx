@@ -923,35 +923,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               </p>
             )}
 
-            {/* Business Owner Reply: Simple special Google-style button */}
-            {isBusinessOwnerView && (
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  id={`btn-owner-reply-bottom-${video.id}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPauseVideo?.();
-                    if (onOpenOwnerReply) {
-                      onOpenOwnerReply(video);
-                    } else {
-                      onOpenComments(video);
-                    }
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all active:scale-95 shadow-lg cursor-pointer"
-                  title="Reply to review"
-                >
-                  <CornerDownLeft className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>{video.ownerResponse ? "Edit business reply" : "Reply to review"}</span>
-                </button>
-                {video.ownerResponse && (
-                  <span className="text-[11px] text-zinc-300 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1 font-medium">
-                    <ShieldCheck className="w-3 h-3 text-white" />
-                    <span>Replied</span>
-                  </span>
-                )}
-              </div>
-            )}
           </div>
         </footer>
 
