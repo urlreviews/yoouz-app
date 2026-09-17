@@ -937,7 +937,7 @@ export function getUserFromRegistry(key: string): any {
  * and never replaced with generic fallback initial icons or placeholder names.
  */
 export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null, handle?: string | null): string {
-  if (!avatarUrl || avatarUrl === "data:;" || avatarUrl.trim() === "" || avatarUrl.includes("/api/avatar")) {
+  if (!avatarUrl || avatarUrl === "data:;" || avatarUrl.trim() === "" || avatarUrl.includes("/api/avatar") || avatarUrl.includes("ui-avatars") || avatarUrl.includes("dicebear")) {
     return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
   }
 
@@ -951,7 +951,30 @@ export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null
     return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
   }
 
-  // If it's already an SVG data URI or base64 image, return directly
+  // Handle SVG data URIs (e.g. legacy letter avatars stored in database, localStorage or currentUser)
+  if (avatarUrl.includes("data:image/svg+xml")) {
+    // If it's a letter avatar SVG or contains rx rounded corners / text, regenerate a clean full-square SVG
+    if (
+      avatarUrl.includes("rx%3D") ||
+      avatarUrl.includes("rx=") ||
+      avatarUrl.includes("%3Ctext") ||
+      avatarUrl.includes("<text") ||
+      avatarUrl.includes("letter") ||
+      avatarUrl.includes("%20rx")
+    ) {
+      return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
+    }
+
+    // Otherwise strip any rx attribute from raw SVG data URIs
+    return avatarUrl
+      .replace(/rx%3D%22\d+%22/gi, "")
+      .replace(/rx%3D%27\d+%27/gi, "")
+      .replace(/rx%3D\d+/gi, "")
+      .replace(/rx="\d+"/gi, "")
+      .replace(/rx='\d+'/gi, "");
+  }
+
+  // If it's another base64 image or photo
   if (avatarUrl.startsWith("data:image/")) {
     return avatarUrl;
   }
