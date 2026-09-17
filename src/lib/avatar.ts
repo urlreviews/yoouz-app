@@ -44,20 +44,33 @@ export function getFirstLetter(nameOrEmail?: string): string {
 
   // If email was passed, take part before @
   const cleanName = trimmed.includes('@') ? trimmed.split('@')[0] : trimmed;
+  // If handle was passed with leading @
+  const handleClean = cleanName.startsWith('@') ? cleanName.substring(1) : cleanName;
   // Grab the very first letter/character
-  const firstWord = cleanName.split(/\s+/)[0];
+  const firstWord = handleClean.split(/\s+/)[0];
   const char = firstWord.charAt(0);
   return char ? char.toUpperCase() : 'U';
 }
 
 /**
- * Returns Google-style palette style for a given name or seed
+ * Normalizes any user identifier (Name, Handle, Email) into a canonical seed string.
+ * E.g. "Ben Blue", "@benblue", "benblue", "ben.blue@gmail.com" all normalize to "benblue".
  */
-export function getAvatarColor(nameOrSeed?: string): { bg: string; text: string } {
-  let seed = (nameOrSeed || 'user').trim().toLowerCase();
-  if (seed.includes('@')) {
-    seed = seed.split('@')[0].trim();
-  }
+export function normalizeAvatarSeed(input?: string): string {
+  if (!input || typeof input !== 'string') return 'user';
+  let str = input.trim().toLowerCase();
+  if (str.startsWith('@')) str = str.substring(1);
+  if (str.includes('@')) str = str.split('@')[0].trim();
+  // Remove special characters / spaces so "Ben Blue" and "@benblue" map to identical seed "benblue"
+  const clean = str.replace(/[^a-z0-9]/g, '');
+  return clean || 'user';
+}
+
+/**
+ * Returns Google-style palette style for a given name, handle or seed
+ */
+export function getAvatarColor(nameOrSeed?: string, fallbackSeed?: string): { bg: string; text: string } {
+  const seed = normalizeAvatarSeed(nameOrSeed || fallbackSeed || 'user');
   const index = hashString(seed) % GOOGLE_AVATAR_PALETTE.length;
   return GOOGLE_AVATAR_PALETTE[index];
 }
@@ -68,7 +81,7 @@ export function getAvatarColor(nameOrSeed?: string): { bg: string; text: string 
  */
 export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string, isSquircle = true): string {
   const letter = getFirstLetter(nameOrSeed);
-  const color = getAvatarColor(nameOrSeed || colorSeed);
+  const color = getAvatarColor(nameOrSeed, colorSeed);
   const fontSize = Math.round(size * 0.52);
   const rx = isSquircle ? Math.round(size * 0.22) : Math.round(size / 2);
 

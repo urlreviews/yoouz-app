@@ -27,6 +27,8 @@ import { CopoBrandLogo } from "./CopoBrandLogo";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 import { buildCommentTree } from "../utils/commentUtils";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 interface CopoCommentsDrawerProps {
   video: VideoReview | null;
@@ -148,7 +150,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     }
 
     const nameToUse = formatCommentAuthorName(authorName, isOwner);
-    return `/api/avatar?name=${encodeURIComponent(nameToUse)}&background=1a73e8&color=fff&bold=true&size=128`;
+    return getSafeAvatarUrl(authorAvatar, nameToUse, authorHandle);
   };
 
   // Determine if logged-in user is the creator of this video review
