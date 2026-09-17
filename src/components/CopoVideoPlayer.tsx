@@ -70,6 +70,8 @@ interface CopoVideoPlayerProps {
   forceShowMenu?: boolean;
   hideFloatingNav?: boolean;
   isEmbed?: boolean;
+  isBusinessOwnerView?: boolean;
+  onOpenOwnerReply?: (video: VideoReview) => void;
 }
 
 const safeSetVolume = (v: HTMLVideoElement | null, vol: number = 1) => {
@@ -115,7 +117,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   unreadCount = 0,
   forceShowMenu = false,
   hideFloatingNav = false,
-  isEmbed = false
+  isEmbed = false,
+  isBusinessOwnerView = false,
+  onOpenOwnerReply
 }) => {
   const { t } = useLanguage();
   const currentVideo = videos[Math.min(currentIndex, Math.max(0, videos.length - 1))] || videos[0];
@@ -1439,6 +1443,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 unreadCount={unreadCount}
                 forceShowMenu={forceShowMenu}
                 isEmbed={isEmbed}
+                isBusinessOwnerView={isBusinessOwnerView}
+                onOpenOwnerReply={onOpenOwnerReply}
               />
             );
           })}

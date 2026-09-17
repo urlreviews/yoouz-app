@@ -264,9 +264,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 <Shield className="w-4 h-4 text-white" />
                 <span>{t("nav.business", "For Businesses & Owners")}</span>
               </div>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-800 text-white font-bold border border-zinc-700">
-                PRO
-              </span>
+              <ChevronRight className="w-4 h-4 text-zinc-400" />
             </button>
 
             {/* Language Selection Row */}

@@ -20,7 +20,9 @@ import {
   Loader2,
   MapPin,
   RotateCcw,
-  RotateCw
+  RotateCw,
+  CornerDownLeft,
+  ShieldCheck
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
@@ -83,6 +85,8 @@ interface VideoFeedCardProps {
   onScrubEnd?: (percent: number) => void;
   forceShowMenu?: boolean;
   isEmbed?: boolean;
+  isBusinessOwnerView?: boolean;
+  onOpenOwnerReply?: (video: VideoReview) => void;
 }
 
 export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
@@ -131,7 +135,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onSeekDelta,
   onScrubEnd,
   forceShowMenu = false,
-  isEmbed = false
+  isEmbed = false,
+  isBusinessOwnerView = false,
+  onOpenOwnerReply
 }) => {
   const { t } = useLanguage();
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
@@ -916,6 +922,36 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 })()}
               </p>
             )}
+
+            {/* Business Owner Reply: Simple special Google-style button */}
+            {isBusinessOwnerView && (
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  id={`btn-owner-reply-bottom-${video.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPauseVideo?.();
+                    if (onOpenOwnerReply) {
+                      onOpenOwnerReply(video);
+                    } else {
+                      onOpenComments(video);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all active:scale-95 shadow-lg cursor-pointer"
+                  title="Reply to review"
+                >
+                  <CornerDownLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>{video.ownerResponse ? "Edit business reply" : "Reply to review"}</span>
+                </button>
+                {video.ownerResponse && (
+                  <span className="text-[11px] text-zinc-300 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1 font-medium">
+                    <ShieldCheck className="w-3 h-3 text-white" />
+                    <span>Replied</span>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </footer>
 
@@ -1012,6 +1048,35 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               {(video.commentsCount || video.comments?.length || 0) + (video.ownerResponse ? 1 : 0)}
             </span>
           </div>
+
+          {/* Business Owner Reply Button (Right Rail) */}
+          {isBusinessOwnerView && (
+            <div className="flex flex-col items-center">
+              <button
+                id={`btn-owner-reply-rail-${video.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPauseVideo?.();
+                  if (onOpenOwnerReply) {
+                    onOpenOwnerReply(video);
+                  } else {
+                    onOpenComments(video);
+                  }
+                }}
+                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all active:scale-90 shadow-lg cursor-pointer ${
+                  video.ownerResponse
+                    ? "bg-white text-zinc-950 border-white hover:bg-zinc-200"
+                    : "bg-black/50 text-white border-white/20 hover:border-white/50 hover:bg-black/75"
+                }`}
+                title={video.ownerResponse ? "Edit business reply" : "Reply to review"}
+              >
+                <CornerDownLeft className="w-5 h-5 stroke-[2.2]" />
+              </button>
+              <span className="text-[11px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+                {video.ownerResponse ? "Replied" : "Reply"}
+              </span>
+            </div>
+          )}
 
           {/* Save / Bookmark */}
           <div className="flex flex-col items-center">

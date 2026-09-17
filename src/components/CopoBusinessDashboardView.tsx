@@ -1,6 +1,6 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { NavSection, Place, VideoReview, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from '../types';
+import { NavSection, Place, VideoReview, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES, FeedSubTab } from '../types';
 import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
 import { getDisplayViews, getPlaceSlug } from '../utils/placeUtils';
 import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
@@ -30,7 +30,6 @@ import {
   Loader2, 
   CreditCard, 
   Receipt, 
-  Sparkles,
   BarChart3,
   Video,
   Play,
@@ -92,6 +91,9 @@ import { normalizeVideoUrl, releaseVideoHardwareDecoder } from '../utils/videoUt
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from '../hooks/useGlobalMute';
 import { getPlaceLogoUrl } from '../utils/logoUtils';
 import { CopoBrandLogo } from './CopoBrandLogo';
+import { CopoVideoPlayer } from './CopoVideoPlayer';
+import { CopoCommentsDrawer } from './CopoCommentsDrawer';
+import { GoogleOwnerReplyModal } from './GoogleOwnerReplyModal';
 import { formatRecordedDate } from '../utils/dateUtils';
 import { CountrySelector } from './CountrySelector';
 import { SearchableComboSelector } from './SearchableComboSelector';
@@ -149,642 +151,6 @@ interface CopoBusinessDashboardViewProps {
 
 type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'billing';
 
-interface BusinessVideoPlayerModalProps {
-  video: VideoReview;
-  placeName: string;
-  placeId: string;
-  placeLogoUrl?: string;
-  websiteUrl?: string;
-  ownerReply?: string;
-  isPinned?: boolean;
-  isHidden?: boolean;
-  onTogglePin?: () => void;
-  onToggleHide?: () => void;
-  onSaveReply?: (text: string) => void;
-  onDeleteReply?: () => void;
-  onClose: () => void;
-  onOpenPublicListing: () => void;
-  onOpenCreator?: (author: VideoAuthor) => void;
-}
-
-const BusinessVideoPlayerModal: React.FC<BusinessVideoPlayerModalProps> = ({ 
-  video, 
-  placeName,
-  placeId,
-  placeLogoUrl,
-  websiteUrl,
-  ownerReply = '',
-  isPinned = false,
-  isHidden = false,
-  onTogglePin,
-  onToggleHide,
-  onSaveReply,
-  onDeleteReply,
-  onClose,
-  onOpenPublicListing,
-  onOpenCreator
-}) => {
-  const { t } = useLanguage();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
-  const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
-  const [isActualMuted, setIsActualMuted] = useState<boolean>(isMuted || !isSessionAudioUnlocked);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [showCenterFeedback, setShowCenterFeedback] = useState(false);
-  const [isScrubbing, setIsScrubbing] = useState(false);
-
-  // In-player Verified Owner Reply Drawer State
-  const [showReplyDrawer, setShowReplyDrawer] = useState(false);
-  const [replyInput, setReplyInput] = useState(ownerReply || video.ownerResponse?.text || '');
-  const [isSavingReply, setIsSavingReply] = useState(false);
-
-  useEffect(() => {
-    setReplyInput(ownerReply || video.ownerResponse?.text || '');
-  }, [ownerReply, video.ownerResponse]);
-
-  // Release hardware video decoders on unmount to prevent video decoder freezing
-  useEffect(() => {
-    return () => {
-      if (videoRef.current) {
-        releaseVideoHardwareDecoder(videoRef.current);
-      }
-    };
-  }, []);
-
-  const videoSrc = useMemo(() => {
-    return normalizeVideoUrl(video.videoUrl);
-  }, [video.videoUrl]);
-
-  useEffect(() => {
-    const el = videoRef.current;
-    if (el) {
-      const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
-      el.muted = shouldBeMuted;
-      if (!shouldBeMuted) {
-        try { el.volume = 1; } catch {}
-      }
-      if (hasStarted) {
-        const p = el.play();
-        if (p !== undefined) {
-          p.then(() => {
-            setIsPlaying(true);
-            setIsActualMuted(el.muted);
-          }).catch(() => {
-            el.muted = true;
-            setIsActualMuted(true);
-            const retry = el.play();
-            if (retry !== undefined) {
-              retry.then(() => {
-                setIsPlaying(true);
-                if (isSessionAudioUnlocked && !isMuted) {
-                  const restoreAudio = () => {
-                    if (videoRef.current) {
-                      videoRef.current.muted = false;
-                      try { videoRef.current.volume = 1; } catch {}
-                      setIsActualMuted(false);
-                    }
-                  };
-                  window.addEventListener("touchstart", restoreAudio, { once: true, passive: true });
-                  window.addEventListener("click", restoreAudio, { once: true, passive: true });
-                }
-              }).catch(() => {});
-            }
-          });
-        }
-      } else {
-        // Auto-play preview immediately when modal opens
-        setHasStarted(true);
-        const p = el.play();
-        if (p !== undefined) {
-          p.then(() => {
-            setIsPlaying(true);
-            setIsActualMuted(el.muted);
-          }).catch(() => {
-            el.muted = true;
-            setIsActualMuted(true);
-            el.play().then(() => setIsPlaying(true)).catch(() => {});
-          });
-        }
-      }
-    }
-  }, [hasStarted, videoSrc, isMuted, isSessionAudioUnlocked]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showReplyDrawer) {
-          setShowReplyDrawer(false);
-        } else {
-          onClose();
-        }
-      } else if (e.key === ' ' && !showReplyDrawer) {
-        e.preventDefault();
-        togglePlay();
-      } else if (e.key.toLowerCase() === 'm' && !showReplyDrawer) {
-        handleToggleMute();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, isMuted, isSessionAudioUnlocked, isActualMuted, showReplyDrawer]);
-
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (!hasStarted) {
-      setHasStarted(true);
-    }
-    if (videoRef.current.paused) {
-      const shouldBeMuted = isMuted || !isSessionAudioUnlocked;
-      videoRef.current.muted = shouldBeMuted;
-      if (!shouldBeMuted) {
-        try { videoRef.current.volume = 1; } catch {}
-      }
-      videoRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-          setIsActualMuted(videoRef.current?.muted ?? true);
-        })
-        .catch(() => {
-          if (videoRef.current) {
-            videoRef.current.muted = true;
-            setIsActualMuted(true);
-            videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-          }
-        });
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-    setShowCenterFeedback(true);
-    setTimeout(() => setShowCenterFeedback(false), 500);
-  };
-
-  const handleToggleMute = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    ensureSharedAudioContextUnlocked();
-
-    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted;
-    if (isCurrentlyMuted) {
-      unlockAudioSession();
-      setIsActualMuted(false);
-      if (videoRef.current) {
-        videoRef.current.muted = false;
-        try { videoRef.current.volume = 1; } catch {}
-      }
-    } else {
-      setIsMuted(true);
-      setIsActualMuted(true);
-      if (videoRef.current) {
-        videoRef.current.muted = true;
-      }
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (!videoRef.current || isScrubbing) return;
-    setCurrentTime(videoRef.current.currentTime);
-  };
-
-  const handleLoadedMetadata = () => {
-    if (!videoRef.current) return;
-    setDuration(videoRef.current.duration || 0);
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    const time = parseFloat(e.target.value);
-    setCurrentTime(time);
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-    }
-  };
-
-  const formatTime = (secs: number) => {
-    if (isNaN(secs) || secs < 0) return '0:00';
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
-  const handleSaveVerifiedReply = () => {
-    const text = replyInput.trim();
-    if (!text) return;
-    setIsSavingReply(true);
-    if (onSaveReply) {
-      onSaveReply(text);
-    }
-    setTimeout(() => {
-      setIsSavingReply(false);
-      setShowReplyDrawer(false);
-    }, 200);
-  };
-
-  const handleDeleteVerifiedReply = () => {
-    if (onDeleteReply) {
-      onDeleteReply();
-    }
-    setReplyInput('');
-    setShowReplyDrawer(false);
-  };
-
-  const quickTemplates = [
-    "Thank you for visiting and for the wonderful review! 🙏",
-    "We're thrilled you enjoyed your experience with us! ✨",
-    "Thanks for the kind words! Hope to welcome you back soon! 🍽️",
-    "Thank you for sharing your feedback with the community! ⭐️"
-  ];
-
-  const hasExistingReply = Boolean(ownerReply || video.ownerResponse?.text);
-
-  return (
-    <div 
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 select-none"
-      onClick={onClose}
-    >
-      <div 
-        className="relative w-full max-w-[420px] aspect-9/16 max-h-[92vh] bg-black rounded-[28px] overflow-hidden shadow-[0_25px_70px_rgba(0,0,0,0.95)] border border-white/15 flex flex-col justify-end select-none group"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Background / Main Video Element */}
-        <div 
-          className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black"
-          onClick={togglePlay}
-        >
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            playsInline
-            loop
-            disablePictureInPicture
-            controlsList="nofullscreen nodownload noremoteplayback"
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
-            className="w-full h-full object-cover select-none cursor-pointer"
-          />
-
-          {/* Central Play/Pause Animation Feedback */}
-          {(!isPlaying || showCenterFeedback) && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-15 animate-in zoom-in-75 duration-200">
-              <div className="w-16 h-16 rounded-full bg-black/70 backdrop-blur-md flex items-center justify-center text-white shadow-2xl border border-white/20">
-                {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Top Vignette & Top Header Bar */}
-        <div className="absolute top-0 inset-x-0 z-30 p-3 sm:p-4 bg-gradient-to-b from-black/80 via-black/30 to-transparent flex items-center justify-between pointer-events-none">
-          {/* Left: Top Business Header Badge */}
-          <div className="px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/15 flex items-center gap-2 text-white shadow-lg pointer-events-auto max-w-[calc(100%-110px)] transition-all">
-            {placeLogoUrl ? (
-              <img 
-                src={placeLogoUrl} 
-                alt={placeName} 
-                className="w-6 h-6 rounded-full object-cover shrink-0 ring-1 ring-white/20"
-                referrerPolicy="no-referrer"
-                onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.style.display = 'none'; }}
-              />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-zinc-800 text-white font-bold flex items-center justify-center text-[10px] shrink-0 border border-white/20">
-                {placeName.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="font-bold text-xs truncate text-white">{placeName}</span>
-            <BadgeCheck className="w-3.5 h-3.5 text-white shrink-0" />
-            <div className="flex items-center gap-0.5 text-amber-400 text-[11px] font-bold shrink-0 ml-0.5">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-              <span>{video.rating || 5}</span>
-            </div>
-          </div>
-
-          {/* Right: Audio Toggle & Close */}
-          <div className="flex items-center gap-2 pointer-events-auto">
-            <button
-              type="button"
-              onClick={handleToggleMute}
-              className={`h-8.5 rounded-full bg-black/65 hover:bg-black/90 active:scale-95 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-xl ${
-                isMuted || !isSessionAudioUnlocked || isActualMuted
-                  ? "px-2.5 gap-1.5 border-white/40 animate-pulse-subtle bg-black/80"
-                  : "w-8.5 border-white/20"
-              }`}
-              title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
-              aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
-            >
-              {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
-                <>
-                  <VolumeX className="w-3.5 h-3.5 text-white stroke-[2.2] shrink-0" />
-                  <span className="text-[10px] font-bold tracking-wide select-none whitespace-nowrap">
-                    Unmute
-                  </span>
-                </>
-              ) : (
-                <Volume2 className="w-3.5 h-3.5 text-white stroke-[2.2]" />
-              )}
-            </button>
-
-            <button
-              onClick={onClose}
-              className="w-8.5 h-8.5 rounded-full bg-black/65 hover:bg-black/90 active:scale-95 backdrop-blur-2xl border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-xl"
-              aria-label="Close review"
-              title="Close"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Right-Side Action Rail (Yoouz Vertical Layout) */}
-        <div className="absolute right-3 bottom-24 z-30 flex flex-col items-center gap-3.5 pointer-events-auto">
-          {/* Creator Profile Button */}
-          <button
-            type="button"
-            onClick={() => {
-              if (onOpenCreator && video.author) {
-                onClose();
-                onOpenCreator(video.author);
-              }
-            }}
-            className="flex flex-col items-center gap-1 group cursor-pointer"
-            title={`View ${video.author?.name || 'Creator'}'s Profile`}
-          >
-            <div className="relative">
-              {video.author?.avatar ? (
-                <img
-                  src={video.author.avatar}
-                  alt={video.author.name}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-white/40 group-hover:ring-white group-hover:scale-105 transition-all shadow-xl"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-zinc-800 ring-2 ring-white/40 group-hover:ring-white text-white font-bold flex items-center justify-center text-xs shadow-xl transition-all">
-                  {(video.author?.name || 'C').charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white text-black flex items-center justify-center shadow-md">
-                <Check className="w-2.5 h-2.5 stroke-[3]" />
-              </div>
-            </div>
-            <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
-              Creator
-            </span>
-          </button>
-
-          {/* Reply as Owner Action Button */}
-          <button
-            type="button"
-            onClick={() => setShowReplyDrawer(prev => !prev)}
-            className="flex flex-col items-center gap-1 group cursor-pointer"
-            title="Reply as Verified Business Owner"
-          >
-            <div className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-xl active:scale-90 ${
-              hasExistingReply 
-                ? "bg-white text-black border-white ring-2 ring-white/30" 
-                : "bg-black/60 hover:bg-black/85 text-white border-white/20 group-hover:border-white/50"
-            }`}>
-              <MessageSquare className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
-              {hasExistingReply ? "Replied" : "Reply"}
-            </span>
-          </button>
-
-          {/* Pin to Website Widget Action */}
-          {onTogglePin && (
-            <button
-              type="button"
-              onClick={onTogglePin}
-              className="flex flex-col items-center gap-1 group cursor-pointer"
-              title={isPinned ? "Unpin from website widget" : "Pin to top of website widget (Max 3)"}
-            >
-              <div className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-xl active:scale-90 ${
-                isPinned 
-                  ? "bg-amber-400 text-black border-amber-300 ring-2 ring-amber-400/40" 
-                  : "bg-black/60 hover:bg-black/85 text-white border-white/20 group-hover:border-white/50"
-              }`}>
-                <Pin className={`w-4 h-4 ${isPinned ? "fill-current" : ""}`} />
-              </div>
-              <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
-                {isPinned ? "Pinned" : "Pin"}
-              </span>
-            </button>
-          )}
-
-          {/* Hide / Moderate Video Action */}
-          {onToggleHide && (
-            <button
-              type="button"
-              onClick={onToggleHide}
-              className="flex flex-col items-center gap-1 group cursor-pointer"
-              title={isHidden ? "Restore video to public profile" : "Hide video from public profile"}
-            >
-              <div className={`w-10 h-10 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-xl active:scale-90 ${
-                isHidden 
-                  ? "bg-red-500/80 text-white border-red-400" 
-                  : "bg-black/60 hover:bg-black/85 text-white border-white/20 group-hover:border-white/50"
-              }`}>
-                {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </div>
-              <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
-                {isHidden ? "Hidden" : "Public"}
-              </span>
-            </button>
-          )}
-
-          {/* View on Public Listing Action */}
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              onOpenPublicListing();
-            }}
-            className="flex flex-col items-center gap-1 group cursor-pointer"
-            title="Open on Yoouz Public Listing"
-          >
-            <div className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-xl border border-white/20 group-hover:border-white/50 text-white flex items-center justify-center transition-all shadow-xl active:scale-90">
-              <ExternalLink className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-bold text-white/90 drop-shadow-md tracking-wide">
-              Listing
-            </span>
-          </button>
-        </div>
-
-        {/* Bottom Details & Caption Overlay */}
-        <div className="relative z-25 p-4 pb-2.5 pt-16 bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col gap-2 pointer-events-none">
-          {/* Reviewer Header Row */}
-          <div className="flex items-center gap-2 pointer-events-auto">
-            <span className="font-extrabold text-sm text-white drop-shadow-md truncate">
-              By {video.author?.name || 'Customer'}
-            </span>
-            <BadgeCheck className="w-3.5 h-3.5 text-white shrink-0" />
-            <span className="text-white/60 text-xs font-semibold">•</span>
-            <span className="text-white/70 text-xs font-medium shrink-0">
-              {formatRecordedDate(video.recordedAt, video.createdAtMs)}
-            </span>
-          </div>
-
-          {/* Dish / Item Tag if present */}
-          {video.dishOrItem && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/10 backdrop-blur-md border border-white/15 text-white text-[11px] font-semibold w-fit pointer-events-auto">
-              <span>{video.dishOrItem}</span>
-            </div>
-          )}
-
-          {/* Caption text */}
-          {video.caption && (
-            <p className="text-xs text-white/95 leading-relaxed font-medium line-clamp-3 drop-shadow-sm pointer-events-auto pr-12">
-              "{video.caption}"
-            </p>
-          )}
-
-          {/* Verified Owner Response Preview Card (if reply exists and drawer is closed) */}
-          {hasExistingReply && !showReplyDrawer && (
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 backdrop-blur-md border border-white/15 text-white space-y-1 pointer-events-auto pr-10 shadow-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-white">
-                  <BadgeCheck className="w-3.5 h-3.5 text-white shrink-0" />
-                  <span className="truncate">Verified Response from {placeName}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowReplyDrawer(true)}
-                  className="text-[10px] text-zinc-300 hover:text-white font-semibold underline underline-offset-2 cursor-pointer shrink-0"
-                >
-                  Edit
-                </button>
-              </div>
-              <p className="text-xs text-zinc-200 font-normal italic line-clamp-2">
-                "{ownerReply || video.ownerResponse?.text}"
-              </p>
-            </div>
-          )}
-
-          {/* Scrubber Progress Bar & Time */}
-          <div className="pt-2 flex flex-col gap-1 pointer-events-auto">
-            <div className="flex items-center gap-2">
-              <input
-                type="range"
-                min={0}
-                max={duration || 100}
-                step={0.1}
-                value={currentTime}
-                onMouseDown={() => setIsScrubbing(true)}
-                onMouseUp={() => setIsScrubbing(false)}
-                onTouchStart={() => setIsScrubbing(true)}
-                onTouchEnd={() => setIsScrubbing(false)}
-                onChange={handleSeek}
-                className="w-full h-1 bg-white/20 hover:bg-white/40 rounded-lg appearance-none cursor-pointer accent-white"
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] font-mono text-white/70">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Interactive In-Player Verified Owner Reply Drawer */}
-        {showReplyDrawer && (
-          <div className="absolute inset-x-0 bottom-0 z-40 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800 p-4 rounded-t-3xl shadow-2xl flex flex-col gap-3 animate-in slide-in-from-bottom duration-200 text-white max-h-[75%] overflow-y-auto custom-scrollbar">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center">
-                  <BadgeCheck className="w-3.5 h-3.5 fill-black text-white" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs text-white">Verified Business Reply</h4>
-                  <p className="text-[10px] text-zinc-400">{placeName} (Owner)</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowReplyDrawer(false)}
-                className="w-7 h-7 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Fast Templates */}
-            <div className="space-y-1">
-              <span className="text-[10px] text-zinc-400 font-semibold block">Quick Responses:</span>
-              <div className="flex flex-wrap gap-1.5">
-                {quickTemplates.map((tpl, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setReplyInput(tpl)}
-                    className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-[10px] text-zinc-300 hover:text-white border border-zinc-800 transition-colors cursor-pointer text-left truncate max-w-full"
-                  >
-                    {tpl}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Input Textarea */}
-            <div className="space-y-1">
-              <textarea
-                value={replyInput}
-                onChange={(e) => setReplyInput(e.target.value)}
-                placeholder={`Write a verified reply as ${placeName}...`}
-                rows={3}
-                maxLength={500}
-                className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white transition-colors resize-none"
-                autoFocus
-              />
-              <div className="flex justify-end text-[10px] text-zinc-500 font-mono">
-                {replyInput.length} / 500
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between gap-2 pt-1">
-              {hasExistingReply && onDeleteReply ? (
-                <button
-                  type="button"
-                  onClick={handleDeleteVerifiedReply}
-                  className="px-3 py-2 rounded-xl bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800/60 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete</span>
-                </button>
-              ) : (
-                <div />
-              )}
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowReplyDrawer(false)}
-                  className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={!replyInput.trim() || isSavingReply}
-                  onClick={handleSaveVerifiedReply}
-                  className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-                >
-                  {isSavingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                  <span>{hasExistingReply ? "Update Reply" : "Publish Reply"}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps> = ({ 
   onNavigate,
@@ -1321,6 +687,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [ownerReplies, setOwnerReplies] = useState<Record<string, string>>({});
   const [expandedCommentsMap, setExpandedCommentsMap] = useState<Record<string, boolean>>({});
   const [activeVideoModal, setActiveVideoModal] = useState<VideoReview | null>(null);
+  const [bizVideoIndex, setBizVideoIndex] = useState<number>(0);
+  const [bizVideoSubTab, setBizVideoSubTab] = useState<FeedSubTab>('discover');
+  const [activeCommentVideo, setActiveCommentVideo] = useState<VideoReview | null>(null);
+  const [activeReplyModalVideo, setActiveReplyModalVideo] = useState<VideoReview | null>(null);
+
+  const handleOpenBusinessVideo = useCallback((video: VideoReview) => {
+    const idx = placeVideos.findIndex((v) => v.id === video.id);
+    setBizVideoIndex(idx >= 0 ? idx : 0);
+    setActiveVideoModal(video);
+    setSeenReviewIds((prev) => {
+      const next = new Set(prev);
+      next.add(video.id);
+      return next;
+    });
+  }, [placeVideos]);
 
   // QR Standee Studio State
   const [qrCustomHeading, setQrCustomHeading] = useState('LEAVE A 60-SECOND VIDEO REVIEW');
@@ -1719,7 +1100,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   }, [activeTab, businessFollowers.length, unseenFollowersCount, handleMarkFollowersAsRead]);
 
-  // Mark all video reviews as seen/read
+  // Mark all video reviews as seen/read and clear notification badges
   const handleMarkReviewsAsRead = useCallback(() => {
     const allIds = placeVideos.map((v) => v.id);
     const nextSet = new Set([...Array.from(seenReviewIds), ...allIds]);
@@ -1728,7 +1109,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       const placeKey = currentPlace?.id || 'biz';
       localStorage.setItem(`copo_seen_reviews_${placeKey}`, JSON.stringify(Array.from(nextSet)));
     } catch (e) {}
-  }, [placeVideos, seenReviewIds, currentPlace]);
+
+    // Also clear review-related notifications if callback is provided
+    if (onMarkNotificationRead && businessNotifications.length > 0) {
+      businessNotifications.forEach((n) => {
+        if (!n.isRead) onMarkNotificationRead(n.id);
+      });
+    }
+  }, [placeVideos, seenReviewIds, currentPlace, onMarkNotificationRead, businessNotifications]);
 
   // Toggle seen status for a specific video review
   const toggleMarkReviewAsRead = useCallback((videoId: string) => {
@@ -2655,7 +2043,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 {pinNotice && (
                   <div className="bg-zinc-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-lg border border-zinc-700 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
                     <span className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
+                      <Pin className="w-4 h-4 text-white" />
                       {pinNotice}
                     </span>
                     <button
@@ -2719,12 +2107,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     {/* Clear Badge Button */}
                     <button
                       type="button"
+                      id="btn-clear-reviews-badge"
                       onClick={handleMarkReviewsAsRead}
-                      className="px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-                      title="Clear badge and mark reviews as reviewed"
+                      className="px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 active:scale-95"
+                      title="Clear badge and mark all reviews as reviewed"
                     >
-                      <CheckCheck className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>Clear Badge</span>
+                      <CheckCheck className="w-3.5 h-3.5 text-white" />
+                      <span>{unseenReviewsCount > 0 ? `Clear (${unseenReviewsCount})` : 'All Reviewed'}</span>
                     </button>
                   </div>
                 </div>
@@ -2764,7 +2153,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <div className="flex flex-col md:flex-row gap-5 items-start">
                             {/* Video Thumbnail Player Viewport */}
                             <div 
-                              onClick={() => setActiveVideoModal(video)}
+                              onClick={() => handleOpenBusinessVideo(video)}
                               className="w-full md:w-44 aspect-9/14 shrink-0 relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-xs cursor-pointer group"
                               title="Click to play review"
                             >
@@ -2913,8 +2302,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                               {/* AI Transcribed Audio Caption Block */}
                               <div className="bg-zinc-900 rounded-2xl p-3.5 border border-zinc-800 space-y-1">
-                                <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-zinc-200 uppercase tracking-wider">
-                                  <Sparkles className="w-3 h-3 text-zinc-200" />
+                                <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-zinc-400 uppercase tracking-wider">
+                                  <MessageSquare className="w-3 h-3 text-zinc-400" />
                                   <span>Transcript</span>
                                 </div>
                                 <p className="text-xs text-zinc-200 leading-relaxed font-medium">
@@ -3114,7 +2503,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
                         {businessFollowers.length} {businessFollowers.length === 1 ? 'follower' : 'followers'}
                         {unseenFollowersCount > 0 && (
-                          <span className="text-emerald-400 ml-1 font-semibold">({unseenFollowersCount} new)</span>
+                          <span className="text-white ml-1 font-semibold">({unseenFollowersCount} new)</span>
                         )}
                       </p>
                     </div>
@@ -3338,7 +2727,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       >
                         {isDirectLinkCopied ? (
                           <>
-                            <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
+                            <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
                             <span>Copied</span>
                           </>
                         ) : (
@@ -3358,7 +2747,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         HTML iFrame Code
                       </span>
                       {isCodeCopied && (
-                        <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                        <span className="text-xs font-bold text-white flex items-center gap-1">
                           <Check className="w-3.5 h-3.5 stroke-[2.5]" /> Copied!
                         </span>
                       )}
@@ -3375,7 +2764,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         href={`/embed/${getPlaceSlug(currentPlace)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 transition-colors"
+                        className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 transition-colors"
                       >
                         <span>Test player</span>
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -3386,7 +2775,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         onClick={copyEmbedCode}
                         className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-white text-zinc-950 hover:bg-zinc-100 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
                       >
-                        {isCodeCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-950" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{isCodeCopied ? 'Copied Code' : 'Copy Code'}</span>
                       </button>
                     </div>
@@ -3451,7 +2840,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           {displayableWidgetVideos.slice(0, 4).map((v) => (
                             <div
                               key={v.id}
-                              onClick={() => setActiveVideoModal(v)}
+                              onClick={() => handleOpenBusinessVideo(v)}
                               className="relative rounded-2xl overflow-hidden aspect-9/14 bg-zinc-900 group border border-zinc-800 cursor-pointer hover:scale-[1.02] transition-transform shadow-md"
                             >
                               <img
@@ -3497,7 +2886,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
                           Live In-Venue QR
                         </span>
                       </div>
@@ -3519,7 +2908,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       }}
                       className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl sm:rounded-2xl bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-750 text-white border border-zinc-700 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-98 shadow-xs"
                     >
-                      {qrLinkCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-300" />}
+                      {qrLinkCopied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-zinc-300" />}
                       <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Link'}</span>
                     </button>
                   </div>
@@ -4057,7 +3446,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   {/* BUSINESS CATEGORY */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-zinc-400" /> Business Category
+                      <Building2 className="w-3.5 h-3.5 text-zinc-400" /> Business Category
                     </label>
                     <div className="relative">
                       <select
@@ -4245,30 +3634,70 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         </main>
       </div>
 
-      {/* Video Playback Modal (Unified Official Yoouz Vertical Player) */}
+      {/* Official CopoVideoPlayer (100% parity with homepage and user profile) */}
       {activeVideoModal && (
-        <BusinessVideoPlayerModal
-          video={activeVideoModal}
+        <div
+          id="business-official-player-portal"
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center animate-in fade-in select-none"
+        >
+          <CopoVideoPlayer
+            videos={placeVideos}
+            places={places}
+            currentIndex={bizVideoIndex}
+            onSelectVideoIndex={(idx) => {
+              setBizVideoIndex(idx);
+              const targetVid = placeVideos[idx];
+              if (targetVid) {
+                setActiveVideoModal(targetVid);
+                setSeenReviewIds((prev) => {
+                  const next = new Set(prev);
+                  next.add(targetVid.id);
+                  return next;
+                });
+              }
+            }}
+            activeSubTab={bizVideoSubTab}
+            onSelectSubTab={setBizVideoSubTab}
+            onOpenComments={(v) => setActiveCommentVideo(v)}
+            onOpenPlace={() => {}}
+            onOpenCreator={onOpenCreator || (() => {})}
+            onOpenShare={() => {}}
+            onToggleLike={() => {}}
+            onToggleBookmark={() => {}}
+            onToggleFollow={() => {}}
+            onGoBack={() => setActiveVideoModal(null)}
+            feedContextTitle={currentPlace.name}
+            currentUser={currentUser || effectiveUser}
+            isBusinessOwnerView={true}
+            onOpenOwnerReply={(v) => setActiveReplyModalVideo(v)}
+          />
+        </div>
+      )}
+
+      {/* Verified Google-Style Owner Reply Modal */}
+      {activeReplyModalVideo && (
+        <GoogleOwnerReplyModal
+          isOpen={Boolean(activeReplyModalVideo)}
+          video={activeReplyModalVideo}
           placeName={currentPlace.name}
-          placeId={currentPlace.id}
-          placeLogoUrl={getPlaceLogoUrl(currentPlace)}
-          websiteUrl={currentPlace.website || (currentPlace as any).url}
-          ownerReply={ownerReplies[activeVideoModal.id] || activeVideoModal.ownerResponse?.text}
-          isPinned={pinnedVideoIds.includes(activeVideoModal.id)}
-          isHidden={hiddenVideoIds.includes(activeVideoModal.id)}
-          onTogglePin={() => togglePinVideo(activeVideoModal.id)}
-          onToggleHide={() => toggleHideVideo(activeVideoModal.id)}
-          onSaveReply={(text) => handleSaveReply(activeVideoModal.id, text)}
-          onDeleteReply={() => handleDeleteReply(activeVideoModal.id)}
-          onClose={() => setActiveVideoModal(null)}
-          onOpenPublicListing={() => {
-            if (onOpenPlaceDrawer) {
-              onOpenPlaceDrawer(selectedPlaceId);
-            } else {
-              onNavigate('home');
-            }
+          placeLogoUrl={profileLogoUrl || currentPlace.logoUrl}
+          existingReply={ownerReplies[activeReplyModalVideo.id] || activeReplyModalVideo.ownerResponse?.text}
+          onClose={() => setActiveReplyModalVideo(null)}
+          onSaveReply={async (vidId, text) => {
+            await handleSaveReply(vidId, text);
           }}
-          onOpenCreator={onOpenCreator}
+          onDeleteReply={async (vidId) => {
+            await handleDeleteReply(vidId);
+          }}
+        />
+      )}
+
+      {/* Comments Drawer for reviewing customer conversation */}
+      {activeCommentVideo && (
+        <CopoCommentsDrawer
+          video={activeCommentVideo}
+          currentUser={currentUser || effectiveUser}
+          onClose={() => setActiveCommentVideo(null)}
         />
       )}
 
@@ -4500,7 +3929,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           key={v.id}
                           type="button"
                           onClick={() => {
-                            setActiveVideoModal(v);
+                            handleOpenBusinessVideo(v);
                             setIsCommandPaletteOpen(false);
                             setCommandQuery('');
                           }}
@@ -4544,7 +3973,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     },
                     {
                       label: 'Claim or Verify Another Venue',
-                      icon: Sparkles,
+                      icon: ShieldCheck,
                       action: () => setIsClaimModalOpen(true)
                     },
                     {
