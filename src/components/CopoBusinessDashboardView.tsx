@@ -2014,8 +2014,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           </div>
                         </div>
                       </div>
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 text-[10px] font-bold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-zinc-300 text-[10px] font-bold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
                         {t("business.verifiedBusinessActive", "Verified Business (100% Free)")}
                       </div>
                     </div>
@@ -3867,11 +3867,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/80 text-[11px] font-bold">
+                          <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[11px] font-bold">
                             100% Free Forever
                           </span>
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/80 text-[11px] font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Verified Venue
+                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" /> Verified Venue
                           </span>
                         </div>
                         <h3 className="text-2xl font-black text-white tracking-tight pt-1">
@@ -3882,14 +3882,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             $0
                           </span>
                           <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">/ lifetime</span>
-                          <span className="text-xs text-emerald-400/90 font-semibold ml-1.5">
+                          <span className="text-xs text-zinc-400 font-semibold ml-1.5">
                             No credit card or billing ever
                           </span>
                         </div>
                       </div>
 
                       <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shrink-0 shadow-md">
-                        <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                        <ShieldCheck className="w-6 h-6 text-zinc-200" />
                       </div>
                     </div>
 
@@ -3910,7 +3910,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           'Direct Merchant Message Center'
                         ].map((feature, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <Check className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                             <span>{feature}</span>
                           </div>
                         ))}
@@ -4014,8 +4014,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             </button>
 
             <div className="flex items-center gap-3 pr-8">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shrink-0">
-                <Sparkles className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 shrink-0">
+                <HelpCircle className="w-5 h-5 text-zinc-300" />
               </div>
               <div>
                 <h3 className="font-bold text-white text-lg">Merchant Q&A & Guide</h3>
@@ -4028,7 +4028,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               {/* Question 1: Is it free? */}
               <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1.5">
                 <div className="text-white font-bold flex items-center gap-2 text-sm">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <ShieldCheck className="w-4 h-4 text-zinc-300 shrink-0" />
                   <span>Is Yoouz 100% free for business owners?</span>
                 </div>
                 <p className="text-zinc-400 pl-6">
