@@ -1221,6 +1221,32 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return new Set();
   });
 
+  const [seenReviewIds, setSeenReviewIds] = useState<Set<string>>(() => {
+    try {
+      const placeKey = currentPlace?.id || 'biz';
+      const stored = localStorage.getItem(`copo_seen_reviews_${placeKey}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return new Set(parsed);
+      }
+    } catch (e) {}
+    return new Set();
+  });
+
+  // Re-sync seen sets whenever active venue changes
+  useEffect(() => {
+    try {
+      const placeKey = currentPlace?.id || 'biz';
+      const storedRev = localStorage.getItem(`copo_seen_reviews_${placeKey}`);
+      if (storedRev) {
+        const parsed = JSON.parse(storedRev);
+        if (Array.isArray(parsed)) setSeenReviewIds(new Set(parsed));
+      } else {
+        setSeenReviewIds(new Set());
+      }
+    } catch (e) {}
+  }, [currentPlace?.id]);
+
   // Effective Business User Profile for Messaging & Collaboration
   const effectiveUser: UserProfile = useMemo(() => {
     const base = verifiedBusinessSession ? {
@@ -1511,6 +1537,39 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   }, [activeTab, businessFollowers.length, unseenFollowersCount, handleMarkFollowersAsRead]);
 
+  // Mark all video reviews as seen/read
+  const handleMarkReviewsAsRead = useCallback(() => {
+    const allIds = placeVideos.map((v) => v.id);
+    const nextSet = new Set([...Array.from(seenReviewIds), ...allIds]);
+    setSeenReviewIds(nextSet);
+    try {
+      const placeKey = currentPlace?.id || 'biz';
+      localStorage.setItem(`copo_seen_reviews_${placeKey}`, JSON.stringify(Array.from(nextSet)));
+    } catch (e) {}
+  }, [placeVideos, seenReviewIds, currentPlace]);
+
+  // Toggle seen status for a specific video review
+  const toggleMarkReviewAsRead = useCallback((videoId: string) => {
+    const nextSet = new Set(seenReviewIds);
+    if (nextSet.has(videoId)) {
+      nextSet.delete(videoId);
+    } else {
+      nextSet.add(videoId);
+    }
+    setSeenReviewIds(nextSet);
+    try {
+      const placeKey = currentPlace?.id || 'biz';
+      localStorage.setItem(`copo_seen_reviews_${placeKey}`, JSON.stringify(Array.from(nextSet)));
+    } catch (e) {}
+  }, [seenReviewIds, currentPlace]);
+
+  // When active tab is reviews, automatically mark reviews as seen
+  useEffect(() => {
+    if (activeTab === 'reviews' && placeVideos.length > 0) {
+      handleMarkReviewsAsRead();
+    }
+  }, [activeTab, placeVideos.length, handleMarkReviewsAsRead]);
+
   const handleMessageFollower = (follower: any) => {
     setActiveTab('inbox');
     const existing = (messages || []).find(m => 
@@ -1525,12 +1584,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   };
 
-  // Count reviews that need owner attention (unreplied)
-  const unrepliedReviewsCount = useMemo(() => {
+  // Count reviews that need owner attention (unseen / unacknowledged without reply)
+  const unseenReviewsCount = useMemo(() => {
     return placeVideos.filter(
-      (v) => !ownerReplies[v.id] && !v.ownerResponse?.text
+      (v) => !seenReviewIds.has(v.id) && !ownerReplies[v.id] && !v.ownerResponse?.text
     ).length;
-  }, [placeVideos, ownerReplies]);
+  }, [placeVideos, seenReviewIds, ownerReplies]);
 
   // Dynamic KPIs calculated strictly from real data
   const totalReviews = placeVideos.length;
@@ -1795,7 +1854,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       id: 'reviews' as BusinessTab, 
       label: t('business.videoReviews', 'Video Reviews'), 
       icon: Video, 
-      badge: unrepliedReviewsCount > 0 ? unrepliedReviewsCount : undefined 
+      badge: unseenReviewsCount > 0 ? unseenReviewsCount : undefined 
     },
     { 
       id: 'inbox' as BusinessTab, 
@@ -2438,7 +2497,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </div>
                   </div>
 
-                  {/* Search and Filter Row */}
+                  {/* Search, Filter and Clear Badge Row */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                     {/* Search Reviews Input */}
                     <div className="relative flex-1 min-w-[180px]">
@@ -2474,6 +2533,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </button>
                       ))}
                     </div>
+
+                    {/* Clear Badge Button */}
+                    <button
+                      type="button"
+                      onClick={handleMarkReviewsAsRead}
+                      className="px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                      title="Clear badge and mark reviews as reviewed"
+                    >
+                      <CheckCheck className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>Clear Badge</span>
+                    </button>
                   </div>
                 </div>
 
@@ -2628,6 +2698,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   >
                                     {isHidden ? <Eye className="w-3.5 h-3.5 text-zinc-200" /> : <EyeOff className="w-3.5 h-3.5 text-zinc-200" />}
                                     <span>{isHidden ? 'Unhide' : 'Hide'}</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleMarkReviewAsRead(video.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                      seenReviewIds.has(video.id)
+                                        ? 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
+                                        : 'bg-zinc-800 text-zinc-200 border-zinc-700 hover:bg-zinc-700'
+                                    }`}
+                                    title={seenReviewIds.has(video.id) ? 'Review acknowledged. Click to toggle.' : 'Mark this review as reviewed'}
+                                  >
+                                    <Check className={`w-3.5 h-3.5 ${seenReviewIds.has(video.id) ? 'text-zinc-500' : 'text-zinc-300'}`} />
+                                    <span>{seenReviewIds.has(video.id) ? 'Reviewed' : 'Acknowledge'}</span>
                                   </button>
 
                                   {!hasReply && !isReplying && (
