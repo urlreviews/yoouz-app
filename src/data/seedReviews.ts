@@ -14,7 +14,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     placeCity: "Online",
     placeRating: 5,
     placeWebsite: "https://yoouz.com",
-    placeLogoUrl: "/icon-512.png",
+    placeLogoUrl: "/favicon.svg",
     placeBannerUrl: "https://www.yoouz.com/og-banner.png?v=8",
     placeDescription: "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.",
     author: {

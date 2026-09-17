@@ -654,7 +654,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       if (parsed) {
         const dom = (parsed.domain || parsed.businessEmail || '').toLowerCase();
         if (dom.includes('yoouz.com') || parsed.placeName?.toLowerCase() === 'yoouz') {
-          parsed.logoUrl = '/icon-512.png';
+          parsed.logoUrl = '/favicon.svg';
           parsed.placeName = 'Yoouz';
           localStorage.setItem('copo_business_verified_session', JSON.stringify(parsed));
         } else if (parsed.logoUrl && (parsed.logoUrl.startsWith('<svg') || parsed.logoUrl.startsWith('data:image/svg+xml;utf8,'))) {
@@ -710,7 +710,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         derived.name === 'Yoouz';
         if (isYoouz) {
           derived.name = 'Yoouz';
-          derived.logoUrl = '/icon-512.png';
+          derived.logoUrl = '/favicon.svg';
           derived.website = 'https://yoouz.com';
         }
         
@@ -830,7 +830,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profileEmail, setProfileEmail] = useState((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
   const [profileHours, setProfileHours] = useState((currentPlace as any).hours || currentPlace.openingHours || 'Mon-Fri: 9:00 AM - 6:00 PM');
   const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || `Official verified business profile on Yoouz.`);
-  const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? '/icon-512.png' : ''));
+  const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? '/favicon.svg' : ''));
   const [profileBannerUrl, setProfileBannerUrl] = useState((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
@@ -951,7 +951,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       if (currentPlace.logoUrl) {
         setProfileLogoUrl(currentPlace.logoUrl);
       } else if (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz')) {
-        setProfileLogoUrl('https://www.yoouz.com/icon-512.png');
+        setProfileLogoUrl('https://www.yoouz.com/favicon.svg');
       }
       if ((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0]) {
         setProfileBannerUrl((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
@@ -2048,37 +2048,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   className="h-9 sm:h-10 px-2 sm:px-3 flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold group shadow-xs"
                   title="Business Account Menu"
                 >
-                  {/* Dedicated Logo Container with High-Contrast Background for Dark Mode */}
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white text-zinc-950 border border-zinc-700 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs">
-                    {currentPlace.logoUrl ? (
-                      <img 
-                        src={currentPlace.logoUrl} 
-                        alt={currentPlace.name} 
-                        loading="eager" 
-                        decoding="sync" 
-                        fetchPriority="high" 
-                        className="w-full h-full object-cover rounded-md"
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          if (currentPlace.name?.toLowerCase().includes('yoouz') || (currentPlace.id && currentPlace.id.includes('yoouz'))) {
-                            target.src = 'https://www.yoouz.com/icon-512.png';
-                          } else {
-                            target.style.display = 'none';
-                            if (target.parentElement && !target.parentElement.querySelector('.fallback-initial')) {
-                              const span = document.createElement('span');
-                              span.className = 'fallback-initial font-black text-[11px] text-zinc-950';
-                              span.textContent = currentPlace.name?.charAt(0).toUpperCase() || 'B';
-                              target.parentElement.appendChild(span);
-                            }
-                          }
-                        }} 
-                      />
-                    ) : (
-                      <span className="font-black text-[11px] text-zinc-950">
-                        {currentPlace.name?.charAt(0).toUpperCase() || 'B'}
-                      </span>
-                    )}
-                  </div>
+                  {/* Dedicated Logo Container using CopoBrandLogo for consistent branding */}
+                  <CopoBrandLogo
+                    domain={currentPlace.website || currentPlace.id}
+                    name={currentPlace.name}
+                    logoUrl={currentPlace.logoUrl}
+                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg border border-zinc-700/80 bg-zinc-950 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-1"
+                    imageClassName="w-full h-full object-contain"
+                    fallbackTextClassName="font-black text-[11px] text-white"
+                  />
 
                   <span className="font-bold text-xs text-white max-w-[110px] sm:max-w-[160px] truncate">
                     {currentPlace.name}
@@ -2091,33 +2069,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div className="fixed top-[60px] right-3 w-[270px] sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-2 sm:w-68 bg-zinc-900 rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-3 border-b border-zinc-800 mb-1">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-white text-zinc-950 border border-zinc-700 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs">
-                          {currentPlace.logoUrl ? (
-                            <img 
-                              src={currentPlace.logoUrl} 
-                              alt={currentPlace.name} 
-                              className="w-full h-full object-cover rounded-lg"
-                              onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                if (currentPlace.name?.toLowerCase().includes('yoouz') || (currentPlace.id && currentPlace.id.includes('yoouz'))) {
-                                  target.src = 'https://www.yoouz.com/icon-512.png';
-                                } else {
-                                  target.style.display = 'none';
-                                  if (target.parentElement && !target.parentElement.querySelector('.fallback-initial')) {
-                                    const span = document.createElement('span');
-                                    span.className = 'fallback-initial font-black text-xs text-zinc-950';
-                                    span.textContent = currentPlace.name?.charAt(0).toUpperCase() || 'B';
-                                    target.parentElement.appendChild(span);
-                                  }
-                                }
-                              }}
-                            />
-                          ) : (
-                            <span className="font-black text-xs text-zinc-950">
-                              {currentPlace.name?.charAt(0).toUpperCase() || 'B'}
-                            </span>
-                          )}
-                        </div>
+                        <CopoBrandLogo
+                          domain={currentPlace.website || currentPlace.id}
+                          name={currentPlace.name}
+                          logoUrl={currentPlace.logoUrl}
+                          className="w-8 h-8 rounded-xl border border-zinc-700/80 bg-zinc-950 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs p-1"
+                          imageClassName="w-full h-full object-contain"
+                          fallbackTextClassName="font-black text-xs text-white"
+                        />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1">
                             <span className="font-extrabold text-white text-sm truncate">{currentPlace.name}</span>
@@ -3250,22 +3209,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       {/* Business Header Bar */}
                       <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          {(profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl || (currentPlace as any)?.photo) ? (
-                            <img
-                              src={profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl || (currentPlace as any)?.photo}
-                              alt={currentPlace.name}
-                              className="w-10 h-10 rounded-xl object-cover border border-zinc-700/80 shadow-md shrink-0"
-                              referrerPolicy="no-referrer"
-                              onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center font-bold text-base shadow-md shrink-0">
-                              {currentPlace.name ? currentPlace.name.charAt(0).toUpperCase() : 'Y'}
-                            </div>
-                          )}
+                          <CopoBrandLogo
+                            domain={currentPlace.website || currentPlace.id}
+                            name={currentPlace.name}
+                            logoUrl={profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl}
+                            className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-700/80 shadow-md shrink-0 flex items-center justify-center p-1.5 overflow-hidden"
+                            imageClassName="w-full h-full object-contain"
+                            fallbackTextClassName="font-bold text-base text-white"
+                          />
 
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
@@ -3394,29 +3345,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     )}
 
                     {/* Venue Logo Avatar */}
-                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white text-zinc-950 p-1 flex items-center justify-center mx-auto mb-2.5 sm:mb-3 shadow-lg border border-zinc-200/20 overflow-hidden">
-                      {currentPlace.logoUrl ? (
-                        <img 
-                          src={currentPlace.logoUrl} 
-                          alt={currentPlace.name} 
-                          className="w-full h-full object-cover rounded-xl"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.style.display = 'none';
-                            if (target.parentElement && !target.parentElement.querySelector('.fallback-initial')) {
-                              const span = document.createElement('span');
-                              span.className = 'fallback-initial font-black text-base text-zinc-950';
-                              span.textContent = currentPlace.name?.charAt(0).toUpperCase() || '★';
-                              target.parentElement.appendChild(span);
-                            }
-                          }}
-                        />
-                      ) : (
-                        <span className="font-black text-base text-zinc-950">
-                          {currentPlace.name?.charAt(0).toUpperCase() || '★'}
-                        </span>
-                      )}
-                    </div>
+                    <CopoBrandLogo
+                      domain={currentPlace.website || currentPlace.id}
+                      name={currentPlace.name}
+                      logoUrl={currentPlace.logoUrl}
+                      className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-zinc-950 p-2 flex items-center justify-center mx-auto mb-2.5 sm:mb-3 shadow-lg border border-zinc-700/80 overflow-hidden"
+                      imageClassName="w-full h-full object-contain"
+                      fallbackTextClassName="font-black text-base text-white"
+                    />
 
                     {/* Venue Title & Verified Badge */}
                     <div className="flex items-center justify-center gap-1.5 mb-1 px-2">
@@ -3621,22 +3557,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       onClick={() => logoFileInputRef.current?.click()}
                       title="Click to upload custom logo"
                     >
-                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center">
-                        {profileLogoUrl ? (
-                          <img 
-                            src={profileLogoUrl} 
-                            alt={profileName || "Logo"} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = 'https://www.yoouz.com/icon-512.png';
-                            }}
-                          />
-                        ) : (
-                          <span className="text-2xl font-black text-white uppercase">
-                            {profileName ? profileName.charAt(0) : "B"}
-                          </span>
-                        )}
+                      <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center p-2.5">
+                        <CopoBrandLogo
+                          domain={currentPlace.website || currentPlace.id}
+                          name={profileName || currentPlace.name}
+                          logoUrl={profileLogoUrl || currentPlace.logoUrl}
+                          className="w-full h-full bg-transparent overflow-hidden flex items-center justify-center border-0 p-0 shadow-none ring-0"
+                          imageClassName="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                          fallbackTextClassName="text-2xl font-black text-white uppercase"
+                        />
                         <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                           <Camera className="w-6 h-6" />
                         </div>

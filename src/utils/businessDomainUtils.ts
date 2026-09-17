@@ -45,7 +45,7 @@ export function getDomainLogoUrl(domain: string): string {
     return '';
   }
   if (clean === 'yoouz.com' || clean === 'www.yoouz.com' || clean.includes('yoouz')) {
-    return '/icon-512.png';
+    return '/favicon.svg';
   }
   if (KNOWN_BRAND_LOGOS[clean]) {
     return KNOWN_BRAND_LOGOS[clean];
@@ -91,7 +91,7 @@ export function derivePlaceFromEmailOrDomain(
   // Special case: Yoouz official website
   const isYoouz = cleanDomain === 'yoouz.com' || cleanDomain === 'www.yoouz.com' || cleanDomain.includes('yoouz');
   const businessName = isYoouz ? 'Yoouz' : (cleanDomain ? formatBusinessNameFromDomain(cleanDomain) : 'Verified Business');
-  const logoUrl = isYoouz ? '/icon-512.png' : getDomainLogoUrl(cleanDomain);
+  const logoUrl = isYoouz ? '/favicon.svg' : getDomainLogoUrl(cleanDomain);
   const placeId = cleanDomain ? cleanDomain : 'place-custom';
 
   return {

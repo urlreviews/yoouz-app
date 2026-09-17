@@ -762,7 +762,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         rating: 5.0,
         totalReviews: 1,
         ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-        avatarUrl: '/icon-512.png',
+        avatarUrl: '/favicon.svg',
         bannerUrl: '/og-banner.png',
         photos: [],
         openingHours: '24/7',
@@ -777,7 +777,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         isClaimed: true,
         isVerified: true,
         claimedByEmail: 'info@yoouz.com',
-        logoUrl: '/icon-512.png'
+        logoUrl: '/favicon.svg'
       });
     } else {
       const existingYoouz = canonicalMap.get('yoouz.com')!;

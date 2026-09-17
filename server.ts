@@ -4146,8 +4146,8 @@ app.get('/api/nosql/:collection', async (req, res) => {
           totalReviews: 1,
           website: 'https://yoouz.com',
           brandDomain: 'yoouz.com',
-          logoUrl: 'https://www.yoouz.com/icon-512.png',
-          avatarUrl: 'https://www.yoouz.com/icon-512.png',
+          logoUrl: 'https://www.yoouz.com/favicon.svg',
+          avatarUrl: 'https://www.yoouz.com/favicon.svg',
           bannerUrl: '',
           ogImage: '',
           photos: [],
@@ -6650,7 +6650,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           continue;
         }
         const isYoouz = cleanDomain === "yoouz.com";
-        const logo = isYoouz ? "/icon-512.png" : `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+        const logo = isYoouz ? "/favicon.svg" : `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
         const autoPlaceDoc = {
           id: autoPlaceId,
           name: isYoouz ? "Yoouz" : item.title,
@@ -6719,8 +6719,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         rating: 5,
         totalReviews: 1,
         ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-        avatarUrl: "/icon-512.png",
-        logoUrl: "/icon-512.png",
+        avatarUrl: "/favicon.svg",
+        logoUrl: "/favicon.svg",
         bannerUrl: "https://yoouz.com/og-banner.png?v=8",
         ogImage: "https://yoouz.com/og-banner.png?v=8",
         photos: ["https://yoouz.com/og-banner.png?v=8"],
@@ -6744,8 +6744,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
               ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-        args: ["yoouz.com", "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon-512.png", JSON.stringify(yoouzDoc),
-               "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/icon-512.png", JSON.stringify(yoouzDoc)]
+        args: ["yoouz.com", "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/favicon.svg", JSON.stringify(yoouzDoc),
+               "Yoouz", "yoouz.com", "Video Reviews Platform", "Worldwide", "Global", 0, 0, "/favicon.svg", JSON.stringify(yoouzDoc)]
       }).catch(() => {});
 
       // Clean up any legacy or duplicate yoouz aliases
@@ -6985,7 +6985,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               parsedData.placeId = "yoouz.com";
               parsedData.placeName = "Yoouz";
               parsedData.placeWebsite = "https://www.yoouz.com";
-              parsedData.placeLogoUrl = "/icon-512.png";
+              parsedData.placeLogoUrl = "/favicon.svg";
               parsedData.placeBannerUrl = "https://yoouz.com/og-banner.png?v=8";
               updated = true;
             }
@@ -10839,7 +10839,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         matchedPlaceId = 'yoouz.com';
       }
 
-      let existingPlaceLogo = isYoouz ? 'https://www.yoouz.com/icon-512.png' : (rawDomain && KNOWN_BRAND_LOGOS[rawDomain] ? KNOWN_BRAND_LOGOS[rawDomain] : '');
+      let existingPlaceLogo = isYoouz ? 'https://www.yoouz.com/favicon.svg' : (rawDomain && KNOWN_BRAND_LOGOS[rawDomain] ? KNOWN_BRAND_LOGOS[rawDomain] : '');
       try {
         if (!existingPlaceLogo) {
           const bunnyDb = getBunnyDb();
@@ -10863,7 +10863,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
 
       let logoUrl = isYoouz 
-        ? 'https://www.yoouz.com/icon-512.png' 
+        ? 'https://www.yoouz.com/favicon.svg' 
         : (existingPlaceLogo || (rawDomain && !rawDomain.includes('gmail.com') && !rawDomain.includes('yahoo.com') && !rawDomain.includes('hotmail.com')
           ? `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${rawDomain}&size=256`
           : ''));
@@ -10890,7 +10890,7 @@ app.post("/api/videos/save-review", async (req, res) => {
             updatedDoc.verifiedAt = new Date().toISOString();
             if (isYoouz) {
               updatedDoc.name = "Yoouz";
-              updatedDoc.logoUrl = "/icon-512.png";
+              updatedDoc.logoUrl = "/favicon.svg";
             }
             await bunnyDb.execute({
               sql: `UPDATE places SET data = ?, updatedAt = datetime('now') WHERE id = ?`,
@@ -15854,8 +15854,8 @@ function escapeXml(unsafe: string) {
 }
 
 const KNOWN_BRAND_LOGOS: Record<string, string> = {
-  "yoouz.com": "https://www.yoouz.com/icon-512.png",
-  "www.yoouz.com": "https://www.yoouz.com/icon-512.png",
+  "yoouz.com": "https://www.yoouz.com/favicon.svg",
+  "www.yoouz.com": "https://www.yoouz.com/favicon.svg",
   "tajhotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
     <rect width="100" height="100" rx="22" fill="#1c1917"/>
     <path d="M50 18 C36 32 28 48 28 62 C28 74 38 82 50 82 C62 82 72 74 72 62 C72 48 64 32 50 18 Z" fill="#d97706"/>
@@ -16123,7 +16123,7 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
   const isYoouz = domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz');
   if (isYoouz) {
     place.name = 'Yoouz';
-    place.logoUrl = 'https://www.yoouz.com/icon-512.png';
+    place.logoUrl = 'https://www.yoouz.com/favicon.svg';
   } else if (!place.logoUrl && KNOWN_BRAND_LOGOS[domain]) {
     const brand = KNOWN_BRAND_LOGOS[domain];
     place.logoUrl = brand.startsWith('<svg')
@@ -16887,7 +16887,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         const isYoouzPlace = domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || placeName?.toLowerCase() === 'yoouz';
         if (isYoouzPlace) {
-          foundLogo = 'https://www.yoouz.com/icon-512.png';
+          foundLogo = 'https://www.yoouz.com/favicon.svg';
           placeName = 'Yoouz';
         } else if (!foundLogo && KNOWN_BRAND_LOGOS[domain]) {
           const brand = KNOWN_BRAND_LOGOS[domain];

@@ -91,7 +91,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       rating: 5.0,
       totalReviews: 0,
       website: isYoouz ? "https://yoouz.com" : `https://www.${cleanSlug}`,
-      logoUrl: isYoouz ? "/icon-512.png" : undefined,
+      logoUrl: isYoouz ? "/favicon.svg" : undefined,
       isClaimed: true
     } as Place;
   }, [places, cleanSlug]);
