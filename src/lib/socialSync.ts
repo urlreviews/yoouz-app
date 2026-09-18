@@ -541,7 +541,9 @@ export function subscribeToNotifications(
 
   let isDisposed = false;
   let cachedNotifs: CopoNotification[] = [];
-  const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+  const userEmail = currentUser ? (currentUser.email || (currentUser as any).businessEmail || "").toLowerCase().trim() : "";
+  const userId = currentUser ? (currentUser.userId || (currentUser as any).id || (currentUser as any).placeId || "").toLowerCase().trim() : "";
+  const userKey = (userEmail || userId || "anon").toLowerCase().trim();
   const cacheKey = `copo_cached_notifs_${userKey}`;
 
   const updateList = (newItems: CopoNotification[]) => {
@@ -549,28 +551,40 @@ export function subscribeToNotifications(
     cachedNotifs = newItems;
     try {
       localStorage.setItem(cacheKey, JSON.stringify(newItems));
+      if (userEmail) localStorage.setItem(`copo_cached_notifs_${userEmail}`, JSON.stringify(newItems));
+      if (userId) localStorage.setItem(`copo_cached_notifs_${userId}`, JSON.stringify(newItems));
+      if ((currentUser as any)?.placeId) localStorage.setItem(`copo_cached_notifs_${(currentUser as any).placeId}`, JSON.stringify(newItems));
     } catch (e) {}
     onUpdate(newItems);
   };
 
   // 0. Immediate load from LocalStorage cache so notifications never disappear on refresh
   try {
-    const rawCache = localStorage.getItem(cacheKey);
-    if (rawCache) {
-      const parsed = JSON.parse(rawCache);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Clean out any synthetic unpersisted welcome notification for existing users
-        const cleaned = parsed.filter((n: any) => {
-          if (!n || !n.id) return false;
-          // If it's a synthetic welcome without real ID or if user already has other real notifications
-          if (String(n.id).startsWith("welcome_notif_") && parsed.length > 1 && n.isRead === false) {
-            // Keep it if it has been marked as read, otherwise clean it out from initial display
-            return false;
+    const keysToTry = [
+      cacheKey,
+      userEmail ? `copo_cached_notifs_${userEmail}` : null,
+      userId ? `copo_cached_notifs_${userId}` : null,
+      (currentUser as any)?.placeId ? `copo_cached_notifs_${(currentUser as any).placeId}` : null
+    ].filter(Boolean) as string[];
+
+    for (const key of keysToTry) {
+      const rawCache = localStorage.getItem(key);
+      if (rawCache) {
+        const parsed = JSON.parse(rawCache);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const cleaned = parsed.filter((n: any) => {
+            if (!n || !n.id) return false;
+            if (String(n.id).startsWith("welcome_notif_") && parsed.length > 1 && (n.isRead === false || n.read === false)) {
+              return false;
+            }
+            return true;
+          });
+          if (cleaned.length > 0) {
+            cachedNotifs = cleaned;
+            onUpdate(cleaned);
+            break;
           }
-          return true;
-        });
-        cachedNotifs = cleaned;
-        onUpdate(cleaned);
+        }
       }
     }
   } catch (e) {}
@@ -724,13 +738,19 @@ export function subscribeToNotifications(
 export async function markNotificationAsRead(notificationId: string, currentUser?: UserProfile | null): Promise<void> {
   if (!notificationId) return;
 
-  const userKey = currentUser
-    ? (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim()
-    : "";
+  const userEmail = currentUser ? (currentUser.email || (currentUser as any).businessEmail || "").toLowerCase().trim() : "";
+  const userId = currentUser ? (currentUser.userId || (currentUser as any).id || (currentUser as any).placeId || "").toLowerCase().trim() : "";
+  const userKey = (userEmail || userId || "anon").toLowerCase().trim();
 
-  if (userKey) {
+  const keysToUpdate = Array.from(new Set([
+    `copo_cached_notifs_${userKey}`,
+    userEmail ? `copo_cached_notifs_${userEmail}` : null,
+    userId ? `copo_cached_notifs_${userId}` : null,
+    (currentUser as any)?.placeId ? `copo_cached_notifs_${(currentUser as any).placeId}` : null
+  ].filter(Boolean))) as string[];
+
+  keysToUpdate.forEach((cacheKey) => {
     try {
-      const cacheKey = `copo_cached_notifs_${userKey}`;
       const rawCache = localStorage.getItem(cacheKey);
       if (rawCache) {
         const parsed = JSON.parse(rawCache);
@@ -740,13 +760,13 @@ export async function markNotificationAsRead(notificationId: string, currentUser
         }
       }
     } catch (e) {}
-  }
+  });
 
   // 1. Dedicated high-performance interaction endpoint
   fetch("/api/interactions/notification/read", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id: notificationId, isRead: true })
+    body: JSON.stringify({ id: notificationId, isRead: true, recipientEmail: userEmail || userId })
   }).catch(() => {});
 
   // 2. Secondary NoSQL mirror endpoint
@@ -763,30 +783,37 @@ export async function markNotificationAsRead(notificationId: string, currentUser
 export async function markAllNotificationsAsRead(notificationIds: string[], currentUser?: UserProfile | null): Promise<void> {
   if (!notificationIds || notificationIds.length === 0) return;
 
-  const userKey = currentUser
-    ? (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim()
-    : "";
+  const userEmail = currentUser ? (currentUser.email || (currentUser as any).businessEmail || "").toLowerCase().trim() : "";
+  const userId = currentUser ? (currentUser.userId || (currentUser as any).id || (currentUser as any).placeId || "").toLowerCase().trim() : "";
+  const userKey = (userEmail || userId || "anon").toLowerCase().trim();
 
-  if (userKey) {
+  const keysToUpdate = Array.from(new Set([
+    `copo_cached_notifs_${userKey}`,
+    userEmail ? `copo_cached_notifs_${userEmail}` : null,
+    userId ? `copo_cached_notifs_${userId}` : null,
+    (currentUser as any)?.placeId ? `copo_cached_notifs_${(currentUser as any).placeId}` : null
+  ].filter(Boolean))) as string[];
+
+  const idSet = new Set(notificationIds);
+
+  keysToUpdate.forEach((cacheKey) => {
     try {
-      const cacheKey = `copo_cached_notifs_${userKey}`;
       const rawCache = localStorage.getItem(cacheKey);
       if (rawCache) {
         const parsed = JSON.parse(rawCache);
         if (Array.isArray(parsed)) {
-          const idSet = new Set(notificationIds);
           const updated = parsed.map((n: any) => idSet.has(n.id) ? { ...n, isRead: true, read: true } : n);
           localStorage.setItem(cacheKey, JSON.stringify(updated));
         }
       }
     } catch (e) {}
-  }
+  });
 
   // 1. Dedicated high-performance bulk endpoint
   fetch("/api/interactions/notification/read-all", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ids: notificationIds, recipientEmail: currentUser?.email || userKey })
+    body: JSON.stringify({ ids: notificationIds, recipientEmail: userEmail || userId })
   }).catch(() => {});
 
   // 2. Secondary NoSQL mirror update
@@ -805,15 +832,23 @@ export async function markAllNotificationsAsRead(notificationIds: string[], curr
 export async function deleteNotification(notificationId: string, currentUser?: UserProfile | null): Promise<void> {
   if (!notificationId) return;
 
-  const userKey = currentUser
-    ? (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim()
-    : "";
+  const userEmail = currentUser ? (currentUser.email || (currentUser as any).businessEmail || "").toLowerCase().trim() : "";
+  const userId = currentUser ? (currentUser.userId || (currentUser as any).id || (currentUser as any).placeId || "").toLowerCase().trim() : "";
+  const userKey = (userEmail || userId || "anon").toLowerCase().trim();
 
   recordDeletedNotifId(notificationId, userKey);
+  if (userEmail) recordDeletedNotifId(notificationId, userEmail);
+  if (userId) recordDeletedNotifId(notificationId, userId);
 
-  if (userKey) {
+  const keysToUpdate = Array.from(new Set([
+    `copo_cached_notifs_${userKey}`,
+    userEmail ? `copo_cached_notifs_${userEmail}` : null,
+    userId ? `copo_cached_notifs_${userId}` : null,
+    (currentUser as any)?.placeId ? `copo_cached_notifs_${(currentUser as any).placeId}` : null
+  ].filter(Boolean))) as string[];
+
+  keysToUpdate.forEach((cacheKey) => {
     try {
-      const cacheKey = `copo_cached_notifs_${userKey}`;
       const rawCache = localStorage.getItem(cacheKey);
       if (rawCache) {
         const parsed = JSON.parse(rawCache);
@@ -823,7 +858,7 @@ export async function deleteNotification(notificationId: string, currentUser?: U
         }
       }
     } catch (e) {}
-  }
+  });
 
   // 1. Dedicated delete endpoint
   fetch("/api/interactions/notification/delete", {
@@ -842,24 +877,32 @@ export async function deleteNotification(notificationId: string, currentUser?: U
  * Clear all notifications for user
  */
 export async function clearAllNotifications(notificationIds: string[], currentUser?: UserProfile | null): Promise<void> {
-  const userKey = currentUser
-    ? (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim()
-    : "";
+  const userEmail = currentUser ? (currentUser.email || (currentUser as any).businessEmail || "").toLowerCase().trim() : "";
+  const userId = currentUser ? (currentUser.userId || (currentUser as any).id || (currentUser as any).placeId || "").toLowerCase().trim() : "";
+  const userKey = (userEmail || userId || "anon").toLowerCase().trim();
 
   recordDeletedNotifId("all_cleared", userKey);
+  if (userEmail) recordDeletedNotifId("all_cleared", userEmail);
+  if (userId) recordDeletedNotifId("all_cleared", userId);
 
-  if (userKey) {
+  const keysToUpdate = Array.from(new Set([
+    `copo_cached_notifs_${userKey}`,
+    userEmail ? `copo_cached_notifs_${userEmail}` : null,
+    userId ? `copo_cached_notifs_${userId}` : null,
+    (currentUser as any)?.placeId ? `copo_cached_notifs_${(currentUser as any).placeId}` : null
+  ].filter(Boolean))) as string[];
+
+  keysToUpdate.forEach((cacheKey) => {
     try {
-      const cacheKey = `copo_cached_notifs_${userKey}`;
       localStorage.setItem(cacheKey, JSON.stringify([]));
     } catch (e) {}
-  }
+  });
 
   // 1. Dedicated clear-all endpoint
   fetch("/api/interactions/notification/clear-all", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ids: notificationIds, recipientEmail: currentUser?.email || userKey })
+    body: JSON.stringify({ ids: notificationIds, recipientEmail: userEmail || userId })
   }).catch(() => {});
 
   if (Array.isArray(notificationIds)) {

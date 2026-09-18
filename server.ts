@@ -3801,8 +3801,8 @@ async function ensureWelcomeNotificationForUser(userEmail: string, userName?: st
     await bunnyDb.execute({
       sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
             VALUES (?, ?, 'follow', ?, 0, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(id) DO UPDATE SET recipientEmail = ?, type = 'follow', text = ?, isRead = 0, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-      args: [notifId, cleanEmail, payload.text, jsonStr, cleanEmail, payload.text, jsonStr]
+            ON CONFLICT(id) DO NOTHING`,
+      args: [notifId, cleanEmail, payload.text, jsonStr]
     });
 
     console.log(`⚡ [Welcome Notification] Auto-created welcome notification for ${cleanEmail}`);
@@ -8485,8 +8485,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       await bunnyDb.execute({
         sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
               VALUES (?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP)
-              ON CONFLICT(id) DO UPDATE SET recipientEmail = ?, type = ?, text = ?, isRead = 0, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-        args: [notifId, params.recipientEmail, params.type, params.text, jsonStr, params.recipientEmail, params.type, params.text, jsonStr]
+              ON CONFLICT(id) DO NOTHING`,
+        args: [notifId, params.recipientEmail, params.type, params.text, jsonStr]
       });
 
       const targets = [
@@ -8540,8 +8540,10 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         notifData.read = Boolean(isRead);
         const jsonStr = JSON.stringify(notifData);
         await bunnyDb.execute({
-          sql: "UPDATE notifications SET isRead = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-          args: [isRead ? 1 : 0, jsonStr, id]
+          sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
+                VALUES (?, ?, 'info', '', ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET isRead = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+          args: [id, (req.body.recipientEmail || ""), isRead ? 1 : 0, jsonStr, isRead ? 1 : 0, jsonStr]
         });
       }
 
@@ -8578,14 +8580,17 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             notifData.isRead = true;
             notifData.read = true;
             await bunnyDb.execute({
-              sql: "UPDATE notifications SET isRead = 1, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-              args: [JSON.stringify(notifData), id]
+              sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
+                    VALUES (?, ?, 'info', '', 1, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(id) DO UPDATE SET isRead = 1, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+              args: [id, (recipientEmail || ""), JSON.stringify(notifData), JSON.stringify(notifData)]
             });
           }
-        } else if (recipientEmail) {
+        }
+        if (recipientEmail) {
           await bunnyDb.execute({
-            sql: "UPDATE notifications SET isRead = 1, updatedAt = CURRENT_TIMESTAMP WHERE recipientEmail = ?",
-            args: [recipientEmail]
+            sql: "UPDATE notifications SET isRead = 1, updatedAt = CURRENT_TIMESTAMP WHERE recipientEmail = ? OR recipientEmail LIKE ?",
+            args: [recipientEmail, `%${recipientEmail}%`]
           });
         }
       }

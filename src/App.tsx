@@ -5789,10 +5789,16 @@ export function App() {
                 onNavigateToMessages={() => setActiveSection("messages")}
                 onNavigateHome={handleGoHome}
                 onUpdateNotifications={setNotifications}
-                onMarkRead={(id) => markNotificationAsRead(id, currentUser)}
+                onMarkRead={(id) => {
+                  markNotificationAsRead(id, currentUser);
+                  if (effectiveMessagingUser) markNotificationAsRead(id, effectiveMessagingUser as any);
+                  setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true, read: true } : n));
+                }}
                 onMarkAllRead={() => {
-                  markAllNotificationsAsRead(notifications.map(n => n.id), currentUser);
-                  setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                  const ids = notifications.map(n => n.id);
+                  markAllNotificationsAsRead(ids, currentUser);
+                  if (effectiveMessagingUser) markAllNotificationsAsRead(ids, effectiveMessagingUser as any);
+                  setNotifications(prev => prev.map(n => ({ ...n, isRead: true, read: true })));
                 }}
                 onDeleteNotification={(id) => deleteNotification(id, currentUser)}
                 onClearAll={() => {
@@ -6022,11 +6028,17 @@ export function App() {
                   if (effectiveMessagingUser) {
                     markNotificationAsRead(id, effectiveMessagingUser as any);
                   }
-                  setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+                  if (currentUser) {
+                    markNotificationAsRead(id, currentUser);
+                  }
+                  setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true, read: true } : n));
                 }}
                 onDeleteNotification={(id) => {
                   if (effectiveMessagingUser) {
                     deleteNotification(id, effectiveMessagingUser as any);
+                  }
+                  if (currentUser) {
+                    deleteNotification(id, currentUser);
                   }
                   setNotifications(prev => prev.filter(n => n.id !== id));
                 }}
@@ -6036,6 +6048,9 @@ export function App() {
                 onClearAllNotifications={() => {
                   if (effectiveMessagingUser) {
                     clearAllNotifications(notifications.map(n => n.id), effectiveMessagingUser as any);
+                  }
+                  if (currentUser) {
+                    clearAllNotifications(notifications.map(n => n.id), currentUser);
                   }
                   setNotifications([]);
                 }}

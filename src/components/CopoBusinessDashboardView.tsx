@@ -3125,6 +3125,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   onNavigateToMessages={() => setActiveTab('inbox')}
                   onNavigateHome={() => setActiveTab('overview')}
                   onMarkRead={(id) => onMarkNotificationRead?.(id)}
+                  onMarkAllRead={() => {
+                    if (onMarkNotificationRead && businessNotifications.length > 0) {
+                      businessNotifications.forEach((n) => onMarkNotificationRead(n.id));
+                    }
+                  }}
                   onDeleteNotification={onDeleteNotification}
                   onUpdateNotifications={onUpdateNotifications}
                   onClearAll={onClearAllNotifications}
