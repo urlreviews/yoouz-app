@@ -1,6 +1,6 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { NavSection, Place, VideoReview, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES, FeedSubTab } from '../types';
+import { NavSection, Place, VideoReview, ReviewComment, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES, FeedSubTab } from '../types';
 import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
 import { getDisplayViews, getPlaceSlug } from '../utils/placeUtils';
 import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
@@ -119,6 +119,19 @@ interface CopoBusinessDashboardViewProps {
   onClearInitialPlace?: () => void;
   onSaveOwnerResponse?: (videoId: string, text: string) => void;
   onDeleteOwnerResponse?: (videoId: string) => void;
+  onAddComment?: (
+    videoId: string,
+    text: string,
+    options?: {
+      replyToId?: string;
+      postAsOwner?: boolean;
+      postAsCreator?: boolean;
+      commentItem?: ReviewComment;
+    }
+  ) => void;
+  onToggleCommentLike?: (videoId: string, commentId: string, replyId?: string) => void;
+  onToggleCreatorHeart?: (videoId: string, commentId: string, replyId?: string) => void;
+  onDeleteComment?: (videoId: string, commentId: string, replyId?: string) => void;
   onClose?: () => void;
   onUpdatePlace?: (place: Place) => void;
   onSendMessage?: (
@@ -167,6 +180,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onClearInitialPlace,
   onSaveOwnerResponse,
   onDeleteOwnerResponse,
+  onAddComment,
+  onToggleCommentLike,
+  onToggleCreatorHeart,
+  onDeleteComment,
   onClose = () => onNavigate('home'),
   onUpdatePlace,
   onSendMessage,
@@ -691,6 +708,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [bizVideoSubTab, setBizVideoSubTab] = useState<FeedSubTab>('discover');
   const [activeCommentVideo, setActiveCommentVideo] = useState<VideoReview | null>(null);
   const [activeReplyModalVideo, setActiveReplyModalVideo] = useState<VideoReview | null>(null);
+
+  // Keep activeCommentVideo synchronized with videos array so live comments and owner responses immediately reflect in the open drawer
+  useEffect(() => {
+    if (activeCommentVideo && videos) {
+      const current = videos.find((v) => v.id === activeCommentVideo.id);
+      if (current && (current.comments !== activeCommentVideo.comments || current.ownerResponse !== activeCommentVideo.ownerResponse || current.commentsCount !== activeCommentVideo.commentsCount)) {
+        setActiveCommentVideo(current);
+      }
+    }
+  }, [videos, activeCommentVideo]);
 
   // Filter videos strictly for this verified place
   const placeVideos = useMemo(() => {
@@ -3736,7 +3763,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           currentUser={currentUser || effectiveUser}
           isUserOwner={true}
           placeName={currentPlace.name}
+          placeLogoUrl={profileLogoUrl || currentPlace.logoUrl}
           onClose={() => setActiveCommentVideo(null)}
+          onAddComment={onAddComment}
+          onToggleCommentLike={onToggleCommentLike}
+          onToggleCreatorHeart={onToggleCreatorHeart}
+          onDeleteComment={onDeleteComment}
           onAddOwnerResponse={async (vidId, text) => {
             await handleSaveReply(vidId, text);
           }}

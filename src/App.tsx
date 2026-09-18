@@ -3890,6 +3890,7 @@ export function App() {
       replyToId?: string;
       postAsOwner?: boolean;
       postAsCreator?: boolean;
+      commentItem?: ReviewComment;
     }
   ) => {
     if (!currentUser) {
@@ -3920,8 +3921,18 @@ export function App() {
       (currentUser.name && targetVid?.author?.name && currentUser.name.toLowerCase().trim() === (targetVid?.author?.name || "").toLowerCase().trim())
     );
 
-    const authorName = currentUser.name || (options?.postAsOwner ? "Verified Business Owner" : (isTargetCreator ? "Video Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer")));
-    const authorHandle = currentUser.email ? currentUser.email.split("@")[0] : (options?.postAsOwner ? "owner" : (isTargetCreator ? "reviewer" : "user"));
+    const targetPlace = places.find(
+      (p) => p.id === targetVid?.placeId || (p.reviews && p.reviews.some((r) => r.id === videoId))
+    );
+    const placeName = targetPlace?.name || targetVid?.placeName || "Business";
+    const placeLogo = targetPlace?.logoUrl || targetVid?.placeLogoUrl || "";
+
+    const authorName = options?.commentItem?.authorName || (options?.postAsOwner
+      ? placeName
+      : (currentUser.name || (isTargetCreator ? "Video Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer"))));
+    const authorHandle = options?.commentItem?.authorHandle || (options?.postAsOwner
+      ? (targetPlace?.brandDomain || "owner")
+      : (currentUser.email ? currentUser.email.split("@")[0] : (isTargetCreator ? "reviewer" : "user")));
     const validCurrentAvatar =
       currentUser.avatar &&
       !currentUser.avatar.includes("photo-1534528741775") &&
@@ -3929,16 +3940,20 @@ export function App() {
         ? currentUser.avatar
         : "";
 
-    const authorAvatar =
-      validCurrentAvatar ||
-      `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
+    const authorAvatar = options?.commentItem?.authorAvatar || (options?.postAsOwner
+      ? (placeLogo || `/api/avatar?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`)
+      : (validCurrentAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`));
 
-    const newCommentItem: ReviewComment = {
+    const newCommentItem: ReviewComment = options?.commentItem ? {
+      ...options.commentItem,
+      text: cleanText,
+      isOwner: Boolean(options.postAsOwner || options.commentItem.isOwner)
+    } : {
       id: `comm-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       authorName,
       authorHandle,
       authorAvatar,
-      text,
+      text: cleanText,
       createdAt: "Just now",
       createdAtMs: Date.now(),
       likesCount: 0,
@@ -4438,42 +4453,26 @@ export function App() {
 
   // Handle Adding/Updating Owner Response on Review - fully synced with BunnyDB
   const handleSaveOwnerResponse = async (videoId: string, text: string) => {
-    const ownerResp = {
-      text: text.trim(),
+    const cleanText = text.trim();
+    const ownerResp = cleanText ? {
+      text: cleanText,
       respondedAt: "Just now",
       respondedAtMs: Date.now()
-    };
+    } : undefined;
 
     let updatedComments: ReviewComment[] = [];
 
     setVideos((prev) => {
       const updated = prev.map((v) => {
         if (v.id === videoId) {
-          const placeName = v.placeName || "Business";
-          const placeLogo = v.placeLogoUrl || "";
           const existingComments = v.comments || [];
-
-          // Create or update owner comment in comments array
-          const ownerComment: ReviewComment = {
-            id: `owner_comm_${videoId}`,
-            authorName: `${placeName} (Owner)`,
-            authorHandle: "owner",
-            authorAvatar: placeLogo || `/api/avatar?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`,
-            text: text.trim(),
-            createdAt: "Just now",
-      createdAtMs: Date.now(),
-            likesCount: 0,
-            isOwner: true,
-            isCreator: false,
-            replies: []
-          };
-
-          const filteredComments = existingComments.filter((c) => !c.isOwner && c.id !== `owner_comm_${videoId}`);
-          updatedComments = text.trim() ? [ownerComment, ...filteredComments] : filteredComments;
+          // Preserve all real user and business owner comments in the thread
+          const cleanExisting = existingComments.filter((c) => c.id !== `owner_comm_${videoId}`);
+          updatedComments = cleanExisting;
 
           return {
             ...v,
-            ownerResponse: text.trim() ? ownerResp : undefined,
+            ownerResponse: ownerResp,
             comments: updatedComments,
             commentsCount: updatedComments.length
           };
@@ -4488,7 +4487,7 @@ export function App() {
         prev
           ? {
               ...prev,
-              ownerResponse: text.trim() ? ownerResp : undefined,
+              ownerResponse: ownerResp,
               comments: updatedComments,
               commentsCount: updatedComments.length
             }
@@ -4496,22 +4495,20 @@ export function App() {
       );
     }
 
-    // Persist to Server and BunnyDB database
+    // Persist to Server and BunnyDB database via dedicated endpoint
     try {
-      fetch("/api/videos/save-review", {
+      fetch("/api/videos/owner-response", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: videoId,
-          ownerResponse: text.trim() ? ownerResp : null,
-          comments: updatedComments,
-          commentsCount: updatedComments.length
+          videoId,
+          text: cleanText
         })
       }).catch(() => {});
     } catch (e) {}
 
     // Send social notification to review author that business responded
-    if (text.trim()) {
+    if (cleanText) {
       const targetVid =
         videos.find((v) => v.id === videoId) ||
         videosRef.current.find((v) => v.id === videoId) ||
@@ -4531,7 +4528,7 @@ export function App() {
             avatar: targetVid.placeLogoUrl || `/api/avatar?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`,
             email: currentUser?.email || "owner@yoouz.com"
           },
-          text: `responded to your review: "${text.trim().slice(0, 50)}${text.trim().length > 50 ? '...' : ''}"`,
+          text: `responded to your review: "${cleanText.slice(0, 50)}${cleanText.length > 50 ? '...' : ''}"`,
           videoId: targetVid.id,
           videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
           placeName: targetVid.placeName
@@ -4548,7 +4545,7 @@ export function App() {
       const updated = prev.map((v) => {
         if (v.id === videoId) {
           const { ownerResponse, ...rest } = v;
-          updatedComments = (v.comments || []).filter((c) => !c.isOwner && c.id !== `owner_comm_${videoId}`);
+          updatedComments = (v.comments || []).filter((c) => c.id !== `owner_comm_${videoId}`);
           return {
             ...rest,
             ownerResponse: undefined,
@@ -4573,6 +4570,14 @@ export function App() {
         };
       });
     }
+
+    try {
+      fetch("/api/videos/owner-response", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId })
+      }).catch(() => {});
+    } catch (e) {}
   };
 
   // Handle Opening the Create Review Modal
@@ -5811,6 +5816,10 @@ export function App() {
                 }}
                 onSaveOwnerResponse={handleSaveOwnerResponse}
                 onDeleteOwnerResponse={handleDeleteOwnerResponse}
+                onAddComment={handleAddComment}
+                onToggleCommentLike={handleToggleCommentLike}
+                onToggleCreatorHeart={handleToggleCreatorHeart}
+                onDeleteComment={handleDeleteComment}
                 onUpdatePlace={handleUpdatePlace}
                 onRecordReview={(targetPlace) => handleOpenCreateReview(targetPlace)}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt) => {

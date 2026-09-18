@@ -562,6 +562,18 @@ export function useFeedPagination() {
               window.dispatchEvent(new CustomEvent("copo-like-comment", { detail: payload }));
             } else if (payload.type === "heart_comment" && payload.videoId) {
               window.dispatchEvent(new CustomEvent("copo-heart-comment", { detail: payload }));
+            } else if (payload.type === "owner_response_updated" && payload.videoId) {
+              const vidId = String(payload.videoId);
+              setVideos((prev) => prev.map((v) => {
+                if (v.id === vidId) {
+                  return {
+                    ...v,
+                    ownerResponse: payload.ownerResponse || undefined
+                  };
+                }
+                return v;
+              }));
+              window.dispatchEvent(new CustomEvent("copo-owner-response-updated", { detail: payload }));
             } else if (payload.type === "video_liked" && payload.videoId) {
               const vidId = String(payload.videoId);
               setVideos((prev) => prev.map((v) => v.id === vidId ? {

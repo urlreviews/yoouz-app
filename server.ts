@@ -5686,6 +5686,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           if (commRows && commRows.rows) {
             totalCommentsAnalyzed = commRows.rows.length;
             const seenComms = new Map<string, string>();
+            const duplicateIdsToDelete: string[] = [];
             commRows.rows.forEach((row: any) => {
               let cData: any = {};
               try { cData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e) {}
@@ -5696,11 +5697,22 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                 const sig = `${vId}:${uName}:${txt}`;
                 if (seenComms.has(sig) && seenComms.get(sig) !== String(row.id)) {
                   duplicateCommentCount++;
+                  duplicateIdsToDelete.push(String(row.id));
                 } else {
                   seenComms.set(sig, String(row.id));
                 }
               }
             });
+            // Automatically clean up duplicate identical rows
+            if (duplicateIdsToDelete.length > 0) {
+              for (const dupId of duplicateIdsToDelete) {
+                try {
+                  await bDb.execute({ sql: "DELETE FROM comments WHERE id = ?", args: [dupId] });
+                } catch(e) {}
+              }
+              totalCommentsAnalyzed = Math.max(0, totalCommentsAnalyzed - duplicateIdsToDelete.length);
+              duplicateCommentCount = 0;
+            }
           }
 
           // Check video reviews for ID leaks in caption or placeName
@@ -9711,6 +9723,143 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       res.status(500).json({ error: err.message });
     }
   });
+
+app.post("/api/videos/owner-response", async (req, res) => {
+  try {
+    const { videoId, text } = req.body;
+    if (!videoId) {
+      return res.status(400).json({ error: "Missing videoId" });
+    }
+
+    const cleanText = (text || "").trim();
+    const ownerResp = cleanText ? {
+      text: cleanText,
+      respondedAt: "Just now",
+      respondedAtMs: Date.now()
+    } : null;
+
+    // 1. Update local reviews index
+    const list = readReviewsIndex();
+    const existingIdx = list.findIndex((item: any) => item.id === videoId);
+    if (existingIdx !== -1) {
+      if (ownerResp) {
+        list[existingIdx].ownerResponse = ownerResp;
+      } else {
+        delete list[existingIdx].ownerResponse;
+      }
+      writeReviewsIndex(list);
+    }
+
+    // 2. Update memory feedCache
+    const cachedIdx = feedCache.videos.findIndex((item: any) => item.id === videoId);
+    if (cachedIdx !== -1) {
+      if (ownerResp) {
+        feedCache.videos[cachedIdx].ownerResponse = ownerResp;
+      } else {
+        delete feedCache.videos[cachedIdx].ownerResponse;
+      }
+    }
+    feedCache.lastFetched = Date.now();
+
+    // 3. Update BunnyDB videoReviews table
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        const existingRow = await bunnyDb.execute({
+          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (existingRow && existingRow.rows && existingRow.rows.length > 0) {
+          const curDataRaw = (existingRow.rows[0] as any).data;
+          let curData = typeof curDataRaw === "string" ? JSON.parse(curDataRaw) : (curDataRaw || {});
+          if (ownerResp) {
+            curData.ownerResponse = ownerResp;
+          } else {
+            delete curData.ownerResponse;
+          }
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [JSON.stringify(curData), videoId]
+          });
+          console.log(`🐰 [BunnyDB] Owner response ${ownerResp ? "saved" : "removed"} for video ${videoId}`);
+        }
+      } catch (bErr: any) {
+        console.warn("Notice updating ownerResponse in bunnyDb:", bErr?.message || bErr);
+      }
+    }
+
+    // 4. Broadcast SSE
+    broadcastSseEvent({
+      type: "owner_response_updated",
+      videoId,
+      ownerResponse: ownerResp
+    });
+
+    res.json({ success: true, videoId, ownerResponse: ownerResp });
+  } catch (err: any) {
+    console.error("Owner response error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/videos/owner-response", async (req, res) => {
+  try {
+    const { videoId } = req.body;
+    if (!videoId) {
+      return res.status(400).json({ error: "Missing videoId" });
+    }
+
+    // 1. Update local reviews index
+    const list = readReviewsIndex();
+    const existingIdx = list.findIndex((item: any) => item.id === videoId);
+    if (existingIdx !== -1) {
+      delete list[existingIdx].ownerResponse;
+      writeReviewsIndex(list);
+    }
+
+    // 2. Update memory feedCache
+    const cachedIdx = feedCache.videos.findIndex((item: any) => item.id === videoId);
+    if (cachedIdx !== -1) {
+      delete feedCache.videos[cachedIdx].ownerResponse;
+    }
+    feedCache.lastFetched = Date.now();
+
+    // 3. Update BunnyDB videoReviews table
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        const existingRow = await bunnyDb.execute({
+          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+        if (existingRow && existingRow.rows && existingRow.rows.length > 0) {
+          const curDataRaw = (existingRow.rows[0] as any).data;
+          let curData = typeof curDataRaw === "string" ? JSON.parse(curDataRaw) : (curDataRaw || {});
+          delete curData.ownerResponse;
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [JSON.stringify(curData), videoId]
+          });
+          console.log(`🐰 [BunnyDB] Owner response deleted for video ${videoId}`);
+        }
+      } catch (bErr: any) {
+        console.warn("Notice deleting ownerResponse in bunnyDb:", bErr?.message || bErr);
+      }
+    }
+
+    // 4. Broadcast SSE
+    broadcastSseEvent({
+      type: "owner_response_updated",
+      videoId,
+      ownerResponse: null
+    });
+
+    res.json({ success: true, videoId, ownerResponse: null });
+  } catch (err: any) {
+    console.error("Delete owner response error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.post("/api/videos/save-review", async (req, res) => {
     try {

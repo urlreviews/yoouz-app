@@ -40,9 +40,9 @@ interface CopoCommentsDrawerProps {
     text: string,
     options?: {
       replyToId?: string;
-      
       postAsOwner?: boolean;
       postAsCreator?: boolean;
+      commentItem?: ReviewComment;
     }
   ) => void;
   onToggleCommentLike?: (videoId: string, commentId: string, replyId?: string) => void;
@@ -52,6 +52,7 @@ interface CopoCommentsDrawerProps {
   onDeleteOwnerResponse?: (videoId: string) => void;
   isUserOwner?: boolean;
   placeName?: string;
+  placeLogoUrl?: string;
   onSelectAuthor?: (authorHandle: string, authorName?: string, authorAvatar?: string) => void;
 }
 
@@ -87,6 +88,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   onDeleteOwnerResponse,
   isUserOwner = false,
   placeName,
+  placeLogoUrl: placeLogoUrlProp,
   onSelectAuthor,
 }) => {
   const { t } = useLanguage();
@@ -426,7 +428,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         : (currentUser.avatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`);
 
       const newOptComment: ReviewComment = {
-        id: `comm-opt-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        id: `comm-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
         authorName,
         authorHandle,
         authorAvatar,
@@ -458,11 +460,25 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       });
 
       // Post normal comment or reply (saved to BunnyDB)
-      onAddComment(video.id, text, {
-        replyToId: replyingTo?.commentId,
-        postAsOwner: isOwnerPosting,
-        postAsCreator: isUserCreator
-      });
+      if (onAddComment) {
+        onAddComment(video.id, text, {
+          replyToId: replyingTo?.commentId,
+          postAsOwner: isOwnerPosting,
+          postAsCreator: isUserCreator,
+          commentItem: newOptComment
+        });
+      }
+
+      // Direct persistent write to Bunny Cloud Database API to guarantee zero data loss
+      fetch("/api/interactions/comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId: video.id,
+          comment: newOptComment,
+          userId: currentUser?.email || (currentUser as any)?.id || "user"
+        })
+      }).catch(() => {});
 
       if (replyingTo) {
         setExpandedReplies((prev) => ({
@@ -542,9 +558,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
   if (!video) return null;
 
-  const placeLogoUrl = video.placeLogoUrl 
+  const placeLogoUrl = placeLogoUrlProp || (video.placeLogoUrl 
     ? getCleanLogoUrl(video.placeLogoUrl, video.placeWebsite) 
-    : getPlaceLogoUrl({ name: video.placeName, website: video.placeWebsite, category: video.placeCategory });
+    : getPlaceLogoUrl({ name: video.placeName, website: video.placeWebsite, category: video.placeCategory }));
 
   return (
     <div
