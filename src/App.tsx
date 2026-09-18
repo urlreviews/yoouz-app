@@ -5128,6 +5128,19 @@ export function App() {
           }}
           unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
           unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
+          onCloseEmbed={() => {
+            setEmbedTargetId(null);
+            try {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+              }
+            } catch (e) {}
+            if (window.history && window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.history.pushState(null, "", "/");
+            }
+          }}
         />
 
         {/* Place Drawer */}

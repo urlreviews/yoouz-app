@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
 import { getPlaceSlug } from "../utils/placeUtils";
 import { CopoVideoPlayer } from "./CopoVideoPlayer";
+import { CopoMobileBottomNav } from "./CopoMobileBottomNav";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -44,6 +45,10 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   onRecordReview,
   onOpenAuth: _onOpenAuth,
   onOpenMenu,
+  onOpenSearch,
+  onSelectSection,
+  unreadNotifsCount = 0,
+  unreadMessagesCount = 0,
   onCloseEmbed
 }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -199,9 +204,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   return (
     <div
       id="copo-embed-root"
-      className="w-full h-full min-h-screen h-[100dvh] bg-black text-white flex items-center justify-center relative overflow-hidden font-sans select-none antialiased"
+      className="w-full h-full min-h-screen h-[100dvh] bg-black text-white flex flex-col items-center justify-center relative overflow-hidden font-sans select-none antialiased"
     >
-      <div className="w-full h-full relative bg-black flex flex-col overflow-hidden z-10">
+      <div className="copo-has-bottom-nav w-full h-full relative bg-black flex flex-col overflow-hidden z-10">
         <CopoVideoPlayer
           videos={matchingVideos}
           places={places}
@@ -228,6 +233,23 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           onCloseEmbed={handleCloseEmbed}
         />
       </div>
+
+      {/* Official Bottom Mobile Navigation Bar */}
+      <CopoMobileBottomNav
+        activeSection="home"
+        onSelectSection={(sec) => {
+          if (sec === "home") {
+            // Stay on feed
+          } else if (onSelectSection) {
+            onSelectSection(sec);
+          }
+        }}
+        currentUser={currentUser}
+        unreadNotifsCount={unreadNotifsCount}
+        unreadMessagesCount={unreadMessagesCount}
+        onOpenSearch={onOpenSearch}
+        onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
+      />
     </div>
   );
 };

@@ -715,31 +715,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               type="button"
               id={`btn-feed-back-${video.id}`}
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 onPauseVideo?.();
-                if (onGoBack) {
-                  onGoBack();
-                } else if (onCloseEmbed) {
+                if (onCloseEmbed) {
                   onCloseEmbed();
-                } else {
-                  try {
-                    if (window.parent && window.parent !== window) {
-                      window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
-                    }
-                  } catch (err) {}
-                  if (window.history && window.history.length > 1) {
-                    window.history.back();
-                  }
-                }
-              }}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                onPauseVideo?.();
-                if (onGoBack) {
+                } else if (onGoBack) {
                   onGoBack();
-                } else if (onCloseEmbed) {
-                  onCloseEmbed();
                 } else {
                   try {
                     if (window.parent && window.parent !== window) {
