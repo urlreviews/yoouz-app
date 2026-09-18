@@ -1165,14 +1165,78 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   }, [currentPlace, allUsers, videos, currentUser]);
 
   const filteredFollowers = useMemo(() => {
-    if (!followerSearchQuery.trim()) return businessFollowers;
     const q = followerSearchQuery.toLowerCase().trim();
-    return businessFollowers.filter(f => 
-      f.name.toLowerCase().includes(q) || 
-      f.handle.toLowerCase().includes(q) ||
-      (f.lastReviewSnippet && f.lastReviewSnippet.toLowerCase().includes(q))
-    );
-  }, [businessFollowers, followerSearchQuery]);
+    if (!q) return businessFollowers;
+
+    const map = new Map<string, any>();
+
+    // 1. Matching existing followers
+    businessFollowers.forEach((f) => {
+      if (f.name.toLowerCase().includes(q) || f.handle.toLowerCase().includes(q) || (f.lastReviewSnippet && f.lastReviewSnippet.toLowerCase().includes(q))) {
+        map.set(f.name.toLowerCase(), f);
+      }
+    });
+
+    // 2. All platform users/reviewers matching query (excluding businesses)
+    (allUsers || []).forEach((u: any) => {
+      const name = (u.name || "").trim();
+      const email = (u.email || "").toLowerCase().trim();
+      const handle = (u.handle || name || "").toLowerCase().replace(/^@/, '');
+      if (!name || name === "Registered User" || name === "Reviewer") return;
+      if (email === "admin@yoouz.com") return;
+
+      if (name.toLowerCase().includes(q) || handle.includes(q) || (u.bio && u.bio.toLowerCase().includes(q))) {
+        const key = name.toLowerCase();
+        if (!map.has(key)) {
+          const isFollowed = Boolean(
+            businessFollowedAuthors.some(
+              (a) => a.toLowerCase().trim() === key || a.toLowerCase().replace(/^@/, '') === handle
+            )
+          );
+          map.set(key, {
+            id: u.id || u.uid || key,
+            name,
+            handle: handle || 'user',
+            avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
+            isReviewer: true,
+            reviewCount: u.videoCount || 0,
+            location: u.location || 'Local Contributor',
+            isFollowedBack: isFollowed
+          });
+        }
+      }
+    });
+
+    // 3. Video review authors matching query
+    (videos || []).forEach((v) => {
+      if (v.author && v.author.name) {
+        const name = v.author.name.trim();
+        const handle = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (name.toLowerCase().includes(q)) {
+          const key = name.toLowerCase();
+          if (!map.has(key)) {
+            const isFollowed = Boolean(
+              businessFollowedAuthors.some(
+                (a) => a.toLowerCase().trim() === key || a.toLowerCase().replace(/^@/, '') === handle
+              )
+            );
+            map.set(key, {
+              id: key,
+              name,
+              handle,
+              avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
+              isReviewer: true,
+              reviewCount: 1,
+              location: v.placeCity || 'Local Contributor',
+              isFollowedBack: isFollowed
+            });
+          }
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [businessFollowers, followerSearchQuery, allUsers, videos, businessFollowedAuthors]);
 
   // Business Messages strictly scoped to this business entity (placeId, business email, or business handle)
   const businessMessages = useMemo(() => {
