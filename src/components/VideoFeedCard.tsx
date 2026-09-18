@@ -1017,7 +1017,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               <MessageCircle className="w-5 h-5 text-white stroke-[2]" />
             </button>
             <span className="text-[11.5px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-              {(video.commentsCount || video.comments?.length || 0) + (video.ownerResponse ? 1 : 0)}
+              {typeof video.commentsCount === 'number' ? video.commentsCount : ((video.comments?.length || 0) + (video.ownerResponse && !(video.comments || []).some(c => c.isOwner || c.id?.startsWith("owner_comm_")) ? 1 : 0))}
             </span>
           </div>
 

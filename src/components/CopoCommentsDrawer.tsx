@@ -404,17 +404,57 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     if (!text) return;
 
     setIsSubmittingComment(true);
+
     if (postAsOwner && !replyingTo && onAddOwnerResponse) {
       // Post as official pinned business owner response
       onAddOwnerResponse(video.id, text);
       setEditingOwnerResponse(false);
     } else {
+      // Create optimistic local comment object for instant 0ms UI update
+      const isTargetCreator = isUserCreator;
+      const authorName = currentUser.name || (postAsOwner ? "Verified Business Owner" : (isTargetCreator ? "Video Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer")));
+      const authorHandle = currentUser.email ? currentUser.email.split("@")[0] : (postAsOwner ? "owner" : (isTargetCreator ? "reviewer" : "user"));
+      const authorAvatar = currentUser.avatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
+
+      const newOptComment: ReviewComment = {
+        id: `comm-opt-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        authorName,
+        authorHandle,
+        authorAvatar,
+        text,
+        createdAt: "Just now",
+        createdAtMs: Date.now(),
+        likesCount: 0,
+        isLiked: false,
+        isOwner: Boolean(postAsOwner),
+        isCreator: Boolean(isTargetCreator),
+        replies: []
+      };
+      if (replyingTo) newOptComment.replyToId = replyingTo.commentId;
+
+      // Optimistically insert into remoteComments so it appears in the drawer INSTANTLY on Enter!
+      setRemoteComments((prev) => {
+        if (replyingTo) {
+          return prev.map((c) => {
+            if (c.id === replyingTo.commentId) {
+              return {
+                ...c,
+                replies: [...(c.replies || []), newOptComment]
+              };
+            }
+            return c;
+          });
+        }
+        return [newOptComment, ...prev];
+      });
+
       // Post normal comment or reply
       onAddComment(video.id, text, {
         replyToId: replyingTo?.commentId,
         postAsOwner: isUserOwner && postAsOwner,
         postAsCreator: isUserCreator
       });
+
       if (replyingTo) {
         setExpandedReplies((prev) => ({
           ...prev,
@@ -423,11 +463,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         setReplyingTo(null);
       }
     }
+
     setCommentText("");
     if (inputRef.current) {
       inputRef.current.focus();
     }
-    setTimeout(() => setIsSubmittingComment(false), 300);
+    setTimeout(() => setIsSubmittingComment(false), 200);
   };
 
   const [sheetHeight, setSheetHeight] = useState<"normal" | "expanded">("normal");
@@ -621,8 +662,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       <span className="font-extrabold text-white text-xs truncate">
                         {t("comments.responseOwner", "Response from the owner")}
                       </span>
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/80 text-[9px] font-bold tracking-tight">
-                        <ShieldCheck className="w-2.5 h-2.5 text-amber-400" />
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[9px] font-bold tracking-tight">
+                        <ShieldCheck className="w-2.5 h-2.5 text-white" />
                         {t("business.verified", "Verified Business")}
                       </span>
                     </div>
@@ -637,7 +678,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 </span>
               </div>
 
-              <div className="pl-3 py-1 border-l-2 border-amber-500 text-zinc-200 text-[13px] leading-relaxed font-medium bg-zinc-850 rounded-r-xl p-2.5">
+              <div className="pl-3 py-1 border-l-2 border-zinc-500 text-zinc-200 text-[13px] leading-relaxed font-medium bg-zinc-850 rounded-r-xl p-2.5">
                 "{video.ownerResponse.text}"
               </div>
 
@@ -671,15 +712,21 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
           )}
 
           {/* 2. Empty State when no comments exist */}
-          {sortedComments.length === 0 && !video.ownerResponse ? (
-            <div className="h-full flex flex-col items-center justify-center text-center px-4 py-12 space-y-4">
-              <div className="w-16 h-16 rounded-3xl bg-zinc-900 text-zinc-200 flex items-center justify-center shadow-xs">
-                <MessageSquare className="w-8 h-8 stroke-[1.5]" />
+          {sortedComments.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center px-4 py-8 space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-zinc-900 text-zinc-300 flex items-center justify-center shadow-xs">
+                <MessageSquare className="w-7 h-7 stroke-[1.5]" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-white font-bold text-sm">{t("comments.noCommentsYet", "No comments yet")}</h3>
-                <p className="text-zinc-200 text-xs max-w-xs leading-relaxed">
-                  {t("comments.beFirst", "Be the first to share your thoughts or ask a question about")} {video.placeName}!
+                <h3 className="text-white font-bold text-sm">
+                  {video.ownerResponse
+                    ? t("comments.noUserCommentsYet", "No user comments yet")
+                    : t("comments.noCommentsYet", "No comments yet")}
+                </h3>
+                <p className="text-zinc-300 text-xs max-w-xs leading-relaxed">
+                  {video.ownerResponse
+                    ? t("comments.beFirstWithResponse", "Be the first creator to share your thoughts or ask a question!")
+                    : `${t("comments.beFirst", "Be the first to share your thoughts or ask a question about")} ${video.placeName}!`}
                 </p>
               </div>
 
@@ -767,8 +814,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
                           {/* Verified Business Owner Badge */}
                           {comment.isOwner && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/80 text-[10px] font-bold">
-                              <ShieldCheck className="w-2.5 h-2.5 text-amber-400" />
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[10px] font-bold">
+                              <ShieldCheck className="w-2.5 h-2.5 text-white" />
                               {t("business.owner", "Business Owner")}
                             </span>
                           )}
@@ -934,7 +981,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                       )}
 
                                       {reply.isOwner && (
-                                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/80 text-[9px] font-bold">
+                                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[9px] font-bold">
                                           {t("business.owner", "Owner")}
                                         </span>
                                       )}
@@ -1050,25 +1097,25 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
               {/* Verified Business Owner Identity Badge */}
               {isUserOwner && (
-                <div className="flex items-center justify-between bg-amber-950/40 border border-amber-800/60 rounded-xl px-3 py-2">
+                <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="relative shrink-0">
                       <img
                         src={placeLogoUrl || video?.placeLogoUrl || "/favicon.svg"}
                         alt={placeName || video.placeName}
-                        className="w-7 h-7 rounded-full object-cover border border-amber-500/60 bg-black"
+                        className="w-7 h-7 rounded-full object-cover border border-zinc-700 bg-black"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/favicon.svg'; }}
                       />
-                      <ShieldCheck className="w-3.5 h-3.5 text-amber-400 absolute -bottom-1 -right-1 bg-black rounded-full" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-white absolute -bottom-1 -right-1 bg-black rounded-full" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-bold text-amber-200 truncate flex items-center gap-1.5">
+                      <p className="text-[11px] font-bold text-white truncate flex items-center gap-1.5">
                         <span>{placeName || video.placeName}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase tracking-wide">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 font-extrabold uppercase tracking-wide">
                           Verified Owner
                         </span>
                       </p>
-                      <p className="text-[10px] text-amber-300/80 truncate">
+                      <p className="text-[10px] text-zinc-400 truncate">
                         {t("comments.respondingAsOfficialBusiness", "Posting official response as business owner")}
                       </p>
                     </div>
@@ -1092,7 +1139,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   }
                   alt={(isUserOwner || postAsOwner) ? (placeName || video.placeName) : (currentUser?.name || "You")}
                   className={`w-8 h-8 rounded-full object-cover shrink-0 ${
-                    (isUserOwner || postAsOwner) ? "border-2 border-amber-500/80 bg-black shadow-md" : "border border-zinc-800"
+                    (isUserOwner || postAsOwner) ? "border border-zinc-700 bg-black shadow-md" : "border border-zinc-800"
                   }`}
                   onError={(e) => {
                     const target = e.currentTarget as HTMLImageElement;
@@ -1121,7 +1168,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     }
                     className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-xs sm:text-sm px-4 py-2.5 rounded-full border transition-all ${
                       postAsOwner
-                        ? "border-amber-700/60 focus:border-amber-500 focus:bg-zinc-900 focus:ring-2 focus:ring-amber-500/20"
+                        ? "border-zinc-700 focus:border-white focus:bg-zinc-900 focus:ring-2 focus:ring-white/10"
                         : "border-zinc-800 focus:border-white/50 focus:bg-zinc-900 focus:ring-2 focus:ring-white/10"
                     } focus:outline-none`}
                   />
@@ -1147,7 +1194,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     disabled={!commentText.trim() || commentText.length > 300}
                     className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer ${
                       postAsOwner
-                        ? "bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40"
+                        ? "bg-white hover:bg-zinc-200 text-zinc-950 disabled:opacity-40"
                         : "bg-zinc-800 hover:bg-zinc-700 text-white disabled:opacity-40"
                     }`}
                     title={t("comments.sendComment", "Send comment")}
