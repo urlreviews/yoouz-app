@@ -3336,45 +3336,38 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
             {/* TAB 4: QR CODE STUDIO */}
             {activeTab === 'qr_invites' && (
-              <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200 max-w-lg mx-auto pb-16 px-1 sm:px-0">
+              <div className="space-y-5 animate-in fade-in duration-200 max-w-lg mx-auto pb-16 px-1 sm:px-0">
                 
-                {/* Header Banner - Native Mobile App Card Styling */}
-                <div className="bg-zinc-900/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white border border-zinc-800 shadow-sm backdrop-blur-md">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                          Live In-Venue QR
-                        </span>
-                      </div>
-                      <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
-                        Venue QR Code
-                      </h2>
-                      <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                        Display on counter tops, dining tables, or windows. Scanning immediately launches the 60-second video review screen.
-                      </p>
-                    </div>
-
-                    {/* Quick Direct Link Copy Pill */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(qrDirectReviewUrl);
-                        setQrLinkCopied(true);
-                        setTimeout(() => setQrLinkCopied(false), 2500);
-                      }}
-                      className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl sm:rounded-2xl bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-750 text-white border border-zinc-700 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-98 shadow-xs"
-                    >
-                      {qrLinkCopied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-zinc-300" />}
-                      <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Link'}</span>
-                    </button>
+                {/* Header Banner - Sleek Minimal Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/90 rounded-2xl sm:rounded-3xl p-4 sm:p-5 text-white border border-zinc-800/90 shadow-lg backdrop-blur-md">
+                  <div className="min-w-0">
+                    <h2 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
+                      <QrCode className="w-5 h-5 text-white shrink-0" />
+                      <span>Venue QR Code</span>
+                    </h2>
+                    <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                      Display at your counter or tables. Customers scan to record live 60s video reviews.
+                    </p>
                   </div>
+
+                  {/* Quick Direct Link Copy Pill */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(qrDirectReviewUrl);
+                      setQrLinkCopied(true);
+                      setTimeout(() => setQrLinkCopied(false), 2500);
+                    }}
+                    className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 text-white border border-zinc-700/80 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95 shadow-xs"
+                  >
+                    {qrLinkCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-300" />}
+                    <span>{qrLinkCopied ? 'Link Copied!' : 'Copy Direct Link'}</span>
+                  </button>
                 </div>
 
                 {/* Centerpiece: Physical Mobile App Standee Card */}
                 <div className="flex flex-col items-center w-full">
-                  <div className="w-full bg-zinc-950 border border-zinc-800/90 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden text-center text-white ring-1 ring-white/5">
+                  <div className="w-full bg-zinc-900/90 border border-zinc-800/90 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden text-center text-white ring-1 ring-white/10 backdrop-blur-2xl">
                     {/* Top Acrylic Lip & Bevel */}
                     <div className="w-16 sm:w-20 h-1 sm:h-1.5 bg-zinc-700/80 rounded-full mx-auto mb-4 sm:mb-5 shadow-inner" />
 
@@ -3389,14 +3382,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       domain={currentPlace.website || currentPlace.id}
                       name={currentPlace.name}
                       logoUrl={currentPlace.logoUrl}
-                      className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-zinc-950 p-2 flex items-center justify-center mx-auto mb-2.5 sm:mb-3 shadow-lg border border-zinc-700/80 overflow-hidden"
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-950 p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-750 overflow-hidden"
                       imageClassName="w-full h-full object-contain"
-                      fallbackTextClassName="font-black text-base text-white"
+                      fallbackTextClassName="font-black text-lg text-white"
                     />
 
                     {/* Venue Title & Verified Badge */}
                     <div className="flex items-center justify-center gap-1.5 mb-1 px-2">
-                      <h3 className="font-black text-white text-base sm:text-lg tracking-tight truncate max-w-[240px] sm:max-w-[280px]">
+                      <h3 className="font-black text-white text-base sm:text-xl tracking-tight truncate max-w-[260px] sm:max-w-[300px]">
                         {currentPlace.name}
                       </h3>
                       <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
@@ -3416,20 +3409,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </div>
 
                     {/* Callout Prompt */}
-                    <div className="mb-3 sm:mb-4 px-2">
-                      <span className="inline-block px-3 py-1 rounded-full bg-zinc-900 text-zinc-200 font-extrabold text-[10px] sm:text-[10.5px] uppercase tracking-wider border border-zinc-800 shadow-inner max-w-full truncate">
+                    <div className="mb-4 sm:mb-5 px-2">
+                      <span className="inline-block px-3.5 py-1.5 rounded-full bg-zinc-950 text-zinc-100 font-black text-[10.5px] sm:text-xs uppercase tracking-wider border border-zinc-750 shadow-inner max-w-full truncate">
                         {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
                       </span>
                     </div>
 
-                    {/* QR Code Canvas Card (Responsive Sizing for Mobile) */}
-                    <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xl inline-block border border-zinc-300 relative group my-1 max-w-full">
-                      {/* Responsive QR canvas sizing: 180px on narrow mobile, 210px on tablet/desktop */}
+                    {/* QR Code Canvas Card */}
+                    <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-2xl inline-block border border-zinc-300 relative group my-1 max-w-full">
+                      {/* Responsive QR canvas sizing: 190px on mobile, 220px on tablet/desktop */}
                       <div className="hidden sm:block">
                         <QRCodeCanvas
                           id="yoouz-qr-code"
                           value={qrDirectReviewUrl}
-                          size={210}
+                          size={220}
                           level="H"
                           includeMargin={true}
                         />
@@ -3438,7 +3431,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <QRCodeCanvas
                           id="yoouz-qr-code-mobile"
                           value={qrDirectReviewUrl}
-                          size={180}
+                          size={190}
                           level="H"
                           includeMargin={true}
                         />
@@ -3446,33 +3439,33 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                       {/* Center Yoouz Star Overlay */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-950 border-2 border-white text-white flex items-center justify-center font-black text-xs shadow-lg">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-950 border-2 border-white text-white flex items-center justify-center font-black text-sm shadow-xl">
                           ★
                         </div>
                       </div>
                     </div>
 
                     {/* Camera Guidance Prompt */}
-                    <div className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 mt-3 font-medium px-2">
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-400 mt-4 font-medium px-2">
                       <Camera className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                       <span>Scan with phone camera to record live review</span>
                     </div>
 
                     {/* Direct URL Footnote */}
-                    <div className="mt-3.5 pt-2.5 border-t border-zinc-900/80">
+                    <div className="mt-3.5 pt-3 border-t border-zinc-800/80">
                       <p className="text-[10px] font-mono text-zinc-500 truncate max-w-[260px] sm:max-w-xs mx-auto">
                         {qrDirectReviewUrl.replace(/^https?:\/\//, '')}
                       </p>
                     </div>
                   </div>
 
-                  {/* Tactile Native Mobile App Buttons */}
-                  <div className="w-full mt-4 sm:mt-6 space-y-2.5 sm:space-y-3">
+                  {/* Primary Action Buttons */}
+                  <div className="w-full mt-4 sm:mt-5 space-y-2.5">
                     <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                       <button
                         type="button"
                         onClick={downloadQRCode}
-                        className="py-3 px-3 sm:px-4 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 rounded-2xl text-xs font-extrabold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                        className="py-3 px-4 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                       >
                         <Download className="w-4 h-4 text-zinc-950 shrink-0" />
                         <span className="truncate">Download PNG</span>
@@ -3481,72 +3474,70 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <button
                         type="button"
                         onClick={() => setShowPrintModal(true)}
-                        className="py-3 px-3 sm:px-4 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-750 text-white rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-750 active:scale-95 shadow-md"
+                        className="py-3 px-4 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-750 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-750 active:scale-95 shadow-md"
                       >
                         <Printer className="w-4 h-4 text-zinc-300 shrink-0" />
                         <span className="truncate">Print Standee</span>
                       </button>
                     </div>
 
-                    {/* Test Scan / Open Recorder Button (Mobile touch-friendly) */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onRecordReview) {
-                          onRecordReview(currentPlace);
-                        } else {
-                          window.location.href = qrDirectReviewUrl;
-                        }
-                      }}
-                      className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800 text-zinc-200 hover:text-white rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-800 active:scale-98"
-                    >
-                      <Video className="w-4 h-4 text-white shrink-0" />
-                      <span>Test Scan & Record Flow</span>
-                    </button>
+                    {/* Secondary Action Row: Test Scan Flow & Customization */}
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onRecordReview) {
+                            onRecordReview(currentPlace);
+                          } else {
+                            window.location.href = qrDirectReviewUrl;
+                          }
+                        }}
+                        className="py-2.5 px-3 bg-zinc-900/80 hover:bg-zinc-850 text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-zinc-800 active:scale-98"
+                      >
+                        <Video className="w-3.5 h-3.5 text-white shrink-0" />
+                        <span className="truncate">Test Scan Flow</span>
+                      </button>
 
-                    {/* Minimal Inline Customization Toggle */}
-                    <div className="pt-1">
                       <button
                         type="button"
                         onClick={() => setShowCustomizeAccordion(!showCustomizeAccordion)}
-                        className="w-full flex items-center justify-between text-xs font-semibold text-zinc-400 hover:text-zinc-200 py-2.5 px-3.5 rounded-xl bg-zinc-900/60 active:bg-zinc-900 border border-zinc-800 transition-colors cursor-pointer"
+                        className="py-2.5 px-3 bg-zinc-900/80 hover:bg-zinc-850 text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-zinc-800 active:scale-98"
                       >
-                        <span className="flex items-center gap-2">
-                          <Sliders className="w-3.5 h-3.5" />
-                          <span>Customize Standee Text</span>
-                        </span>
-                        {showCustomizeAccordion ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        <Sliders className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                        <span className="truncate">Customize Text</span>
+                        {showCustomizeAccordion ? <ChevronUp className="w-3.5 h-3.5 ml-0.5" /> : <ChevronDown className="w-3.5 h-3.5 ml-0.5" />}
                       </button>
-
-                      {showCustomizeAccordion && (
-                        <div className="mt-2 p-3.5 sm:p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-3 text-left animate-in fade-in slide-in-from-top-1">
-                          <div>
-                            <label className="block text-[11px] font-bold text-zinc-300 mb-1">
-                              Callout Heading
-                            </label>
-                            <input
-                              type="text"
-                              value={qrCustomHeading}
-                              onChange={(e) => setQrCustomHeading(e.target.value)}
-                              placeholder="e.g. LEAVE A 60-SECOND VIDEO REVIEW"
-                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-bold text-zinc-300 mb-1">
-                              Table / Zone Label (Optional)
-                            </label>
-                            <input
-                              type="text"
-                              value={qrTableLabel}
-                              onChange={(e) => setQrTableLabel(e.target.value)}
-                              placeholder="e.g. Counter, Table #4"
-                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
-                            />
-                          </div>
-                        </div>
-                      )}
                     </div>
+
+                    {/* Customization Options Dropdown */}
+                    {showCustomizeAccordion && (
+                      <div className="mt-2 p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-3 text-left animate-in fade-in slide-in-from-top-1 shadow-xl">
+                        <div>
+                          <label className="block text-[11px] font-bold text-zinc-300 mb-1">
+                            Callout Heading
+                          </label>
+                          <input
+                            type="text"
+                            value={qrCustomHeading}
+                            onChange={(e) => setQrCustomHeading(e.target.value)}
+                            placeholder="e.g. LEAVE A 60-SECOND VIDEO REVIEW"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-zinc-300 mb-1">
+                            Table / Zone Label (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={qrTableLabel}
+                            onChange={(e) => setQrTableLabel(e.target.value)}
+                            placeholder="e.g. Counter, Table #4"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
