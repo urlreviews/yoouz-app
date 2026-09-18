@@ -275,6 +275,28 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
+  const [isReconcilingProfiles, setIsReconcilingProfiles] = useState(false);
+  const handleReconcileUserProfiles = async () => {
+    setIsReconcilingProfiles(true);
+    try {
+      const res = await fetch("/api/system/reconcile-user-profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(data.message || "User profiles reconciled and deduplicated globally.");
+        fetchHealthDiagnostic();
+      } else {
+        showToast("Failed to reconcile user profiles.");
+      }
+    } catch (e) {
+      showToast("Error reconciling user profiles.");
+    } finally {
+      setIsReconcilingProfiles(false);
+    }
+  };
+
   // Deletion Confirmations
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
   const [confirmDeletePlaceId, setConfirmDeletePlaceId] = useState<string | null>(null);
@@ -1758,7 +1780,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     comments_deduplication_sync: "26. Review ID Leak Guard, Caption Sanitizer & Comments Deduplication",
                     business_profile_review_match_guard: "27. Business Profile Place Review Matching & Empty State Guard",
                     comments_realtime_sync_guard: "28. Video Comments & Owner Response Real-Time Sync Guard",
-                    cross_device_comment_sync_guard: "29. Cross-Device Comment Deletion, Mobile Cache & Business Owner Logo Guard"
+                    cross_device_comment_sync_guard: "29. Cross-Device Comment Deletion, Mobile Cache & Business Owner Logo Guard",
+                    user_profile_chat_dedup_guard: "30. Business Chat Single-Profile & User Address Update Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1790,7 +1813,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     comments_deduplication_sync: "💬",
                     business_profile_review_match_guard: "🏢",
                     comments_realtime_sync_guard: "⚡",
-                    cross_device_comment_sync_guard: "🔄"
+                    cross_device_comment_sync_guard: "🔄",
+                    user_profile_chat_dedup_guard: "👤"
                   };
 
                   return (
@@ -1838,6 +1862,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         >
                           <RefreshCw className={`w-3.5 h-3.5 ${isSyncingComments ? "animate-spin" : ""}`} />
                           <span>{isSyncingComments ? "Reconciling Comments & Flushing Device Caches..." : "Re-sync Comments & Flush Stale Device Caches"}</span>
+                        </button>
+                      )}
+
+                      {key === "user_profile_chat_dedup_guard" && (
+                        <button
+                          type="button"
+                          onClick={handleReconcileUserProfiles}
+                          disabled={isReconcilingProfiles}
+                          className="w-full mt-2 py-2 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isReconcilingProfiles ? "animate-spin" : ""}`} />
+                          <span>{isReconcilingProfiles ? "Reconciling & Deduplicating User Profiles..." : "Re-sync & Deduplicate User Profiles"}</span>
                         </button>
                       )}
                     </div>

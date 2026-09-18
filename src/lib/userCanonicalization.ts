@@ -50,7 +50,10 @@ export function getCanonicalUserKey(candidate: UserIdentityCandidate): string {
     handle.includes("aouisemee") ||
     id.includes("aouisesmee") ||
     id.includes("aouisemee") ||
-    id === "mlio66hdr9trvofdgddgwm30rku2"
+    id === "mlio66hdr9trvofdgddgwm30rku2" ||
+    name === "ben blue" ||
+    name.replace(/[^a-z0-9]/g, "") === "benblue" ||
+    handle === "benblue"
   ) {
     return "user_group_aouisesmee";
   }
@@ -59,6 +62,7 @@ export function getCanonicalUserKey(candidate: UserIdentityCandidate): string {
   if (
     name === "biz riv" ||
     name.replace(/[^a-z0-9]/g, "") === "bizriv" ||
+    handle === "bizriv" ||
     email.includes("louis42111") ||
     handle.includes("louis42111") ||
     id.includes("louis42111")
@@ -66,27 +70,34 @@ export function getCanonicalUserKey(candidate: UserIdentityCandidate): string {
     return "user_group_bizriv";
   }
 
-  // Cluster 3: avt ertuop
+  // Cluster 3: Steven Akan (unified with avr6566gd and previous test aliases)
   if (
+    name === "steven akan" ||
+    name.replace(/[^a-z0-9]/g, "") === "stevenakan" ||
+    handle === "stevenakan" ||
+    handle.replace(/[^a-z0-9]/g, "") === "stevenakan" ||
+    id === "steven_akan" ||
+    id.includes("steven_akan") ||
+    id.includes("stevenakan") ||
     name === "avt ertuop" ||
     name.replace(/[^a-z0-9]/g, "") === "avtertuop" ||
     email.includes("avr6566gd") ||
     handle.includes("avr6566gd") ||
     id.includes("avr6566gd")
   ) {
-    return "user_group_avtertuop";
+    return "user_group_stevenakan";
   }
 
-  // General fallback by clean name
-  const cleanName = name.replace(/[^a-z0-9]/g, "");
-  if (cleanName && !isGenericUsername(cleanName)) {
-    return `user_group_name_${cleanName}`;
-  }
-
-  // General fallback by handle
+  // Priority 1: Non-generic handle
   const cleanHandle = handle.replace(/[^a-z0-9]/g, "");
-  if (cleanHandle && !isGenericUsername(cleanHandle)) {
+  if (cleanHandle && !isGenericUsername(cleanHandle) && cleanHandle.length >= 3) {
     return `user_group_handle_${cleanHandle}`;
+  }
+
+  // Priority 2: Non-generic real name
+  const cleanName = name.replace(/[^a-z0-9]/g, "");
+  if (cleanName && !isGenericUsername(cleanName) && cleanName.length >= 3) {
+    return `user_group_name_${cleanName}`;
   }
 
   // Fallback by email

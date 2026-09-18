@@ -607,13 +607,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     }));
 
     // Instantly save to BunnyDB live for all users across the platform
-    const userDocId = currentUser?.uid || currentUser?.id || currentUser?.email?.replace(/[^a-zA-Z0-9]/g, "_") || "user_me";
+    const canonicalEmail = currentUser?.email && currentUser.email.includes("@") ? currentUser.email.trim().toLowerCase() : "";
+    const userDocId = canonicalEmail || currentUser?.uid || currentUser?.id || "user_me";
     const savePayload = {
       ...currentUser,
       ...updatedProfile,
-      uid: currentUser?.uid || currentUser?.id || userDocId,
-      id: currentUser?.uid || currentUser?.id || userDocId,
-      email: currentUser?.email || "",
+      uid: userDocId,
+      id: userDocId,
+      email: canonicalEmail || currentUser?.email || "",
       updatedAt: new Date().toISOString()
     };
 

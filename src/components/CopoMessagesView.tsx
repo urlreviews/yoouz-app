@@ -305,14 +305,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         (hasUploadedAvatar(existing?.avatar) ? existing?.avatar : "") ||
         u.avatar ||
         existing?.avatar;
-      const bestEmail = uEmail && uEmail.includes("@") ? uEmail : (existing?.email || "");
+      const bestEmail = (uEmail && uEmail.includes("@") ? uEmail : "") || (existing?.email && existing.email.includes("@") ? existing.email : "");
       const bestName = uName && uName !== "Registered User" && uName !== "Reviewer" ? uName : (existing?.name || uName || "Reviewer");
-      const bestLocation = u.location || existing?.location;
-      const bestBio = u.bio || existing?.bio || "Community Creator";
+      const bestLocation = (u.location && u.location.length >= (existing?.location?.length || 0)) ? u.location : (existing?.location || u.location);
+      const bestBio = (u.bio && u.bio.length >= (existing?.bio?.length || 0)) ? u.bio : (existing?.bio || u.bio || "Community Creator");
       const isVerified = Boolean(u.isVerified ?? existing?.isVerified ?? true);
+      const bestId = (bestEmail && bestEmail.includes("@") ? bestEmail : "") || (existing?.id && existing.id.includes("@") ? existing.id : "") || uId || existing?.id || key;
 
       map.set(key, {
-        id: uId || existing?.id || key,
+        id: bestId,
         name: bestName,
         avatar: bestAvatar || `/api/avatar?name=${encodeURIComponent(bestName)}&background=1a73e8&color=fff`,
         email: bestEmail,
@@ -342,14 +343,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         (hasUploadedAvatar(existing?.avatar) ? existing?.avatar : "") ||
         v.author.avatar ||
         existing?.avatar;
-      const bestEmail = aEmail && aEmail.includes("@") ? aEmail : (existing?.email || "");
+      const bestEmail = (aEmail && aEmail.includes("@") ? aEmail : "") || (existing?.email && existing.email.includes("@") ? existing.email : "");
       const bestName = aName && aName !== "Registered User" && aName !== "Reviewer" ? aName : (existing?.name || aName || "Reviewer");
-      const bestLocation = v.author.location || existing?.location;
-      const bestBio = v.author.bio || existing?.bio || "Community Creator";
+      const bestLocation = (v.author.location && v.author.location.length >= (existing?.location?.length || 0)) ? v.author.location : (existing?.location || v.author.location);
+      const bestBio = (v.author.bio && v.author.bio.length >= (existing?.bio?.length || 0)) ? v.author.bio : (existing?.bio || v.author.bio || "Community Creator");
       const isVerified = Boolean(v.author.isVerified ?? existing?.isVerified ?? true);
+      const bestId = (bestEmail && bestEmail.includes("@") ? bestEmail : "") || (existing?.id && existing.id.includes("@") ? existing.id : "") || aId || existing?.id || key;
 
       map.set(key, {
-        id: existing?.id || aId || key,
+        id: bestId,
         name: bestName,
         avatar: bestAvatar || `/api/avatar?name=${encodeURIComponent(bestName)}&background=1a73e8&color=fff`,
         email: bestEmail,

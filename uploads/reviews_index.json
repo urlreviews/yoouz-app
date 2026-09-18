@@ -21,7 +21,11 @@
       "localGuideLevel": 7,
       "videoReviewCount": 2,
       "photosCount": 0,
-      "isVerified": true
+      "isVerified": true,
+      "bio": "Passionate community food & culture reviewer.",
+      "location": "Miami Beach, Florida, United States",
+      "city": "Miami Beach",
+      "country": "United States"
     },
     "rating": 5,
     "durationSeconds": 5,
@@ -230,9 +234,10 @@
       "videoReviewCount": 1,
       "photosCount": 0,
       "isVerified": true,
-      "location": "Manchester, United Kingdom",
-      "city": "Manchester",
-      "country": "United Kingdom"
+      "location": "Miami Beach, Florida, United States",
+      "city": "Miami Beach",
+      "country": "United States",
+      "bio": "Passionate community food & culture reviewer."
     },
     "rating": 5,
     "durationSeconds": 8,
