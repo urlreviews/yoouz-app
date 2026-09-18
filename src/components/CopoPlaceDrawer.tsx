@@ -1,6 +1,5 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useEffect } from "react";
-import { downloadYoouzBanner } from "../utils/bannerDownload";
 import {
   X,
   MapPin,
@@ -667,31 +666,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             />
             {/* Subtle overlay */}
             <div className="absolute inset-0 bg-black/5 z-20 pointer-events-none" />
-
-            {/* Official Yoouz Banner Download Controls */}
-            {isYoouzPlace && (
-              <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5 backdrop-blur-md bg-black/70 p-1.5 rounded-xl border border-white/15 shadow-xl">
-                <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider px-1.5 hidden sm:inline">Official Banner</span>
-                <button
-                  type="button"
-                  onClick={() => downloadYoouzBanner('svg')}
-                  className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-bold rounded-lg border border-amber-500/40 transition-all active:scale-95 cursor-pointer"
-                  title="Download Yoouz Banner (SVG)"
-                >
-                  <Download className="w-3 h-3 text-amber-400" />
-                  <span>SVG</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadYoouzBanner('png')}
-                  className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-bold rounded-lg border border-amber-500/40 transition-all active:scale-95 cursor-pointer"
-                  title="Download Yoouz Banner (PNG)"
-                >
-                  <Download className="w-3 h-3 text-amber-400" />
-                  <span>PNG</span>
-                </button>
-              </div>
-            )}
           </div>
         ) : (
           <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center overflow-hidden">
