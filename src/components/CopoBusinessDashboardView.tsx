@@ -1362,14 +1362,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         return true;
       }
 
-      // 4. Strict venue match: Must match THIS specific business place ID, Name, or Video ID
+      // 4. Venue or recipient email match: Must match this business place ID, Name, Video ID, or business owner email
       const notifPlaceName = (n.placeName || '').toLowerCase().trim();
       const notifPlaceId = (n.placeId || '').toLowerCase().trim();
+      const notifRecipient = ((n as any).recipientEmail || '').toLowerCase().trim();
+      const bizEmail = ((currentPlace as any)?.claimedByEmail || verifiedBusinessSession?.businessEmail || '').toLowerCase().trim();
 
       const matchesThisPlace = Boolean(
         (pId && notifPlaceId && notifPlaceId === pId) ||
         (pName && notifPlaceName && notifPlaceName === pName) ||
-        (n.videoId && placeVideoIds.has(n.videoId))
+        (n.videoId && placeVideoIds.has(n.videoId)) ||
+        (notifRecipient && bizEmail && notifRecipient === bizEmail) ||
+        (n.type === 'message')
       );
 
       if (!matchesThisPlace) {
