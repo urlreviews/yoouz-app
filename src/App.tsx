@@ -1635,6 +1635,33 @@ export function App() {
   const activeSectionRef = useRef(activeSection);
   activeSectionRef.current = activeSection;
 
+  const effectiveMessagingUser = useMemo(() => {
+    let effective = currentUser;
+    if (activeSection === 'business') {
+      try {
+        const saved = localStorage.getItem('copo_business_verified_session');
+        if (saved) {
+          const session = JSON.parse(saved);
+          if (session && session.placeId) {
+            effective = {
+              id: session.placeId,
+              uid: session.placeId,
+              userId: session.placeId,
+              placeId: session.placeId,
+              name: session.placeName || 'Business Manager',
+              email: session.businessEmail || `biz_${session.placeId}@business.yoouz.com`,
+              avatar: session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+              handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
+              isVerified: true,
+              isBusiness: true
+            } as any;
+          }
+        }
+      } catch(e) {}
+    }
+    return effective;
+  }, [currentUser, activeSection]);
+
   // Real-time BunnyDB sync for Notifications
   useEffect(() => {
     if (!effectiveMessagingUser) {
@@ -1695,34 +1722,7 @@ export function App() {
     });
 
     return () => unsubscribe();
-  }, [currentUser]);
-
-  const effectiveMessagingUser = useMemo(() => {
-    let effective = currentUser;
-    if (activeSection === 'business') {
-      try {
-        const saved = localStorage.getItem('copo_business_verified_session');
-        if (saved) {
-          const session = JSON.parse(saved);
-          if (session && session.placeId) {
-            effective = {
-              id: session.placeId,
-              uid: session.placeId,
-              userId: session.placeId,
-              placeId: session.placeId,
-              name: session.placeName || 'Business Manager',
-              email: session.businessEmail || `biz_${session.placeId}@business.yoouz.com`,
-              avatar: session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-              handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
-              isVerified: true,
-              isBusiness: true
-            } as any;
-          }
-        }
-      } catch(e) {}
-    }
-    return effective;
-  }, [currentUser, activeSection]);
+  }, [effectiveMessagingUser, currentUser]);
 
   // Real-time BunnyDB sync for Direct Messages & Chats
   useEffect(() => {

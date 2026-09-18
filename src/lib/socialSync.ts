@@ -320,6 +320,13 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     userName.includes("biz") ||
     userHandle.includes("biz");
 
+  const isYoouzBizUser =
+    userEmail.includes("yoouz") ||
+    userName.includes("yoouz") ||
+    userHandle.includes("yoouz") ||
+    userId.includes("yoouz") ||
+    Boolean((currentUser as any).isBusiness);
+
   const list: CopoNotification[] = [];
 
   for (const data of rawItems) {
@@ -390,11 +397,21 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       normRecHandle.includes("biz")
     );
 
+    const matchesYoouzBiz = isYoouzBizUser && (
+      recEmail.includes("yoouz") ||
+      recId.includes("yoouz") ||
+      recHandle.includes("yoouz") ||
+      normRecId.includes("yoouz") ||
+      normRecHandle.includes("yoouz") ||
+      (data.placeName && (data.placeName.toLowerCase().includes("yoouz") || (userName && userName.length > 2 && userName.toLowerCase().includes(data.placeName.toLowerCase()))))
+    );
+
     const isGeneralMatch =
       isSystemOrGlobal ||
       matchesAvtErtuop ||
       matchesAouisesmee ||
       matchesBizRiv ||
+      matchesYoouzBiz ||
       (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail || normRecId === userEmail)) ||
       (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || normRecId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
       (userHandle && (recHandle === userHandle || recId === userHandle || normRecId === userHandle || normRecHandle === userHandle || recEmail.includes(userHandle))) ||
@@ -407,8 +424,9 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
 
     // Exclude accidental pure self-action unless explicitly testing or addressed
     const isPureSelfAction =
-      (userEmail && senderEmail && senderEmail === userEmail && !senderEmail.includes("test")) ||
-      (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail) && !userName.includes("test"));
+      !isYoouzBizUser &&
+      ((userEmail && senderEmail && senderEmail === userEmail && !senderEmail.includes("test")) ||
+      (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail) && !userName.includes("test")));
 
     if (isPureSelfAction && !isSystemOrGlobal) {
       continue;
