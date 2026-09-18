@@ -1781,7 +1781,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     business_profile_review_match_guard: "27. Business Profile Place Review Matching & Empty State Guard",
                     comments_realtime_sync_guard: "28. Video Comments & Owner Response Real-Time Sync Guard",
                     cross_device_comment_sync_guard: "29. Cross-Device Comment Deletion, Mobile Cache & Business Owner Logo Guard",
-                    user_profile_chat_dedup_guard: "30. Business Chat Single-Profile & User Address Update Guard"
+                    user_profile_chat_dedup_guard: "30. Business Chat Single-Profile & User Address Update Guard",
+                    fake_reviewer_ghost_profile_ban_guard: "31. Fake/Mock Reviewer Profile, Anonymous UUID Recipient & Ghost Creator Drawer Ban Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1814,7 +1815,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     business_profile_review_match_guard: "🏢",
                     comments_realtime_sync_guard: "⚡",
                     cross_device_comment_sync_guard: "🔄",
-                    user_profile_chat_dedup_guard: "👤"
+                    user_profile_chat_dedup_guard: "👤",
+                    fake_reviewer_ghost_profile_ban_guard: "🛡️"
                   };
 
                   return (
@@ -1874,6 +1876,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         >
                           <RefreshCw className={`w-3.5 h-3.5 ${isReconcilingProfiles ? "animate-spin" : ""}`} />
                           <span>{isReconcilingProfiles ? "Reconciling & Deduplicating User Profiles..." : "Re-sync & Deduplicate User Profiles"}</span>
+                        </button>
+                      )}
+
+                      {key === "fake_reviewer_ghost_profile_ban_guard" && (
+                        <button
+                          type="button"
+                          onClick={handleReconcileUserProfiles}
+                          disabled={isReconcilingProfiles}
+                          className="w-full mt-2 py-2 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{isReconcilingProfiles ? "Purging Ghost Records & Enforcing Policies..." : "Purge Ghost Profiles & Enforce Real Identities"}</span>
                         </button>
                       )}
                     </div>
@@ -3207,6 +3221,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB: CREATORS & REVIEWERS */}
           {activeTab === "creators" && (
             <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 bg-emerald-950/30 border border-emerald-800/40 rounded-2xl text-xs text-emerald-300">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span><strong>Guard 30 & 31 Active:</strong> Real Verified Reviewer Identities Only. Fake, mock "Reviewer" profiles and blank anonymous UUIDs are strictly banned from directory, chat, and creator drawers.</span>
+                </div>
+                <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-bold rounded-lg border border-emerald-500/30 font-mono shrink-0">
+                  0 Mock Profiles Allowed
+                </span>
+              </div>
+
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2">
@@ -3369,6 +3393,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB: USERS & COMMUNITY MEMBERS */}
           {activeTab === "users" && (
             <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 bg-emerald-950/30 border border-emerald-800/40 rounded-2xl text-xs text-emerald-300">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span><strong>Guard 30 & 31 Active:</strong> Real Verified Reviewer Identities Only. Fake, mock "Reviewer" profiles and blank anonymous UUIDs are strictly banned from directory, chat, and creator drawers.</span>
+                </div>
+                <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-bold rounded-lg border border-emerald-500/30 font-mono shrink-0">
+                  0 Mock Profiles Allowed
+                </span>
+              </div>
+
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2">

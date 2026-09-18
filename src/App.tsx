@@ -584,6 +584,21 @@ export function App() {
               window.history.replaceState(null, "", `/place/${getPlaceSlug(targetPlaceId)}`);
             } catch (e) {}
           } else {
+            // STRICT POLICY 31: Fake/mock "reviewer" pages are strictly banned
+            const isDisallowedSlug = !rawParam || 
+              rawParam === "reviewer" || 
+              rawParam === "user" || 
+              rawParam === "registered-user" || 
+              rawParam === "verified-reviewer" || 
+              rawParam === "community-creator";
+
+            if (isDisallowedSlug) {
+              setSelectedAuthorForDrawer(null);
+              setSelectedPlaceIdForDrawer(null);
+              try { window.history.replaceState(null, "", "/"); } catch (e) {}
+              return;
+            }
+
             const matchingVid = videosRef.current.find((v) => {
               if (!v.author) return false;
               const h = (v.author.name || "").replace(/^@+/, "").toLowerCase().trim();
@@ -596,42 +611,46 @@ export function App() {
                 .replace(/-+/g, "-");
               return h === rawParam || n === rawParam;
             });
-            const authorObj: VideoAuthor = matchingVid?.author || {
-              name: rawParam.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-              avatar: `/api/avatar?name=${encodeURIComponent(rawParam)}&background=27272a&color=fff&bold=true&size=128`,
-              isVerified: true,
-              isFollowed: false
-            };
-            setSelectedAuthorForDrawer(authorObj);
-            setSelectedPlaceIdForDrawer(null);
 
-            // Asynchronously fetch live user data to guarantee exact Google avatar and profile details
-            fetch(`/api/nosql/users`)
-              .then(res => res.json())
-              .then(usersList => {
-                if (Array.isArray(usersList)) {
-                  const matched = usersList.find((u: any) => {
-                    const uName = (u.name || "").trim().toLowerCase();
-                    const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
-                    const uEmail = (u.email || "").split("@")[0].toLowerCase();
-                    return uName === rawParam || uHandle === rawParam || uEmail === rawParam;
-                  });
-                  if (matched && matched.avatar) {
-                    setSelectedAuthorForDrawer(prev => {
-                      if (!prev) return prev;
-                      return {
-                        ...prev,
-                        name: matched.name || prev.name,
-                        avatar: matched.avatar,
-                        bio: matched.bio || prev.bio,
-                        banner: matched.banner || prev.banner,
-                        location: matched.location || prev.location
-                      };
+            if (matchingVid && matchingVid.author) {
+              setSelectedAuthorForDrawer(matchingVid.author);
+              setSelectedPlaceIdForDrawer(null);
+            } else {
+              // Check registered users for authentic profile
+              fetch(`/api/nosql/users`)
+                .then(res => res.json())
+                .then(usersList => {
+                  if (Array.isArray(usersList)) {
+                    const matched = usersList.find((u: any) => {
+                      const uName = (u.name || "").trim().toLowerCase().replace(/\s+/g, "-");
+                      const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
+                      const uEmail = (u.email || "").split("@")[0].toLowerCase();
+                      return uName === rawParam || uHandle === rawParam || uEmail === rawParam;
                     });
+                    if (matched && matched.name && matched.name.toLowerCase() !== "reviewer") {
+                      setSelectedAuthorForDrawer({
+                        name: matched.name,
+                        avatar: matched.avatar || `/api/avatar?name=${encodeURIComponent(matched.name)}&background=27272a&color=fff&bold=true&size=128`,
+                        bio: matched.bio || "",
+                        banner: matched.banner || "",
+                        location: matched.location || "",
+                        isVerified: matched.isVerified !== false,
+                        isFollowed: false
+                      });
+                      setSelectedPlaceIdForDrawer(null);
+                    } else {
+                      // No authentic creator found; never fabricate mock pages
+                      setSelectedAuthorForDrawer(null);
+                      setSelectedPlaceIdForDrawer(null);
+                      try { window.history.replaceState(null, "", "/"); } catch (e) {}
+                    }
                   }
-                }
-              })
-              .catch(() => {});
+                })
+                .catch(() => {
+                  setSelectedAuthorForDrawer(null);
+                  setSelectedPlaceIdForDrawer(null);
+                });
+            }
           }
         } else {
           setSelectedPlaceIdForDrawer(null);
@@ -3324,6 +3343,18 @@ export function App() {
 
     const authorLower = (author.name || "").toLowerCase().trim();
     const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
+
+    // STRICT POLICY 31: Fake/mock "reviewer" pages are strictly banned
+    if (!authorLower || authorLower === "reviewer" || authorLower === "user" || authorLower === "registered user" || authorLower === "verified reviewer") {
+      const matchedRealUser = allRegisteredUsers?.find((u: any) => {
+        const uEmail = (u.email || "").toLowerCase().trim();
+        const aEmail = (author.email || "").toLowerCase().trim();
+        return aEmail && uEmail === aEmail;
+      });
+      if (!matchedRealUser) {
+        return;
+      }
+    }
 
     // Check if this author corresponds to a business / place
     const matchingPlace = (places || []).find((p: Place) => {

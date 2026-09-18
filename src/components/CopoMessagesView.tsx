@@ -282,6 +282,34 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       );
     };
 
+    // STRONG GUARD 31: Disallow mock, fake, anonymous UUID, or generic placeholder accounts
+    const isDisallowedRecipient = (cand: { email?: string; name?: string; id?: string; handle?: string }) => {
+      const e = (cand.email || "").toLowerCase().trim();
+      const n = (cand.name || "").toLowerCase().trim();
+      const i = (cand.id || "").toLowerCase().trim();
+      const h = (cand.handle || "").replace(/^@+/, "").toLowerCase().trim();
+
+      // 1. Must have at least some identifier
+      if (!e && !n && !h) return true;
+
+      // 2. Reject pure anonymous UUIDs without registered email
+      const isUuidOnly = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(i);
+      if (isUuidOnly && (!e || !e.includes("@"))) return true;
+
+      // 3. Reject generic / placeholder / mock names without registered email
+      const isGenericName = !n || 
+        n === "reviewer" || 
+        n === "user" || 
+        n === "registered user" || 
+        n === "verified reviewer" || 
+        n === "community creator" || 
+        n === "local guide";
+
+      if (isGenericName && (!e || !e.includes("@"))) return true;
+
+      return false;
+    };
+
     const getCanonicalKey = (cand: { email?: string; name?: string; id?: string; handle?: string }): string => {
       return getCanonicalUserKey(cand);
     };
@@ -294,7 +322,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const uHandle = (u.handle || "").trim();
 
       const cand = { email: uEmail, name: uName, id: uId, handle: uHandle };
-      if (isMe(cand) || isDeleted(cand)) return;
+      if (isMe(cand) || isDeleted(cand) || isDisallowedRecipient(cand)) return;
       const key = getCanonicalKey(cand);
       if (!key) return;
 
@@ -306,9 +334,17 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         u.avatar ||
         existing?.avatar;
       const bestEmail = (uEmail && uEmail.includes("@") ? uEmail : "") || (existing?.email && existing.email.includes("@") ? existing.email : "");
-      const bestName = uName && uName !== "Registered User" && uName !== "Reviewer" ? uName : (existing?.name || uName || "Reviewer");
+      
+      let bestName = uName && uName !== "Registered User" && uName !== "Reviewer" && uName !== "User" ? uName : (existing?.name || "");
+      if (!bestName && bestEmail) {
+        bestName = bestEmail.split("@")[0];
+      }
+      if (!bestName || bestName.toLowerCase() === "reviewer" || bestName.toLowerCase() === "user" || bestName.toLowerCase() === "registered user") {
+        return; // Never insert a mock/nameless "Reviewer" card
+      }
+
       const bestLocation = (u.location && u.location.length >= (existing?.location?.length || 0)) ? u.location : (existing?.location || u.location);
-      const bestBio = (u.bio && u.bio.length >= (existing?.bio?.length || 0)) ? u.bio : (existing?.bio || u.bio || "Community Creator");
+      const bestBio = (u.bio && u.bio.length >= (existing?.bio?.length || 0)) ? u.bio : (existing?.bio || u.bio || (bestLocation ? `Creator in ${bestLocation}` : "Community Member"));
       const isVerified = Boolean(u.isVerified ?? existing?.isVerified ?? true);
       const bestId = (bestEmail && bestEmail.includes("@") ? bestEmail : "") || (existing?.id && existing.id.includes("@") ? existing.id : "") || uId || existing?.id || key;
 
@@ -332,7 +368,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const aHandle = ((v.author as any).handle || "").trim();
 
       const cand = { email: aEmail, name: aName, id: aId, handle: aHandle };
-      if (isMe(cand) || isDeleted(cand)) return;
+      if (isMe(cand) || isDeleted(cand) || isDisallowedRecipient(cand)) return;
       const key = getCanonicalKey(cand);
       if (!key) return;
 
@@ -344,9 +380,17 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         v.author.avatar ||
         existing?.avatar;
       const bestEmail = (aEmail && aEmail.includes("@") ? aEmail : "") || (existing?.email && existing.email.includes("@") ? existing.email : "");
-      const bestName = aName && aName !== "Registered User" && aName !== "Reviewer" ? aName : (existing?.name || aName || "Reviewer");
+      
+      let bestName = aName && aName !== "Registered User" && aName !== "Reviewer" && aName !== "User" ? aName : (existing?.name || "");
+      if (!bestName && bestEmail) {
+        bestName = bestEmail.split("@")[0];
+      }
+      if (!bestName || bestName.toLowerCase() === "reviewer" || bestName.toLowerCase() === "user" || bestName.toLowerCase() === "registered user") {
+        return; // Never insert a mock/nameless "Reviewer" card
+      }
+
       const bestLocation = (v.author.location && v.author.location.length >= (existing?.location?.length || 0)) ? v.author.location : (existing?.location || v.author.location);
-      const bestBio = (v.author.bio && v.author.bio.length >= (existing?.bio?.length || 0)) ? v.author.bio : (existing?.bio || v.author.bio || "Community Creator");
+      const bestBio = (v.author.bio && v.author.bio.length >= (existing?.bio?.length || 0)) ? v.author.bio : (existing?.bio || v.author.bio || (bestLocation ? `Creator in ${bestLocation}` : "Video Creator"));
       const isVerified = Boolean(v.author.isVerified ?? existing?.isVerified ?? true);
       const bestId = (bestEmail && bestEmail.includes("@") ? bestEmail : "") || (existing?.id && existing.id.includes("@") ? existing.id : "") || aId || existing?.id || key;
 
@@ -745,13 +789,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   };
 
   // Helper to resolve an author object from name, id, or avatar
-  const resolveAuthor = (name?: string, id?: string, avatar?: string): VideoAuthor => {
+  const resolveAuthor = (name?: string, id?: string, avatar?: string): VideoAuthor | null => {
     // 1. Check in allVideos for matching author
     const matchVideo = allVideos.find(
       (v) =>
         (v.author?.name && name && v.author.name.toLowerCase() === name.toLowerCase()) ||
         (v.author?.name && name && v.author.name.toLowerCase() === name.toLowerCase().replace(/^@/, '')) ||
-        (id && v.author?.name && v.author.name.toLowerCase() === id.toLowerCase().replace(/^@/, ''))
+        (id && v.author?.name && v.author.name.toLowerCase() === id.toLowerCase().replace(/^@/, '')) ||
+        (id && (v.author?.id === id || (v.author as any)?.userId === id || v.userId === id))
     );
     if (matchVideo && matchVideo.author) {
       return matchVideo.author;
@@ -766,40 +811,40 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         (u.email && id && u.email === id)
     );
     if (matchUser) {
+      const uName = (matchUser.name || name || "").trim();
+      const uEmail = matchUser.email || (id && id.includes('@') ? id : undefined);
+      if (!uName || uName.toLowerCase() === "reviewer" || uName.toLowerCase() === "user" || uName.toLowerCase() === "registered user") {
+        if (uEmail) {
+          const derivedName = uEmail.split("@")[0];
+          return {
+            name: derivedName,
+            email: uEmail,
+            userId: matchUser.userId || matchUser.id || id,
+            id: matchUser.id || matchUser.userId || id,
+            avatar: matchUser.avatar || avatar || `/api/avatar?name=${encodeURIComponent(derivedName)}&background=1a73e8&color=fff`,
+            bio: matchUser.bio || "",
+            location: matchUser.location || "",
+            followersCount: matchUser.followersCount || 0,
+            isVerified: matchUser.isVerified !== false,
+          };
+        }
+        return null;
+      }
       return {
-        name: matchUser.name || name || "Reviewer",
-        //handle: (matchUser.name || matchUser.name || name || "reviewer").toLowerCase().replace(/[^a-z0-9]/g, ""),
-        email: matchUser.email || (id && id.includes('@') ? id : undefined),
+        name: uName,
+        email: uEmail,
         userId: matchUser.userId || matchUser.id || id,
         id: matchUser.id || matchUser.userId || id,
-        avatar: matchUser.avatar || avatar || `/api/avatar?name=${encodeURIComponent(name || "User")}&background=1a73e8&color=fff`,
-        bio: matchUser.bio || "Local Reviewer on Yoouz. Sharing authentic video reviews and discoveries.",
+        avatar: matchUser.avatar || avatar || `/api/avatar?name=${encodeURIComponent(uName)}&background=1a73e8&color=fff`,
+        bio: matchUser.bio || "",
+        location: matchUser.location || "",
         followersCount: matchUser.followersCount || 0,
-        videoReviewCount: 8,
-        photosCount: 24,
-        isVerified: true,
-        isLocalGuide: true,
-        localGuideLevel: 7
+        isVerified: matchUser.isVerified !== false,
       };
     }
 
-    // 3. Fallback author object
-    const cleanHandle = (name || id || "reviewer").toLowerCase().replace(/[^a-z0-9]/g, "");
-    return {
-      name: name || "Local Guide",
-      //handle: cleanHandle || "reviewer",
-      email: id && id.includes('@') ? id : undefined,
-      userId: id,
-      id: id,
-      avatar: avatar || `/api/avatar?name=${encodeURIComponent(name || "User")}&background=1a73e8&color=fff`,
-      bio: "Local food & travel reviewer on Yoouz. Exploring top rated places and sharing honest video reviews.",
-      followersCount: 0,
-      videoReviewCount: 6,
-      photosCount: 18,
-      isVerified: true,
-      isLocalGuide: true,
-      localGuideLevel: 7
-    };
+    // 3. Fake/mock reviewer profile is strictly banned.
+    return null;
   };
 
   const handleOpenAuthorProfile = (name?: string, id?: string, avatar?: string) => {
@@ -837,7 +882,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     }
 
     const author = resolveAuthor(name, id, avatar);
-    if (onOpenCreator) {
+    if (author && onOpenCreator) {
       onOpenCreator(author);
     }
   };

@@ -106,10 +106,18 @@ export function getCanonicalUserKey(candidate: UserIdentityCandidate): string {
     if (emailPrefix) return `user_group_email_${emailPrefix}`;
   }
 
-  // Fallback by id
+  // Fallback by id (only if not an anonymous generic ID)
   if (id) {
-    return `user_group_id_${id.replace(/[^a-z0-9]/g, "")}`;
+    const cleanId = id.replace(/[^a-z0-9]/g, "");
+    const isBareUuid = /^[0-9a-f]{32}$/i.test(cleanId);
+    if (!isBareUuid || (email && email.includes("@"))) {
+      return `user_group_id_${cleanId}`;
+    }
   }
 
-  return name || "";
+  if (name && !isGenericUsername(name)) {
+    return name;
+  }
+
+  return "";
 }
