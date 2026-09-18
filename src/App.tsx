@@ -5130,15 +5130,26 @@ export function App() {
           unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
           onCloseEmbed={() => {
             setEmbedTargetId(null);
+            setSelectedPlaceIdForDrawer(null);
+            setSelectedAuthorForDrawer(null);
+
+            // 1. Send postMessage to host window if inside an iframe
             try {
               if (window.parent && window.parent !== window) {
                 window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+                window.parent.postMessage({ type: "YOOUZ_CLOSE_MODAL", action: "close" }, "*");
+                window.parent.postMessage("yoouz_close", "*");
               }
             } catch (e) {}
-            if (window.history && window.history.length > 1) {
-              window.history.back();
+
+            // 2. If navigated from an external business website, return to referrer
+            if (document.referrer && !document.referrer.includes(window.location.host)) {
+              window.location.href = document.referrer;
             } else {
-              window.history.pushState(null, "", "/");
+              // 3. Otherwise replace URL state synchronously to /
+              try {
+                window.history.replaceState(null, "", "/");
+              } catch (e) {}
             }
           }}
         />

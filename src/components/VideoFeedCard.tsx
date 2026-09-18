@@ -706,7 +706,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Top Header Overlay (iOS & Android Universal Ergonomics) - z-50 to stay above everything */}
       <div 
-        className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 [padding-top:max(14px,calc(env(safe-area-inset-top,14px)+4px))] md:pt-4 pointer-events-none"
+        className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 pt-[max(32px,calc(env(safe-area-inset-top,0px)+10px))] md:pt-4 pointer-events-none"
       >
         {/* Left side: Navigation / Menu + Top Business Badge */}
         <div className="pointer-events-auto flex items-center gap-2 max-w-[calc(100%-60px)]">
@@ -718,19 +718,35 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 e.preventDefault();
                 e.stopPropagation();
                 onPauseVideo?.();
+
+                // 1. Post message to host window if inside an iframe
+                try {
+                  if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+                    window.parent.postMessage({ type: "YOOUZ_CLOSE_MODAL", action: "close" }, "*");
+                    window.parent.postMessage("yoouz_close", "*");
+                  }
+                } catch (err) {}
+
+                // 2. Invoke React onCloseEmbed / onGoBack if passed
                 if (onCloseEmbed) {
                   onCloseEmbed();
                 } else if (onGoBack) {
                   onGoBack();
                 } else {
-                  try {
-                    if (window.parent && window.parent !== window) {
-                      window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+                  // 3. Fallback: Check for external referrer or clean URL replace
+                  if (document.referrer && !document.referrer.includes(window.location.host)) {
+                    window.location.href = document.referrer;
+                  } else {
+                    try {
+                      window.history.replaceState(null, "", "/");
+                    } catch (err) {}
+                    if (window.history && window.history.length > 1) {
+                      window.history.back();
+                    } else {
+                      window.location.href = "/";
                     }
-                  } catch (err) {}
-                  try {
-                    window.history.replaceState(null, "", "/");
-                  } catch (err) {}
+                  }
                 }
               }}
               className="w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all shadow-xl cursor-pointer shrink-0"

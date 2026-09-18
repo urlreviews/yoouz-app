@@ -58,20 +58,35 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
   // Close handler function
   const handleCloseEmbed = () => {
+    // 1. Send postMessages to parent window if embedded in an iframe
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+        window.parent.postMessage({ type: "YOOUZ_CLOSE_MODAL", action: "close" }, "*");
+        window.parent.postMessage("yoouz_close", "*");
+      }
+    } catch (e) {}
+
+    // 2. Invoke parent onCloseEmbed callback if present
     if (onCloseEmbed) {
       onCloseEmbed();
       return;
     }
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
-      }
-    } catch (e) {}
 
+    // 3. If navigated directly from an external website, return to referrer page
+    if (document.referrer && !document.referrer.includes(window.location.host)) {
+      window.location.href = document.referrer;
+      return;
+    }
+
+    // 4. Otherwise cleanly reset state & URL to main app feed
+    try {
+      window.history.replaceState(null, "", "/");
+    } catch (e) {}
     if (window.history && window.history.length > 1) {
       window.history.back();
     } else {
-      window.location.href = "https://yoouz.com";
+      window.location.href = "/";
     }
   };
 
