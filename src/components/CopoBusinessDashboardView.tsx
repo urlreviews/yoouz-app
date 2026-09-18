@@ -930,6 +930,127 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const placeKey = currentPlace?.id || 'biz';
+  const [businessActiveTabSegment, setBusinessActiveTabSegment] = useState<"following" | "followers">("following");
+  const [businessFollowingSubTab, setBusinessFollowingSubTab] = useState<"all" | "businesses" | "reviewers">("all");
+  const [hoveredUnfollowPlace, setHoveredUnfollowPlace] = useState<string | null>(null);
+
+  const [businessFollowedAuthors, setBusinessFollowedAuthors] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`copo_business_followed_authors_${placeKey}`);
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return (currentPlace as any)?.followedAuthors || currentUser?.followedAuthors || [];
+  });
+
+  const [businessFollowedPlaces, setBusinessFollowedPlaces] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`copo_business_followed_places_${placeKey}`);
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return (currentPlace as any)?.followedPlaces || currentUser?.followedPlaces || [];
+  });
+
+  // Business Followed Authors List
+  const businessFollowedAuthorsList = useMemo(() => {
+    const list: VideoAuthor[] = [];
+    const seen = new Set<string>();
+    businessFollowedAuthors.forEach((nameItem) => {
+      const clean = (nameItem || "").trim();
+      if (!clean) return;
+      const key = clean.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      const matchingVid = videos.find(v => v.author?.name?.toLowerCase() === key);
+      const matchingUser = allUsers.find(u => u.name?.toLowerCase() === key);
+      const userReviews = videos.filter(v => v.author?.name?.toLowerCase() === key);
+
+      list.push({
+        name: matchingUser?.name || matchingVid?.author?.name || clean,
+        avatar: matchingUser?.avatar || matchingVid?.author?.avatar || `/api/avatar?name=${encodeURIComponent(clean)}&background=27272a&color=fff`,
+        bio: matchingUser?.bio || "Community reviewer",
+        location: matchingUser?.location || matchingVid?.placeCity || "Local Contributor",
+        isFollowed: true,
+        videoReviewCount: userReviews.length || (matchingUser as any)?.videoCount || 0
+      });
+    });
+    return list;
+  }, [businessFollowedAuthors, videos, allUsers]);
+
+  // Business Followed Places List
+  const businessFollowedPlacesList = useMemo(() => {
+    const list: Place[] = [];
+    const seen = new Set<string>();
+    businessFollowedPlaces.forEach((pId) => {
+      const clean = String(pId || "").toLowerCase().trim();
+      if (!clean || seen.has(clean)) return;
+      seen.add(clean);
+
+      const foundPlace = places.find(p => p.id.toLowerCase() === clean || p.name.toLowerCase() === clean);
+      if (foundPlace) {
+        list.push({ ...foundPlace, isFollowed: true });
+      } else {
+        list.push({
+          id: pId,
+          name: pId,
+          category: "Business",
+          categoryType: "all",
+          address: "Verified Business",
+          city: "Miami, FL",
+          lat: 25.7617,
+          lng: -80.1918,
+          rating: 5.0,
+          totalReviews: 1,
+          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: "",
+          bannerUrl: "",
+          photos: [],
+          openingHours: "Open now",
+          isOpen: true,
+          phone: "",
+          website: "",
+          priceRange: "$$",
+          plusCode: "",
+          description: "Verified business on Yoouz.",
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          isFollowed: true
+        });
+      }
+    });
+    return list;
+  }, [businessFollowedPlaces, places]);
+
+  const totalBusinessFollowingCount = businessFollowedAuthorsList.length + businessFollowedPlacesList.length;
+
+  const handleToggleBusinessFollowAuthor = (authorName: string) => {
+    const key = authorName.toLowerCase().trim();
+    const exists = businessFollowedAuthors.some(a => a.toLowerCase().trim() === key);
+    const updated = exists
+      ? businessFollowedAuthors.filter(a => a.toLowerCase().trim() !== key)
+      : [...businessFollowedAuthors, authorName];
+    setBusinessFollowedAuthors(updated);
+    try {
+      localStorage.setItem(`copo_business_followed_authors_${placeKey}`, JSON.stringify(updated));
+    } catch {}
+    if (onToggleFollow) onToggleFollow(authorName);
+  };
+
+  const handleToggleBusinessFollowPlace = (placeId: string) => {
+    const key = placeId.toLowerCase().trim();
+    const exists = businessFollowedPlaces.some(p => p.toLowerCase().trim() === key);
+    const updated = exists
+      ? businessFollowedPlaces.filter(p => p.toLowerCase().trim() !== key)
+      : [...businessFollowedPlaces, placeId];
+    setBusinessFollowedPlaces(updated);
+    try {
+      localStorage.setItem(`copo_business_followed_places_${placeKey}`, JSON.stringify(updated));
+    } catch {}
+    if (onToggleFollowPlace) onToggleFollowPlace(placeId);
+  };
+
   // STRICT POLICY 32: Real Business Followers List strictly derived from authentic user follows.
   // Reviews, bookmarks, chats, and guest visits NEVER synthesize fake follower relationships.
   const businessFollowers = useMemo(() => {
@@ -956,6 +1077,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       lastReviewSnippet?: string;
       followedAt?: string;
       isFollowedBack?: boolean;
+      location?: string;
     }>();
 
     // 1. Registered users from allUsers who have EXPLICITLY added this business to their followedPlaces
@@ -984,17 +1106,27 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           );
         });
 
+        const totalUserReviews = (videos || []).filter(v => {
+          const authorName = (v.author?.name || '').toLowerCase().trim();
+          const vUid = (v.userId || (v.author as any)?.id || '').toLowerCase().trim();
+          return (
+            (authorName && (authorName === handle || authorName === rawName.toLowerCase())) ||
+            (vUid && (vUid === String(u.id).toLowerCase() || vUid === String(u.email).toLowerCase()))
+          );
+        }).length;
+
         map.set(key, {
           id: u.id || u.uid || key,
           name: rawName || 'Yoouz User',
           handle: handle || 'user',
           avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(rawName || "User")}&background=27272a&color=fff`,
-          isReviewer: userReviews.length > 0,
-          reviewCount: userReviews.length,
+          isReviewer: totalUserReviews > 0,
+          reviewCount: totalUserReviews,
           rating: userReviews[0]?.rating,
           lastReviewSnippet: userReviews[0]?.caption || (userReviews[0] as any)?.text,
           followedAt: 'Recent',
-          isFollowedBack: Boolean(currentUser?.followedAuthors?.some(a => a.toLowerCase().replace(/^@/, '') === handle))
+          isFollowedBack: Boolean(businessFollowedAuthors.some(a => a.toLowerCase().replace(/^@/, '') === handle)),
+          location: u.location || (userReviews[0]?.placeCity ? `${userReviews[0].placeCity}` : 'Local Contributor')
         });
       }
     });
@@ -2546,7 +2678,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
             )}
 
-            {/* FOLLOWERS TAB (Exact User Account Layout & Design Language) */}
+            {/* FOLLOWING & FOLLOWERS TAB (Exact User Account Layout & Design Language) */}
             {activeTab === 'followers' && (
               <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 animate-in fade-in zoom-in-95 duration-200">
                 {/* Top Header & Navigation Bar */}
@@ -2562,26 +2694,97 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <div className="min-w-0">
                       <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight flex items-center gap-2">
                         <Users className="w-5 h-5 text-zinc-300 shrink-0" />
-                        <span>Followers</span>
+                        <span>Following & Followers</span>
                       </h1>
                       <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
-                        {businessFollowers.length} {businessFollowers.length === 1 ? 'follower' : 'followers'}
-                        {unseenFollowersCount > 0 && (
-                          <span className="text-white ml-1 font-semibold">({unseenFollowersCount} new)</span>
-                        )}
+                        Manage businesses and reviewers you follow & view your followers
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Search Bar matching CopoFollowingView */}
+                {/* Main Segmented Toggle: Following vs Followers */}
+                <div className="grid grid-cols-2 p-1 bg-zinc-900/90 rounded-2xl border border-zinc-800 gap-1">
+                  <button
+                    onClick={() => setBusinessActiveTabSegment('following')}
+                    className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                      businessActiveTabSegment === 'following'
+                        ? 'bg-white text-zinc-950 shadow-sm font-black'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Following</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                      businessActiveTabSegment === 'following' ? 'bg-zinc-200 text-zinc-900' : 'bg-zinc-800 text-zinc-300'
+                    }`}>
+                      {totalBusinessFollowingCount}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setBusinessActiveTabSegment('followers')}
+                    className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                      businessActiveTabSegment === 'followers'
+                        ? 'bg-white text-zinc-950 shadow-sm font-black'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Followers</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                      businessActiveTabSegment === 'followers' ? 'bg-zinc-200 text-zinc-900' : 'bg-zinc-800 text-zinc-300'
+                    }`}>
+                      {businessFollowers.length}
+                      {unseenFollowersCount > 0 && ` (${unseenFollowersCount} new)`}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Sub-filter inside Following segment */}
+                {businessActiveTabSegment === 'following' && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                    <button
+                      onClick={() => setBusinessFollowingSubTab('all')}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                        businessFollowingSubTab === 'all'
+                          ? 'bg-zinc-100 text-zinc-950 shadow-xs'
+                          : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                      }`}
+                    >
+                      All ({totalBusinessFollowingCount})
+                    </button>
+                    <button
+                      onClick={() => setBusinessFollowingSubTab('businesses')}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                        businessFollowingSubTab === 'businesses'
+                          ? 'bg-zinc-100 text-zinc-950 shadow-xs'
+                          : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                      }`}
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>Businesses ({businessFollowedPlacesList.length})</span>
+                    </button>
+                    <button
+                      onClick={() => setBusinessFollowingSubTab('reviewers')}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                        businessFollowingSubTab === 'reviewers'
+                          ? 'bg-zinc-100 text-zinc-950 shadow-xs'
+                          : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Reviewers ({businessFollowedAuthorsList.length})</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Search Bar */}
                 <div className="relative">
                   <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={followerSearchQuery}
                     onChange={(e) => setFollowerSearchQuery(e.target.value)}
-                    placeholder="Search followers by name or review..."
+                    placeholder={businessActiveTabSegment === 'following' ? "Search followed businesses or reviewers..." : "Search followers by name or review..."}
                     className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:border-zinc-600 focus:bg-zinc-900 transition-all shadow-inner"
                   />
                   {followerSearchQuery && (
@@ -2594,135 +2797,308 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   )}
                 </div>
 
-                {/* Follower Directory List */}
-                {filteredFollowers.length === 0 ? (
-                  <div className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-300 space-y-3 shadow-xs">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-850 text-white flex items-center justify-center mx-auto">
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1 max-w-sm mx-auto">
-                      <p className="font-bold text-white text-sm sm:text-base">
-                        {followerSearchQuery ? "No matching followers found" : "No followers yet"}
-                      </p>
-                      <p className="text-xs text-zinc-300 leading-relaxed">
-                        {followerSearchQuery
-                          ? `No customer follower matches "${followerSearchQuery}". Try a different name.`
-                          : "When customers and video reviewers follow your business on Yoouz, they will appear here."}
-                      </p>
-                    </div>
-                    {followerSearchQuery && (
-                      <button
-                        onClick={() => setFollowerSearchQuery("")}
-                        className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold cursor-pointer transition-colors"
-                      >
-                        Clear search
-                      </button>
+                {/* LIST CONTENT: FOLLOWING SEGMENT */}
+                {businessActiveTabSegment === 'following' ? (
+                  <div className="space-y-4">
+                    {/* Businesses / Places Followed */}
+                    {(businessFollowingSubTab === 'all' || businessFollowingSubTab === 'businesses') && businessFollowedPlacesList.length > 0 && (
+                      <div className="space-y-2">
+                        {businessFollowingSubTab === 'all' && (
+                          <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider px-1">
+                            Followed Businesses ({businessFollowedPlacesList.length})
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-2">
+                          {businessFollowedPlacesList
+                            .filter(p => !followerSearchQuery || p.name.toLowerCase().includes(followerSearchQuery.toLowerCase()) || (p.address && p.address.toLowerCase().includes(followerSearchQuery.toLowerCase())))
+                            .map((place) => {
+                              const isHovered = hoveredUnfollowPlace === place.id;
+                              return (
+                                <div
+                                  key={`biz-followed-place-${place.id}`}
+                                  onClick={() => onOpenPlaceDrawer?.(place.id)}
+                                  className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                                    <img
+                                      src={place.logoUrl || place.avatarUrl || `https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100&auto=format&fit=crop&q=80`}
+                                      alt={place.name}
+                                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = `https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100&auto=format&fit=crop&q=80`;
+                                      }}
+                                    />
+                                    <div className="min-w-0 flex-1 text-left">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                                          {place.name}
+                                        </h3>
+                                        <span className="px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 border border-zinc-700/80 text-[10px] font-medium shrink-0 flex items-center gap-1">
+                                          <span>Business</span>
+                                          <span className="text-zinc-400">•</span>
+                                          <span className="flex items-center gap-0.5 text-zinc-200 font-semibold">
+                                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                            {(place.rating || 5.0).toFixed(1)}
+                                          </span>
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
+                                        {place.address || place.city || "Verified Venue"} • {place.totalReviews || place.videoReviewCount || 0} reviews
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      onMouseEnter={() => setHoveredUnfollowPlace(place.id)}
+                                      onMouseLeave={() => setHoveredUnfollowPlace(null)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleBusinessFollowPlace(place.id);
+                                      }}
+                                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                                        isHovered
+                                          ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                                          : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                                      }`}
+                                    >
+                                      {isHovered ? (
+                                        <>
+                                          <UserMinus className="w-3.5 h-3.5" />
+                                          <span>Unfollow</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                                          <span>Following</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reviewers Followed */}
+                    {(businessFollowingSubTab === 'all' || businessFollowingSubTab === 'reviewers') && businessFollowedAuthorsList.length > 0 && (
+                      <div className="space-y-2">
+                        {businessFollowingSubTab === 'all' && (
+                          <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider px-1 pt-2">
+                            Followed Reviewers ({businessFollowedAuthorsList.length})
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-2">
+                          {businessFollowedAuthorsList
+                            .filter(author => !followerSearchQuery || author.name.toLowerCase().includes(followerSearchQuery.toLowerCase()) || (author.bio && author.bio.toLowerCase().includes(followerSearchQuery.toLowerCase())))
+                            .map((author) => {
+                              const isHovered = hoveredUnfollow === author.name;
+                              return (
+                                <div
+                                  key={`biz-followed-author-${author.name}`}
+                                  onClick={() => onOpenCreator?.(author)}
+                                  className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                                    <img
+                                      src={author.avatar}
+                                      alt={author.name}
+                                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(author.name)}&background=27272a&color=fff`;
+                                      }}
+                                    />
+                                    <div className="min-w-0 flex-1 text-left">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                                          {author.name}
+                                        </h3>
+                                        <span className="px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 border border-zinc-700/80 text-[10px] font-medium shrink-0 flex items-center gap-1">
+                                          <span>Reviewer</span>
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
+                                        {author.location ? `📍 ${author.location}` : 'Local Contributor'} • {author.videoReviewCount || 0} video reviews
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      onMouseEnter={() => setHoveredUnfollow(author.name)}
+                                      onMouseLeave={() => setHoveredUnfollow(null)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleBusinessFollowAuthor(author.name);
+                                      }}
+                                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                                        isHovered
+                                          ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                                          : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                                      }`}
+                                    >
+                                      {isHovered ? (
+                                        <>
+                                          <UserMinus className="w-3.5 h-3.5" />
+                                          <span>Unfollow</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                                          <span>Following</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+
+                    {businessFollowedPlacesList.length === 0 && businessFollowedAuthorsList.length === 0 && (
+                      <div className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-400 space-y-3 shadow-xs">
+                        <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-white flex items-center justify-center mx-auto">
+                          <Users className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1 max-w-sm mx-auto">
+                          <p className="font-bold text-white text-sm sm:text-base">
+                            Not following anyone yet
+                          </p>
+                          <p className="text-xs text-zinc-400 leading-relaxed">
+                            Follow other businesses and reviewers on Yoouz to build your business network.
+                          </p>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    {filteredFollowers.map((follower) => {
-                      const isHovered = hoveredUnfollow === follower.name;
-                      return (
-                        <div
-                          key={`follower-${follower.id || follower.name}`}
-                          onClick={() => onOpenCreator?.({ name: follower.name, avatar: follower.avatar, id: follower.id } as any)}
-                          className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
-                        >
-                          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                            <div className="relative shrink-0">
-                              <img
-                                src={follower.avatar}
-                                alt={follower.name}
-                                className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  if (!target.src.includes("/api/avatar")) {
-                                    target.src = `/api/avatar?name=${encodeURIComponent(follower.name || "User")}&background=27272a&color=fff`;
-                                  }
-                                }}
-                              />
-                              {follower.isReviewer && (
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-950 text-amber-400 shadow-xs" title="Verified Customer Reviewer">
-                                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="min-w-0 flex-1 text-left">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
-                                  {follower.name}
-                                </h3>
+                  /* LIST CONTENT: FOLLOWERS SEGMENT */
+                  filteredFollowers.length === 0 ? (
+                    <div className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-400 space-y-3 shadow-xs">
+                      <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-white flex items-center justify-center mx-auto">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <div className="space-y-1 max-w-sm mx-auto">
+                        <p className="font-bold text-white text-sm sm:text-base">
+                          {followerSearchQuery ? "No matching followers found" : "No followers yet"}
+                        </p>
+                        <p className="text-xs text-zinc-400 leading-relaxed">
+                          {followerSearchQuery
+                            ? `No customer follower matches "${followerSearchQuery}". Try a different name.`
+                            : "When customers and video reviewers follow your business on Yoouz, they will appear here."}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {filteredFollowers.map((follower) => {
+                        const isHovered = hoveredUnfollow === follower.name;
+                        return (
+                          <div
+                            key={`follower-${follower.id || follower.name}`}
+                            onClick={() => onOpenCreator?.({ name: follower.name, avatar: follower.avatar, id: follower.id } as any)}
+                            className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                              <div className="relative shrink-0">
+                                <img
+                                  src={follower.avatar}
+                                  alt={follower.name}
+                                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    if (!target.src.includes("/api/avatar")) {
+                                      target.src = `/api/avatar?name=${encodeURIComponent(follower.name || "User")}&background=27272a&color=fff`;
+                                    }
+                                  }}
+                                />
                                 {follower.isReviewer && (
-                                  <span className="px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 border border-zinc-700/80 text-[10px] font-medium shrink-0 flex items-center gap-1">
-                                    <span>Reviewer</span>
-                                    {follower.rating && (
-                                      <>
-                                        <span className="text-zinc-400">•</span>
-                                        <span className="flex items-center gap-0.5 text-zinc-200 font-semibold">
-                                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                          {follower.rating.toFixed(1)}
-                                        </span>
-                                      </>
-                                    )}
-                                  </span>
+                                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-950 text-amber-400 shadow-xs" title="Verified Customer Reviewer">
+                                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                  </div>
                                 )}
                               </div>
 
-                              <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium truncate mt-0.5">
-                                <span className="shrink-0">
-                                  {follower.lastReviewSnippet
-                                    ? `"${follower.lastReviewSnippet}"`
-                                    : `@${follower.handle} · Customer`}
-                                </span>
+                              <div className="min-w-0 flex-1 text-left">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                                    {follower.name}
+                                  </h3>
+                                  {follower.isReviewer && (
+                                    <span className="px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 border border-zinc-700/80 text-[10px] font-medium shrink-0 flex items-center gap-1">
+                                      <span>Reviewer</span>
+                                      {follower.rating && (
+                                        <>
+                                          <span className="text-zinc-400">•</span>
+                                          <span className="flex items-center gap-0.5 text-zinc-200 font-semibold">
+                                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                            {follower.rating.toFixed(1)}
+                                          </span>
+                                        </>
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate mt-0.5">
+                                  <span className="shrink-0 text-zinc-300">
+                                    📍 {follower.location || 'Local Contributor'}
+                                  </span>
+                                  <span>•</span>
+                                  <span className="shrink-0 text-zinc-300">
+                                    {follower.reviewCount} {follower.reviewCount === 1 ? 'video review' : 'video reviews'}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
-                            {/* Follow back / Following toggle */}
-                            {onToggleFollow && (
-                              <button
-                                onMouseEnter={() => setHoveredUnfollow(follower.name)}
-                                onMouseLeave={() => setHoveredUnfollow(null)}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onToggleFollow(follower.handle);
-                                }}
-                                className={`px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
-                                  follower.isFollowedBack
-                                    ? isHovered
-                                      ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                                      : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
-                                    : "bg-white hover:bg-zinc-200 text-zinc-950 font-black"
-                                }`}
-                              >
-                                {follower.isFollowedBack ? (
-                                  isHovered ? (
-                                    <>
-                                      <UserMinus className="w-3.5 h-3.5" />
-                                      <span>Unfollow</span>
-                                    </>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {onToggleFollow && (
+                                <button
+                                  onMouseEnter={() => setHoveredUnfollow(follower.name)}
+                                  onMouseLeave={() => setHoveredUnfollow(null)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleBusinessFollowAuthor(follower.name);
+                                  }}
+                                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                                    follower.isFollowedBack
+                                      ? isHovered
+                                        ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                                        : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                                      : "bg-white hover:bg-zinc-200 text-zinc-950 font-black"
+                                  }`}
+                                >
+                                  {follower.isFollowedBack ? (
+                                    isHovered ? (
+                                      <>
+                                        <UserMinus className="w-3.5 h-3.5" />
+                                        <span>Unfollow</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                                        <span>Following</span>
+                                      </>
+                                    )
                                   ) : (
                                     <>
-                                      <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                                      <span>Following</span>
+                                      <UserPlus className="w-3.5 h-3.5" />
+                                      <span>Follow</span>
                                     </>
-                                  )
-                                ) : (
-                                  <>
-                                    <UserPlus className="w-3.5 h-3.5" />
-                                    <span>Follow</span>
-                                  </>
-                                )}
-                              </button>
-                            )}
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )
                 )}
               </div>
             )}
