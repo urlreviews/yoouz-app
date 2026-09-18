@@ -1,5 +1,6 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { downloadYoouzBanner } from '../utils/bannerDownload';
 import { NavSection, Place, VideoReview, ReviewComment, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES, FeedSubTab } from '../types';
 import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
 import { getDisplayViews, getPlaceSlug } from '../utils/placeUtils';
@@ -3688,10 +3689,30 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         onChange={handleBannerFileUpload} 
                       />
                     </div>
-                    <div className="text-center">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
                       <span className="text-xs font-bold text-zinc-200">Cover Banner</span>
-                      <p className="text-[11px] text-zinc-400">Click to upload a custom JPG or PNG</p>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => downloadYoouzBanner('svg')}
+                          className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-semibold rounded-lg border border-amber-500/30 transition-colors"
+                          title="Download official Yoouz 16:9 brand cover banner (SVG)"
+                        >
+                          <Download className="w-3 h-3 text-amber-400" />
+                          <span>SVG</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => downloadYoouzBanner('png')}
+                          className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-semibold rounded-lg border border-amber-500/30 transition-colors"
+                          title="Download official Yoouz 16:9 brand cover banner (PNG)"
+                        >
+                          <Download className="w-3 h-3 text-amber-400" />
+                          <span>PNG</span>
+                        </button>
+                      </div>
                     </div>
+                    <p className="text-[11px] text-zinc-400 text-center">Click cover to upload a custom image or download our official brand asset</p>
                     {bannerError && <p className="text-xs text-rose-400 font-semibold">{bannerError}</p>}
                   </div>
 

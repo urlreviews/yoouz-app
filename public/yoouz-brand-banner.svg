@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <!-- Dark Glossy Background Gradient matching official Yoouz star logo -->
+    <linearGradient id="yoouzDarkGloss" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e24" />
+      <stop offset="30%" stop-color="#141418" />
+      <stop offset="70%" stop-color="#0d0d10" />
+      <stop offset="100%" stop-color="#08080a" />
+    </linearGradient>
+
+    <!-- Diagonal Glossy Sheen Overlay -->
+    <linearGradient id="diagonalGloss" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08" />
+      <stop offset="42%" stop-color="#ffffff" stop-opacity="0.04" />
+      <stop offset="43%" stop-color="#000000" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.4" />
+    </linearGradient>
+
+    <!-- Pure White Star Fill Gradient with subtle top sheen -->
+    <linearGradient id="starWhiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="85%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#f1f5f9" />
+    </linearGradient>
+
+    <!-- Soft Drop Shadow for Depth -->
+    <filter id="starShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.75" />
+    </filter>
+  </defs>
+
+  <!-- Full Widescreen Solid Dark Canvas -->
+  <rect width="1920" height="1080" fill="url(#yoouzDarkGloss)" />
+
+  <!-- Full Widescreen Glossy Diagonal Sheen Reflection -->
+  <rect width="1920" height="1080" fill="url(#diagonalGloss)" />
+
+  <!-- Center Official White Star Icon -->
+  <g transform="translate(960, 540)" filter="url(#starShadow)">
+    <path d="M 0 -220 L 64 -66 L 228 -56 L 102 52 L 138 214 L 0 134 L -138 214 L -102 52 L -228 -56 L -64 -66 Z" fill="url(#starWhiteGrad)" />
+  </g>
+</svg>

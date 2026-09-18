@@ -2554,6 +2554,8 @@ export function App() {
                     brandDomain: 'yoouz.com',
                     logoUrl: '/favicon.svg',
                     avatarUrl: '/favicon.svg',
+                    bannerUrl: '/yoouz-brand-banner.svg',
+                    ogImage: '/yoouz-brand-banner.svg',
                     isClaimed: true,
                     isVerified: true,
                     claimedByEmail: 'info@yoouz.com',

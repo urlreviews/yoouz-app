@@ -15105,6 +15105,80 @@ Return JSON:
   });
 
   
+  // Direct file download & viewing endpoints for Yoouz Brand Banner (SVG & PNG)
+  const SVG_BANNER_CONTENT = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="yoouzDarkGloss" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e24" />
+      <stop offset="30%" stop-color="#141418" />
+      <stop offset="70%" stop-color="#0d0d10" />
+      <stop offset="100%" stop-color="#08080a" />
+    </linearGradient>
+    <linearGradient id="diagonalGloss" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08" />
+      <stop offset="42%" stop-color="#ffffff" stop-opacity="0.04" />
+      <stop offset="43%" stop-color="#000000" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="starWhiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="85%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#f1f5f9" />
+    </linearGradient>
+    <filter id="starShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.75" />
+    </filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#yoouzDarkGloss)" />
+  <rect width="1920" height="1080" fill="url(#diagonalGloss)" />
+  <g transform="translate(960, 540)" filter="url(#starShadow)">
+    <path d="M 0 -220 L 64 -66 L 228 -56 L 102 52 L 138 214 L 0 134 L -138 214 L -102 52 L -228 -56 L -64 -66 Z" fill="url(#starWhiteGrad)" />
+  </g>
+</svg>`;
+
+  app.get(["/api/download-banner", "/download-banner", "/yoouz-brand-banner.svg", "/yoouz-brand-banner.png"], async (req, res) => {
+    try {
+      const isPng = req.path.endsWith('.png') || req.query.format === 'png';
+      const isDownload = req.path.includes('download') || req.query.download === 'true';
+
+      let svgBuffer: Buffer | null = null;
+      const possiblePaths = [
+        path.join(process.cwd(), "public", "yoouz-brand-banner.svg"),
+        path.join(process.cwd(), "dist", "yoouz-brand-banner.svg"),
+        path.join(process.cwd(), "dist", "public", "yoouz-brand-banner.svg"),
+      ];
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          svgBuffer = fs.readFileSync(p);
+          break;
+        }
+      }
+      if (!svgBuffer) {
+        svgBuffer = Buffer.from(SVG_BANNER_CONTENT, 'utf-8');
+      }
+
+      res.setHeader("Access-Control-Allow-Origin", "*");
+
+      if (isPng) {
+        const pngBuffer = await sharp(svgBuffer).resize(1920, 1080).png().toBuffer();
+        if (isDownload) {
+          res.setHeader("Content-Disposition", 'attachment; filename="yoouz-brand-banner.png"');
+        }
+        res.setHeader("Content-Type", "image/png");
+        return res.send(pngBuffer);
+      } else {
+        if (isDownload) {
+          res.setHeader("Content-Disposition", 'attachment; filename="yoouz-brand-banner.svg"');
+        }
+        res.setHeader("Content-Type", "image/svg+xml");
+        return res.send(svgBuffer);
+      }
+    } catch (e: any) {
+      res.setHeader("Content-Type", "image/svg+xml");
+      return res.send(SVG_BANNER_CONTENT);
+    }
+  });
+
   // Proxy for Google Favicon CDN to bypass mobile tracking blockers (e.g. iOS Safari)
   app.get("/api/favicon", async (req, res) => {
     try {
