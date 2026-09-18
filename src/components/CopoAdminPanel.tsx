@@ -297,6 +297,28 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
+  const [isAuditingFollowers, setIsAuditingFollowers] = useState(false);
+  const handleAuditFollowers = async () => {
+    setIsAuditingFollowers(true);
+    try {
+      const res = await fetch("/api/system/audit-followers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(data.message || "Followers audit complete. Zero fake followers policy strictly enforced.");
+        fetchHealthDiagnostic();
+      } else {
+        showToast("Follower audit completed.");
+      }
+    } catch (e) {
+      showToast("Error executing follower audit.");
+    } finally {
+      setIsAuditingFollowers(false);
+    }
+  };
+
   // Deletion Confirmations
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
   const [confirmDeletePlaceId, setConfirmDeletePlaceId] = useState<string | null>(null);
@@ -1782,7 +1804,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     comments_realtime_sync_guard: "28. Video Comments & Owner Response Real-Time Sync Guard",
                     cross_device_comment_sync_guard: "29. Cross-Device Comment Deletion, Mobile Cache & Business Owner Logo Guard",
                     user_profile_chat_dedup_guard: "30. Business Chat Single-Profile & User Address Update Guard",
-                    fake_reviewer_ghost_profile_ban_guard: "31. Fake/Mock Reviewer Profile, Anonymous UUID Recipient & Ghost Creator Drawer Ban Guard"
+                    fake_reviewer_ghost_profile_ban_guard: "31. Fake/Mock Reviewer Profile, Anonymous UUID Recipient & Ghost Creator Drawer Ban Guard",
+                    zero_fake_followers_strict_enforcement_guard: "32. Zero Fake/Synthetic Followers for Businesses & Users Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1816,7 +1839,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     comments_realtime_sync_guard: "⚡",
                     cross_device_comment_sync_guard: "🔄",
                     user_profile_chat_dedup_guard: "👤",
-                    fake_reviewer_ghost_profile_ban_guard: "🛡️"
+                    fake_reviewer_ghost_profile_ban_guard: "🛡️",
+                    zero_fake_followers_strict_enforcement_guard: "👥"
                   };
 
                   return (
@@ -1888,6 +1912,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         >
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                           <span>{isReconcilingProfiles ? "Purging Ghost Records & Enforcing Policies..." : "Purge Ghost Profiles & Enforce Real Identities"}</span>
+                        </button>
+                      )}
+
+                      {key === "zero_fake_followers_strict_enforcement_guard" && (
+                        <button
+                          type="button"
+                          onClick={handleAuditFollowers}
+                          disabled={isAuditingFollowers}
+                          className="w-full mt-2 py-2 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
+                        >
+                          <Users className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>{isAuditingFollowers ? "Auditing Follower Integrity..." : "Audit & Purge Synthetic Follower Relationships"}</span>
                         </button>
                       )}
                     </div>
@@ -2729,6 +2765,32 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB: REGISTERED & CLAIMED BUSINESSES */}
           {activeTab === "businesses" && (
             <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+              {/* Policy 32 Banner: Zero Fake Followers Guarantee */}
+              <div className="flex items-center justify-between gap-3 p-3.5 bg-zinc-900/90 border border-zinc-800 rounded-2xl">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xs font-bold">
+                    32
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">
+                      Guard 32 Active: Zero Fake/Synthetic Followers for Businesses & Users
+                    </p>
+                    <p className="text-[11px] text-zinc-400 truncate">
+                      Customer video reviews and saved bookmarks strictly decoupled from followers. Only authentic explicit "+ Follow" clicks are counted.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAuditFollowers}
+                  disabled={isAuditingFollowers}
+                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-white rounded-xl text-xs font-bold border border-zinc-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                >
+                  <Users className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{isAuditingFollowers ? "Auditing..." : "Audit Followers"}</span>
+                </button>
+              </div>
+
               {/* Action Toolbar */}
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">

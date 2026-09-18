@@ -881,7 +881,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </span>
               <span className="text-zinc-700">·</span>
               <span className="text-zinc-200 font-medium">
-                {(author.followersCount || 0) + (author.isFollowed ? 1 : 0)} {t("profile.followers", "followers")}
+                {author.followersCount || 0} {t("profile.followers", "followers")}
               </span>
             </div>
             {displayLocation && (
@@ -1237,7 +1237,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.followers", "Followers")}</span>
-                    <span className="text-base font-black text-white">{(author.followersCount || 0) + (author.isFollowed ? 1 : 0)}</span>
+                    <span className="text-base font-black text-white">{author.followersCount || 0}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>

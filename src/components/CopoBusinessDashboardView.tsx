@@ -930,11 +930,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Real Business Followers List derived from all registered users and community reviewers
+  // STRICT POLICY 32: Real Business Followers List strictly derived from authentic user follows.
+  // Reviews, bookmarks, chats, and guest visits NEVER synthesize fake follower relationships.
   const businessFollowers = useMemo(() => {
     if (!currentPlace) return [];
-    const placeId = currentPlace.id;
+    const placeId = String(currentPlace.id || '').trim();
     const placeNameLower = (currentPlace.name || '').toLowerCase().trim();
+    const placeSlugLower = ((currentPlace as any).slug || currentPlace.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+    const placeCanonId = placeId.toLowerCase().replace(/^place-custom-/, '').replace(/^www\./, '');
+
+    const targetPlaceKeys = new Set<string>([
+      placeId.toLowerCase(),
+      placeSlugLower,
+      placeCanonId
+    ].filter(Boolean));
 
     const map = new Map<string, {
       id: string;
@@ -949,80 +958,71 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       isFollowedBack?: boolean;
     }>();
 
-    // 1. Users from allUsers who follow this place
+    // 1. Registered users from allUsers who have EXPLICITLY added this business to their followedPlaces
     (allUsers || []).forEach((u: any) => {
       const followedPlaces = Array.isArray(u.followedPlaces) ? u.followedPlaces : [];
-      if (followedPlaces.includes(placeId)) {
-        const handle = (u.handle || u.name || '').toLowerCase().replace(/^@/, '');
-        const key = u.id || u.email || handle;
+      const isActuallyFollowing = followedPlaces.some((pId: string) => {
+        const cleanPId = String(pId || '').toLowerCase().trim();
+        return targetPlaceKeys.has(cleanPId);
+      });
+
+      if (isActuallyFollowing) {
+        const rawName = (u.name || '').trim();
+        const handle = (u.handle || rawName || 'user').toLowerCase().replace(/^@/, '');
+        const key = (u.id || u.email || handle).toLowerCase();
+
+        // Check if this real follower has also submitted reviews for this place (for display enhancement only)
+        const userReviews = (videos || []).filter(v => {
+          const vPlaceMatch = v.placeId && targetPlaceKeys.has(String(v.placeId).toLowerCase().trim());
+          const vNameMatch = v.placeName && v.placeName.toLowerCase().trim() === placeNameLower;
+          if (!vPlaceMatch && !vNameMatch) return false;
+          const authorName = (v.author?.name || '').toLowerCase().trim();
+          const vUid = (v.userId || (v.author as any)?.id || '').toLowerCase().trim();
+          return (
+            (authorName && (authorName === handle || authorName === rawName.toLowerCase())) ||
+            (vUid && (vUid === String(u.id).toLowerCase() || vUid === String(u.email).toLowerCase()))
+          );
+        });
+
         map.set(key, {
           id: u.id || u.uid || key,
-          name: u.name || 'Yoouz User',
+          name: rawName || 'Yoouz User',
           handle: handle || 'user',
-          avatar: u.avatar || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`,
-          isReviewer: false,
-          reviewCount: 0,
+          avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(rawName || "User")}&background=27272a&color=fff`,
+          isReviewer: userReviews.length > 0,
+          reviewCount: userReviews.length,
+          rating: userReviews[0]?.rating,
+          lastReviewSnippet: userReviews[0]?.caption || (userReviews[0] as any)?.text,
           followedAt: 'Recent',
           isFollowedBack: Boolean(currentUser?.followedAuthors?.some(a => a.toLowerCase().replace(/^@/, '') === handle))
         });
       }
     });
 
-    // 2. Reviewers who created a video review for this place (authentic customer advocates)
-    const placeReviews = (videos || []).filter(v => 
-      v.placeId === placeId || (v.placeName && v.placeName.toLowerCase().trim() === placeNameLower)
-    );
-
-    placeReviews.forEach((rev) => {
-      const author = rev.author;
-      if (!author) return;
-      const authorName = (author.name || '').trim();
-      const authorHandle = (author.name || '').toLowerCase().replace(/^@/, '').trim();
-      const key = (rev.userId || (author as any).id || authorHandle).toLowerCase();
-
-      const existing = map.get(key);
-      if (existing) {
-        existing.isReviewer = true;
-        existing.reviewCount = (existing.reviewCount || 0) + 1;
-        if (!existing.rating && rev.rating) existing.rating = rev.rating;
-        if (!existing.lastReviewSnippet && (rev.caption || (rev as any).text)) {
-          existing.lastReviewSnippet = rev.caption || (rev as any).text;
-        }
-      } else {
-        map.set(key, {
-          id: rev.userId || (author as any).id || (author as any).uid || key,
-          name: authorName || 'Customer Reviewer',
-          handle: authorHandle || 'reviewer',
-          avatar: author.avatar || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`,
-          isReviewer: true,
-          reviewCount: 1,
-          rating: rev.rating,
-          lastReviewSnippet: rev.caption || (rev as any).text,
-          followedAt: rev.createdAt || 'Recent',
-          isFollowedBack: Boolean(currentUser?.followedAuthors?.some(a => a.toLowerCase().replace(/^@/, '') === authorHandle))
-        });
-      }
-    });
-
-    // 3. Current user if they have followed or saved this place
+    // 2. Current user IF they explicitly followed this place (authenticated or local session)
     if (currentUser) {
-      const myFollowedPlaces = currentUser.followedPlaces || [];
+      const myFollowedPlaces = Array.isArray(currentUser.followedPlaces) ? currentUser.followedPlaces : [];
       let storedFollowed: string[] = [];
       try {
-        storedFollowed = JSON.parse(localStorage.getItem('copo_saved_place_ids') || '[]');
+        storedFollowed = JSON.parse(localStorage.getItem('copo_followed_places') || '[]');
       } catch (e) {}
-      if (myFollowedPlaces.includes(placeId) || storedFollowed.includes(placeId)) {
-        const myKey = currentUser.id || currentUser.email || 'me';
+
+      const isMyFollow = myFollowedPlaces.some(pId => targetPlaceKeys.has(String(pId).toLowerCase().trim())) ||
+        storedFollowed.some(pId => targetPlaceKeys.has(String(pId).toLowerCase().trim()));
+
+      if (isMyFollow) {
+        const myKey = (currentUser.id || currentUser.email || 'me').toLowerCase();
         if (!map.has(myKey)) {
-          const myHandle = (currentUser.handle || currentUser.name || 'me').toLowerCase().replace(/^@/, '');
+          const myRawName = (currentUser.name || '').trim();
+          const myHandle = (currentUser.handle || myRawName || 'me').toLowerCase().replace(/^@/, '');
           map.set(myKey, {
             id: myKey,
-            name: currentUser.name || 'You',
+            name: myRawName || 'You',
             handle: myHandle,
-            avatar: currentUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+            avatar: currentUser.avatar || `/api/avatar?name=${encodeURIComponent(myRawName || "You")}&background=27272a&color=fff`,
             isReviewer: false,
             reviewCount: 0,
-            followedAt: 'Saved',
+            followedAt: 'Recent',
             isFollowedBack: true
           });
         }

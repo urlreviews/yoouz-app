@@ -3887,18 +3887,55 @@ export function App() {
     }
   };
 
-  // Handle Follow Place (Business)
+  // Handle Follow Place (Business) - Strict Explicit Follow Only
   const handleToggleFollowPlace = (placeId: string) => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      setAuthIntent("general");
+      setIsAuthModalOpen(true);
+      return;
+    }
+    const cleanPlaceId = String(placeId || "").trim();
+    if (!cleanPlaceId) return;
+
     const currentFollows = currentUser.followedPlaces || [];
-    const isFollowing = currentFollows.includes(placeId);
+    const isFollowing = currentFollows.some((id) => String(id).toLowerCase().trim() === cleanPlaceId.toLowerCase());
     const updatedFollowedPlaces = isFollowing
-      ? currentFollows.filter(id => id !== placeId)
-      : [...currentFollows, placeId];
+      ? currentFollows.filter((id) => String(id).toLowerCase().trim() !== cleanPlaceId.toLowerCase())
+      : [...currentFollows, cleanPlaceId];
       
     const followerUid = currentUser.id || currentUser.uid || currentUser.email || "guest";
-    setCurrentUser(prev => prev ? { ...prev, followedPlaces: updatedFollowedPlaces } : null);
-    setSavedPlaceIds(updatedFollowedPlaces);
+    setCurrentUser((prev) => (prev ? { ...prev, followedPlaces: updatedFollowedPlaces } : null));
+
+    // Save strictly to followed places in localStorage
+    try {
+      localStorage.setItem("copo_followed_places", JSON.stringify(updatedFollowedPlaces));
+    } catch (e) {}
+
+    // Update places state to immediately reflect accurate follow state
+    setPlaces((prev) =>
+      prev.map((p) => {
+        const pIdMatch = String(p.id).toLowerCase() === cleanPlaceId.toLowerCase();
+        const pSlugMatch = (p as any).slug && String((p as any).slug).toLowerCase() === cleanPlaceId.toLowerCase();
+        if (pIdMatch || pSlugMatch) {
+          return { ...p, isFollowed: !isFollowing };
+        }
+        return p;
+      })
+    );
+
+    // Call /api/follow for place
+    fetch("/api/follow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        followerUserId: followerUid,
+        followerName: currentUser.name || "User",
+        followerAvatar: currentUser.avatar || "",
+        placeId: cleanPlaceId,
+        type: "place",
+        isFollowed: !isFollowing
+      })
+    }).catch(() => {});
 
     // 9. Persist to NoSQL endpoint
     fetch(`/api/nosql/users/${followerUid}`, {

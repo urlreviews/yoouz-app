@@ -117,7 +117,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     videos.forEach((v) => {
       if (v.author && v.author.name) {
         const key = v.author.name.toLowerCase().trim();
-        const isFollowed = followedAuthorsSet.has(key) || Boolean(v.author.isFollowed);
+        const isFollowed = followedAuthorsSet.has(key);
         const existing = map.get(key);
 
         map.set(key, {
@@ -223,7 +223,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     places.forEach((p) => {
       const pidLower = p.id.toLowerCase().trim();
       const pSlugLower = extractCleanDomain(p.website || p.name || p.id).replace(/[^a-z0-9]/g, "-");
-      const isFollowed = p.isFollowed || followedPlacesSet.has(pidLower) || followedPlacesSet.has(pSlugLower);
+      const isFollowed = followedPlacesSet.has(pidLower) || followedPlacesSet.has(pSlugLower);
 
       if (isFollowed && !seen.has(pidLower)) {
         seen.add(pidLower);
