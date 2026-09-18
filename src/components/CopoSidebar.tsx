@@ -81,7 +81,6 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
   const navItems = [
     { id: "home" as NavSection, label: t("nav.home", "Home"), icon: Home },
     { id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search, hasDot: true },
-    { id: "discover" as NavSection, label: t("nav.discover", "Discover"), icon: Compass },
     { id: "following" as NavSection, label: t("nav.following", "Following"), icon: UserPlus },
     { id: "messages" as NavSection, label: t("nav.messages", "Messages"), icon: Mail, badge: unreadMessagesCount },
     { id: "notifications" as NavSection, label: t("nav.notifications", "Notifications"), icon: Bell, badge: unreadNotifsCount },

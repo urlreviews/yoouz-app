@@ -159,21 +159,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               </span>
             </button>
 
-            {/* Discover */}
-            <button
-              onClick={() => handleNavClick("discover")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
-                activeSection === "discover"
-                  ? "bg-zinc-900 text-white font-bold border border-zinc-700/80"
-                  : "text-white hover:bg-zinc-900"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Compass className="w-4 h-4 text-white" />
-                <span>{t("nav.discover", "Discover Creators & Spots")}</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-zinc-200" />
-            </button>
+
 
             {/* Following */}
             <button

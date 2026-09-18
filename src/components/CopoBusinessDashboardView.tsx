@@ -2920,7 +2920,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                         </span>
                                       </div>
                                       <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
-                                        {author.location ? `📍 ${author.location}` : 'Local Contributor'} • {author.videoReviewCount || 0} video reviews
+                                        {author.location || 'Local Contributor'} • {author.videoReviewCount || 0} video reviews
                                       </p>
                                     </div>
                                   </div>
@@ -3046,7 +3046,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                                 <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate mt-0.5">
                                   <span className="shrink-0 text-zinc-300">
-                                    📍 {follower.location || 'Local Contributor'}
+                                    {follower.location || 'Local Contributor'}
                                   </span>
                                   <span>•</span>
                                   <span className="shrink-0 text-zinc-300">
