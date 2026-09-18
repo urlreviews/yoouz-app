@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 export interface CopoMobileBottomNavProps {
   activeSection: NavSection | string;
@@ -167,7 +169,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
         >
           {currentUser?.avatar ? (
             <img
-              src={currentUser.avatar}
+              src={getSafeAvatarUrl(currentUser.avatar, currentUser.name, currentUser.handle || currentUser.email)}
               alt={currentUser.name || "Profile"}
               className={`w-[22px] h-[22px] rounded-full object-cover ring-2 transition-all ${
                 activeSection === "profile" || activeSection === "more"
@@ -177,8 +179,9 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               referrerPolicy="no-referrer"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
-                if (!target.src.includes('/api/avatar')) {
-                  target.src = '/api/avatar?name=User&background=27272a&color=fff';
+                const fallback = generateGoogleLetterAvatarSvg(currentUser.name || "User", 128, currentUser.handle || currentUser.name);
+                if (target.src !== fallback) {
+                  target.src = fallback;
                 }
               }}
             />

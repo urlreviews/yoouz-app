@@ -187,7 +187,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       id="copo-embed-root"
       className="w-full h-full min-h-screen h-[100dvh] bg-black text-white flex items-center justify-center relative overflow-hidden font-sans select-none antialiased p-0"
     >
-      <div className="copo-has-bottom-nav w-full h-full max-w-full sm:max-w-[440px] h-full relative bg-black flex flex-col overflow-hidden">
+      <div className="w-full h-full relative bg-black flex flex-col overflow-hidden">
         <div className="w-full h-full relative overflow-hidden flex-1">
           <CopoVideoPlayer
             videos={matchingVideos}
@@ -214,7 +214,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           />
         </div>
 
-        {/* Mobile App Native 5-Tab Bottom Navigation Bar */}
+        {/* Mobile App Native 5-Tab Bottom Navigation Bar (Shown on mobile only, hidden on desktop) */}
         <CopoMobileBottomNav
           activeSection={activeTabSection}
           onSelectSection={(section) => {
@@ -231,7 +231,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           unreadMessagesCount={unreadMessagesCount}
           onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
           onOpenSearch={onOpenSearch}
-          className="absolute bottom-0 left-0 right-0"
+          className="md:hidden fixed bottom-0 left-0 right-0"
         />
       </div>
     </div>
