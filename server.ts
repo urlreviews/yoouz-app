@@ -3876,6 +3876,18 @@ app.get('/api/nosql/:collection', async (req, res) => {
                   : Boolean(parsedData.isRead || parsedData.read);
                 parsedData.isRead = isReadVal;
                 parsedData.read = isReadVal;
+                if (!parsedData.recipientEmail && row.recipientEmail) {
+                  parsedData.recipientEmail = row.recipientEmail;
+                }
+                if (!parsedData.type && row.type) {
+                  parsedData.type = row.type;
+                }
+                if (!parsedData.text && row.text) {
+                  parsedData.text = row.text;
+                }
+                if (!parsedData.createdAtMs && row.updatedAt) {
+                  parsedData.createdAtMs = new Date(row.updatedAt).getTime() || Date.now();
+                }
               }
               if (colName === 'users') {
                 const uEmail = String(row.email || parsedData.email || "").trim().toLowerCase();

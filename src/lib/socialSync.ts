@@ -275,12 +275,13 @@ export function recordDeletedNotifId(notificationId: string, userKey?: string) {
  * Filter notifications intended for the current user
  */
 function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): CopoNotification[] {
-  const userEmail = (currentUser.email || "").toLowerCase().trim();
+  const userEmail = (currentUser.email || (currentUser as any).businessEmail || "").toLowerCase().trim();
   const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
   const emailPrefix = userEmail && userEmail.includes("@") ? userEmail.split("@")[0].toLowerCase().trim() : "";
   const userHandle = (currentUser.handle || currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "").trim();
   const userName = (currentUser.name || "").toLowerCase().trim();
   const userId = (currentUser.userId || (currentUser as any).id || (currentUser as any).uid || "").toLowerCase().trim();
+  const userPlaceId = ((currentUser as any).placeId || (currentUser as any).businessPlaceId || "").toLowerCase().trim();
 
   const deletedSet = getDeletedNotifIds(userKey);
 
@@ -325,7 +326,8 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     userName.includes("yoouz") ||
     userHandle.includes("yoouz") ||
     userId.includes("yoouz") ||
-    Boolean((currentUser as any).isBusiness);
+    Boolean((currentUser as any).isBusiness) ||
+    Boolean(userPlaceId);
 
   const list: CopoNotification[] = [];
 
@@ -337,12 +339,19 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       continue;
     }
 
-    const senderEmail = (data.user?.email || "").toLowerCase().trim();
-    const senderName = (data.user?.name || "").toLowerCase().trim();
+    let parsedInner: any = {};
+    if (typeof data.data === "string") {
+      try { parsedInner = JSON.parse(data.data); } catch(e){}
+    } else if (typeof data.data === "object" && data.data) {
+      parsedInner = data.data;
+    }
 
-    const recEmail = (data.recipientEmail || "").toLowerCase().trim();
-    const recHandle = (data.recipientHandle || "").toLowerCase().trim().replace(/^@/, "");
-    const recId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
+    const senderEmail = (data.user?.email || parsedInner.user?.email || "").toLowerCase().trim();
+    const senderName = (data.user?.name || parsedInner.user?.name || "").toLowerCase().trim();
+
+    const recEmail = (data.recipientEmail || parsedInner.recipientEmail || "").toLowerCase().trim();
+    const recHandle = (data.recipientHandle || parsedInner.recipientHandle || "").toLowerCase().trim().replace(/^@/, "");
+    const recId = (data.recipientId || parsedInner.recipientId || "").toLowerCase().trim().replace(/^@/, "");
     const normRecId = recId.replace(/\s+/g, "");
     const normRecHandle = recHandle.replace(/\s+/g, "");
 
@@ -406,12 +415,23 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       (data.placeName && (data.placeName.toLowerCase().includes("yoouz") || (userName && userName.length > 2 && userName.toLowerCase().includes(data.placeName.toLowerCase()))))
     );
 
+    const matchesPlaceId = Boolean(userPlaceId && (
+      recId === userPlaceId ||
+      recEmail === userPlaceId ||
+      recHandle === userPlaceId ||
+      normRecId === userPlaceId ||
+      normRecId.includes(userPlaceId) ||
+      (data.videoId && String(data.videoId).includes(userPlaceId)) ||
+      (data.placeName && userPlaceId.includes(data.placeName.toLowerCase().replace(/[^a-z0-9]/g, '')))
+    ));
+
     const isGeneralMatch =
       isSystemOrGlobal ||
       matchesAvtErtuop ||
       matchesAouisesmee ||
       matchesBizRiv ||
       matchesYoouzBiz ||
+      matchesPlaceId ||
       (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail || normRecId === userEmail)) ||
       (emailPrefix && (recEmail === emailPrefix || recHandle === emailPrefix || recId === emailPrefix || normRecId === emailPrefix || recEmail.startsWith(emailPrefix))) ||
       (userHandle && (recHandle === userHandle || recId === userHandle || normRecId === userHandle || normRecHandle === userHandle || recEmail.includes(userHandle))) ||
@@ -433,20 +453,25 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     }
 
     list.push({
+      ...data,
       id: String(data.id),
+      recipientEmail: data.recipientEmail || recEmail,
+      recipientId: data.recipientId || recId,
+      recipientHandle: data.recipientHandle || recHandle,
       type: data.type || "like",
       user: {
-        name: data.user?.name || "Yoouz Member",
-        avatar: data.user?.avatar || `/api/avatar?name=${encodeURIComponent(data.user?.name || "User")}&background=27272a&color=fff`,
-        email: data.user?.email || senderEmail
+        name: data.user?.name || parsedInner.user?.name || "Yoouz Member",
+        avatar: data.user?.avatar || parsedInner.user?.avatar || `/api/avatar?name=${encodeURIComponent(data.user?.name || parsedInner.user?.name || "User")}&background=27272a&color=fff`,
+        email: data.user?.email || parsedInner.user?.email || senderEmail
       },
-      text: data.text || "",
-      timestamp: data.timestamp || "Recently",
-      createdAtMs: data.createdAt || data.createdAtMs || Date.now(),
-      videoId: data.videoId,
-      videoThumbnail: data.videoThumbnail,
-      placeName: data.placeName,
-      isRead: Boolean(data.isRead === true || data.isRead === 1 || data.read === true || data.read === 1 || data.isRead === "true" || data.isRead === "1")
+      text: data.text || parsedInner.text || "",
+      timestamp: data.timestamp || parsedInner.timestamp || "Recently",
+      createdAtMs: data.createdAtMs || data.createdAt || parsedInner.createdAtMs || parsedInner.createdAt || Date.now(),
+      videoId: data.videoId || parsedInner.videoId,
+      videoThumbnail: data.videoThumbnail || parsedInner.videoThumbnail,
+      placeName: data.placeName || parsedInner.placeName,
+      isRead: Boolean(data.isRead === true || data.isRead === 1 || data.read === true || data.read === 1 || data.isRead === "true" || data.isRead === "1" || parsedInner.isRead === true || parsedInner.read === true),
+      read: Boolean(data.isRead === true || data.isRead === 1 || data.read === true || data.read === 1 || data.isRead === "true" || data.isRead === "1" || parsedInner.isRead === true || parsedInner.read === true)
     });
   }
 
