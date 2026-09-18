@@ -1721,7 +1721,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     video_sharing_deep_links: "23. Deep Links, Share & Embed Generator",
                     category_clubs_discovery: "24. Category Filters & Community Clubs",
                     video_review_feed_retention: "25. Video Review Retention & Feed Disappearance Guard",
-                    comments_deduplication_sync: "26. Review ID Leak Guard, Caption Sanitizer & Comments Deduplication"
+                    comments_deduplication_sync: "26. Review ID Leak Guard, Caption Sanitizer & Comments Deduplication",
+                    business_profile_review_match_guard: "27. Business Profile Place Review Matching & Empty State Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1750,7 +1751,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     video_sharing_deep_links: "🔗",
                     category_clubs_discovery: "🧭",
                     video_review_feed_retention: "🛡️",
-                    comments_deduplication_sync: "💬"
+                    comments_deduplication_sync: "💬",
+                    business_profile_review_match_guard: "🏢"
                   };
 
                   return (
