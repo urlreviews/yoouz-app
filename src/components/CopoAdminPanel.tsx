@@ -1805,7 +1805,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     cross_device_comment_sync_guard: "29. Cross-Device Comment Deletion, Mobile Cache & Business Owner Logo Guard",
                     user_profile_chat_dedup_guard: "30. Business Chat Single-Profile & User Address Update Guard",
                     fake_reviewer_ghost_profile_ban_guard: "31. Fake/Mock Reviewer Profile, Anonymous UUID Recipient & Ghost Creator Drawer Ban Guard",
-                    zero_fake_followers_strict_enforcement_guard: "32. Zero Fake/Synthetic Followers for Businesses & Users Guard"
+                    zero_fake_followers_strict_enforcement_guard: "32. Zero Fake/Synthetic Followers for Businesses & Users Guard",
+                    business_comments_messages_sync_guard: "33. Business Video Review Comments & Direct Messages Notification Sync Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1840,7 +1841,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     cross_device_comment_sync_guard: "🔄",
                     user_profile_chat_dedup_guard: "👤",
                     fake_reviewer_ghost_profile_ban_guard: "🛡️",
-                    zero_fake_followers_strict_enforcement_guard: "👥"
+                    zero_fake_followers_strict_enforcement_guard: "👥",
+                    business_comments_messages_sync_guard: "💬"
                   };
 
                   return (
