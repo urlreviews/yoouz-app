@@ -378,24 +378,37 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
   // Filtered lists
   const filteredAuthors = useMemo(() => {
-    if (!searchQuery.trim()) return followedAuthors;
     const q = searchQuery.toLowerCase().trim();
-    return followedAuthors.filter((a) => a.name.toLowerCase().includes(q) || (a.bio && a.bio.toLowerCase().includes(q)));
-  }, [followedAuthors, searchQuery]);
+    if (!q) return followedAuthors;
+    const allList = Array.from(allAuthorsMap.values());
+    return allList
+      .filter((a) => a.name.toLowerCase().includes(q) || (a.bio && a.bio.toLowerCase().includes(q)))
+      .map((a) => ({
+        ...a,
+        isFollowed: followedAuthorsSet.has(a.name.toLowerCase().trim())
+      }));
+  }, [followedAuthors, searchQuery, allAuthorsMap, followedAuthorsSet]);
 
   const filteredPlaces = useMemo(() => {
-    if (!searchQuery.trim()) return followedPlacesList;
     const q = searchQuery.toLowerCase().trim();
-    return followedPlacesList.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.id.toLowerCase().includes(q) ||
-        (p.website && p.website.toLowerCase().includes(q)) ||
-        (p.address && p.address.toLowerCase().includes(q)) ||
-        (p.city && p.city.toLowerCase().includes(q)) ||
-        (p.category && p.category.toLowerCase().includes(q))
-    );
-  }, [followedPlacesList, searchQuery]);
+    if (!q) return followedPlacesList;
+    return places
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.id.toLowerCase().includes(q) ||
+          (p.website && p.website.toLowerCase().includes(q)) ||
+          (p.address && p.address.toLowerCase().includes(q)) ||
+          (p.city && p.city.toLowerCase().includes(q)) ||
+          (p.category && p.category.toLowerCase().includes(q))
+      )
+      .map((p) => {
+        const pidLower = p.id.toLowerCase().trim();
+        const pSlugLower = extractCleanDomain(p.website || p.name || p.id).replace(/[^a-z0-9]/g, "-");
+        const isFollowed = followedPlacesSet.has(pidLower) || followedPlacesSet.has(pSlugLower);
+        return { ...p, isFollowed };
+      });
+  }, [followedPlacesList, searchQuery, places, followedPlacesSet]);
 
   const filteredFollowers = useMemo(() => {
     if (!searchQuery.trim()) return myFollowers;

@@ -2700,6 +2700,16 @@ export function App() {
       }
     };
 
+    const handlePlaceUpdatedEvent = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        const updated = customEvent.detail as Place;
+        if (updated && updated.id) {
+          handleUpdatePlace(updated);
+        }
+      }
+    };
+
     window.addEventListener("copo-place-deleted", handlePlaceDeleted);
     window.addEventListener("copo-places-purged", handlePlacesPurged);
     window.addEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
@@ -2707,6 +2717,8 @@ export function App() {
     window.addEventListener("copo-user-restored", handleUserRestored);
     window.addEventListener("copo-users-purged", handleUsersPurged);
     window.addEventListener("copo-init-deleted-users", handleInitDeletedUsers);
+    window.addEventListener("copo-place-updated", handlePlaceUpdatedEvent);
+    window.addEventListener("yoouz-place-updated", handlePlaceUpdatedEvent);
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("focus", checkActiveUserDeleted);
 
@@ -2721,6 +2733,8 @@ export function App() {
       window.removeEventListener("copo-user-restored", handleUserRestored);
       window.removeEventListener("copo-users-purged", handleUsersPurged);
       window.removeEventListener("copo-init-deleted-users", handleInitDeletedUsers);
+      window.removeEventListener("copo-place-updated", handlePlaceUpdatedEvent);
+      window.removeEventListener("yoouz-place-updated", handlePlaceUpdatedEvent);
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("focus", checkActiveUserDeleted);
     };

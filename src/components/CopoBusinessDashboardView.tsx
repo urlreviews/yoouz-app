@@ -496,16 +496,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   }, [currentPlace]);
 
-  // Structured Physical Address State
-  const [streetAddress, setStreetAddress] = useState('123 Main St, Suite 400');
-  const [city, setCity] = useState(currentPlace.city || 'New York');
-  const [stateRegion, setStateRegion] = useState('NY');
-  const [zipCode, setZipCode] = useState('10001');
+  // Structured Physical Address State (No mock data)
+  const [streetAddress, setStreetAddress] = useState(currentPlace.address ? currentPlace.address.split(',')[0] || '' : '');
+  const [city, setCity] = useState(currentPlace.city || '');
+  const [stateRegion, setStateRegion] = useState('');
+  const [zipCode, setZipCode] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('United States');
 
-  // Structured Phone & Dialing Code State
+  // Structured Phone & Dialing Code State (No mock data)
   const [phoneDialCode, setPhoneDialCode] = useState('+1');
-  const [localPhone, setLocalPhone] = useState('(212) 555-0198');
+  const [localPhone, setLocalPhone] = useState((currentPlace as any).phone || '');
 
   // Business Category & Amenities State
   const [businessCategory, setBusinessCategory] = useState(currentPlace.category || 'Dining & Artisanal Food');
@@ -532,7 +532,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setProfileName(currentPlace.name || '');
     setProfileWebsite((currentPlace as any).website || '');
     setProfileEmail((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
-    setProfileHours((currentPlace as any).hours || currentPlace.openingHours || 'Mon-Fri: 9:00 AM - 6:00 PM');
+    setProfileHours((currentPlace as any).hours || currentPlace.openingHours || '');
     setProfileDesc((currentPlace as any).description || '');
     setProfileLogoUrl(currentPlace.logoUrl || '');
     setProfileBannerUrl((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
@@ -1459,7 +1459,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     (currentPlace as any).description = profileDesc;
     (currentPlace as any).category = businessCategory;
     currentPlace.logoUrl = profileLogoUrl;
+    currentPlace.bannerUrl = profileBannerUrl;
     (currentPlace as any).bannerUrl = profileBannerUrl;
+    if (profileBannerUrl) {
+      currentPlace.photos = [profileBannerUrl, ...(currentPlace.photos || []).filter(p => p !== profileBannerUrl)];
+    }
 
     if (onUpdatePlace) {
       onUpdatePlace({ ...currentPlace });
@@ -1507,6 +1511,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
     try {
       window.dispatchEvent(new CustomEvent('copo-place-updated', { detail: currentPlace }));
+      window.dispatchEvent(new CustomEvent('yoouz-place-updated', { detail: currentPlace }));
     } catch (e) {}
 
     setIsProfileSaved(true);
