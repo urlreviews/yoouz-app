@@ -710,17 +710,47 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       >
         {/* Left side: Navigation / Menu + Top Business Badge */}
         <div className="pointer-events-auto flex items-center gap-2 max-w-[calc(100%-60px)]">
-          {onGoBack ? (
+          {(onGoBack || onCloseEmbed || isEmbed) ? (
             <button
               type="button"
               id={`btn-feed-back-${video.id}`}
               onClick={(e) => {
                 e.stopPropagation();
                 onPauseVideo?.();
-                onGoBack();
+                if (onGoBack) {
+                  onGoBack();
+                } else if (onCloseEmbed) {
+                  onCloseEmbed();
+                } else {
+                  try {
+                    if (window.parent && window.parent !== window) {
+                      window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+                    }
+                  } catch (err) {}
+                  if (window.history && window.history.length > 1) {
+                    window.history.back();
+                  }
+                }
               }}
               onTouchStart={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                onPauseVideo?.();
+                if (onGoBack) {
+                  onGoBack();
+                } else if (onCloseEmbed) {
+                  onCloseEmbed();
+                } else {
+                  try {
+                    if (window.parent && window.parent !== window) {
+                      window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+                    }
+                  } catch (err) {}
+                  if (window.history && window.history.length > 1) {
+                    window.history.back();
+                  }
+                }
+              }}
               className="w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all shadow-xl cursor-pointer shrink-0"
               title={t("common.goBack", "Go back")}
             >
@@ -795,51 +825,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </button>
         </div>
 
-        {/* Right side: Sound Mute / Unmute Toggle Button & Embed Exit Button */}
+        {/* Right side: Sound Mute / Unmute Toggle Button */}
         <div className="pointer-events-auto flex items-center gap-2">
-          {isEmbed && (
-            <button
-              type="button"
-              id={`btn-embed-close-${video.id}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onCloseEmbed) {
-                  onCloseEmbed();
-                } else {
-                  try {
-                    if (window.parent && window.parent !== window) {
-                      window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
-                    }
-                  } catch (err) {}
-                  if (window.history && window.history.length > 1) {
-                    window.history.back();
-                  }
-                }
-              }}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                if (onCloseEmbed) {
-                  onCloseEmbed();
-                } else {
-                  try {
-                    if (window.parent && window.parent !== window) {
-                      window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
-                    }
-                  } catch (err) {}
-                  if (window.history && window.history.length > 1) {
-                    window.history.back();
-                  }
-                }
-              }}
-              className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 flex items-center justify-center text-white transition-all cursor-pointer shadow-xl"
-              title={t("common.close", "Close")}
-              aria-label={t("common.close", "Close")}
-            >
-              <X className="w-5 h-5 text-white stroke-[2.5]" />
-            </button>
-          )}
-
           <button
             type="button"
             id={`btn-toggle-sound-${video.id}`}
@@ -1203,45 +1190,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               />
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Bottom Embed Footer Badge (Matches Screenshot) */}
-      {isEmbed && (
-        <div className="absolute bottom-0 left-0 right-0 z-50 w-full bg-zinc-950/90 backdrop-blur-xl border-t border-white/10 py-1.5 px-3 flex flex-col items-center justify-center text-center pointer-events-auto select-none">
-          <a
-            href="https://yoouz.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="text-white/80 hover:text-white font-semibold text-[11px] sm:text-xs tracking-wide flex items-center gap-1 transition-colors"
-          >
-            <span>Powered by</span>
-            <span className="font-extrabold text-white">Yoouz.com</span>
-          </a>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onCloseEmbed) {
-                onCloseEmbed();
-              } else {
-                try {
-                  if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
-                  }
-                } catch (err) {}
-                if (window.history && window.history.length > 1) {
-                  window.history.back();
-                }
-              }
-            }}
-            className="mt-0.5 text-white/50 hover:text-white transition-colors cursor-pointer p-0.5 active:scale-90"
-            title={t("common.close", "Close")}
-            aria-label={t("common.close", "Close")}
-          >
-            <X className="w-3.5 h-3.5 stroke-[2.5]" />
-          </button>
         </div>
       )}
     </div>

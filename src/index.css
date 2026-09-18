@@ -82,15 +82,6 @@ html, body, #root {
   padding-bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 24px));
 }
 
-/* Embed Mode CSS Overrides: Offset scrubber and metadata above Powered by Yoouz footer bar */
-.copo-embed-mode .copo-video-scrubber-position {
-  bottom: calc(46px + env(safe-area-inset-bottom, 0px)) !important;
-}
-
-.copo-embed-mode .copo-video-bottom-metadata {
-  padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
-}
-
 /* Mobile screens (< 768px): Apply bottom nav offset */
 @media (max-width: 767px) {
   .copo-has-bottom-nav .copo-video-scrubber-position {
