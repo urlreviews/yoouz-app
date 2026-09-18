@@ -427,14 +427,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     return uniqueComments;
   }, [video?.comments, remoteComments, hasRemoteFetched, localDeletedCommentIds, video?.ownerResponse]);
 
-  // Calculate total comments count including nested replies and owner response
+  // Calculate total comments count from the community discussion thread
   const totalCommentsCount = useMemo(() => {
     if (!video) return 0;
     const tree = buildCommentTree(combinedComments);
-    const ownerAlreadyInComments = combinedComments.some((c) => Boolean(c.isOwner) || (video.ownerResponse?.text && c.text === video.ownerResponse.text));
-    const ownerExtra = (video.ownerResponse && !ownerAlreadyInComments) ? 1 : 0;
-    return tree.count + ownerExtra;
-  }, [combinedComments, video?.ownerResponse, video]);
+    return tree.count;
+  }, [combinedComments, video]);
 
   // Sort comments according to selected filter
   const sortedComments = useMemo(() => {
@@ -773,9 +771,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       <span className="font-extrabold text-white text-xs truncate">
                         {t("comments.responseOwner", "Response from the owner")}
                       </span>
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[9px] font-bold tracking-tight">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[10px] font-bold tracking-tight">
                         <ShieldCheck className="w-2.5 h-2.5 text-white" />
-                        {t("business.verified", "Verified Business")}
+                        {t("business.owner", "Business Owner")}
                       </span>
                     </div>
                     <span className="text-[10px] text-zinc-200 font-medium truncate block">
@@ -1110,8 +1108,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                       )}
 
                                       {reply.isOwner && (
-                                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[9px] font-bold">
-                                          {t("business.owner", "Owner")}
+                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[10px] font-bold">
+                                          <ShieldCheck className="w-2.5 h-2.5 text-white" />
+                                          {t("business.owner", "Business Owner")}
                                         </span>
                                       )}
 
@@ -1240,8 +1239,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     <div className="min-w-0">
                       <p className="text-[11px] font-bold text-white truncate flex items-center gap-1.5">
                         <span>{placeName || video.placeName}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 font-extrabold uppercase tracking-wide">
-                          Verified Owner
+                        <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 font-bold border border-zinc-700 tracking-wide">
+                          <ShieldCheck className="w-2.5 h-2.5 text-white" />
+                          {t("business.owner", "Business Owner")}
                         </span>
                       </p>
                       <p className="text-[10px] text-zinc-400 truncate">
