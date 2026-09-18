@@ -85,11 +85,11 @@ html, body, #root {
 /* Mobile screens (< 768px): Apply bottom nav offset */
 @media (max-width: 767px) {
   .copo-has-bottom-nav .copo-video-scrubber-position {
-    bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .copo-has-bottom-nav .copo-video-bottom-metadata {
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 

@@ -728,9 +728,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                       window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
                     }
                   } catch (err) {}
-                  if (window.history && window.history.length > 1) {
-                    window.history.back();
-                  }
+                  try {
+                    window.history.replaceState(null, "", "/");
+                  } catch (err) {}
                 }
               }}
               className="w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all shadow-xl cursor-pointer shrink-0"
