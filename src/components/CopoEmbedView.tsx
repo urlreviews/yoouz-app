@@ -187,7 +187,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       id="copo-embed-root"
       className="w-full h-full min-h-screen h-[100dvh] bg-black text-white flex items-center justify-center relative overflow-hidden font-sans select-none antialiased p-0"
     >
-      <div className="w-full h-full relative bg-black flex flex-col overflow-hidden">
+      <div className="copo-has-bottom-nav w-full h-full relative bg-black flex flex-col overflow-hidden">
         <div className="w-full h-full relative overflow-hidden flex-1">
           <CopoVideoPlayer
             videos={matchingVideos}

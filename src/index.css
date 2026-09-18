@@ -93,24 +93,13 @@ html, body, #root {
   }
 }
 
-/* Embed view (even on desktop): Apply bottom nav offset inside embed frame */
-#copo-embed-root .copo-has-bottom-nav .copo-video-scrubber-position {
-  bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
-}
-
-#copo-embed-root .copo-has-bottom-nav .copo-video-bottom-metadata {
-  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
-}
-
-/* Desktop screens (>= 768px) in main app: Reset to standard bottom positioning without bottom nav offset */
+/* Desktop screens (>= 768px): Reset to standard bottom positioning without bottom nav offset */
 @media (min-width: 768px) {
-  #copo-app-root:not(#copo-embed-root) .copo-video-scrubber-position,
-  #copo-app-root:not(#copo-embed-root) .copo-has-bottom-nav .copo-video-scrubber-position {
+  .copo-video-scrubber-position {
     bottom: 0px !important;
   }
 
-  #copo-app-root:not(#copo-embed-root) .copo-video-bottom-metadata,
-  #copo-app-root:not(#copo-embed-root) .copo-has-bottom-nav .copo-video-bottom-metadata {
+  .copo-video-bottom-metadata {
     padding-bottom: 1.25rem !important;
   }
 }
