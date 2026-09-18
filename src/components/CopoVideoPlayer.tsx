@@ -1460,11 +1460,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               ref={(el) => {
                 cardRefs.current[videos.length] = el;
               }}
-              className={`w-full h-full min-h-full max-h-full ${
-                isEmbed
-                  ? "aspect-[9/16] max-w-[440px] rounded-none border-0 shadow-none md:min-h-full md:max-h-full md:h-full md:w-full md:max-w-none md:rounded-none md:border-0 md:shadow-none"
-                  : "md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] md:rounded-3xl border-0 md:border md:border-white/10"
-              } snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 bg-black text-center select-none relative`}
+              className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] md:rounded-3xl border-0 md:border md:border-white/10 snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 bg-black text-center select-none relative"
             >
               {/* Checkmark circle - natural dark mode */}
               <div className="w-16 h-16 rounded-full bg-zinc-850 border border-zinc-700/80 flex items-center justify-center mb-5 text-zinc-100 shadow-md">
@@ -1525,7 +1521,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         </div>
 
         {/* Floating Up/Down Navigation Buttons (Desktop) */}
-        {!hideFloatingNav && !isEmbed && (
+        {!hideFloatingNav && (
           <div
             id="copo-floating-nav-buttons"
             className="hidden sm:flex flex-col gap-3 z-30"
