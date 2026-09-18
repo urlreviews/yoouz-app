@@ -1720,7 +1720,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     pwa_service_worker_cache: "22. PWA Cache Eviction & Service Worker",
                     video_sharing_deep_links: "23. Deep Links, Share & Embed Generator",
                     category_clubs_discovery: "24. Category Filters & Community Clubs",
-                    video_review_feed_retention: "25. Video Review Retention & Feed Disappearance Guard"
+                    video_review_feed_retention: "25. Video Review Retention & Feed Disappearance Guard",
+                    comments_deduplication_sync: "26. Review ID Leak Guard, Caption Sanitizer & Comments Deduplication"
                   };
 
                   const icons: Record<string, string> = {
@@ -1748,7 +1749,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     pwa_service_worker_cache: "📲",
                     video_sharing_deep_links: "🔗",
                     category_clubs_discovery: "🧭",
-                    video_review_feed_retention: "🛡️"
+                    video_review_feed_retention: "🛡️",
+                    comments_deduplication_sync: "💬"
                   };
 
                   return (

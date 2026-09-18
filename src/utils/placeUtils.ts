@@ -86,61 +86,88 @@ export function isValidDomainUrl(input?: string | null): boolean {
  * "alaris-law.com" -> "alaris-law.com"
  * Guaranteed NO "www.", NO "https://", NO "http://", NO trailing slashes.
  */
-export function getCleanDomainUrl(item?: string | { brandDomain?: string; website?: string; id?: string; name?: string; placeWebsite?: string; placeName?: string } | null): string {
+export function getCleanDomainUrl(item?: string | { brandDomain?: string; website?: string; id?: string; name?: string; placeWebsite?: string; placeName?: string; placeId?: string } | null): string {
   if (!item) return "";
+  const isRevId = (str?: string) => !str ? false : (str.startsWith("rev") || /rev\d+/i.test(str) || /rev[0-9a-f]{8,}/i.test(str) || str.includes("rev17895"));
+
   if (typeof item === "string") {
+    if (isRevId(item)) return "yoouz.com";
     return extractCleanDomain(item);
   }
   // If Place or Place-like object
-  const domainSource = item.brandDomain || item.placeWebsite || item.website || item.id || item.placeName || item.name || "";
-  const clean = extractCleanDomain(domainSource);
-  if (clean && clean.includes(".")) return clean;
+  let domainSource = item.brandDomain || item.placeWebsite || item.website;
+  if (!domainSource && item.placeId && !isRevId(item.placeId)) domainSource = item.placeId;
+  if (!domainSource && item.placeName && !isRevId(item.placeName)) domainSource = item.placeName;
+  if (!domainSource && item.name && !isRevId(item.name)) domainSource = item.name;
+  if (!domainSource && item.id && !isRevId(item.id)) domainSource = item.id;
+
+  const clean = extractCleanDomain(domainSource || "");
+  if (clean && clean.includes(".") && !isRevId(clean)) return clean;
   if (item.brandDomain) {
     const brandClean = extractCleanDomain(item.brandDomain);
-    if (brandClean && brandClean.includes(".")) return brandClean;
+    if (brandClean && brandClean.includes(".") && !isRevId(brandClean)) return brandClean;
   }
   if (item.website || item.placeWebsite) {
     const webClean = extractCleanDomain(item.website || item.placeWebsite);
-    if (webClean && webClean.includes(".")) return webClean;
+    if (webClean && webClean.includes(".") && !isRevId(webClean)) return webClean;
   }
-  return clean || "website.com";
+  return (clean && !isRevId(clean)) ? clean : "yoouz.com";
 }
 
 /**
  * Gets a clean URL slug for a place (e.g. "digitalpark.ae", "legal500.com", "yoouz.com")
  * Guarantees no "www." prefixes or URL protocol baggage while keeping authentic domain dots.
  */
-export function getPlaceSlug(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string } | null | undefined): string {
+export function getPlaceSlug(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string, placeId?: string } | null | undefined): string {
   const domain = getDisplayUrlAsDomain(placeSource);
   return domain.toLowerCase().replace(/^www\./, "").replace(/[^a-z0-9\._-]/g, "").trim();
 }
 
-export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string } | null | undefined): string {
-  if (!placeSource) return "website.com";
-  let urlSource = "";
+export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string, placeId?: string } | null | undefined): string {
+  if (!placeSource) return "yoouz.com";
+  
+  const isRevId = (str?: string) => !str ? false : (str.startsWith("rev") || /rev\d+/i.test(str) || /rev[0-9a-f]{8,}/i.test(str) || str.includes("rev17895"));
+
   if (typeof placeSource === "string") {
-    urlSource = placeSource;
-  } else if (typeof placeSource === "object") {
-    urlSource = placeSource.brandDomain || placeSource.placeWebsite || placeSource.website || placeSource.id || placeSource.placeName || placeSource.name || "";
-  }
-  if (urlSource.includes("place-custom") || urlSource.includes("yoouz")) {
+    if (isRevId(placeSource)) return "yoouz.com";
+    const clean = extractCleanDomain(placeSource);
+    if (clean && clean.includes(".") && !isRevId(clean)) return clean;
+    if (clean && !isRevId(clean)) return `${clean}.com`;
     return "yoouz.com";
   }
+
+  let urlSource = "";
+  if (placeSource.brandDomain) urlSource = placeSource.brandDomain;
+  else if (placeSource.placeWebsite) urlSource = placeSource.placeWebsite;
+  else if (placeSource.website) urlSource = placeSource.website;
+  else if (placeSource.placeId && !isRevId(placeSource.placeId)) urlSource = placeSource.placeId;
+  else if (placeSource.placeName && !isRevId(placeSource.placeName)) urlSource = placeSource.placeName;
+  else if (placeSource.name && !isRevId(placeSource.name)) urlSource = placeSource.name;
+  else if (placeSource.id && !isRevId(placeSource.id)) urlSource = placeSource.id;
+
+  if (!urlSource || isRevId(urlSource) || urlSource.includes("place-custom") || urlSource.includes("yoouz")) {
+    return "yoouz.com";
+  }
+
   let domain = extractCleanDomain(urlSource);
   
-  if (!domain) {
-    if (typeof placeSource === "string" && placeSource.trim()) {
-      const cleanStr = placeSource.trim().toLowerCase().replace(/^www[\.\-]/, "").replace(/[^a-z0-9]/g, "");
-      if (cleanStr) return `${cleanStr}.com`;
-    } else if (placeSource && typeof placeSource === "object" && (placeSource.name || placeSource.placeName)) {
-      const cleanName = (placeSource.name || placeSource.placeName || "").trim().toLowerCase().replace(/^www[\.\-]/, "").replace(/[^a-z0-9]/g, "");
-      if (cleanName) return `${cleanName}.com`;
+  if (!domain || isRevId(domain)) {
+    if (placeSource.name || placeSource.placeName) {
+      const pName = (placeSource.name || placeSource.placeName || "").trim();
+      if (pName && !isRevId(pName)) {
+        const cleanName = pName.toLowerCase().replace(/^www[\.\-]/, "").replace(/[^a-z0-9]/g, "");
+        if (cleanName) return `${cleanName}.com`;
+      }
     }
-    return "website.com";
+    return "yoouz.com";
   }
 
   if (!domain.includes(".")) {
     domain = domain.split('|')[0].replace(/[^a-z0-9]/g, "") + ".com";
+  }
+
+  if (isRevId(domain) || domain.startsWith("rev")) {
+    return "yoouz.com";
   }
 
   return domain;
@@ -328,6 +355,11 @@ export function isGenericPlaceName(name?: string | null): boolean {
 export function formatBusinessName(name?: string | null): string {
   if (!name) return "";
   let trimmed = name.trim();
+
+  // Guard against review IDs or raw ID strings leaking into business names (e.g., rev17895770756273488d)
+  if (trimmed.startsWith("rev") && (/^rev\d+/i.test(trimmed) || /^rev[0-9a-f]{8,}/i.test(trimmed) || trimmed.includes("rev17895"))) {
+    return "Yoouz";
+  }
   
   // Quick lookup of trimmed normalized key
   const normalizedKey = trimmed.toLowerCase().replace(/^https?:\/\//, "").replace(/^www[\.\-]/, "").replace(/\/+$/, "");

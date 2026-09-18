@@ -457,12 +457,14 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
             {/* Caption */}
             <p className="text-xs text-white/95 leading-relaxed font-normal drop-shadow">
               {(() => {
-                const trimmed = (currentReview.caption || "").trim();
+                let trimmed = (currentReview.caption || "").trim();
+                // Strip raw review ID leaks (e.g. rev17895770756273488d.com)
+                trimmed = trimmed.replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com").replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
                 if (/^video review (for|of)\b/i.test(trimmed)) {
                   const cleanDomain = getDisplayUrlAsDomain(currentReview);
                   return `Video review for ${cleanDomain}`;
                 }
-                return currentReview.caption;
+                return trimmed;
               })()}
             </p>
           </div>

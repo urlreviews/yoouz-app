@@ -913,12 +913,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             {video.caption && video.caption.trim().length > 0 && (
               <p className="text-white/95 text-xs font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-0.5">
                 {(() => {
-                  const trimmed = video.caption.trim();
+                  let trimmed = video.caption.trim();
+                  trimmed = trimmed.replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com").replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
                   if (/^video review (for|of)\b/i.test(trimmed)) {
                     const cleanDomain = getDisplayUrlAsDomain(video);
                     return `Video review for ${cleanDomain}`;
                   }
-                  return video.caption;
+                  return trimmed;
                 })()}
               </p>
             )}

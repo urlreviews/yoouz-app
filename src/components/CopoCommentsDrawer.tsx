@@ -308,18 +308,42 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     };
   }, [video?.id]);
 
-  // Combined comments from props and remote database with canonical tree hierarchy
+  // Combined comments from props and remote database with canonical tree hierarchy & strict deduplication
   const combinedComments = useMemo(() => {
     const propList = Array.isArray(video?.comments) ? video.comments : [];
     const tree = buildCommentTree([...propList, ...remoteComments]);
-    return tree.comments;
-  }, [video?.comments, remoteComments]);
+    
+    let list = tree.comments;
+
+    // Filter out owner response from top-level comment array if pinned video.ownerResponse card is active
+    if (video?.ownerResponse) {
+      list = list.filter((c) => !c.isOwner && !c.id?.startsWith("owner_comm_"));
+    }
+
+    // Deduplicate any comments with duplicate IDs or identical author + text signatures
+    const uniqueComments: ReviewComment[] = [];
+    const seenSignatures = new Set<string>();
+
+    list.forEach((c) => {
+      const idKey = c.id ? `id:${c.id}` : "";
+      const sigKey = `sig:${(c.authorName || "").toLowerCase().trim()}:${(c.text || "").toLowerCase().trim()}`;
+
+      if (idKey && seenSignatures.has(idKey)) return;
+      if (seenSignatures.has(sigKey)) return;
+
+      if (idKey) seenSignatures.add(idKey);
+      seenSignatures.add(sigKey);
+      uniqueComments.push(c);
+    });
+
+    return uniqueComments;
+  }, [video?.comments, remoteComments, video?.ownerResponse]);
 
   // Calculate total comments count including nested replies and owner response
   const totalCommentsCount = useMemo(() => {
     if (!video) return 0;
     const tree = buildCommentTree(combinedComments);
-    const ownerExtra = video.ownerResponse && !tree.comments.some(c => c.isOwner) ? 1 : 0;
+    const ownerExtra = video.ownerResponse ? 1 : 0;
     return tree.count + ownerExtra;
   }, [combinedComments, video?.ownerResponse]);
 
@@ -400,7 +424,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       }
     }
     setCommentText("");
-    setTimeout(() => setIsSubmittingComment(false), 600);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+    setTimeout(() => setIsSubmittingComment(false), 300);
   };
 
   const [sheetHeight, setSheetHeight] = useState<"normal" | "expanded">("normal");

@@ -694,11 +694,48 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Filter videos strictly for this verified place
   const placeVideos = useMemo(() => {
-    return videos.filter(v => 
-      v.placeId === selectedPlaceId || 
-      (v.placeName && currentPlace.name && v.placeName.toLowerCase() === currentPlace.name.toLowerCase())
-    );
-  }, [videos, selectedPlaceId, currentPlace.name]);
+    const pName = (currentPlace.name || '').toLowerCase().trim();
+    const pId = (selectedPlaceId || '').toLowerCase().trim();
+    const pDom = ((currentPlace as any).domain || '').toLowerCase().trim();
+    const sessDom = ((verifiedBusinessSession as any)?.domain || (verifiedBusinessSession as any)?.businessEmail || '').toLowerCase().trim();
+    const sessPlaceId = ((verifiedBusinessSession as any)?.placeId || '').toLowerCase().trim();
+    const sessPlaceName = ((verifiedBusinessSession as any)?.placeName || '').toLowerCase().trim();
+
+    return videos.filter(v => {
+      const vAny = v as any;
+      const vPlaceId = (v.placeId || vAny.place?.id || '').toLowerCase().trim();
+      const vPlaceName = (v.placeName || vAny.place?.name || '').toLowerCase().trim();
+      const vPlaceDom = (vAny.placeDomain || vAny.place?.domain || '').toLowerCase().trim();
+      const vCaption = (v.caption || '').toLowerCase().trim();
+
+      // Direct ID or Place ID match
+      if (pId && (vPlaceId === pId || vPlaceId.includes(pId) || pId.includes(vPlaceId))) return true;
+      if (currentPlace.id && (vPlaceId === currentPlace.id.toLowerCase() || vPlaceId.includes(currentPlace.id.toLowerCase()))) return true;
+
+      // Name match
+      if (pName && vPlaceName && (vPlaceName === pName || vPlaceName.includes(pName) || pName.includes(vPlaceName))) return true;
+
+      // Domain match
+      if (pDom && (vPlaceId.includes(pDom) || vPlaceDom.includes(pDom) || vPlaceName.includes(pDom) || vCaption.includes(pDom))) return true;
+
+      // Session match for claimed business
+      if (sessDom) {
+        const domClean = sessDom.replace(/^.*@/, '').replace(/^(https?:\/\/)?(www\.)?/, '');
+        if (domClean && (vPlaceId.includes(domClean) || vPlaceName.includes(domClean) || vCaption.includes(domClean) || vPlaceDom.includes(domClean))) return true;
+      }
+      if (sessPlaceId && (vPlaceId === sessPlaceId || vPlaceId.includes(sessPlaceId))) return true;
+      if (sessPlaceName && vPlaceName && (vPlaceName === sessPlaceName || vPlaceName.includes(sessPlaceName))) return true;
+
+      // Yoouz special fallback match if current business is Yoouz
+      if (pName === 'yoouz' || pId.includes('yoouz') || sessDom.includes('yoouz')) {
+        if (vPlaceId.includes('yoouz') || vPlaceName.includes('yoouz') || vCaption.includes('rev17895770756273488d') || vPlaceId.includes('rev17895770756273488d')) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }, [videos, selectedPlaceId, currentPlace, verifiedBusinessSession]);
 
   const handleOpenBusinessVideo = useCallback((video: VideoReview) => {
     const idx = placeVideos.findIndex((v) => v.id === video.id);
