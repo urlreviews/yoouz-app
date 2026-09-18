@@ -315,9 +315,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     
     let list = tree.comments;
 
-    // Filter out owner response from top-level comment array if pinned video.ownerResponse card is active
+    // Filter out synthetic dummy owner response items from top-level comment array
     if (video?.ownerResponse) {
-      list = list.filter((c) => !c.isOwner && !c.id?.startsWith("owner_comm_"));
+      list = list.filter((c) => !c.id?.startsWith("owner_comm_"));
     }
 
     // Deduplicate any comments with duplicate IDs or identical author + text signatures
@@ -405,16 +405,24 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
     setIsSubmittingComment(true);
 
-    if (postAsOwner && !replyingTo && onAddOwnerResponse) {
-      // Post as official pinned business owner response
+    if (editingOwnerResponse && !replyingTo && onAddOwnerResponse) {
+      // Post or update official pinned business owner response card
       onAddOwnerResponse(video.id, text);
       setEditingOwnerResponse(false);
     } else {
       // Create optimistic local comment object for instant 0ms UI update
       const isTargetCreator = isUserCreator;
-      const authorName = currentUser.name || (postAsOwner ? "Verified Business Owner" : (isTargetCreator ? "Video Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer")));
-      const authorHandle = currentUser.email ? currentUser.email.split("@")[0] : (postAsOwner ? "owner" : (isTargetCreator ? "reviewer" : "user"));
-      const authorAvatar = currentUser.avatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
+      const isOwnerPosting = isUserOwner && postAsOwner;
+
+      const authorName = isOwnerPosting
+        ? `${placeName || video.placeName || "Business"}`
+        : (currentUser.name || (isTargetCreator ? "Video Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer")));
+      const authorHandle = isOwnerPosting
+        ? "owner"
+        : (currentUser.email ? currentUser.email.split("@")[0] : (isTargetCreator ? "reviewer" : "user"));
+      const authorAvatar = isOwnerPosting
+        ? (placeLogoUrl || video.placeLogoUrl || `/api/avatar?name=${encodeURIComponent(placeName || video.placeName || "Business")}&background=27272a&color=fff&bold=true`)
+        : (currentUser.avatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`);
 
       const newOptComment: ReviewComment = {
         id: `comm-opt-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -426,7 +434,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         createdAtMs: Date.now(),
         likesCount: 0,
         isLiked: false,
-        isOwner: Boolean(postAsOwner),
+        isOwner: Boolean(isOwnerPosting),
         isCreator: Boolean(isTargetCreator),
         replies: []
       };
@@ -448,10 +456,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         return [newOptComment, ...prev];
       });
 
-      // Post normal comment or reply
+      // Post normal comment or reply (saved to BunnyDB)
       onAddComment(video.id, text, {
         replyToId: replyingTo?.commentId,
-        postAsOwner: isUserOwner && postAsOwner,
+        postAsOwner: isOwnerPosting,
         postAsCreator: isUserCreator
       });
 
@@ -1116,7 +1124,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         </span>
                       </p>
                       <p className="text-[10px] text-zinc-400 truncate">
-                        {t("comments.respondingAsOfficialBusiness", "Posting official response as business owner")}
+                        {editingOwnerResponse
+                          ? t("comments.editingPinnedResponseBanner", "Updating official pinned response card")
+                          : t("comments.respondingAsOfficialBusiness", "Posting comments as business owner")}
                       </p>
                     </div>
                   </div>
@@ -1160,8 +1170,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     placeholder={
                       replyingTo
                         ? `${t("comments.replyTo", "Reply to")} ${replyingTo.name}...`
+                        : editingOwnerResponse
+                        ? t("comments.editingPinnedResponsePlaceholder", "Updating official pinned response...")
                         : postAsOwner
-                        ? t("comments.addOwnerResponsePlaceholder", "Add official response from business owner...")
+                        ? t("comments.addOwnerCommentPlaceholder", "Add comment as business owner...")
                         : isUserCreator
                         ? t("comments.addReviewerCommentPlaceholder", "Add comment as the video reviewer...")
                         : t("comments.addCommentPlaceholder", "Add a comment...")
