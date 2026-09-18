@@ -649,7 +649,19 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           uid: u.uid || u.id
         })
       );
-      const isCreator = userVideos.length > 0 || u.role === "Creator";
+
+      // Exclude placeholder/anonymous accounts that have 0 reviews and no real email/identity
+      const isPlaceholderName = !u.email && (
+        u.name === "Verified Reviewer" || 
+        u.name === "Registered User" || 
+        u.name === "Yoouz Reviewer" ||
+        u.id === "usr_verified_reviewer"
+      );
+      if (isPlaceholderName && userVideos.length === 0) {
+        return;
+      }
+
+      const isCreator = userVideos.length > 0 || (u.role === "Creator" && !isPlaceholderName);
       const totalLikes = userVideos.reduce((acc, v) => acc + (v.likes || 0), 0);
       const totalViews = userVideos.reduce((acc, v) => acc + (v.viewsCount || v.views || 0), 0);
       const avgRating = userVideos.length > 0 ? (userVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / userVideos.length).toFixed(1) : "5.0";

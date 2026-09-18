@@ -10105,9 +10105,12 @@ app.post("/api/videos/save-review", async (req, res) => {
           
           const reviewPlaceId = review.placeId || (review.place && review.place.id) || '';
           const reviewPlaceName = review.placeName || (review.place && review.place.name) || '';
-          const reviewAuthorName = review.authorName || (review.author && review.author.name) || 'Verified Reviewer';
+          const rawAuthorName = review.authorName || (review.author && review.author.name) || '';
+          const authorEmailVal = review.userEmail || review.authorEmail || (review.author && review.author.email) || '';
+          const emailPrefix = authorEmailVal ? authorEmailVal.split('@')[0] : '';
+          const reviewAuthorName = rawAuthorName || (emailPrefix ? (emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)) : 'Yoouz Reviewer');
           const reviewAuthorAvatar = review.authorAvatar || (review.author && review.author.avatar) || '';
-          const reviewUserId = review.userId || review.authorEmail || (review.author && review.author.email) || `usr_${(reviewAuthorName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+          const reviewUserId = review.userId || authorEmailVal || `usr_${(reviewAuthorName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
           const reviewRating = typeof review.rating === 'number' ? review.rating : 5;
           const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
           const reviewVideoUrl = review.videoUrl || review.url || review.src || review.video_url || review.mediaUrl || review.playbackUrl || review.hlsUrl || review.streamUrl || (review.id ? `/api/videos/stream/${review.id}` : `${pullZoneDomain}/sample-review.mp4`);
@@ -10154,8 +10157,9 @@ app.post("/api/videos/save-review", async (req, res) => {
           console.log(`🐰 [Server] BunnyDB successfully permanently saved video review ${review.id}`);
 
           // 2b. Automatically ensure creator is upserted into BunnyDB users table
-          try {
-            const authorData = {
+          if (reviewAuthorName !== 'Verified Reviewer' && reviewUserId !== 'usr_verified_reviewer' && reviewAuthorName !== 'Yoouz Reviewer') {
+            try {
+              const authorData = {
               id: reviewUserId,
               uid: reviewUserId,
               name: reviewAuthorName,
@@ -10197,6 +10201,7 @@ app.post("/api/videos/save-review", async (req, res) => {
           } catch (userUpsertErr: any) {
             console.warn("Notice syncing creator to BunnyDB users table:", userUpsertErr?.message || userUpsertErr);
           }
+        }
 
           // 2c. Automatically ensure place is upserted into BunnyDB places table
           if (reviewPlaceId || reviewPlaceName) {
