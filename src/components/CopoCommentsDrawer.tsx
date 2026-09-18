@@ -343,9 +343,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   const totalCommentsCount = useMemo(() => {
     if (!video) return 0;
     const tree = buildCommentTree(combinedComments);
-    const ownerExtra = video.ownerResponse ? 1 : 0;
+    const ownerAlreadyInComments = combinedComments.some((c) => Boolean(c.isOwner) || (video.ownerResponse?.text && c.text === video.ownerResponse.text));
+    const ownerExtra = (video.ownerResponse && !ownerAlreadyInComments) ? 1 : 0;
     return tree.count + ownerExtra;
-  }, [combinedComments, video?.ownerResponse]);
+  }, [combinedComments, video?.ownerResponse, video]);
 
   // Sort comments according to selected filter
   const sortedComments = useMemo(() => {
