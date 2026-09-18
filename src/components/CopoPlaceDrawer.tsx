@@ -296,18 +296,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Check if any video review for this place has a high quality banner or logo
   const reviewBannerUrl = React.useMemo(() => {
-    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && !place.bannerUrl.startsWith("data:") && !place.bannerUrl.includes("unsplash.com") && !place.bannerUrl.includes("placeholder") && !place.bannerUrl.includes("mock")) return place.bannerUrl;
-    if (place.ogImage && !place.ogImage.startsWith("blob:") && !place.ogImage.startsWith("data:") && !place.ogImage.includes("unsplash.com") && !place.ogImage.includes("placeholder") && !place.ogImage.includes("mock")) return place.ogImage;
+    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && place.bannerUrl.trim() !== "" && !place.bannerUrl.includes("unsplash.com") && !place.bannerUrl.includes("placeholder") && !place.bannerUrl.includes("mock")) return place.bannerUrl;
+    if (place.ogImage && !place.ogImage.startsWith("blob:") && place.ogImage.trim() !== "" && !place.ogImage.includes("unsplash.com") && !place.ogImage.includes("placeholder") && !place.ogImage.includes("mock")) return place.ogImage;
     for (const v of rawPlaceVideos) {
       const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
-      if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/"))) {
+      if (b && typeof b === "string" && !b.startsWith("blob:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/") || b.startsWith("data:image/"))) {
         if (!b.includes("unsplash.com") && !b.includes("placeholder") && !b.includes("mock")) return b;
       }
     }
     for (const v of (allVideos || [])) {
       if (isPlaceReviewMatch(v, place)) {
         const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
-        if (b && typeof b === "string" && !b.startsWith("blob:") && !b.startsWith("data:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/"))) {
+        if (b && typeof b === "string" && !b.startsWith("blob:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/") || b.startsWith("data:image/"))) {
           if (!b.includes("unsplash.com") && !b.includes("placeholder") && !b.includes("mock")) return b;
         }
       }
@@ -381,12 +381,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
 
   const effectiveBanner =
-    (isYoouzPlace ? "https://yoouz.com/og-banner.png?v=8" : "") ||
-    fetchedBannerUrl ||
-    reviewBannerUrl ||
     place.bannerUrl ||
     place.ogImage ||
+    reviewBannerUrl ||
+    fetchedBannerUrl ||
     (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]) ||
+    (isYoouzPlace ? "https://yoouz.com/og-banner.png?v=8" : "") ||
     "";
 
   // Check if photos are authentic place photos
@@ -398,7 +398,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       ...(place.photos || [])
     ])
   ).filter((p): p is string => {
-    if (!p || p.startsWith("blob:") || p.startsWith("data:")) return false;
+    if (!p || p.startsWith("blob:")) return false;
+    if (p.startsWith("data:image/")) return true;
     // Always preserve effectiveBanner, bannerUrl, ogImage or logoUrl
     if (p === effectiveBanner || p === place.bannerUrl || p === place.ogImage || p === place.logoUrl) return true;
     const lower = p.toLowerCase();
@@ -412,12 +413,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const hasAuthenticPhoto = allPhotos.length > 0;
 
   const primaryLogoUrl = React.useMemo(() => {
+    if (place.logoUrl && !place.logoUrl.startsWith("data:;") && place.logoUrl.trim() !== "") return getCleanLogoUrl(place.logoUrl, drawerDomain);
+    if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;") && place.avatarUrl.trim() !== "") return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
-    if (place.logoUrl && !place.logoUrl.startsWith("data:;")) return getCleanLogoUrl(place.logoUrl, drawerDomain);
-    if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);
-    if (place.avatarUrl && !place.avatarUrl.startsWith("data:;")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     return null;
   }, [place, drawerDomain]);
 

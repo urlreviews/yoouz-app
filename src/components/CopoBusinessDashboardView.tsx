@@ -1572,7 +1572,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setTimeout(() => setIsCtaSaved(false), 2500);
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const parts = [streetAddress.trim(), city.trim(), stateRegion.trim(), zipCode.trim(), selectedCountry.trim()].filter(Boolean);
     const finalAddress = parts.join(', ') || profileAddress;
 
@@ -1594,6 +1594,32 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     (currentPlace as any).bannerUrl = profileBannerUrl;
     if (profileBannerUrl) {
       currentPlace.photos = [profileBannerUrl, ...(currentPlace.photos || []).filter(p => p !== profileBannerUrl)];
+    }
+
+    // Persist to server database (BunnyDB NoSQL)
+    try {
+      const payload = { data: { ...currentPlace }, merge: true };
+      if (selectedPlaceId) {
+        fetch(`/api/nosql/places/${encodeURIComponent(selectedPlaceId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+        fetch(`/api/nosql/business_profiles/${encodeURIComponent(selectedPlaceId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      }
+      if (currentPlace.id && currentPlace.id !== selectedPlaceId) {
+        fetch(`/api/nosql/places/${encodeURIComponent(currentPlace.id)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      }
+    } catch (dbErr) {
+      console.warn("Failed to persist place profile to BunnyDB:", dbErr);
     }
 
     if (onUpdatePlace) {
