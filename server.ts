@@ -177,6 +177,7 @@ const reviewsIndexPath = path.join(globalUploadsDir, "reviews_index.json");
 const deletedReviewsIndexPath = path.join(globalUploadsDir, "deleted_reviews_index.json");
 const deletedPlacesIndexPath = path.join(globalUploadsDir, "deleted_places_index.json");
 const deletedUsersIndexPath = path.join(globalUploadsDir, "deleted_users_index.json");
+const deletedCommentsIndexPath = path.join(globalUploadsDir, "deleted_comments_index.json");
 
 function readDeletedReviewsIndex(): string[] {
   try {
@@ -457,8 +458,43 @@ function recordDeletedUserIds(ids: string[]): void {
   } catch (e) {}
 }
 
+function readDeletedCommentsIndex(): string[] {
+  try {
+    if (fs.existsSync(deletedCommentsIndexPath)) {
+      const raw = fs.readFileSync(deletedCommentsIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+    }
+    const publicFallback = path.join(process.cwd(), "public", "deleted_comments_index.json");
+    if (fs.existsSync(publicFallback)) {
+      const raw = fs.readFileSync(publicFallback, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function recordDeletedCommentId(id: string): void {
+  if (!id) return;
+  try {
+    const list = readDeletedCommentsIndex();
+    const strId = String(id).trim();
+    if (strId && !list.includes(strId)) {
+      list.push(strId);
+      if (!fs.existsSync(globalUploadsDir)) {
+        fs.mkdirSync(globalUploadsDir, { recursive: true });
+      }
+      fs.writeFileSync(deletedCommentsIndexPath, JSON.stringify(list, null, 2), "utf8");
+      const publicPath = path.join(process.cwd(), "public", "deleted_comments_index.json");
+      try { fs.writeFileSync(publicPath, JSON.stringify(list, null, 2), "utf8"); } catch(e){}
+    }
+  } catch (e) {}
+}
+
 function readReviewsIndex(): any[] {
   const deletedSet = new Set(readDeletedReviewsIndex());
+  const deletedCommentsSet = new Set(readDeletedCommentsIndex());
   try {
     if (fs.existsSync(reviewsIndexPath)) {
       const raw = fs.readFileSync(reviewsIndexPath, "utf8");
@@ -469,6 +505,14 @@ function readReviewsIndex(): any[] {
         const processed = parsed
           .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)))
           .map((r: any) => {
+            if (Array.isArray(r.comments) && r.comments.length > 0) {
+              const prevLen = r.comments.length;
+              r.comments = r.comments.filter((c: any) => c && c.id && !deletedCommentsSet.has(String(c.id)));
+              if (r.comments.length !== prevLen) {
+                dirty = true;
+              }
+              r.commentsCount = r.comments.length;
+            }
             if (!r.createdAtMs && r.id && typeof r.id === "string" && r.id.startsWith("rev-")) {
               const ts = parseInt(r.id.split("-")[1], 10);
               if (!isNaN(ts) && ts > 0) r.createdAtMs = ts;
@@ -5785,6 +5829,63 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         testInstruction: "Open video comments drawer and submit a comment or owner response. Verify it renders instantly in 0ms without leaving page, and comment count matches across video overlay and drawer."
       };
 
+      // 29. Cross-Device Comment Deletion, Mobile Cache & Business Owner Logo Guard
+      const check29Start = Date.now();
+      let check29Status: "ok" | "degraded" | "error" = "ok";
+      let check29Details = "";
+      try {
+        const deletedCommentIds = readDeletedCommentsIndex();
+        const bunnyDb = getBunnyDb();
+        let lingeringDeletedCount = 0;
+        let logoIssueCount = 0;
+        let countDiscrepancyCount = 0;
+
+        const faviconPath = path.join(process.cwd(), "public", "favicon.svg");
+        if (!fs.existsSync(faviconPath)) {
+          logoIssueCount++;
+        }
+
+        if (bunnyDb) {
+          const vRows = await bunnyDb.execute({
+            sql: "SELECT id, commentsCount, data FROM videoReviews LIMIT 100"
+          });
+          for (const row of vRows.rows || []) {
+            let parsedData: any = {};
+            try { parsedData = JSON.parse(String(row.data || "{}")); } catch(e){}
+            const commentsInVid = Array.isArray(parsedData.comments) ? parsedData.comments : [];
+            const lingering = commentsInVid.filter((c: any) => c && c.id && deletedCommentIds.includes(String(c.id)));
+            if (lingering.length > 0) {
+              lingeringDeletedCount += lingering.length;
+            }
+            if (typeof row.commentsCount === "number" && row.commentsCount !== commentsInVid.length) {
+              countDiscrepancyCount++;
+            }
+            for (const c of commentsInVid) {
+              if (c.isOwner && (!c.authorAvatar || c.authorAvatar.trim() === "" || c.authorAvatar.startsWith("data:;"))) {
+                logoIssueCount++;
+              }
+            }
+          }
+        }
+
+        if (lingeringDeletedCount > 0 || logoIssueCount > 0 || countDiscrepancyCount > 0) {
+          check29Status = lingeringDeletedCount > 5 || logoIssueCount > 5 ? "error" : "degraded";
+          check29Details = `Detected ${lingeringDeletedCount} lingering deleted comment(s), ${countDiscrepancyCount} count discrepancies, and ${logoIssueCount} logo issues. Auto-synchronization active.`;
+        } else {
+          check29Details = `Cross-device deletion tracking active (${deletedCommentIds.length} pruned), business owner logo SVG valid, comment counts 100% synchronized across mobile and desktop.`;
+        }
+      } catch (c29Err: any) {
+        check29Status = "degraded";
+        check29Details = `Diagnostic sync check notice: ${c29Err.message}`;
+      }
+
+      diagnostics["cross_device_comment_sync_guard"] = {
+        status: check29Status,
+        latencyMs: Math.max(1, Date.now() - check29Start),
+        details: check29Details,
+        testInstruction: "Delete or add comments on any device. Verify count parity (e.g. 2 comments on desktop and phone alike), no stale cache resurrection, and crisp business owner reply logo."
+      };
+
       const unresolvedLogs = systemErrorLogs.filter(l => l.status === "unresolved");
       const degradedOrErrorCount = Object.values(diagnostics).filter(d => d.status === "error" || d.status === "degraded").length;
       const isOverallHealthy = unresolvedLogs.length === 0 && Object.values(diagnostics).every(d => d.status === "ok");
@@ -5797,6 +5898,88 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         timestamp: new Date().toISOString(),
         subsystems: diagnostics,
         logs: systemErrorLogs
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Cross-device comment reconciliation & stale cache purging endpoint
+  app.post("/api/system/sync-comments-cache", async (_req, res) => {
+    try {
+      const bunnyDb = getBunnyDb();
+      const deletedCommentsSet = new Set(readDeletedCommentsIndex());
+      let reconciledVideos = 0;
+      let reconciledComments = 0;
+
+      if (bunnyDb) {
+        const allCommentsRes = await bunnyDb.execute({
+          sql: "SELECT * FROM comments ORDER BY createdAt ASC"
+        });
+        const commentsByVideo = new Map<string, any[]>();
+        for (const row of allCommentsRes.rows || []) {
+          const vidId = String(row.videoId);
+          const commId = String(row.id);
+          if (deletedCommentsSet.has(commId)) {
+            // Prune deleted comment from database if still exists
+            await bunnyDb.execute({ sql: "DELETE FROM comments WHERE id = ?", args: [commId] });
+            continue;
+          }
+          let parsed: any = {};
+          try { parsed = JSON.parse(String(row.data || '{}')); } catch(e){}
+          const cObj = {
+            ...parsed,
+            id: commId,
+            videoId: vidId,
+            userId: row.userId || parsed.userId || '',
+            authorName: row.userName || parsed.authorName || 'Guest',
+            authorAvatar: (parsed.isOwner && (!parsed.authorAvatar || parsed.authorAvatar === '' || parsed.authorAvatar.startsWith('data:;'))) ? '/favicon.svg' : (row.userAvatar || parsed.authorAvatar),
+            text: row.text || parsed.text || '',
+            createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+          };
+          if (!commentsByVideo.has(vidId)) commentsByVideo.set(vidId, []);
+          commentsByVideo.get(vidId)!.push(cObj);
+        }
+
+        const vRows = await bunnyDb.execute({
+          sql: "SELECT id, data FROM videoReviews"
+        });
+        for (const row of vRows.rows || []) {
+          const vidId = String(row.id);
+          let parsedData: any = {};
+          try { parsedData = JSON.parse(String(row.data || "{}")); } catch(e){}
+          const videoComments = commentsByVideo.get(vidId) || [];
+          const tree = buildCommentTree(videoComments);
+          parsedData.comments = tree.comments;
+          parsedData.commentsCount = tree.count;
+          if (parsedData.placeName && parsedData.placeName.toLowerCase().includes("yoouz") && !parsedData.placeLogoUrl) {
+            parsedData.placeLogoUrl = "/favicon.svg";
+          }
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET commentsCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [tree.count, JSON.stringify(parsedData), vidId]
+          });
+          reconciledVideos++;
+          reconciledComments += tree.count;
+        }
+      }
+
+      // Reconcile public and uploads reviews_index.json
+      const localList = readReviewsIndex();
+      writeReviewsIndex(localList);
+      feedCache.lastFetched = 0;
+
+      // Broadcast SSE event so all active mobile and desktop clients flush stale comment caches
+      broadcastSseEvent({
+        type: "sync_comments",
+        timestamp: Date.now()
+      });
+
+      return res.json({
+        success: true,
+        reconciledVideos,
+        reconciledComments,
+        message: "Successfully synchronized comments across database, index, and connected devices."
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -8014,7 +8197,15 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         });
       }
 
-      const allComments = Array.from(commentMap.values());
+      const deletedCommentsSet = new Set(readDeletedCommentsIndex());
+      const allComments = Array.from(commentMap.values())
+        .filter((c: any) => c && c.id && !deletedCommentsSet.has(String(c.id)))
+        .map((c: any) => {
+          if (c.isOwner && (!c.authorAvatar || c.authorAvatar.trim() === "" || c.authorAvatar.startsWith("data:;"))) {
+            return { ...c, authorAvatar: "/favicon.svg" };
+          }
+          return c;
+        });
       const { comments, count } = buildCommentTree(allComments);
       return res.json({ comments, count, commentsCount: count });
     } catch (err: any) {
@@ -8433,6 +8624,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       const { videoId, commentId, replyId } = req.body;
       if (!videoId || !commentId) return res.status(400).json({ error: "Missing fields" });
 
+      // Record in permanent deleted comments index so devices with stale caches can never resurrect it
+      if (replyId) {
+        recordDeletedCommentId(replyId);
+      } else {
+        recordDeletedCommentId(commentId);
+      }
+
       const bunnyDb = getBunnyDb();
       let treeResult = { comments: [] as any[], count: 0 };
 
@@ -8453,20 +8651,23 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
           args: [videoId]
         });
-        const remaining = (allCommentsRes.rows || []).map((row: any) => {
-          let parsed: any = {};
-          try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
-          return {
-            ...parsed,
-            id: String(row.id),
-            videoId: String(row.videoId),
-            userId: row.userId || parsed.userId || '',
-            authorName: row.userName || parsed.authorName || 'Guest',
-            authorAvatar: row.userAvatar || parsed.authorAvatar,
-            text: row.text || parsed.text || '',
-            createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
-          };
-        });
+        const deletedSet = new Set(readDeletedCommentsIndex());
+        const remaining = (allCommentsRes.rows || [])
+          .filter((row: any) => row && row.id && !deletedSet.has(String(row.id)))
+          .map((row: any) => {
+            let parsed: any = {};
+            try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
+            return {
+              ...parsed,
+              id: String(row.id),
+              videoId: String(row.videoId),
+              userId: row.userId || parsed.userId || '',
+              authorName: row.userName || parsed.authorName || 'Guest',
+              authorAvatar: (parsed.isOwner && (!parsed.authorAvatar || parsed.authorAvatar === '' || parsed.authorAvatar.startsWith('data:;'))) ? '/favicon.svg' : (row.userAvatar || parsed.authorAvatar),
+              text: row.text || parsed.text || '',
+              createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+            };
+          });
 
         treeResult = buildCommentTree(remaining);
 

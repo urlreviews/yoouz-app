@@ -130,7 +130,21 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     isOwner?: boolean
   ) => {
     if (isOwner) {
-      return placeLogoUrl || video?.placeLogoUrl || "/favicon.svg";
+      if (authorAvatar && authorAvatar.trim() !== "" && !authorAvatar.startsWith("data:;") && !authorAvatar.includes("undefined")) {
+        return authorAvatar;
+      }
+      if (placeLogoUrl && placeLogoUrl.trim() !== "" && !placeLogoUrl.startsWith("data:;") && !placeLogoUrl.includes("undefined")) {
+        return placeLogoUrl;
+      }
+      if (video?.placeLogoUrl && video.placeLogoUrl.trim() !== "" && !video.placeLogoUrl.startsWith("data:;") && !video.placeLogoUrl.includes("undefined")) {
+        return video.placeLogoUrl;
+      }
+      const rawName = placeName || video?.placeName || "";
+      const cleanName = rawName.toLowerCase().trim();
+      if (!cleanName || cleanName.includes("yoouz") || cleanName.includes("owner") || cleanName.includes("business")) {
+        return "/favicon.svg";
+      }
+      return getPlaceLogoUrl({ name: rawName, website: video?.placeWebsite, category: video?.placeCategory }) || `/api/avatar?name=${encodeURIComponent(rawName)}&background=27272a&color=fff&bold=true`;
     }
 
     const isSelf =
@@ -202,10 +216,46 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   }, [replyingTo]);
 
   const [remoteComments, setRemoteComments] = useState<ReviewComment[]>([]);
+  const [hasRemoteFetched, setHasRemoteFetched] = useState(false);
+  const [localDeletedCommentIds, setLocalDeletedCommentIds] = useState<string[]>(() => {
+    try {
+      const delRaw = localStorage.getItem("copo_deleted_comments");
+      return delRaw ? JSON.parse(delRaw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const handleDeleteCommentAction = (videoId: string, commentId: string, replyId?: string) => {
+    const targetId = replyId || commentId;
+    if (targetId) {
+      setLocalDeletedCommentIds((prev) => {
+        const next = [...prev, targetId];
+        try {
+          localStorage.setItem("copo_deleted_comments", JSON.stringify(next));
+        } catch (e) {}
+        return next;
+      });
+      setRemoteComments((prev) => {
+        if (replyId) {
+          return prev.map((c) =>
+            c.id === commentId
+              ? { ...c, replies: (c.replies || []).filter((r) => r.id !== replyId) }
+              : c
+          );
+        }
+        return prev.filter((c) => c.id !== commentId);
+      });
+    }
+    if (onDeleteComment) {
+      onDeleteComment(videoId, commentId, replyId);
+    }
+  };
 
   useEffect(() => {
     if (!video?.id) {
       setRemoteComments([]);
+      setHasRemoteFetched(false);
       return;
     }
     let isMounted = true;
@@ -214,6 +264,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       .then((data) => {
         if (isMounted && data && Array.isArray(data.comments)) {
           setRemoteComments(data.comments);
+          setHasRemoteFetched(true);
         }
       })
       .catch(() => {});
@@ -224,6 +275,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       if (detail && String(detail.videoId) === String(video.id)) {
         if (Array.isArray(detail.comments)) {
           setRemoteComments(detail.comments);
+          setHasRemoteFetched(true);
         } else if (detail.comment) {
           setRemoteComments((prev) => {
             const tree = buildCommentTree([...prev, detail.comment]);
@@ -236,8 +288,22 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     const handleDeleteCommentEvent = (e: any) => {
       const detail = e.detail;
       if (detail && String(detail.videoId) === String(video.id)) {
+        const delCommId = detail.commentId ? String(detail.commentId) : "";
+        const delReplyId = detail.replyId ? String(detail.replyId) : "";
+        if (delCommId || delReplyId) {
+          setLocalDeletedCommentIds((prev) => {
+            const next = [...prev];
+            if (delCommId && !next.includes(delCommId)) next.push(delCommId);
+            if (delReplyId && !next.includes(delReplyId)) next.push(delReplyId);
+            try {
+              localStorage.setItem("copo_deleted_comments", JSON.stringify(next));
+            } catch (e) {}
+            return next;
+          });
+        }
         if (Array.isArray(detail.comments)) {
           setRemoteComments(detail.comments);
+          setHasRemoteFetched(true);
         }
       }
     };
@@ -313,7 +379,13 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   // Combined comments from props and remote database with canonical tree hierarchy & strict deduplication
   const combinedComments = useMemo(() => {
     const propList = Array.isArray(video?.comments) ? video.comments : [];
-    const tree = buildCommentTree([...propList, ...remoteComments]);
+    // If remote comments have been loaded, they are the authoritative source from the database.
+    // Prop list may contain stale, cached deleted comments from a previous device session.
+    const baseList = hasRemoteFetched
+      ? remoteComments
+      : (remoteComments.length > 0 ? remoteComments : propList);
+
+    const tree = buildCommentTree(baseList);
     
     let list = tree.comments;
 
@@ -321,6 +393,20 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     if (video?.ownerResponse) {
       list = list.filter((c) => !c.id?.startsWith("owner_comm_"));
     }
+
+    // Filter out any locally or remotely deleted comment IDs across the whole thread
+    const deletedSet = new Set(localDeletedCommentIds);
+    list = list
+      .filter((c) => c && c.id && !deletedSet.has(String(c.id)))
+      .map((c) => {
+        if (Array.isArray(c.replies)) {
+          return {
+            ...c,
+            replies: c.replies.filter((r) => r && r.id && !deletedSet.has(String(r.id)))
+          };
+        }
+        return c;
+      });
 
     // Deduplicate any comments with duplicate IDs or identical author + text signatures
     const uniqueComments: ReviewComment[] = [];
@@ -339,7 +425,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     });
 
     return uniqueComments;
-  }, [video?.comments, remoteComments, video?.ownerResponse]);
+  }, [video?.comments, remoteComments, hasRemoteFetched, localDeletedCommentIds, video?.ownerResponse]);
 
   // Calculate total comments count including nested replies and owner response
   const totalCommentsCount = useMemo(() => {
@@ -819,7 +905,16 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           comment.isOwner
                         )}
                         alt={displayName}
-                        className={`w-9 h-9 rounded-full object-cover border border-zinc-800 shadow-2xs shrink-0 ${(!comment.isOwner && onSelectAuthor && comment.authorHandle) ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`} onClick={() => !comment.isOwner && onSelectAuthor && comment.authorHandle && onSelectAuthor(comment.authorHandle, comment.authorName, comment.authorAvatar)}
+                        className={`w-9 h-9 rounded-full object-cover border border-zinc-800 shadow-2xs shrink-0 ${(!comment.isOwner && onSelectAuthor && comment.authorHandle) ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          if (comment.isOwner) {
+                            target.src = "/favicon.svg";
+                          } else {
+                            target.src = `/api/avatar?name=${encodeURIComponent(comment.authorName || "User")}&background=27272a&color=fff&bold=true`;
+                          }
+                        }}
+                        onClick={() => !comment.isOwner && onSelectAuthor && comment.authorHandle && onSelectAuthor(comment.authorHandle, comment.authorName, comment.authorAvatar)}
                       />
 
                       {/* Comment Content */}
@@ -919,7 +1014,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           {(isCurrentUserComment || isUserOwner || isUserCreator) &&
                             onDeleteComment && (
                               <button
-                                onClick={() => onDeleteComment(video.id, comment.id)}
+                                onClick={() => handleDeleteCommentAction(video.id, comment.id)}
                                 className="text-zinc-200 hover:text-red-500 transition-colors ml-auto opacity-0 group-hover:opacity-100 p-1"
                                 title="Delete comment"
                               >
@@ -991,7 +1086,16 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                       reply.isOwner
                                     )}
                                     alt={replyDisplayName}
-                                    className={`w-7 h-7 rounded-full object-cover border border-zinc-800 shrink-0 ${(!reply.isOwner && onSelectAuthor && reply.authorHandle) ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`} onClick={() => !reply.isOwner && onSelectAuthor && reply.authorHandle && onSelectAuthor(reply.authorHandle, reply.authorName, reply.authorAvatar)}
+                                    className={`w-7 h-7 rounded-full object-cover border border-zinc-800 shrink-0 ${(!reply.isOwner && onSelectAuthor && reply.authorHandle) ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      if (reply.isOwner) {
+                                        target.src = "/favicon.svg";
+                                      } else {
+                                        target.src = `/api/avatar?name=${encodeURIComponent(reply.authorName || "User")}&background=27272a&color=fff&bold=true`;
+                                      }
+                                    }}
+                                    onClick={() => !reply.isOwner && onSelectAuthor && reply.authorHandle && onSelectAuthor(reply.authorHandle, reply.authorName, reply.authorAvatar)}
                                   />
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -1049,7 +1153,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                         onDeleteComment && (
                                           <button
                                             onClick={() =>
-                                              onDeleteComment(video.id, comment.id, reply.id)
+                                              handleDeleteCommentAction(video.id, comment.id, reply.id)
                                             }
                                             className="text-zinc-200 hover:text-red-500 transition-colors ml-auto opacity-0 group-hover/reply:opacity-100"
                                             title="Delete reply"

@@ -392,16 +392,27 @@ export function useFeedPagination() {
               });
               const pendingLocalVideos = Array.from(pendingLocalVideosMap.values());
 
-              // Server videos are authoritative: if a video was deleted on server, it is dropped here!
+              // Server videos are authoritative: if a video or comment was deleted on server, it is dropped here!
               const mergedServerVideos = valid.map((v) => {
                 const local = interactionMap.get(v.id);
                 if (local) {
-                  const localComments = local.comments || [];
+                  // Server comments are authoritative! Never resurrect stale cached comments.
+                  // Only keep local optimistic comments currently in flight
                   const serverComments = v.comments || [];
+                  const localOptimisticComments = (local.comments || []).filter((c: any) => c && c.isOptimistic);
+                  
+                  let deletedCommentIds: string[] = [];
+                  try {
+                    const delRaw = localStorage.getItem("copo_deleted_comments");
+                    if (delRaw) deletedCommentIds = JSON.parse(delRaw);
+                  } catch (e) {}
+                  const deletedSet = new Set(deletedCommentIds);
 
-                  // Canonical tree build eliminates duplicate top-level entries and guarantees exact count parity
-                  const combinedRaw = [...serverComments, ...localComments];
-                  const tree = buildCommentTree(combinedRaw);
+                  const activeComments = (serverComments.length > 0 || localOptimisticComments.length > 0)
+                    ? [...serverComments, ...localOptimisticComments].filter((c: any) => c && c.id && !deletedSet.has(String(c.id)))
+                    : (local.comments || []).filter((c: any) => c && c.id && !deletedSet.has(String(c.id)));
+
+                  const tree = buildCommentTree(activeComments);
 
                   const isBm = local.isBookmarked !== undefined ? local.isBookmarked : v.isBookmarked;
                   const isLk = local.isLiked !== undefined ? local.isLiked : v.isLiked;
@@ -545,19 +556,38 @@ export function useFeedPagination() {
               window.dispatchEvent(new CustomEvent("copo-new-comment", { detail: payload }));
             } else if (payload.type === "delete_comment" && payload.videoId) {
               const vidId = String(payload.videoId);
-              setVideos((prev) => prev.map((v) => {
-                if (v.id === vidId) {
-                  const rawList = payload.comments || [];
-                  const tree = buildCommentTree(rawList);
-                  return {
-                    ...v,
-                    comments: tree.comments,
-                    commentsCount: payload.commentsCount !== undefined ? payload.commentsCount : tree.count
-                  };
-                }
-                return v;
-              }));
+              const delCommId = payload.commentId ? String(payload.commentId) : "";
+              const delReplyId = payload.replyId ? String(payload.replyId) : "";
+
+              try {
+                const delRaw = localStorage.getItem("copo_deleted_comments");
+                const delList: string[] = delRaw ? JSON.parse(delRaw) : [];
+                if (delCommId && !delList.includes(delCommId)) delList.push(delCommId);
+                if (delReplyId && !delList.includes(delReplyId)) delList.push(delReplyId);
+                localStorage.setItem("copo_deleted_comments", JSON.stringify(delList));
+              } catch (e) {}
+
+              setVideos((prev) => {
+                const updated = prev.map((v) => {
+                  if (v.id === vidId) {
+                    const rawList = payload.comments || [];
+                    const tree = buildCommentTree(rawList);
+                    return {
+                      ...v,
+                      comments: tree.comments,
+                      commentsCount: payload.commentsCount !== undefined ? payload.commentsCount : tree.count
+                    };
+                  }
+                  return v;
+                });
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated.slice(0, 50)));
+                } catch (e) {}
+                return updated;
+              });
               window.dispatchEvent(new CustomEvent("copo-delete-comment", { detail: payload }));
+            } else if (payload.type === "sync_comments") {
+              loadData(true);
             } else if (payload.type === "like_comment" && payload.videoId) {
               window.dispatchEvent(new CustomEvent("copo-like-comment", { detail: payload }));
             } else if (payload.type === "heart_comment" && payload.videoId) {

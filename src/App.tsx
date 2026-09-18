@@ -43,7 +43,7 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, YOOUZ_VIDEOS_CACHE_KEY } from "./utils/placeUtils";
-import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
+import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
 import {
@@ -4368,6 +4368,18 @@ export function App() {
     commentId: string,
     replyId?: string
   ) => {
+    const targetDeletedId = replyId || commentId;
+    if (targetDeletedId) {
+      try {
+        const delRaw = localStorage.getItem("copo_deleted_comments");
+        const delList: string[] = delRaw ? JSON.parse(delRaw) : [];
+        if (!delList.includes(targetDeletedId)) {
+          delList.push(targetDeletedId);
+          localStorage.setItem("copo_deleted_comments", JSON.stringify(delList));
+        }
+      } catch (e) {}
+    }
+
     let updatedComments: ReviewComment[] = [];
 
     setVideos((prev) =>
@@ -4428,6 +4440,20 @@ export function App() {
         totalCount += 1;
         if (Array.isArray(c.replies)) totalCount += c.replies.length;
       });
+
+      // Update cached feed immediately to prevent resurrection on page reload
+      try {
+        const cached = localStorage.getItem("yoouz_cached_videos_v30");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            const updatedCache = parsed.map((v: any) =>
+              v.id === videoId ? { ...v, comments: updatedComments, commentsCount: totalCount } : v
+            );
+            localStorage.setItem("yoouz_cached_videos_v30", JSON.stringify(updatedCache));
+          }
+        }
+      } catch (e) {}
 
       const dataToSave = cleanData({ comments: updatedComments, commentsCount: totalCount });
 
@@ -4917,6 +4943,34 @@ export function App() {
     );
   }, [activeCommentVideo, places, currentUser, activeSection]);
 
+  const activeCommentPlace = useMemo(() => {
+    if (!activeCommentVideo) return null;
+    return (
+      places.find((p) => p.id === activeCommentVideo.placeId || (p.reviews && p.reviews.some((r) => r.id === activeCommentVideo.id))) ||
+      null
+    );
+  }, [activeCommentVideo, places]);
+
+  const activeCommentPlaceLogo = useMemo(() => {
+    if (!activeCommentVideo) return "/favicon.svg";
+    if (activeCommentPlace?.logoUrl && activeCommentPlace.logoUrl.trim() !== "" && !activeCommentPlace.logoUrl.startsWith("data:;")) {
+      return activeCommentPlace.logoUrl;
+    }
+    if (activeCommentVideo.placeLogoUrl && activeCommentVideo.placeLogoUrl.trim() !== "" && !activeCommentVideo.placeLogoUrl.startsWith("data:;")) {
+      return activeCommentVideo.placeLogoUrl;
+    }
+    const name = activeCommentPlace?.name || activeCommentVideo.placeName || "";
+    const cleanName = name.toLowerCase().trim();
+    if (!cleanName || cleanName.includes("yoouz") || cleanName.includes("owner") || cleanName.includes("business")) {
+      return "/favicon.svg";
+    }
+    return getPlaceLogoUrl({ name, website: activeCommentPlace?.website || activeCommentVideo.placeWebsite, category: activeCommentPlace?.category || activeCommentVideo.placeCategory }) || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff&bold=true`;
+  }, [activeCommentVideo, activeCommentPlace]);
+
+  const activeCommentPlaceName = useMemo(() => {
+    return activeCommentPlace?.name || activeCommentVideo?.placeName || "Yoouz";
+  }, [activeCommentPlace, activeCommentVideo]);
+
   const seoTitle = useMemo(() => {
     if (activeSection === 'business') return 'Yoouz for Business - Claim Your Profile & Leverage Video Reviews';
     if (activeSection === 'home' && activeSubTab === 'following') return 'Following - Your Favorite Reviewers on Yoouz';
@@ -5058,7 +5112,8 @@ export function App() {
             onAddOwnerResponse={handleSaveOwnerResponse}
             onDeleteOwnerResponse={handleDeleteOwnerResponse}
             isUserOwner={isUserOwnerOfCommentPlace}
-            placeName={activeCommentVideo?.placeName}
+            placeName={activeCommentPlaceName}
+            placeLogoUrl={activeCommentPlaceLogo}
             onSelectAuthor={(handle, name, avatar) => {
               setActiveCommentVideo(null);
               handleOpenCreatorDrawer({
@@ -5971,7 +6026,8 @@ export function App() {
         onAddOwnerResponse={handleSaveOwnerResponse}
         onDeleteOwnerResponse={handleDeleteOwnerResponse}
         isUserOwner={isUserOwnerOfCommentPlace}
-        placeName={activeCommentVideo?.placeName}
+        placeName={activeCommentPlaceName}
+        placeLogoUrl={activeCommentPlaceLogo}
         onSelectAuthor={(handle, name, avatar) => {
           setActiveCommentVideo(null); // Close the drawer first
           
