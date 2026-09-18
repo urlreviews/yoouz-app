@@ -268,7 +268,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
   const averageRating = placeVideos.length > 0
     ? placeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / placeVideos.length
-    : 0;
+    : (searchedPlace?.rating || 5.0);
   const totalReviewsCount = placeVideos.length;
 
   return (

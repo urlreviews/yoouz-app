@@ -1488,7 +1488,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Dynamic KPIs calculated strictly from real data
   const totalReviews = placeVideos.length;
-  const avgRating = totalReviews > 0 ? (placeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalReviews).toFixed(1) : '0.0';
+  const avgRating = totalReviews > 0 
+    ? (placeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalReviews).toFixed(1) 
+    : (currentPlace.rating ? Number(currentPlace.rating).toFixed(1) : '5.0');
   const totalViews = placeVideos.reduce((acc, v) => acc + getDisplayViews(v), 0);
 
   // Chart Time Series Data for Interactive SVG Chart (Accurate Data Only)
@@ -3265,7 +3267,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                              <span className="text-xs font-bold text-white">4.9</span>
+                              <span className="text-xs font-bold text-white">{avgRating}</span>
                               <span className="text-xs text-zinc-500">•</span>
                               <span className="text-xs text-zinc-400 font-medium truncate">
                                 {placeVideos.length} Reviews
@@ -3402,7 +3404,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     {/* Star Rating & Reviews Count */}
                     <div className="flex items-center justify-center gap-1.5 text-xs font-bold mb-3">
-                      <span className="text-amber-400">★ {(currentPlace.rating || 5.0).toFixed(1)}</span>
+                      <span className="text-amber-400">★ {avgRating}</span>
                       <div className="flex text-amber-400 text-xs">
                         {'★★★★★'.split('').map((s, idx) => (
                           <span key={idx}>{s}</span>
@@ -4514,7 +4516,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <CheckCircle className="inline-block w-5 h-5 ml-1.5 align-text-bottom fill-white text-black shrink-0 relative -top-[1.5px]" />
                 </h2>
                 <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1 mt-0.5">
-                  <span>★ 4.9</span>
+                  <span>★ {avgRating}</span>
                   <span className="text-zinc-200 font-normal">({placeVideos.length} Video Reviews on Yoouz)</span>
                 </div>
               </div>
