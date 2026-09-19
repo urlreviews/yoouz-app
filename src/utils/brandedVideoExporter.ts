@@ -239,10 +239,11 @@ export function renderBrandedVideoOverlays(
   ctx.imageSmoothingQuality = 'high';
 
   // -------------------------------------------------------------
-  // 1. TOP-LEFT BUSINESS HEADER PILL (Studio Dark Mode - Exact Website Match)
+  // 1. TOP-LEFT BUSINESS HEADER PILL (Elevated Safe Zone for Mobile & Desktop)
   // -------------------------------------------------------------
-  const pillMarginX = 18 * safeScale;
-  const pillMarginY = 22 * safeScale; // Top-anchored with natural headroom
+  // Positioned safely below phone status bar, Dynamic Island, time indicator, and platform back buttons
+  const pillMarginX = 20 * safeScale;
+  const pillMarginY = 58 * safeScale; // Placed in the verified social video top safe zone
   const pillHeight = 36 * safeScale;
 
   // Measure text for pill width
@@ -258,7 +259,7 @@ export function renderBrandedVideoOverlays(
     pillWidth,
     pillHeight,
     pillHeight / 2,
-    'rgba(0, 0, 0, 0.72)',
+    'rgba(0, 0, 0, 0.75)',
     'rgba(255, 255, 255, 0.22)',
     1.2 * safeScale
   );
@@ -322,12 +323,14 @@ export function renderBrandedVideoOverlays(
   ctx.fillText(`(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})`, textStartX + 30 * safeScale, subY);
 
   // -------------------------------------------------------------
-  // 2. BOTTOM-LEFT REVIEW DETAILS & CREATOR INFO (Repositioned to natural bottom)
+  // 2. BOTTOM-LEFT REVIEW DETAILS (Elevated Safe Zone: Above Facebook User & Comment UI)
   // -------------------------------------------------------------
-  const bottomMarginX = 18 * safeScale;
-  const line3CaptionY = height - 42 * safeScale;
-  const line2StarsY = line3CaptionY - 18 * safeScale;
-  const line1AuthorY = line2StarsY - 20 * safeScale;
+  // Elevating by 138 safe scale units ensures zero obstruction by Facebook/Instagram/TikTok poster profile photo & comment bar
+  const bottomMarginX = 20 * safeScale;
+  const safeBottomOffset = 138 * safeScale;
+  const line3CaptionY = height - safeBottomOffset;
+  const line2StarsY = line3CaptionY - 19 * safeScale;
+  const line1AuthorY = line2StarsY - 21 * safeScale;
 
   ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
   ctx.shadowBlur = 6 * safeScale;
@@ -377,12 +380,12 @@ export function renderBrandedVideoOverlays(
   ctx.fillText(captionText, bottomMarginX, line3CaptionY);
 
   // -------------------------------------------------------------
-  // 3. BOTTOM-RIGHT POWERED BY YOOUZ.COM TRUST BADGE
+  // 3. BOTTOM-RIGHT POWERED BY YOOUZ.COM TRUST BADGE (Elevated Safe Zone)
   // -------------------------------------------------------------
   const watermarkHeight = 28 * safeScale;
   const wmIconSize = 18 * safeScale;
-  const wmMarginRight = 18 * safeScale;
-  const watermarkY = height - 44 * safeScale;
+  const wmMarginRight = 20 * safeScale;
+  const watermarkY = height - safeBottomOffset - 2 * safeScale; // Aligned with the elevated safe zone
 
   // Measure text with exact natural font metrics for seamless typography
   ctx.font = `500 ${9.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
@@ -405,7 +408,7 @@ export function renderBrandedVideoOverlays(
     watermarkWidth,
     watermarkHeight,
     watermarkHeight / 2,
-    'rgba(0, 0, 0, 0.72)',
+    'rgba(0, 0, 0, 0.75)',
     'rgba(255, 255, 255, 0.22)',
     1.1 * safeScale
   );
