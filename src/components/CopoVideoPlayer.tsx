@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from
 import { useLanguage } from "../i18n/LanguageContext";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
-import { resolvePlayableVideoSource, resolveVideoPosterUrl, resolvePlayableVideoSourcesCascade } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, resolveVideoPosterUrl, resolvePlayableVideoSourcesCascade, downloadVideoForAds } from "../utils/videoUtils";
 import { VideoFeedCard } from "./VideoFeedCard";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import {
@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   ArrowUp,
   ArrowDown,
-  Plus
+  Plus,
+  Download
 } from "lucide-react";
 import { VideoReview, FeedSubTab, VideoAuthor, Place } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
@@ -1602,199 +1603,275 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
             >
-              {/* Check if current user is owner of the video */}
-              {Boolean(
-                moreMenuVideo &&
-                  currentUser &&
-                  (isAuthorMatch(moreMenuVideo, currentUser) ||
-                    (currentUser.email && (moreMenuVideo?.userId === currentUser.email || (moreMenuVideo as any)?.userEmail === currentUser.email)) ||
-                    moreMenuVideo.author?.name === "me" ||
-                    moreMenuVideo.userId === "me")
-              ) ? (
-                /* OWNER ACTIONS: Edit Star Rating & Review, Share, View Place, Delete */
-                <>
-                  <button
-                    id="btn-more-option-edit-rating"
-                    onClick={() => {
-                      setEditRating(Math.round(moreMenuVideo.rating) || 5);
-                      setEditingReviewVideo(moreMenuVideo);
-                      setMoreMenuVideo(null);
-                    }}
-                    className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-all text-left font-semibold text-sm cursor-pointer shadow-sm"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center text-white shrink-0">
-                      <Edit3 className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-bold text-white">{t("video.editRatingTitle", "Edit Star Rating & Review")}</div>
-                      <div className="text-xs text-zinc-200 font-normal">
-                        {t("video.updateYourScore", "Update your score")} ({typeof moreMenuVideo.rating === "number" && !isNaN(moreMenuVideo.rating) ? moreMenuVideo.rating.toFixed(1) : (Number(moreMenuVideo.rating) || 5.0).toFixed(1)} ★) {t("video.placeRating", "& place rating")}
-                      </div>
-                    </div>
-                  </button>
+              {(() => {
+                const isVerifiedOwnerOfThisPlace = Boolean(
+                  isBusinessOwnerView ||
+                  (() => {
+                    try {
+                      const s = localStorage.getItem('copo_business_verified_session');
+                      if (!s || !moreMenuVideo) return false;
+                      const parsed = JSON.parse(s);
+                      if (!parsed) return false;
+                      const sessionPlaceId = parsed.placeId;
+                      const sessionPlaceName = (parsed.placeName || '').toLowerCase().trim();
+                      const videoPlaceId = moreMenuVideo.placeId;
+                      const videoPlaceName = (moreMenuVideo.placeName || '').toLowerCase().trim();
+                      
+                      if (sessionPlaceId && videoPlaceId && sessionPlaceId === videoPlaceId) return true;
+                      if (sessionPlaceId === 'place-custom' && sessionPlaceName && videoPlaceName && sessionPlaceName === videoPlaceName) return true;
+                      if (sessionPlaceName && videoPlaceName && (sessionPlaceName === videoPlaceName || (sessionPlaceName === 'yoouz' && (videoPlaceId === 'yoouz.com' || videoPlaceName.includes('yoouz'))))) return true;
+                      return false;
+                    } catch {
+                      return false;
+                    }
+                  })()
+                );
 
-                  <button
-                    id="btn-more-option-bookmark-owner"
-                    onClick={() => {
-                      const vidId = moreMenuVideo.id;
-                      setMoreMenuVideo(null);
-                      if (vidId) onToggleBookmark(vidId);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
-                  >
-                    {moreMenuVideo.isBookmarked ? (
-                      <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400" />
-                    ) : (
-                      <Bookmark className="w-4 h-4 text-zinc-200" />
-                    )}
-                    <span>
-                      {moreMenuVideo.isBookmarked
-                        ? t("video.removeBookmark", "Remove from Bookmarks")
-                        : t("video.saveBookmark", "Save to Bookmarks")}
-                    </span>
-                  </button>
-
-                  <button
-                    id="btn-more-option-share-owner"
-                    onClick={() => {
-                      const v = moreMenuVideo;
-                      setMoreMenuVideo(null);
-                      if (v) onOpenShare(v);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
-                  >
-                    <Share2 className="w-4 h-4 text-zinc-200" />
-                    <span>{t("video.shareReviewLink", "Share Video Review Link")}</span>
-                  </button>
-
-                  <button
-                    id="btn-more-option-view-place-owner"
-                    onClick={() => {
-                      const pid = moreMenuVideo.placeId;
-                      setMoreMenuVideo(null);
-                      if (pid) onOpenPlace(pid);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
-                  >
-                    <MapPin className="w-4 h-4 text-zinc-200" />
-                    <span>{t("video.viewBusinessInfo", "View Business Info & All Reviews")}</span>
-                  </button>
-
-                  <div className="my-2 border-t border-zinc-800" />
-
-                  <button
-                    id="btn-more-option-delete"
-                    onClick={() => {
-                      const v = moreMenuVideo;
-                      setMoreMenuVideo(null);
-                      if (v) {
-                        setVideoConfirmDelete(v);
-                      }
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                    <span>{t("video.deleteVideoReview", "Delete Video Review")}</span>
-                  </button>
-                </>
-              ) : (
-                /* VIEWER ACTIONS: Save/Bookmark, Share, View Place, View Creator, Report, Not Interested */
-                <>
-                  <button
-                    id="btn-more-option-bookmark-viewer"
-                    onClick={() => {
-                      const vidId = moreMenuVideo.id;
-                      setMoreMenuVideo(null);
-                      if (vidId) onToggleBookmark(vidId);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
-                  >
-                    {moreMenuVideo.isBookmarked ? (
-                      <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400" />
-                    ) : (
-                      <Bookmark className="w-4 h-4 text-zinc-200" />
-                    )}
-                    <span>
-                      {moreMenuVideo.isBookmarked
-                        ? t("video.removeBookmark", "Remove from Bookmarks")
-                        : t("video.saveBookmark", "Save to Bookmarks")}
-                    </span>
-                  </button>
-
-                  <button
-                    id="btn-more-option-share"
-                    onClick={() => {
-                      const v = moreMenuVideo;
-                      setMoreMenuVideo(null);
-                      if (v) onOpenShare(v);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
-                  >
-                    <Share2 className="w-4 h-4 text-zinc-200" />
-                    <span>{t("video.shareVideoReview", "Share Video Review")}</span>
-                  </button>
-
-                  <button
-                    id="btn-more-option-view-place"
-                    onClick={() => {
-                      const pid = moreMenuVideo.placeId;
-                      setMoreMenuVideo(null);
-                      if (pid) onOpenPlace(pid);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
-                  >
-                    <MapPin className="w-4 h-4 text-zinc-200" />
-                    <span>{t("video.viewPlaceInfo", "View Place Info & All Reviews")}</span>
-                  </button>
-
-                  {moreMenuVideo.author && (
+                return Boolean(
+                  moreMenuVideo &&
+                    currentUser &&
+                    (isAuthorMatch(moreMenuVideo, currentUser) ||
+                      (currentUser.email && (moreMenuVideo?.userId === currentUser.email || (moreMenuVideo as any)?.userEmail === currentUser.email)) ||
+                      moreMenuVideo.author?.name === "me" ||
+                      moreMenuVideo.userId === "me")
+                ) ? (
+                  /* OWNER ACTIONS: Edit Star Rating & Review, Share, View Place, Delete */
+                  <>
                     <button
-                      id="btn-more-option-view-creator"
+                      id="btn-more-option-edit-rating"
                       onClick={() => {
-                        const author = moreMenuVideo.author;
+                        setEditRating(Math.round(moreMenuVideo.rating) || 5);
+                        setEditingReviewVideo(moreMenuVideo);
                         setMoreMenuVideo(null);
-                        if (author) onOpenCreator(author);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                      className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-all text-left font-semibold text-sm cursor-pointer shadow-sm"
                     >
-                      <User className="w-4 h-4 text-zinc-200" />
-                      <span>{t("video.viewCreatorProfile", "View Creator Profile")} ({moreMenuVideo.author.name})</span>
+                      <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center text-white shrink-0">
+                        <Edit3 className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-white">{t("video.editRatingTitle", "Edit Star Rating & Review")}</div>
+                        <div className="text-xs text-zinc-200 font-normal">
+                          {t("video.updateYourScore", "Update your score")} ({typeof moreMenuVideo.rating === "number" && !isNaN(moreMenuVideo.rating) ? moreMenuVideo.rating.toFixed(1) : (Number(moreMenuVideo.rating) || 5.0).toFixed(1)} ★) {t("video.placeRating", "& place rating")}
+                        </div>
+                      </div>
                     </button>
-                  )}
 
-                  <div className="my-2 border-t border-zinc-800" />
-
-                  {onHideVideo && (
                     <button
-                      id="btn-more-option-hide"
+                      id="btn-more-option-bookmark-owner"
                       onClick={() => {
                         const vidId = moreMenuVideo.id;
                         setMoreMenuVideo(null);
-                        if (vidId) onHideVideo(vidId);
+                        if (vidId) onToggleBookmark(vidId);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
-                      <EyeOff className="w-4 h-4 text-zinc-200" />
-                      <span>{t("video.notInterested", "Not interested in this video")}</span>
+                      {moreMenuVideo.isBookmarked ? (
+                        <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      ) : (
+                        <Bookmark className="w-4 h-4 text-zinc-200" />
+                      )}
+                      <span>
+                        {moreMenuVideo.isBookmarked
+                          ? t("video.removeBookmark", "Remove from Bookmarks")
+                          : t("video.saveBookmark", "Save to Bookmarks")}
+                      </span>
                     </button>
-                  )}
 
-                  {onOpenReport && (
                     <button
-                      id="btn-more-option-report"
+                      id="btn-more-option-share-owner"
                       onClick={() => {
                         const v = moreMenuVideo;
                         setMoreMenuVideo(null);
-                        if (v) onOpenReport(v);
+                        if (v) onOpenShare(v);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
-                      <Flag className="w-4 h-4 text-red-400" />
-                      <span>{t("video.reportVideoReview", "Report Video Review")}</span>
+                      <Share2 className="w-4 h-4 text-zinc-200" />
+                      <span>{t("video.shareReviewLink", "Share Video Review Link")}</span>
                     </button>
-                  )}
-                </>
-              )}
+
+                    {/* Verified Business Owner Only: Download for Social & Ads */}
+                    {isVerifiedOwnerOfThisPlace && (
+                      <button
+                        id="btn-more-option-download-ad-owner"
+                        onClick={async () => {
+                          const v = moreMenuVideo;
+                          setMoreMenuVideo(null);
+                          if (v) {
+                            await downloadVideoForAds(v, v.placeName);
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 hover:border-zinc-700 transition-colors text-left font-medium text-sm cursor-pointer"
+                      >
+                        <Download className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-white flex items-center gap-2">
+                            <span>{t("video.downloadForAds", "Download for Ads (MP4)")}</span>
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded-sm border border-emerald-500/30">9:16</span>
+                          </div>
+                          <div className="text-[11px] text-zinc-400 font-normal truncate">
+                            {t("video.downloadForAdsDesc", "Clean video for TikTok, Instagram & Facebook ads")}
+                          </div>
+                        </div>
+                      </button>
+                    )}
+
+                    <button
+                      id="btn-more-option-view-place-owner"
+                      onClick={() => {
+                        const pid = moreMenuVideo.placeId;
+                        setMoreMenuVideo(null);
+                        if (pid) onOpenPlace(pid);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                    >
+                      <MapPin className="w-4 h-4 text-zinc-200" />
+                      <span>{t("video.viewBusinessInfo", "View Business Info & All Reviews")}</span>
+                    </button>
+
+                    <div className="my-2 border-t border-zinc-800" />
+
+                    <button
+                      id="btn-more-option-delete"
+                      onClick={() => {
+                        const v = moreMenuVideo;
+                        setMoreMenuVideo(null);
+                        if (v) {
+                          setVideoConfirmDelete(v);
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                      <span>{t("video.deleteVideoReview", "Delete Video Review")}</span>
+                    </button>
+                  </>
+                ) : (
+                  /* VIEWER ACTIONS: Save/Bookmark, Share, View Place, View Creator, Report, Not Interested */
+                  <>
+                    <button
+                      id="btn-more-option-bookmark-viewer"
+                      onClick={() => {
+                        const vidId = moreMenuVideo.id;
+                        setMoreMenuVideo(null);
+                        if (vidId) onToggleBookmark(vidId);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                    >
+                      {moreMenuVideo.isBookmarked ? (
+                        <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      ) : (
+                        <Bookmark className="w-4 h-4 text-zinc-200" />
+                      )}
+                      <span>
+                        {moreMenuVideo.isBookmarked
+                          ? t("video.removeBookmark", "Remove from Bookmarks")
+                          : t("video.saveBookmark", "Save to Bookmarks")}
+                      </span>
+                    </button>
+
+                    <button
+                      id="btn-more-option-share"
+                      onClick={() => {
+                        const v = moreMenuVideo;
+                        setMoreMenuVideo(null);
+                        if (v) onOpenShare(v);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                    >
+                      <Share2 className="w-4 h-4 text-zinc-200" />
+                      <span>{t("video.shareVideoReview", "Share Video Review")}</span>
+                    </button>
+
+                    {/* Verified Business Owner Only: Download for Social & Ads */}
+                    {isVerifiedOwnerOfThisPlace && (
+                      <button
+                        id="btn-more-option-download-ad-viewer"
+                        onClick={async () => {
+                          const v = moreMenuVideo;
+                          setMoreMenuVideo(null);
+                          if (v) {
+                            await downloadVideoForAds(v, v.placeName);
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 hover:border-zinc-700 transition-colors text-left font-medium text-sm cursor-pointer"
+                      >
+                        <Download className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-white flex items-center gap-2">
+                            <span>{t("video.downloadForAds", "Download for Ads (MP4)")}</span>
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded-sm border border-emerald-500/30">9:16</span>
+                          </div>
+                          <div className="text-[11px] text-zinc-400 font-normal truncate">
+                            {t("video.downloadForAdsDesc", "Clean video for TikTok, Instagram & Facebook ads")}
+                          </div>
+                        </div>
+                      </button>
+                    )}
+
+                    <button
+                      id="btn-more-option-view-place"
+                      onClick={() => {
+                        const pid = moreMenuVideo.placeId;
+                        setMoreMenuVideo(null);
+                        if (pid) onOpenPlace(pid);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                    >
+                      <MapPin className="w-4 h-4 text-zinc-200" />
+                      <span>{t("video.viewPlaceInfo", "View Place Info & All Reviews")}</span>
+                    </button>
+
+                    {moreMenuVideo.author && (
+                      <button
+                        id="btn-more-option-view-creator"
+                        onClick={() => {
+                          const author = moreMenuVideo.author;
+                          setMoreMenuVideo(null);
+                          if (author) onOpenCreator(author);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                      >
+                        <User className="w-4 h-4 text-zinc-200" />
+                        <span>{t("video.viewCreatorProfile", "View Creator Profile")} ({moreMenuVideo.author.name})</span>
+                      </button>
+                    )}
+
+                    <div className="my-2 border-t border-zinc-800" />
+
+                    {onHideVideo && (
+                      <button
+                        id="btn-more-option-hide"
+                        onClick={() => {
+                          const vidId = moreMenuVideo.id;
+                          setMoreMenuVideo(null);
+                          if (vidId) onHideVideo(vidId);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
+                      >
+                        <EyeOff className="w-4 h-4 text-zinc-200" />
+                        <span>{t("video.notInterested", "Not interested in this video")}</span>
+                      </button>
+                    )}
+
+                    {onOpenReport && (
+                      <button
+                        id="btn-more-option-report"
+                        onClick={() => {
+                          const v = moreMenuVideo;
+                          setMoreMenuVideo(null);
+                          if (v) onOpenReport(v);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
+                      >
+                        <Flag className="w-4 h-4 text-red-400" />
+                        <span>{t("video.reportReview", "Report Video Review")}</span>
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

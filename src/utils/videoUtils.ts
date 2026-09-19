@@ -234,3 +234,56 @@ export function releaseVideoHardwareDecoder(el: HTMLVideoElement | null) {
   } catch (e) {}
 }
 
+/**
+ * Downloads a video review formatted for advertising campaigns (Meta/TikTok/Google).
+ * Validates availability and triggers clean, branded file saving.
+ */
+export async function downloadVideoForAds(video: VideoReview, placeName?: string): Promise<boolean> {
+  try {
+    const rawUrl = video.videoUrl || '';
+    const src = normalizeVideoUrl(rawUrl);
+    if (!src) return false;
+
+    const safePlace = (placeName || video.placeName || 'venue')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    const safeAuthor = (video.author?.name || 'review')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    const filename = `yoouz-ad-review-${safePlace}-${safeAuthor}.mp4`;
+
+    // Attempt blob download for seamless file saving
+    try {
+      const response = await fetch(src, { mode: 'cors' });
+      if (response.ok) {
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+        return true;
+      }
+    } catch {
+      // CORS or network fallback
+    }
+
+    // Direct anchor fallback
+    const link = document.createElement('a');
+    link.href = src;
+    link.target = '_blank';
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return true;
+  } catch (err) {
+    console.error('Error downloading video for ads:', err);
+    return false;
+  }
+}
+
+

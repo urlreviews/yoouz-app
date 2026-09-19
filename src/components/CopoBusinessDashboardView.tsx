@@ -85,7 +85,7 @@ import {
   Edit2
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
-import { normalizeVideoUrl, releaseVideoHardwareDecoder } from '../utils/videoUtils';
+import { normalizeVideoUrl, releaseVideoHardwareDecoder, downloadVideoForAds } from '../utils/videoUtils';
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from '../hooks/useGlobalMute';
 import { getPlaceLogoUrl } from '../utils/logoUtils';
 import { CopoBrandLogo } from './CopoBrandLogo';
@@ -839,6 +839,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [embedAccentColor, setEmbedAccentColor] = useState<string>('#10B981');
   const [pinnedVideoIds, setPinnedVideoIds] = useState<string[]>([]);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>([]);
+  const [downloadingVideoId, setDownloadingVideoId] = useState<string | null>(null);
   const [pinNotice, setPinNotice] = useState<string | null>(null);
   const [isCodeCopied, setIsCodeCopied] = useState(false);
   const [isDirectLinkCopied, setIsDirectLinkCopied] = useState(false);
@@ -1857,6 +1858,24 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setTimeout(() => setPinNotice(null), 3500);
   };
 
+  const handleDownloadVideoForAds = async (video: VideoReview) => {
+    setDownloadingVideoId(video.id);
+    setPinNotice(`📥 Downloading MP4 video review for ${currentPlace?.name || 'ads'}...`);
+    try {
+      const success = await downloadVideoForAds(video, currentPlace?.name);
+      if (success) {
+        setPinNotice(`✅ 9:16 Video review downloaded! Ready for TikTok, Meta & Google Ads.`);
+      } else {
+        setPinNotice(`⚠️ Could not download video. Please check connection.`);
+      }
+    } catch {
+      setPinNotice(`⚠️ Download failed.`);
+    } finally {
+      setDownloadingVideoId(null);
+      setTimeout(() => setPinNotice(null), 4000);
+    }
+  };
+
   const copyEmbedCode = () => {
     const embedSlug = getPlaceSlug(currentPlace);
     const iframeSnippet = `<iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
@@ -2844,6 +2863,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                     <span>{seenReviewIds.has(video.id) ? 'Reviewed' : 'Acknowledge'}</span>
                                   </button>
 
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadVideoForAds(video)}
+                                    disabled={downloadingVideoId === video.id}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-emerald-400 hover:text-emerald-300 border border-zinc-800 hover:border-emerald-500/40"
+                                    title="Download clean 9:16 MP4 video review for TikTok, Meta & Google Ad campaigns"
+                                  >
+                                    {downloadingVideoId === video.id ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                                    ) : (
+                                      <Download className="w-3.5 h-3.5 text-emerald-400" />
+                                    )}
+                                    <span>{downloadingVideoId === video.id ? 'Downloading...' : 'Download for Ads'}</span>
+                                  </button>
+
                                   {!hasReply && !isReplying && (
                                     <button
                                       onClick={() => {
@@ -3556,6 +3590,27 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <span>Live Sync Powered by Yoouz</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* 3. Social & Video Ads Export Info */}
+                  <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Download className="w-4 h-4 text-emerald-400" />
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">Download for TikTok, Meta & Google Ads</span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded-sm border border-emerald-500/30">9:16 MP4</span>
+                      </div>
+                      <p className="text-xs text-zinc-400">
+                        Need video creative for paid social campaigns? Verified business owners can download clean MP4 files directly from the <strong className="text-zinc-200">Customer Video Reviews</strong> tab or the 3-dots menu on any of your venue's videos.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('reviews')}
+                      className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold shrink-0 transition-colors border border-zinc-700 cursor-pointer"
+                    >
+                      Go to Reviews →
+                    </button>
                   </div>
                 </div>
               </div>
