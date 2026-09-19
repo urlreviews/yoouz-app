@@ -2853,9 +2853,9 @@ export function App() {
 
       next.forEach((p, index) => {
         const matchingV = videos.filter(v => !isPlaceDeleted(v.placeId || v.placeWebsite || v.placeName, currentDeleted) && isPlaceReviewMatch(v, p));
-        const computedCount = Math.max(matchingV.length, p.totalReviews || 0);
-        if (computedCount > 0 && p.totalReviews !== computedCount) {
-          next[index] = { ...p, totalReviews: computedCount };
+        const computedCount = matchingV.length > 0 ? matchingV.length : (p.totalReviews || 0);
+        if (p.totalReviews !== computedCount || p.videoReviewCount !== computedCount) {
+          next[index] = { ...p, totalReviews: computedCount, videoReviewCount: computedCount };
           modified = true;
         }
       });

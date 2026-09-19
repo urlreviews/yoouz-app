@@ -147,7 +147,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
               />
             ))}
           </div>
-          <span>({(place.totalReviews || 0).toLocaleString()})</span>
+          <span>({(placeVideoReviews.length > 0 ? placeVideoReviews.length : (place.totalReviews || 1)).toLocaleString()})</span>
           <span>•</span>
           <span>{place.category}</span>
         </div>

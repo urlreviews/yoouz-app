@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug, isPlaceReviewMatch } from "../utils/placeUtils";
 import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
@@ -148,34 +148,48 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 }) => {
   const { t } = useLanguage();
 
-  const effectiveReviewCount = React.useMemo(() => {
-    const vCount = Number((video as any).reviewsCount || (video as any).reviewCount || (video as any).totalReviews || 0);
+  const { effectiveReviewCount, effectiveRating } = React.useMemo(() => {
+    let count = 1;
+    let ratingVal = Number(video.rating) || 5.0;
 
-    let placeCount = 0;
-    if (places && places.length > 0) {
-      const targetSlug = getPlaceSlug(video.placeWebsite || video.placeId || video.placeName);
-      const matchedPlace = places.find(p => {
-        if (p.id === video.placeId) return true;
-        const pSlug = getPlaceSlug(p);
-        return Boolean(pSlug && targetSlug && pSlug === targetSlug);
+    // 1. Calculate exact count and average rating from allVideos feed if available
+    if (allVideos && allVideos.length > 0) {
+      const matches = allVideos.filter(v => {
+        if (!v) return false;
+        return isPlaceReviewMatch(v, {
+          id: video.placeId,
+          name: video.placeName,
+          website: video.placeWebsite
+        });
       });
-      if (matchedPlace) {
-        placeCount = Number(matchedPlace.totalReviews || (matchedPlace as any).reviewCount || 0);
+      if (matches.length > 0) {
+        count = matches.length;
+        const totalRating = matches.reduce((acc, curr) => acc + (Number(curr.rating) || 5.0), 0);
+        ratingVal = totalRating / matches.length;
+        return {
+          effectiveReviewCount: count,
+          effectiveRating: ratingVal.toFixed(1)
+        };
       }
     }
 
-    let videoMatchesCount = 0;
-    if (allVideos && allVideos.length > 0) {
-      const targetSlug = getPlaceSlug(video.placeWebsite || video.placeId || video.placeName);
-      videoMatchesCount = allVideos.filter(v => {
-        if (!v) return false;
-        if (v.placeId && video.placeId && v.placeId === video.placeId) return true;
-        const vSlug = getPlaceSlug(v.placeWebsite || v.placeId || v.placeName);
-        return Boolean(vSlug && targetSlug && vSlug === targetSlug);
-      }).length;
+    // 2. Fall back to video's own review count / matched place info
+    const vCount = Number((video as any).reviewsCount || (video as any).reviewCount || (video as any).totalReviews || 0);
+    if (vCount > 0) count = vCount;
+
+    if (places && places.length > 0) {
+      const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
+      if (matchedPlace) {
+        const pCount = Number(matchedPlace.videoReviewCount || matchedPlace.totalReviews || 0);
+        if (pCount > 0 && count === 1) count = pCount;
+        if (matchedPlace.rating) ratingVal = Number(matchedPlace.rating) || ratingVal;
+      }
     }
 
-    return Math.max(vCount, placeCount, videoMatchesCount, 1);
+    return {
+      effectiveReviewCount: count,
+      effectiveRating: ratingVal.toFixed(1)
+    };
   }, [video, places, allVideos]);
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
@@ -846,7 +860,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               </span>
               <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
                 <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
-                <span>{(video.rating || 5.0).toFixed(1)}</span>
+                <span>{effectiveRating}</span>
                 <span className="text-zinc-300 font-normal">({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})</span>
               </div>
             </div>

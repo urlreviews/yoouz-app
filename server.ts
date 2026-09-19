@@ -4419,6 +4419,27 @@ app.get('/api/nosql/:collection', async (req, res) => {
         });
       }
       items = Array.from(canonicalMap.values());
+
+      // Re-evaluate accurate video review count per place from reviews_index / videoReviews
+      try {
+        const allRevs = readReviewsIndex();
+        items.forEach((p: any) => {
+          if (!p || !p.id) return;
+          const pDomain = cleanDomainName(p.website || p.brandDomain || p.id || p.name);
+          const matchedCount = allRevs.filter((v: any) => {
+            if (!v) return false;
+            const pIdLower = String(p.id).toLowerCase().trim();
+            const vPlaceId = String(v.placeId || "").toLowerCase().trim();
+            if (vPlaceId && pIdLower && (vPlaceId === pIdLower || vPlaceId.replace(/[^a-z0-9]/g, "") === pIdLower.replace(/[^a-z0-9]/g, ""))) return true;
+            const vDomain = cleanDomainName(v.placeWebsite || v.placeId || v.placeName);
+            return Boolean(pDomain && vDomain && pDomain === vDomain);
+          }).length;
+          if (matchedCount > 0) {
+            p.totalReviews = matchedCount;
+            p.videoReviewCount = matchedCount;
+          }
+        });
+      } catch (e) {}
     }
 
     if (colName === 'users') {
