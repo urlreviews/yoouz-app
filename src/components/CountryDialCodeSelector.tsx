@@ -35,17 +35,16 @@ export const CountryDialCodeSelector: React.FC<CountryDialCodeSelectorProps> = (
 
   // Find active country dial info based on dialCode and selectedCountry
   const activeDialInfo = React.useMemo(() => {
+    if (!value) return null;
     if (selectedCountry) {
       const match = countryDialData.find(
         (c) => c.name.toLowerCase() === selectedCountry.toLowerCase()
       );
-      if (match && (!value || match.dialCode === value)) return match;
+      if (match && match.dialCode === value) return match;
     }
-    if (value) {
-      const match = countryDialData.find((c) => c.dialCode === value);
-      if (match) return match;
-    }
-    return getCountryDialInfo(selectedCountry || "United States");
+    const match = countryDialData.find((c) => c.dialCode === value);
+    if (match) return match;
+    return null;
   }, [value, selectedCountry]);
 
   // Alphabetical list of countries (A-Z order)
@@ -74,15 +73,15 @@ export const CountryDialCodeSelector: React.FC<CountryDialCodeSelectorProps> = (
           setIsOpen(!isOpen);
           setSearch("");
         }}
-        className="w-full flex items-center justify-between gap-1.5 bg-zinc-950 hover:bg-zinc-900/80 border border-zinc-800 rounded-2xl px-3 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all cursor-pointer select-none"
-        title="Select country dialing code"
+        className="w-full flex items-center justify-between gap-1.5 bg-zinc-950 hover:bg-zinc-900/80 border border-zinc-800 rounded-2xl px-3 py-3 text-xs sm:text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all cursor-pointer select-none"
+        title={value ? `Dialing code: ${value}` : "Select country dialing code (optional)"}
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-base leading-none shrink-0" aria-hidden="true">
+          <span className="text-sm sm:text-base leading-none shrink-0" aria-hidden="true">
             {activeDialInfo?.flag || "🌐"}
           </span>
-          <span className="text-sm font-bold text-white tracking-wide shrink-0">
-            {value || activeDialInfo?.dialCode || "+1"}
+          <span className={`text-xs sm:text-sm tracking-wide shrink-0 ${value ? "font-bold text-white" : "font-semibold text-zinc-400"}`}>
+            {value || "Select"}
           </span>
         </div>
         <ChevronDown
@@ -93,17 +92,17 @@ export const CountryDialCodeSelector: React.FC<CountryDialCodeSelectorProps> = (
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 left-0 top-full mt-1.5 w-72 sm:w-80 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
+        <div className="absolute z-50 left-0 top-full mt-1.5 w-64 sm:w-72 max-w-[calc(100vw-2rem)] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
           {/* Search Header */}
-          <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-zinc-800 bg-zinc-900/60">
-            <Search className="w-4 h-4 text-zinc-400 shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-800 bg-zinc-900/60">
+            <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
             <input
               type="text"
               value={search}
               autoComplete="off"
               spellCheck={false}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search country or code (e.g. +212, UK)..."
+              placeholder="Search country or code..."
               className="w-full bg-transparent border-0 p-0 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:ring-0 font-medium"
               autoFocus
             />
@@ -111,7 +110,7 @@ export const CountryDialCodeSelector: React.FC<CountryDialCodeSelectorProps> = (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="text-[11px] text-zinc-400 hover:text-white font-medium"
+                className="text-[10px] text-zinc-400 hover:text-white font-medium"
               >
                 Clear
               </button>
@@ -119,7 +118,33 @@ export const CountryDialCodeSelector: React.FC<CountryDialCodeSelectorProps> = (
           </div>
 
           {/* List */}
-          <div className="max-h-56 overflow-y-auto py-1 scrollbar-thin divide-y divide-zinc-900/50">
+          <div className="max-h-52 overflow-y-auto py-1 scrollbar-thin divide-y divide-zinc-900/50">
+            {/* Option to clear / select none */}
+            {(!search || "none".includes(search.toLowerCase()) || "select".includes(search.toLowerCase()) || "no code".includes(search.toLowerCase()) || "clear".includes(search.toLowerCase())) && (
+              <button
+                type="button"
+                id="btn-select-none-dial-code"
+                onClick={() => {
+                  onChange("", undefined);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-xs font-semibold flex items-center justify-between gap-2 transition-colors cursor-pointer border-b border-zinc-800/70 ${
+                  !value
+                    ? "bg-zinc-800/90 text-white"
+                    : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm leading-none shrink-0">🌐</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-zinc-200 font-medium">None / No Dial Code</span>
+                    <span className="text-[10px] text-zinc-500">Direct or local number</span>
+                  </div>
+                </div>
+                {!value && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+              </button>
+            )}
+
             {filteredCountries.length === 0 ? (
               <div className="px-4 py-4 text-xs text-zinc-400 text-center font-medium">
                 No matching country found
@@ -135,21 +160,21 @@ export const CountryDialCodeSelector: React.FC<CountryDialCodeSelectorProps> = (
                       onChange(c.dialCode, c);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                    className={`w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                       isSelected
                         ? "bg-zinc-800/90 text-white"
                         : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-base leading-none shrink-0">{c.flag}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm leading-none shrink-0">{c.flag}</span>
                       <span className="truncate font-medium text-zinc-200">{c.name}</span>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <span className="text-[11px] font-mono font-bold text-zinc-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
                         {c.dialCode}
                       </span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-zinc-300" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
                     </div>
                   </button>
                 );

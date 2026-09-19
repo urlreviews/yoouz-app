@@ -567,7 +567,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Structured Phone & Dialing Code State (No mock data)
   const initialPhoneStr = ((currentPlace as any).phone || '').trim();
-  const initialDialCode = initialPhoneStr.startsWith('+') ? initialPhoneStr.split(' ')[0] : (currentPlace.country ? (getCountryDialInfo(currentPlace.country)?.dialCode || '+1') : '+1');
+  const initialDialCode = initialPhoneStr.startsWith('+') ? initialPhoneStr.split(' ')[0] : '';
   const initialLocalPhone = initialPhoneStr.startsWith('+') ? (initialPhoneStr.split(' ').slice(1).join(' ') || '') : initialPhoneStr;
 
   const [phoneDialCode, setPhoneDialCode] = useState(initialDialCode);
@@ -4013,8 +4013,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     {localPhone && (
                       <div className="flex items-center justify-between text-[11px] text-zinc-400 pl-1 pt-0.5">
                         <span>
-                          Full Number: <span className="font-bold text-white tracking-wide">{phoneDialCode} {localPhone}</span>
+                          Full Number: <span className="font-bold text-white tracking-wide">{phoneDialCode ? `${phoneDialCode} ` : ''}{localPhone}</span>
                         </span>
+                        {phoneDialCode && (
+                          <button
+                            type="button"
+                            onClick={() => setPhoneDialCode('')}
+                            className="text-[10px] text-zinc-400 hover:text-zinc-200 transition-colors"
+                          >
+                            Clear code
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
