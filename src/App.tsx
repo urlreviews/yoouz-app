@@ -208,6 +208,27 @@ export function App() {
   const [searchResetKey, setSearchResetKey] = useState<number>(0);
   const [recordReviewResetKey, setRecordReviewResetKey] = useState<number>(0);
 
+  // Background Upload state for in-app navigation & bottom progress bar
+  const [backgroundUpload, setBackgroundUpload] = useState<{
+    isPublishing: boolean;
+    progress: number;
+    placeName: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!backgroundUpload?.isPublishing) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      const msg = "Publishing... Keep Yoouz open until 100% complete.";
+      e.returnValue = msg;
+      return msg;
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [backgroundUpload?.isPublishing]);
+
   // 3. Drawers & Modals States
     const previousSectionRef = useRef<NavSection | null>(null);
   const previousVideoIndexRef = useRef<number>(0);
@@ -6507,7 +6528,47 @@ export function App() {
         onPublishVideoReview={handlePublishVideoReview}
         currentUser={currentUser}
         onAddPlace={handleUpdatePlace}
+        onStartBackgroundUpload={(placeName, progress) => {
+          setBackgroundUpload({ isPublishing: true, progress, placeName });
+        }}
+        onUpdateBackgroundUpload={(progress) => {
+          setBackgroundUpload((prev) => prev ? { ...prev, progress } : null);
+        }}
+        onCompleteBackgroundUpload={() => {
+          setBackgroundUpload(null);
+        }}
       />
+
+      {/* Background Upload Bottom Progress Bar with Clear Guidance */}
+      {backgroundUpload?.isPublishing && (
+        <div className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-[420px] z-50 bg-zinc-950/95 backdrop-blur-xl text-white rounded-2xl p-4 border border-zinc-800 shadow-2xl animate-in slide-in-from-bottom-3 duration-300 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-white truncate">
+                  Publishing review for {backgroundUpload.placeName}...
+                </p>
+                <p className="text-[11px] text-amber-400/90 font-medium">
+                  Publishing... Keep Yoouz open until 100% complete.
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold text-zinc-300 shrink-0">
+              {Math.round(backgroundUpload.progress)}%
+            </span>
+          </div>
+
+          <div className="w-full bg-zinc-900 rounded-full h-2 overflow-hidden border border-zinc-800">
+            <div
+              className="bg-gradient-to-r from-amber-500 to-amber-400 h-full transition-all duration-300 rounded-full"
+              style={{ width: `${backgroundUpload.progress}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <GlobalUploadToast />
       <PWAInstallPrompt />

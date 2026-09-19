@@ -40,6 +40,9 @@ interface CopoCreateModalProps {
   onPublishVideoReview: (review: VideoReview) => void;
   currentUser?: UserProfile | null;
   onAddPlace?: (place: Place) => void;
+  onStartBackgroundUpload?: (placeName: string, progress: number) => void;
+  onUpdateBackgroundUpload?: (progress: number) => void;
+  onCompleteBackgroundUpload?: () => void;
 }
 
 export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
@@ -50,7 +53,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   preselectedPlace,
   onPublishVideoReview,
   currentUser,
-  onAddPlace
+  onAddPlace,
+  onStartBackgroundUpload,
+  onUpdateBackgroundUpload,
+  onCompleteBackgroundUpload
 }) => {
   const { t, isRTL } = useLanguage();
   const [step, setStep] = useState<1 | 2>(1);
@@ -129,7 +135,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const handleUploadBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      const promptMessage = "Publishing video review in progress... If you leave or reload this page, your video review will not be saved.";
+      const promptMessage = "Publishing... Keep Yoouz open until 100% complete.";
       e.returnValue = promptMessage;
       return promptMessage;
     };
@@ -141,11 +147,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   }, [isPublishing]);
 
   const handleAttemptClose = () => {
-    if (isPublishing) {
-      if (!window.confirm("Publishing is in progress. Closing now will cancel your video upload. Are you sure you want to exit?")) {
-        return;
-      }
-    }
+    // Allow closing the record modal and continuing in-app navigation while upload proceeds in background
     onClose();
   };
 
@@ -744,6 +746,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     setIsPublishing(true);
     setUploadProgress(10);
+    onStartBackgroundUpload?.(selectedPlace.name, 10);
 
     let finalThumbnail = videoThumbnail || "";
 
@@ -795,7 +798,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         reviewId,
         (progress: any) => {
           const pct = typeof progress === "number" ? progress : progress.percent;
-          setUploadProgress(Math.max(15, Math.min(95, pct)));
+          const clamped = Math.max(15, Math.min(95, pct));
+          setUploadProgress(clamped);
+          onUpdateBackgroundUpload?.(clamped);
         },
         visualPayload || undefined
       );
@@ -809,6 +814,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       if (modResult && !modResult.isSafe) {
         setIsPublishing(false);
         setUploadProgress(0);
+        onCompleteBackgroundUpload?.();
         setRecordedVideoBlob(null);
         setRecordedVideoUrl(null);
         setVideoThumbnail(null);
@@ -830,12 +836,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       console.warn("Server video upload notice:", uploadErr);
       setIsPublishing(false);
       setUploadProgress(0);
+      onCompleteBackgroundUpload?.();
       alert("Video upload failed. Please check your connection and try again.");
       return;
     }
 
 
     setUploadProgress(100);
+    onUpdateBackgroundUpload?.(100);
+    onCompleteBackgroundUpload?.();
 
     const placeDomain = extractCleanDomain(selectedPlace.website || selectedPlace.name || selectedPlace.id);
     const cleanPlaceName = formatBusinessName(selectedPlace.name || placeDomain) || selectedPlace.name;
