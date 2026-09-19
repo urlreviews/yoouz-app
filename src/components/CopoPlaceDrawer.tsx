@@ -386,13 +386,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place.id, place.website, place.description, place.name, drawerDomain, reviewBannerUrl, onUpdatePlace, place]);
 
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
-  const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg";
+  const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
 
   // Helper to check for broken/placeholder/stale banners
   const isBadBanner = (url?: string | null) => {
     if (!url) return true;
     const u = url.toLowerCase();
-    return u.includes('yoouz.com/og-banner.png') || u.includes('placeholder') || u.includes('mock') || u.includes('unsplash.com');
+    return u.includes('yoouz.com/og-banner.png') || u.includes('placeholder') || u.includes('mock') || u.includes('unsplash.com') || u.includes('1789810172562');
   };
 
   const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (isYoouzPlace ? YOOUZ_CDN_BANNER : "");

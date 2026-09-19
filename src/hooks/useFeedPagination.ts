@@ -517,6 +517,8 @@ export function useFeedPagination() {
               });
             } else if (payload.type === "places_purged") {
               window.dispatchEvent(new CustomEvent("copo-places-purged"));
+            } else if (payload.type === "place_updated" && payload.place) {
+              window.dispatchEvent(new CustomEvent("copo-place-updated", { detail: { place: payload.place } }));
             } else if (payload.type === "user_deleted") {
               const uIds = Array.isArray(payload.userIds) ? payload.userIds : [payload.userId, payload.email, payload.name, payload.handle].filter(Boolean);
               window.dispatchEvent(new CustomEvent("copo-user-deleted", { detail: { userIds: uIds, email: payload.email, name: payload.name, handle: payload.handle } }));

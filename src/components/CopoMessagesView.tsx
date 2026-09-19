@@ -38,6 +38,7 @@ import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
 import { deduplicateChatHistory } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
 
 interface CopoMessagesViewProps {
   messages: CopoMessage[];
@@ -351,7 +352,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       map.set(key, {
         id: bestId,
         name: bestName,
-        avatar: bestAvatar || `/api/avatar?name=${encodeURIComponent(bestName)}&background=1a73e8&color=fff`,
+        avatar: getSafeAvatarUrl(bestAvatar, bestName, bestId),
         email: bestEmail,
         bio: bestBio,
         location: bestLocation,
@@ -1059,10 +1060,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                       >
                         <img
-                          src={thread.senderAvatar || `/api/avatar?name=${encodeURIComponent(thread.senderName || "User")}&background=27272a&color=fff`}
+                          src={getSafeAvatarUrl(thread.senderAvatar, thread.senderName, thread.senderId)}
                           alt={thread.senderName}
                           className="w-11 h-11 rounded-full object-cover border border-zinc-800"
-                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, thread.senderName, thread.senderId); }} /> 
                         {threadBlocked ? (
                           <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-red-500 ring-2 ring-zinc-950 flex items-center justify-center text-white" title="Blocked user">
                             <X className="w-2.5 h-2.5" />
@@ -1132,10 +1133,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                     >
                       <img
-                        src={activeThread.senderAvatar || `/api/avatar?name=${encodeURIComponent(activeThread.senderName || "User")}&background=27272a&color=fff`}
+                        src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
                         alt={activeThread.senderName}
                         className="w-10 h-10 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800"
-                       onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+                        onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }} />
                       <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
                     </button>
 
@@ -1281,10 +1282,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <div className="flex flex-col items-center justify-center text-center py-10 px-4 space-y-4 my-auto animate-in fade-in duration-300">
                       <div className="relative">
                         <img
-                          src={activeThread.senderAvatar || `/api/avatar?name=${encodeURIComponent(activeThread.senderName || "User")}&background=27272a&color=fff`}
+                          src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
                           alt={activeThread.senderName}
                           className="w-20 h-20 rounded-full object-cover border-2 border-zinc-700 shadow-xl"
-                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
+                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }}
                         />
                         <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-zinc-950" />
                       </div>
@@ -1307,10 +1308,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                       >
                         <img
-                          src={activeThread.senderAvatar || `/api/avatar?name=${encodeURIComponent(activeThread.senderName || "User")}&background=27272a&color=fff`}
+                          src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
                           alt={activeThread.senderName}
                           className="w-8 h-8 rounded-full object-cover border border-zinc-800"
-                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }} />
                       </button>
                       <div className="space-y-1 max-w-md">
                         <button
@@ -1343,10 +1344,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                         >
                           <img
-                            src={msg.isMe ? (currentUser?.avatar || msg.senderAvatar) : (msg.senderAvatar || `/api/avatar?name=${encodeURIComponent(msg.senderName || "User")}&background=27272a&color=fff`)}
+                            src={msg.isMe ? getSafeAvatarUrl(currentUser?.avatar || msg.senderAvatar, currentUser?.name || msg.senderName, currentUser?.email) : getSafeAvatarUrl(msg.senderAvatar, msg.senderName, msg.senderId)}
                             alt={msg.isMe ? (currentUser?.name || msg.senderName) : msg.senderName}
                             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
-                           onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, msg.senderName, msg.senderId); }} />
                         </button>
                         <div className={`flex flex-col space-y-1 max-w-sm sm:max-w-md ${msg.isMe ? "items-end text-right" : "items-start text-left"}`}>
                           <button
@@ -1731,14 +1732,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <img
-                        src={recipient.avatar}
+                        src={getSafeAvatarUrl(recipient.avatar, recipient.name, recipient.id)}
                         alt={recipient.name}
                         className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
-                          if (!target.src.includes('/api/avatar')) {
-                            target.src = '/api/avatar?name=User&background=27272a&color=fff';
-                          }
+                          target.src = getSafeAvatarUrl(null, recipient.name, recipient.id);
                         }}
                       />
                       <div className="min-w-0">

@@ -10,7 +10,7 @@ import {
   Sparkles,
   MapPin
 } from "lucide-react";
-import { isAuthorMatch } from "../utils/placeUtils";
+import { isAuthorMatch, getSafeAvatarUrl } from "../utils/placeUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoDiscoverViewProps {
@@ -124,17 +124,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
     };
 
     const getAppropriateAvatar = (name?: string, handle?: string, avatar?: string): string => {
-      if (
-        avatar &&
-        !avatar.includes("dicebear") &&
-        !avatar.includes("unsplash") &&
-        !avatar.includes("/api/videos/") &&
-        !avatar.includes(".mp4") &&
-        !avatar.includes("rev-")
-      ) {
-        return avatar;
-      }
-      return `/api/avatar?name=${encodeURIComponent(name || "User")}&background=27272a&color=fff&bold=true&size=128`;
+      return getSafeAvatarUrl(avatar, name, handle);
     };
 
     // Deep equality check to determine if candidate A and candidate B are the same human creator
@@ -598,11 +588,14 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                     <div className="flex items-center gap-4 min-w-0 flex-1">
                       <div className="relative shrink-0">
                         <img
-                          src={reviewer.author.avatar}
+                          src={getSafeAvatarUrl(reviewer.author.avatar, reviewer.author.name, reviewer.author.handle)}
                           alt={reviewer.author.name}
                           className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 group-hover:scale-105 transition-transform"
                           referrerPolicy="no-referrer"
-                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} 
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.src = getSafeAvatarUrl(null, reviewer.author.name, reviewer.author.handle);
+                          }} 
                         />
                       </div>
                       <div className="min-w-0 flex-1">

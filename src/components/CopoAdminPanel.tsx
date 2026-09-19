@@ -1855,7 +1855,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     business_comments_messages_sync_guard: "33. Business Video Review Comments & Direct Messages Notification Sync Guard",
                     business_universal_notifications_all_interactions_guard: "34. Business Universal All-Interaction Notifications & Direct Message Delivery Guard",
                     business_profile_banner_logo_database_live_sync_guard: "35. Business Profile Logo, Cover Banner & Info Live Database Storage Guard",
-                    google_maps_business_name_resolution_anti_break_guard: "36. Google Maps Entity Resolution, Embedded Maps & Directions Anti-Break Guard"
+                    google_maps_business_name_resolution_anti_break_guard: "36. Google Maps Entity Resolution, Embedded Maps & Directions Anti-Break Guard",
+                    universal_avatar_deterministic_sync_guard: "37. Universal Avatar Parity & Deterministic Color Sync Guard",
+                    business_cover_banner_sync_storage_guard: "38. Business Profile Cover Banner Instant Sync & Storage Asset Purge Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1894,7 +1896,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     business_comments_messages_sync_guard: "💬",
                     business_universal_notifications_all_interactions_guard: "🔔",
                     business_profile_banner_logo_database_live_sync_guard: "🖼️",
-                    google_maps_business_name_resolution_anti_break_guard: "🗺️"
+                    google_maps_business_name_resolution_anti_break_guard: "🗺️",
+                    universal_avatar_deterministic_sync_guard: "🎨",
+                    business_cover_banner_sync_storage_guard: "🖼️"
                   };
 
                   return (

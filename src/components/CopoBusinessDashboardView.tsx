@@ -531,7 +531,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               body: JSON.stringify({
                 imageBase64: compressed,
                 imageType: "banner",
-                placeId: targetId
+                placeId: targetId,
+                previousUrl: profileBannerUrl
               })
             });
             if (uploadRes.ok) {
@@ -609,11 +610,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       setProfileLogoUrl(currentPlace.logoUrl);
     }
     const resolvedBanner = (currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0];
-    if (resolvedBanner && !resolvedBanner.includes('yoouz.com/og-banner.png')) {
+    if (resolvedBanner && !resolvedBanner.includes('yoouz.com/og-banner.png') && !resolvedBanner.includes('1789810172562')) {
       setProfileBannerUrl(resolvedBanner);
       setBannerPreviewFailed(false);
     } else if (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz')) {
-      setProfileBannerUrl("https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg");
+      setProfileBannerUrl("https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg");
       setBannerPreviewFailed(false);
     }
 
@@ -3825,6 +3826,33 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <Camera className="w-6 h-6" />
                         </div>
                       </div>
+                      {profileBannerUrl && (
+                        <button 
+                          type="button" 
+                          id="btn-remove-banner-badge"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const oldUrl = profileBannerUrl;
+                            setProfileBannerUrl("");
+                            setBannerPreviewFailed(false);
+                            try {
+                              await fetch('/api/business/delete-image', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  url: oldUrl,
+                                  placeId: selectedPlaceId || currentPlace.id || 'yoouz.com',
+                                  type: 'banner'
+                                })
+                              });
+                            } catch (err) {}
+                          }}
+                          className="absolute bottom-2.5 right-12 p-2 bg-rose-900/80 hover:bg-rose-800 text-rose-200 rounded-full shadow-lg transition-colors cursor-pointer border border-rose-700/50"
+                          title="Remove cover banner"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button 
                         type="button" 
                         id="btn-upload-banner-badge"

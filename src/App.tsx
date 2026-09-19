@@ -2735,7 +2735,8 @@ export function App() {
     const handlePlaceUpdatedEvent = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail) {
-        const updated = customEvent.detail as Place;
+        const raw = customEvent.detail;
+        const updated = (raw.place || raw) as Place;
         if (updated && updated.id) {
           handleUpdatePlace(updated);
         }
@@ -2798,11 +2799,11 @@ export function App() {
           // If existing place is missing banner, logo, or website, enrich it from the video review or known metadata!
           const existing = next[idx];
           const isYoouz = reviewDomain === "yoouz.com" || reviewDomain === "yoouz" || existing.id?.toLowerCase().includes("yoouz") || existing.name?.toLowerCase() === "yoouz";
-          const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg";
+          const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
           
           let reviewBanner = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage || knownBanner;
-          if (reviewBanner && reviewBanner.includes("yoouz.com/og-banner.png")) {
-            reviewBanner = YOOUZ_CDN_BANNER;
+          if (reviewBanner && (reviewBanner.includes("yoouz.com/og-banner.png") || reviewBanner.includes("1789810172562"))) {
+            reviewBanner = isYoouz ? YOOUZ_CDN_BANNER : "";
           }
           const reviewLogo = v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") && !v.placeLogoUrl.includes("gstatic.com") && !v.placeLogoUrl.includes("faviconV2") ? v.placeLogoUrl : (knownLogo || existing.logoUrl);
           const reviewWebsite = v.placeWebsite || (reviewDomain && reviewDomain.includes(".") ? `https://${reviewDomain}` : "");
@@ -2810,14 +2811,14 @@ export function App() {
           const effectiveWeb = currentWebsite || reviewWebsite || (existing.brandDomain && existing.brandDomain.includes(".") ? `https://${existing.brandDomain}` : "");
 
           let existingBanner = existing.bannerUrl;
-          if (existingBanner && existingBanner.includes("yoouz.com/og-banner.png")) {
-            existingBanner = YOOUZ_CDN_BANNER;
+          if (existingBanner && (existingBanner.includes("yoouz.com/og-banner.png") || existingBanner.includes("1789810172562"))) {
+            existingBanner = isYoouz ? YOOUZ_CDN_BANNER : "";
           }
           let existingOg = existing.ogImage;
-          if (existingOg && existingOg.includes("yoouz.com/og-banner.png")) {
-            existingOg = YOOUZ_CDN_BANNER;
+          if (existingOg && (existingOg.includes("yoouz.com/og-banner.png") || existingOg.includes("1789810172562"))) {
+            existingOg = isYoouz ? YOOUZ_CDN_BANNER : "";
           }
-          if (isYoouz && (!existingBanner || existingBanner.includes("yoouz.com/og-banner.png"))) {
+          if (isYoouz && (!existingBanner || existingBanner.includes("yoouz.com/og-banner.png") || existingBanner.includes("1789810172562"))) {
             existingBanner = YOOUZ_CDN_BANNER;
           }
 

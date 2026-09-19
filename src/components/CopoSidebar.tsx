@@ -20,6 +20,7 @@ import { NavSection, UserProfile } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
 import { LanguageSelectorModal } from "./LanguageSelectorModal";
 import { CopoMobileBottomNav } from "./CopoMobileBottomNav";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
 
 interface CopoSidebarProps {
   activeSection: NavSection;
@@ -150,13 +151,17 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     <div className="relative flex items-center justify-center">
                       {isProfileItem ? (
                         <img
-                          src={currentUser!.avatar}
-                          alt={currentUser!.name || "Profile"}
+                          src={getSafeAvatarUrl(currentUser?.avatar, currentUser?.name, (currentUser as any)?.handle || currentUser?.email)}
+                          alt={currentUser?.name || "Profile"}
                           className={`w-5 h-5 rounded-full object-cover shrink-0 ring-1.5 ${
                             isActive ? "ring-white" : "ring-white/40"
                           }`}
                           referrerPolicy="no-referrer"
-                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.src = getSafeAvatarUrl(null, currentUser?.name, (currentUser as any)?.handle || currentUser?.email);
+                          }}
+                        />
                       ) : (
                         <Icon
                           className={`w-5 h-5 shrink-0 transition-colors ${

@@ -152,21 +152,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       ((authorName && (authorName.toLowerCase() === "you" || (currentUser?.name && authorName.toLowerCase() === currentUser.name.toLowerCase()))) ||
         (currentUser?.email && authorHandle && currentUser.email.split("@")[0].toLowerCase() === authorHandle.toLowerCase()));
 
-    if (isSelf && currentUser?.avatar && !currentUser.avatar.includes("photo-1534528741775") && !currentUser.avatar.includes("photo-1535713875002")) {
-      return currentUser.avatar;
-    }
-
-    if (
-      authorAvatar &&
-      !authorAvatar.includes("unsplash.com") &&
-      !authorAvatar.includes("photo-1534528741775") &&
-      !authorAvatar.includes("photo-1535713875002")
-    ) {
-      return authorAvatar;
-    }
-
     const nameToUse = formatCommentAuthorName(authorName, isOwner);
-    return getSafeAvatarUrl(authorAvatar, nameToUse, authorHandle);
+    const candidate = isSelf ? (currentUser?.avatar || authorAvatar) : authorAvatar;
+    return getSafeAvatarUrl(candidate, nameToUse, authorHandle);
   };
 
   // Determine if logged-in user is the creator of this video review

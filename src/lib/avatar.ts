@@ -53,34 +53,74 @@ export function getFirstLetter(nameOrEmail?: string): string {
 }
 
 /**
- * Normalizes any user identifier (Name, Handle, Email) into a canonical seed string.
- * E.g. "Ben Blue", "@benblue", "benblue", "ben.blue@gmail.com" all normalize to "benblue".
+ * Normalizes any user identifier (Name, Handle, Email, User ID) into a canonical seed string.
+ * E.g. "Steven Akan", "Steven", "@stevenakan", "stevenakan", "avr6566gd@gmail.com" all normalize to "stevenakan".
+ * "Ben Blue", "Ben", "@benblue", "benblue", "aouisesmee@gmail.com" all normalize to "benblue".
  */
 export function normalizeAvatarSeed(input?: string): string {
   if (!input || typeof input !== 'string') return 'user';
   let str = input.trim().toLowerCase();
   if (str.startsWith('@')) str = str.substring(1);
   if (str.includes('@')) str = str.split('@')[0].trim();
-  // Remove special characters / spaces so "Ben Blue" and "@benblue" map to identical seed "benblue"
+  
+  // Clean alphanumeric characters
   const clean = str.replace(/[^a-z0-9]/g, '');
-  return clean || 'user';
+  if (!clean) return 'user';
+
+  // Canonical clusters for known community reviewer identities
+  if (
+    clean === 'stevenakan' ||
+    clean === 'steven' ||
+    clean === 'avr6566gd' ||
+    clean === 'steven_akan' ||
+    clean.includes('stevenakan') ||
+    clean === 'avtertuop'
+  ) {
+    return 'stevenakan';
+  }
+
+  if (
+    clean === 'benblue' ||
+    clean === 'ben' ||
+    clean.includes('aouisesmee') ||
+    clean.includes('aouisemee') ||
+    clean.includes('aouisesme')
+  ) {
+    return 'benblue';
+  }
+
+  if (
+    clean === 'bizriv' ||
+    clean.includes('louis42111')
+  ) {
+    return 'bizriv';
+  }
+
+  return clean;
 }
 
 /**
- * Returns Google-style palette style for a given name, handle or seed
+ * Returns Google-style palette style for a given name, handle or seed.
+ * Prioritizes colorSeed (e.g. handle/email/id) when available for 100% stable color parity.
  */
-export function getAvatarColor(nameOrSeed?: string, fallbackSeed?: string): { bg: string; text: string } {
-  const seed = normalizeAvatarSeed(nameOrSeed || fallbackSeed || 'user');
+export function getAvatarColor(nameOrSeed?: string, colorSeed?: string): { bg: string; text: string; name: string } {
+  let seed = 'user';
+  if (colorSeed && colorSeed.trim() !== '' && colorSeed !== 'user') {
+    seed = normalizeAvatarSeed(colorSeed);
+  } else if (nameOrSeed && nameOrSeed.trim() !== '') {
+    seed = normalizeAvatarSeed(nameOrSeed);
+  }
   const index = hashString(seed) % GOOGLE_AVATAR_PALETTE.length;
   return GOOGLE_AVATAR_PALETTE[index];
 }
 
 /**
  * Generate a standalone SVG Data URI for an initial avatar
- * Compatible everywhere as an <img> src or CSS background
+ * Compatible everywhere as an <img> src or CSS background.
+ * Always renders a full-square (no embedded rx) so CSS border-radius applies smoothly.
  */
 export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string): string {
-  const letter = getFirstLetter(nameOrSeed);
+  const letter = getFirstLetter(nameOrSeed || colorSeed);
   const color = getAvatarColor(nameOrSeed, colorSeed);
   const fontSize = Math.round(size * 0.52);
 

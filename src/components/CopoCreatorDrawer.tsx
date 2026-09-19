@@ -1353,7 +1353,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       ) : (
                         <div
                           className="w-full h-full rounded-[16px] sm:rounded-[18px] flex items-center justify-center shadow-inner select-none"
-                          style={{ backgroundColor: getAvatarColor(activeName).bg }}
+                          style={{ backgroundColor: getAvatarColor(activeName, (currentUser as any)?.handle || author.handle || (currentUser as any)?.email).bg }}
                         >
                           <span className="font-black text-3xl sm:text-4xl text-white drop-shadow-md font-sans">
                             {getFirstLetter(activeName)}
