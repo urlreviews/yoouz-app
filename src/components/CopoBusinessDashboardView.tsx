@@ -2048,8 +2048,40 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           </div>
         </div>
 
-        {/* Sidebar Footer Spacer */}
-        <div className="pt-2 border-t border-zinc-800/80 flex flex-col shrink-0 bg-zinc-950" />
+        {/* Footer & Legal Links (Matching Homepage Sidebar) */}
+        <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
+          <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
+            <button
+              type="button"
+              onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate("home")}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+            >
+              {t("legal.privacy", "Privacy")}
+            </button>
+            <span className="text-zinc-600">•</span>
+            <button
+              type="button"
+              onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate("home")}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+            >
+              {t("legal.terms", "Terms")}
+            </button>
+            <span className="text-zinc-600">•</span>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onNavigate("more");
+              }}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+            >
+              {t("legal.about", "About")}
+            </button>
+          </div>
+          <p className="text-[11px] text-zinc-200 font-normal">
+            {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
+          </p>
+        </div>
       </aside>
         
         {/* Right side content wrapper */}
@@ -2203,6 +2235,46 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <span>{t("business.viewPublicListing", "View Public Listing")}</span>
                     </button>
                     
+                    <div className="h-px bg-zinc-800 my-1" />
+
+                    <div className="px-4 py-1.5 flex items-center gap-2 text-[11px] font-medium text-zinc-400">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAccountDropdown(false);
+                          if (onOpenLegal) onOpenLegal("privacy");
+                          else onNavigate("home");
+                        }}
+                        className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                      >
+                        {t("legal.privacy", "Privacy")}
+                      </button>
+                      <span className="text-zinc-600">•</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAccountDropdown(false);
+                          if (onOpenLegal) onOpenLegal("terms");
+                          else onNavigate("home");
+                        }}
+                        className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                      >
+                        {t("legal.terms", "Terms")}
+                      </button>
+                      <span className="text-zinc-600">•</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAccountDropdown(false);
+                          onClose();
+                          onNavigate("more");
+                        }}
+                        className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                      >
+                        {t("legal.about", "About")}
+                      </button>
+                    </div>
+
                     <div className="h-px bg-zinc-800 my-1" />
                     
                     <button 
@@ -4136,6 +4208,40 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
             )}
 
+            {/* Mobile & Bottom Page Footer Links */}
+            <div className="md:hidden pt-8 pb-12 flex flex-col items-center justify-center gap-2 text-center text-zinc-400">
+              <div className="flex items-center justify-center gap-2 text-xs font-medium text-zinc-200">
+                <button
+                  type="button"
+                  onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate("home")}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                >
+                  {t("legal.privacy", "Privacy")}
+                </button>
+                <span className="text-zinc-600">•</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate("home")}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                >
+                  {t("legal.terms", "Terms")}
+                </button>
+                <span className="text-zinc-600">•</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onNavigate("more");
+                  }}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                >
+                  {t("legal.about", "About")}
+                </button>
+              </div>
+              <p className="text-[11px] text-zinc-400 font-normal">
+                {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
+              </p>
+            </div>
 
           </div>
         </main>
