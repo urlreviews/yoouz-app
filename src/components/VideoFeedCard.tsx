@@ -754,7 +754,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       >
         {/* Left side: Navigation / Menu + Top Business Badge */}
         <div className="pointer-events-auto flex items-center gap-2 max-w-[calc(100%-60px)]">
-          {(onGoBack || onCloseEmbed || isEmbed) ? (
+          {(onGoBack || onCloseEmbed || isEmbed) && (
             <button
               type="button"
               id={`btn-feed-back-${video.id}`}
@@ -798,29 +798,29 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             >
               <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
             </button>
-          ) : (
-            onOpenMenu && (
-              <button
-                type="button"
-                id={`btn-mobile-menu-${video.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenMenu();
-                }}
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
-                className={`relative flex ${forceShowMenu ? '' : 'md:hidden'} w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 items-center justify-center text-white shadow-xl transition-all cursor-pointer select-none shrink-0`}
-                aria-label={t("nav.openMenu", "Open menu")}
-                title={t("nav.openMenu", "Open menu")}
-              >
-                <Menu className="w-5 h-5 text-white stroke-[2.2]" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white font-black text-[10px] flex items-center justify-center border-2 border-black shadow-lg animate-pulse">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </button>
-            )
+          )}
+
+          {onOpenMenu && (
+            <button
+              type="button"
+              id={`btn-mobile-menu-${video.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenMenu();
+              }}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              className={`relative flex ${forceShowMenu ? '' : 'md:hidden'} w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 items-center justify-center text-white shadow-xl transition-all cursor-pointer select-none shrink-0`}
+              aria-label={t("nav.openMenu", "Open menu")}
+              title={t("nav.openMenu", "Open menu")}
+            >
+              <Menu className="w-5 h-5 text-white stroke-[2.2]" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white font-black text-[10px] flex items-center justify-center border-2 border-black shadow-lg animate-pulse">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
           )}
 
           {/* Top Business Header Badge */}

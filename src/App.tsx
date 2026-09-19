@@ -3094,6 +3094,47 @@ export function App() {
   const activeFeedVideos = useMemo(() => {
     // Filter out hidden/blocked videos
     const visibleVideos = videos.filter((v) => !hiddenVideoIds.includes(v.id));
+
+    if (embedTargetId) {
+      const cleanSlug = embedTargetId.toLowerCase().trim();
+      const isYoouz = cleanSlug === "yoouz.com" || cleanSlug === "yoouz";
+
+      // 1. Resolve specific video if embedTargetId matches a specific video ID directly
+      const specificVideo = visibleVideos.find((v) => v && (v.id === embedTargetId || v.id.toLowerCase() === cleanSlug)) || null;
+
+      // 2. Resolve matching videos for the place/business
+      const matched = visibleVideos.filter((v) => {
+        if (!v) return false;
+        if (isYoouz) {
+          return (
+            v.placeId === "yoouz.com" ||
+            v.placeId === "place-custom-yoouz-com" ||
+            v.placeId === "place-custom" ||
+            (v.placeName && v.placeName.toLowerCase().includes("yoouz"))
+          );
+        }
+        const vSlug = getPlaceSlug(v.placeId || v.placeName);
+        return (
+          vSlug === cleanSlug ||
+          v.placeId === cleanSlug ||
+          (v.placeName && v.placeName.toLowerCase().trim() === cleanSlug)
+        );
+      });
+
+      let result = matched;
+      if (specificVideo) {
+        result = [specificVideo, ...matched.filter((v) => v.id !== specificVideo.id)];
+      }
+
+      if (result.length > 0) {
+        return result;
+      }
+      if (specificVideo) {
+        return [specificVideo];
+      }
+      return visibleVideos;
+    }
+
     if (fullscreenFeedContext) {
       if (fullscreenFeedContext.type === "creator" && fullscreenFeedContext.authorData) {
         return visibleVideos.filter(v => isAuthorMatch(v, fullscreenFeedContext.authorData!));
@@ -3150,7 +3191,7 @@ export function App() {
     }
 
     return visibleVideos;
-  }, [videos, activeSubTab, hiddenVideoIds, fullscreenFeedContext, isPlaceView, drawerPlace, isCreatorView, selectedAuthorForDrawer, activeSection, userVideos]);
+  }, [videos, activeSubTab, hiddenVideoIds, fullscreenFeedContext, isPlaceView, drawerPlace, isCreatorView, selectedAuthorForDrawer, activeSection, userVideos, embedTargetId]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
@@ -5174,19 +5215,21 @@ export function App() {
   }, [activeCommentPlace, activeCommentVideo]);
 
   const seoTitle = useMemo(() => {
+    if (embedTargetId) return `Embedded Video Review Player for ${embedTargetId} - Yoouz`;
     if (activeSection === 'business') return 'Yoouz for Business - Claim Your Profile & Leverage Video Reviews';
     if (activeSection === 'home' && activeSubTab === 'following') return 'Following - Your Favorite Reviewers on Yoouz';
     if (activeSection === 'home' && activeSubTab === 'discover') return 'Discover Authentic Video Reviews on Yoouz';
     if (activeSection === 'admin') return 'Yoouz Admin Dashboard';
     return 'Yoouz - Real Video Reviews by Real People | Authentic Business Reviews';
-  }, [activeSection, activeSubTab]);
+  }, [activeSection, activeSubTab, embedTargetId]);
 
   const seoDescription = useMemo(() => {
+    if (embedTargetId) return `Watch authentic 60-second video reviews for ${embedTargetId} on Yoouz.`;
     if (activeSection === 'business') return 'Claim your business profile on Yoouz, monitor authentic 60-second video reviews, and connect with your customers through authentic video feedback.';
     if (activeSection === 'home' && activeSubTab === 'following') return 'Watch the latest video reviews from the creators and local businesses you follow on Yoouz.';
     if (activeSection === 'home' && activeSubTab === 'discover') return 'Explore a continuous feed of authentic 60-second video reviews. Discover the best local businesses, food, and experiences near you.';
     return 'Yoouz is the #1 authentic video review network. Discover local businesses, restaurants, cafes, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.';
-  }, [activeSection, activeSubTab]);
+  }, [activeSection, activeSubTab, embedTargetId]);
 
   const seoUrl = useMemo(() => {
     if (typeof window === 'undefined') return 'https://yoouz.com';
@@ -5194,7 +5237,7 @@ export function App() {
     return url.origin + url.pathname + url.search;
   }, [activeSection, activeSubTab]);
 
-  if (embedTargetId) {
+  if (false && embedTargetId) {
     return (
       <div
         id="copo-app-root"
@@ -5584,10 +5627,16 @@ export function App() {
             if (section === "record_review") {
               setRecordReviewResetKey((prev) => prev + 1);
             }
-            if (section === "home" || section === "more") {
+             if (section === "home" || section === "more") {
               setSelectedPlaceIdForDrawer(null);
               setSelectedAuthorForDrawer(null);
               if (section === "home") {
+                if (embedTargetId) {
+                  setEmbedTargetId(null);
+                  try {
+                    window.history.replaceState(null, "", "/");
+                  } catch (e) {}
+                }
                 setCurrentVideoIndex(0);
                 setActiveSubTab("discover");
                 setActiveSection("home");
@@ -5703,8 +5752,56 @@ export function App() {
               onToggleLike={handleToggleLike}
               onToggleBookmark={handleToggleBookmark}
               onToggleFollow={handleToggleFollow}
-              onGoBack={fullscreenFeedContext ? handleFeedGoBack : undefined}
-              feedContextTitle={fullscreenFeedContext?.title || (isCreatorView && selectedAuthorForDrawer ? selectedAuthorForDrawer.name : isPlaceView && drawerPlace ? drawerPlace.name : undefined)}
+              onGoBack={
+                embedTargetId
+                  ? () => {
+                      setEmbedTargetId(null);
+                      setSelectedPlaceIdForDrawer(null);
+                      setSelectedAuthorForDrawer(null);
+                      try {
+                        if (window.parent && window.parent !== window) {
+                          window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+                          window.parent.postMessage({ type: "YOOUZ_CLOSE_MODAL", action: "close" }, "*");
+                          window.parent.postMessage("yoouz_close", "*");
+                        }
+                      } catch (err) {}
+                      if (document.referrer && !document.referrer.includes(window.location.host)) {
+                        window.location.href = document.referrer;
+                      } else {
+                        try {
+                          window.history.replaceState(null, "", "/");
+                        } catch (err) {}
+                      }
+                    }
+                  : fullscreenFeedContext
+                  ? handleFeedGoBack
+                  : undefined
+              }
+              onCloseEmbed={
+                embedTargetId
+                  ? () => {
+                      setEmbedTargetId(null);
+                      setSelectedPlaceIdForDrawer(null);
+                      setSelectedAuthorForDrawer(null);
+                      try {
+                        if (window.parent && window.parent !== window) {
+                          window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
+                          window.parent.postMessage({ type: "YOOUZ_CLOSE_MODAL", action: "close" }, "*");
+                          window.parent.postMessage("yoouz_close", "*");
+                        }
+                      } catch (err) {}
+                      if (document.referrer && !document.referrer.includes(window.location.host)) {
+                        window.location.href = document.referrer;
+                      } else {
+                        try {
+                          window.history.replaceState(null, "", "/");
+                        } catch (err) {}
+                      }
+                    }
+                  : undefined
+              }
+              isEmbed={Boolean(embedTargetId)}
+              feedContextTitle={embedTargetId ? embedTargetId : (fullscreenFeedContext?.title || (isCreatorView && selectedAuthorForDrawer ? selectedAuthorForDrawer.name : isPlaceView && drawerPlace ? drawerPlace.name : undefined))}
               onGoHome={handleGoHome}
               onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
               onRecordView={handleRecordVideoView}
