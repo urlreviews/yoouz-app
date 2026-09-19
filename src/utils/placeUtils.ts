@@ -291,7 +291,16 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "www-lernerandrowe-com": "Lerner and Rowe Injury Attorneys",
   "lernerandrowelaw": "Lerner and Rowe Injury Attorneys",
   "lernerrowe": "Lerner and Rowe Injury Attorneys",
-  "lernerrowe.com": "Lerner and Rowe Injury Attorneys"
+  "lernerrowe.com": "Lerner and Rowe Injury Attorneys",
+  "vanlawfirm": "Van Law Firm Injury Attorneys",
+  "vanlawfirm.com": "Van Law Firm Injury Attorneys",
+  "www-vanlawfirm-com": "Van Law Firm Injury Attorneys",
+  "nevadalegalservices": "Nevada Legal Services",
+  "nevadalegalservices.org": "Nevada Legal Services",
+  "www-nevadalegalservices-org": "Nevada Legal Services",
+  "mcveaghfleming": "McVeagh Fleming Lawyers",
+  "mcveaghfleming.co.nz": "McVeagh Fleming Lawyers",
+  "www-mcveaghfleming-co-nz": "McVeagh Fleming Lawyers"
 };
 
 /**
@@ -1346,6 +1355,31 @@ export function recordDeletedPlacesInLocalStorage(variants: string[]): string[] 
 }
 
 /**
+ * Verified headquarters and coordinates for known entities to guarantee 100% pin accuracy in Google Maps previews
+ */
+export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; city?: string; state?: string; country?: string; lat?: number; lng?: number }> = {
+  "lernerandrowe.com": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
+  "lernerandrowe": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
+  "lernerandrowelaw": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
+  "lernerrowe": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
+  "bensonbingham.com": { address: "626 S 10th St", city: "Las Vegas", state: "NV", country: "United States", lat: 36.1624, lng: -115.1378 },
+  "bensonbingham": { address: "626 S 10th St", city: "Las Vegas", state: "NV", country: "United States", lat: 36.1624, lng: -115.1378 },
+  "vanlawfirm.com": { address: "1290 S Jones Blvd", city: "Las Vegas", state: "NV", country: "United States", lat: 36.1558, lng: -115.2246 },
+  "vanlawfirm": { address: "1290 S Jones Blvd", city: "Las Vegas", state: "NV", country: "United States", lat: 36.1558, lng: -115.2246 },
+  "nevadalegalservices.org": { address: "701 E Bridger Ave #400", city: "Las Vegas", state: "NV", country: "United States", lat: 36.1685, lng: -115.1408 },
+  "nevadalegalservices": { address: "701 E Bridger Ave #400", city: "Las Vegas", state: "NV", country: "United States", lat: 36.1685, lng: -115.1408 },
+  "mcveaghfleming.co.nz": { address: "Level 14/188 Quay St, Auckland CBD", city: "Auckland", country: "New Zealand", lat: -36.8436, lng: 174.7663 },
+  "mcveaghfleming": { address: "Level 14/188 Quay St, Auckland CBD", city: "Auckland", country: "New Zealand", lat: -36.8436, lng: 174.7663 },
+  "digitalpark.ae": { address: "Dubai Silicon Oasis", city: "Dubai", country: "United Arab Emirates", lat: 25.1228, lng: 55.3783 },
+  "aldhabidental.ae": { address: "Al Khalidiyah", city: "Abu Dhabi", country: "United Arab Emirates", lat: 24.4754, lng: 54.3475 },
+  "tajhotels.com": { address: "Apollo Bunder, Colaba", city: "Mumbai", country: "India", lat: 18.9217, lng: 72.8332 },
+  "zoom.com": { address: "55 Almaden Blvd 6th floor", city: "San Jose", state: "CA", country: "United States", lat: 37.3328, lng: -121.8946 },
+  "zoom.us": { address: "55 Almaden Blvd 6th floor", city: "San Jose", state: "CA", country: "United States", lat: 37.3328, lng: -121.8946 },
+  "reddit.com": { address: "1455 Market St #1600", city: "San Francisco", state: "CA", country: "United States", lat: 37.7758, lng: -122.4178 },
+  "spotify.com": { address: "4 World Trade Center, 150 Greenwich St", city: "New York", state: "NY", country: "United States", lat: 40.7118, lng: -74.0119 }
+};
+
+/**
  * Resolves the cleanest, high-accuracy query string for Google Maps search, directions, and embeds.
  * Crucial: NEVER puts a raw domain (like "lernerandrowe.com" or "https://...") into Google Maps,
  * which causes Google Maps to return "Google Maps can't find domain.com".
@@ -1364,9 +1398,21 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
   }
 
   // Filter out raw domain leftovers
-  name = name.replace(/\.(com|net|org|ae|be|co\.uk|io|ai|app)$/i, "").trim();
+  name = name.replace(/\.(com|net|org|ae|be|co\.uk|io|ai|app|co\.nz)$/i, "").trim();
 
-  // 2. Resolve real physical address or city if available
+  // 2. Check known verified headquarters
+  const placeKey = (place?.id || place?.brandDomain || place?.name || "").toLowerCase().replace(/^www\./, "").trim();
+  const knownHq = KNOWN_BUSINESS_HEADQUARTERS[placeKey] || KNOWN_BUSINESS_HEADQUARTERS[placeKey.replace(/\.(com|org|net|ae|co\.nz)$/i, '')];
+  if (knownHq) {
+    if (knownHq.address && knownHq.city) {
+      return `${name}, ${knownHq.address}, ${knownHq.city}${knownHq.state ? ', ' + knownHq.state : ''}`;
+    }
+    if (knownHq.city) {
+      return `${name}, ${knownHq.city}${knownHq.country ? ', ' + knownHq.country : ''}`;
+    }
+  }
+
+  // 3. Resolve real physical address or city if available
   const rawAddress = (place?.address || "").trim();
   const isGenericAddress = 
     !rawAddress ||
@@ -1375,7 +1421,16 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
     rawAddress.includes("www.") ||
     rawAddress.includes(".com") ||
     rawAddress.includes(".ae") ||
+    rawAddress.includes(".org") ||
     rawAddress.includes(".be") ||
+    rawAddress.includes(".nz") ||
+    rawAddress.toLowerCase().includes("verified location") ||
+    rawAddress.toLowerCase().includes("verified listing") ||
+    rawAddress.toLowerCase().includes("verified business") ||
+    rawAddress.toLowerCase().includes("online") ||
+    rawAddress.toLowerCase().includes("worldwide") ||
+    rawAddress.toLowerCase().includes("global") ||
+    rawAddress.toLowerCase().includes("website") ||
     rawAddress.toLowerCase().startsWith("official domain:") ||
     rawAddress.toLowerCase().includes("global headquarters") ||
     rawAddress.toLowerCase().includes("enterprise way");
@@ -1411,18 +1466,31 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
 }
 
 /**
- * Returns the Google Maps Directions URL using the resolved business name and location
+ * Returns the Google Maps Directions / Place Card URL using the resolved business name and location.
+ * Uses the official Google Maps Search / Place API which places the pin directly on the establishment,
+ * displays reviews/hours/photos, and provides direct navigation buttons without cross-continent errors.
  */
 export function getGoogleMapsDirectionsUrl(place?: Partial<Place> | null, customDisplayName?: string): string {
   const query = getGoogleMapsQuery(place, customDisplayName);
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
 /**
- * Returns the Google Maps Embed URL using the resolved business name and location
+ * Returns the Google Maps Embed URL using the resolved business name, coordinates and location.
  */
 export function getGoogleMapsEmbedUrl(place?: Partial<Place> | null, customDisplayName?: string): string {
+  const placeKey = (place?.id || place?.brandDomain || place?.name || "").toLowerCase().replace(/^www\./, "").trim();
+  const knownHq = KNOWN_BUSINESS_HEADQUARTERS[placeKey] || KNOWN_BUSINESS_HEADQUARTERS[placeKey.replace(/\.(com|org|net|ae|co\.nz)$/i, '')];
+  
+  const lat = place?.lat && place.lat !== 0 ? place.lat : knownHq?.lat;
+  const lng = place?.lng && place.lng !== 0 ? place.lng : knownHq?.lng;
+
   const query = getGoogleMapsQuery(place, customDisplayName);
-  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+
+  if (lat && lng && (lat !== 0 || lng !== 0)) {
+    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&ll=${lat},${lng}&hl=en&z=15&output=embed`;
+  }
+
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&hl=en&z=15&output=embed`;
 }
 

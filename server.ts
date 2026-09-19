@@ -4497,14 +4497,14 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
         const autoPlaceId = cleanDomain;
         const logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
         const banner = KNOWN_PLACE_METADATA[cleanDomain]?.bannerUrl || KNOWN_PLACE_METADATA[`www.${cleanDomain}`]?.bannerUrl || "";
-        const capitalizedTitle = cleanDomain.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const capitalizedTitle = formatBusinessName(cleanDomain) || cleanDomain.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
         const autoPlaceDoc = {
           id: autoPlaceId,
           name: capitalizedTitle,
           category: "Website / Business",
           categoryType: "all",
-          address: cleanDomain,
+          address: "",
           city: "Online",
           rating: 5,
           totalReviews: 0,
@@ -7691,7 +7691,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           name: isYoouz ? "Yoouz" : item.title,
           category: isYoouz ? "Video Reviews Platform" : "Website",
           categoryType: "all",
-          address: autoPlaceId,
+          address: "",
           city: isYoouz ? "Worldwide" : "Online",
           country: isYoouz ? "Global" : "",
           lat: 0,
@@ -7722,8 +7722,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-          args: [autoPlaceId, autoPlaceDoc.name, autoPlaceId, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr,
-                 autoPlaceDoc.name, autoPlaceId, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr]
+          args: [autoPlaceId, autoPlaceDoc.name, "", autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr,
+                 autoPlaceDoc.name, "", autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr]
         }).catch(() => {});
       }
       console.log(`✅ [BunnyDB] Successfully synchronized all previous search metadata into Bunny Cloud Database!`);
@@ -8116,6 +8116,63 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               sql: `UPDATE videoReviews SET placeId = ?, placeName = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
               args: [newPlaceId, newPlaceName, JSON.stringify(parsedData), String(row.id)]
             }).catch(() => {});
+          }
+        }
+      }
+
+      // 7. Update all existing places and video reviews to replace "Verified Location" / URLs in address with real addresses or clean queries
+      const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; city: string; country: string; lat: number; lng: number }> = {
+        "lernerandrowe.com": { name: "Lerner and Rowe Injury Attorneys", address: "2701 E Camelback Rd #140", city: "Phoenix, AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
+        "bensonbingham.com": { name: "Benson & Bingham", address: "626 S 10th St", city: "Las Vegas, NV", country: "United States", lat: 36.1624, lng: -115.1378 },
+        "vanlawfirm.com": { name: "Van Law Firm Injury Attorneys", address: "1290 S Jones Blvd", city: "Las Vegas, NV", country: "United States", lat: 36.1558, lng: -115.2246 },
+        "nevadalegalservices.org": { name: "Nevada Legal Services", address: "701 E Bridger Ave #400", city: "Las Vegas, NV", country: "United States", lat: 36.1685, lng: -115.1408 },
+        "mcveaghfleming.co.nz": { name: "McVeagh Fleming Lawyers", address: "Level 14/188 Quay St, Auckland CBD", city: "Auckland", country: "New Zealand", lat: -36.8436, lng: 174.7663 },
+        "digitalpark.ae": { name: "Digital Park", address: "Dubai Silicon Oasis", city: "Dubai", country: "United Arab Emirates", lat: 25.1228, lng: 55.3783 },
+        "aldhabidental.ae": { name: "Al Dhabi Dental Center", address: "Al Khalidiyah", city: "Abu Dhabi", country: "United Arab Emirates", lat: 24.4754, lng: 54.3475 }
+      };
+
+      for (const [entityId, info] of Object.entries(KNOWN_ENTITY_LOCATIONS)) {
+        // Update places table
+        await bunnyDb.execute({
+          sql: `UPDATE places SET name = ?, address = ?, city = ?, country = ?, latitude = ?, longitude = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+          args: [info.name, info.address, info.city, info.country, info.lat, info.lng, entityId]
+        }).catch(() => {});
+
+        // Update parsed data in places table
+        const pRow = await bunnyDb.execute({ sql: `SELECT data FROM places WHERE id = ?`, args: [entityId] }).catch(() => null);
+        if (pRow && pRow.rows && pRow.rows[0]) {
+          try {
+            const parsed = typeof (pRow.rows[0] as any).data === 'string' ? JSON.parse((pRow.rows[0] as any).data) : ((pRow.rows[0] as any).data || {});
+            parsed.name = info.name;
+            parsed.address = info.address;
+            parsed.city = info.city;
+            parsed.country = info.country;
+            parsed.lat = info.lat;
+            parsed.lng = info.lng;
+            await bunnyDb.execute({
+              sql: `UPDATE places SET data = ? WHERE id = ?`,
+              args: [JSON.stringify(parsed), entityId]
+            }).catch(() => {});
+          } catch(e) {}
+        }
+
+        // Update videoReviews table
+        const vRows = await bunnyDb.execute({ sql: `SELECT id, data FROM videoReviews WHERE placeId = ?`, args: [entityId] }).catch(() => null);
+        if (vRows && vRows.rows) {
+          for (const vRow of vRows.rows as any[]) {
+            try {
+              const parsed = typeof vRow.data === 'string' ? JSON.parse(vRow.data) : (vRow.data || {});
+              parsed.placeName = info.name;
+              parsed.placeAddress = info.address;
+              parsed.placeCity = info.city;
+              if (parsed.caption && (parsed.caption.toLowerCase().includes("home") || parsed.caption.includes("lernerandrowe"))) {
+                parsed.caption = `Video review for ${info.name}`;
+              }
+              await bunnyDb.execute({
+                sql: `UPDATE videoReviews SET placeName = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [info.name, JSON.stringify(parsed), String(vRow.id)]
+              }).catch(() => {});
+            } catch(e) {}
           }
         }
       }
@@ -17956,6 +18013,15 @@ const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "lernerandrowelaw": "Lerner and Rowe Injury Attorneys",
   "lernerrowe": "Lerner and Rowe Injury Attorneys",
   "lernerrowe.com": "Lerner and Rowe Injury Attorneys",
+  "vanlawfirm": "Van Law Firm Injury Attorneys",
+  "vanlawfirm.com": "Van Law Firm Injury Attorneys",
+  "www-vanlawfirm-com": "Van Law Firm Injury Attorneys",
+  "nevadalegalservices": "Nevada Legal Services",
+  "nevadalegalservices.org": "Nevada Legal Services",
+  "www-nevadalegalservices-org": "Nevada Legal Services",
+  "mcveaghfleming": "McVeagh Fleming Lawyers",
+  "mcveaghfleming.co.nz": "McVeagh Fleming Lawyers",
+  "www-mcveaghfleming-co-nz": "McVeagh Fleming Lawyers",
   "bensonbingham": "Benson & Bingham",
   "bensonbingham.com": "Benson & Bingham",
   "bensonandbingham": "Benson & Bingham",
