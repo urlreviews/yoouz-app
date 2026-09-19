@@ -1704,13 +1704,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                             setAdExportVideo(v);
                           }
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 hover:border-zinc-700 transition-colors text-left font-medium text-sm cursor-pointer"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700/80 hover:border-zinc-500 transition-colors text-left font-medium text-sm cursor-pointer"
                       >
-                        <Download className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <Download className="w-4 h-4 text-white shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-white flex items-center gap-2">
                             <span>{t("video.downloadForAds", "Download for Ads (MP4)")}</span>
-                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded-sm border border-emerald-500/30">9:16</span>
+                            <span className="text-[10px] bg-white/15 text-white font-extrabold px-1.5 py-0.5 rounded-sm border border-white/20">9:16</span>
                           </div>
                           <div className="text-[11px] text-zinc-400 font-normal truncate">
                             {t("video.downloadForAdsDesc", "Clean video for TikTok, Instagram & Facebook ads")}
@@ -1797,13 +1797,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                             setAdExportVideo(v);
                           }
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 hover:border-zinc-700 transition-colors text-left font-medium text-sm cursor-pointer"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700/80 hover:border-zinc-500 transition-colors text-left font-medium text-sm cursor-pointer"
                       >
-                        <Download className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <Download className="w-4 h-4 text-white shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-white flex items-center gap-2">
                             <span>{t("video.downloadForAds", "Download for Ads (MP4)")}</span>
-                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded-sm border border-emerald-500/30">9:16</span>
+                            <span className="text-[10px] bg-white/15 text-white font-extrabold px-1.5 py-0.5 rounded-sm border border-white/20">9:16</span>
                           </div>
                           <div className="text-[11px] text-zinc-400 font-normal truncate">
                             {t("video.downloadForAdsDesc", "Clean video for TikTok, Instagram & Facebook ads")}

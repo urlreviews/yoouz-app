@@ -3579,9 +3579,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Download className="w-4 h-4 text-emerald-400" />
+                        <Download className="w-4 h-4 text-white" />
                         <span className="text-xs font-bold text-white uppercase tracking-wider">Download for TikTok, Meta & Google Ads</span>
-                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded-sm border border-emerald-500/30">9:16 MP4</span>
+                        <span className="text-[10px] bg-white/10 text-white font-extrabold px-2 py-0.5 rounded-full border border-white/20">9:16 MP4</span>
                       </div>
                       <p className="text-xs text-zinc-400">
                         Need video creative for paid social campaigns? Verified business owners can download clean MP4 files directly from the <strong className="text-zinc-200">Customer Video Reviews</strong> tab or the 3-dots menu on any of your venue's videos.
@@ -3590,7 +3590,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <button
                       type="button"
                       onClick={() => setActiveTab('reviews')}
-                      className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold shrink-0 transition-colors border border-zinc-700 cursor-pointer"
+                      className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-bold shrink-0 transition-colors cursor-pointer shadow-md"
                     >
                       Go to Reviews →
                     </button>
