@@ -92,6 +92,7 @@ import { CopoBrandLogo } from './CopoBrandLogo';
 import { CopoVideoPlayer } from './CopoVideoPlayer';
 import { CopoCommentsDrawer } from './CopoCommentsDrawer';
 import { GoogleOwnerReplyModal } from './GoogleOwnerReplyModal';
+import { CopoBrandedAdExportModal } from './CopoBrandedAdExportModal';
 import { formatRecordedDate } from '../utils/dateUtils';
 import { CountrySelector } from './CountrySelector';
 import { CountryDialCodeSelector } from './CountryDialCodeSelector';
@@ -840,6 +841,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [pinnedVideoIds, setPinnedVideoIds] = useState<string[]>([]);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>([]);
   const [downloadingVideoId, setDownloadingVideoId] = useState<string | null>(null);
+  const [adExportVideo, setAdExportVideo] = useState<VideoReview | null>(null);
   const [pinNotice, setPinNotice] = useState<string | null>(null);
   const [isCodeCopied, setIsCodeCopied] = useState(false);
   const [isDirectLinkCopied, setIsDirectLinkCopied] = useState(false);
@@ -1858,22 +1860,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     setTimeout(() => setPinNotice(null), 3500);
   };
 
-  const handleDownloadVideoForAds = async (video: VideoReview) => {
-    setDownloadingVideoId(video.id);
-    setPinNotice(`📥 Downloading MP4 video review for ${currentPlace?.name || 'ads'}...`);
-    try {
-      const success = await downloadVideoForAds(video, currentPlace?.name);
-      if (success) {
-        setPinNotice(`✅ 9:16 Video review downloaded! Ready for TikTok, Meta & Google Ads.`);
-      } else {
-        setPinNotice(`⚠️ Could not download video. Please check connection.`);
-      }
-    } catch {
-      setPinNotice(`⚠️ Download failed.`);
-    } finally {
-      setDownloadingVideoId(null);
-      setTimeout(() => setPinNotice(null), 4000);
-    }
+  const handleDownloadVideoForAds = (video: VideoReview) => {
+    setAdExportVideo(video);
   };
 
   const copyEmbedCode = () => {
@@ -4803,6 +4791,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         onClose={() => setIsNotificationSettingsOpen(false)}
         settings={businessNotificationSettings}
         onSave={handleSaveBusinessNotificationSettings}
+      />
+
+      {/* Branded Ad Video Export Modal (Baked-in overlays: Venue Logo, Rating, Creator badge & Powered by Yoouz.com) */}
+      <CopoBrandedAdExportModal
+        isOpen={Boolean(adExportVideo)}
+        onClose={() => setAdExportVideo(null)}
+        video={adExportVideo}
+        place={currentPlace}
       />
 
       </div>

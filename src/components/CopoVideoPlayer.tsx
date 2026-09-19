@@ -4,6 +4,7 @@ import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlo
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl, resolvePlayableVideoSourcesCascade, downloadVideoForAds } from "../utils/videoUtils";
 import { VideoFeedCard } from "./VideoFeedCard";
+import { CopoBrandedAdExportModal } from "./CopoBrandedAdExportModal";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import {
   ChevronUp,
@@ -764,6 +765,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Edit Rating State
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
   const [videoConfirmDelete, setVideoConfirmDelete] = useState<VideoReview | null>(null);
+  const [adExportVideo, setAdExportVideo] = useState<VideoReview | null>(null);
   const [editRating, setEditRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
@@ -1695,11 +1697,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     {isVerifiedOwnerOfThisPlace && (
                       <button
                         id="btn-more-option-download-ad-owner"
-                        onClick={async () => {
+                        onClick={() => {
                           const v = moreMenuVideo;
                           setMoreMenuVideo(null);
                           if (v) {
-                            await downloadVideoForAds(v, v.placeName);
+                            setAdExportVideo(v);
                           }
                         }}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 hover:border-zinc-700 transition-colors text-left font-medium text-sm cursor-pointer"
@@ -1788,11 +1790,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     {isVerifiedOwnerOfThisPlace && (
                       <button
                         id="btn-more-option-download-ad-viewer"
-                        onClick={async () => {
+                        onClick={() => {
                           const v = moreMenuVideo;
                           setMoreMenuVideo(null);
                           if (v) {
-                            await downloadVideoForAds(v, v.placeName);
+                            setAdExportVideo(v);
                           }
                         }}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 hover:border-zinc-700 transition-colors text-left font-medium text-sm cursor-pointer"
@@ -2111,6 +2113,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           </div>
         </div>
       )}
+
+      {/* Branded Ad Video Export Modal (Baked-in overlays: Venue Logo, Rating, Creator badge & Powered by Yoouz.com) */}
+      <CopoBrandedAdExportModal
+        isOpen={Boolean(adExportVideo)}
+        onClose={() => setAdExportVideo(null)}
+        video={adExportVideo}
+        place={
+          places?.find(
+            (p) =>
+              p.id === adExportVideo?.placeId ||
+              (p.name && adExportVideo?.placeName && p.name.toLowerCase() === adExportVideo.placeName.toLowerCase())
+          ) || (adExportVideo ? { name: adExportVideo.placeName, logoUrl: adExportVideo.placeLogoUrl } : undefined)
+        }
+      />
     </main>
   );
 };
