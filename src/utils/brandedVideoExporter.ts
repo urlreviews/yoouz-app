@@ -142,6 +142,37 @@ function drawYoouzDarkIcon(
 }
 
 /**
+ * Helper to draw a vector Clock icon matching lucide-react Clock
+ */
+function drawClockIcon(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  strokeColor: string = 'rgba(255, 255, 255, 0.9)'
+) {
+  ctx.save();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = Math.max(1.3, radius * 0.28);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Outer circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Hands: center to 12:00, and center to 2:30
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - radius * 0.52);
+  ctx.lineTo(cx, cy);
+  ctx.lineTo(cx + radius * 0.42, cy + radius * 0.1);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
  * Helper to draw a verified checkmark badge matching website styling (<CheckCircle className="fill-white text-black" />)
  */
 function drawVerifiedBadge(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number = 10) {
@@ -190,9 +221,18 @@ export function renderBrandedVideoOverlays(
   const isYoouz = placeName.toLowerCase().includes('yoouz');
   const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
   const ratingScore = rawRating.toFixed(1);
-  const reviewsCount = (place as any)?.reviewsCount || (place as any)?.reviewCount || video.commentsCount || 1;
+  
+  // Review count for the venue (strictly from venue data, never falling back to video comments count)
+  let reviewsCount = 1;
+  if (typeof (place as any)?.reviewsCount === 'number' && (place as any).reviewsCount > 0) {
+    reviewsCount = (place as any).reviewsCount;
+  } else if (typeof (place as any)?.reviewCount === 'number' && (place as any).reviewCount > 0) {
+    reviewsCount = (place as any).reviewCount;
+  } else if (typeof (video as any).reviewsCount === 'number' && (video as any).reviewsCount > 0) {
+    reviewsCount = (video as any).reviewsCount;
+  }
+
   const authorName = video.author?.name || 'Verified Reviewer';
-  const recordedDateStr = formatRecordedDate(video.recordedAt, video.createdAtMs);
 
   ctx.save();
   ctx.imageSmoothingEnabled = true;
@@ -202,7 +242,7 @@ export function renderBrandedVideoOverlays(
   // 1. TOP-LEFT BUSINESS HEADER PILL (Studio Dark Mode - Exact Website Match)
   // -------------------------------------------------------------
   const pillMarginX = 18 * safeScale;
-  const pillMarginY = 24 * safeScale; // Top-anchored with natural headroom
+  const pillMarginY = 22 * safeScale; // Top-anchored with natural headroom
   const pillHeight = 36 * safeScale;
 
   // Measure text for pill width
@@ -269,7 +309,7 @@ export function renderBrandedVideoOverlays(
   const badgeX = textStartX + ctx.measureText(placeName).width + 6 * safeScale;
   drawVerifiedBadge(ctx, badgeX, nameY - 4 * safeScale, 4.8 * safeScale);
 
-  // Subtitle: ⭐ 5.0 (1 reviews)
+  // Subtitle: ⭐ 5.0 (1 review)
   const subY = pillMarginY + 28 * safeScale;
   drawStar(ctx, textStartX + 4 * safeScale, subY - 3 * safeScale, 5, 4 * safeScale, 2 * safeScale, '#FBBF24');
 
@@ -282,54 +322,12 @@ export function renderBrandedVideoOverlays(
   ctx.fillText(`(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})`, textStartX + 30 * safeScale, subY);
 
   // -------------------------------------------------------------
-  // 2. TOP-RIGHT POWERED BY YOOUZ.COM WATERMARK
+  // 2. BOTTOM-LEFT REVIEW DETAILS & CREATOR INFO (Repositioned to natural bottom)
   // -------------------------------------------------------------
-  const watermarkWidth = 168 * safeScale;
-  const watermarkHeight = 36 * safeScale;
-  const watermarkX = width - watermarkWidth - 18 * safeScale;
-  const watermarkY = pillMarginY;
-
-  // Watermark Background (Deep dark glass with crisp border)
-  drawRoundedRect(
-    ctx,
-    watermarkX,
-    watermarkY,
-    watermarkWidth,
-    watermarkHeight,
-    watermarkHeight / 2,
-    'rgba(0, 0, 0, 0.72)',
-    'rgba(255, 255, 255, 0.22)',
-    1.2 * safeScale
-  );
-
-  // Official Dark Mode Yoouz Icon badge (Dark squircle with crisp WHITE star)
-  const wmIconSize = 24 * safeScale;
-  const wmIconX = watermarkX + 6 * safeScale;
-  const wmIconY = watermarkY + (watermarkHeight - wmIconSize) / 2;
-  drawYoouzDarkIcon(ctx, wmIconX, wmIconY, wmIconSize, yoouzLogoImage);
-
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-  ctx.shadowBlur = 4 * safeScale;
-
-  // "Powered by" text in crisp semi-translucent white
-  ctx.font = `600 ${10 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-  ctx.fillText('Powered by', watermarkX + 35 * safeScale, watermarkY + 22 * safeScale);
-
-  // "yoouz.com" in pure bold white
-  ctx.font = `800 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText('yoouz.com', watermarkX + 96 * safeScale, watermarkY + 22 * safeScale);
-
-  // -------------------------------------------------------------
-  // 3. BOTTOM-LEFT REVIEW DETAILS & CREATOR INFO
-  // -------------------------------------------------------------
-  const bottomMarginX = 20 * safeScale;
-  const socialSafeZonePaddingY = 125 * safeScale; // Elevated above social player scrubbers
-  
-  const line3CaptionY = height - socialSafeZonePaddingY;
-  const line2StarsY = line3CaptionY - 22 * safeScale;
-  const line1AuthorY = line2StarsY - 24 * safeScale;
+  const bottomMarginX = 18 * safeScale;
+  const line3CaptionY = height - 42 * safeScale;
+  const line2StarsY = line3CaptionY - 18 * safeScale;
+  const line1AuthorY = line2StarsY - 20 * safeScale;
 
   ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
   ctx.shadowBlur = 6 * safeScale;
@@ -337,13 +335,13 @@ export function renderBrandedVideoOverlays(
   ctx.shadowOffsetY = 1.5;
 
   // Author Row: By Author Name + Verified
-  ctx.font = `800 ${15 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${14.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = '#FFFFFF';
   const byText = `By ${authorName}`;
   ctx.fillText(byText, bottomMarginX, line1AuthorY);
 
   const byTextWidth = ctx.measureText(byText).width;
-  drawVerifiedBadge(ctx, bottomMarginX + byTextWidth + 8 * safeScale, line1AuthorY - 5 * safeScale, 5.5 * safeScale);
+  drawVerifiedBadge(ctx, bottomMarginX + byTextWidth + 7 * safeScale, line1AuthorY - 4.5 * safeScale, 5 * safeScale);
 
   // Star Rating & Date Row
   const starRadius = 5.5 * safeScale;
@@ -355,10 +353,19 @@ export function renderBrandedVideoOverlays(
     drawStar(ctx, bottomMarginX + (i * starGap) + starRadius, line2StarsY - 3 * safeScale, 5, starRadius, starRadius * 0.5, starFill);
   }
 
-  // Date timestamp
-  ctx.font = `700 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
-  ctx.fillText(`🕒 ${recordedDateStr || '2 days ago'}`, bottomMarginX + (5 * starGap) + 8 * safeScale, line2StarsY);
+  // Date timestamp with clean vector clock symbol matching the in-app player
+  const recordedDateStr = formatRecordedDate(video.recordedAt, video.createdAtMs);
+  if (recordedDateStr) {
+    const clockRadius = 4.8 * safeScale;
+    const clockX = bottomMarginX + (5 * starGap) + 12 * safeScale;
+    const clockY = line2StarsY - 3.2 * safeScale;
+    
+    drawClockIcon(ctx, clockX, clockY, clockRadius, 'rgba(255, 255, 255, 0.88)');
+
+    ctx.font = `700 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.fillText(recordedDateStr, clockX + clockRadius + 5 * safeScale, line2StarsY);
+  }
 
   // Caption / Domain info
   let captionText = video.caption ? video.caption.trim() : `Video review for ${placeName.toLowerCase() === 'yoouz' ? 'yoouz.com' : placeName}`;
@@ -366,8 +373,65 @@ export function renderBrandedVideoOverlays(
     captionText = `Video review for ${placeName.toLowerCase() === 'yoouz' ? 'yoouz.com' : placeName}`;
   }
   ctx.font = `600 ${11 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
   ctx.fillText(captionText, bottomMarginX, line3CaptionY);
+
+  // -------------------------------------------------------------
+  // 3. BOTTOM-RIGHT POWERED BY YOOUZ.COM TRUST BADGE
+  // -------------------------------------------------------------
+  const watermarkHeight = 28 * safeScale;
+  const wmIconSize = 18 * safeScale;
+  const wmMarginRight = 18 * safeScale;
+  const watermarkY = height - 44 * safeScale;
+
+  // Measure text with exact natural font metrics for seamless typography
+  ctx.font = `500 ${9.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  const prefixText = 'Powered by ';
+  const prefixWidth = ctx.measureText(prefixText).width;
+
+  ctx.font = `800 ${9.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  const domainText = 'yoouz.com';
+  const domainWidth = ctx.measureText(domainText).width;
+
+  const innerTextWidth = prefixWidth + domainWidth;
+  const watermarkWidth = wmIconSize + (14 * safeScale) + innerTextWidth + (12 * safeScale);
+  const watermarkX = width - watermarkWidth - wmMarginRight;
+
+  // Watermark Background (Deep dark glass with crisp border)
+  drawRoundedRect(
+    ctx,
+    watermarkX,
+    watermarkY,
+    watermarkWidth,
+    watermarkHeight,
+    watermarkHeight / 2,
+    'rgba(0, 0, 0, 0.72)',
+    'rgba(255, 255, 255, 0.22)',
+    1.1 * safeScale
+  );
+
+  // Official Dark Mode Yoouz Icon badge (Dark squircle with crisp WHITE star)
+  const wmIconX = watermarkX + 5 * safeScale;
+  const wmIconY = watermarkY + (watermarkHeight - wmIconSize) / 2;
+  drawYoouzDarkIcon(ctx, wmIconX, wmIconY, wmIconSize, yoouzLogoImage);
+
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 4 * safeScale;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 1;
+
+  const wmTextStartX = wmIconX + wmIconSize + 6 * safeScale;
+  const wmTextY = watermarkY + 17.5 * safeScale;
+
+  // "Powered by " text in crisp semi-translucent white
+  ctx.font = `500 ${9.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.fillText(prefixText, wmTextStartX, wmTextY);
+
+  // "yoouz.com" immediately contiguous in pure bold white
+  ctx.font = `800 ${9.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(domainText, wmTextStartX + prefixWidth, wmTextY);
 
   ctx.restore();
 }
@@ -557,15 +621,9 @@ export async function exportBrandedAdVideo(
       const naturalHeight = videoEl.videoHeight || 1920;
       const duration = videoEl.duration || 5;
 
-      // 4. Set canvas dimensions to 1080x1920 (matching native HD/FHD vertical recording) for real-time 60fps hardware encoding without frame drops
-      let targetWidth = 1080;
-      let targetHeight = 1920;
-
-      const nativeAspect = naturalWidth / naturalHeight;
-      if (Math.abs(nativeAspect - (9 / 16)) > 0.05) {
-        targetWidth = 1080;
-        targetHeight = Math.round(1080 / nativeAspect);
-      }
+      // 4. Set canvas dimensions to 1080x1920 (standard 9:16 vertical video across mobile & desktop) for real-time 60fps hardware encoding
+      const targetWidth = 1080;
+      const targetHeight = 1920;
 
       const canvas = document.createElement('canvas');
       canvas.width = targetWidth;

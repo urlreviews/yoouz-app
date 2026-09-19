@@ -3514,28 +3514,47 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <span className="text-xs font-bold text-white">{avgRating}</span>
                               <span className="text-xs text-zinc-500">•</span>
                               <span className="text-xs text-zinc-400 font-medium truncate">
-                                {placeVideos.length} Reviews
+                                {placeVideos.length} {placeVideos.length === 1 ? 'Review' : 'Reviews'}
                               </span>
                             </div>
                           </div>
                         </div>
-
-                        <a
-                          href={`/#/record_review?placeId=${selectedPlaceId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1.5 rounded-xl bg-white text-zinc-950 text-xs font-bold transition hover:bg-zinc-100 shrink-0 flex items-center gap-1 cursor-pointer"
-                        >
-                          <Video className="w-3.5 h-3.5" />
-                          <span>Review</span>
-                        </a>
                       </div>
 
-                      {/* Video Grid */}
+                      {/* Video Grid / Layout */}
                       {displayableWidgetVideos.length === 0 ? (
                         <div className="py-12 text-center text-zinc-500 space-y-2">
                           <AlertCircle className="w-8 h-8 mx-auto text-zinc-600" />
                           <p className="text-xs font-medium text-zinc-400">No video reviews found.</p>
+                        </div>
+                      ) : displayableWidgetVideos.length === 1 ? (
+                        <div className="flex justify-center">
+                          {displayableWidgetVideos.map((v) => (
+                            <div
+                              key={v.id}
+                              onClick={() => handleOpenBusinessVideo(v)}
+                              className="relative w-full max-w-[260px] rounded-2xl overflow-hidden aspect-9/14 bg-zinc-900 group border border-zinc-800 cursor-pointer hover:scale-[1.02] transition-transform shadow-md"
+                            >
+                              <img
+                                src={v.thumbnailUrl}
+                                alt={v.dishOrItem || 'Review'}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-white text-[10px] font-extrabold flex items-center gap-1 z-10 border border-white/10">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                <span>{v.rating || 5}</span>
+                              </div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-white">
+                                <span className="text-xs font-bold leading-tight line-clamp-1">
+                                  {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Verified Customer')}
+                                </span>
+                              </div>
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                <Play className="w-4 h-4 fill-current ml-0.5" />
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 gap-2.5">
@@ -3551,13 +3570,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 referrerPolicy="no-referrer"
                               />
-                              <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-0.5 z-10">
+                              <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-white text-[10px] font-extrabold flex items-center gap-0.5 z-10 border border-white/10">
                                 <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                                 <span>{v.rating || 5}</span>
                               </div>
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
                                 <span className="text-[10px] font-bold leading-tight line-clamp-1">
-                                  {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Customer')}
+                                  {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || 'Verified Customer')}
                                 </span>
                               </div>
                               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
