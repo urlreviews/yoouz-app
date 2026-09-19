@@ -374,7 +374,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [logoError, setLogoError] = useState("");
   const [bannerError, setBannerError] = useState("");
 
-  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+
+  const handleLogoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -386,10 +389,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       return;
     }
     setLogoError("");
+    setIsUploadingLogo(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement("canvas");
         const MAX_WIDTH = 400;
         const MAX_HEIGHT = 400;
@@ -413,18 +417,43 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           ctx.drawImage(img, 0, 0, width, height);
           try {
             const compressed = canvas.toDataURL("image/jpeg", 0.88);
-            setProfileLogoUrl(compressed);
+            // Upload directly to Bunny CDN Storage
+            const targetId = selectedPlaceId || currentPlace.id || 'yoouz.com';
+            const uploadRes = await fetch("/api/business/upload-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                imageBase64: compressed,
+                imageType: "logo",
+                placeId: targetId
+              })
+            });
+            if (uploadRes.ok) {
+              const data = await uploadRes.json();
+              if (data.imageUrl) {
+                setProfileLogoUrl(data.imageUrl);
+              } else {
+                setProfileLogoUrl(compressed);
+              }
+            } else {
+              setProfileLogoUrl(compressed);
+            }
           } catch (err) {
-            setLogoError("Failed to process image.");
+            setLogoError("Failed to upload image.");
+          } finally {
+            setIsUploadingLogo(false);
           }
+        } else {
+          setIsUploadingLogo(false);
         }
       };
+      img.onerror = () => setIsUploadingLogo(false);
       img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
 
-  const handleBannerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -436,10 +465,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       return;
     }
     setBannerError("");
+    setIsUploadingBanner(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement("canvas");
         const MAX_WIDTH = 1200;
         const MAX_HEIGHT = 800;
@@ -463,12 +493,37 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           ctx.drawImage(img, 0, 0, width, height);
           try {
             const compressed = canvas.toDataURL("image/jpeg", 0.88);
-            setProfileBannerUrl(compressed);
+            // Upload directly to Bunny CDN Storage
+            const targetId = selectedPlaceId || currentPlace.id || 'yoouz.com';
+            const uploadRes = await fetch("/api/business/upload-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                imageBase64: compressed,
+                imageType: "banner",
+                placeId: targetId
+              })
+            });
+            if (uploadRes.ok) {
+              const data = await uploadRes.json();
+              if (data.imageUrl) {
+                setProfileBannerUrl(data.imageUrl);
+              } else {
+                setProfileBannerUrl(compressed);
+              }
+            } else {
+              setProfileBannerUrl(compressed);
+            }
           } catch (err) {
-            setBannerError("Failed to process image.");
+            setBannerError("Failed to upload image.");
+          } finally {
+            setIsUploadingBanner(false);
           }
+        } else {
+          setIsUploadingBanner(false);
         }
       };
+      img.onerror = () => setIsUploadingBanner(false);
       img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
@@ -1576,6 +1631,54 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     const parts = [streetAddress.trim(), city.trim(), stateRegion.trim(), zipCode.trim(), selectedCountry.trim()].filter(Boolean);
     const finalAddress = parts.join(', ') || profileAddress;
 
+    let finalBannerUrl = profileBannerUrl;
+    let finalLogoUrl = profileLogoUrl;
+    const targetPlaceId = selectedPlaceId || currentPlace.id || 'yoouz.com';
+
+    // If profileBannerUrl is still base64 data, upload to Bunny Storage CDN now
+    if (finalBannerUrl && finalBannerUrl.startsWith('data:image/')) {
+      try {
+        const uRes = await fetch('/api/business/upload-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: finalBannerUrl,
+            imageType: 'banner',
+            placeId: targetPlaceId
+          })
+        });
+        if (uRes.ok) {
+          const uData = await uRes.json();
+          if (uData.imageUrl) {
+            finalBannerUrl = uData.imageUrl;
+            setProfileBannerUrl(uData.imageUrl);
+          }
+        }
+      } catch (e) {}
+    }
+
+    // If profileLogoUrl is still base64 data, upload to Bunny Storage CDN now
+    if (finalLogoUrl && finalLogoUrl.startsWith('data:image/')) {
+      try {
+        const uRes = await fetch('/api/business/upload-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: finalLogoUrl,
+            imageType: 'logo',
+            placeId: targetPlaceId
+          })
+        });
+        if (uRes.ok) {
+          const uData = await uRes.json();
+          if (uData.imageUrl) {
+            finalLogoUrl = uData.imageUrl;
+            setProfileLogoUrl(uData.imageUrl);
+          }
+        }
+      } catch (e) {}
+    }
+
     (currentPlace as any).name = profileName;
     (currentPlace as any).address = finalAddress;
     currentPlace.address = finalAddress;
@@ -1589,35 +1692,47 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     (currentPlace as any).email = profileEmail;
     (currentPlace as any).description = profileDesc;
     (currentPlace as any).category = businessCategory;
-    currentPlace.logoUrl = profileLogoUrl;
-    currentPlace.bannerUrl = profileBannerUrl;
-    (currentPlace as any).bannerUrl = profileBannerUrl;
-    if (profileBannerUrl) {
-      currentPlace.photos = [profileBannerUrl, ...(currentPlace.photos || []).filter(p => p !== profileBannerUrl)];
+    currentPlace.logoUrl = finalLogoUrl;
+    currentPlace.bannerUrl = finalBannerUrl;
+    (currentPlace as any).bannerUrl = finalBannerUrl;
+    if (finalBannerUrl) {
+      currentPlace.photos = [finalBannerUrl, ...(currentPlace.photos || []).filter(p => p !== finalBannerUrl)];
     }
 
     // Persist to server database (BunnyDB NoSQL)
     try {
-      const payload = { data: { ...currentPlace }, merge: true };
+      const payload = { data: { ...currentPlace, logoUrl: finalLogoUrl, bannerUrl: finalBannerUrl }, merge: true };
+      const requests: Promise<any>[] = [];
+
       if (selectedPlaceId) {
-        fetch(`/api/nosql/places/${encodeURIComponent(selectedPlaceId)}`, {
+        requests.push(fetch(`/api/nosql/places/${encodeURIComponent(selectedPlaceId)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        }).catch(() => {});
-        fetch(`/api/nosql/business_profiles/${encodeURIComponent(selectedPlaceId)}`, {
+        }).catch(() => {}));
+        requests.push(fetch(`/api/nosql/business_profiles/${encodeURIComponent(selectedPlaceId)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        }).catch(() => {});
+        }).catch(() => {}));
       }
       if (currentPlace.id && currentPlace.id !== selectedPlaceId) {
-        fetch(`/api/nosql/places/${encodeURIComponent(currentPlace.id)}`, {
+        requests.push(fetch(`/api/nosql/places/${encodeURIComponent(currentPlace.id)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        }).catch(() => {});
+        }).catch(() => {}));
       }
+      // Guarantee explicit write for yoouz.com if editing yoouz place
+      if (targetPlaceId.includes('yoouz')) {
+        requests.push(fetch(`/api/nosql/places/yoouz.com`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {}));
+      }
+
+      await Promise.all(requests);
     } catch (dbErr) {
       console.warn("Failed to persist place profile to BunnyDB:", dbErr);
     }

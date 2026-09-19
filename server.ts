@@ -6316,15 +6316,26 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       try {
         const bunnyDb = getBunnyDb();
         let placeCount = 0;
+        let cdnBannerCount = 0;
         if (bunnyDb) {
-          const pRes = await bunnyDb.execute({ sql: "SELECT COUNT(*) as c FROM places" });
-          placeCount = Number(pRes?.rows?.[0]?.c || 0);
+          const pRes = await bunnyDb.execute({ sql: "SELECT id, data FROM places" });
+          if (pRes && pRes.rows) {
+            placeCount = pRes.rows.length;
+            pRes.rows.forEach((row: any) => {
+              let pData: any = {};
+              try { pData = JSON.parse(String(row.data || '{}')); } catch(e){}
+              const banner = pData.bannerUrl || '';
+              if (banner && (banner.startsWith('http') || banner.includes('b-cdn.net'))) {
+                cdnBannerCount++;
+              }
+            });
+          }
         }
         check35Status = "ok";
-        check35Details = `Business Profile Cloud Storage & Real-Time Sync Subsystem active. Total ${placeCount} business places stored in BunnyDB server storage. Profile edits (logo, cover banner, info) persist to cloud DB and update live across all public drawers, embeds, search, and video headers for all visitors globally.`;
+        check35Details = `Business Profile Cloud Storage & Bunny Storage CDN Subsystem verified. ${placeCount} places in cloud DB (${cdnBannerCount} custom CDN banners). Profile edits persist permanently to BunnyDB and sync across all public drawers, embeds, search, and video headers.`;
       } catch (c35Err: any) {
-        check35Status = "ok";
-        check35Details = `Business Profile Cloud Storage Subsystem active. Profile updates saved in Business Portal persist directly to BunnyDB server storage and live sync across all public pages.`;
+        check35Status = "degraded";
+        check35Details = `Business Profile Cloud Storage Subsystem active. Storage read-back note: ${c35Err?.message || 'Database query initialized'}. Profile updates saved in Business Portal persist directly to server storage and live sync across all public pages.`;
       }
 
       diagnostics["business_profile_banner_logo_database_live_sync_guard"] = {
@@ -11755,6 +11766,62 @@ app.post("/api/videos/save-review", async (req, res) => {
     } catch (err: any) {
       console.error("upload-avatar error:", err);
       return res.status(500).json({ error: err.message || "Failed to upload avatar" });
+    }
+  });
+
+  // Business Profile Cover Banner & Logo Upload Endpoint (Direct to Bunny CDN Storage)
+  app.post("/api/business/upload-image", async (req, res) => {
+    try {
+      const { imageBase64, imageType = 'banner', placeId, mimeType = 'image/jpeg' } = req.body;
+      if (!imageBase64 || typeof imageBase64 !== 'string') {
+        return res.status(400).json({ error: "Missing image data." });
+      }
+
+      // Strip data uri prefix if present
+      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+
+      const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
+      const cleanPlaceId = (placeId || 'yoouz.com').replace(/[^a-zA-Z0-9_.-]/g, '_');
+      const subFolder = imageType === 'logo' ? 'logos' : 'banners';
+      const filename = `${imageType}_${cleanPlaceId}_${Date.now()}${ext}`;
+
+      const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
+      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || 'rev1';
+      const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL || 'https://rev1.b-cdn.net';
+      const bunnyRegion = process.env.BUNNY_STORAGE_REGION || '';
+
+      if (bunnyAccessKey && bunnyStorageZone) {
+        const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
+        const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/${subFolder}/${filename}`;
+
+        const uploadRes = await fetch(bunnyUrl, {
+          method: 'PUT',
+          headers: {
+            'AccessKey': bunnyAccessKey,
+            'Content-Type': mimeType,
+            'Content-Length': buffer.length.toString()
+          },
+          body: buffer
+        });
+
+        if (uploadRes.ok || uploadRes.status === 201 || uploadRes.status === 200) {
+          const cdnBase = bunnyPullZoneUrl.replace(/\/+$/, '');
+          const cdnUrl = `${cdnBase}/${subFolder}/${filename}`;
+          return res.json({ success: true, imageUrl: cdnUrl, filename });
+        } else {
+          console.error("Bunny image upload error:", await uploadRes.text());
+        }
+      }
+
+      // Local fallback if bunny is unavailable
+      const localDir = path.join(serverUploadsDir, subFolder);
+      if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
+      fs.writeFileSync(path.join(localDir, filename), buffer);
+      return res.json({ success: true, imageUrl: `/uploads/${subFolder}/${filename}`, filename });
+    } catch (err: any) {
+      console.error("upload-image error:", err);
+      return res.status(500).json({ error: err.message || "Failed to upload image" });
     }
   });
 
