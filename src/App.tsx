@@ -2797,14 +2797,32 @@ export function App() {
         } else {
           // If existing place is missing banner, logo, or website, enrich it from the video review or known metadata!
           const existing = next[idx];
-          const reviewBanner = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage || knownBanner;
+          const isYoouz = reviewDomain === "yoouz.com" || reviewDomain === "yoouz" || existing.id?.toLowerCase().includes("yoouz") || existing.name?.toLowerCase() === "yoouz";
+          const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg";
+          
+          let reviewBanner = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage || knownBanner;
+          if (reviewBanner && reviewBanner.includes("yoouz.com/og-banner.png")) {
+            reviewBanner = YOOUZ_CDN_BANNER;
+          }
           const reviewLogo = v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") && !v.placeLogoUrl.includes("gstatic.com") && !v.placeLogoUrl.includes("faviconV2") ? v.placeLogoUrl : (knownLogo || existing.logoUrl);
           const reviewWebsite = v.placeWebsite || (reviewDomain && reviewDomain.includes(".") ? `https://${reviewDomain}` : "");
           const currentWebsite = existing.website && existing.website.trim() !== "" && !existing.website.includes("maps.google.com") ? existing.website : "";
           const effectiveWeb = currentWebsite || reviewWebsite || (existing.brandDomain && existing.brandDomain.includes(".") ? `https://${existing.brandDomain}` : "");
 
-          const effectiveBanner = existing.bannerUrl || existing.ogImage || reviewBanner || knownBanner || "";
-          const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310") && !existing.logoUrl.includes("gstatic.com") && !existing.logoUrl.includes("faviconV2")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !existing.avatarUrl.includes("gstatic.com") && !existing.avatarUrl.includes("faviconV2")) ? existing.avatarUrl : (knownLogo || reviewLogo || ""));
+          let existingBanner = existing.bannerUrl;
+          if (existingBanner && existingBanner.includes("yoouz.com/og-banner.png")) {
+            existingBanner = YOOUZ_CDN_BANNER;
+          }
+          let existingOg = existing.ogImage;
+          if (existingOg && existingOg.includes("yoouz.com/og-banner.png")) {
+            existingOg = YOOUZ_CDN_BANNER;
+          }
+          if (isYoouz && (!existingBanner || existingBanner.includes("yoouz.com/og-banner.png"))) {
+            existingBanner = YOOUZ_CDN_BANNER;
+          }
+
+          const effectiveBanner = existingBanner || existingOg || reviewBanner || knownBanner || (isYoouz ? YOOUZ_CDN_BANNER : "") || "";
+          const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310") && !existing.logoUrl.includes("gstatic.com") && !existing.logoUrl.includes("faviconV2")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !existing.avatarUrl.includes("gstatic.com") && !existing.avatarUrl.includes("faviconV2")) ? existing.avatarUrl : (knownLogo || reviewLogo || (isYoouz ? "/favicon.svg" : "")));
           const effectiveDescription = v.placeDescription || (existing.description && !existing.description.includes("Verified video review destination") && !existing.description.includes("Verified Yoouz business listing") ? existing.description : "");
 
           if (

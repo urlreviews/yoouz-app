@@ -397,6 +397,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || '');
   const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? '/favicon.svg' : ''));
   const [profileBannerUrl, setProfileBannerUrl] = useState((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
+  const [bannerPreviewFailed, setBannerPreviewFailed] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
@@ -537,11 +538,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               const data = await uploadRes.json();
               if (data.imageUrl) {
                 setProfileBannerUrl(data.imageUrl);
+                setBannerPreviewFailed(false);
               } else {
                 setProfileBannerUrl(compressed);
+                setBannerPreviewFailed(false);
               }
             } else {
               setProfileBannerUrl(compressed);
+              setBannerPreviewFailed(false);
             }
           } catch (err) {
             setBannerError("Failed to upload image.");
@@ -605,8 +609,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       setProfileLogoUrl(currentPlace.logoUrl);
     }
     const resolvedBanner = (currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0];
-    if (resolvedBanner) {
+    if (resolvedBanner && !resolvedBanner.includes('yoouz.com/og-banner.png')) {
       setProfileBannerUrl(resolvedBanner);
+      setBannerPreviewFailed(false);
+    } else if (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz')) {
+      setProfileBannerUrl("https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg");
+      setBannerPreviewFailed(false);
     }
 
     if (currentPlace.address) {
@@ -1693,10 +1701,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     (currentPlace as any).description = profileDesc;
     (currentPlace as any).category = businessCategory;
     currentPlace.logoUrl = finalLogoUrl;
+    (currentPlace as any).logoUrl = finalLogoUrl;
+    (currentPlace as any).avatarUrl = finalLogoUrl;
+    (currentPlace as any).placeLogoUrl = finalLogoUrl;
     currentPlace.bannerUrl = finalBannerUrl;
     (currentPlace as any).bannerUrl = finalBannerUrl;
+    (currentPlace as any).ogImage = finalBannerUrl;
+    (currentPlace as any).placeBannerUrl = finalBannerUrl;
     if (finalBannerUrl) {
-      currentPlace.photos = [finalBannerUrl, ...(currentPlace.photos || []).filter(p => p !== finalBannerUrl)];
+      currentPlace.photos = [finalBannerUrl, ...(currentPlace.photos || []).filter(p => p !== finalBannerUrl && !p.includes('yoouz.com/og-banner.png'))];
     }
 
     const updatedPlaceObj = {
@@ -1713,8 +1726,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       description: profileDesc,
       category: businessCategory,
       logoUrl: finalLogoUrl,
+      avatarUrl: finalLogoUrl,
+      placeLogoUrl: finalLogoUrl,
       bannerUrl: finalBannerUrl,
-      photos: finalBannerUrl ? [finalBannerUrl, ...(currentPlace.photos || []).filter(p => p !== finalBannerUrl)] : currentPlace.photos
+      ogImage: finalBannerUrl,
+      placeBannerUrl: finalBannerUrl,
+      photos: finalBannerUrl 
+        ? [finalBannerUrl, ...(currentPlace.photos || []).filter(p => p && p !== finalBannerUrl && !p.includes('yoouz.com/og-banner.png') && !p.includes('placeholder'))] 
+        : (currentPlace.photos || []).filter(p => p && !p.includes('yoouz.com/og-banner.png') && !p.includes('placeholder'))
     };
 
     // Persist to server database (BunnyDB NoSQL)
@@ -3786,18 +3805,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       title="Click to upload cover banner"
                     >
                       <div className="w-full h-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center">
-                        {profileBannerUrl ? (
+                        {profileBannerUrl && !bannerPreviewFailed ? (
                           <img 
                             src={profileBannerUrl} 
                             alt="Cover Banner" 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
                             referrerPolicy="no-referrer" 
-                            onError={() => setProfileBannerUrl('')}
+                            onError={() => setBannerPreviewFailed(true)}
                           />
                         ) : (
                           <div className="w-full h-full bg-zinc-950 flex flex-col items-center justify-center gap-2 text-zinc-500">
                             <Camera className="w-7 h-7 text-zinc-600" />
-                            <span className="text-xs font-medium text-zinc-500">No cover banner set</span>
+                            <span className="text-xs font-medium text-zinc-500">
+                              {bannerPreviewFailed ? "Image preview error (click to replace banner)" : "No cover banner set"}
+                            </span>
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">

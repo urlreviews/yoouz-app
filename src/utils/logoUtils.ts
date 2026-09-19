@@ -365,9 +365,9 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 export const KNOWN_BRAND_BANNERS: Record<string, string> = {
-  "yoouz.com": "/yoouz-brand-banner.svg",
-  "www.yoouz.com": "/yoouz-brand-banner.svg",
-  "yoouz": "/yoouz-brand-banner.svg",
+  "yoouz.com": "https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg",
+  "www.yoouz.com": "https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg",
+  "yoouz": "https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg",
   "zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
   "www.zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
   "zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",

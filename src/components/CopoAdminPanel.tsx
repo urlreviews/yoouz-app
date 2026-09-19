@@ -319,6 +319,52 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
+  const [isResyncingBanners, setIsResyncingBanners] = useState(false);
+  const handleResyncBusinessBanners = async () => {
+    setIsResyncingBanners(true);
+    try {
+      const res = await fetch("/api/system/resync-business-banners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(data.message || "Business profile banners synchronized with Bunny CDN.");
+        fetchHealthDiagnostic();
+        fetchLiveStats();
+      } else {
+        showToast("Failed to sync business profile banners.");
+      }
+    } catch (e) {
+      showToast("Error syncing business profile banners.");
+    } finally {
+      setIsResyncingBanners(false);
+    }
+  };
+
+  const [isResyncingMaps, setIsResyncingMaps] = useState(false);
+  const handleResyncMapsPreviews = async () => {
+    setIsResyncingMaps(true);
+    try {
+      const res = await fetch("/api/system/resync-maps-previews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(data.message || "Google Maps previews verified across all businesses.");
+        fetchHealthDiagnostic();
+        fetchLiveStats();
+      } else {
+        showToast("Failed to verify Google Maps previews.");
+      }
+    } catch (e) {
+      showToast("Error verifying Google Maps previews.");
+    } finally {
+      setIsResyncingMaps(false);
+    }
+  };
+
   // Deletion Confirmations
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
   const [confirmDeletePlaceId, setConfirmDeletePlaceId] = useState<string | null>(null);
@@ -1932,6 +1978,30 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         >
                           <Users className="w-3.5 h-3.5 text-cyan-400" />
                           <span>{isAuditingFollowers ? "Auditing Follower Integrity..." : "Audit & Purge Synthetic Follower Relationships"}</span>
+                        </button>
+                      )}
+
+                      {key === "business_profile_banner_logo_database_live_sync_guard" && (
+                        <button
+                          type="button"
+                          onClick={handleResyncBusinessBanners}
+                          disabled={isResyncingBanners}
+                          className="w-full mt-2 py-2 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isResyncingBanners ? "animate-spin text-amber-400" : "text-emerald-400"}`} />
+                          <span>{isResyncingBanners ? "Synchronizing Banners with Bunny CDN..." : "Resync Business Banners with Bunny CDN"}</span>
+                        </button>
+                      )}
+
+                      {key === "google_maps_business_name_resolution_anti_break_guard" && (
+                        <button
+                          type="button"
+                          onClick={handleResyncMapsPreviews}
+                          disabled={isResyncingMaps}
+                          className="w-full mt-2 py-2 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
+                        >
+                          <MapPin className={`w-3.5 h-3.5 ${isResyncingMaps ? "animate-bounce text-amber-400" : "text-emerald-400"}`} />
+                          <span>{isResyncingMaps ? "Verifying Google Maps Previews for All Places..." : "Re-Verify Google Maps Previews for All Businesses"}</span>
                         </button>
                       )}
                     </div>

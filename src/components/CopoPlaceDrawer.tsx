@@ -108,6 +108,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [showUnclaimedChatModal, setShowUnclaimedChatModal] = useState(false);
   const [claimAsOwner, setClaimAsOwner] = useState(false);
   const [bannerError, setBannerError] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
   
   // Instantly load the banner and logo into memory BEFORE rendering the UI
   // to avoid the network fetch flicker.
@@ -123,6 +124,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   // Reset image errors and banner state when place changes
   useEffect(() => {
     setBannerError(false);
+    setPhotoIndex(0);
     setLogoError(false);
     setFetchedBannerUrl(null);
     fetchedTargetUrlRef.current = null;
@@ -384,31 +386,45 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place.id, place.website, place.description, place.name, drawerDomain, reviewBannerUrl, onUpdatePlace, place]);
 
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
+  const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/banner_yoouz.com_1789810172562.jpg";
+
+  // Helper to check for broken/placeholder/stale banners
+  const isBadBanner = (url?: string | null) => {
+    if (!url) return true;
+    const u = url.toLowerCase();
+    return u.includes('yoouz.com/og-banner.png') || u.includes('placeholder') || u.includes('mock') || u.includes('unsplash.com');
+  };
+
+  const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
+  const cleanOgImage = !isBadBanner(place.ogImage) ? place.ogImage : (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
+  const cleanReviewBanner = !isBadBanner(reviewBannerUrl) ? reviewBannerUrl : "";
+  const cleanFetchedBanner = !isBadBanner(fetchedBannerUrl) ? fetchedBannerUrl : "";
 
   const effectiveBanner =
-    place.bannerUrl ||
-    place.ogImage ||
-    reviewBannerUrl ||
-    fetchedBannerUrl ||
+    cleanBannerUrl ||
+    cleanOgImage ||
+    cleanReviewBanner ||
+    cleanFetchedBanner ||
     (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]) ||
-    (isYoouzPlace ? "/yoouz-brand-banner.svg" : "") ||
+    (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
     "";
 
   // Check if photos are authentic place photos
   const allPhotos = Array.from(
     new Set([
       effectiveBanner,
-      place.bannerUrl,
-      place.ogImage,
-      ...(place.photos || [])
+      cleanBannerUrl,
+      cleanOgImage,
+      ...(place.photos || []).filter(p => !isBadBanner(p)),
+      (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]),
+      (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
     ])
   ).filter((p): p is string => {
     if (!p || p.startsWith("blob:")) return false;
     if (p.startsWith("data:image/")) return true;
-    // Always preserve effectiveBanner, bannerUrl, ogImage or logoUrl
-    if (p === effectiveBanner || p === place.bannerUrl || p === place.ogImage || p === place.logoUrl) return true;
+    if (isBadBanner(p)) return false;
+    if (p === effectiveBanner || p === cleanBannerUrl || p === cleanOgImage || p === YOOUZ_CDN_BANNER) return true;
     const lower = p.toLowerCase();
-    // Only filter out obvious small icons if we have other photos
     if (lower.includes("favicon") || lower.includes(".ico")) {
       return false;
     }
@@ -659,14 +675,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="absolute inset-0 w-full h-full bg-black overflow-hidden flex items-center justify-center group">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
-              src={allPhotos[0]}
+              src={allPhotos[photoIndex] || allPhotos[0]}
               alt={displayedPlaceName}
               loading="eager"
               decoding="sync"
               fetchPriority="high"
               className="absolute inset-0 w-full h-full object-cover p-0 z-10"
               referrerPolicy="no-referrer"
-              onError={() => setBannerError(true)}
+              onError={() => {
+                if (photoIndex + 1 < allPhotos.length) {
+                  setPhotoIndex(prev => prev + 1);
+                } else {
+                  setBannerError(true);
+                }
+              }}
             />
             {/* Subtle overlay */}
             <div className="absolute inset-0 bg-black/5 z-20 pointer-events-none" />
