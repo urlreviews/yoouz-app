@@ -455,7 +455,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               body: JSON.stringify({
                 imageBase64: compressed,
                 imageType: "logo",
-                placeId: targetId
+                placeId: targetId,
+                previousUrl: profileLogoUrl || undefined
               })
             });
             if (uploadRes.ok) {
@@ -3771,18 +3772,32 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <Camera className="w-6 h-6" />
                         </div>
                       </div>
-                      <button 
-                        type="button" 
-                        id="btn-upload-logo-badge"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          logoFileInputRef.current?.click();
-                        }}
-                        className="absolute bottom-0 right-0 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"
-                        title="Upload logo"
-                      >
-                        <Camera className="w-3.5 h-3.5" />
-                      </button>
+                      {profileLogoUrl && (
+                        <button 
+                          type="button" 
+                          id="btn-remove-logo-badge"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const oldUrl = profileLogoUrl;
+                            setProfileLogoUrl("");
+                            try {
+                              await fetch('/api/business/delete-image', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  url: oldUrl,
+                                  placeId: selectedPlaceId || currentPlace.id || 'yoouz.com',
+                                  type: 'logo'
+                                })
+                              });
+                            } catch (err) {}
+                          }}
+                          className="absolute bottom-0 right-0 p-2 bg-rose-900/80 hover:bg-rose-800 text-rose-200 rounded-full shadow-lg transition-colors cursor-pointer border border-rose-700/50"
+                          title="Remove logo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <input 
                         type="file" 
                         ref={logoFileInputRef} 
@@ -3847,24 +3862,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               });
                             } catch (err) {}
                           }}
-                          className="absolute bottom-2.5 right-12 p-2 bg-rose-900/80 hover:bg-rose-800 text-rose-200 rounded-full shadow-lg transition-colors cursor-pointer border border-rose-700/50"
+                          className="absolute bottom-2.5 right-2.5 p-2 bg-rose-900/80 hover:bg-rose-800 text-rose-200 rounded-full shadow-lg transition-colors cursor-pointer border border-rose-700/50"
                           title="Remove cover banner"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
-                      <button 
-                        type="button" 
-                        id="btn-upload-banner-badge"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          bannerFileInputRef.current?.click();
-                        }}
-                        className="absolute bottom-2.5 right-2.5 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"
-                        title="Upload cover banner"
-                      >
-                        <Camera className="w-3.5 h-3.5" />
-                      </button>
                       <input 
                         type="file" 
                         ref={bannerFileInputRef} 

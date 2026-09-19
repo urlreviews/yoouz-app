@@ -12630,6 +12630,50 @@ app.post("/api/videos/save-review", async (req, res) => {
                 sql: "UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
                 args: [JSON.stringify(data), cleanId]
               }).catch(() => {});
+
+              // Also update business_profiles table if present
+              try {
+                const bpRow = await bunnyDb.execute({ sql: "SELECT data FROM business_profiles WHERE id = ?", args: [cleanId] }).catch(() => null);
+                if (bpRow && bpRow.rows && bpRow.rows[0]) {
+                  const bpData = typeof (bpRow.rows[0] as any).data === 'string' ? JSON.parse((bpRow.rows[0] as any).data) : ((bpRow.rows[0] as any).data || {});
+                  if (type === 'banner') {
+                    bpData.bannerUrl = "";
+                    bpData.ogImage = "";
+                  } else if (type === 'logo') {
+                    bpData.logoUrl = "";
+                    bpData.avatarUrl = "";
+                  }
+                  await bunnyDb.execute({
+                    sql: "UPDATE business_profiles SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                    args: [JSON.stringify(bpData), cleanId]
+                  }).catch(() => {});
+                }
+              } catch (e) {}
+
+              // Also propagate to existing video reviews
+              try {
+                const vrRows = await bunnyDb.execute({
+                  sql: `SELECT id, data FROM videoReviews WHERE placeId = ?`,
+                  args: [cleanId]
+                }).catch(() => null);
+                if (vrRows && vrRows.rows) {
+                  for (const vr of vrRows.rows) {
+                    try {
+                      const vd = typeof (vr as any).data === 'string' ? JSON.parse((vr as any).data) : ((vr as any).data || {});
+                      if (type === 'banner') {
+                        vd.placeBannerUrl = "";
+                      } else if (type === 'logo') {
+                        vd.placeLogoUrl = "";
+                      }
+                      await bunnyDb.execute({
+                        sql: `UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                        args: [JSON.stringify(vd), (vr as any).id]
+                      });
+                    } catch (e) {}
+                  }
+                }
+              } catch (e) {}
+
               broadcastSseEvent({ type: "place_updated", place: { id: cleanId, ...data } });
             }
           }
