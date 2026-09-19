@@ -4816,8 +4816,19 @@ export function App() {
         body: JSON.stringify({ data: updatedPlace, merge: true })
       }).catch((e) => console.error("Error updating place in BunnyDB:", e));
 
+      fetch(`/api/nosql/business_profiles/${encodeURIComponent(updatedPlace.id)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: updatedPlace, merge: true })
+      }).catch(() => {});
+
       if (updatedPlace.id.includes('yoouz') || updatedPlace.name?.toLowerCase() === 'yoouz') {
         fetch(`/api/nosql/places/yoouz.com`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: updatedPlace, merge: true })
+        }).catch(() => {});
+        fetch(`/api/nosql/business_profiles/yoouz.com`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ data: updatedPlace, merge: true })

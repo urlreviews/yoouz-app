@@ -174,10 +174,48 @@ async function sendResendEmail(params: {
 
 const globalUploadsDir = path.join(process.cwd(), "uploads");
 const reviewsIndexPath = path.join(globalUploadsDir, "reviews_index.json");
+const placesIndexPath = path.join(globalUploadsDir, "places_index.json");
 const deletedReviewsIndexPath = path.join(globalUploadsDir, "deleted_reviews_index.json");
 const deletedPlacesIndexPath = path.join(globalUploadsDir, "deleted_places_index.json");
 const deletedUsersIndexPath = path.join(globalUploadsDir, "deleted_users_index.json");
 const deletedCommentsIndexPath = path.join(globalUploadsDir, "deleted_comments_index.json");
+
+function readPlacesIndex(): any[] {
+  const deletedSet = new Set(readDeletedPlacesIndex());
+  try {
+    if (fs.existsSync(placesIndexPath)) {
+      const raw = fs.readFileSync(placesIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((p: any) => p && p.id && !deletedSet.has(String(p.id)));
+      }
+    }
+    const publicFallback = path.join(process.cwd(), "public", "places_index.json");
+    if (fs.existsSync(publicFallback)) {
+      const raw = fs.readFileSync(publicFallback, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((p: any) => p && p.id && !deletedSet.has(String(p.id)));
+      }
+    }
+  } catch (e) {}
+  return [];
+}
+
+function writePlacesIndex(list: any[]): void {
+  try {
+    if (!fs.existsSync(globalUploadsDir)) {
+      fs.mkdirSync(globalUploadsDir, { recursive: true });
+    }
+    fs.writeFileSync(placesIndexPath, JSON.stringify(list, null, 2), "utf8");
+    const publicPath = path.join(process.cwd(), "public", "places_index.json");
+    try {
+      const pubDir = path.dirname(publicPath);
+      if (!fs.existsSync(pubDir)) fs.mkdirSync(pubDir, { recursive: true });
+      fs.writeFileSync(publicPath, JSON.stringify(list, null, 2), "utf8");
+    } catch (e) {}
+  } catch (e) {}
+}
 
 function readDeletedReviewsIndex(): string[] {
   try {
@@ -3941,6 +3979,23 @@ app.get('/api/nosql/:collection', async (req, res) => {
       } catch (e) {}
     }
 
+    // 2b. For places, aggregate with local places_index.json
+    if (colName === 'places' || colName === 'business_profiles') {
+      try {
+        const localPlaces = readPlacesIndex();
+        localPlaces.forEach((p: any) => {
+          if (p && p.id) {
+            const existing = itemMap.get(p.id) || {};
+            itemMap.set(p.id, {
+              ...existing,
+              ...p,
+              id: p.id
+            });
+          }
+        });
+      } catch (e) {}
+    }
+
     // 3. If PostgreSQL is active, optionally fetch from Drizzle
     if (getDb()) {
       try {
@@ -4380,6 +4435,19 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
       if (found) return res.json(found);
     }
 
+    // 3b. Try local places index
+    if (colName === 'places' || colName === 'business_profiles') {
+      const localPlaces = readPlacesIndex();
+      const cleanId = String(id).trim().toLowerCase();
+      const found = localPlaces.find((p: any) => {
+        if (!p) return false;
+        const pId = String(p.id || '').trim().toLowerCase();
+        const pDomain = String(p.brandDomain || p.website || '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim().toLowerCase();
+        return pId === cleanId || pDomain === cleanId || (p.name && p.name.toLowerCase() === cleanId);
+      });
+      if (found) return res.json(found);
+    }
+
     // 4. Try SQL if configured
     if (getDb()) {
       try {
@@ -4747,6 +4815,22 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
           list.unshift({ id, ...data });
         }
         writeReviewsIndex(list);
+      } catch (e) {}
+    }
+
+    // 2b. If places or business_profiles, update local places index
+    if (colName === 'places' || colName === 'business_profiles') {
+      try {
+        const list = readPlacesIndex();
+        const cleanId = String(id).trim();
+        const existingIdx = list.findIndex((item: any) => item.id === cleanId || item.id === data?.id);
+        const mergedPlace = { ...(existingIdx !== -1 ? list[existingIdx] : {}), ...(data || {}), id: cleanId };
+        if (existingIdx !== -1) {
+          list[existingIdx] = mergedPlace;
+        } else {
+          list.unshift(mergedPlace);
+        }
+        writePlacesIndex(list);
       } catch (e) {}
     }
 

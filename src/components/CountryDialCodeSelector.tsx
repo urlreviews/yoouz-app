@@ -48,17 +48,22 @@ export const CountryDialCodeSelector: React.FC<CountryDialCodeSelectorProps> = (
     return getCountryDialInfo(selectedCountry || "United States");
   }, [value, selectedCountry]);
 
+  // Alphabetical list of countries (A-Z order)
+  const sortedCountries = React.useMemo(() => {
+    return [...countryDialData].sort((a, b) => a.name.localeCompare(b.name));
+  }, []);
+
   // Filter countries by name or dial code
   const filteredCountries = React.useMemo(() => {
     const query = search.toLowerCase().trim();
-    if (!query) return countryDialData;
-    return countryDialData.filter(
+    if (!query) return sortedCountries;
+    return sortedCountries.filter(
       (c) =>
         c.name.toLowerCase().includes(query) ||
         c.dialCode.toLowerCase().includes(query) ||
         c.code.toLowerCase().includes(query)
     );
-  }, [search]);
+  }, [search, sortedCountries]);
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
