@@ -47,7 +47,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -594,11 +594,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   };
 
   const handleOpenDirections = () => {
-    // If it has a website/domain, search ONLY by the domain to prevent Google Maps from failing to find it
-    const query = place.brandDomain || place.website 
-      ? (place.brandDomain || place.website)
-      : `${displayedPlaceName}, ${place.address || place.city}`;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query.trim())}`;
+    const url = getGoogleMapsDirectionsUrl(place, displayedPlaceName);
     window.open(url, "_blank");
   };
 
@@ -1441,11 +1437,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     frameBorder="0" 
                     style={{ border: 0, pointerEvents: 'none' }} 
                     referrerPolicy="no-referrer-when-downgrade" 
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(place.name + ', ' + (place.address || place.city || ''))}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                    src={getGoogleMapsEmbedUrl(place, displayedPlaceName)}
                     title="Google Maps Location"
                   />
                 </div>
-                {place.address && (
+                {place.address && !place.address.includes("://") && !place.address.includes("www.") && !place.address.endsWith(".com") && !place.address.toLowerCase().startsWith("official domain:") && (
                    <div className="flex items-start gap-2 mt-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800">
                      <MapPin className="w-4 h-4 text-zinc-200 shrink-0 mt-0.5" />
                      <p className="text-xs text-zinc-200 font-medium">{place.address}</p>

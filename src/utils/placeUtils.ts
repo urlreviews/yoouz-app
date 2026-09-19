@@ -285,7 +285,13 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "bensonbingham.com": "Benson & Bingham",
   "bensonandbingham": "Benson & Bingham",
   "bensonandbingham.com": "Benson & Bingham",
-  "www-bensonbingham-com": "Benson & Bingham"
+  "www-bensonbingham-com": "Benson & Bingham",
+  "lernerandrowe": "Lerner and Rowe Injury Attorneys",
+  "lernerandrowe.com": "Lerner and Rowe Injury Attorneys",
+  "www-lernerandrowe-com": "Lerner and Rowe Injury Attorneys",
+  "lernerandrowelaw": "Lerner and Rowe Injury Attorneys",
+  "lernerrowe": "Lerner and Rowe Injury Attorneys",
+  "lernerrowe.com": "Lerner and Rowe Injury Attorneys"
 };
 
 /**
@@ -301,7 +307,7 @@ export function splitCompoundWords(str: string): string {
   s = s.replace(/^(al|el|the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
   
   // 4. Known compound word boundaries & suffixes
-  const commonWords = /(benson|bingham|injury|accident|lawyer|lawyers|attorney|attorneys|lawfirm|dental|clinic|center|centre|park|hotels?|avenue|valley|therapy|services?|solutions?|group|media|news|technology|tech|studios?|travel|cafe|coffee|bar|suites?|hospitals?|stores?|shops?|markets?|clubs?|fitness|gym|labs?|care|health|spa|salon|resorts?|villas?|restaurants?|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations?|motors?|auto|rentals?|logistics|express|trust|trusted|capital|consulting|associates?|partners?|properties|realestate|agency|law|firm|dentists?|orthodontics|wellness|massage|towers?|plaza|square|malls?|hubs?|holdings|globals?|international|world|networks?|systems?|software|security|design|creative|productions?|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  const commonWords = /(lerner|rowe|and|benson|bingham|injury|accident|lawyer|lawyers|attorney|attorneys|lawfirm|dental|clinic|center|centre|park|hotels?|avenue|valley|therapy|services?|solutions?|group|media|news|technology|tech|studios?|travel|cafe|coffee|bar|suites?|hospitals?|stores?|shops?|markets?|clubs?|fitness|gym|labs?|care|health|spa|salon|resorts?|villas?|restaurants?|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations?|motors?|auto|rentals?|logistics|express|trust|trusted|capital|consulting|associates?|partners?|properties|realestate|agency|law|firm|dentists?|orthodontics|wellness|massage|towers?|plaza|square|malls?|hubs?|holdings|globals?|international|world|networks?|systems?|software|security|design|creative|productions?|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
   
   // Apply word splitting if no spaces yet
   const parts = s.split(" ").map(p => {
@@ -1338,3 +1344,85 @@ export function recordDeletedPlacesInLocalStorage(variants: string[]): string[] 
     return variants;
   }
 }
+
+/**
+ * Resolves the cleanest, high-accuracy query string for Google Maps search, directions, and embeds.
+ * Crucial: NEVER puts a raw domain (like "lernerandrowe.com" or "https://...") into Google Maps,
+ * which causes Google Maps to return "Google Maps can't find domain.com".
+ * Instead, passes the human-readable business name + real street address/city/state if available.
+ */
+export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayName?: string): string {
+  if (!place && !customDisplayName) return "Yoouz";
+
+  // 1. Resolve authentic clean business name
+  let name = customDisplayName && !customDisplayName.includes("://") && !customDisplayName.endsWith(".com")
+    ? customDisplayName
+    : formatBusinessName(place?.name || place?.id || place?.brandDomain || "");
+
+  if (!name || name.includes("://") || name.endsWith(".com") || name.toLowerCase() === "yoouz.com") {
+    name = formatBusinessName(place?.id || place?.brandDomain || place?.name || "") || "Yoouz";
+  }
+
+  // Filter out raw domain leftovers
+  name = name.replace(/\.(com|net|org|ae|be|co\.uk|io|ai|app)$/i, "").trim();
+
+  // 2. Resolve real physical address or city if available
+  const rawAddress = (place?.address || "").trim();
+  const isGenericAddress = 
+    !rawAddress ||
+    rawAddress.startsWith("http://") ||
+    rawAddress.startsWith("https://") ||
+    rawAddress.includes("www.") ||
+    rawAddress.includes(".com") ||
+    rawAddress.includes(".ae") ||
+    rawAddress.includes(".be") ||
+    rawAddress.toLowerCase().startsWith("official domain:") ||
+    rawAddress.toLowerCase().includes("global headquarters") ||
+    rawAddress.toLowerCase().includes("enterprise way");
+
+  const rawCity = (place?.city || "").trim();
+  const isGenericCity =
+    !rawCity ||
+    rawCity.toLowerCase() === "online" ||
+    rawCity.toLowerCase() === "worldwide" ||
+    rawCity.toLowerCase() === "global headquarters" ||
+    rawCity.toLowerCase() === "global";
+
+  const rawCountry = (place?.country || "").trim();
+  const isGenericCountry = !rawCountry || rawCountry.toLowerCase() === "global";
+
+  // If we have a real street address
+  if (!isGenericAddress) {
+    return `${name}, ${rawAddress}`;
+  }
+
+  // If we have a real city / country
+  if (!isGenericCity) {
+    const loc = !isGenericCountry ? `${rawCity}, ${rawCountry}` : rawCity;
+    return `${name}, ${loc}`;
+  }
+
+  if (!isGenericCountry) {
+    return `${name}, ${rawCountry}`;
+  }
+
+  // Fallback to pure business name for Google Maps to find the official business entity
+  return name;
+}
+
+/**
+ * Returns the Google Maps Directions URL using the resolved business name and location
+ */
+export function getGoogleMapsDirectionsUrl(place?: Partial<Place> | null, customDisplayName?: string): string {
+  const query = getGoogleMapsQuery(place, customDisplayName);
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+}
+
+/**
+ * Returns the Google Maps Embed URL using the resolved business name and location
+ */
+export function getGoogleMapsEmbedUrl(place?: Partial<Place> | null, customDisplayName?: string): string {
+  const query = getGoogleMapsQuery(place, customDisplayName);
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+}
+

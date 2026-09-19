@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { isValidLatLng, sanitizeLatLng, getCachedUserLocation } from "../utils/geo";
-import { isPlaceReviewMatch } from "../utils/placeUtils";
+import { isPlaceReviewMatch, getGoogleMapsDirectionsUrl } from "../utils/placeUtils";
 
 interface CopoMapViewProps {
   places: Place[];
@@ -358,9 +358,7 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                 <div className="px-3 py-3 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800">
                   <button
                     onClick={() => {
-                      const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                        selectedPlace.name + ", " + selectedPlace.address
-                      )}`;
+                      const url = getGoogleMapsDirectionsUrl(selectedPlace);
                       window.open(url, "_blank");
                     }}
                     className="flex flex-col items-center gap-1 text-[11px] text-zinc-200 hover:text-white hover:scale-105 transition-all cursor-pointer"
