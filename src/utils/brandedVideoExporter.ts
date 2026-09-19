@@ -178,16 +178,20 @@ export function renderBrandedVideoOverlays(
   logoImage?: HTMLImageElement | null,
   yoouzLogoImage?: HTMLImageElement | null
 ) {
-  // Scale metrics relative to 1080p canvas baseline (so 4K 2160p scales up proportionally with retina sharpness)
-  const scale = width / 1080;
-  const safeScale = Math.max(scale, 0.75);
+  // Scale metrics relative to 440px mobile baseline for exact layout parity
+  const safeScale = width / 440;
 
-  const placeName = place?.name || video.placeName || 'Yoouz';
+  const rawPlaceName = place?.name || video.placeName || 'Yoouz';
+  let placeName = rawPlaceName.trim();
+  if (placeName.toLowerCase() === 'yoouz' || placeName.toLowerCase() === 'yoouz.com') {
+    placeName = 'Yoouz';
+  }
+
   const isYoouz = placeName.toLowerCase().includes('yoouz');
   const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
   const ratingScore = rawRating.toFixed(1);
-  const reviewsCount = (video as any).reviewsCount || 1;
-  const authorName = video.author?.name || 'Verified Customer';
+  const reviewsCount = (place as any)?.reviewsCount || (place as any)?.reviewCount || video.commentsCount || 1;
+  const authorName = video.author?.name || 'Verified Reviewer';
   const recordedDateStr = formatRecordedDate(video.recordedAt, video.createdAtMs);
 
   ctx.save();
@@ -197,16 +201,16 @@ export function renderBrandedVideoOverlays(
   // -------------------------------------------------------------
   // 1. TOP-LEFT BUSINESS HEADER PILL (Studio Dark Mode - Exact Website Match)
   // -------------------------------------------------------------
-  const pillMarginX = 28 * safeScale;
-  const pillMarginY = 28 * safeScale; // Top-anchored, perfectly spaced
-  const pillHeight = 58 * safeScale;
+  const pillMarginX = 18 * safeScale;
+  const pillMarginY = 24 * safeScale; // Top-anchored with natural headroom
+  const pillHeight = 36 * safeScale;
 
   // Measure text for pill width
-  ctx.font = `900 ${18 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `700 ${12.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   const nameWidth = ctx.measureText(placeName).width;
-  const pillWidth = Math.max(240 * safeScale, nameWidth + 120 * safeScale);
+  const pillWidth = Math.max(160 * safeScale, nameWidth + 88 * safeScale);
 
-  // Top Pill Background (Translucent dark glass matching website backdrop-blur-xl)
+  // Top Pill Background (Translucent dark glass matching in-app backdrop-blur-xl)
   drawRoundedRect(
     ctx,
     pillMarginX,
@@ -214,14 +218,14 @@ export function renderBrandedVideoOverlays(
     pillWidth,
     pillHeight,
     pillHeight / 2,
-    'rgba(9, 9, 11, 0.88)',
+    'rgba(0, 0, 0, 0.72)',
     'rgba(255, 255, 255, 0.22)',
-    1.4 * safeScale
+    1.2 * safeScale
   );
 
   // Logo box (Squircle matching website)
-  const logoSize = 42 * safeScale;
-  const logoX = pillMarginX + 8 * safeScale;
+  const logoSize = 26 * safeScale;
+  const logoX = pillMarginX + 5 * safeScale;
   const logoY = pillMarginY + (pillHeight - logoSize) / 2;
 
   if (isYoouz) {
@@ -229,7 +233,7 @@ export function renderBrandedVideoOverlays(
   } else if (logoImage && logoImage.complete && logoImage.naturalWidth > 0) {
     ctx.save();
     const logoRadius = logoSize * 0.28;
-    drawRoundedRect(ctx, logoX, logoY, logoSize, logoSize, logoRadius, '#09090b', 'rgba(255, 255, 255, 0.25)', 1.2 * safeScale);
+    drawRoundedRect(ctx, logoX, logoY, logoSize, logoSize, logoRadius, '#09090b', 'rgba(255, 255, 255, 0.25)', 1.0 * safeScale);
     ctx.beginPath();
     ctx.moveTo(logoX + logoRadius, logoY);
     ctx.lineTo(logoX + logoSize - logoRadius, logoY);
@@ -249,41 +253,41 @@ export function renderBrandedVideoOverlays(
   }
 
   // Business Name + Checkmark
-  const textStartX = logoX + logoSize + 11 * safeScale;
-  const nameY = pillMarginY + 23 * safeScale;
+  const textStartX = logoX + logoSize + 8 * safeScale;
+  const nameY = pillMarginY + 15 * safeScale;
 
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 6 * safeScale;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 4 * safeScale;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 1;
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `900 ${17 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.fillText(placeName, textStartX, nameY);
 
   // Checkmark next to name
-  const badgeX = textStartX + ctx.measureText(placeName).width + 9 * safeScale;
-  drawVerifiedBadge(ctx, badgeX, nameY - 5 * safeScale, 7 * safeScale);
+  const badgeX = textStartX + ctx.measureText(placeName).width + 6 * safeScale;
+  drawVerifiedBadge(ctx, badgeX, nameY - 4 * safeScale, 4.8 * safeScale);
 
-  // Subtitle: ⭐ 5.0 (1 review)
-  const subY = pillMarginY + 44 * safeScale;
-  drawStar(ctx, textStartX + 6 * safeScale, subY - 4 * safeScale, 5, 5.5 * safeScale, 2.8 * safeScale, '#FBBF24');
+  // Subtitle: ⭐ 5.0 (1 reviews)
+  const subY = pillMarginY + 28 * safeScale;
+  drawStar(ctx, textStartX + 4 * safeScale, subY - 3 * safeScale, 5, 4 * safeScale, 2 * safeScale, '#FBBF24');
 
-  ctx.font = `800 ${13 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${9.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = '#FBBF24';
-  ctx.fillText(ratingScore, textStartX + 15 * safeScale, subY);
+  ctx.fillText(ratingScore, textStartX + 11 * safeScale, subY);
 
-  ctx.font = `600 ${11.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = 'rgba(212, 212, 216, 0.9)';
-  ctx.fillText(`(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})`, textStartX + 42 * safeScale, subY);
+  ctx.font = `600 ${8.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.fillText(`(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})`, textStartX + 30 * safeScale, subY);
 
   // -------------------------------------------------------------
-  // 2. TOP-RIGHT POWERED BY YOOUZ.COM WATERMARK (Aligned with Top Safe Zone)
+  // 2. TOP-RIGHT POWERED BY YOOUZ.COM WATERMARK
   // -------------------------------------------------------------
-  const watermarkWidth = 230 * safeScale;
-  const watermarkHeight = 52 * safeScale;
-  const watermarkX = width - watermarkWidth - 28 * safeScale;
-  const watermarkY = pillMarginY + (pillHeight - watermarkHeight) / 2;
+  const watermarkWidth = 168 * safeScale;
+  const watermarkHeight = 36 * safeScale;
+  const watermarkX = width - watermarkWidth - 18 * safeScale;
+  const watermarkY = pillMarginY;
 
   // Watermark Background (Deep dark glass with crisp border)
   drawRoundedRect(
@@ -293,76 +297,75 @@ export function renderBrandedVideoOverlays(
     watermarkWidth,
     watermarkHeight,
     watermarkHeight / 2,
-    'rgba(9, 9, 11, 0.88)',
+    'rgba(0, 0, 0, 0.72)',
     'rgba(255, 255, 255, 0.22)',
-    1.4 * safeScale
+    1.2 * safeScale
   );
 
   // Official Dark Mode Yoouz Icon badge (Dark squircle with crisp WHITE star)
-  const wmIconSize = 34 * safeScale;
-  const wmIconX = watermarkX + 9 * safeScale;
+  const wmIconSize = 24 * safeScale;
+  const wmIconX = watermarkX + 6 * safeScale;
   const wmIconY = watermarkY + (watermarkHeight - wmIconSize) / 2;
   drawYoouzDarkIcon(ctx, wmIconX, wmIconY, wmIconSize, yoouzLogoImage);
 
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 5 * safeScale;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 4 * safeScale;
 
   // "Powered by" text in crisp semi-translucent white
-  ctx.font = `700 ${13 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `600 ${10 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-  ctx.fillText('Powered by', watermarkX + 48 * safeScale, watermarkY + 31 * safeScale);
+  ctx.fillText('Powered by', watermarkX + 35 * safeScale, watermarkY + 22 * safeScale);
 
-  // "yoouz.com" in pure bold white (NOT green!)
-  ctx.font = `900 ${13 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  // "yoouz.com" in pure bold white
+  ctx.font = `800 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText('yoouz.com', watermarkX + 130 * safeScale, watermarkY + 31 * safeScale);
+  ctx.fillText('yoouz.com', watermarkX + 96 * safeScale, watermarkY + 22 * safeScale);
 
   // -------------------------------------------------------------
-  // 3. BOTTOM-LEFT REVIEW DETAILS & CREATOR INFO (Social Media Safe Zone Layout)
-  // Lifted significantly above bottom player bars (TikTok / Reels / Facebook / Shorts)
+  // 3. BOTTOM-LEFT REVIEW DETAILS & CREATOR INFO
   // -------------------------------------------------------------
-  const bottomMarginX = 32 * safeScale;
-  const socialSafeZonePaddingY = 195 * safeScale; // High clearance over progress bars and comment drawers
+  const bottomMarginX = 20 * safeScale;
+  const socialSafeZonePaddingY = 125 * safeScale; // Elevated above social player scrubbers
   
   const line3CaptionY = height - socialSafeZonePaddingY;
-  const line2StarsY = line3CaptionY - 32 * safeScale;
-  const line1AuthorY = line2StarsY - 36 * safeScale;
+  const line2StarsY = line3CaptionY - 22 * safeScale;
+  const line1AuthorY = line2StarsY - 24 * safeScale;
 
   ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
-  ctx.shadowBlur = 10 * safeScale;
+  ctx.shadowBlur = 6 * safeScale;
   ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 2;
+  ctx.shadowOffsetY = 1.5;
 
   // Author Row: By Author Name + Verified
-  ctx.font = `900 ${25 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${15 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = '#FFFFFF';
   const byText = `By ${authorName}`;
   ctx.fillText(byText, bottomMarginX, line1AuthorY);
 
   const byTextWidth = ctx.measureText(byText).width;
-  drawVerifiedBadge(ctx, bottomMarginX + byTextWidth + 13 * safeScale, line1AuthorY - 8 * safeScale, 9 * safeScale);
+  drawVerifiedBadge(ctx, bottomMarginX + byTextWidth + 8 * safeScale, line1AuthorY - 5 * safeScale, 5.5 * safeScale);
 
   // Star Rating & Date Row
-  const starRadius = 8.5 * safeScale;
-  const starGap = 20 * safeScale;
+  const starRadius = 5.5 * safeScale;
+  const starGap = 13.5 * safeScale;
   const numRating = Math.round(rawRating) || 5;
 
   for (let i = 0; i < 5; i++) {
     const starFill = i < numRating ? '#FBBF24' : 'rgba(113, 113, 122, 0.6)';
-    drawStar(ctx, bottomMarginX + (i * starGap) + starRadius, line2StarsY - 4 * safeScale, 5, starRadius, starRadius * 0.5, starFill);
+    drawStar(ctx, bottomMarginX + (i * starGap) + starRadius, line2StarsY - 3 * safeScale, 5, starRadius, starRadius * 0.5, starFill);
   }
 
   // Date timestamp
-  ctx.font = `700 ${14 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-  ctx.fillText(`🕒 ${recordedDateStr || '2 days ago'}`, bottomMarginX + (5 * starGap) + 14 * safeScale, line2StarsY);
+  ctx.font = `700 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+  ctx.fillText(`🕒 ${recordedDateStr || '2 days ago'}`, bottomMarginX + (5 * starGap) + 8 * safeScale, line2StarsY);
 
   // Caption / Domain info
   let captionText = video.caption ? video.caption.trim() : `Video review for ${placeName.toLowerCase() === 'yoouz' ? 'yoouz.com' : placeName}`;
   if (!captionText || captionText.length === 0) {
     captionText = `Video review for ${placeName.toLowerCase() === 'yoouz' ? 'yoouz.com' : placeName}`;
   }
-  ctx.font = `600 ${15 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `600 ${11 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(captionText, bottomMarginX, line3CaptionY);
 
@@ -456,305 +459,321 @@ export async function exportBrandedAdVideo(
   let audioContext: AudioContext | null = null;
   let animFrameId: number | null = null;
 
-  const cleanup = () => {
-    if (animFrameId !== null) {
-      cancelAnimationFrame(animFrameId);
-      animFrameId = null;
-    }
-    if (videoEl && videoEl.parentElement) {
-      try {
-        videoEl.pause();
-        videoEl.removeAttribute('src');
-        videoEl.load();
-        videoEl.parentElement.removeChild(videoEl);
-      } catch (e) {}
-    }
-    if (audioContext) {
-      try {
-        audioContext.close();
-      } catch (e) {}
-    }
-  };
+    let canvasEl: HTMLCanvasElement | null = null;
 
-  try {
-    onProgress?.({
-      status: 'initializing',
-      progress: 5,
-      message: 'Preparing Ultra-HD video pipeline & audio channels...',
-    });
-
-    // 1. Resolve raw playable video source (IndexedDB blob or network URL)
-    let videoSrc = '';
-    if (video.id) {
-      try {
-        const storedBlobUrl = await getVideoBlobFromIndexedDB(video.id);
-        if (storedBlobUrl) {
-          videoSrc = storedBlobUrl;
-        }
-      } catch (e) {
-        console.warn('Could not read from IndexedDB, falling back to network url', e);
+    const cleanup = () => {
+      if (animFrameId !== null) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
       }
-    }
-
-    if (!videoSrc) {
-      videoSrc = normalizeVideoUrl(video.videoUrl || '');
-    }
-
-    if (!videoSrc) {
-      const err = 'No valid video source found for export';
-      onProgress?.({ status: 'error', progress: 0, message: err, error: err });
-      return { success: false, error: err };
-    }
-
-    // 2. Preload Logo Image & Official Yoouz Vector Assets for Canvas
-    onProgress?.({
-      status: 'loading',
-      progress: 15,
-      message: 'Loading high-resolution venue & Yoouz master branding...',
-    });
-
-    const logoUrl = place?.logoUrl || video.placeLogoUrl;
-    const [logoImg, yoouzLogoImg] = await Promise.all([
-      loadCanvasImage(logoUrl),
-      loadCanvasImage('/yoouz-avatar-white.svg').then(img => img || loadCanvasImage('/yoouz-avatar-white.png'))
-    ]);
-
-    // 3. Create and Attach Video Element to DOM (Crucial: Prevents browser decoder freezing during canvas capture)
-    videoEl = document.createElement('video');
-    videoEl.crossOrigin = 'anonymous';
-    videoEl.src = videoSrc;
-    videoEl.muted = false;
-    videoEl.playsInline = true;
-    videoEl.preload = 'auto';
-    videoEl.style.position = 'fixed';
-    videoEl.style.top = '-9999px';
-    videoEl.style.left = '-9999px';
-    videoEl.style.width = '320px';
-    videoEl.style.height = '568px';
-    videoEl.style.opacity = '0.001';
-    videoEl.style.pointerEvents = 'none';
-    videoEl.style.zIndex = '-9999';
-    document.body.appendChild(videoEl);
-
-    await new Promise<void>((resolve, reject) => {
-      if (!videoEl) return reject(new Error('Video element destroyed'));
-      videoEl.onloadedmetadata = () => resolve();
-      videoEl.onerror = () => reject(new Error('Failed to load video element metadata'));
-      setTimeout(() => reject(new Error('Video loading timed out')), 15000);
-    });
-
-    const naturalWidth = videoEl.videoWidth || 1080;
-    const naturalHeight = videoEl.videoHeight || 1920;
-    const duration = videoEl.duration || 5;
-
-    // 4. Set canvas dimensions to 1080x1920 (matching native HD/FHD vertical recording) for real-time 60fps hardware encoding without frame drops
-    let targetWidth = 1080;
-    let targetHeight = 1920;
-
-    const nativeAspect = naturalWidth / naturalHeight;
-    if (Math.abs(nativeAspect - (9 / 16)) > 0.05) {
-      targetWidth = 1080;
-      targetHeight = Math.round(1080 / nativeAspect);
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext('2d', { alpha: false });
-    if (!ctx) throw new Error('Could not create Canvas 2D context');
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    // 5. Setup AudioContext and Audio Stream Routing
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    let audioDestination: MediaStreamAudioDestinationNode | null = null;
-
-    if (AudioContextClass) {
-      try {
-        audioContext = new AudioContextClass();
-        if (audioContext.state === 'suspended') {
-          await audioContext.resume();
-        }
-        const source = audioContext.createMediaElementSource(videoEl);
-        audioDestination = audioContext.createMediaStreamDestination();
-        source.connect(audioDestination);
-      } catch (audioErr) {
-        console.warn('AudioContext setup error (video may export without audio):', audioErr);
+      if (videoEl && videoEl.parentElement) {
+        try {
+          videoEl.pause();
+          videoEl.removeAttribute('src');
+          videoEl.load();
+          videoEl.parentElement.removeChild(videoEl);
+        } catch (e) {}
       }
-    }
+      if (canvasEl && canvasEl.parentElement) {
+        try {
+          canvasEl.parentElement.removeChild(canvasEl);
+        } catch (e) {}
+      }
+      if (audioContext) {
+        try {
+          audioContext.close();
+        } catch (e) {}
+      }
+    };
 
-    // 6. Capture MediaStream from Canvas + Audio Tracks (60fps)
-    const canvasStream = canvas.captureStream(60);
-    if (audioDestination && audioDestination.stream.getAudioTracks().length > 0) {
-      audioDestination.stream.getAudioTracks().forEach((track) => {
-        canvasStream.addTrack(track);
+    try {
+      onProgress?.({
+        status: 'initializing',
+        progress: 5,
+        message: 'Preparing Ultra-HD video pipeline & audio channels...',
       });
-    }
 
-    // 7. Initialize MediaRecorder with Studio-Quality Bitrate
-    const mimeTypes = [
-      'video/mp4;codecs=avc1.640028,mp4a.40.2',
-      'video/mp4;codecs=avc1.4d4028',
-      'video/mp4;codecs=avc1',
-      'video/mp4',
-      'video/webm;codecs=vp9,opus',
-      'video/webm;codecs=vp8,opus',
-      'video/webm',
-    ];
-
-    let chosenMime = '';
-    for (const mime of mimeTypes) {
-      if (MediaRecorder.isTypeSupported(mime)) {
-        chosenMime = mime;
-        break;
-      }
-    }
-
-    const recordedChunks: Blob[] = [];
-    const mediaRecorder = new MediaRecorder(
-      canvasStream,
-      chosenMime ? { mimeType: chosenMime, videoBitsPerSecond: 25000000 } : undefined
-    );
-
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data && event.data.size > 0) {
-        recordedChunks.push(event.data);
-      }
-    };
-
-    onProgress?.({
-      status: 'rendering',
-      progress: 25,
-      message: 'Encoding Ultra-HD frames with studio branding...',
-    });
-
-    // 8. High-Fidelity Playback & Frame-by-Frame Draw Loop
-    let isCancelled = false;
-
-    const drawCurrentFrame = () => {
-      if (!videoEl || isCancelled) return;
-
-      // Draw video frame with aspect-ratio cover (no distortion)
-      const vRatio = naturalWidth / naturalHeight;
-      const cRatio = canvas.width / canvas.height;
-      let drawW = canvas.width;
-      let drawH = canvas.height;
-      let offsetX = 0;
-      let offsetY = 0;
-
-      if (vRatio > cRatio) {
-        drawW = canvas.height * vRatio;
-        offsetX = -(drawW - canvas.width) / 2;
-      } else {
-        drawH = canvas.width / vRatio;
-        offsetY = -(drawH - canvas.height) / 2;
+      // 1. Resolve raw playable video source (IndexedDB blob or network URL)
+      let videoSrc = '';
+      if (video.id) {
+        try {
+          const storedBlobUrl = await getVideoBlobFromIndexedDB(video.id);
+          if (storedBlobUrl) {
+            videoSrc = storedBlobUrl;
+          }
+        } catch (e) {
+          console.warn('Could not read from IndexedDB, falling back to network url', e);
+        }
       }
 
-      ctx.drawImage(videoEl, offsetX, offsetY, drawW, drawH);
-
-      // Draw studio-grade branded overlays on top with official vector assets
-      renderBrandedVideoOverlays(ctx, canvas.width, canvas.height, video, place, logoImg, yoouzLogoImg);
-    };
-
-    const renderLoop = () => {
-      if (isCancelled || !videoEl || videoEl.ended || (videoEl.paused && videoEl.currentTime >= duration - 0.1)) {
-        return;
+      if (!videoSrc) {
+        videoSrc = normalizeVideoUrl(video.videoUrl || '');
       }
 
-      drawCurrentFrame();
+      if (!videoSrc) {
+        const err = 'No valid video source found for export';
+        onProgress?.({ status: 'error', progress: 0, message: err, error: err });
+        return { success: false, error: err };
+      }
 
-      // Update progress
-      const currentPct = 25 + Math.round((videoEl.currentTime / duration) * 65);
+      // 2. Preload Logo Image & Official Yoouz Vector Assets for Canvas
+      onProgress?.({
+        status: 'loading',
+        progress: 15,
+        message: 'Loading high-resolution venue & Yoouz master branding...',
+      });
+
+      const logoUrl = place?.logoUrl || video.placeLogoUrl;
+      const [logoImg, yoouzLogoImg] = await Promise.all([
+        loadCanvasImage(logoUrl),
+        loadCanvasImage('/yoouz-avatar-white.svg').then(img => img || loadCanvasImage('/yoouz-avatar-white.png'))
+      ]);
+
+      // 3. Create and Attach Video Element to DOM in active viewport (Critical: Prevents browser decoder throttling/freezing)
+      videoEl = document.createElement('video');
+      videoEl.crossOrigin = 'anonymous';
+      videoEl.src = videoSrc;
+      videoEl.muted = false;
+      videoEl.playsInline = true;
+      videoEl.preload = 'auto';
+      videoEl.style.position = 'fixed';
+      videoEl.style.bottom = '0px';
+      videoEl.style.right = '0px';
+      videoEl.style.width = '4px';
+      videoEl.style.height = '4px';
+      videoEl.style.opacity = '0.01';
+      videoEl.style.pointerEvents = 'none';
+      videoEl.style.zIndex = '999999';
+      document.body.appendChild(videoEl);
+
+      await new Promise<void>((resolve, reject) => {
+        if (!videoEl) return reject(new Error('Video element destroyed'));
+        videoEl.onloadedmetadata = () => resolve();
+        videoEl.onerror = () => reject(new Error('Failed to load video element metadata'));
+        setTimeout(() => reject(new Error('Video loading timed out')), 15000);
+      });
+
+      const naturalWidth = videoEl.videoWidth || 1080;
+      const naturalHeight = videoEl.videoHeight || 1920;
+      const duration = videoEl.duration || 5;
+
+      // 4. Set canvas dimensions to 1080x1920 (matching native HD/FHD vertical recording) for real-time 60fps hardware encoding without frame drops
+      let targetWidth = 1080;
+      let targetHeight = 1920;
+
+      const nativeAspect = naturalWidth / naturalHeight;
+      if (Math.abs(nativeAspect - (9 / 16)) > 0.05) {
+        targetWidth = 1080;
+        targetHeight = Math.round(1080 / nativeAspect);
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      canvas.style.position = 'fixed';
+      canvas.style.bottom = '0px';
+      canvas.style.right = '0px';
+      canvas.style.width = '4px';
+      canvas.style.height = '4px';
+      canvas.style.opacity = '0.01';
+      canvas.style.pointerEvents = 'none';
+      canvas.style.zIndex = '999998';
+      document.body.appendChild(canvas);
+      canvasEl = canvas;
+
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) throw new Error('Could not create Canvas 2D context');
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // 5. Setup AudioContext and Audio Stream Routing
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      let audioDestination: MediaStreamAudioDestinationNode | null = null;
+
+      if (AudioContextClass) {
+        try {
+          audioContext = new AudioContextClass();
+          if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+          }
+          const source = audioContext.createMediaElementSource(videoEl);
+          audioDestination = audioContext.createMediaStreamDestination();
+          source.connect(audioDestination);
+        } catch (audioErr) {
+          console.warn('AudioContext setup error (video may export without audio):', audioErr);
+        }
+      }
+
+      // 6. Capture MediaStream from Canvas + Audio Tracks (60fps)
+      const canvasStream = canvas.captureStream(60);
+      if (audioDestination && audioDestination.stream.getAudioTracks().length > 0) {
+        audioDestination.stream.getAudioTracks().forEach((track) => {
+          canvasStream.addTrack(track);
+        });
+      }
+
+      // 7. Initialize MediaRecorder with Studio-Quality Bitrate
+      const mimeTypes = [
+        'video/mp4;codecs=avc1.640028,mp4a.40.2',
+        'video/mp4;codecs=avc1.4d4028',
+        'video/mp4;codecs=avc1',
+        'video/mp4',
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+      ];
+
+      let chosenMime = '';
+      for (const mime of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mime)) {
+          chosenMime = mime;
+          break;
+        }
+      }
+
+      const recordedChunks: Blob[] = [];
+      const mediaRecorder = new MediaRecorder(
+        canvasStream,
+        chosenMime ? { mimeType: chosenMime, videoBitsPerSecond: 25000000 } : undefined
+      );
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      };
+
       onProgress?.({
         status: 'rendering',
-        progress: Math.min(92, currentPct),
-        message: `Rendering Ultra-HD frames (${Math.round(videoEl.currentTime)}s / ${Math.round(duration)}s)...`,
+        progress: 25,
+        message: 'Encoding Ultra-HD frames with studio branding...',
       });
 
-      if ('requestVideoFrameCallback' in (videoEl as any)) {
-        (videoEl as any).requestVideoFrameCallback(() => {
-          renderLoop();
+      // 8. High-Fidelity Playback & Frame-by-Frame Draw Loop
+      let isCancelled = false;
+
+      const drawCurrentFrame = () => {
+        if (!videoEl || isCancelled) return;
+
+        // Draw video frame with aspect-ratio cover (no distortion)
+        const vRatio = naturalWidth / naturalHeight;
+        const cRatio = canvas.width / canvas.height;
+        let drawW = canvas.width;
+        let drawH = canvas.height;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (vRatio > cRatio) {
+          drawW = canvas.height * vRatio;
+          offsetX = -(drawW - canvas.width) / 2;
+        } else {
+          drawH = canvas.width / vRatio;
+          offsetY = -(drawH - canvas.height) / 2;
+        }
+
+        try {
+          ctx.drawImage(videoEl, offsetX, offsetY, drawW, drawH);
+        } catch (e) {}
+
+        // Draw studio-grade branded overlays on top with official vector assets
+        renderBrandedVideoOverlays(ctx, canvas.width, canvas.height, video, place, logoImg, yoouzLogoImg);
+      };
+
+      const renderLoop = () => {
+        if (isCancelled || !videoEl) return;
+        
+        if (videoEl.ended || (videoEl.paused && videoEl.currentTime >= duration - 0.15)) {
+          return;
+        }
+
+        drawCurrentFrame();
+
+        // Update progress
+        const currentPct = 25 + Math.round((videoEl.currentTime / duration) * 65);
+        onProgress?.({
+          status: 'rendering',
+          progress: Math.min(94, currentPct),
+          message: `Rendering Ultra-HD frames (${Math.max(1, Math.round(videoEl.currentTime))}s / ${Math.round(duration)}s)...`,
         });
-      } else {
+
         animFrameId = requestAnimationFrame(renderLoop);
+      };
+
+      const completionPromise = new Promise<{ success: boolean; blobUrl?: string; filename?: string; error?: string }>(
+        (resolve) => {
+          mediaRecorder.onstop = () => {
+            cleanup();
+
+            onProgress?.({
+              status: 'encoding',
+              progress: 96,
+              message: 'Finalizing Ultra-HD video package...',
+            });
+
+            const finalMime = chosenMime.includes('mp4') ? 'video/mp4' : 'video/webm';
+            const extension = chosenMime.includes('mp4') ? 'mp4' : 'webm';
+            const finalBlob = new Blob(recordedChunks, { type: finalMime });
+            const blobUrl = URL.createObjectURL(finalBlob);
+
+            const safePlace = (place?.name || video.placeName || 'venue')
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '-');
+            const safeAuthor = (video.author?.name || 'review')
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '-');
+            const filename = `yoouz-branded-ad-${safePlace}-${safeAuthor}.${extension}`;
+
+            // Trigger automatic file download
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            onProgress?.({
+              status: 'completed',
+              progress: 100,
+              message: 'Ultra-HD Branded Video Ready! File downloaded.',
+              blobUrl,
+              filename,
+            });
+
+            resolve({ success: true, blobUrl, filename });
+          };
+        }
+      );
+
+      // Start recorder and playback
+      mediaRecorder.start(100);
+      videoEl.currentTime = 0;
+      try {
+        await videoEl.play();
+      } catch (playErr) {
+        console.warn('Unmuted playback failed, continuing with muted stream:', playErr);
+        videoEl.muted = true;
+        await videoEl.play();
       }
-    };
+      renderLoop();
 
-    const completionPromise = new Promise<{ success: boolean; blobUrl?: string; filename?: string; error?: string }>(
-      (resolve) => {
-        mediaRecorder.onstop = () => {
-          cleanup();
-
-          onProgress?.({
-            status: 'encoding',
-            progress: 96,
-            message: 'Finalizing Ultra-HD video package...',
-          });
-
-          const finalMime = chosenMime.includes('mp4') ? 'video/mp4' : 'video/webm';
-          const extension = chosenMime.includes('mp4') ? 'mp4' : 'webm';
-          const finalBlob = new Blob(recordedChunks, { type: finalMime });
-          const blobUrl = URL.createObjectURL(finalBlob);
-
-          const safePlace = (place?.name || video.placeName || 'venue')
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '-');
-          const safeAuthor = (video.author?.name || 'review')
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '-');
-          const filename = `yoouz-branded-ad-${safePlace}-${safeAuthor}.${extension}`;
-
-          // Trigger automatic file download
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          onProgress?.({
-            status: 'completed',
-            progress: 100,
-            message: 'Ultra-HD Branded Video Ready! File downloaded.',
-            blobUrl,
-            filename,
-          });
-
-          resolve({ success: true, blobUrl, filename });
-        };
-      }
-    );
-
-    // Start recorder and playback
-    mediaRecorder.start(100);
-    videoEl.currentTime = 0;
-    try {
-      await videoEl.play();
-    } catch (playErr) {
-      console.warn('Unmuted playback failed, continuing with muted stream:', playErr);
-      videoEl.muted = true;
-      await videoEl.play();
-    }
-    renderLoop();
-
-    const maxTimeout = (duration + 3) * 1000;
-    const safetyTimer = setTimeout(() => {
-      if (mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-      }
-    }, maxTimeout);
-
-    videoEl.onended = () => {
-      clearTimeout(safetyTimer);
-      setTimeout(() => {
+      const maxTimeout = (duration + 3) * 1000;
+      const safetyTimer = setTimeout(() => {
         if (mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
-      }, 200);
-    };
+      }, maxTimeout);
 
-    return await completionPromise;
+      videoEl.onended = () => {
+        clearTimeout(safetyTimer);
+        setTimeout(() => {
+          if (mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+          }
+        }, 200);
+      };
+
+      return await completionPromise;
   } catch (err: any) {
     console.error('Failed to export branded video:', err);
     cleanup();
