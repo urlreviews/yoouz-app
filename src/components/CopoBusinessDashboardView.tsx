@@ -90,6 +90,7 @@ import { useGlobalMute, ensureSharedAudioContextUnlocked } from '../hooks/useGlo
 import { getPlaceLogoUrl } from '../utils/logoUtils';
 import { CopoBrandLogo } from './CopoBrandLogo';
 import { CopoVideoPlayer } from './CopoVideoPlayer';
+import { CopoMobileBottomNav } from './CopoMobileBottomNav';
 import { CopoCommentsDrawer } from './CopoCommentsDrawer';
 import { GoogleOwnerReplyModal } from './GoogleOwnerReplyModal';
 import { CopoBrandedAdExportModal } from './CopoBrandedAdExportModal';
@@ -4289,38 +4290,57 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       {activeVideoModal && (
         <div
           id="business-official-player-portal"
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center animate-in fade-in select-none"
+          className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center animate-in fade-in select-none"
         >
-          <CopoVideoPlayer
-            videos={placeVideos}
-            places={places}
-            currentIndex={bizVideoIndex}
-            onSelectVideoIndex={(idx) => {
-              setBizVideoIndex(idx);
-              const targetVid = placeVideos[idx];
-              if (targetVid) {
-                setActiveVideoModal(targetVid);
-                setSeenReviewIds((prev) => {
-                  const next = new Set(prev);
-                  next.add(targetVid.id);
-                  return next;
-                });
-              }
+          <div className="copo-has-bottom-nav flex-1 w-full h-full relative bg-zinc-950 flex flex-col overflow-hidden z-10">
+            <CopoVideoPlayer
+              videos={placeVideos}
+              places={places}
+              currentIndex={bizVideoIndex}
+              onSelectVideoIndex={(idx) => {
+                setBizVideoIndex(idx);
+                const targetVid = placeVideos[idx];
+                if (targetVid) {
+                  setActiveVideoModal(targetVid);
+                  setSeenReviewIds((prev) => {
+                    const next = new Set(prev);
+                    next.add(targetVid.id);
+                    return next;
+                  });
+                }
+              }}
+              activeSubTab={bizVideoSubTab}
+              onSelectSubTab={setBizVideoSubTab}
+              onOpenComments={(v) => setActiveCommentVideo(v)}
+              onOpenPlace={() => {}}
+              onOpenCreator={onOpenCreator || (() => {})}
+              onOpenShare={() => {}}
+              onToggleLike={() => {}}
+              onToggleBookmark={() => {}}
+              onToggleFollow={() => {}}
+              onGoBack={() => setActiveVideoModal(null)}
+              feedContextTitle={currentPlace.name}
+              currentUser={currentUser || effectiveUser}
+              isBusinessOwnerView={true}
+              onOpenOwnerReply={(v) => setActiveReplyModalVideo(v)}
+              isEmbed={true}
+              onCloseEmbed={() => setActiveVideoModal(null)}
+            />
+          </div>
+
+          <CopoMobileBottomNav
+            activeSection="home"
+            onSelectSection={(sec) => {
+              setActiveVideoModal(null);
+              onNavigate(sec);
             }}
-            activeSubTab={bizVideoSubTab}
-            onSelectSubTab={setBizVideoSubTab}
-            onOpenComments={(v) => setActiveCommentVideo(v)}
-            onOpenPlace={() => {}}
-            onOpenCreator={onOpenCreator || (() => {})}
-            onOpenShare={() => {}}
-            onToggleLike={() => {}}
-            onToggleBookmark={() => {}}
-            onToggleFollow={() => {}}
-            onGoBack={() => setActiveVideoModal(null)}
-            feedContextTitle={currentPlace.name}
             currentUser={currentUser || effectiveUser}
-            isBusinessOwnerView={true}
-            onOpenOwnerReply={(v) => setActiveReplyModalVideo(v)}
+            unreadNotifsCount={notifications.filter((n) => !n.isRead).length}
+            unreadMessagesCount={messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0)}
+            onOpenSearch={() => {
+              setActiveVideoModal(null);
+              onNavigate("home");
+            }}
           />
         </div>
       )}

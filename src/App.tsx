@@ -5237,7 +5237,7 @@ export function App() {
     return url.origin + url.pathname + url.search;
   }, [activeSection, activeSubTab]);
 
-  if (false && embedTargetId) {
+  if (embedTargetId) {
     return (
       <div
         id="copo-app-root"
