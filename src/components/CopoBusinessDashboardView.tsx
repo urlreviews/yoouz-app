@@ -96,6 +96,9 @@ import { CopoCommentsDrawer } from './CopoCommentsDrawer';
 import { GoogleOwnerReplyModal } from './GoogleOwnerReplyModal';
 import { formatRecordedDate } from '../utils/dateUtils';
 import { CountrySelector } from './CountrySelector';
+import { CountryDialCodeSelector } from './CountryDialCodeSelector';
+import { BusinessHoursManager, DaySchedule } from './BusinessHoursManager';
+import { BusinessCategorySelector } from './BusinessCategorySelector';
 import { SearchableComboSelector } from './SearchableComboSelector';
 import { locationData } from "../utils/locationData";
 import { Country, State, City } from "country-state-city";
@@ -683,8 +686,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Derived country dial and postal formatting info
   const activeCountryDialInfo = useMemo(() => {
-    return getCountryDialInfo(selectedCountry);
-  }, [selectedCountry]);
+    if (selectedCountry) {
+      const match = countryDialData.find(c => c.name.toLowerCase() === selectedCountry.toLowerCase());
+      if (match) return match;
+    }
+    if (phoneDialCode) {
+      const match = countryDialData.find(c => c.dialCode === phoneDialCode);
+      if (match) return match;
+    }
+    return getCountryDialInfo(selectedCountry || "United States");
+  }, [selectedCountry, phoneDialCode]);
 
   // Dynamic location options derived from country-state-city
   const activeCountryObj = Country.getAllCountries().find(c => c.name === selectedCountry);
@@ -3952,72 +3963,40 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   </div>
 
                   {/* OPERATING HOURS */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-zinc-400" /> Operating Hours
-                      </label>
-                      {profileHours && (
-                        <button
-                          type="button"
-                          onClick={() => setProfileHours('')}
-                          className="text-[10px] text-zinc-400 hover:text-rose-400 font-semibold transition-colors cursor-pointer"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      id="input-profile-hours"
+                  <div className="space-y-1.5 pt-1">
+                    <BusinessHoursManager
                       value={profileHours}
-                      onChange={(e) => setProfileHours(e.target.value)}
-                      placeholder="e.g. Mon-Fri: 9:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                      schedule={weeklySchedule}
+                      onChange={(formattedHours, schedule) => {
+                        setProfileHours(formattedHours);
+                        setWeeklySchedule(schedule);
+                      }}
                     />
-                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setProfileHours('Open 24 Hours (Mon - Sun)')}
-                        className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-[11px] font-medium text-zinc-300 transition-colors cursor-pointer"
-                      >
-                        24/7
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setProfileHours('Mon-Fri: 9:00 AM - 5:00 PM')}
-                        className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-[11px] font-medium text-zinc-300 transition-colors cursor-pointer"
-                      >
-                        Mon-Fri 9-5
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setProfileHours('Mon-Sat: 8:00 AM - 8:00 PM • Sun: Closed')}
-                        className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-[11px] font-medium text-zinc-300 transition-colors cursor-pointer"
-                      >
-                        Mon-Sat 8-8
-                      </button>
-                    </div>
                   </div>
 
                   {/* PHONE NUMBER */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-zinc-400" /> Phone Number
-                    </label>
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-zinc-400" /> Phone Number
+                      </label>
+                      {profilePhone && (
+                        <span className="text-[10px] font-bold text-zinc-300 bg-zinc-800/80 px-2 py-0.5 rounded-full border border-zinc-700/60 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" /> Connected
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-24 shrink-0">
-                        <input
-                          type="text"
-                          id="input-profile-dialcode"
+                      <div className="w-28 sm:w-32 shrink-0">
+                        <CountryDialCodeSelector
                           value={phoneDialCode}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setPhoneDialCode(val.startsWith('+') ? val : (val ? '+' + val : ''));
+                          selectedCountry={selectedCountry}
+                          onChange={(dialCode, countryObj) => {
+                            setPhoneDialCode(dialCode);
+                            if (countryObj && !selectedCountry) {
+                              setSelectedCountry(countryObj.name);
+                            }
                           }}
-                          placeholder="+1"
-                          title="Area / Country dial code"
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all text-center placeholder:text-zinc-500"
                         />
                       </div>
                       <div className="flex-1">
@@ -4025,18 +4004,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           type="tel"
                           id="input-profile-phone"
                           value={localPhone}
-                          onChange={(e) => {
-                            setLocalPhone(e.target.value);
-                          }}
-                          placeholder="e.g. (212) 555-0198"
+                          onChange={(e) => setLocalPhone(e.target.value)}
+                          placeholder={activeCountryDialInfo?.phonePlaceholder || "e.g. (555) 012-3456"}
                           className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
                         />
                       </div>
                     </div>
                     {localPhone && (
-                      <p className="text-[11px] text-zinc-400 pl-1">
-                        Formatted: <span className="font-semibold text-zinc-200">{profilePhone || 'Not provided'}</span>
-                      </p>
+                      <div className="flex items-center justify-between text-[11px] text-zinc-400 pl-1 pt-0.5">
+                        <span>
+                          Full Number: <span className="font-bold text-white tracking-wide">{phoneDialCode} {localPhone}</span>
+                        </span>
+                      </div>
                     )}
                   </div>
 
@@ -4092,31 +4071,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   </div>
 
                   {/* BUSINESS CATEGORY */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-zinc-400" /> Business Category
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="select-profile-category"
-                        value={businessCategory}
-                        onChange={(e) => setBusinessCategory(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all pr-10"
-                      >
-                        <option value="" className="bg-zinc-900 text-zinc-500">Select Category</option>
-                        <option value="Dining & Artisanal Food" className="bg-zinc-900 text-white">Dining & Artisanal Food</option>
-                        <option value="Coffee, Cafes & Bakeries" className="bg-zinc-900 text-white">Coffee, Cafes & Bakeries</option>
-                        <option value="Nightlife, Bars & Lounges" className="bg-zinc-900 text-white">Nightlife, Bars & Lounges</option>
-                        <option value="Hospitality & Hotels" className="bg-zinc-900 text-white">Hospitality & Hotels</option>
-                        <option value="Retail & Local Boutiques" className="bg-zinc-900 text-white">Retail & Local Boutiques</option>
-                        <option value="Health, Beauty & Wellness" className="bg-zinc-900 text-white">Health, Beauty & Wellness</option>
-                        <option value="Entertainment & Venues" className="bg-zinc-900 text-white">Entertainment & Venues</option>
-                        <option value="Services & Home Trades" className="bg-zinc-900 text-white">Services & Home Trades</option>
-                        <option value="Corporate & Legal" className="bg-zinc-900 text-white">Corporate & Legal</option>
-                        <option value="Other Venue" className="bg-zinc-900 text-white">Other Venue</option>
-                      </select>
-                      <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    </div>
+                  <div className="space-y-1.5 pt-1">
+                    <BusinessCategorySelector
+                      value={businessCategory}
+                      onChange={(cat) => setBusinessCategory(cat)}
+                    />
                   </div>
 
                   {/* Bottom Save Action Button */}
