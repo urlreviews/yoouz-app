@@ -10,10 +10,11 @@ import {
   Check,
   Loader2,
   ShieldCheck,
-  Video
+  Video,
+  FileVideo
 } from 'lucide-react';
 import { VideoReview, Place } from '../types';
-import { exportBrandedAdVideo, BrandedExportProgress } from '../utils/brandedVideoExporter';
+import { exportBrandedAdVideo, downloadOriginalLosslessVideo, BrandedExportProgress } from '../utils/brandedVideoExporter';
 import { getPlaceSlug } from '../utils/placeUtils';
 
 interface CopoBrandedAdExportModalProps {
@@ -35,6 +36,7 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
     message: 'Preparing Ultra-HD video pipeline...',
   });
   const [isExporting, setIsExporting] = useState(false);
+  const [isDownloadingOriginal, setIsDownloadingOriginal] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
 
   useEffect(() => {
@@ -61,11 +63,21 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
       message: 'Preparing Ultra-HD video canvas...',
     });
 
-    const result = await exportBrandedAdVideo(video, place, (progress) => {
+    await exportBrandedAdVideo(video, place, (progress) => {
       setExportState(progress);
     });
 
     setIsExporting(false);
+  };
+
+  const handleDownloadOriginal = async () => {
+    if (isDownloadingOriginal) return;
+    setIsDownloadingOriginal(true);
+    try {
+      await downloadOriginalLosslessVideo(video, place);
+    } finally {
+      setIsDownloadingOriginal(false);
+    }
   };
 
   const handleCopyAdLink = () => {
@@ -88,13 +100,13 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
             </div>
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>Branded Video for Ads</span>
+                <span>Download Video Review</span>
                 <span className="text-[10px] bg-white/10 text-white font-extrabold px-2.5 py-0.5 rounded-full border border-white/20 uppercase tracking-wider">
-                  Ultra-HD MP4
+                  Master Quality
                 </span>
               </h3>
               <p className="text-xs text-zinc-400">
-                Ready for Meta (Instagram & Facebook), TikTok & Google Ads
+                Direct lossless original video & Ultra-HD branded ad formats
               </p>
             </div>
           </div>
@@ -109,86 +121,107 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
         {/* Body Content */}
         <div className="p-6 overflow-y-auto space-y-6 text-sm text-zinc-300">
           
-          {/* Burned-in Feature Elements in Studio Dark Mode */}
-          <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-zinc-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
-                Baked-in Video Elements
-              </span>
-              <span className="text-white bg-white/10 px-2 py-0.5 rounded-full border border-white/15 text-[11px] font-bold">
-                100% Ad Compliant
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 text-xs">
-              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 space-y-1">
-                <div className="font-semibold text-white flex items-center gap-1.5">
-                  <span>Top Venue Header</span>
-                  <CheckCircle className="w-3.5 h-3.5 text-white" />
-                </div>
-                <div className="text-[11px] text-zinc-400 truncate">
-                  {placeName} • ⭐ {rawRating.toFixed(1)}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 space-y-1">
-                <div className="font-semibold text-white flex items-center gap-1.5">
-                  <span>Author & Rating</span>
-                  <CheckCircle className="w-3.5 h-3.5 text-white" />
-                </div>
-                <div className="text-[11px] text-zinc-400 truncate">
-                  By {authorName} • 5 Stars
-                </div>
-              </div>
-
-              <div className="col-span-2 p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between">
+          {/* Dual Download Options */}
+          <div className="space-y-3">
+            {/* Option 1: 100% Lossless Original Master (Direct Camera Quality) */}
+            <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-700/80 space-y-3">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-lg bg-zinc-900 border border-white/20 flex items-center justify-center shrink-0">
-                    <Star className="w-3.5 h-3.5 fill-white text-white" />
+                  <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
+                    <FileVideo className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <div className="font-semibold text-white">Trust Watermark</div>
+                    <div className="font-bold text-white text-xs flex items-center gap-2">
+                      <span>Original Lossless Video</span>
+                      <span className="text-[9px] bg-white text-black font-extrabold px-1.5 py-0.2 rounded-full uppercase">100% Camera Original</span>
+                    </div>
                     <div className="text-[11px] text-zinc-400">
-                      Powered by <span className="text-white font-bold">yoouz.com</span>
+                      Exact raw video without any compression or transcoding (Identical to in-app playback)
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md font-mono border border-zinc-700/60">
-                  Audio & Stereo Preserved
+              </div>
+              <button
+                onClick={handleDownloadOriginal}
+                disabled={isDownloadingOriginal}
+                className="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs border border-zinc-600 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 shadow"
+              >
+                {isDownloadingOriginal ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                    <span>Downloading Original Video...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 text-white" />
+                    <span>Download Original Lossless Video (MP4)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Option 2: Branded Ad Export */}
+            <div className="p-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-zinc-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
+                  Branded Ad Format (Overlays & Watermark)
+                </span>
+                <span className="text-white bg-white/10 px-2 py-0.5 rounded-full border border-white/15 text-[11px] font-bold">
+                  Ultra-HD MP4
                 </span>
               </div>
-            </div>
-          </div>
 
-          {/* Progress / Status Display */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-zinc-300 flex items-center gap-2">
-                {isExporting ? (
-                  <Loader2 className="w-4 h-4 text-white animate-spin" />
-                ) : exportState.status === 'completed' ? (
-                  <CheckCircle className="w-4 h-4 text-white" />
-                ) : (
-                  <Sparkles className="w-4 h-4 text-zinc-300" />
-                )}
-                <span>{exportState.message}</span>
-              </span>
-              <span className="font-bold text-white font-mono">{exportState.progress}%</span>
-            </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80">
+                  <div className="font-semibold text-white flex items-center gap-1 text-[11px]">
+                    <span>Top Venue Pill</span>
+                    <CheckCircle className="w-3 h-3 text-white" />
+                  </div>
+                  <div className="text-[10px] text-zinc-400 truncate">
+                    {placeName} • ⭐ {rawRating.toFixed(1)}
+                  </div>
+                </div>
 
-            {/* High Contrast Dark Mode Progress Bar */}
-            <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
-              <div
-                className={`h-full transition-all duration-300 ${
-                  exportState.status === 'completed'
-                    ? 'bg-white'
-                    : exportState.status === 'error'
-                    ? 'bg-red-500'
-                    : 'bg-gradient-to-r from-zinc-200 via-white to-zinc-400'
-                }`}
-                style={{ width: `${exportState.progress}%` }}
-              />
+                <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80">
+                  <div className="font-semibold text-white flex items-center gap-1 text-[11px]">
+                    <span>Author & Stars</span>
+                    <CheckCircle className="w-3 h-3 text-white" />
+                  </div>
+                  <div className="text-[10px] text-zinc-400 truncate">
+                    By {authorName} • 5 Stars
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Bar for Branded Export */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-zinc-300 flex items-center gap-1.5">
+                    {isExporting ? (
+                      <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                    ) : exportState.status === 'completed' ? (
+                      <CheckCircle className="w-3.5 h-3.5 text-white" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                    )}
+                    <span>{exportState.message}</span>
+                  </span>
+                  <span className="font-bold text-white font-mono">{exportState.progress}%</span>
+                </div>
+                <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      exportState.status === 'completed'
+                        ? 'bg-white'
+                        : exportState.status === 'error'
+                        ? 'bg-red-500'
+                        : 'bg-gradient-to-r from-zinc-300 via-white to-zinc-400'
+                    }`}
+                    style={{ width: `${exportState.progress}%` }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -257,17 +290,17 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
             {isExporting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
-                <span>Generating Ultra-HD Video ({exportState.progress}%)...</span>
+                <span>Rendering Branded Ad ({exportState.progress}%)...</span>
               </>
             ) : exportState.status === 'completed' ? (
               <>
                 <Download className="w-4 h-4 text-black" />
-                <span>Re-Download Video</span>
+                <span>Re-Download Branded Ad Video</span>
               </>
             ) : (
               <>
                 <Download className="w-4 h-4 text-black" />
-                <span>Start Video Generation</span>
+                <span>Download Branded Ad Video</span>
               </>
             )}
           </button>

@@ -204,7 +204,7 @@ export function renderBrandedVideoOverlays(
   // Measure text for pill width
   ctx.font = `900 ${18 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   const nameWidth = ctx.measureText(placeName).width;
-  const pillWidth = Math.max(250 * safeScale, nameWidth + 120 * safeScale);
+  const pillWidth = Math.max(240 * safeScale, nameWidth + 120 * safeScale);
 
   // Top Pill Background (Translucent dark glass matching website backdrop-blur-xl)
   drawRoundedRect(
@@ -278,21 +278,63 @@ export function renderBrandedVideoOverlays(
   ctx.fillText(`(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})`, textStartX + 42 * safeScale, subY);
 
   // -------------------------------------------------------------
-  // 2. BOTTOM REVIEW DETAILS & CREATOR INFO (Anchored precisely to bottom edge)
+  // 2. TOP-RIGHT POWERED BY YOOUZ.COM WATERMARK (Aligned with Top Safe Zone)
   // -------------------------------------------------------------
-  const bottomMarginX = 28 * safeScale;
+  const watermarkWidth = 230 * safeScale;
+  const watermarkHeight = 52 * safeScale;
+  const watermarkX = width - watermarkWidth - 28 * safeScale;
+  const watermarkY = pillMarginY + (pillHeight - watermarkHeight) / 2;
+
+  // Watermark Background (Deep dark glass with crisp border)
+  drawRoundedRect(
+    ctx,
+    watermarkX,
+    watermarkY,
+    watermarkWidth,
+    watermarkHeight,
+    watermarkHeight / 2,
+    'rgba(9, 9, 11, 0.88)',
+    'rgba(255, 255, 255, 0.22)',
+    1.4 * safeScale
+  );
+
+  // Official Dark Mode Yoouz Icon badge (Dark squircle with crisp WHITE star)
+  const wmIconSize = 34 * safeScale;
+  const wmIconX = watermarkX + 9 * safeScale;
+  const wmIconY = watermarkY + (watermarkHeight - wmIconSize) / 2;
+  drawYoouzDarkIcon(ctx, wmIconX, wmIconY, wmIconSize, yoouzLogoImage);
+
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  ctx.shadowBlur = 5 * safeScale;
+
+  // "Powered by" text in crisp semi-translucent white
+  ctx.font = `700 ${13 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.fillText('Powered by', watermarkX + 48 * safeScale, watermarkY + 31 * safeScale);
+
+  // "yoouz.com" in pure bold white (NOT green!)
+  ctx.font = `900 ${13 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText('yoouz.com', watermarkX + 130 * safeScale, watermarkY + 31 * safeScale);
+
+  // -------------------------------------------------------------
+  // 3. BOTTOM-LEFT REVIEW DETAILS & CREATOR INFO (Social Media Safe Zone Layout)
+  // Lifted significantly above bottom player bars (TikTok / Reels / Facebook / Shorts)
+  // -------------------------------------------------------------
+  const bottomMarginX = 32 * safeScale;
+  const socialSafeZonePaddingY = 195 * safeScale; // High clearance over progress bars and comment drawers
   
-  const line3CaptionY = height - 26 * safeScale;
-  const line2StarsY = height - 54 * safeScale;
-  const line1AuthorY = height - 84 * safeScale;
+  const line3CaptionY = height - socialSafeZonePaddingY;
+  const line2StarsY = line3CaptionY - 32 * safeScale;
+  const line1AuthorY = line2StarsY - 36 * safeScale;
 
   ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
-  ctx.shadowBlur = 8 * safeScale;
+  ctx.shadowBlur = 10 * safeScale;
   ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 1.5;
+  ctx.shadowOffsetY = 2;
 
   // Author Row: By Author Name + Verified
-  ctx.font = `900 ${24 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `900 ${25 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = '#FFFFFF';
   const byText = `By ${authorName}`;
   ctx.fillText(byText, bottomMarginX, line1AuthorY);
@@ -301,8 +343,8 @@ export function renderBrandedVideoOverlays(
   drawVerifiedBadge(ctx, bottomMarginX + byTextWidth + 13 * safeScale, line1AuthorY - 8 * safeScale, 9 * safeScale);
 
   // Star Rating & Date Row
-  const starRadius = 8 * safeScale;
-  const starGap = 19 * safeScale;
+  const starRadius = 8.5 * safeScale;
+  const starGap = 20 * safeScale;
   const numRating = Math.round(rawRating) || 5;
 
   for (let i = 0; i < 5; i++) {
@@ -313,7 +355,7 @@ export function renderBrandedVideoOverlays(
   // Date timestamp
   ctx.font = `700 ${14 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-  ctx.fillText(`🕒 ${recordedDateStr || '2 days ago'}`, bottomMarginX + (5 * starGap) + 12 * safeScale, line2StarsY);
+  ctx.fillText(`🕒 ${recordedDateStr || '2 days ago'}`, bottomMarginX + (5 * starGap) + 14 * safeScale, line2StarsY);
 
   // Caption / Domain info
   let captionText = video.caption ? video.caption.trim() : `Video review for ${placeName.toLowerCase() === 'yoouz' ? 'yoouz.com' : placeName}`;
@@ -323,46 +365,6 @@ export function renderBrandedVideoOverlays(
   ctx.font = `600 ${15 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(captionText, bottomMarginX, line3CaptionY);
-
-  // -------------------------------------------------------------
-  // 3. POWERED BY YOOUZ.COM WATERMARK BADGE (Studio Dark Mode)
-  // -------------------------------------------------------------
-  const watermarkWidth = 236 * safeScale;
-  const watermarkHeight = 42 * safeScale;
-  const watermarkX = width - watermarkWidth - 24 * safeScale;
-  const watermarkY = height - watermarkHeight - 24 * safeScale;
-
-  // Watermark Background (Deep dark glass with crisp border)
-  drawRoundedRect(
-    ctx,
-    watermarkX,
-    watermarkY,
-    watermarkWidth,
-    watermarkHeight,
-    watermarkHeight / 2,
-    'rgba(9, 9, 11, 0.92)',
-    'rgba(255, 255, 255, 0.22)',
-    1.4 * safeScale
-  );
-
-  // Official Dark Mode Yoouz Icon badge (Dark squircle with crisp WHITE star)
-  const wmIconSize = 28 * safeScale;
-  const wmIconX = watermarkX + 7 * safeScale;
-  const wmIconY = watermarkY + (watermarkHeight - wmIconSize) / 2;
-  drawYoouzDarkIcon(ctx, wmIconX, wmIconY, wmIconSize, yoouzLogoImage);
-
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-  ctx.shadowBlur = 4 * safeScale;
-
-  // "Powered by" text in crisp semi-translucent white
-  ctx.font = `700 ${13.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-  ctx.fillText('Powered by', watermarkX + 43 * safeScale, watermarkY + 26 * safeScale);
-
-  // "yoouz.com" in pure bold white (NOT green!)
-  ctx.font = `900 ${13.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText('yoouz.com', watermarkX + 128 * safeScale, watermarkY + 26 * safeScale);
 
   ctx.restore();
 }
@@ -387,11 +389,93 @@ export async function loadCanvasImage(url?: string): Promise<HTMLImageElement | 
  * Encodes and downloads a studio-grade, Ultra-HD (1080p / 4K) branded MP4/WebM video review
  * with burned-in overlays, studio dark mode branding, and high bitrate encoding.
  */
+/**
+ * Export 100% original, lossless raw camera video file directly (Zero compression/transcoding loss)
+ */
+export async function downloadOriginalLosslessVideo(
+  video: VideoReview,
+  place?: Place | { name?: string; rating?: number; reviewsCount?: number; logoUrl?: string; website?: string }
+): Promise<{ success: boolean; blobUrl?: string; filename?: string; error?: string }> {
+  try {
+    let videoSrc = '';
+    if (video.id) {
+      try {
+        const storedBlobUrl = await getVideoBlobFromIndexedDB(video.id);
+        if (storedBlobUrl) {
+          videoSrc = storedBlobUrl;
+        }
+      } catch (e) {
+        console.warn('Could not read from IndexedDB', e);
+      }
+    }
+
+    if (!videoSrc) {
+      videoSrc = normalizeVideoUrl(video.videoUrl || '');
+    }
+
+    if (!videoSrc) {
+      throw new Error('No valid video source found');
+    }
+
+    const safePlace = (place?.name || video.placeName || 'venue')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    const safeAuthor = (video.author?.name || 'review')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    const filename = `yoouz-original-raw-${safePlace}-${safeAuthor}.mp4`;
+
+    // Fetch original raw video blob
+    const response = await fetch(videoSrc);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    return { success: true, blobUrl, filename };
+  } catch (err: any) {
+    console.error('Failed to download original lossless video:', err);
+    return { success: false, error: err?.message || 'Failed to download original video' };
+  }
+}
+
+/**
+ * Main function to export a branded video with burned-in overlays (MP4 / WebM)
+ */
 export async function exportBrandedAdVideo(
   video: VideoReview,
   place?: Place | { name?: string; rating?: number; reviewsCount?: number; logoUrl?: string; website?: string },
   onProgress?: (progress: BrandedExportProgress) => void
 ): Promise<{ success: boolean; blobUrl?: string; filename?: string; error?: string }> {
+  let videoEl: HTMLVideoElement | null = null;
+  let audioContext: AudioContext | null = null;
+  let animFrameId: number | null = null;
+
+  const cleanup = () => {
+    if (animFrameId !== null) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    if (videoEl && videoEl.parentElement) {
+      try {
+        videoEl.pause();
+        videoEl.removeAttribute('src');
+        videoEl.load();
+        videoEl.parentElement.removeChild(videoEl);
+      } catch (e) {}
+    }
+    if (audioContext) {
+      try {
+        audioContext.close();
+      } catch (e) {}
+    }
+  };
+
   try {
     onProgress?.({
       status: 'initializing',
@@ -435,15 +519,25 @@ export async function exportBrandedAdVideo(
       loadCanvasImage('/yoouz-avatar-white.svg').then(img => img || loadCanvasImage('/yoouz-avatar-white.png'))
     ]);
 
-    // 3. Create Offscreen Video Element
-    const videoEl = document.createElement('video');
+    // 3. Create and Attach Video Element to DOM (Crucial: Prevents browser decoder freezing during canvas capture)
+    videoEl = document.createElement('video');
     videoEl.crossOrigin = 'anonymous';
     videoEl.src = videoSrc;
     videoEl.muted = false;
     videoEl.playsInline = true;
     videoEl.preload = 'auto';
+    videoEl.style.position = 'fixed';
+    videoEl.style.top = '-9999px';
+    videoEl.style.left = '-9999px';
+    videoEl.style.width = '320px';
+    videoEl.style.height = '568px';
+    videoEl.style.opacity = '0.001';
+    videoEl.style.pointerEvents = 'none';
+    videoEl.style.zIndex = '-9999';
+    document.body.appendChild(videoEl);
 
     await new Promise<void>((resolve, reject) => {
+      if (!videoEl) return reject(new Error('Video element destroyed'));
       videoEl.onloadedmetadata = () => resolve();
       videoEl.onerror = () => reject(new Error('Failed to load video element metadata'));
       setTimeout(() => reject(new Error('Video loading timed out')), 15000);
@@ -453,15 +547,14 @@ export async function exportBrandedAdVideo(
     const naturalHeight = videoEl.videoHeight || 1920;
     const duration = videoEl.duration || 5;
 
-    // 4. Supersample to Master 4K Ultra-HD vertical format (2160x3840) for extreme text & vector sharpness
-    let targetWidth = 2160;
-    let targetHeight = 3840;
+    // 4. Set canvas dimensions to 1080x1920 (matching native HD/FHD vertical recording) for real-time 60fps hardware encoding without frame drops
+    let targetWidth = 1080;
+    let targetHeight = 1920;
 
-    // Scale canvas dimensions if aspect ratio differs from standard 9:16
     const nativeAspect = naturalWidth / naturalHeight;
     if (Math.abs(nativeAspect - (9 / 16)) > 0.05) {
-      targetWidth = 2160;
-      targetHeight = Math.round(2160 / nativeAspect);
+      targetWidth = 1080;
+      targetHeight = Math.round(1080 / nativeAspect);
     }
 
     const canvas = document.createElement('canvas');
@@ -476,7 +569,6 @@ export async function exportBrandedAdVideo(
     // 5. Setup AudioContext and Audio Stream Routing
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     let audioDestination: MediaStreamAudioDestinationNode | null = null;
-    let audioContext: AudioContext | null = null;
 
     if (AudioContextClass) {
       try {
@@ -500,7 +592,7 @@ export async function exportBrandedAdVideo(
       });
     }
 
-    // 7. Initialize MediaRecorder with Studio-Quality High Bitrate (60 Mbps)
+    // 7. Initialize MediaRecorder with Studio-Quality Bitrate
     const mimeTypes = [
       'video/mp4;codecs=avc1.640028,mp4a.40.2',
       'video/mp4;codecs=avc1.4d4028',
@@ -522,7 +614,7 @@ export async function exportBrandedAdVideo(
     const recordedChunks: Blob[] = [];
     const mediaRecorder = new MediaRecorder(
       canvasStream,
-      chosenMime ? { mimeType: chosenMime, videoBitsPerSecond: 60000000 } : undefined
+      chosenMime ? { mimeType: chosenMime, videoBitsPerSecond: 25000000 } : undefined
     );
 
     mediaRecorder.ondataavailable = (event) => {
@@ -534,17 +626,14 @@ export async function exportBrandedAdVideo(
     onProgress?.({
       status: 'rendering',
       progress: 25,
-      message: 'Encoding Master 4K Ultra-HD frames with studio branding...',
+      message: 'Encoding Ultra-HD frames with studio branding...',
     });
 
-    // 8. High-Fidelity Playback & Draw Loop
+    // 8. High-Fidelity Playback & Frame-by-Frame Draw Loop
     let isCancelled = false;
-    let animFrameId: number;
 
-    const renderLoop = () => {
-      if (isCancelled || videoEl.ended || (videoEl.paused && videoEl.currentTime >= duration - 0.1)) {
-        return;
-      }
+    const drawCurrentFrame = () => {
+      if (!videoEl || isCancelled) return;
 
       // Draw video frame with aspect-ratio cover (no distortion)
       const vRatio = naturalWidth / naturalHeight;
@@ -566,22 +655,37 @@ export async function exportBrandedAdVideo(
 
       // Draw studio-grade branded overlays on top with official vector assets
       renderBrandedVideoOverlays(ctx, canvas.width, canvas.height, video, place, logoImg, yoouzLogoImg);
+    };
+
+    const renderLoop = () => {
+      if (isCancelled || !videoEl || videoEl.ended || (videoEl.paused && videoEl.currentTime >= duration - 0.1)) {
+        return;
+      }
+
+      drawCurrentFrame();
 
       // Update progress
       const currentPct = 25 + Math.round((videoEl.currentTime / duration) * 65);
       onProgress?.({
         status: 'rendering',
         progress: Math.min(92, currentPct),
-        message: `Rendering Master 4K Ultra-HD (${Math.round(videoEl.currentTime)}s / ${Math.round(duration)}s)...`,
+        message: `Rendering Ultra-HD frames (${Math.round(videoEl.currentTime)}s / ${Math.round(duration)}s)...`,
       });
 
-      animFrameId = requestAnimationFrame(renderLoop);
+      if ('requestVideoFrameCallback' in (videoEl as any)) {
+        (videoEl as any).requestVideoFrameCallback(() => {
+          renderLoop();
+        });
+      } else {
+        animFrameId = requestAnimationFrame(renderLoop);
+      }
     };
 
     const completionPromise = new Promise<{ success: boolean; blobUrl?: string; filename?: string; error?: string }>(
       (resolve) => {
         mediaRecorder.onstop = () => {
-          cancelAnimationFrame(animFrameId);
+          cleanup();
+
           onProgress?.({
             status: 'encoding',
             progress: 96,
@@ -617,11 +721,6 @@ export async function exportBrandedAdVideo(
             filename,
           });
 
-          // Cleanup AudioContext
-          if (audioContext) {
-            audioContext.close().catch(() => {});
-          }
-
           resolve({ success: true, blobUrl, filename });
         };
       }
@@ -644,6 +743,7 @@ export async function exportBrandedAdVideo(
     return await completionPromise;
   } catch (err: any) {
     console.error('Failed to export branded video:', err);
+    cleanup();
     const errorMsg = err?.message || 'An error occurred during branded video export';
     onProgress?.({
       status: 'error',
