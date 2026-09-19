@@ -84,8 +84,6 @@ import {
   Trash2,
   Edit2
 } from 'lucide-react';
-import { CopoAgencyInquiryModal } from './CopoAgencyInquiryModal';
-import { VERIFIED_PARTNER_AGENCIES, getAgencyById, PartnerAgency } from '../data/agencies';
 import { QRCodeCanvas } from 'qrcode.react';
 import { normalizeVideoUrl, releaseVideoHardwareDecoder } from '../utils/videoUtils';
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from '../hooks/useGlobalMute';
@@ -165,7 +163,7 @@ interface CopoBusinessDashboardViewProps {
   onRecordReview?: (place: Place) => void;
 }
 
-type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'billing';
+type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile';
 
 
 export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps> = ({ 
@@ -742,21 +740,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   }, [phoneDialCode, localPhone]);
 
-  // Agency Partner State
-  const [assignedAgencyId, setAssignedAgencyId] = useState<string>(() => {
-    return localStorage.getItem(`yoouz_agency_${currentPlace?.id}`) || 'agency_london_apex';
-  });
-  const assignedAgency = getAgencyById(assignedAgencyId);
-
-  // Sync agency when place changes
-  useEffect(() => {
-    if (currentPlace?.id) {
-      const storedAgency = localStorage.getItem(`yoouz_agency_${currentPlace.id}`);
-      if (storedAgency) {
-        setAssignedAgencyId(storedAgency);
-      }
-    }
-  }, [currentPlace?.id]);
 
   // Reviews Moderation & Reply State
   const [reviewsFilter, setReviewsFilter] = useState<'all' | '5' | '4' | '3'>('all');
@@ -865,7 +848,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
-  const [showAgencyInquiryModal, setShowAgencyInquiryModal] = useState(false);
+  const [faqSearchQuery, setFaqSearchQuery] = useState('');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
 
@@ -1961,7 +1944,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
     { id: 'qr_invites' as BusinessTab, label: t('business.qrCode', 'QR Code'), icon: QrCode },
     { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
-    { id: 'billing' as BusinessTab, label: t('business.agencyPartners', 'Agency Partners'), icon: ShieldCheck },
   ];
 
   // If user hasn't signed in / claimed a business or is currently claiming
@@ -2185,17 +2167,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </button>
                     <button 
                       onClick={() => {
-                        setActiveTab('billing');
                         setShowAccountDropdown(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
-                    >
-                      <ShieldCheck className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.agencyPartners", "Agency Partners")}</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setShowAccountDropdown(false);
+                        setFaqSearchQuery('');
                         setShowHelpModal(true);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
@@ -4162,142 +4135,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
               </div>
             )}
-            {/* TAB 7: PLAN & AGENCY PARTNERSHIP (100% FREE FOR VENUES) */}
-            {activeTab === 'billing' && (
-              <div className="space-y-6 animate-in fade-in duration-200 pb-16 max-w-2xl mx-auto">
-                
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-black text-white tracking-tight">Agency Partnerships & Verified Access</h2>
-                    <p className="text-sm text-zinc-400 mt-1">Yoouz is 100% free for verified businesses. No subscription or billing required.</p>
-                  </div>
-                  <button
-                    type="button"
-                    id="btn-faq-help-open"
-                    onClick={() => setShowHelpModal(true)}
-                    className="self-start sm:self-auto px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold border border-zinc-700 hover:border-zinc-600 transition-all cursor-pointer shadow-md flex items-center gap-2 active:scale-95"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>Questions & Answers (FAQ)</span>
-                  </button>
-                </div>
 
-                {/* Main Unified Membership Card */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-6 shadow-2xl backdrop-blur-xl">
-
-                  {/* ACTIVE PLAN SHOWCASE */}
-                  <div className="bg-zinc-950 border border-zinc-800/90 rounded-2xl p-5 sm:p-6 space-y-5 relative overflow-hidden">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[11px] font-bold">
-                            100% Free Forever
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/80 text-[11px] font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" /> Verified Venue
-                          </span>
-                        </div>
-                        <h3 className="text-2xl font-black text-white tracking-tight pt-1">
-                          Yoouz Merchant Suite
-                        </h3>
-                        <div className="flex items-baseline gap-2 pt-0.5">
-                          <span className="text-3xl font-black text-white">
-                            $0
-                          </span>
-                          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">/ lifetime</span>
-                          <span className="text-xs text-zinc-400 font-semibold ml-1.5">
-                            No credit card or billing ever
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shrink-0 shadow-md">
-                        <ShieldCheck className="w-6 h-6 text-zinc-200" />
-                      </div>
-                    </div>
-
-                    {/* Included Plan Features Checklist */}
-                    <div className="pt-3 border-t border-zinc-800/80">
-                      <div className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-2.5">
-                        Included In Your Free Account
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-zinc-300 font-medium">
-                        {[
-                          'Verified Business Status & Badge',
-                          'Official Public Video Replies',
-                          'Real-Time Video Review Alerts',
-                          'Website Video Review Embed Widget',
-                          'Downloadable Table & Window QR Standees',
-                          'Operating Hours, Phone & Address Sync',
-                          'Direct Customer Follower Insights',
-                          'Direct Merchant Message Center'
-                        ].map((feature, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <Check className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                            <span>{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* AGENCY PARTNERSHIP ONBOARDING SECTION */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
-                        Working with an Advertising or Marketing Agency?
-                      </label>
-                      <span className="text-[10px] font-bold text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-md border border-zinc-700 uppercase tracking-wide">
-                        Agency Inquiries
-                      </span>
-                    </div>
-
-                    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-4">
-                      <div className="flex items-start gap-3.5">
-                        <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shrink-0 mt-0.5">
-                          <Building2 className="w-5 h-5 text-zinc-300" />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-bold text-white">
-                            Direct Agency Management & Custom Campaigns
-                          </h4>
-                          <p className="text-xs text-zinc-400 leading-relaxed">
-                            Yoouz is completely free for venue operators. If your business works with an external PR, marketing, or advertising agency for customized paid ad campaigns, sponsored content, or managed video production, your agency can partner with us directly.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-xl space-y-3">
-                        <div className="text-xs font-semibold text-zinc-300">
-                          How it works for agencies:
-                        </div>
-                        <ul className="text-xs text-zinc-400 space-y-1.5 list-disc list-inside">
-                          <li>Submit your agency information through our secure Partner Desk application form</li>
-                          <li>We verify agency authorization and connect client profiles for multi-venue management</li>
-                          <li>Your agency receives dedicated partner support, API tools, and campaign materials</li>
-                        </ul>
-
-                        <div className="pt-2">
-                          <button
-                            type="button"
-                            onClick={() => setShowAgencyInquiryModal(true)}
-                            className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-md cursor-pointer"
-                          >
-                            <Building2 className="w-4 h-4 text-zinc-950" />
-                            <span>Open Agency Partnership Form</span>
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-            )}
 
           </div>
         </main>
@@ -4385,127 +4223,147 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
       {/* Help & FAQ Modal */}
       {showHelpModal && (
-        <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-          <div className="bg-zinc-950 rounded-3xl border border-zinc-800 text-white p-6 sm:p-7 max-w-lg w-full shadow-2xl relative flex flex-col gap-5 animate-in zoom-in-95 duration-300 max-h-[85vh] overflow-hidden">
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-zinc-950 rounded-3xl border border-zinc-800 text-white p-6 sm:p-7 max-w-xl w-full shadow-2xl relative flex flex-col gap-5 animate-in zoom-in-95 duration-300 max-h-[88vh] overflow-hidden">
             <button
-              onClick={() => setShowHelpModal(false)}
+              onClick={() => {
+                setShowHelpModal(false);
+                setFaqSearchQuery('');
+              }}
               className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
+            {/* Header */}
             <div className="flex items-center gap-3 pr-8">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 shrink-0">
-                <HelpCircle className="w-5 h-5 text-zinc-300" />
+              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 shrink-0 shadow-xs">
+                <HelpCircle className="w-5 h-5 text-zinc-200" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg">Merchant Q&A & Guide</h3>
+                <h3 className="font-bold text-white text-lg tracking-tight">Merchant Q&A & Guide</h3>
                 <p className="text-xs text-zinc-400">Everything you need to know about Yoouz Business</p>
               </div>
             </div>
 
-            <div className="space-y-3.5 text-xs text-zinc-300 leading-relaxed overflow-y-auto pr-1 custom-scrollbar">
-              
-              {/* Question 1: Is it free? */}
-              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1.5">
-                <div className="text-white font-bold flex items-center gap-2 text-sm">
-                  <ShieldCheck className="w-4 h-4 text-zinc-300 shrink-0" />
-                  <span>Is Yoouz 100% free for business owners?</span>
-                </div>
-                <p className="text-zinc-400 pl-6">
-                  <strong className="text-white">Yes, completely free.</strong> Claiming your venue, getting verified, replying to video reviews, downloading table QR standees, and embedding video review widgets on your website is 100% free forever with no credit card required.
-                </p>
-              </div>
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={faqSearchQuery}
+                onChange={(e) => setFaqSearchQuery(e.target.value)}
+                placeholder="Search questions (e.g. video, reviews, QR, replies, embed)..."
+                className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 focus:border-zinc-600 focus:outline-none text-xs text-white placeholder-zinc-500 transition-colors"
+              />
+              {faqSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setFaqSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-              {/* Question 2: Why no billing? */}
-              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1.5">
-                <div className="text-white font-bold flex items-center gap-2 text-sm">
-                  <CreditCard className="w-4 h-4 text-zinc-300 shrink-0" />
-                  <span>Why is there no billing or credit card option?</span>
-                </div>
-                <p className="text-zinc-400 pl-6">
-                  Because there is no money or charges involved for venue owners. Yoouz does not charge local businesses any subscription or listing fees.
-                </p>
-              </div>
+            {/* Q&A Accordion Items */}
+            <div className="space-y-3 text-xs text-zinc-300 leading-relaxed overflow-y-auto pr-1 custom-scrollbar">
+              {[
+                {
+                  id: 'qa-what-is-yoouz',
+                  icon: Video,
+                  question: 'What is Yoouz for Businesses?',
+                  answer: 'Yoouz connects your venue directly with authentic, real-world guests. Customers record genuine 60-second selfie video reviews using their front camera inside your location. There are no bot accounts, fake AI-written reviews, or anonymous trolls—just real people sharing authentic customer experiences that build trust and drive foot traffic.'
+                },
+                {
+                  id: 'qa-is-it-free',
+                  icon: ShieldCheck,
+                  question: 'Is claiming and managing my venue 100% free?',
+                  answer: 'Yes, completely free forever. Venue claiming, verified status, receiving real-time review alerts, publishing official owner replies, downloading print-ready table QR standees, and website embed widgets are 100% free for all verified venue operators with no credit card or billing ever required.'
+                },
+                {
+                  id: 'qa-reply-reviews',
+                  icon: MessageSquare,
+                  question: 'How do I reply to customer video reviews?',
+                  answer: 'Go to the Video Reviews tab in your dashboard. Beneath any customer review, click "Reply" to publish an official response. Your message is pinned with a distinguished "Verified Business Owner" badge directly below the customer\'s video so potential guests see your dedication to hospitality.'
+                },
+                {
+                  id: 'qa-qr-codes',
+                  icon: QrCode,
+                  question: 'How do Table & Window QR Codes help my venue get more reviews?',
+                  answer: 'In the QR Code tab, you can instantly download or print high-resolution table standees and window stickers. When guests scan the QR code with their mobile phone, it launches the Yoouz camera directly for your venue, making it effortless for guests to record authentic 60-second video reviews.'
+                },
+                {
+                  id: 'qa-website-embed',
+                  icon: Code,
+                  question: 'Can I showcase customer video reviews on our website?',
+                  answer: 'Yes! Navigate to the Embed tab to copy your venue\'s embed code. You can paste the responsive iframe snippet into WordPress, Squarespace, Shopify, Wix, or any custom website to display an interactive video review carousel that boosts visitor trust and conversions.'
+                },
+                {
+                  id: 'qa-direct-messages',
+                  icon: Mail,
+                  question: 'How do Customer Direct Messages work?',
+                  answer: 'In the Messages tab, customers can send private inquiries directly to your venue (e.g. table reservations, event bookings, opening hours, or lost items). You can chat back in real time directly from your dashboard.'
+                },
+                {
+                  id: 'qa-profile-branding',
+                  icon: Building2,
+                  question: 'How do I update our venue logo, cover banner, and contact information?',
+                  answer: 'Open the Profile tab. Tap directly on your cover banner or profile image to upload your branding, or update your street address, phone number, website link, and category. Changes update live across the entire Yoouz app immediately.'
+                },
+                {
+                  id: 'qa-moderation-rules',
+                  icon: AlertCircle,
+                  question: 'What should I do if a review violates guidelines or contains spam?',
+                  answer: 'Every review on Yoouz must comply with our community trust policies. All videos must be recorded live at the venue without abusive language, harassment, or copyright infringement. If a review violates our policies, you can report it directly from the video player for prompt investigation.'
+                }
+              ]
+                .filter(item => {
+                  if (!faqSearchQuery.trim()) return true;
+                  const q = faqSearchQuery.toLowerCase();
+                  return item.question.toLowerCase().includes(q) || item.answer.toLowerCase().includes(q);
+                })
+                .map((item) => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <div key={item.id} className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2">
+                      <div className="text-white font-bold flex items-center gap-2.5 text-xs sm:text-sm">
+                        <ItemIcon className="w-4 h-4 text-zinc-300 shrink-0" />
+                        <span>{item.question}</span>
+                      </div>
+                      <p className="text-zinc-400 pl-6 text-xs leading-relaxed">
+                        {item.answer}
+                      </p>
+                    </div>
+                  );
+                })}
 
-              {/* Question 3: How do upgrades / agencies work? */}
-              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2">
-                <div className="text-white font-bold flex items-center gap-2 text-sm">
-                  <Building2 className="w-4 h-4 text-zinc-300 shrink-0" />
-                  <span>How do we upgrade or run custom ad campaigns?</span>
-                </div>
-                <p className="text-zinc-400 pl-6">
-                  We work directly with certified advertising, marketing, and PR agencies. If your business wants custom promotional campaigns, commercial media rights, or dedicated video shoots, have your marketing agency submit an application through our Partner Desk form.
-                </p>
-                <div className="pl-6 pt-1">
+              {faqSearchQuery && (
+                <div className="text-center py-6 text-zinc-400 text-xs">
+                  <div>No matching questions found for "{faqSearchQuery}".</div>
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowHelpModal(false);
-                      setShowAgencyInquiryModal(true);
-                    }}
-                    className="px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-[11px] transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-zinc-700"
+                    onClick={() => setFaqSearchQuery('')}
+                    className="mt-2 text-zinc-200 underline hover:text-white cursor-pointer"
                   >
-                    <Building2 className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>Open Agency Form</span>
+                    Clear search filter
                   </button>
                 </div>
-              </div>
-
-              {/* Question 4: Can our marketing agency manage our profile? */}
-              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2">
-                <div className="text-white font-bold flex items-center gap-2 text-sm">
-                  <Users className="w-4 h-4 text-zinc-300 shrink-0" />
-                  <span>Can our external marketing agency manage our profile?</span>
-                </div>
-                <p className="text-zinc-400 pl-6">
-                  Yes! Your marketing agency can submit an inquiry through our secure Agency Partner Form with your venue name. We will verify and authorize their agency account to manage multi-location campaigns on your behalf.
-                </p>
-                <div className="pl-6 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowHelpModal(false);
-                      setShowAgencyInquiryModal(true);
-                    }}
-                    className="px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-[11px] transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-zinc-700"
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>Open Agency Form</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Question 5: QR Codes & Embeds */}
-              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1.5">
-                <div className="text-white font-bold flex items-center gap-2 text-sm">
-                  <QrCode className="w-4 h-4 text-zinc-300 shrink-0" />
-                  <span>How do Table QR Codes & Website Embeds work?</span>
-                </div>
-                <p className="text-zinc-400 pl-6">
-                  You can download print-ready QR standees directly from the "QR Code" tab and embed an authentic video review carousel on your website (WordPress, Shopify, Squarespace) via the "Embed" tab at zero cost.
-                </p>
-              </div>
-
+              )}
             </div>
 
             <button
-              onClick={() => setShowHelpModal(false)}
-              className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-md shrink-0"
+              onClick={() => {
+                setShowHelpModal(false);
+                setFaqSearchQuery('');
+              }}
+              className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-md shrink-0 active:scale-[0.99]"
             >
               Got it, thanks!
             </button>
           </div>
         </div>
-      )}
-
-      {/* Agency Partnership Application Modal */}
-      {showAgencyInquiryModal && (
-        <CopoAgencyInquiryModal
-          onClose={() => setShowAgencyInquiryModal(false)}
-          venueId={currentPlace?.id}
-          venueName={currentPlace?.name}
-        />
       )}
 
       {/* Business Claim & Verification Modal (Resend Magic Link & Website Meta Tag) */}
@@ -4565,7 +4423,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     { id: 'embed', label: 'Embed', icon: Code, desc: 'Embed video review carousel on website' },
                     { id: 'qr_invites', label: 'Invites', icon: QrCode, desc: 'Download table standees & send email invites' },
                     { id: 'profile', label: 'Profile', icon: Building2, desc: 'Manage operating hours, address & phone' },
-                    { id: 'billing', label: 'Agency Partners', icon: ShieldCheck, desc: 'Agency partnerships & dedicated campaign support' },
                   ]
                     .filter(item => !commandQuery || item.label.toLowerCase().includes(commandQuery.toLowerCase()) || item.desc.toLowerCase().includes(commandQuery.toLowerCase()))
                     .map(item => (
@@ -4659,9 +4516,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       action: () => setIsClaimModalOpen(true)
                     },
                     {
-                      label: 'Agency Partnerships & Inquiry Form',
-                      icon: Building2,
-                      action: () => setShowAgencyInquiryModal(true)
+                      label: 'Merchant Guide & FAQ',
+                      icon: HelpCircle,
+                      action: () => setShowHelpModal(true)
                     }
                   ]
                     .filter(a => !commandQuery || a.label.toLowerCase().includes(commandQuery.toLowerCase()))
