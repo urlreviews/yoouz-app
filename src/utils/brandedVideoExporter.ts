@@ -4,7 +4,7 @@ import { formatRecordedDate } from './dateUtils';
 import { getVideoBlobFromIndexedDB } from '../lib/videoStorage';
 
 export interface BrandedExportProgress {
-  status: 'initializing' | 'loading' | 'rendering' | 'encoding' | 'completed' | 'error';
+  status: 'idle' | 'initializing' | 'loading' | 'rendering' | 'encoding' | 'completed' | 'error';
   progress: number; // 0 to 100
   message: string;
   blobUrl?: string;

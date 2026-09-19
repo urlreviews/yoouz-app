@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Download,
@@ -9,9 +9,8 @@ import {
   Copy,
   Check,
   Loader2,
-  ShieldCheck,
-  Video,
-  FileVideo
+  FileVideo,
+  ShieldCheck
 } from 'lucide-react';
 import { VideoReview, Place } from '../types';
 import { exportBrandedAdVideo, downloadOriginalLosslessVideo, BrandedExportProgress } from '../utils/brandedVideoExporter';
@@ -31,36 +30,27 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
   place
 }) => {
   const [exportState, setExportState] = useState<BrandedExportProgress>({
-    status: 'initializing',
+    status: 'idle',
     progress: 0,
-    message: 'Preparing Ultra-HD video pipeline...',
+    message: '',
   });
   const [isExporting, setIsExporting] = useState(false);
-  const [isDownloadingOriginal, setIsDownloadingOriginal] = useState(false);
+  const [isDownloadingRaw, setIsDownloadingRaw] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && video && !isExporting && exportState.status !== 'completed') {
-      // Auto start export when modal opens
-      handleStartExport();
-    }
-  }, [isOpen, video]);
 
   if (!isOpen || !video) return null;
 
-  const placeName = place?.name || video.placeName || 'Yoouz Verified';
-  const authorName = video.author?.name || 'Verified Customer';
-  const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
+  const placeName = place?.name || video.placeName || 'Yoouz';
   const placeSlug = getPlaceSlug(place || { name: placeName, id: video.placeId });
   const adDestinationUrl = `https://www.yoouz.com/v/${placeSlug}`;
 
-  const handleStartExport = async () => {
+  const handleDownloadBranded = async () => {
     if (isExporting) return;
     setIsExporting(true);
     setExportState({
       status: 'initializing',
-      progress: 5,
-      message: 'Preparing Ultra-HD video canvas...',
+      progress: 10,
+      message: 'Preparing Ultra-HD video...',
     });
 
     await exportBrandedAdVideo(video, place, (progress) => {
@@ -70,47 +60,45 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
     setIsExporting(false);
   };
 
-  const handleDownloadOriginal = async () => {
-    if (isDownloadingOriginal) return;
-    setIsDownloadingOriginal(true);
+  const handleDownloadRaw = async () => {
+    if (isDownloadingRaw) return;
+    setIsDownloadingRaw(true);
     try {
       await downloadOriginalLosslessVideo(video, place);
     } finally {
-      setIsDownloadingOriginal(false);
+      setIsDownloadingRaw(false);
     }
   };
 
   const handleCopyAdLink = () => {
     navigator.clipboard.writeText(adDestinationUrl);
     setIsCopiedLink(true);
-    setTimeout(() => setIsCopiedLink(false), 3000);
+    setTimeout(() => setIsCopiedLink(false), 2500);
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+    <div 
+      id="branded-video-export-modal" 
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div 
-        className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
+        className="relative w-full max-w-md bg-zinc-950 border border-zinc-800/90 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with Dark Mode Yoouz Branding */}
-        <div className="px-6 py-5 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/60">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/20 flex items-center justify-center text-white shadow-lg">
-              <Star className="w-5 h-5 fill-white text-white" />
+        {/* Clean Header */}
+        <div className="px-6 py-5 border-b border-zinc-800/70 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
+              <Star className="w-4 h-4 fill-white text-white" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>Download Video Review</span>
-                <span className="text-[10px] bg-white/10 text-white font-extrabold px-2.5 py-0.5 rounded-full border border-white/20 uppercase tracking-wider">
-                  Master Quality
-                </span>
-              </h3>
-              <p className="text-xs text-zinc-400">
-                Direct lossless original video & Ultra-HD branded ad formats
-              </p>
+              <h3 className="text-sm font-bold text-white tracking-tight">Download Video Review</h3>
+              <p className="text-[11px] text-zinc-400">High-Resolution Ad Formats</p>
             </div>
           </div>
           <button
+            id="close-export-modal-btn"
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center border border-zinc-800 transition-colors cursor-pointer"
           >
@@ -118,135 +106,133 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
           </button>
         </div>
 
-        {/* Body Content */}
-        <div className="p-6 overflow-y-auto space-y-6 text-sm text-zinc-300">
+        {/* Modal Body */}
+        <div className="p-6 space-y-4 text-zinc-300">
           
-          {/* Dual Download Options */}
-          <div className="space-y-3">
-            {/* Option 1: 100% Lossless Original Master (Direct Camera Quality) */}
-            <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-700/80 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
-                    <FileVideo className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-white text-xs flex items-center gap-2">
-                      <span>Original Lossless Video</span>
-                      <span className="text-[9px] bg-white text-black font-extrabold px-1.5 py-0.2 rounded-full uppercase">100% Camera Original</span>
-                    </div>
-                    <div className="text-[11px] text-zinc-400">
-                      Exact raw video without any compression or transcoding (Identical to in-app playback)
-                    </div>
-                  </div>
+          {/* Card 1: Primary Branded Ad Video */}
+          <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-700/80 space-y-3.5 relative overflow-hidden">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white">Branded for Ads</span>
+                  <span className="text-[9px] bg-white text-black font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Ultra-HD MP4
+                  </span>
                 </div>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Includes venue pill, star rating & watermark for TikTok, Meta & Reels
+                </p>
               </div>
-              <button
-                onClick={handleDownloadOriginal}
-                disabled={isDownloadingOriginal}
-                className="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs border border-zinc-600 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 shadow"
-              >
-                {isDownloadingOriginal ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                    <span>Downloading Original Video...</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-3.5 h-3.5 text-white" />
-                    <span>Download Original Lossless Video (MP4)</span>
-                  </>
-                )}
-              </button>
             </div>
 
-            {/* Option 2: Branded Ad Export */}
-            <div className="p-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-zinc-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
-                  Branded Ad Format (Overlays & Watermark)
-                </span>
-                <span className="text-white bg-white/10 px-2 py-0.5 rounded-full border border-white/15 text-[11px] font-bold">
-                  Ultra-HD MP4
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                  <div className="font-semibold text-white flex items-center gap-1 text-[11px]">
-                    <span>Top Venue Pill</span>
-                    <CheckCircle className="w-3 h-3 text-white" />
-                  </div>
-                  <div className="text-[10px] text-zinc-400 truncate">
-                    {placeName} • ⭐ {rawRating.toFixed(1)}
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                  <div className="font-semibold text-white flex items-center gap-1 text-[11px]">
-                    <span>Author & Stars</span>
-                    <CheckCircle className="w-3 h-3 text-white" />
-                  </div>
-                  <div className="text-[10px] text-zinc-400 truncate">
-                    By {authorName} • 5 Stars
-                  </div>
-                </div>
-              </div>
-
-              {/* Progress Bar for Branded Export */}
+            {/* Progress Bar (Visible while exporting or upon completion) */}
+            {isExporting && (
               <div className="space-y-1.5 pt-1">
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-zinc-300 flex items-center gap-1.5">
-                    {isExporting ? (
-                      <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
-                    ) : exportState.status === 'completed' ? (
-                      <CheckCircle className="w-3.5 h-3.5 text-white" />
-                    ) : (
-                      <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-                    )}
-                    <span>{exportState.message}</span>
+                    <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                    <span>{exportState.message || 'Rendering video...'}</span>
                   </span>
                   <span className="font-bold text-white font-mono">{exportState.progress}%</span>
                 </div>
-                <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
+                <div className="w-full h-1.5 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
                   <div
-                    className={`h-full transition-all duration-300 ${
-                      exportState.status === 'completed'
-                        ? 'bg-white'
-                        : exportState.status === 'error'
-                        ? 'bg-red-500'
-                        : 'bg-gradient-to-r from-zinc-300 via-white to-zinc-400'
-                    }`}
+                    className="h-full bg-white transition-all duration-300"
                     style={{ width: `${exportState.progress}%` }}
                   />
                 </div>
               </div>
-            </div>
+            )}
+
+            {exportState.status === 'completed' && !isExporting && (
+              <div className="flex items-center gap-1.5 text-[11px] text-white font-medium bg-white/5 py-1.5 px-3 rounded-lg border border-white/10">
+                <CheckCircle className="w-3.5 h-3.5 text-white shrink-0" />
+                <span>Video downloaded successfully!</span>
+              </div>
+            )}
+
+            <button
+              id="download-branded-ad-btn"
+              onClick={handleDownloadBranded}
+              disabled={isExporting}
+              className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
+                isExporting
+                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/50'
+                  : 'bg-white hover:bg-zinc-200 text-black active:scale-98'
+              }`}
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-500" />
+                  <span>Rendering Branded Video ({exportState.progress}%)...</span>
+                </>
+              ) : exportState.status === 'completed' ? (
+                <>
+                  <Download className="w-3.5 h-3.5 text-black" />
+                  <span>Re-Download Branded Video (MP4)</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5 text-black" />
+                  <span>Download Branded Video (MP4)</span>
+                </>
+              )}
+            </button>
           </div>
 
-          {/* Campaign Destination Link for Ads */}
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Link className="w-3.5 h-3.5 text-zinc-300" />
-                Ad Campaign Destination URL
-              </span>
-              <span className="text-[10px] text-zinc-400 font-mono">TikTok / Meta Ads CTA</span>
+          {/* Card 2: Original Raw Master */}
+          <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                <FileVideo className="w-3.5 h-3.5 text-zinc-300" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-white truncate">Original Raw Video</div>
+                <div className="text-[10px] text-zinc-400 truncate">Clean capture without overlays</div>
+              </div>
             </div>
-            <p className="text-[11px] text-zinc-400 leading-relaxed">
-              Paste this link into your ad campaign settings so viewers directly open your business profile, menu, and customer video reviews on Yoouz:
-            </p>
+
+            <button
+              id="download-raw-video-btn"
+              onClick={handleDownloadRaw}
+              disabled={isDownloadingRaw}
+              className="py-1.5 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-[11px] border border-zinc-700 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shrink-0"
+            >
+              {isDownloadingRaw ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin text-white" />
+                  <span>Downloading...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3 h-3 text-white" />
+                  <span>Download Raw</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Card 3: Ad Campaign Destination URL */}
+          <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-white flex items-center gap-1.5">
+                <Link className="w-3 h-3 text-zinc-400" />
+                Ad Campaign Link
+              </span>
+              <span className="text-[10px] text-zinc-500 font-mono">Meta / TikTok CTA</span>
+            </div>
+
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 readOnly
                 value={adDestinationUrl}
-                className="w-full bg-black/60 border border-zinc-700/80 rounded-xl px-3 py-2 text-xs text-zinc-200 font-mono select-all focus:outline-none"
+                className="w-full bg-black/60 border border-zinc-700/80 rounded-xl px-3 py-1.5 text-xs text-zinc-200 font-mono select-all focus:outline-none"
               />
               <button
+                id="copy-ad-link-btn"
                 onClick={handleCopyAdLink}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
                   isCopiedLink
                     ? 'bg-white text-black'
                     : 'bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700'
@@ -254,12 +240,12 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
               >
                 {isCopiedLink ? (
                   <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Copied!</span>
+                    <Check className="w-3 h-3" />
+                    <span>Copied</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-3 h-3" />
                     <span>Copy</span>
                   </>
                 )}
@@ -269,43 +255,18 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
 
         </div>
 
-        {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-zinc-800/80 bg-zinc-900/60 flex items-center justify-end gap-3">
+        {/* Simple Footer */}
+        <div className="px-6 py-3.5 border-t border-zinc-800/70 bg-zinc-900/40 flex items-center justify-end">
           <button
+            id="close-modal-bottom-btn"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+            className="px-4 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
           >
-            Close
-          </button>
-
-          <button
-            onClick={handleStartExport}
-            disabled={isExporting}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xl ${
-              isExporting
-                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/50'
-                : 'bg-white hover:bg-zinc-200 text-black active:scale-95'
-            }`}
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
-                <span>Rendering Branded Ad ({exportState.progress}%)...</span>
-              </>
-            ) : exportState.status === 'completed' ? (
-              <>
-                <Download className="w-4 h-4 text-black" />
-                <span>Re-Download Branded Ad Video</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 text-black" />
-                <span>Download Branded Ad Video</span>
-              </>
-            )}
+            Done
           </button>
         </div>
       </div>
     </div>
   );
 };
+
