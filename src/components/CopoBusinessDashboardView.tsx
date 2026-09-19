@@ -2854,16 +2854,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                   <button
                                     type="button"
                                     onClick={() => handleDownloadVideoForAds(video)}
-                                    disabled={downloadingVideoId === video.id}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-emerald-400 hover:text-emerald-300 border border-zinc-800 hover:border-emerald-500/40"
-                                    title="Download clean 9:16 MP4 video review for TikTok, Meta & Google Ad campaigns"
+                                    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
+                                    title="Export Ultra-HD branded 9:16 video review for TikTok, Meta & Google Ad campaigns"
                                   >
-                                    {downloadingVideoId === video.id ? (
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
-                                    ) : (
-                                      <Download className="w-3.5 h-3.5 text-emerald-400" />
-                                    )}
-                                    <span>{downloadingVideoId === video.id ? 'Downloading...' : 'Download for Ads'}</span>
+                                    <Download className="w-3.5 h-3.5 text-white" />
+                                    <span>Download for Ads</span>
                                   </button>
 
                                   {!hasReply && !isReplying && (
