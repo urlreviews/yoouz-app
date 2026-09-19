@@ -9076,6 +9076,30 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       });
       merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
 
+      // Dynamically compute exact total reviews count per place/domain across all videos in feed
+      const placeReviewCountsMap = new Map<string, number>();
+      merged.forEach((v: any) => {
+        const rawPlace = String(v.placeId || v.placeName || v.placeWebsite || 'yoouz.com').toLowerCase().trim();
+        const domainKey = cleanDomainName(rawPlace);
+        const keysToIncrement = new Set([rawPlace, domainKey].filter(Boolean));
+        keysToIncrement.forEach(k => {
+          placeReviewCountsMap.set(k, (placeReviewCountsMap.get(k) || 0) + 1);
+        });
+      });
+
+      merged.forEach((v: any) => {
+        const rawPlace = String(v.placeId || v.placeName || v.placeWebsite || 'yoouz.com').toLowerCase().trim();
+        const domainKey = cleanDomainName(rawPlace);
+        const count = Math.max(
+          placeReviewCountsMap.get(domainKey) || 0,
+          placeReviewCountsMap.get(rawPlace) || 0,
+          1
+        );
+        v.reviewsCount = count;
+        v.reviewCount = count;
+        v.totalReviews = count;
+      });
+
       // 4. Update memory cache and write-back to local reviews_index.json on success
       if (bunnyFetchSuccess || BunnyDBFetchSuccess) {
         feedCache.videos = merged;

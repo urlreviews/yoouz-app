@@ -25,9 +25,9 @@ import {
   ShieldCheck,
   X
 } from "lucide-react";
-import { VideoReview, VideoAuthor, FeedSubTab } from "../types";
+import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug } from "../utils/placeUtils";
 import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
@@ -52,6 +52,8 @@ interface VideoFeedCardProps {
   hasRenderedFirstFrame?: boolean;
   allUsers?: any[];
   currentUser?: any;
+  places?: Place[];
+  allVideos?: VideoReview[];
   
   activeSubTab?: FeedSubTab;
   onSelectSubTab?: (tab: FeedSubTab) => void;
@@ -106,6 +108,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   hasRenderedFirstFrame = false,
   allUsers,
   currentUser,
+  places,
+  allVideos,
   activeSubTab,
   onSelectSubTab,
   onToggleMute,
@@ -143,6 +147,36 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onCloseEmbed
 }) => {
   const { t } = useLanguage();
+
+  const effectiveReviewCount = React.useMemo(() => {
+    const vCount = Number((video as any).reviewsCount || (video as any).reviewCount || (video as any).totalReviews || 0);
+
+    let placeCount = 0;
+    if (places && places.length > 0) {
+      const targetSlug = getPlaceSlug(video.placeWebsite || video.placeId || video.placeName);
+      const matchedPlace = places.find(p => {
+        if (p.id === video.placeId) return true;
+        const pSlug = getPlaceSlug(p);
+        return Boolean(pSlug && targetSlug && pSlug === targetSlug);
+      });
+      if (matchedPlace) {
+        placeCount = Number(matchedPlace.totalReviews || (matchedPlace as any).reviewCount || 0);
+      }
+    }
+
+    let videoMatchesCount = 0;
+    if (allVideos && allVideos.length > 0) {
+      const targetSlug = getPlaceSlug(video.placeWebsite || video.placeId || video.placeName);
+      videoMatchesCount = allVideos.filter(v => {
+        if (!v) return false;
+        if (v.placeId && video.placeId && v.placeId === video.placeId) return true;
+        const vSlug = getPlaceSlug(v.placeWebsite || v.placeId || v.placeName);
+        return Boolean(vSlug && targetSlug && vSlug === targetSlug);
+      }).length;
+    }
+
+    return Math.max(vCount, placeCount, videoMatchesCount, 1);
+  }, [video, places, allVideos]);
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
   const lastTapTimeRef = useRef<number>(0);
@@ -813,7 +847,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
                 <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
                 <span>{(video.rating || 5.0).toFixed(1)}</span>
-                <span className="text-zinc-300 font-normal">({(video as any).reviewsCount || 1} {t("common.reviews", "reviews")})</span>
+                <span className="text-zinc-300 font-normal">({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})</span>
               </div>
             </div>
           </button>

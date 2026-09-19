@@ -2850,6 +2850,16 @@ export function App() {
           }
         }
       });
+
+      next.forEach((p, index) => {
+        const matchingV = videos.filter(v => !isPlaceDeleted(v.placeId || v.placeWebsite || v.placeName, currentDeleted) && isPlaceReviewMatch(v, p));
+        const computedCount = Math.max(matchingV.length, p.totalReviews || 0);
+        if (computedCount > 0 && p.totalReviews !== computedCount) {
+          next[index] = { ...p, totalReviews: computedCount };
+          modified = true;
+        }
+      });
+
       return modified ? next : prev;
     });
   }, [videos]);

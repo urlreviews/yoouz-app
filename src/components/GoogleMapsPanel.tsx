@@ -295,7 +295,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                   ))}
                 </div>
                 <span className="text-[12px] text-zinc-200">
-                  {(place.totalReviews || 0).toLocaleString()} reviews
+                  {(place.totalReviews || 0).toLocaleString()} {(place.totalReviews || 0) === 1 ? "review" : "reviews"}
                 </span>
               </div>
             </div>

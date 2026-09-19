@@ -123,6 +123,32 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     };
   }, []);
 
+  // Strict browser tab closure protection during active video publishing upload
+  useEffect(() => {
+    if (!isPublishing) return;
+
+    const handleUploadBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      const promptMessage = "Publishing video review in progress... If you leave or reload this page, your video review will not be saved.";
+      e.returnValue = promptMessage;
+      return promptMessage;
+    };
+
+    window.addEventListener("beforeunload", handleUploadBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUploadBeforeUnload);
+    };
+  }, [isPublishing]);
+
+  const handleAttemptClose = () => {
+    if (isPublishing) {
+      if (!window.confirm("Publishing is in progress. Closing now will cancel your video upload. Are you sure you want to exit?")) {
+        return;
+      }
+    }
+    onClose();
+  };
+
   useEffect(() => {
     if (preselectedPlace) {
       setSelectedPlace(preselectedPlace);
@@ -1127,7 +1153,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               </div>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleAttemptClose}
                 className="w-10 h-10 rounded-full bg-zinc-800/90 hover:bg-zinc-700 border border-zinc-700/60 text-white flex items-center justify-center transition-all cursor-pointer shadow-lg active:scale-95 shrink-0"
                 title="Close"
               >
@@ -1317,7 +1343,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   <div className="flex items-center gap-2 pointer-events-auto shrink-0">
                     <button
                       type="button"
-                      onClick={onClose}
+                      onClick={handleAttemptClose}
                       className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center hover:bg-black transition-all cursor-pointer active:scale-95 shadow-xl shrink-0"
                       title="Close"
                     >
@@ -1395,20 +1421,23 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
                   {/* Upload Progress Bar (when publishing) */}
                   {isPublishing && (
-                    <div className="w-full space-y-1.5 bg-zinc-900 p-3 rounded-2xl border border-zinc-800">
+                    <div className="w-full space-y-2 bg-zinc-900/95 p-3.5 rounded-2xl border border-zinc-700/60 backdrop-blur-md shadow-2xl">
                       <div className="flex justify-between text-xs font-bold text-white">
                         <span className="flex items-center gap-2">
                           <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                           Publishing authentic review...
                         </span>
-                        <span>{uploadProgress}%</span>
+                        <span className="font-mono text-amber-400 font-black">{uploadProgress}%</span>
                       </div>
                       <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-white transition-all duration-300 rounded-full"
+                          className="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-emerald-400 transition-all duration-300 rounded-full"
                           style={{ width: `${uploadProgress}%` }}
                         />
                       </div>
+                      <p className="text-[10.5px] text-zinc-300 text-center font-medium leading-tight pt-0.5">
+                        Please do not close or reload this browser tab until publishing reaches 100%.
+                      </p>
                     </div>
                   )}
 
@@ -1491,7 +1520,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   <div className="flex items-center gap-2 pointer-events-auto shrink-0">
                     <button
                       type="button"
-                      onClick={onClose}
+                      onClick={handleAttemptClose}
                       className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center hover:bg-black/80 transition-all cursor-pointer shadow-xl active:scale-95 shrink-0"
                       title="Close"
                     >
