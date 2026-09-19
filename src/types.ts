@@ -239,6 +239,7 @@ export interface Place {
   bannerUrl: string;
   photos: string[];
   openingHours: string;
+  hours?: string;
   hoursSubtext?: string;
   isOpen: boolean;
   phone: string;

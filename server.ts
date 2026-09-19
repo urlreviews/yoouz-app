@@ -4245,10 +4245,20 @@ app.get('/api/nosql/:collection', async (req, res) => {
           const preferNew = (!existing.id.includes('.') && canonId.includes('.')) || (!existing.isClaimed && p.isClaimed);
           const base = preferNew ? p : existing;
           const other = preferNew ? existing : p;
+
+          const mergedLogo = (base.logoUrl && !base.logoUrl.includes('favicon.svg') && !base.logoUrl.startsWith('<svg')) ? base.logoUrl : (other.logoUrl || base.logoUrl);
+          const mergedBanner = base.bannerUrl || other.bannerUrl || '';
+          const mergedCategory = (base.category && base.category !== 'Website' && base.category !== 'all') ? base.category : (other.category || base.category);
+
           canonicalMap.set(key, {
             ...other,
             ...base,
             id: (base.id.includes('.') ? base.id : (other.id.includes('.') ? other.id : base.id)),
+            logoUrl: mergedLogo,
+            avatarUrl: mergedLogo,
+            bannerUrl: mergedBanner,
+            ogImage: mergedBanner,
+            category: mergedCategory,
             isClaimed: Boolean(base.isClaimed || other.isClaimed),
             isVerified: Boolean(base.isVerified || other.isVerified),
             claimedByEmail: base.claimedByEmail || other.claimedByEmail,
@@ -4619,6 +4629,10 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
                   ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
             args: [id, placeName, address, category, city, country, latitude, longitude, logoUrl, jsonStr,
                    placeName, address, category, city, country, latitude, longitude, logoUrl, jsonStr]
+          });
+          broadcastSseEvent({
+            type: "place_updated",
+            place: { id, ...finalDataObj }
           });
         } else if (colName === 'videoReviews' || colName === 'videos') {
           const rev = enrichReviewPlaceAssets({ id, ...finalDataObj });

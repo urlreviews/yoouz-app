@@ -27,7 +27,12 @@ export interface BusinessSession {
   placeName: string;
   domain?: string;
   logoUrl?: string;
+  bannerUrl?: string;
   website?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  category?: string;
   verifiedAt: string;
   role: 'business_owner';
   verificationMethod: 'business_email_code' | 'resend_email_magic_link' | 'website_meta_tag';

@@ -507,15 +507,7 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
 }
 
 export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null): string | null {
-  const cleanDomain = extractDomain(domain || url);
-  if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz")) {
-    return "/favicon.svg";
-  }
-  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
-    return KNOWN_BRAND_LOGOS[cleanDomain];
-  }
-
-  // Reject white/inverted variants that disappear on light badges
+  // 1. Explicit custom valid URL takes absolute priority
   if (
     url &&
     !isWhiteOrInvertedLogo(url) &&
@@ -530,6 +522,14 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
+  const cleanDomain = extractDomain(domain || url);
+  if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz")) {
+    return "/favicon.svg";
+  }
+  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
+    return KNOWN_BRAND_LOGOS[cleanDomain];
+  }
+
   if (cleanDomain && cleanDomain.includes(".")) {
     return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
   }
@@ -539,6 +539,22 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
 
 export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): string | null {
   if (!place) return null;
+
+  // 1. Explicit custom logoUrl provided (e.g. uploaded by owner to Bunny CDN or custom URL) takes highest priority
+  if (
+    place.logoUrl &&
+    place.logoUrl.trim() !== "" &&
+    !isWhiteOrInvertedLogo(place.logoUrl) &&
+    !place.logoUrl.includes("brandfetch.io") &&
+    place.logoUrl !== "data:;" &&
+    !place.logoUrl.startsWith("data:;")
+  ) {
+    if (place.logoUrl.startsWith("/api/proxy-image")) return place.logoUrl;
+    if (place.logoUrl.includes("googleusercontent.com") || place.logoUrl.includes("framerusercontent.com")) {
+      return `/api/proxy-image?url=${encodeURIComponent(place.logoUrl)}`;
+    }
+    return place.logoUrl;
+  }
 
   let domain = place.brandDomain;
   if (!domain && place.website) {
@@ -560,27 +576,11 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return "/favicon.svg";
   }
 
-  // 1. Direct match for known high-quality brand vector logos
+  // 2. Direct match for known high-quality brand vector logos
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
     return KNOWN_BRAND_LOGOS[cleanDomain];
   }
 
-  // 2. Explicit logoUrl provided (if not a broken brandfetch or white/inverted variant)
-  if (
-    place.logoUrl &&
-    place.logoUrl.trim() !== "" &&
-    !isWhiteOrInvertedLogo(place.logoUrl) &&
-    !place.logoUrl.includes("brandfetch.io") &&
-    place.logoUrl !== "data:;" &&
-    !place.logoUrl.startsWith("data:;")
-  ) {
-    if (place.logoUrl.startsWith("/api/proxy-image")) return place.logoUrl;
-    if (place.logoUrl.includes("googleusercontent.com") || place.logoUrl.includes("framerusercontent.com")) {
-      return `/api/proxy-image?url=${encodeURIComponent(place.logoUrl)}`;
-    }
-    return place.logoUrl;
-  }
-  
   // 3. Authentic High-Resolution Social Favicon (Google 256px resolution directly from website icon/metadata)
   if (cleanDomain && cleanDomain.includes(".")) {
     return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;

@@ -2535,8 +2535,38 @@ export function App() {
                   if (!existing) {
                     map.set(key, placeObj);
                   } else {
-                    const preferNew = (!existing.id.includes('.') && placeObj.id.includes('.')) || (!existing.isClaimed && placeObj.isClaimed);
-                    map.set(key, preferNew ? { ...existing, ...placeObj } : { ...placeObj, ...existing });
+                    const mergedLogo = (placeObj.logoUrl && !placeObj.logoUrl.includes('favicon.svg') && !placeObj.logoUrl.startsWith('<svg')) ? placeObj.logoUrl : (existing.logoUrl || placeObj.logoUrl);
+                    const mergedBanner = placeObj.bannerUrl || existing.bannerUrl || '';
+                    const mergedCategory = (placeObj.category && placeObj.category !== 'Website' && placeObj.category !== 'all') ? placeObj.category : (existing.category || placeObj.category);
+                    const mergedPhone = placeObj.phone || (existing as any).phone || '';
+                    const mergedHours = (placeObj as any).hours || placeObj.openingHours || (existing as any).hours || existing.openingHours || '';
+                    const mergedDesc = (placeObj as any).description || (existing as any).description || '';
+                    const mergedAddress = placeObj.address || existing.address || '';
+                    const mergedWebsite = placeObj.website || existing.website || '';
+                    const mergedEmail = (placeObj as any).email || (existing as any).email || '';
+
+                    map.set(key, {
+                      ...existing,
+                      ...placeObj,
+                      id: (canonId.includes('.') ? canonId : (existing.id.includes('.') ? existing.id : placeObj.id)),
+                      logoUrl: mergedLogo,
+                      avatarUrl: mergedLogo,
+                      bannerUrl: mergedBanner,
+                      ogImage: mergedBanner,
+                      photos: mergedBanner ? [mergedBanner, ...(placeObj.photos || existing.photos || []).filter((ph: any) => ph !== mergedBanner)] : (placeObj.photos || existing.photos || []),
+                      category: mergedCategory,
+                      address: mergedAddress,
+                      phone: mergedPhone,
+                      hours: mergedHours,
+                      openingHours: mergedHours,
+                      description: mergedDesc,
+                      website: mergedWebsite,
+                      email: mergedEmail,
+                      isClaimed: Boolean(placeObj.isClaimed || existing.isClaimed),
+                      isVerified: Boolean(placeObj.isVerified || existing.isVerified),
+                      claimedByEmail: placeObj.claimedByEmail || existing.claimedByEmail,
+                      ownerId: placeObj.ownerId || existing.ownerId
+                    });
                   }
                 });
 
@@ -4749,23 +4779,50 @@ export function App() {
 
   // Handle Updating Business Information (Claim, Edit, Add Phone/Website/Hours)
   const handleUpdatePlace = (updatedPlace: Place) => {
+    const updatedSlug = getPlaceSlug(updatedPlace.id);
+    const updatedDomain = extractCleanDomain(updatedPlace.brandDomain || updatedPlace.website || updatedPlace.id);
+
     setPlaces((prev) => {
-      const exists = prev.some((p) => p.id === updatedPlace.id);
-      if (exists) {
-        return prev.map((p) => (p.id === updatedPlace.id ? updatedPlace : p));
-      }
-      return [updatedPlace, ...prev];
+      let matched = false;
+      const nextList = prev.map((p) => {
+        const pSlug = getPlaceSlug(p.id);
+        const pDomain = extractCleanDomain(p.brandDomain || p.website || p.id);
+        const isMatch = p.id === updatedPlace.id || 
+                        (updatedSlug && pSlug === updatedSlug) || 
+                        (updatedDomain && pDomain === updatedDomain);
+        if (isMatch) {
+          matched = true;
+          return {
+            ...p,
+            ...updatedPlace,
+            id: updatedPlace.id || p.id
+          };
+        }
+        return p;
+      });
+
+      const finalList = matched ? nextList : [updatedPlace, ...prev];
+      try {
+        localStorage.setItem("yoouz_cached_places", JSON.stringify(finalList));
+      } catch (e) {}
+      return finalList;
     });
 
     // Mirror updates to BunnyDB (libSQL/SQLite) and BunnyDB so they persist forever (even after page refresh!)
     try {
-      fetch(`/api/nosql/places/${updatedPlace.id}`, {
+      fetch(`/api/nosql/places/${encodeURIComponent(updatedPlace.id)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedPlace, merge: true })
       }).catch((e) => console.error("Error updating place in BunnyDB:", e));
 
-
+      if (updatedPlace.id.includes('yoouz') || updatedPlace.name?.toLowerCase() === 'yoouz') {
+        fetch(`/api/nosql/places/yoouz.com`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: updatedPlace, merge: true })
+        }).catch(() => {});
+      }
     } catch (err) {
       console.error("Failed to sync updated place to databases:", err);
     }

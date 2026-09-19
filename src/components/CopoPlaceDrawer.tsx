@@ -764,18 +764,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <span className="text-zinc-200 font-medium">
             ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? t("place.review", "review") : t("place.reviews", "reviews")})
           </span>
-          <span className="text-zinc-700">·</span>
-          {effectiveWebsite ? (
-            <a 
-              href={effectiveWebsite} 
-              target="_blank" 
-              rel="noreferrer" 
-              className="text-zinc-200 hover:text-white hover:underline font-medium truncate max-w-[180px]"
-            >
-              {displayWebsiteClean}
-            </a>
-          ) : (
-            <span className="text-zinc-200 font-medium">{place.category || t("place.establishment", "Establishment")}</span>
+          {place.category && (
+            <>
+              <span className="text-zinc-700">·</span>
+              <span className="text-zinc-300 font-medium px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-xs">
+                {place.category}
+              </span>
+            </>
+          )}
+          {effectiveWebsite && (
+            <>
+              <span className="text-zinc-700">·</span>
+              <a 
+                href={effectiveWebsite} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-zinc-200 hover:text-white hover:underline font-medium truncate max-w-[180px]"
+              >
+                {displayWebsiteClean}
+              </a>
+            </>
           )}
           
           {((place.city && place.city !== "Online") || place.country) && (
@@ -1390,6 +1398,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </button>
                 )}
               </div>
+
+              {/* Business Category (if provided) */}
+              {place.category && (
+                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
+                    {t("place.businessCategory", "Business Category")}
+                  </span>
+                  <p className="text-sm text-white font-semibold">
+                    {place.category}
+                  </p>
+                </div>
+              )}
 
               {/* Full Description & URL Metadata */}
               <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1">

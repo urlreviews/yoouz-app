@@ -250,8 +250,28 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const currentPlace = useMemo(() => {
     // 1. If we have a verified session with place or domain
     if (verifiedBusinessSession) {
-      const found = places.find(p => p.id === verifiedBusinessSession.placeId);
-      if (found) return found;
+      const vDomain = (verifiedBusinessSession.domain || '').replace(/^www\./, '').toLowerCase().trim();
+      const vPlaceId = verifiedBusinessSession.placeId;
+      
+      const found = places.find(p => {
+        if (vPlaceId && p.id === vPlaceId) return true;
+        const pDomain = (p.brandDomain || (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || p.id).replace(/^www\./, '').toLowerCase().trim();
+        return vDomain && (pDomain === vDomain || p.id === vDomain || p.id === `place-custom-${vDomain.replace(/[^a-z0-9]/g, '-')}`);
+      });
+
+      if (found) {
+        // If the session has updated logo or banner not yet in places, overlay it
+        const overlayLogo = (verifiedBusinessSession.logoUrl && !verifiedBusinessSession.logoUrl.startsWith('<svg') && !verifiedBusinessSession.logoUrl.includes('favicon.svg')) 
+          ? verifiedBusinessSession.logoUrl 
+          : found.logoUrl;
+        const overlayBanner = verifiedBusinessSession.bannerUrl || found.bannerUrl;
+        return {
+          ...found,
+          logoUrl: overlayLogo,
+          avatarUrl: overlayLogo,
+          bannerUrl: overlayBanner
+        };
+      }
 
       if (verifiedBusinessSession.domain || verifiedBusinessSession.businessEmail) {
         const derived = derivePlaceFromEmailOrDomain(
@@ -259,15 +279,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           places
         );
         
-        const isDynamicPlace = derived.id.startsWith('place-custom');
-        
-        if (isDynamicPlace) {
-          if (verifiedBusinessSession.placeName && verifiedBusinessSession.placeName !== 'Verified Business') {
-            derived.name = verifiedBusinessSession.placeName;
-          }
-          if (verifiedBusinessSession.logoUrl && !verifiedBusinessSession.logoUrl.startsWith('<svg')) {
-            derived.logoUrl = verifiedBusinessSession.logoUrl;
-          }
+        if (verifiedBusinessSession.placeName && verifiedBusinessSession.placeName !== 'Verified Business') {
+          derived.name = verifiedBusinessSession.placeName;
+        }
+        if (verifiedBusinessSession.logoUrl && !verifiedBusinessSession.logoUrl.startsWith('<svg')) {
+          derived.logoUrl = verifiedBusinessSession.logoUrl;
+          derived.avatarUrl = verifiedBusinessSession.logoUrl;
+        }
+        if (verifiedBusinessSession.bannerUrl) {
+          derived.bannerUrl = verifiedBusinessSession.bannerUrl;
         }
 
         const isYoouz = (verifiedBusinessSession.domain || '').includes('yoouz.com') || 
@@ -275,7 +295,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         derived.name === 'Yoouz';
         if (isYoouz) {
           derived.name = 'Yoouz';
-          derived.logoUrl = '/favicon.svg';
+          if (!derived.logoUrl || derived.logoUrl.startsWith('<svg')) {
+            derived.logoUrl = verifiedBusinessSession.logoUrl || '/favicon.svg';
+            derived.avatarUrl = derived.logoUrl;
+          }
+          if (!derived.bannerUrl) {
+            derived.bannerUrl = verifiedBusinessSession.bannerUrl || '/yoouz-brand-banner.svg';
+          }
           derived.website = 'https://yoouz.com';
         }
         
@@ -364,8 +390,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profilePhone, setProfilePhone] = useState((currentPlace as any).phone || '');
   const [profileWebsite, setProfileWebsite] = useState((currentPlace as any).website || '');
   const [profileEmail, setProfileEmail] = useState((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
-  const [profileHours, setProfileHours] = useState((currentPlace as any).hours || currentPlace.openingHours || 'Mon-Fri: 9:00 AM - 6:00 PM');
-  const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || `Official verified business profile on Yoouz.`);
+  const [profileHours, setProfileHours] = useState((currentPlace as any).hours || currentPlace.openingHours || '');
+  const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || '');
   const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? '/favicon.svg' : ''));
   const [profileBannerUrl, setProfileBannerUrl] = useState((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
   const [isProfileSaved, setIsProfileSaved] = useState(false);
@@ -529,94 +555,85 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     reader.readAsDataURL(file);
   };
 
-  // Sync profile fields whenever currentPlace changes (e.g. on business login)
-  useEffect(() => {
-    if (currentPlace) {
-      setProfileName(currentPlace.name || 'Verified Business');
-      setProfileAddress(currentPlace.address || '');
-      setProfilePhone((currentPlace as any).phone || '');
-      setProfileWebsite((currentPlace as any).website || '');
-      setProfileEmail((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
-      setProfileHours((currentPlace as any).hours || currentPlace.openingHours || 'Mon-Fri: 9:00 AM - 6:00 PM');
-      setProfileDesc((currentPlace as any).description || `Official verified business profile on Yoouz.`);
-      if (currentPlace.logoUrl) {
-        setProfileLogoUrl(currentPlace.logoUrl);
-      } else if (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz')) {
-        setProfileLogoUrl('https://www.yoouz.com/favicon.svg');
-      }
-      if ((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0]) {
-        setProfileBannerUrl((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
-      }
-      if (currentPlace.city) setCity(currentPlace.city);
-    }
-  }, [currentPlace]);
-
   // Structured Physical Address State (No mock data)
   const [streetAddress, setStreetAddress] = useState(currentPlace.address ? currentPlace.address.split(',')[0] || '' : '');
   const [city, setCity] = useState(currentPlace.city || '');
   const [stateRegion, setStateRegion] = useState('');
   const [zipCode, setZipCode] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('United States');
+  const [selectedCountry, setSelectedCountry] = useState(currentPlace.country || '');
 
   // Structured Phone & Dialing Code State (No mock data)
-  const [phoneDialCode, setPhoneDialCode] = useState('+1');
-  const [localPhone, setLocalPhone] = useState((currentPlace as any).phone || '');
+  const initialPhoneStr = ((currentPlace as any).phone || '').trim();
+  const initialDialCode = initialPhoneStr.startsWith('+') ? initialPhoneStr.split(' ')[0] : (currentPlace.country ? (getCountryDialInfo(currentPlace.country)?.dialCode || '+1') : '+1');
+  const initialLocalPhone = initialPhoneStr.startsWith('+') ? (initialPhoneStr.split(' ').slice(1).join(' ') || '') : initialPhoneStr;
+
+  const [phoneDialCode, setPhoneDialCode] = useState(initialDialCode);
+  const [localPhone, setLocalPhone] = useState(initialLocalPhone);
 
   // Business Category & Amenities State
   const [businessCategory, setBusinessCategory] = useState(currentPlace.category || '');
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([
-    '📶 Free Wi-Fi',
-    '🅿️ Onsite Parking',
-    '♿ Accessible Entrance',
-    '🌱 Fresh Ingredients'
-  ]);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
   // Structured Operating Hours Schedule State
   const [weeklySchedule, setWeeklySchedule] = useState<{ day: string; status: 'open' | '24h' | 'closed'; openTime: string; closeTime: string }[]>([
-    { day: 'Monday', status: 'open', openTime: '08:00 AM', closeTime: '10:00 PM' },
-    { day: 'Tuesday', status: 'open', openTime: '08:00 AM', closeTime: '10:00 PM' },
-    { day: 'Wednesday', status: 'open', openTime: '08:00 AM', closeTime: '10:00 PM' },
-    { day: 'Thursday', status: 'open', openTime: '08:00 AM', closeTime: '10:00 PM' },
-    { day: 'Friday', status: 'open', openTime: '08:00 AM', closeTime: '10:00 PM' },
-    { day: 'Saturday', status: 'open', openTime: '09:00 AM', closeTime: '11:00 PM' },
-    { day: 'Sunday', status: 'open', openTime: '09:00 AM', closeTime: '11:00 PM' },
+    { day: 'Monday', status: 'closed', openTime: '09:00 AM', closeTime: '06:00 PM' },
+    { day: 'Tuesday', status: 'closed', openTime: '09:00 AM', closeTime: '06:00 PM' },
+    { day: 'Wednesday', status: 'closed', openTime: '09:00 AM', closeTime: '06:00 PM' },
+    { day: 'Thursday', status: 'closed', openTime: '09:00 AM', closeTime: '06:00 PM' },
+    { day: 'Friday', status: 'closed', openTime: '09:00 AM', closeTime: '06:00 PM' },
+    { day: 'Saturday', status: 'closed', openTime: '10:00 AM', closeTime: '04:00 PM' },
+    { day: 'Sunday', status: 'closed', openTime: '10:00 AM', closeTime: '04:00 PM' },
   ]);
 
-  // Re-sync profile fields when currentPlace changes
+  // Sync profile fields whenever currentPlace or selectedPlaceId changes
   useEffect(() => {
-    setProfileName(currentPlace.name || '');
+    if (!currentPlace) return;
+
+    setProfileName(currentPlace.name || 'Verified Business');
     setProfileWebsite((currentPlace as any).website || '');
     setProfileEmail((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
     setProfileHours((currentPlace as any).hours || currentPlace.openingHours || '');
     setProfileDesc((currentPlace as any).description || '');
-    setProfileLogoUrl(currentPlace.logoUrl || '');
-    setProfileBannerUrl((currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0] || '');
-    setBusinessCategory(currentPlace.category || 'Dining & Artisanal Food');
+    if (currentPlace.category) {
+      setBusinessCategory(currentPlace.category);
+    }
+
+    if (currentPlace.logoUrl && !currentPlace.logoUrl.startsWith('<svg')) {
+      setProfileLogoUrl(currentPlace.logoUrl);
+    }
+    const resolvedBanner = (currentPlace as any).bannerUrl || currentPlace.bannerUrl || currentPlace.photos?.[0];
+    if (resolvedBanner) {
+      setProfileBannerUrl(resolvedBanner);
+    }
 
     if (currentPlace.address) {
       const parts = currentPlace.address.split(',').map(s => s.trim());
       if (parts.length >= 3) {
         setStreetAddress(parts[0] || '');
-        setCity(parts[1] || 'New York');
+        setCity(parts[1] || '');
         const stateZip = (parts[2] || '').split(' ');
-        if (stateZip.length >= 1) setStateRegion(stateZip[0] || 'NY');
-        if (stateZip.length >= 2) setZipCode(stateZip[1] || '10001');
-        if (parts.length >= 4) setSelectedCountry(parts[3] || 'United States');
+        if (stateZip.length >= 1) setStateRegion(stateZip[0] || '');
+        if (stateZip.length >= 2) setZipCode(stateZip.slice(1).join(' ') || '');
+        if (parts.length >= 4) setSelectedCountry(parts[3] || '');
       } else {
         setStreetAddress(currentPlace.address);
       }
     }
 
+    if (currentPlace.city) setCity(currentPlace.city);
+    if (currentPlace.country) setSelectedCountry(currentPlace.country);
+
     if ((currentPlace as any).phone) {
-      const rawPhone = (currentPlace as any).phone as string;
+      const rawPhone = ((currentPlace as any).phone as string).trim();
       setProfilePhone(rawPhone);
       if (rawPhone.startsWith('+')) {
         const spaceIdx = rawPhone.indexOf(' ');
         if (spaceIdx > 0) {
           setPhoneDialCode(rawPhone.substring(0, spaceIdx));
-          setLocalPhone(rawPhone.substring(spaceIdx + 1));
+          setLocalPhone(rawPhone.substring(spaceIdx + 1).trim());
         } else {
-          setLocalPhone(rawPhone);
+          setPhoneDialCode(rawPhone);
+          setLocalPhone('');
         }
       } else {
         setLocalPhone(rawPhone);
@@ -628,46 +645,39 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   useEffect(() => {
     const parts = [streetAddress, city, stateRegion, zipCode, selectedCountry].filter(Boolean);
     const formatted = parts.join(', ');
-    if (formatted && !profileAddress) setProfileAddress(formatted);
+    if (formatted) setProfileAddress(formatted);
   }, [streetAddress, city, stateRegion, zipCode, selectedCountry]);
 
   // Handle Country Selection with Automatic State/Province & Dial Code Recognition
   const handleCountryChange = (newCountry: string) => {
-    const c = newCountry || 'United States';
-    setSelectedCountry(c);
+    setSelectedCountry(newCountry);
 
-    // Auto-update dialing code for the selected country
-    const dialInfo = getCountryDialInfo(c);
-    if (dialInfo?.dialCode) {
-      setPhoneDialCode(dialInfo.dialCode);
-    }
-
-    // Reset default US placeholder/dummy phone if moving away from US
-    if (c !== 'United States') {
-      if (localPhone === '(212) 555-0198' || localPhone === '212 555-0198' || localPhone === '(212)555-0198' || localPhone === '2125550198') {
-        setLocalPhone('');
+    if (newCountry) {
+      // Auto-update dialing code for the selected country
+      const dialInfo = getCountryDialInfo(newCountry);
+      if (dialInfo?.dialCode) {
+        setPhoneDialCode(dialInfo.dialCode);
       }
-    }
 
-    const countryObjMatch = Country.getAllCountries().find(countryObj => countryObj.name === c);
-    if (countryObjMatch) {
-      const statesObj = State.getStatesOfCountry(countryObjMatch.isoCode);
-      if (statesObj.length > 0) {
-        setStateRegion(statesObj[0].name);
-        const citiesObj = City.getCitiesOfState(countryObjMatch.isoCode, statesObj[0].isoCode);
-        setCity(citiesObj[0]?.name || '');
+      const countryObjMatch = Country.getAllCountries().find(countryObj => countryObj.name === newCountry);
+      if (countryObjMatch) {
+        const statesObj = State.getStatesOfCountry(countryObjMatch.isoCode);
+        if (statesObj.length > 0) {
+          setStateRegion(statesObj[0].name);
+          const citiesObj = City.getCitiesOfState(countryObjMatch.isoCode, statesObj[0].isoCode);
+          setCity(citiesObj[0]?.name || '');
+        } else {
+          setStateRegion('');
+          const citiesObj = City.getCitiesOfCountry(countryObjMatch.isoCode);
+          setCity(citiesObj[0]?.name || '');
+        }
       } else {
         setStateRegion('');
-        const citiesObj = City.getCitiesOfCountry(countryObjMatch.isoCode);
-        setCity(citiesObj[0]?.name || '');
+        setCity('');
       }
     } else {
       setStateRegion('');
       setCity('');
-    }
-
-    if (c !== 'United States' && zipCode === '10001') {
-      setZipCode('');
     }
   };
 
@@ -700,41 +710,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   
   cityOptions = Array.from(new Set(cityOptions));
 
-  // Sync profilePhone string from dial code and local phone on initial load
+  // Sync profilePhone string from dial code and local phone
   useEffect(() => {
-    const formattedPhone = `${phoneDialCode} ${localPhone}`.trim();
-    if (formattedPhone && !profilePhone) setProfilePhone(formattedPhone);
+    if (localPhone && localPhone.trim().replace(/\D/g, '').length >= 3) {
+      const cleanDial = (phoneDialCode || '').trim();
+      const cleanLocal = localPhone.trim();
+      setProfilePhone(cleanDial ? `${cleanDial} ${cleanLocal}` : cleanLocal);
+    } else if (!localPhone || localPhone.trim() === '') {
+      setProfilePhone('');
+    }
   }, [phoneDialCode, localPhone]);
-
-  // Sync profileHours string from weekly schedule
-  useEffect(() => {
-    const openDays = weeklySchedule.filter(d => d.status !== 'closed');
-    if (openDays.length === 0) {
-      setProfileHours('Temporarily Closed');
-      return;
-    }
-    const all24h = weeklySchedule.every(d => d.status === '24h');
-    if (all24h) {
-      setProfileHours('Open 24/7 (Mon - Sun)');
-      return;
-    }
-    const monToFri = weeklySchedule.slice(0, 5);
-    const satSun = weeklySchedule.slice(5, 7);
-    const monFriSame = monToFri.every(d => d.status === monToFri[0].status && d.openTime === monToFri[0].openTime && d.closeTime === monToFri[0].closeTime);
-    const satSunSame = satSun.every(d => d.status === satSun[0].status && d.openTime === satSun[0].openTime && d.closeTime === satSun[0].closeTime);
-
-    if (monFriSame && satSunSame) {
-      const mfStr = monToFri[0].status === 'closed' ? 'Mon-Fri: Closed' : monToFri[0].status === '24h' ? 'Mon-Fri: 24 Hours' : `Mon-Fri: ${monToFri[0].openTime} - ${monToFri[0].closeTime}`;
-      const ssStr = satSun[0].status === 'closed' ? 'Sat-Sun: Closed' : satSun[0].status === '24h' ? 'Sat-Sun: 24 Hours' : `Sat-Sun: ${satSun[0].openTime} - ${satSun[0].closeTime}`;
-      setProfileHours(`${mfStr} • ${ssStr}`);
-    } else {
-      const summary = weeklySchedule
-        .filter(d => d.status !== 'closed')
-        .map(d => `${d.day.slice(0, 3)}: ${d.status === '24h' ? '24h' : `${d.openTime}-${d.closeTime}`}`)
-        .join(' • ');
-      setProfileHours(summary || 'Open Daily');
-    }
-  }, [weeklySchedule]);
 
   // Agency Partner State
   const [assignedAgencyId, setAssignedAgencyId] = useState<string>(() => {
@@ -1679,13 +1664,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       } catch (e) {}
     }
 
+    const cleanPhone = profilePhone.trim();
+    const hasValidPhoneDigits = cleanPhone.replace(/\D/g, '').length >= 4;
+    const finalPhone = hasValidPhoneDigits ? cleanPhone : '';
+
     (currentPlace as any).name = profileName;
     (currentPlace as any).address = finalAddress;
     currentPlace.address = finalAddress;
     setProfileAddress(finalAddress);
     (currentPlace as any).city = city;
     (currentPlace as any).country = selectedCountry;
-    (currentPlace as any).phone = profilePhone;
+    (currentPlace as any).phone = finalPhone;
     (currentPlace as any).website = profileWebsite;
     (currentPlace as any).hours = profileHours;
     currentPlace.openingHours = profileHours;
@@ -1699,9 +1688,27 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       currentPlace.photos = [finalBannerUrl, ...(currentPlace.photos || []).filter(p => p !== finalBannerUrl)];
     }
 
+    const updatedPlaceObj = {
+      ...currentPlace,
+      name: profileName,
+      address: finalAddress,
+      city: city,
+      country: selectedCountry,
+      phone: finalPhone,
+      website: profileWebsite,
+      hours: profileHours,
+      openingHours: profileHours,
+      email: profileEmail,
+      description: profileDesc,
+      category: businessCategory,
+      logoUrl: finalLogoUrl,
+      bannerUrl: finalBannerUrl,
+      photos: finalBannerUrl ? [finalBannerUrl, ...(currentPlace.photos || []).filter(p => p !== finalBannerUrl)] : currentPlace.photos
+    };
+
     // Persist to server database (BunnyDB NoSQL)
     try {
-      const payload = { data: { ...currentPlace, logoUrl: finalLogoUrl, bannerUrl: finalBannerUrl }, merge: true };
+      const payload = { data: updatedPlaceObj, merge: true };
       const requests: Promise<any>[] = [];
 
       if (selectedPlaceId) {
@@ -1738,18 +1745,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
 
     if (onUpdatePlace) {
-      onUpdatePlace({ ...currentPlace });
+      onUpdatePlace({ ...updatedPlaceObj });
     }
 
     if (verifiedBusinessSession) {
       const updatedSession = { 
         ...verifiedBusinessSession, 
-        logoUrl: profileLogoUrl, 
+        logoUrl: finalLogoUrl, 
         placeName: profileName,
-        bannerUrl: profileBannerUrl,
+        bannerUrl: finalBannerUrl,
         email: profileEmail,
-        phone: profilePhone,
-        address: finalAddress
+        phone: finalPhone,
+        address: finalAddress,
+        category: businessCategory
       };
       setVerifiedBusinessSession(updatedSession);
       try {
@@ -1761,7 +1769,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       localStorage.setItem(`copo_business_profile_${selectedPlaceId}`, JSON.stringify({
         name: profileName,
         address: finalAddress,
-        phone: profilePhone,
+        phone: finalPhone,
         website: profileWebsite,
         hours: profileHours,
         email: profileEmail,
@@ -1774,16 +1782,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         country: selectedCountry,
         weeklySchedule,
         selectedAmenities,
-        logoUrl: profileLogoUrl,
-        bannerUrl: profileBannerUrl
+        logoUrl: finalLogoUrl,
+        bannerUrl: finalBannerUrl
       }));
     } catch (e) {
       console.warn('Failed to save profile to localStorage:', e);
     }
 
     try {
-      window.dispatchEvent(new CustomEvent('copo-place-updated', { detail: currentPlace }));
-      window.dispatchEvent(new CustomEvent('yoouz-place-updated', { detail: currentPlace }));
+      window.dispatchEvent(new CustomEvent('copo-place-updated', { detail: updatedPlaceObj }));
+      window.dispatchEvent(new CustomEvent('yoouz-place-updated', { detail: updatedPlaceObj }));
+      window.dispatchEvent(new CustomEvent('copo_place_updated', { detail: updatedPlaceObj }));
     } catch (e) {}
 
     setIsProfileSaved(true);
@@ -3772,6 +3781,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             alt="Cover Banner" 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
                             referrerPolicy="no-referrer" 
+                            onError={() => setProfileBannerUrl('')}
                           />
                         ) : (
                           <div className="w-full h-full bg-zinc-950 flex flex-col items-center justify-center gap-2 text-zinc-500">
@@ -3943,9 +3953,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                   {/* OPERATING HOURS */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-zinc-400" /> Operating Hours
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-zinc-400" /> Operating Hours
+                      </label>
+                      {profileHours && (
+                        <button
+                          type="button"
+                          onClick={() => setProfileHours('')}
+                          className="text-[10px] text-zinc-400 hover:text-rose-400 font-semibold transition-colors cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       id="input-profile-hours"
@@ -3954,6 +3975,29 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       placeholder="e.g. Mon-Fri: 9:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
                     />
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setProfileHours('Open 24 Hours (Mon - Sun)')}
+                        className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-[11px] font-medium text-zinc-300 transition-colors cursor-pointer"
+                      >
+                        24/7
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfileHours('Mon-Fri: 9:00 AM - 5:00 PM')}
+                        className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-[11px] font-medium text-zinc-300 transition-colors cursor-pointer"
+                      >
+                        Mon-Fri 9-5
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfileHours('Mon-Sat: 8:00 AM - 8:00 PM • Sun: Closed')}
+                        className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-[11px] font-medium text-zinc-300 transition-colors cursor-pointer"
+                      >
+                        Mon-Sat 8-8
+                      </button>
+                    </div>
                   </div>
 
                   {/* PHONE NUMBER */}
@@ -3961,14 +4005,39 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5 text-zinc-400" /> Phone Number
                     </label>
-                    <input
-                      type="tel"
-                      id="input-profile-phone"
-                      value={profilePhone}
-                      onChange={(e) => setProfilePhone(e.target.value)}
-                      placeholder="e.g. +1 (212) 555-0198"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 shrink-0">
+                        <input
+                          type="text"
+                          id="input-profile-dialcode"
+                          value={phoneDialCode}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPhoneDialCode(val.startsWith('+') ? val : (val ? '+' + val : ''));
+                          }}
+                          placeholder="+1"
+                          title="Area / Country dial code"
+                          className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all text-center placeholder:text-zinc-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="tel"
+                          id="input-profile-phone"
+                          value={localPhone}
+                          onChange={(e) => {
+                            setLocalPhone(e.target.value);
+                          }}
+                          placeholder="e.g. (212) 555-0198"
+                          className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                        />
+                      </div>
+                    </div>
+                    {localPhone && (
+                      <p className="text-[11px] text-zinc-400 pl-1">
+                        Formatted: <span className="font-semibold text-zinc-200">{profilePhone || 'Not provided'}</span>
+                      </p>
+                    )}
                   </div>
 
                   {/* BUSINESS EMAIL */}
