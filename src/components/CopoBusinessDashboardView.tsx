@@ -563,7 +563,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [localPhone, setLocalPhone] = useState((currentPlace as any).phone || '');
 
   // Business Category & Amenities State
-  const [businessCategory, setBusinessCategory] = useState(currentPlace.category || 'Dining & Artisanal Food');
+  const [businessCategory, setBusinessCategory] = useState(currentPlace.category || '');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([
     '📶 Free Wi-Fi',
     '🅿️ Onsite Parking',
@@ -4034,6 +4034,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         onChange={(e) => setBusinessCategory(e.target.value)}
                         className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all pr-10"
                       >
+                        <option value="" className="bg-zinc-900 text-zinc-500">Select Category</option>
                         <option value="Dining & Artisanal Food" className="bg-zinc-900 text-white">Dining & Artisanal Food</option>
                         <option value="Coffee, Cafes & Bakeries" className="bg-zinc-900 text-white">Coffee, Cafes & Bakeries</option>
                         <option value="Nightlife, Bars & Lounges" className="bg-zinc-900 text-white">Nightlife, Bars & Lounges</option>

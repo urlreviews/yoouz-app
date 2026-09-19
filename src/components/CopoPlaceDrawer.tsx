@@ -143,6 +143,10 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [editAddress, setEditAddress] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editLogoUrl, setEditLogoUrl] = useState("");
+  const [editBannerUrl, setEditBannerUrl] = useState("");
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [modalStep, setModalStep] = useState<1 | 2>(1);
   const [showHoursHelper, setShowHoursHelper] = useState(false);
   const [copiedTag, setCopiedTag] = useState(false);
@@ -534,6 +538,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     setEditDescription(isDefaultDescription ? "" : (place.description || ""));
     
     setEditEmail(place.email || "");
+    setEditLogoUrl(place.logoUrl || "");
+    setEditBannerUrl(place.bannerUrl || "");
     setClaimAsOwner(false);
     setModalStep(1);
     setShowHoursHelper(false);
@@ -553,6 +559,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         address: editAddress.trim(),
         description: editDescription.trim(),
         email: editEmail.trim(),
+        logoUrl: editLogoUrl,
+        bannerUrl: editBannerUrl,
         isClaimed: place.isClaimed || (claimAsOwner && !!currentUser),
         claimedByEmail: place.claimedByEmail || (claimAsOwner && currentUser ? currentUser.email : undefined),
         isSavedToProfile: true
@@ -1601,6 +1609,97 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       placeholder="e.g. contact@business.com"
                       className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-zinc-200 block mb-1">{t("place.logo", "Logo")}</label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setIsUploadingLogo(true);
+                              const reader = new FileReader();
+                              reader.onload = async (ev) => {
+                                try {
+                                  const base64 = ev.target?.result as string;
+                                  const targetId = place.id || 'yoouz.com';
+                                  const uploadRes = await fetch("/api/business/upload-image", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ imageBase64: base64, imageType: "logo", placeId: targetId })
+                                  });
+                                  if (uploadRes.ok) {
+                                    const data = await uploadRes.json();
+                                    setEditLogoUrl(data.imageUrl || base64);
+                                  } else {
+                                    setEditLogoUrl(base64);
+                                  }
+                                } catch (err) {
+                                  console.error("Logo upload failed", err);
+                                } finally {
+                                  setIsUploadingLogo(false);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                          id="logo-upload"
+                        />
+                        <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-zinc-700 rounded-xl bg-zinc-950 text-zinc-200 hover:border-zinc-500 cursor-pointer transition-all">
+                          <ImageIcon className="w-4 h-4" />
+                          <span className="text-xs truncate">{isUploadingLogo ? t("common.uploading", "Uploading...") : editLogoUrl ? t("common.changeLogo", "Change Logo") : t("common.uploadLogo", "Upload Logo")}</span>
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="font-bold text-zinc-200 block mb-1">{t("place.banner", "Cover Banner")}</label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setIsUploadingBanner(true);
+                              const reader = new FileReader();
+                              reader.onload = async (ev) => {
+                                try {
+                                  const base64 = ev.target?.result as string;
+                                  const targetId = place.id || 'yoouz.com';
+                                  const uploadRes = await fetch("/api/business/upload-image", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ imageBase64: base64, imageType: "banner", placeId: targetId })
+                                  });
+                                  if (uploadRes.ok) {
+                                    const data = await uploadRes.json();
+                                    setEditBannerUrl(data.imageUrl || base64);
+                                  } else {
+                                    setEditBannerUrl(base64);
+                                  }
+                                } catch (err) {
+                                  console.error("Banner upload failed", err);
+                                } finally {
+                                  setIsUploadingBanner(false);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                          id="banner-upload"
+                        />
+                        <label htmlFor="banner-upload" className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-zinc-700 rounded-xl bg-zinc-950 text-zinc-200 hover:border-zinc-500 cursor-pointer transition-all">
+                          <ImageIcon className="w-4 h-4" />
+                          <span className="text-xs truncate">{isUploadingBanner ? t("common.uploading", "Uploading...") : editBannerUrl ? t("common.changeBanner", "Change Banner") : t("common.uploadBanner", "Upload Banner")}</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
