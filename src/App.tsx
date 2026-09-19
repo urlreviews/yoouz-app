@@ -5228,7 +5228,8 @@ export function App() {
           onOpenSearch={() => setIsSearchModalOpen(true)}
           onSelectSection={(section) => {
             if (section === "home") {
-              // stay on embed feed
+              setEmbedTargetId(null);
+              setActiveSection("home");
             } else if (section === "search") {
               setIsSearchModalOpen(true);
             } else if (section === "record_review") {

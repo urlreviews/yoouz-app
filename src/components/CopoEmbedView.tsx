@@ -253,9 +253,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       <CopoMobileBottomNav
         activeSection="home"
         onSelectSection={(sec) => {
-          if (sec === "home") {
-            // Stay on feed
-          } else if (onSelectSection) {
+          if (onSelectSection) {
             onSelectSection(sec);
           }
         }}
