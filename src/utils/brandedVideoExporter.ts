@@ -729,10 +729,24 @@ export async function exportBrandedAdVideo(
     // Start recorder and playback
     mediaRecorder.start(100);
     videoEl.currentTime = 0;
-    await videoEl.play();
+    try {
+      await videoEl.play();
+    } catch (playErr) {
+      console.warn('Unmuted playback failed, continuing with muted stream:', playErr);
+      videoEl.muted = true;
+      await videoEl.play();
+    }
     renderLoop();
 
+    const maxTimeout = (duration + 3) * 1000;
+    const safetyTimer = setTimeout(() => {
+      if (mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    }, maxTimeout);
+
     videoEl.onended = () => {
+      clearTimeout(safetyTimer);
       setTimeout(() => {
         if (mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
