@@ -19626,10 +19626,18 @@ function decodeDataUrl(dataUrl?: string | null): Buffer | null {
   }
 }
 
-function cleanDomainName(urlStr: string) {
+function getPlaceSlug(place: any): string {
+  if (!place) return "yoouz.com";
+  let target = typeof place === "string" ? place : (place.website || place.placeWebsite || place.placeId || place.id || place.name || "yoouz.com");
+  let clean = target.toLowerCase().trim().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0].split('?')[0];
+  clean = clean.replace(/[^a-z0-9\.\-]/g, "").replace(/\.+/g, ".").replace(/^-+|-+$/g, "");
+  return clean || "yoouz.com";
+}
+
+function cleanDomainName(urlStr: any) {
   if (!urlStr) return "";
   try {
-     let lower = urlStr.trim().toLowerCase();
+     let lower = String(urlStr).trim().toLowerCase();
      lower = lower.replace(/^https?:\/\//, '');
      lower = lower.replace(/^www[\.\-\/]/, '');
      lower = lower.split('/')[0].split('?')[0].split('#')[0].split(':')[0];
@@ -19989,7 +19997,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
     // Strip out all existing title and og/twitter meta tags so they don't conflict
     return html
-      .replace(/<title>.*?<\/title>/g, '')
+      .replace(/<title>[\s\S]*?<\/title>/gi, '')
       .replace(/<meta\s+(?:name|property)=["'](?:description|keywords|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
       .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
       .replace('</head>', `${headInject}</head>`);
@@ -20027,18 +20035,28 @@ function injectOpenGraphTags(html: string, meta: any) {
     let structuredData: any = null;
     let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
     let robots = "";
+    let canonicalVideoUrl = "";
     if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin/")) {
       robots = "noindex, nofollow";
     }
 
-    const videoIdMatch = pathname.match(/\/(?:video|review|r)\/([a-zA-Z0-9_\-\.]+)/) || pathname.match(/\/(rev-[a-zA-Z0-9_\-\.]+)/);
+    const revInPath = pathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
+    let detectedVideoId = null;
+    if (revInPath) {
+      detectedVideoId = revInPath[1];
+    } else if (pathname.includes('/review/') || pathname.includes('/video/') || pathname.includes('/v/')) {
+      const parts = pathname.split('/').filter(Boolean);
+      if (parts.length >= 2) {
+        detectedVideoId = parts[parts.length - 1];
+      }
+    }
+
+    const rawVideoId = params.get('reviewId') || params.get('review_id') || params.get('review') || params.get('video') || params.get('v') || params.get('id') || params.get('r');
+    const videoId = detectedVideoId || (rawVideoId && (rawVideoId.startsWith('rev-') || rawVideoId.length > 3) ? rawVideoId : null);
     const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9_\-\.]+)/);
     const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/);
-
-    const rawVideoId = params.get('reviewId') || params.get('review_id') || params.get('review') || params.get('video') || params.get('v') || params.get('id') || params.get('r');
-    const videoId = videoIdMatch ? videoIdMatch[1] : (rawVideoId && (rawVideoId.startsWith('rev-') || rawVideoId.length > 3) ? rawVideoId : null);
     let placeId = placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null);
     if (placeId && placeId.startsWith('www-')) {
       placeId = placeId.replace(/^www-/, '');
@@ -20054,23 +20072,19 @@ function injectOpenGraphTags(html: string, meta: any) {
                 foundVideo = localList.find((v: any) => v.id === videoId);
             } catch (e) {}
         }
-        if (!foundVideo && typeof getDb !== 'undefined' && getDb()) {
-            try {
-                const [rec] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, videoId));
-                if (rec) foundVideo = { id: rec.id, ...rec.data };
-            } catch (e) {}
-        }
         if (!foundVideo) {
             const bunnyDb = getBunnyDb();
             if (bunnyDb) {
                 try {
                     const bRes = await bunnyDb.execute({
-                        sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+                        sql: "SELECT id, data FROM videoReviews WHERE id = ? LIMIT 1",
                         args: [videoId]
                     });
-                    if (bRes.rows && bRes.rows.length > 0 && (bRes.rows[0] as any).data) {
-                        const raw = (bRes.rows[0] as any).data;
-                        foundVideo = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                    if (bRes.rows && bRes.rows.length > 0) {
+                        const row: any = bRes.rows[0];
+                        const raw = row.data;
+                        const parsed = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+                        foundVideo = { id: row.id, ...parsed };
                     }
                 } catch (e) {}
             }
@@ -20079,14 +20093,19 @@ function injectOpenGraphTags(html: string, meta: any) {
         const authorName = foundVideo?.author?.name || foundVideo?.authorName || "Verified Customer";
         const authorHandle = foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
         const rawPlace = foundVideo?.placeName || "";
-        const placeName = formatBusinessName(rawPlace || cleanDomainName(rawPlace)) || "Local Business";
+        const rawDomain = foundVideo?.placeWebsite || foundVideo?.website || foundVideo?.placeId || rawPlace || "";
+        const domainSlug = getPlaceSlug(rawDomain) || "yoouz.com";
+        const placeName = formatBusinessName(rawPlace || cleanDomainName(rawDomain)) || "Local Business";
         const rating = foundVideo?.rating || 5.0;
         const caption = foundVideo?.caption || "";
+
+        canonicalVideoUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
 
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
         description = caption 
           ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
           : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`;
+        keywords = `${placeName}, ${domainSlug}, ${authorName}, video review, ${placeName} customer review, ${placeName} video review, authentic customer review, Yoouz`;
         
         let thumbArg = foundVideo?.videoThumbnail || foundVideo?.videoPreviewUrl || foundVideo?.coverUrl || foundVideo?.thumbnailUrl || "";
         if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
@@ -20131,7 +20150,7 @@ function injectOpenGraphTags(html: string, meta: any) {
               },
               "aggregateRating": {
                 "@type": "AggregateRating",
-                "ratingValue": (rating).toFixed(1),
+                "ratingValue": Number(rating || 5).toFixed(1),
                 "bestRating": "5",
                 "worstRating": "1",
                 "ratingCount": "1"
@@ -20154,7 +20173,7 @@ function injectOpenGraphTags(html: string, meta: any) {
               },
               "reviewRating": {
                 "@type": "Rating",
-                "ratingValue": (rating).toFixed(1),
+                "ratingValue": Number(rating || 5).toFixed(1),
                 "bestRating": "5"
               },
               "author": {
@@ -20483,7 +20502,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       embedUrl,
       type,
       twitterCard,
-      url: fullUrl,
+      url: (videoId && canonicalVideoUrl) ? canonicalVideoUrl : fullUrl,
       keywords,
       robots,
       structuredData
@@ -20591,32 +20610,27 @@ function injectOpenGraphTags(html: string, meta: any) {
     });
 
     // Handle bot/crawler requests and direct HTML requests for Open Graph tags in dev mode
-    app.use(async (req: any, res: any, next: any) => {
-      const userAgent = req.headers['user-agent'] || '';
-      const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
-      const acceptsHtml = req.headers.accept?.includes('text/html') || req.headers.accept?.includes('*' + '/' + '*') || isCrawler;
+    app.get('*', async (req: any, res: any, next: any) => {
       const STATIC_EXTENSIONS = /\.(js|jsx|ts|tsx|css|png|jpg|jpeg|gif|svg|ico|json|map|woff|woff2|ttf|eot|webp|avif|mp4|webm|mov|ogg|mp3|wav|txt|xml|pdf|webmanifest)$/i;
-      const isStaticFile = STATIC_EXTENSIONS.test(req.path);
-      
-      if (req.method === 'GET' && !req.path.startsWith('/api') && !isStaticFile && acceptsHtml) {
-        try {
-          const indexPath = path.resolve(process.cwd(), 'index.html');
-          let indexTemplate = fs.readFileSync(indexPath, 'utf-8');
-          const meta = await resolveMetadataForRequest(req);
-          indexTemplate = await vite.transformIndexHtml(req.originalUrl, indexTemplate);
-          const finalHtml = injectOpenGraphTags(indexTemplate, meta);
-          return res.status(200).set({ 
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }).end(finalHtml);
-        } catch (e) {
-          console.error("Vite Transform Error:", e);
-          return next();
-        }
+      if (req.path.startsWith('/api') || STATIC_EXTENSIONS.test(req.path) || req.path.startsWith('/@vite') || req.path.startsWith('/src')) {
+        return next();
       }
-      next();
+      try {
+        const indexPath = path.resolve(process.cwd(), 'index.html');
+        let indexTemplate = fs.readFileSync(indexPath, 'utf-8');
+        const meta = await resolveMetadataForRequest(req);
+        indexTemplate = await vite.transformIndexHtml(req.originalUrl || req.url, indexTemplate);
+        const finalHtml = injectOpenGraphTags(indexTemplate, meta);
+        return res.status(200).set({ 
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }).send(finalHtml);
+      } catch (e: any) {
+        console.error("Vite Transform Error:", e);
+        return res.status(500).send(`<pre>${e.stack || String(e)}</pre>`);
+      }
     });
 
     app.use(vite.middlewares);

@@ -135,7 +135,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   let resolvedBannerUrl: string | undefined = undefined;
 
   if (isVideoMode && video) {
-    shareUrl = `${appOrigin}/?reviewId=${encodeURIComponent(video.id)}`;
+    const domainSlug = getPlaceSlug(video.placeWebsite || video.placeId || video.placeName || video);
+    shareUrl = `${appOrigin}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(video.id)}`;
     const placeName = formatBusinessName(video.placeName || "Business");
     title = placeName;
     const authorName = video.author?.name || (video as any)?.authorName || "Verified Reviewer";

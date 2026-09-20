@@ -22,7 +22,7 @@ import { formatRecordedDate } from "../utils/dateUtils";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import { resolvePlayableVideoSource, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
-import { getSafeAvatarUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 interface GoogleVideoPlayerModalProps {
@@ -508,14 +508,8 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
             <button
               onClick={() => {
                 if (navigator.share) {
-                  const cleanHandle = ((currentReview.author as any)?.handle || currentReview.author?.name || "user")
-                    .replace(/^@+/, "")
-                    .trim()
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")
-                    .replace(/[^a-z0-9_-]/g, "")
-                    .replace(/-+/g, "-") || "user";
-                  const shareUrl = `${window.location.origin}/@${cleanHandle}/video/${currentReview.id}`;
+                  const domainSlug = getPlaceSlug(currentReview.placeWebsite || currentReview.placeId || currentReview.placeName || currentReview);
+                  const shareUrl = `${window.location.origin}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(currentReview.id)}`;
                   navigator.share({ title: currentReview.placeName, url: shareUrl }).catch(() => {});
                 }
               }}

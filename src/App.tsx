@@ -493,15 +493,22 @@ export function App() {
         let videoParam = params.get("video") || params.get("v") || (hash.startsWith("#/video/") ? hash.replace("#/video/", "") : null);
         let sectionParam = params.get("section") || (hash.startsWith("#/") && !hash.startsWith("#/place/") && !hash.startsWith("#/creator/") && !hash.startsWith("#/video/") ? hash.replace("#/", "") : null);
 
-        // Pathname parsing for elite SEO routes
+        // Pathname parsing for elite SEO routes (e.g. /review/domain.com/rev-12345 or /review/rev-12345)
         if (!videoParam) {
-          const userVideoMatch = pathname.match(/^\/@([^\/]+)\/video\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)\/video\/([^\/]+)/);
-          if (userVideoMatch) {
-            creatorParam = userVideoMatch[1];
-            videoParam = userVideoMatch[2];
+          const revMatch = pathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
+          if (revMatch) {
+            videoParam = revMatch[1];
           } else {
-            const vMatch = pathname.match(/^\/(v|video|review)\/([^\/]+)/);
-            if (vMatch) videoParam = vMatch[2];
+            const userVideoMatch = pathname.match(/^\/@([^\/]+)\/video\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)\/video\/([^\/]+)/);
+            if (userVideoMatch) {
+              creatorParam = userVideoMatch[1];
+              videoParam = userVideoMatch[2];
+            } else {
+              const vMatch = pathname.match(/^\/(v|video|review)\/([^\/]+)(?:\/([^\/]+))?/);
+              if (vMatch) {
+                videoParam = vMatch[3] || vMatch[2];
+              }
+            }
           }
         }
         if (!creatorParam) {
@@ -554,7 +561,6 @@ export function App() {
             params.get("record") === "1" || 
             params.get("record") === "true" ||
             hash.includes("record_review") ||
-            pathname.startsWith("/review/") ||
             pathname.startsWith("/record/");
 
           if (shouldTriggerRecord) {
@@ -1158,8 +1164,18 @@ export function App() {
         path = `/@${cleanSlug}`;
         title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
       } else if (activeSection === "home") {
-        path = "/";
-        title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
+        const currentVid = videos && currentVideoIndex >= 0 ? videos[currentVideoIndex] : null;
+        const isDirectVideoRoute = window.location.pathname.startsWith("/review/") || window.location.pathname.startsWith("/v/") || window.location.pathname.startsWith("/video/") || window.location.search.includes("reviewId");
+        if (currentVid && isDirectVideoRoute) {
+          const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
+          path = `/review/${domainSlug}/${currentVid.id}`;
+          const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
+          const placeName = formatBusinessName(currentVid.placeName || domainSlug);
+          title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+        } else {
+          path = "/";
+          title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
+        }
       } else if (activeSection === "search") {
         path = "/search";
         title = "Search & Explore Real Video Reviews | Yoouz";
