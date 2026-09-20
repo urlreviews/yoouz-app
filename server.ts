@@ -18391,6 +18391,24 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const authorDisplayWithPrefix = `By ${safeAuthorDisplay}`;
       const authorWidth = getTextAdvanceWidth(authorDisplayWithPrefix, 20, true);
 
+      // Fetch official business logo / favicon buffer
+      let placeLogoBuf: Buffer | null = null;
+      const explicitLogoUrl = queryParams.logoUrl || queryParams.placeLogoUrl || foundVideo?.placeLogoUrl || foundVideo?.logoUrl || "";
+      try {
+        placeLogoBuf = await fetchPlaceLogoBuffer(rawTargetDomain, placeName, explicitLogoUrl, foundVideo);
+      } catch (e) {}
+
+      let logoPngBase64 = "";
+      if (placeLogoBuf) {
+        try {
+          const resizedLogo = await sharp(placeLogoBuf)
+            .resize(36, 36, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+            .png()
+            .toBuffer();
+          logoPngBase64 = `data:image/png;base64,${resizedLogo.toString('base64')}`;
+        } catch (e) {}
+      }
+
       const maxBottomWidth = Math.max(authorWidth + 20, starsWidth, videoReviewWidth);
       const authorPillWidth = Math.min(600, Math.max(280, 76 + maxBottomWidth + 24));
 
@@ -18428,7 +18446,16 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <!-- Left Squircle Logo Container -->
               <rect x="10" y="10" width="42" height="42" rx="13" fill="#18181b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
               <rect x="13" y="13" width="36" height="36" rx="10" fill="#09090b"/>
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(20, 20) scale(0.9)"/>
+              ${logoPngBase64 ? `
+                <g transform="translate(13, 13)">
+                  <clipPath id="squircleLogoClip1">
+                    <rect x="0" y="0" width="36" height="36" rx="9"/>
+                  </clipPath>
+                  <image href="${logoPngBase64}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
+                </g>
+              ` : `
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(20, 20) scale(0.9)"/>
+              `}
 
               <!-- Line 1: Place Name + Darkmode White Verified Badge -->
               ${renderTextPath(safePlaceDisplay, 62, 25, 18, true, '#ffffff')}
@@ -18503,7 +18530,16 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <rect width="${placePillWidth}" height="62" rx="22" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
             <rect x="10" y="10" width="42" height="42" rx="13" fill="#18181b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
             <rect x="13" y="13" width="36" height="36" rx="10" fill="#09090b"/>
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(20, 20) scale(0.9)"/>
+            ${logoPngBase64 ? `
+              <g transform="translate(13, 13)">
+                <clipPath id="squircleLogoClip2">
+                  <rect x="0" y="0" width="36" height="36" rx="9"/>
+                </clipPath>
+                <image href="${logoPngBase64}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
+              </g>
+            ` : `
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(20, 20) scale(0.9)"/>
+            `}
 
             ${renderTextPath(safePlaceDisplay, 62, 25, 18, true, '#ffffff')}
             <g transform="translate(${62 + placeWidth + 6}, 12)">
@@ -18548,7 +18584,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     }
 
     // Dedicated clean routes for direct social scraper access
-    app.get(['/api/og-card/v7/:id.png', '/api/og-card/v7/:id', '/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/og-card/v8/:id.png', '/api/og-card/v8/:id', '/api/og-card/v7/:id.png', '/api/og-card/v7/:id', '/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -19416,12 +19452,12 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
       candidateUrls.push(directUrl);
     }
     if (domain && domain.includes(".")) {
+      candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256`);
+      candidateUrls.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=256`);
       candidateUrls.push(`https://icon.horse/icon/${domain}`);
-      candidateUrls.push(`/api/favicon?domain=${domain}`);
-      candidateUrls.push(`https://unavatar.io/${domain}?fallback=false`);
       candidateUrls.push(`https://api.faviconkit.com/${domain}/256`);
       candidateUrls.push(`https://logo.clearbit.com/${domain}`);
-      candidateUrls.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=256`);
+      candidateUrls.push(`https://unavatar.io/${domain}?fallback=false`);
     }
 
     const fetchPromises = candidateUrls.map(async (u) => {
@@ -20015,7 +20051,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-card/v7/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=7`;
+        imageUrl = `${baseUrl}/api/og-card/v8/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=8`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
