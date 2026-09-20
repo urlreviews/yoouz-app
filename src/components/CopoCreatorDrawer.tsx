@@ -354,7 +354,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           return uName === authorIdentifier || uHandle === authorIdentifier || uEmail === authorIdentifier;
         });
         if (matched && isMounted) {
-          setLiveUserProfile((prev) => ({ ...(prev || {}), ...matched }));
+          setLiveUserProfile((prev) => {
+            const next = { ...(prev || {}), ...matched };
+            // Never downgrade or flap location to a shorter or incomplete string
+            if (prev?.location && prev.location.length > (matched.location?.length || 0)) {
+              next.location = prev.location;
+            }
+            return next;
+          });
         }
       })
       .catch(() => {});
@@ -367,7 +374,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       const pHandle = (p.handle || "").replace(/^@+/, "").trim().toLowerCase();
       const pEmail = (p.email || "").split("@")[0].toLowerCase();
       if (pName === authorIdentifier || pHandle === authorIdentifier || pEmail === authorIdentifier) {
-        setLiveUserProfile((prev) => ({ ...(prev || {}), ...p }));
+        setLiveUserProfile((prev) => {
+          const next = { ...(prev || {}), ...p };
+          if (prev?.location && prev.location.length > (p.location?.length || 0)) {
+            next.location = prev.location;
+          }
+          return next;
+        });
       }
     };
     window.addEventListener("copo-profile-updated", handleProfileUpdate);
@@ -887,9 +900,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
             {/* Line 2: Dedicated solid location line strictly below stats */}
             {displayLocation && (
-              <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium min-w-0 max-w-full">
-                <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                <span className="truncate">{displayLocation}</span>
+              <div className="flex items-start gap-1.5 text-xs text-zinc-400 font-medium min-w-0 max-w-full">
+                <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
+                <span className="leading-snug break-words text-zinc-300">{displayLocation}</span>
               </div>
             )}
           </div>
