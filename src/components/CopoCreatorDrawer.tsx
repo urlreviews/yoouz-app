@@ -25,7 +25,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
@@ -443,9 +443,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     ? currentUser.name
     : (liveUserProfile?.name || safeCreator.name || author.name || "Reviewer");
 
-  const displayLocation = isOwner && currentUser?.location
+  const rawLocation = isOwner && currentUser?.location
     ? currentUser.location
     : (liveUserProfile?.location || safeCreator.location || author.location || (KNOWN_COMMUNITY_USERS[(author.name || "").replace(/^@+/, "").trim().toLowerCase()]?.location));
+
+  const displayLocation = normalizeLocationString(
+    rawLocation,
+    isOwner ? currentUser?.city : (liveUserProfile?.city || safeCreator.city || author.city),
+    isOwner ? (currentUser as any)?.state : (liveUserProfile?.state || (safeCreator as any)?.state || (author as any)?.state),
+    isOwner ? currentUser?.country : (liveUserProfile?.country || safeCreator.country || author.country)
+  );
 
   const displayBio = isOwner && typeof currentUser?.bio === 'string'
     ? currentUser.bio
@@ -899,12 +906,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
 
             {/* Line 2: Dedicated solid location line strictly below stats */}
-            {displayLocation && (
-              <div className="flex items-start gap-1.5 text-xs text-zinc-400 font-medium min-w-0 max-w-full">
+            {displayLocation ? (
+              <div className="flex items-start gap-1.5 text-xs text-zinc-400 font-medium min-w-0 max-w-full min-h-[20px] transition-opacity duration-150">
                 <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
-                <span className="leading-snug break-words text-zinc-300">{displayLocation}</span>
+                <span className="leading-snug break-words text-zinc-300 select-none">{displayLocation}</span>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 

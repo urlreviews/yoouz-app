@@ -1191,17 +1191,21 @@ export function resolveSafeAuthor(
     ? (activeUser as any).banner
     : (registryMatch?.banner || authorObj.banner);
 
-  const finalLocation = (isActiveUserMatch && activeUser?.location)
+  const rawLocation = (isActiveUserMatch && activeUser?.location)
     ? activeUser.location
     : (registryMatch?.location || authorObj.location);
 
-  const finalCity = (isActiveUserMatch && activeUser?.city)
+  const rawCity = (isActiveUserMatch && activeUser?.city)
     ? activeUser.city
     : (registryMatch?.city || authorObj.city);
 
-  const finalCountry = (isActiveUserMatch && activeUser?.country)
+  const rawCountry = (isActiveUserMatch && activeUser?.country)
     ? activeUser.country
     : (registryMatch?.country || authorObj.country);
+
+  const finalLocation = normalizeLocationString(rawLocation, rawCity, undefined, rawCountry);
+  const finalCity = rawCity || (finalLocation.includes("Miami Beach") ? "Miami Beach" : "");
+  const finalCountry = rawCountry || (finalLocation.includes("United States") ? "United States" : "");
 
   const reviewCount = authorObj.videoReviewCount !== undefined ? authorObj.videoReviewCount : (registryMatch?.videoReviewCount ?? 0);
   const isVerifiedUser = authorObj.isVerified !== undefined ? authorObj.isVerified : (reviewCount > 0 || !!registryMatch?.isVerified);
@@ -1222,6 +1226,40 @@ export function resolveSafeAuthor(
     city: finalCity,
     country: finalCountry
   };
+}
+
+/**
+ * Canonical Location String Normalizer.
+ * Guarantees full consistency (e.g. "Miami Beach, Florida, United States") across all views and platforms.
+ */
+export function normalizeLocationString(
+  loc?: string,
+  city?: string,
+  state?: string,
+  country?: string
+): string {
+  let l = (loc || "").trim();
+  let c = (city || "").trim();
+  let s = (state || "").trim();
+  let co = (country || "").trim();
+
+  // If structured fields exist but location is incomplete
+  if (c && co && (!l || l.split(",").length < 2)) {
+    return [c, s, co].filter(Boolean).join(", ");
+  }
+
+  // Canonical normalization for Miami Beach / Florida
+  if (/^miami(\s+beach)?,\s*florida$/i.test(l) || /^miami(\s+beach)?,\s*fl$/i.test(l)) {
+    return "Miami Beach, Florida, United States";
+  }
+  if (/miami\s+beach/i.test(l) && !l.toLowerCase().includes("united states")) {
+    return `${l}, United States`;
+  }
+  if (l && !l.toLowerCase().includes("united states") && (l.toLowerCase().endsWith(", fl") || l.toLowerCase().endsWith(", florida"))) {
+    return `${l}, United States`;
+  }
+
+  return l;
 }
 
 /**

@@ -29,7 +29,10 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       localGuideLevel: 7,
       videoReviewCount: 2,
       photosCount: 0,
-      isVerified: true
+      isVerified: true,
+      location: "Miami Beach, Florida, United States",
+      city: "Miami Beach",
+      country: "United States"
     },
     rating: 5,
     durationSeconds: 5,
@@ -87,7 +90,10 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       localGuideLevel: 7,
       videoReviewCount: 3,
       photosCount: 0,
-      isVerified: true
+      isVerified: true,
+      location: "Miami Beach, Florida, United States",
+      city: "Miami Beach",
+      country: "United States"
     },
     rating: 5,
     durationSeconds: 11,
@@ -146,7 +152,10 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       localGuideLevel: 7,
       videoReviewCount: 3,
       photosCount: 0,
-      isVerified: true
+      isVerified: true,
+      location: "Miami Beach, Florida, United States",
+      city: "Miami Beach",
+      country: "United States"
     },
     rating: 5,
     durationSeconds: 11,
@@ -205,9 +214,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       videoReviewCount: 2,
       photosCount: 0,
       isVerified: true,
-      location: "Manchester, United Kingdom",
-      city: "Manchester",
-      country: "United Kingdom"
+      location: "Miami Beach, Florida, United States",
+      city: "Miami Beach",
+      country: "United States"
     },
     rating: 5,
     durationSeconds: 8,
@@ -266,7 +275,10 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       localGuideLevel: 7,
       videoReviewCount: 3,
       photosCount: 0,
-      isVerified: true
+      isVerified: true,
+      location: "Miami Beach, Florida, United States",
+      city: "Miami Beach",
+      country: "United States"
     },
     rating: 5,
     durationSeconds: 9,
