@@ -18174,6 +18174,26 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return sanitized;
     }
 
+    function getEmbeddedFontBase64(fontFileName: string): string {
+      const possiblePaths = [
+        `/usr/share/fonts/truetype/liberation/${fontFileName}`,
+        `/usr/share/fonts/liberation/${fontFileName}`,
+        `/usr/share/fonts/truetype/freefont/${fontFileName.replace('LiberationSans', 'FreeSans')}`,
+        `/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf`
+      ];
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          try {
+            return fs.readFileSync(p).toString('base64');
+          } catch (e) {}
+        }
+      }
+      return '';
+    }
+
+    const FONT_BOLD_BASE64 = getEmbeddedFontBase64('LiberationSans-Bold.ttf');
+    const FONT_REG_BASE64 = getEmbeddedFontBase64('LiberationSans-Regular.ttf');
+
     // High-fidelity video share card buffer generator
     async function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
       let thumbBuf: Buffer | null = null;
@@ -18300,6 +18320,24 @@ app.get('/api/og-preview-v2', async (req, res) => {
         const overlaySvg = `
           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
             <defs>
+              <style>
+                ${FONT_BOLD_BASE64 ? `
+                @font-face {
+                  font-family: 'YoouzSans';
+                  src: url('data:font/truetype;charset=utf-8;base64,${FONT_BOLD_BASE64}') format('truetype');
+                  font-weight: bold;
+                  font-style: normal;
+                }` : ''}
+                ${FONT_REG_BASE64 ? `
+                @font-face {
+                  font-family: 'YoouzSans';
+                  src: url('data:font/truetype;charset=utf-8;base64,${FONT_REG_BASE64}') format('truetype');
+                  font-weight: normal;
+                  font-style: normal;
+                }` : ''}
+                .bold-txt { font-family: 'YoouzSans', 'Liberation Sans', 'DejaVu Sans', 'FreeSans', sans-serif; font-weight: bold; }
+                .reg-txt { font-family: 'YoouzSans', 'Liberation Sans', 'DejaVu Sans', 'FreeSans', sans-serif; font-weight: normal; }
+              </style>
               <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stop-color="#000000" stop-opacity="0.65" />
                 <stop offset="25%" stop-color="#000000" stop-opacity="0.08" />
@@ -18317,15 +18355,15 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <!-- Gold Star Vector -->
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(18, 14) scale(1.2)"/>
               <!-- Place Name -->
-              <text x="54" y="36" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${safePlaceName}</text>
+              <text x="54" y="36" class="bold-txt" font-size="22" fill="#ffffff">${safePlaceName}</text>
               <!-- Rating Value -->
-              <text x="${ratingX}" y="36" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#fbbf24">${rating}</text>
+              <text x="${ratingX}" y="36" class="bold-txt" font-size="20" fill="#fbbf24">${rating}</text>
             </g>
 
             <!-- TOP RIGHT: Options Button Pill -->
             <g transform="translate(980, 44)">
               <rect width="172" height="56" rx="28" fill="#000000" fill-opacity="0.75" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-              <text x="28" y="36" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#ffffff">Options</text>
+              <text x="28" y="36" class="bold-txt" font-size="20" fill="#ffffff">Options</text>
               <!-- Chevron Right -->
               <path d="M9 18l6-6-6-6" fill="none" stroke="#d1d5db" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(118, 17) scale(0.9)"/>
             </g>
@@ -18342,11 +18380,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect width="${authorPillWidth}" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Avatar Circle (Green) -->
               <circle cx="38" cy="38" r="26" fill="#65a30d"/>
-              <text x="38" y="46" text-anchor="middle" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${authorInitial}</text>
+              <text x="38" y="46" text-anchor="middle" class="bold-txt" font-size="22" fill="#ffffff">${authorInitial}</text>
               <!-- Reviewer Name -->
-              <text x="76" y="33" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="21" font-weight="bold" fill="#ffffff">${safeAuthorName}</text>
+              <text x="76" y="33" class="bold-txt" font-size="21" fill="#ffffff">${safeAuthorName}</text>
               <!-- Subtitle -->
-              <text x="76" y="58" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="16" font-weight="500" fill="#cbd5e1">${safeAuthorName} • 60s Review</text>
+              <text x="76" y="58" class="reg-txt" font-size="16" fill="#cbd5e1">${safeAuthorName} - 60s Review</text>
             </g>
 
             <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
@@ -18354,7 +18392,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect width="192" height="52" rx="26" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Live Red Pulse Dot -->
               <circle cx="28" cy="26" r="6" fill="#ef4444"/>
-              <text x="46" y="33" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="19" font-weight="bold" fill="#ffffff">yoouz.com</text>
+              <text x="46" y="33" class="bold-txt" font-size="19" fill="#ffffff">yoouz.com</text>
             </g>
           </svg>
         `;
@@ -19858,11 +19896,11 @@ function injectOpenGraphTags(html: string, meta: any) {
            thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
         }
 
-        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20`;
+        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=25`;
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-image/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20`;
+        imageUrl = `${baseUrl}/api/og-image/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=25`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
