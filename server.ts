@@ -18279,10 +18279,22 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const placeName = formatBusinessName(queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business");
       const authorName = queryParams.author || foundVideo?.author?.name || foundVideo?.authorName || "Verified Reviewer";
       const rating = Number(queryParams.rating || foundVideo?.rating || 5).toFixed(1);
-      const safePlaceName = escapeXml(placeName);
-      const safeAuthorName = escapeXml(authorName);
+      
+      const safePlaceDisplay = placeName.length > 20 ? `${placeName.substring(0, 18)}...` : placeName;
+      const safePlaceName = escapeXml(safePlaceDisplay);
+      
+      const safeAuthorDisplay = authorName.length > 22 ? `${authorName.substring(0, 20)}...` : authorName;
+      const safeAuthorName = escapeXml(safeAuthorDisplay);
       const authorInitial = escapeXml(authorName.trim().charAt(0).toUpperCase() || "U");
       const domainName = escapeXml(cleanDomainName(placeName || "yoouz.com"));
+
+      // Calculate dynamic pill dimensions to fit any place name (e.g. Villa Pizza, Yoouz)
+      const estPlaceWidth = Math.min(safePlaceDisplay.length * 13, 280);
+      const placePillWidth = Math.min(520, Math.max(240, 60 + estPlaceWidth + 70));
+      const ratingX = placePillWidth - 55;
+
+      const estAuthorWidth = Math.max(safeAuthorDisplay.length * 12, (safeAuthorDisplay + ' • 60s Review').length * 9.5);
+      const authorPillWidth = Math.min(560, Math.max(340, 85 + estAuthorWidth + 25));
 
       if (thumbBuf) {
         const overlaySvg = `
@@ -18301,13 +18313,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
             <!-- TOP LEFT: Place & Rating Pill -->
             <g transform="translate(48, 44)">
-              <rect width="360" height="56" rx="28" fill="#000000" fill-opacity="0.75" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <rect width="${placePillWidth}" height="56" rx="28" fill="#000000" fill-opacity="0.75" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Gold Star Vector -->
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(18, 14) scale(1.2)"/>
               <!-- Place Name -->
               <text x="54" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${safePlaceName}</text>
               <!-- Rating Value -->
-              <text x="300" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#fbbf24">${rating}</text>
+              <text x="${ratingX}" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#fbbf24">${rating}</text>
             </g>
 
             <!-- TOP RIGHT: Options Button Pill -->
@@ -18327,7 +18339,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
             <!-- BOTTOM LEFT: Reviewer Profile Pill -->
             <g transform="translate(48, 510)">
-              <rect width="480" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <rect width="${authorPillWidth}" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Avatar Circle (Green) -->
               <circle cx="38" cy="38" r="26" fill="#65a30d"/>
               <text x="38" y="46" text-anchor="middle" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${authorInitial}</text>
@@ -19846,7 +19858,7 @@ function injectOpenGraphTags(html: string, meta: any) {
            thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
         }
 
-        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=14`;
+        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=15`;
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
