@@ -29,6 +29,7 @@ import dotenv from "dotenv";
 import { Resend } from "resend";
 import sharp from "sharp";
 import { getBunnyDb, initBunnyDbSchema } from "./src/lib/bunny-db.ts";
+import { getAvatarColor, getFirstLetter, normalizeAvatarSeed } from "./src/lib/avatar.ts";
 
 import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
@@ -18358,12 +18359,44 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawPlace = queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business";
       const placeName = formatBusinessName(rawPlace);
       const authorName = queryParams.author || foundVideo?.author?.name || foundVideo?.authorName || "Verified Reviewer";
+      const authorHandle = queryParams.authorHandle || queryParams.handle || foundVideo?.author?.handle || foundVideo?.authorHandle || authorName;
       const ratingNum = Math.max(1, Math.min(5, Math.round(Number(queryParams.rating || foundVideo?.rating || 5))));
       const ratingStr = Number(queryParams.rating || foundVideo?.rating || 5).toFixed(1);
       
       const safePlaceDisplay = placeName.length > 22 ? `${placeName.substring(0, 20)}...` : placeName;
       const safeAuthorDisplay = authorName.length > 20 ? `${authorName.substring(0, 18)}...` : authorName;
-      const authorInitial = (authorName.trim().charAt(0) || "U").toUpperCase();
+      const authorInitial = getFirstLetter(authorName || authorHandle);
+
+      // Deterministic Avatar Palette Matching App Player
+      const avatarColorObj = getAvatarColor(authorName, authorHandle);
+      const avatarBgColor = avatarColorObj.bg;
+      const avatarTextColor = avatarColorObj.text || "#ffffff";
+
+      // Fetch reviewer photo avatar buffer if photo is present
+      let authorAvatarPngBase64 = "";
+      const rawAuthorAvatar = queryParams.authorAvatar || queryParams.avatarUrl || queryParams.avatar || foundVideo?.authorAvatar || foundVideo?.author?.avatar || foundVideo?.userAvatar || "";
+      if (rawAuthorAvatar && (rawAuthorAvatar.startsWith("http://") || rawAuthorAvatar.startsWith("https://") || rawAuthorAvatar.startsWith("data:image/"))) {
+        try {
+          let buf: Buffer | null = null;
+          if (rawAuthorAvatar.startsWith("data:image/")) {
+            const base64Part = rawAuthorAvatar.split(",")[1];
+            if (base64Part) buf = Buffer.from(base64Part, "base64");
+          } else {
+            const res = await fetch(rawAuthorAvatar, { headers: { "User-Agent": "Yoouz-Bot/1.0" } });
+            if (res.ok) {
+              const arr = await res.arrayBuffer();
+              buf = Buffer.from(arr);
+            }
+          }
+          if (buf && buf.length > 100) {
+            const resizedAvatar = await sharp(buf)
+              .resize(52, 52, { fit: "cover" })
+              .png()
+              .toBuffer();
+            authorAvatarPngBase64 = `data:image/png;base64,${resizedAvatar.toString("base64")}`;
+          }
+        } catch (e) {}
+      }
 
       // Vector Star SVG Helper
       const renderStarsSvg = (startX: number, startY: number, filledCount = 5) => {
@@ -18479,9 +18512,18 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <!-- BOTTOM LEFT: Reviewer Profile Pill -->
             <g transform="translate(48, 492)">
               <rect width="${authorPillWidth}" height="90" rx="26" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-              <!-- Avatar Circle (Teal) -->
-              <circle cx="38" cy="45" r="26" fill="#0d9488"/>
-              ${renderTextPath(authorInitial, initialX, 53, 22, true, '#ffffff')}
+              ${authorAvatarPngBase64 ? `
+                <g transform="translate(12, 19)">
+                  <clipPath id="reviewerAvatarClip1">
+                    <circle cx="26" cy="26" r="26"/>
+                  </clipPath>
+                  <image href="${authorAvatarPngBase64}" x="0" y="0" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
+                </g>
+              ` : `
+                <!-- Avatar Circle (Matching App Player Color) -->
+                <circle cx="38" cy="45" r="26" fill="${avatarBgColor}"/>
+                ${renderTextPath(authorInitial, initialX, 53, 22, true, avatarTextColor)}
+              `}
               
               <!-- Line 1: Reviewer Name (By Author) + Darkmode White Verified Badge -->
               ${renderTextPath(authorDisplayWithPrefix, 76, 26, 20, true, '#ffffff')}
@@ -18561,8 +18603,18 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- BOTTOM LEFT: Reviewer Profile Pill -->
           <g transform="translate(48, 492)">
             <rect width="${authorPillWidth}" height="90" rx="26" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-            <circle cx="38" cy="45" r="26" fill="#0d9488"/>
-            ${renderTextPath(authorInitial, initialX, 53, 22, true, '#ffffff')}
+            ${authorAvatarPngBase64 ? `
+              <g transform="translate(12, 19)">
+                <clipPath id="reviewerAvatarClip2">
+                  <circle cx="26" cy="26" r="26"/>
+                </clipPath>
+                <image href="${authorAvatarPngBase64}" x="0" y="0" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
+              </g>
+            ` : `
+              <!-- Avatar Circle (Matching App Player Color) -->
+              <circle cx="38" cy="45" r="26" fill="${avatarBgColor}"/>
+              ${renderTextPath(authorInitial, initialX, 53, 22, true, avatarTextColor)}
+            `}
             
             ${renderTextPath(authorDisplayWithPrefix, 76, 26, 20, true, '#ffffff')}
             <g transform="translate(${76 + authorWidth + 6}, 13)">
@@ -18584,7 +18636,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     }
 
     // Dedicated clean routes for direct social scraper access
-    app.get(['/api/og-card/v8/:id.png', '/api/og-card/v8/:id', '/api/og-card/v7/:id.png', '/api/og-card/v7/:id', '/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/og-card/v9/:id.png', '/api/og-card/v9/:id', '/api/og-card/v8/:id.png', '/api/og-card/v8/:id', '/api/og-card/v7/:id.png', '/api/og-card/v7/:id', '/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -20051,7 +20103,9 @@ function injectOpenGraphTags(html: string, meta: any) {
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-card/v8/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=8`;
+        const rawAuthorAvatar = foundVideo?.authorAvatar || foundVideo?.author?.avatar || foundVideo?.userAvatar || "";
+        const authorAvatarParam = rawAuthorAvatar ? `&authorAvatar=${encodeURIComponent(rawAuthorAvatar)}` : '';
+        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}${authorAvatarParam}&v=9`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
