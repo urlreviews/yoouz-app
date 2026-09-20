@@ -16021,55 +16021,73 @@ Return JSON:
   });
 
   
+  const DEFAULT_YOOUZ_ICON_SVG = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="512" height="512" rx="140" fill="#18181b"/>
+    <g transform="translate(86, 86) scale(14.166)">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
+    </g>
+  </svg>`;
+
   // Dynamic Social Sharing Meta Tags & Open Graph Card Generator Engine
   app.get(['/api/og-image/icon', '/favicon.svg'], (_req: any, res: any) => {
-    const iconSvg = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="512" height="512" rx="140" fill="#18181b"/>
-      <g transform="translate(86, 86) scale(14.166)">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
-      </g>
-    </svg>`;
     res.setHeader('Content-Type', 'image/svg+xml');
     res.setHeader('Cache-Control', 'public, max-age=86400');
-    return res.send(iconSvg);
+    return res.send(DEFAULT_YOOUZ_ICON_SVG);
   });
 
+  // Robust Static Asset Resolver Helper
+  const resolvePublicAssetPath = (filename: string): string | null => {
+    const candidatePaths = [
+      path.join(process.cwd(), 'public', filename),
+      path.join(process.cwd(), 'dist', filename),
+      path.join(process.cwd(), filename)
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) return p;
+    }
+    return null;
+  };
+
   // Dedicated high-resolution PNG icon endpoints for iOS Lock Screen, Safari, and PWA
-  app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png', '/apple-touch-icon', '/api/og-image/icon.png', '/api/og-image/icon-png'], (_req: any, res: any) => {
-    const iconPath = path.join(process.cwd(), 'public', 'apple-touch-icon.png');
-    if (fs.existsSync(iconPath)) {
+  app.all(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png', '/apple-touch-icon', '/api/og-image/icon.png', '/api/og-image/icon-png'], (_req: any, res: any) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    
+    const iconPath = resolvePublicAssetPath('apple-touch-icon.png') || resolvePublicAssetPath('icon-512.png') || resolvePublicAssetPath('icon-192.png');
+    if (iconPath) {
       res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
       return res.sendFile(iconPath);
     }
-    const fallbackPath = path.join(process.cwd(), 'public', 'icon-512.png');
-    if (fs.existsSync(fallbackPath)) {
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
-      return res.sendFile(fallbackPath);
+    const svgPath = resolvePublicAssetPath('favicon.svg');
+    if (svgPath) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+      return res.sendFile(svgPath);
     }
-    return res.redirect('/api/og-image/icon');
+    res.setHeader('Content-Type', 'image/svg+xml');
+    return res.status(200).send(DEFAULT_YOOUZ_ICON_SVG);
   });
 
   // Dedicated standard ICO endpoint for Google Search, Bing, and browser tabs
-  app.get(['/favicon.ico'], (_req: any, res: any) => {
-    const icoPath = path.join(process.cwd(), 'public', 'favicon.ico');
-    if (fs.existsSync(icoPath)) {
+  app.all(['/favicon.ico'], (_req: any, res: any) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    
+    const icoPath = resolvePublicAssetPath('favicon.ico');
+    if (icoPath) {
       res.setHeader('Content-Type', 'image/x-icon');
-      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
       return res.sendFile(icoPath);
     }
-    const pngPath = path.join(process.cwd(), 'public', 'favicon-48x48.png');
-    if (fs.existsSync(pngPath)) {
+    const pngPath = resolvePublicAssetPath('favicon-48x48.png') || resolvePublicAssetPath('icon-192.png');
+    if (pngPath) {
       res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
       return res.sendFile(pngPath);
     }
-    return res.redirect('/favicon.svg');
+    res.setHeader('Content-Type', 'image/svg+xml');
+    return res.status(200).send(DEFAULT_YOOUZ_ICON_SVG);
   });
 
   // Google Search and Device Favicons (48px multiples per Googlebot guidelines: 48, 96, 144, 192, 512)
-  app.get([
+  app.all([
     '/favicon-48x48.png',
     '/favicon-96x96.png',
     '/favicon-144x144.png',
@@ -16078,21 +16096,26 @@ Return JSON:
     '/icon-512.png',
     '/icon-192.png',
     '/icon.png',
-    '/favicon.png'
+    '/favicon.png',
+    '/favicon.svg'
   ], (req: any, res: any) => {
-    const filename = req.path.replace('/', '') || 'favicon-48x48.png';
-    const filePath = path.join(process.cwd(), 'public', filename);
-    if (fs.existsSync(filePath)) {
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    
+    const filename = req.path.replace('/', '') || 'icon-192.png';
+    const filePath = resolvePublicAssetPath(filename);
+    if (filePath) {
+      const isSvg = filename.endsWith('.svg');
+      res.setHeader('Content-Type', isSvg ? 'image/svg+xml' : 'image/png');
       return res.sendFile(filePath);
     }
-    const fallbackPath = path.join(process.cwd(), 'public', 'favicon.png');
-    if (fs.existsSync(fallbackPath)) {
-      res.setHeader('Content-Type', 'image/png');
+    const fallbackPath = resolvePublicAssetPath('icon-512.png') || resolvePublicAssetPath('favicon.svg');
+    if (fallbackPath) {
+      res.setHeader('Content-Type', fallbackPath.endsWith('.svg') ? 'image/svg+xml' : 'image/png');
       return res.sendFile(fallbackPath);
     }
-    return res.redirect('/api/og-image/icon');
+    res.setHeader('Content-Type', 'image/svg+xml');
+    return res.status(200).send(DEFAULT_YOOUZ_ICON_SVG);
   });
 
   // Web App Manifest (Optimized for Google Search & PWA Discoverability)
@@ -16147,11 +16170,6 @@ Return JSON:
           sizes: "512x512",
           type: "image/png",
           purpose: "maskable"
-        },
-        {
-          src: `${protocol}://${host}/apple-touch-icon.png`,
-          sizes: "180x180",
-          type: "image/png"
         },
         {
           src: `${protocol}://${host}/favicon.svg`,
