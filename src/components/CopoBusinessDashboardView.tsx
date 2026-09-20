@@ -212,6 +212,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
 
+  // Automatically scroll main content area back to top when switching tabs
+  useEffect(() => {
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTop = 0;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [activeTab]);
+
   const [verifiedBusinessSession, setVerifiedBusinessSession] = useState<BusinessSession | null>(() => {
     try {
       const saved = localStorage.getItem('copo_business_verified_session');
@@ -3846,13 +3854,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-6 shadow-2xl backdrop-blur-xl">
                   
                   {/* Profile Picture / Logo Uploader */}
-                  <div className="flex flex-col items-center gap-2.5 pt-1">
+                  <div className="flex flex-col items-center gap-3 pt-1">
                     <div 
                       className="relative group cursor-pointer" 
                       onClick={() => logoFileInputRef.current?.click()}
-                      title="Click to upload custom logo"
+                      title="Click to change profile picture"
                     >
-                      <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center p-2.5">
+                      <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center p-2.5 transition-all group-hover:border-zinc-500">
                         <CopoBrandLogo
                           domain={currentPlace.website || currentPlace.id}
                           name={profileName || currentPlace.name}
@@ -3861,36 +3869,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           imageClassName="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
                           fallbackTextClassName="text-2xl font-black text-white uppercase"
                         />
-                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                          <Camera className="w-6 h-6" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 backdrop-blur-xs">
+                          <Camera className="w-5 h-5 text-white" />
+                          <span className="text-[10px] font-bold text-white">Change</span>
                         </div>
                       </div>
-                      {profileLogoUrl && (
-                        <button 
-                          type="button" 
-                          id="btn-remove-logo-badge"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const oldUrl = profileLogoUrl;
-                            setProfileLogoUrl("");
-                            try {
-                              await fetch('/api/business/delete-image', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  url: oldUrl,
-                                  placeId: selectedPlaceId || currentPlace.id || 'yoouz.com',
-                                  type: 'logo'
-                                })
-                              });
-                            } catch (err) {}
-                          }}
-                          className="absolute bottom-0 right-0 p-2 bg-rose-900/80 hover:bg-rose-800 text-rose-200 rounded-full shadow-lg transition-colors cursor-pointer border border-rose-700/50"
-                          title="Remove logo"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                       <input 
                         type="file" 
                         ref={logoFileInputRef} 
@@ -3899,21 +3882,60 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         onChange={handleLogoFileUpload} 
                       />
                     </div>
-                    <div className="text-center">
-                      <span className="text-xs font-bold text-zinc-200">Profile Picture</span>
-                      <p className="text-[11px] text-zinc-400">Click to upload a custom JPG or PNG</p>
+                    <div className="text-center space-y-1.5">
+                      <span className="text-xs font-bold text-zinc-200 block">Profile Picture</span>
+                      
+                      {/* Clean Inline Action Controls */}
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => logoFileInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
+                        >
+                          <Camera className="w-3.5 h-3.5 text-zinc-300" />
+                          <span>{profileLogoUrl ? 'Change Logo' : 'Upload Logo'}</span>
+                        </button>
+
+                        {profileLogoUrl && (
+                          <button 
+                            type="button" 
+                            id="btn-remove-logo-badge"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const oldUrl = profileLogoUrl;
+                              setProfileLogoUrl("");
+                              try {
+                                await fetch('/api/business/delete-image', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    url: oldUrl,
+                                    placeId: selectedPlaceId || currentPlace.id || 'yoouz.com',
+                                    type: 'logo'
+                                  })
+                                });
+                              } catch (err) {}
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                            title="Remove custom logo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-zinc-400" />
+                            <span>Remove</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {logoError && <p className="text-xs text-rose-400 font-semibold">{logoError}</p>}
                   </div>
 
                   {/* Cover Banner Uploader */}
-                  <div className="flex flex-col items-center gap-2.5">
+                  <div className="flex flex-col items-center gap-3">
                     <div 
                       className="relative group cursor-pointer w-full" 
                       onClick={() => bannerFileInputRef.current?.click()}
-                      title="Click to upload cover banner"
+                      title="Click to change cover banner"
                     >
-                      <div className="w-full h-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center">
+                      <div className="w-full h-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center transition-all group-hover:border-zinc-500">
                         {profileBannerUrl && !bannerPreviewFailed ? (
                           <img 
                             src={profileBannerUrl} 
@@ -3930,37 +3952,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             </span>
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                          <Camera className="w-6 h-6" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1.5 backdrop-blur-xs">
+                          <Camera className="w-6 h-6 text-white" />
+                          <span className="text-xs font-bold text-white">Change Cover Banner</span>
                         </div>
                       </div>
-                      {profileBannerUrl && (
-                        <button 
-                          type="button" 
-                          id="btn-remove-banner-badge"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const oldUrl = profileBannerUrl;
-                            setProfileBannerUrl("");
-                            setBannerPreviewFailed(false);
-                            try {
-                              await fetch('/api/business/delete-image', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  url: oldUrl,
-                                  placeId: selectedPlaceId || currentPlace.id || 'yoouz.com',
-                                  type: 'banner'
-                                })
-                              });
-                            } catch (err) {}
-                          }}
-                          className="absolute bottom-2.5 right-2.5 p-2 bg-rose-900/80 hover:bg-rose-800 text-rose-200 rounded-full shadow-lg transition-colors cursor-pointer border border-rose-700/50"
-                          title="Remove cover banner"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                       <input 
                         type="file" 
                         ref={bannerFileInputRef} 
@@ -3969,10 +3965,50 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         onChange={handleBannerFileUpload} 
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-2 mt-1.5">
-                      <span className="text-xs font-bold text-zinc-200">Cover Banner</span>
+                    <div className="text-center space-y-1.5 w-full">
+                      <span className="text-xs font-bold text-zinc-200 block">Cover Banner</span>
+                      
+                      {/* Clean Inline Action Controls */}
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => bannerFileInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
+                        >
+                          <Camera className="w-3.5 h-3.5 text-zinc-300" />
+                          <span>{profileBannerUrl ? 'Change Banner' : 'Upload Banner'}</span>
+                        </button>
+
+                        {profileBannerUrl && (
+                          <button 
+                            type="button" 
+                            id="btn-remove-banner-badge"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const oldUrl = profileBannerUrl;
+                              setProfileBannerUrl("");
+                              setBannerPreviewFailed(false);
+                              try {
+                                await fetch('/api/business/delete-image', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    url: oldUrl,
+                                    placeId: selectedPlaceId || currentPlace.id || 'yoouz.com',
+                                    type: 'banner'
+                                  })
+                                });
+                              } catch (err) {}
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                            title="Remove custom banner"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-zinc-400" />
+                            <span>Remove</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-[11px] text-zinc-400 text-center">Click cover to upload a custom JPG or PNG</p>
                     {bannerError && <p className="text-xs text-rose-400 font-semibold">{bannerError}</p>}
                   </div>
 
