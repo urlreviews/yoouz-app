@@ -873,7 +873,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-x-2 gap-y-1 flex-wrap text-sm text-zinc-300 min-h-[22px]">
+          <div className="flex items-center gap-x-2 gap-y-1 flex-nowrap text-sm text-zinc-300 min-h-[22px]">
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-zinc-200 font-medium">
                 {authorVideos.length} {authorVideos.length === 1 ? t("place.review", "review") : t("place.reviews", "reviews")}
