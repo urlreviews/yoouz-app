@@ -86,7 +86,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const googleFaviconUrl = useMemo(() => {
     if (isYoouz) return null;
     if (resolvedDomain && resolvedDomain.includes(".")) {
-      return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${resolvedDomain}&size=256`;
+      return `/api/favicon?domain=${resolvedDomain}`;
     }
     return null;
   }, [resolvedDomain, isYoouz]);

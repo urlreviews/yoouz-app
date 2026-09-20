@@ -4590,7 +4590,7 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           return res.status(404).json({ error: "Place not found (deleted)" });
         }
         const autoPlaceId = cleanDomain;
-        const logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+        const logo = `/api/favicon?domain=${cleanDomain}`;
         const banner = KNOWN_PLACE_METADATA[cleanDomain]?.bannerUrl || KNOWN_PLACE_METADATA[`www.${cleanDomain}`]?.bannerUrl || "";
         const capitalizedTitle = formatBusinessName(cleanDomain) || cleanDomain.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -8204,7 +8204,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           continue;
         }
         const isYoouz = cleanDomain === "yoouz.com";
-        const logo = isYoouz ? "/favicon.svg" : `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+        const logo = isYoouz ? "/favicon.svg" : `/api/favicon?domain=${cleanDomain}`;
         const autoPlaceDoc = {
           id: autoPlaceId,
           name: isYoouz ? "Yoouz" : item.title,
@@ -8333,7 +8333,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }).catch(() => {});
 
       // 2. Ensure Legal 500 place exists with canonical ID 'legal500.com' and rich metadata
-      const legal500Logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://legal500.com&size=256`;
+      const legal500Logo = `/api/favicon?domain=legal500.com`;
       const legal500Banner = "";
       const legal500Doc = {
         id: "legal500.com",
@@ -8376,7 +8376,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }).catch(() => {});
 
       // 3. Ensure Digital Park place exists with canonical ID 'digitalpark.ae'
-      const digitalParkLogo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://digitalpark.ae&size=256`;
+      const digitalParkLogo = `/api/favicon?domain=digitalpark.ae`;
       const digitalParkBanner = "";
       const digitalParkDoc = {
         id: "digitalpark.ae",
@@ -13133,7 +13133,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       let logoUrl = isYoouz 
         ? 'https://www.yoouz.com/favicon.svg' 
         : (existingPlaceLogo || (rawDomain && !rawDomain.includes('gmail.com') && !rawDomain.includes('yahoo.com') && !rawDomain.includes('hotmail.com')
-          ? `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${rawDomain}&size=256`
+          ? `/api/favicon?domain=${rawDomain}`
           : ''));
 
       // Upsert verified place into Bunny DB with isClaimed: true
@@ -15707,7 +15707,7 @@ Return JSON:
                 logo = getHighQualityImageUrl(logo);
               } else {
                 // Google High-Resolution favicon service fallback (256px resolution)
-                logo = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256`;
+                logo = `/api/favicon?domain=${domain}`;
               }
 
               const lowerTitle = title.toLowerCase();
@@ -15845,7 +15845,7 @@ Return JSON:
 
       // Always use Google Social Favicon V2 (256px resolution) if logo is missing, broken, or white/inverted
       if (!logo || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
-        logo = serverBrandLogos[cleanDomain] || `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+        logo = serverBrandLogos[cleanDomain] || `/api/favicon?domain=${cleanDomain}`;
       }
       
       const sanitizeProxy = (u?: string | null): string => {
@@ -16238,20 +16238,61 @@ Return JSON:
     }
   });
 
-  // Proxy for Google Favicon CDN to bypass mobile tracking blockers (e.g. iOS Safari)
+  // Proxy for Google Favicon CDN to bypass mobile tracking blockers (e.g. iOS Safari) and prevent 404 errors
   app.get("/api/favicon", async (req, res) => {
+    const rawDomain = req.query.domain ? req.query.domain.toString() : "";
+    const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
+
+    const renderFallbackSvg = (domainStr: string) => {
+      const letter = (domainStr[0] || "Y").toUpperCase();
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+        <rect width="256" height="256" rx="64" fill="#18181b"/>
+        <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="120">${letter}</text>
+      </svg>`;
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+      return res.status(200).send(svg);
+    };
+
+    if (!cleanDomain) {
+      return renderFallbackSvg("Y");
+    }
+
+    if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz") {
+      const svgPath = path.join(process.cwd(), "public", "favicon.svg");
+      if (fs.existsSync(svgPath)) {
+        res.setHeader("Content-Type", "image/svg+xml");
+        res.setHeader("Cache-Control", "public, max-age=604800");
+        return res.sendFile(svgPath);
+      }
+      return renderFallbackSvg("Y");
+    }
+
     try {
-      const domain = req.query.domain;
-      if (!domain) return res.status(400).send("Domain required");
-      const url = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256`;
-      const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (!response.ok) return res.status(response.status).send("Failed to fetch favicon");
-      res.setHeader('Content-Type', response.headers.get('content-type') || 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=604800');
+      const url = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const response = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        return renderFallbackSvg(cleanDomain);
+      }
+
+      const contentType = response.headers.get("content-type") || "image/png";
       const arrayBuffer = await response.arrayBuffer();
-      res.send(Buffer.from(arrayBuffer));
+      if (!arrayBuffer || arrayBuffer.byteLength < 100) {
+        return renderFallbackSvg(cleanDomain);
+      }
+
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+      return res.status(200).send(Buffer.from(arrayBuffer));
     } catch (e) {
-      res.status(500).send(e.message);
+      return renderFallbackSvg(cleanDomain);
     }
   });
 
@@ -18527,7 +18568,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     }
     if (domain && domain.includes(".")) {
       candidateUrls.push(`https://icon.horse/icon/${domain}`);
-      candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256`);
+      candidateUrls.push(`/api/favicon?domain=${domain}`);
       candidateUrls.push(`https://unavatar.io/${domain}?fallback=false`);
       candidateUrls.push(`https://api.faviconkit.com/${domain}/256`);
       candidateUrls.push(`https://logo.clearbit.com/${domain}`);

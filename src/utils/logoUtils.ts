@@ -531,7 +531,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
   }
 
   if (cleanDomain && cleanDomain.includes(".")) {
-    return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+    return `/api/favicon?domain=${cleanDomain}`;
   }
 
   return url || null;
@@ -583,7 +583,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 
   // 3. Authentic High-Resolution Social Favicon (Google 256px resolution directly from website icon/metadata)
   if (cleanDomain && cleanDomain.includes(".")) {
-    return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+    return `/api/favicon?domain=${cleanDomain}`;
   }
 
   return null;

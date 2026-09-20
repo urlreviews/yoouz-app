@@ -50,7 +50,7 @@ export function getDomainLogoUrl(domain: string): string {
   if (KNOWN_BRAND_LOGOS[clean]) {
     return KNOWN_BRAND_LOGOS[clean];
   }
-  return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${clean}&size=256`;
+  return `/api/favicon?domain=${clean}`;
 }
 
 /**
