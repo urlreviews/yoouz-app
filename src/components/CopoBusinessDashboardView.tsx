@@ -1980,7 +1980,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   }
 
   return (
-    <div className="w-screen h-[100dvh] flex bg-zinc-950 select-none antialiased overflow-hidden font-sans text-white copo-business-dashboard">
+    <div className="w-full max-w-full h-[100dvh] flex bg-zinc-950 select-none antialiased overflow-x-hidden font-sans text-white copo-business-dashboard">
       <div className="w-full h-full flex">
       {/* Left Google Enterprise Navigation Sidebar (Matching CopoSidebar exactly) */}
       <aside className="w-64 h-[100dvh] bg-zinc-950 border-r border-zinc-800/80 px-4 py-6 flex flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar text-white shadow-none">
@@ -2132,28 +2132,22 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <span className="hidden sm:inline">{t("business.support", "Support")}</span>
               </button>
 
-              {/* Profile / Account Control with Spacious Dark-Mode Adaptive Logo */}
+              {/* Profile / Account Control with Clean Google-Style Circular Avatar */}
               <div className="relative">
                 <button 
                   id="biz-header-account-trigger"
                   onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                  className="h-9 sm:h-10 px-2 sm:px-3 flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold group shadow-xs"
-                  title="Business Account Menu"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-700/80 hover:border-zinc-500 transition-all duration-200 shrink-0 cursor-pointer flex items-center justify-center p-0.5 shadow-xs active:scale-95 group focus:outline-none focus:ring-2 focus:ring-white/20"
+                  title={`${currentPlace.name} - Business Account Menu`}
                 >
-                  {/* Dedicated Logo Container using CopoBrandLogo for consistent branding */}
                   <CopoBrandLogo
                     domain={currentPlace.website || currentPlace.id}
                     name={currentPlace.name}
                     logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg border border-zinc-700/80 bg-zinc-950 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5"
-                    imageClassName="w-full h-full object-contain rounded-md"
-                    fallbackTextClassName="font-black text-[11px] text-white"
+                    className="w-full h-full rounded-full border border-zinc-700/80 bg-zinc-950 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5"
+                    imageClassName="w-full h-full object-contain rounded-full"
+                    fallbackTextClassName="font-black text-xs text-white"
                   />
-
-                  <span className="font-bold text-xs text-white max-w-[110px] sm:max-w-[160px] truncate">
-                    {currentPlace.name}
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform ${showAccountDropdown ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Business Account Dropdown */}
