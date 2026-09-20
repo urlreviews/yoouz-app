@@ -18254,6 +18254,65 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     }
 
+    // Dynamic brand & page OpenGraph share card generator (Centered logo + Title/Button metadata)
+    async function generateBrandOgCardBuffer(title?: string, subtitle?: string, pathText?: string): Promise<Buffer> {
+      const safeTitle = (title || "Yoouz").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      const safeSubtitle = (subtitle || "Authentic 60-Second Video Reviews").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      let displayPath = (pathText || "yoouz.com").replace(/^https?:\/\//i, '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      if (!displayPath.startsWith('yoouz.com')) {
+        displayPath = 'yoouz.com' + (displayPath.startsWith('/') ? displayPath : '/' + displayPath);
+      }
+
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="brandBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e0e12"/>
+      <stop offset="50%" stop-color="#09090b"/>
+      <stop offset="100%" stop-color="#14141a"/>
+    </linearGradient>
+    <radialGradient id="brandGlow" cx="50%" cy="38%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.09"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="brandBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.06)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="630" fill="url(#brandBg)"/>
+  <rect width="1200" height="630" fill="url(#brandGlow)"/>
+
+  <!-- Outer Frame -->
+  <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="url(#brandBorderGrad)" stroke-width="2"/>
+
+  <!-- Centered Logo Emblem Squircle in middle -->
+  <g transform="translate(530, 115)">
+    <rect width="140" height="140" rx="36" fill="#18181b" stroke="rgba(255,255,255,0.22)" stroke-width="2.5"/>
+    <!-- White Star Icon -->
+    <path d="M70 28 L81.5 57 L112 57 L87.5 75 L97 104 L70 86 L43 104 L52.5 75 L28 57 L58.5 57 Z" fill="#ffffff"/>
+  </g>
+
+  <!-- Title / Button Name -->
+  <text x="600" y="325" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, sans-serif" font-weight="800" font-size="44" letter-spacing="-0.02em">${safeTitle}</text>
+
+  <!-- URL Path Pill Badge -->
+  <g transform="translate(600, 370)">
+    <rect x="-160" y="-20" width="320" height="40" rx="20" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.16)" stroke-width="1"/>
+    <text x="0" y="6" text-anchor="middle" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', Menlo, monospace" font-weight="600" font-size="17">${displayPath}</text>
+  </g>
+
+  <!-- Subtitle -->
+  <text x="600" y="450" text-anchor="middle" fill="#a1a1aa" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, sans-serif" font-weight="500" font-size="22">${safeSubtitle}</text>
+
+  <!-- Bottom Brand Footnote -->
+  <text x="600" y="540" text-anchor="middle" fill="#71717a" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, sans-serif" font-weight="600" font-size="15" letter-spacing="0.1em">YOOUZ • 100% AUTHENTIC 60s VIDEO REVIEWS</text>
+</svg>`;
+
+      return await sharp(Buffer.from(svg)).png().toBuffer();
+    }
+
     // High-fidelity video share card buffer generator
     async function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
       let thumbBuf: Buffer | null = null;
@@ -19006,12 +19065,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return res.end(finalImage);
     }
 
-    app.all(['/api/og', '/api/og.png', '/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png'], async (req: any, res: any) => {
+    app.all(['/api/og', '/api/og.png', '/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png', '/api/og-banner/brand.png', '/api/og-banner/page.png', '/api/og-banner/brand'], async (req: any, res: any) => {
       try {
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
         const protocol = (!host.includes('localhost') && !host.includes('127.0.0.1')) ? 'https' : (req.protocol || 'http');
         const baseUrl = `${protocol}://${host}`;
-        const ogBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
         const query = sanitizeQueryParams(req.query);
 
         let type = (query.type as string) || "";
@@ -19020,13 +19078,6 @@ app.get('/api/og-preview-v2', async (req, res) => {
           else if (query.domain || query.logoUrl || query.website || query.place || query.placeId) type = "place";
           else if (query.avatarUrl || query.handle || query.creator || query.user) type = "creator";
           else type = "homepage";
-        }
-
-        if (type === 'homepage' && fs.existsSync(ogBannerPath)) {
-          res.setHeader("Content-Type", "image/png");
-          res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-          return res.sendFile(ogBannerPath);
         }
 
         if (type === 'video') {
@@ -19048,54 +19099,19 @@ app.get('/api/og-preview-v2', async (req, res) => {
           return serveCreatorOgImage(req, res, baseUrl);
         }
 
-        // Default fallback for non-video OG images (Clean centered brand icon emblem, NO text)
-        const defaultSvg = `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="defGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#09090b"/>
-              <stop offset="50%" stop-color="#111115"/>
-              <stop offset="100%" stop-color="#09090b"/>
-            </linearGradient>
-            <radialGradient id="defStarGlow" cx="600" cy="315" r="400" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.14"/>
-              <stop offset="50%" stop-color="#ffffff" stop-opacity="0.03"/>
-              <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
+        // For all non-video pages/buttons (Homepage, Business, Search, Following, Messages, etc.)
+        // Generate a dynamic card featuring OUR LOGO in the middle + Title/Button metadata
+        const titleParam = (query.title as string) || (query.name as string) || "Yoouz";
+        const subtitleParam = (query.subtitle as string) || (query.desc as string) || "Authentic 60-Second Video Reviews";
+        const pathParam = (query.path as string) || (query.button as string) || (query.url as string) || "yoouz.com";
 
-          <!-- Background Base -->
-          <rect width="1200" height="630" fill="url(#defGrad)"/>
-          <rect width="1200" height="630" fill="url(#defStarGlow)"/>
-
-          <!-- Outer Border Frame -->
-          <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
-
-          <!-- Centered Icon Only (Dark Squircle with White Star Emblem) -->
-          <g transform="translate(460, 175)">
-            <rect width="280" height="280" rx="76" fill="#09090b" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
-            <g transform="translate(47, 47) scale(7.75)">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
-            </g>
-          </g>
-        </svg>`;
-
-        if (fs.existsSync(ogBannerPath)) {
-          res.setHeader("Content-Type", "image/png");
-          res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-          return res.sendFile(ogBannerPath);
-        }
-
-        const fallbackBuf = await sharp(Buffer.from(defaultSvg), { density: 150 })
-          .resize(1200, 630)
-          .png({ palette: false, quality: 100, compressionLevel: 6, force: true })
-          .toBuffer();
+        const brandBuf = await generateBrandOgCardBuffer(titleParam, subtitleParam, pathParam);
 
         res.setHeader("Content-Type", "image/png");
-        res.setHeader("Content-Length", fallbackBuf.length);
+        res.setHeader("Content-Length", brandBuf.length);
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-        return res.end(fallbackBuf);
+        res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        return res.end(brandBuf);
       } catch (e: any) {
         console.error("OG Image Error:", e);
         return res.status(500).send("Error generating image");
@@ -20027,7 +20043,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     const publicBase = baseUrl;
     let title = "Yoouz - Authentic 60-Second Video Reviews";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.";
-    let imageUrl = `${publicBase}/og-banner.png?v=8`;
+    let imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=25`;
     let videoUrl = "";
     let embedUrl = "";
     let type = "website";
@@ -20428,7 +20444,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     } else if (pathname === '/business' || pathname.startsWith('/business') || pathname === '/claim') {
         title = "Yoouz for Business | Verified Merchant Portal & Video Reviews";
         description = "Claim and verify your official business profile on Yoouz. Showcase authentic 60-second customer video reviews, embed trust widgets, and eliminate fake text reviews.";
-        imageUrl = `${publicBase}/og-banner.png?v=8`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz for Business")}&subtitle=${encodeURIComponent("Verified Merchant Portal & Video Reviews")}&path=${encodeURIComponent("yoouz.com/business")}&v=25`;
         keywords = "Yoouz business, claim business, authentic video reviews, verified merchant, customer video testimonials, embed video reviews, anti-fake reviews";
         structuredData = {
           "@context": "https://schema.org",
@@ -20447,6 +20463,43 @@ function injectOpenGraphTags(html: string, meta: any) {
             }
           ]
         };
+    } else if (pathname === '/search' || pathname.startsWith('/search')) {
+        const queryTerm = params.get('q') || params.get('query') || '';
+        title = queryTerm ? `Search Video Reviews for "${queryTerm}" | Yoouz` : "Search Video Reviews | Yoouz";
+        description = queryTerm 
+          ? `Discover authentic 60-second customer video reviews for "${queryTerm}" on Yoouz.`
+          : "Search thousands of authentic 60-second video reviews recorded live by real customers for local businesses and places.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(queryTerm ? `Search: ${queryTerm}` : "Search Video Reviews")}&subtitle=${encodeURIComponent("Explore Authentic 60s Testimonials")}&path=${encodeURIComponent("yoouz.com/search")}&v=25`;
+    } else if (pathname === '/following' || pathname.startsWith('/following')) {
+        title = "Following & Community Feed | Yoouz";
+        description = "Stay up to date with genuine video reviews from reviewers and creators you follow on Yoouz.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Following Feed")}&subtitle=${encodeURIComponent("Live Video Updates from Creators You Follow")}&path=${encodeURIComponent("yoouz.com/following")}&v=25`;
+    } else if (pathname === '/messages' || pathname.startsWith('/messages') || pathname.startsWith('/chat')) {
+        title = "Messages & Direct Chat | Yoouz";
+        description = "Connect directly with video reviewers, local business owners, and community members on Yoouz.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Direct Messages")}&subtitle=${encodeURIComponent("Connect with Reviewers & Merchants")}&path=${encodeURIComponent("yoouz.com/messages")}&v=25`;
+    } else if (pathname === '/map' || pathname.startsWith('/map')) {
+        title = "Interactive Video Review Map | Yoouz";
+        description = "Explore real 60-second video reviews near you on the interactive Yoouz map.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Video Review Map")}&subtitle=${encodeURIComponent("Discover Nearby Verified Video Reviews")}&path=${encodeURIComponent("yoouz.com/map")}&v=25`;
+    } else if (pathname === '/notifications' || pathname.startsWith('/notifications')) {
+        title = "Notifications & Activity | Yoouz";
+        description = "Check your latest video review reactions, comments, followers, and business updates on Yoouz.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Notifications")}&subtitle=${encodeURIComponent("Reactions, Comments & Verified Updates")}&path=${encodeURIComponent("yoouz.com/notifications")}&v=25`;
+    } else if (pathname === '/bookmarks' || pathname.startsWith('/bookmarks') || pathname.startsWith('/saved')) {
+        title = "Saved Video Reviews & Bookmarks | Yoouz";
+        description = "View your saved 60-second video reviews and bookmarked local places on Yoouz.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Saved Bookmarks")}&subtitle=${encodeURIComponent("Your Favorite 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/bookmarks")}&v=25`;
+    } else if (pathname === '/privacy' || pathname === '/terms' || pathname === '/faq' || pathname === '/community-guidelines') {
+        const pageName = pathname.replace('/', '').replace(/[-_]/g, ' ').toUpperCase();
+        title = `${pageName} | Yoouz`;
+        description = `Official ${pageName} information for Yoouz - Authentic 60-Second Video Reviews.`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(pageName)}&subtitle=${encodeURIComponent("Official Policy & Information")}&path=${encodeURIComponent("yoouz.com" + pathname)}&v=25`;
+    } else if (pathname !== '/' && !detectedVideoId && !placeId && !creatorHandle) {
+        const sectionTitle = pathname.replace('/', '').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        title = `${sectionTitle} | Yoouz`;
+        description = `Explore ${sectionTitle} on Yoouz - Authentic 60-Second Video Reviews.`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(sectionTitle)}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com" + pathname)}&v=25`;
     }
 
     if (!structuredData) {
