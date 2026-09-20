@@ -18266,12 +18266,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
     <linearGradient id="brandBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0e0e12"/>
-      <stop offset="50%" stop-color="#09090b"/>
-      <stop offset="100%" stop-color="#14141a"/>
+      <stop offset="0%" stop-color="#09090b"/>
+      <stop offset="50%" stop-color="#121217"/>
+      <stop offset="100%" stop-color="#181820"/>
     </linearGradient>
     <radialGradient id="brandGlow" cx="50%" cy="38%" r="55%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.09"/>
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
       <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="brandBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -18287,20 +18287,20 @@ app.get('/api/og-preview-v2', async (req, res) => {
   <!-- Outer Frame -->
   <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="url(#brandBorderGrad)" stroke-width="2"/>
 
-  <!-- Centered Logo Emblem Squircle in middle -->
+  <!-- Centered Dark Squircle Logo Emblem in middle -->
   <g transform="translate(530, 115)">
-    <rect width="140" height="140" rx="36" fill="#18181b" stroke="rgba(255,255,255,0.22)" stroke-width="2.5"/>
-    <!-- White Star Icon -->
+    <rect width="140" height="140" rx="36" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
+    <!-- Crisp White Star Icon -->
     <path d="M70 28 L81.5 57 L112 57 L87.5 75 L97 104 L70 86 L43 104 L52.5 75 L28 57 L58.5 57 Z" fill="#ffffff"/>
   </g>
 
   <!-- Title / Button Name -->
   <text x="600" y="325" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, sans-serif" font-weight="800" font-size="44" letter-spacing="-0.02em">${safeTitle}</text>
 
-  <!-- URL Path Pill Badge -->
+  <!-- URL Path Pill Badge (Crisp White/Zinc Text) -->
   <g transform="translate(600, 370)">
-    <rect x="-160" y="-20" width="320" height="40" rx="20" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.16)" stroke-width="1"/>
-    <text x="0" y="6" text-anchor="middle" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', Menlo, monospace" font-weight="600" font-size="17">${displayPath}</text>
+    <rect x="-160" y="-20" width="320" height="40" rx="20" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+    <text x="0" y="6" text-anchor="middle" fill="#e4e4e7" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', Menlo, monospace" font-weight="600" font-size="17">${displayPath}</text>
   </g>
 
   <!-- Subtitle -->
@@ -18616,14 +18616,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <stop offset="50%" stop-color="#121217" />
               <stop offset="100%" stop-color="#181820" />
             </linearGradient>
-            <radialGradient id="centerBlueGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25" />
-              <stop offset="60%" stop-color="#2563eb" stop-opacity="0.05" />
+            <radialGradient id="centerWhiteGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12" />
+              <stop offset="60%" stop-color="#ffffff" stop-opacity="0.02" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
             </radialGradient>
           </defs>
           <rect width="1200" height="630" fill="url(#bgCinema)"/>
-          <circle cx="600" cy="315" r="320" fill="url(#centerBlueGlow)"/>
+          <circle cx="600" cy="315" r="320" fill="url(#centerWhiteGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
           <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
@@ -18654,8 +18654,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
           <!-- Centered Play Icon -->
           <g transform="translate(540, 255)">
-            <circle cx="60" cy="60" r="60" fill="#2563eb" fill-opacity="0.9"/>
-            <circle cx="60" cy="60" r="57" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="3"/>
+            <circle cx="60" cy="60" r="60" fill="#000000" fill-opacity="0.85"/>
+            <circle cx="60" cy="60" r="57" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
             <path d="M48 38 L84 60 L48 82 Z" fill="#ffffff"/>
           </g>
 
@@ -18916,11 +18916,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
             const svg = `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="avInitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#2563eb"/>
-                  <stop offset="100%" stop-color="#1e3a8a"/>
+                  <stop offset="0%" stop-color="#27272a"/>
+                  <stop offset="100%" stop-color="#09090b"/>
                 </linearGradient>
               </defs>
-              <rect width="300" height="300" rx="150" fill="url(#avInitGrad)"/>
+              <rect width="300" height="300" rx="150" fill="url(#avInitGrad)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
               <text x="150" y="195" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="140" font-weight="800" fill="#ffffff" letter-spacing="-2">${initial}</text>
             </svg>`;
             avatarBuf = await sharp(Buffer.from(svg)).resize(300, 300).png().toBuffer();
@@ -18978,17 +18978,17 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <defs>
             <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#09090b" />
-              <stop offset="50%" stop-color="#10131c" />
-              <stop offset="100%" stop-color="#141824" />
+              <stop offset="50%" stop-color="#121217" />
+              <stop offset="100%" stop-color="#181820" />
             </linearGradient>
-            <radialGradient id="blueGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.20" />
-              <stop offset="60%" stop-color="#2563eb" stop-opacity="0.04" />
+            <radialGradient id="centerWhiteGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12" />
+              <stop offset="60%" stop-color="#ffffff" stop-opacity="0.02" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
             </radialGradient>
           </defs>
           <rect width="1200" height="630" fill="url(#bgGrad)"/>
-          <circle cx="600" cy="315" r="300" fill="url(#blueGlow)"/>
+          <circle cx="600" cy="315" r="300" fill="url(#centerWhiteGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
         </svg>
       `;
@@ -19009,9 +19009,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
         const borderRingSvg = `
           <svg width="316" height="316" viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="158" cy="158" r="152" fill="none" stroke="#3b82f6" stroke-width="6"/>
+            <circle cx="158" cy="158" r="152" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
             <!-- Verified Checkmark Badge Icon at bottom right -->
-            <circle cx="248" cy="248" r="32" fill="#3b82f6" stroke="#09090b" stroke-width="4"/>
+            <circle cx="248" cy="248" r="32" fill="#18181b" stroke="#09090b" stroke-width="4"/>
             <path d="M236 248 L244 256 L260 240" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
@@ -19032,15 +19032,15 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <svg width="316" height="316" viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="avGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#3b82f6" />
-                <stop offset="100%" stop-color="#1d4ed8" />
+                <stop offset="0%" stop-color="#27272a" />
+                <stop offset="100%" stop-color="#09090b" />
               </linearGradient>
             </defs>
-            <circle cx="158" cy="158" r="152" fill="url(#avGrad)" stroke="#60a5fa" stroke-width="5"/>
+            <circle cx="158" cy="158" r="152" fill="url(#avGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="5"/>
             <!-- Monogram Initial Letter -->
             <text x="158" y="205" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="140" font-weight="800" fill="#ffffff" letter-spacing="-2">${initial}</text>
             <!-- Verified Checkmark Badge -->
-            <circle cx="248" cy="248" r="32" fill="#3b82f6" stroke="#09090b" stroke-width="4"/>
+            <circle cx="248" cy="248" r="32" fill="#18181b" stroke="#09090b" stroke-width="4"/>
             <path d="M236 248 L244 256 L260 240" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
@@ -20404,7 +20404,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `Yoouz vs ${comp} (2026 Comparison) | The 100% Authentic Video Review Standard`;
         description = `Compare Yoouz vs ${comp}. Discover why millions of consumers and businesses choose 60-second verified video reviews to eliminate fake AI text and bot spam.`;
-        imageUrl = `${baseUrl}/og-banner.png?v=comp-1`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(`Yoouz vs ${comp}`)}&subtitle=${encodeURIComponent("Authentic Video vs Legacy Text Reviews")}&path=${encodeURIComponent("yoouz.com/vs-" + compSlug)}&v=25`;
         keywords = `Yoouz vs ${comp}, ${comp} alternative, best video review platform, anti-fake review app, authentic restaurant reviews, real customer video feedback`;
 
         structuredData = {
