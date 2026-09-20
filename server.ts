@@ -18358,28 +18358,50 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawPlace = queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business";
       const placeName = formatBusinessName(rawPlace);
       const authorName = queryParams.author || foundVideo?.author?.name || foundVideo?.authorName || "Verified Reviewer";
-      const rating = Number(queryParams.rating || foundVideo?.rating || 5).toFixed(1);
+      const ratingNum = Math.max(1, Math.min(5, Math.round(Number(queryParams.rating || foundVideo?.rating || 5))));
+      const ratingStr = Number(queryParams.rating || foundVideo?.rating || 5).toFixed(1);
       
       const safePlaceDisplay = placeName.length > 22 ? `${placeName.substring(0, 20)}...` : placeName;
-      const safeAuthorDisplay = authorName.length > 22 ? `${authorName.substring(0, 20)}...` : authorName;
+      const safeAuthorDisplay = authorName.length > 20 ? `${authorName.substring(0, 18)}...` : authorName;
       const authorInitial = (authorName.trim().charAt(0) || "U").toUpperCase();
-      
-      const ratingText = `★ ${rating}`;
+
+      // Vector Star SVG Helper
+      const renderStarsSvg = (startX: number, startY: number, filledCount = 5) => {
+        let stars = '';
+        const starPath = "M7 0l2.16 4.38 4.84.7-3.5 3.41.83 4.82L7 11.04l-4.33 2.27.83-4.82-3.5-3.41 4.84-.7L7 0z";
+        for (let i = 0; i < 5; i++) {
+          const x = startX + (i * 17);
+          const color = i < filledCount ? "#fbbf24" : "#52525b";
+          stars += `<path d="${starPath}" fill="${color}" transform="translate(${x}, ${startY})"/>`;
+        }
+        return stars;
+      };
+
+      const starsSvg = renderStarsSvg(76, 34, ratingNum);
+      const starsWidth = 5 * 17; // 85px
+
       const subSuffix = ` • Verified 60s Review`;
-      const ratingTextWidth = getTextAdvanceWidth(ratingText, 16, true);
-      const subSuffixWidth = getTextAdvanceWidth(subSuffix, 16, false);
-      const totalSubWidth = ratingTextWidth + subSuffixWidth;
+      const subSuffixWidth = getTextAdvanceWidth(subSuffix, 14, false);
+
+      const rawTargetDomain = queryParams.placeDomain || (foundVideo?.placeId && foundVideo.placeId.includes('.') ? cleanDomainName(foundVideo.placeId) : (placeName.includes('.') ? placeName.toLowerCase() : `${placeName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`));
+      const targetDomain = rawTargetDomain.length > 30 ? rawTargetDomain.substring(0, 28) + "..." : rawTargetDomain;
+      const videoReviewLine = `Video review for ${targetDomain}`;
+      const videoReviewWidth = getTextAdvanceWidth(videoReviewLine, 14, false);
+
+      const authorDisplayWithPrefix = `By ${safeAuthorDisplay}`;
+      const authorWidth = getTextAdvanceWidth(authorDisplayWithPrefix, 20, true);
+
+      const line2TotalWidth = starsWidth + subSuffixWidth;
+      const maxContentWidth = Math.max(authorWidth + 20, line2TotalWidth, videoReviewWidth);
+      const authorPillWidth = Math.min(620, Math.max(310, 76 + maxContentWidth + 24));
 
       const watermark = "yoouz.com";
 
       // Calculate pure vector dimensions
       const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 22, true);
-      const ratingWidth = getTextAdvanceWidth(rating, 20, true);
+      const ratingWidth = getTextAdvanceWidth(ratingStr, 20, true);
       const placePillWidth = Math.min(540, Math.max(170, 56 + placeWidth + 20 + ratingWidth + 20));
       const ratingX = placePillWidth - 20 - ratingWidth;
-
-      const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 21, true);
-      const authorPillWidth = Math.min(580, Math.max(260, 76 + Math.max(authorWidth, totalSubWidth) + 24));
 
       const initialWidth = getTextAdvanceWidth(authorInitial, 22, true);
       const initialX = 38 - (initialWidth / 2);
@@ -18411,7 +18433,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <!-- Place Name (Pure Vector Path) -->
               ${renderTextPath(safePlaceDisplay, 56, 36, 22, true, '#ffffff')}
               <!-- Rating Value (Pure Vector Path) -->
-              ${renderTextPath(rating, ratingX, 36, 20, true, '#fbbf24')}
+              ${renderTextPath(ratingStr, ratingX, 36, 20, true, '#fbbf24')}
             </g>
 
             <!-- CENTER: Frosted Glass Play Button -->
@@ -18422,16 +18444,26 @@ app.get('/api/og-preview-v2', async (req, res) => {
             </g>
 
             <!-- BOTTOM LEFT: Reviewer Profile Pill -->
-            <g transform="translate(48, 510)">
-              <rect width="${authorPillWidth}" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+            <g transform="translate(48, 492)">
+              <rect width="${authorPillWidth}" height="90" rx="26" fill="#000000" fill-opacity="0.82" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Avatar Circle (Teal) -->
-              <circle cx="38" cy="38" r="26" fill="#0d9488"/>
-              ${renderTextPath(authorInitial, initialX, 46, 22, true, '#ffffff')}
-              <!-- Reviewer Name (Pure Vector Path) -->
-              ${renderTextPath(safeAuthorDisplay, 76, 33, 21, true, '#ffffff')}
-              <!-- Star Rating & Review Subtitle (Pure Vector Path) -->
-              ${renderTextPath(ratingText, 76, 58, 16, true, '#fbbf24')}
-              ${renderTextPath(subSuffix, 76 + ratingTextWidth, 58, 16, false, '#cbd5e1')}
+              <circle cx="38" cy="45" r="26" fill="#0d9488"/>
+              ${renderTextPath(authorInitial, initialX, 53, 22, true, '#ffffff')}
+              
+              <!-- Line 1: Reviewer Name (By Author) -->
+              ${renderTextPath(authorDisplayWithPrefix, 76, 26, 20, true, '#ffffff')}
+              <!-- Verified Badge -->
+              <g transform="translate(${76 + authorWidth + 6}, 13)">
+                <circle cx="6" cy="6" r="6" fill="#3b82f6"/>
+                <path d="M3.5 6l1.8 1.8 3.5-3.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </g>
+
+              <!-- Line 2: Star Icons + Review Tag -->
+              ${starsSvg}
+              ${renderTextPath(subSuffix, 76 + starsWidth, 46, 14, false, '#cbd5e1')}
+
+              <!-- Line 3: Video Review Target Line -->
+              ${renderTextPath(videoReviewLine, 76, 68, 14, false, '#94a3b8')}
             </g>
 
             <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
@@ -18475,7 +18507,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <rect width="${placePillWidth}" height="56" rx="28" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(18, 14) scale(1.2)"/>
             ${renderTextPath(safePlaceDisplay, 56, 36, 22, true, '#ffffff')}
-            ${renderTextPath(rating, ratingX, 36, 20, true, '#fbbf24')}
+            ${renderTextPath(ratingStr, ratingX, 36, 20, true, '#fbbf24')}
           </g>
 
           <!-- Centered Play Icon -->
@@ -18486,13 +18518,24 @@ app.get('/api/og-preview-v2', async (req, res) => {
           </g>
 
           <!-- BOTTOM LEFT: Reviewer Profile Pill -->
-          <g transform="translate(48, 510)">
-            <rect width="${authorPillWidth}" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-            <circle cx="38" cy="38" r="26" fill="#0d9488"/>
-            ${renderTextPath(authorInitial, initialX, 46, 22, true, '#ffffff')}
-            ${renderTextPath(safeAuthorDisplay, 76, 33, 21, true, '#ffffff')}
-            ${renderTextPath(ratingText, 76, 58, 16, true, '#fbbf24')}
-            ${renderTextPath(subSuffix, 76 + ratingTextWidth, 58, 16, false, '#cbd5e1')}
+          <g transform="translate(48, 492)">
+            <rect width="${authorPillWidth}" height="90" rx="26" fill="#000000" fill-opacity="0.82" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+            <circle cx="38" cy="45" r="26" fill="#0d9488"/>
+            ${renderTextPath(authorInitial, initialX, 53, 22, true, '#ffffff')}
+            
+            <!-- Line 1: Reviewer Name (By Author) -->
+            ${renderTextPath(authorDisplayWithPrefix, 76, 26, 20, true, '#ffffff')}
+            <g transform="translate(${76 + authorWidth + 6}, 13)">
+              <circle cx="6" cy="6" r="6" fill="#3b82f6"/>
+              <path d="M3.5 6l1.8 1.8 3.5-3.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+
+            <!-- Line 2: Star Icons + Review Tag -->
+            ${starsSvg}
+            ${renderTextPath(subSuffix, 76 + starsWidth, 46, 14, false, '#cbd5e1')}
+
+            <!-- Line 3: Video Review Target Line -->
+            ${renderTextPath(videoReviewLine, 76, 68, 14, false, '#94a3b8')}
           </g>
 
           <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
@@ -18511,7 +18554,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     }
 
     // Dedicated clean routes for direct social scraper access
-    app.get(['/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -19978,7 +20021,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-card/v4/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=4`;
+        imageUrl = `${baseUrl}/api/og-card/v5/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=5`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
