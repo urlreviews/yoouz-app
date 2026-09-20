@@ -18279,46 +18279,65 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const placeName = formatBusinessName(queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business");
       const authorName = queryParams.author || foundVideo?.author?.name || foundVideo?.authorName || "Verified Reviewer";
       const rating = Number(queryParams.rating || foundVideo?.rating || 5).toFixed(1);
+      const safePlaceName = escapeXml(placeName);
+      const safeAuthorName = escapeXml(authorName);
+      const authorInitial = escapeXml(authorName.trim().charAt(0).toUpperCase() || "U");
+      const domainName = escapeXml(cleanDomainName(placeName || "yoouz.com"));
 
       if (thumbBuf) {
         const overlaySvg = `
           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0.45" />
-                <stop offset="40%" stop-color="#000000" stop-opacity="0.10" />
-                <stop offset="70%" stop-color="#000000" stop-opacity="0.30" />
-                <stop offset="100%" stop-color="#000000" stop-opacity="0.85" />
+                <stop offset="0%" stop-color="#000000" stop-opacity="0.60" />
+                <stop offset="35%" stop-color="#000000" stop-opacity="0.10" />
+                <stop offset="65%" stop-color="#000000" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="#000000" stop-opacity="0.90" />
               </linearGradient>
             </defs>
             <rect width="1200" height="630" fill="url(#vignette)"/>
             
             <!-- Center Glowing Play Button -->
             <g transform="translate(540, 255)">
-              <circle cx="60" cy="60" r="60" fill="#000000" fill-opacity="0.65"/>
-              <circle cx="60" cy="60" r="58" fill="none" stroke="#ffffff" stroke-opacity="0.8" stroke-width="3"/>
+              <circle cx="60" cy="60" r="56" fill="#000000" fill-opacity="0.65"/>
+              <circle cx="60" cy="60" r="55" fill="none" stroke="#ffffff" stroke-opacity="0.85" stroke-width="2.5"/>
               <path d="M48 38 L84 60 L48 82 Z" fill="#ffffff"/>
             </g>
 
-            <!-- Top Left Yoouz Badge -->
-            <g transform="translate(48, 48)">
-              <rect width="130" height="42" rx="21" fill="#09090b" fill-opacity="0.85" stroke="#27272a" stroke-width="1.5"/>
-              <text x="65" y="27" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="800" fill="#ffffff" letter-spacing="1">YOOUZ</text>
+            <!-- Top Left: Place Name & Rating Pill -->
+            <g transform="translate(48, 44)">
+              <rect width="420" height="58" rx="29" fill="#09090b" fill-opacity="0.85" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+              <g transform="translate(20, 15)">
+                <!-- Gold Star -->
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="scale(1.2) translate(-2, -1)"/>
+              </g>
+              <text x="56" y="37" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" fill="#ffffff">${safePlaceName}</text>
+              <text x="350" y="37" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="700" fill="#fbbf24">${rating} ★</text>
             </g>
 
-            <!-- Bottom Left Info Pill -->
-            <g transform="translate(48, 520)">
-              <rect width="460" height="62" rx="31" fill="#09090b" fill-opacity="0.88" stroke="#3f3f46" stroke-width="1.5"/>
-              <!-- Star icon -->
-              <path d="M28 20 l3.09 6.26 L38 27.27 l-5 4.87 1.18 6.88 L28 35.77 l-6.18 3.25 L23 32.14 l-5 -4.87 6.91 -1.01 Z" fill="#eab308"/>
-              <text x="50" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="700" fill="#ffffff">${rating} ★</text>
-              <text x="120" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="600" fill="#a1a1aa">•  60s Video Review</text>
+            <!-- Top Right: Yoouz Brand Pill -->
+            <g transform="translate(1010, 44)">
+              <rect width="142" height="58" rx="29" fill="#09090b" fill-opacity="0.85" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+              <text x="71" y="36" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="800" fill="#ffffff" letter-spacing="2">YOOUZ</text>
+            </g>
+
+            <!-- Bottom Left: Speaker / Reviewer Info Pill -->
+            <g transform="translate(48, 498)">
+              <rect width="560" height="84" rx="42" fill="#09090b" fill-opacity="0.90" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+              <!-- Author Avatar Circle -->
+              <circle cx="44" cy="42" r="28" fill="#2563eb"/>
+              <text x="44" y="51" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="800" fill="#ffffff">${authorInitial}</text>
+              
+              <!-- Speaker Name -->
+              <text x="88" y="36" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" fill="#ffffff">${safeAuthorName}</text>
+              <!-- Subtitle & Domain -->
+              <text x="88" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="600" fill="#9ca3af">${safeAuthorName} • 60s Review  <tspan fill="#3b82f6">●</tspan>  ${domainName}</text>
             </g>
           </svg>
         `;
 
         return await sharp(thumbBuf)
-          .resize(1200, 630, { fit: 'cover' })
+          .resize(1200, 630, { fit: 'cover', position: 'center' })
           .composite([{ input: Buffer.from(overlaySvg), top: 0, left: 0 }])
           .png({ quality: 90 })
           .toBuffer();
@@ -18334,8 +18353,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <stop offset="100%" stop-color="#181820" />
             </linearGradient>
             <radialGradient id="centerRedGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ef4444" stop-opacity="0.25" />
-              <stop offset="60%" stop-color="#ef4444" stop-opacity="0.05" />
+              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25" />
+              <stop offset="60%" stop-color="#2563eb" stop-opacity="0.05" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
             </radialGradient>
           </defs>
@@ -18344,10 +18363,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
           <!-- Centered Play Icon -->
-          <g transform="translate(535, 200)">
-            <circle cx="65" cy="65" r="65" fill="#ef4444" fill-opacity="0.9"/>
-            <circle cx="65" cy="65" r="62" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="3"/>
-            <path d="M52 42 L90 65 L52 88 Z" fill="#ffffff"/>
+          <g transform="translate(540, 240)">
+            <circle cx="60" cy="60" r="60" fill="#2563eb" fill-opacity="0.9"/>
+            <circle cx="60" cy="60" r="57" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="3"/>
+            <path d="M48 38 L84 60 L48 82 Z" fill="#ffffff"/>
           </g>
 
           <!-- Top Brand Pill -->
@@ -18356,10 +18375,16 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <text x="75" y="29" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="800" fill="#ffffff" letter-spacing="1.5">YOOUZ</text>
           </g>
 
+          <!-- Top Place Pill -->
+          <g transform="translate(732, 48)">
+            <rect width="420" height="52" rx="26" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
+            <text x="210" y="33" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="700" fill="#ffffff">${safePlaceName} • ${rating} ★</text>
+          </g>
+
           <!-- Bottom Review Pill -->
           <g transform="translate(360, 480)">
             <rect width="480" height="68" rx="34" fill="#18181b" stroke="#3f3f46" stroke-width="2"/>
-            <text x="240" y="42" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#ffffff">Watch 60s Video Review</text>
+            <text x="240" y="42" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#ffffff">${safeAuthorName} • 60s Video Review</text>
           </g>
         </svg>
       `;
@@ -19638,16 +19663,8 @@ function formatBusinessName(name?: string | null): string {
 function injectOpenGraphTags(html: string, meta: any) {
     const safeTitle = escapeHtml(meta.title);
     const safeDesc = escapeHtml(meta.description);
-    let safeUrl = escapeHtml(meta.url);
-    if (safeUrl.startsWith("https://www.yoouz.com") || safeUrl.startsWith("http://www.yoouz.com")) {
-      safeUrl = safeUrl.replace(/^https?:\/\/www\.yoouz\.com/, "https://yoouz.com");
-    } else if (safeUrl.startsWith("http://yoouz.com")) {
-      safeUrl = safeUrl.replace(/^http:\/\/yoouz\.com/, "https://yoouz.com");
-    }
-    let rawImage = meta.imageUrl || "https://yoouz.com/og-banner.png?v=8";
-    if (rawImage.includes("localhost") || rawImage.startsWith("/") || rawImage.includes("yoouz.com/")) {
-      rawImage = rawImage.replace(/^https?:\/\/(www\.)?yoouz\.com/, "https://yoouz.com").replace(/^https?:\/\/[^\/]+/, "https://yoouz.com").replace(/^\//, "https://yoouz.com/");
-    }
+    const safeUrl = escapeHtml(meta.url);
+    const rawImage = meta.imageUrl || "https://yoouz.com/og-banner.png?v=8";
     const safeImage = escapeHtml(rawImage);
     const safeKeywords = escapeHtml(meta.keywords || "");
     const safeType = escapeHtml(meta.type || "website");
@@ -19657,9 +19674,6 @@ function injectOpenGraphTags(html: string, meta: any) {
     try {
       if (meta.url) {
         baseUrl = new URL(meta.url).origin;
-        if (baseUrl.includes("www.yoouz.com")) {
-          baseUrl = "https://yoouz.com";
-        }
       }
     } catch (e) {}
 
@@ -19739,20 +19753,24 @@ function injectOpenGraphTags(html: string, meta: any) {
     const userAgent = req.headers['user-agent'] || '';
     const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
     
-    let host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
+    let rawHost = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
     let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    if (!host.includes('localhost') && !host.includes('127.0.0.1') || isCrawler) {
+    if (rawHost.includes('localhost') || rawHost.includes('127.0.0.1')) {
+      if (isCrawler) {
+        rawHost = 'yoouz.com';
+        protocol = 'https';
+      }
+    } else {
       protocol = 'https';
-      host = 'yoouz.com';
     }
-    const baseUrl = (host.includes('localhost') && !isCrawler) ? `${protocol}://${host}` : 'https://yoouz.com';
+    const baseUrl = `${protocol}://${rawHost}`;
     const fullUrl = `${baseUrl}${req.originalUrl || req.url}`;
 
     const urlObj = new URL(fullUrl);
     const params = urlObj.searchParams;
     const pathname = urlObj.pathname;
     
-    const publicBase = 'https://yoouz.com';
+    const publicBase = baseUrl;
     let title = "Yoouz - Authentic 60-Second Video Reviews";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.";
     let imageUrl = `${publicBase}/og-banner.png?v=8`;
@@ -19835,7 +19853,7 @@ function injectOpenGraphTags(html: string, meta: any) {
            thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
         }
 
-        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=12`;
+        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=14`;
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
@@ -20223,6 +20241,90 @@ function injectOpenGraphTags(html: string, meta: any) {
     };
   }
 
+  // Endpoint to re-run previous searches database synchronization on demand
+  app.all("/api/admin/seed-searches", async (req, res) => {
+    try {
+      await seedKnownSearchesToBunnyDb();
+      res.json({ success: true, message: "Previous searches and brand metadata synchronized to Bunny Cloud Database." });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e?.message || String(e) });
+    }
+  });
+
+  // Dedicated endpoint for Subsystem #43 to audit and verify video review share cards and OpenGraph metadata
+  app.all("/api/admin/verify-social-share-cards", async (req, res) => {
+    try {
+      const list = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+      const results: any[] = [];
+      const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
+      const baseUrl = `https://${host}`;
+
+      for (const r of list) {
+        if (!r || !r.id) continue;
+        const placeName = formatBusinessName(r.placeName || (r.placeId ? cleanDomainName(r.placeId) : "Local Business"));
+        const authorName = r.author?.name || r.authorName || "Verified Customer";
+        const rating = r.rating || 5.0;
+
+        let thumbArg = r.videoThumbnail || r.videoPreviewUrl || r.coverUrl || r.thumbnailUrl || "";
+        if (!thumbArg && r.id.startsWith('rev-')) {
+          thumbArg = `https://rev1.b-cdn.net/videos/${r.id}.jpg`;
+        }
+
+        const queryParams = {
+          type: "video",
+          id: r.id,
+          placeName,
+          author: authorName,
+          rating,
+          caption: r.caption || "",
+          thumbUrl: thumbArg
+        };
+
+        let cardByteSize = 0;
+        let cardStatus = "ok";
+        let cardError = null;
+
+        try {
+          const buf = await generateVideoShareCardBuffer(r.id, queryParams, baseUrl);
+          cardByteSize = buf ? buf.length : 0;
+          if (cardByteSize < 1000) {
+            cardStatus = "degraded";
+          }
+        } catch (e: any) {
+          cardStatus = "failed";
+          cardError = e?.message || String(e);
+        }
+
+        results.push({
+          id: r.id,
+          placeName,
+          authorName,
+          rating,
+          ogUrl: `https://yoouz.com/?reviewId=${r.id}`,
+          ogImageUrl: `https://yoouz.com/api/og-image/video/${r.id}.png`,
+          cardByteSize,
+          cardStatus,
+          cardError,
+          hasCdnThumb: !!thumbArg
+        });
+      }
+
+      const allOk = results.every(r => r.cardStatus === "ok");
+
+      return res.json({
+        success: true,
+        subsystem: 43,
+        name: "Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
+        status: allOk ? "ok" : "degraded",
+        totalVerified: results.length,
+        verifiedAt: new Date().toISOString(),
+        reviews: results
+      });
+    } catch (e: any) {
+      return res.status(500).json({ success: false, error: e?.message || String(e) });
+    }
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     console.log("Yoouz Server: Starting in DEVELOPMENT mode (Vite middleware enabled)");
     const vite = await createViteServer({
@@ -20315,16 +20417,6 @@ function injectOpenGraphTags(html: string, meta: any) {
       }
     });
   }
-
-  // Endpoint to re-run previous searches database synchronization on demand
-  app.all("/api/admin/seed-searches", async (req, res) => {
-    try {
-      await seedKnownSearchesToBunnyDb();
-      res.json({ success: true, message: "Previous searches and brand metadata synchronized to Bunny Cloud Database." });
-    } catch (e: any) {
-      res.status(500).json({ success: false, error: e?.message || String(e) });
-    }
-  });
 
   async function syncInitialVideoInteractionsToBunnyDb() {
     const bunnyDb = getBunnyDb();

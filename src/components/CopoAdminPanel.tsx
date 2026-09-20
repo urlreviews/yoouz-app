@@ -372,6 +372,29 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
+  const [isVerifyingShareCards, setIsVerifyingShareCards] = useState(false);
+  const handleVerifyShareCards = async () => {
+    setIsVerifyingShareCards(true);
+    try {
+      const res = await fetch("/api/admin/verify-social-share-cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(`Social share cards & metadata verified: ${data.totalVerified} reviews tested. Status: ${data.status.toUpperCase()}`);
+        fetchHealthDiagnostic();
+        fetchLiveStats();
+      } else {
+        showToast("Failed to verify social share cards.");
+      }
+    } catch (e) {
+      showToast("Error verifying social share cards.");
+    } finally {
+      setIsVerifyingShareCards(false);
+    }
+  };
+
   // Deletion Confirmations
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
   const [confirmDeletePlaceId, setConfirmDeletePlaceId] = useState<string | null>(null);
@@ -2091,6 +2114,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         >
                           <MapPin className={`w-3.5 h-3.5 ${isResyncingMaps ? "animate-bounce text-amber-400" : "text-emerald-400"}`} />
                           <span>{isResyncingMaps ? "Verifying Google Maps Previews for All Places..." : "Re-Verify Google Maps Previews for All Businesses"}</span>
+                        </button>
+                      )}
+
+                      {(key === "video_review_metadata_sharing_social_preview_guard" || key === "user_profile_location_canonicalization_guard") && (
+                        <button
+                          type="button"
+                          onClick={handleVerifyShareCards}
+                          disabled={isVerifyingShareCards}
+                          className="w-full mt-2 py-2 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
+                        >
+                          <Share2 className={`w-3.5 h-3.5 ${isVerifyingShareCards ? "animate-spin text-amber-400" : "text-cyan-400"}`} />
+                          <span>{isVerifyingShareCards ? "Auditing & Verifying Social Share Cards..." : "Test & Verify Social Share Cards for All Reviews"}</span>
                         </button>
                       )}
                     </div>
