@@ -279,40 +279,50 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         </a>
       </div>
 
-      {/* 2-Column Side-by-Side Video Cards Grid */}
+      {/* Dynamic Auto-Centering Responsive Video Grid */}
       {matchingVideos.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-12 text-center text-zinc-500 space-y-2">
           <AlertCircle className="w-8 h-8 text-zinc-600" />
           <p className="text-xs font-medium text-zinc-400">No video reviews available yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 flex-1 pb-3">
-          {matchingVideos.map((v, idx) => (
-            <div
-              key={v.id}
-              onClick={() => setActiveVideoIndex(idx)}
-              className="relative rounded-2xl overflow-hidden aspect-9/14 bg-zinc-900 group border border-zinc-800/80 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
-            >
-              <img
-                src={v.thumbnailUrl}
-                alt={v.dishOrItem || 'Review'}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-white text-[10px] font-extrabold flex items-center gap-0.5 z-10 border border-white/10">
-                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                <span>{v.rating || 5}</span>
+        <div className="flex-1 flex items-start justify-center pb-3 w-full overflow-hidden">
+          <div
+            className={`w-full transition-all duration-300 ${
+              matchingVideos.length === 1
+                ? "max-w-[220px] mx-auto"
+                : matchingVideos.length === 2
+                ? "grid grid-cols-2 gap-3 max-w-[460px] mx-auto"
+                : "grid grid-cols-2 xs:grid-cols-2 min-[540px]:grid-cols-3 min-[768px]:grid-cols-4 min-[1024px]:grid-cols-5 gap-2.5 w-full mx-auto"
+            }`}
+          >
+            {matchingVideos.map((v, idx) => (
+              <div
+                key={v.id}
+                onClick={() => setActiveVideoIndex(idx)}
+                className="relative rounded-2xl overflow-hidden aspect-[9/14] max-h-[360px] bg-zinc-900 group border border-zinc-800/80 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
+              >
+                <img
+                  src={v.thumbnailUrl}
+                  alt={v.dishOrItem || 'Review'}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-white text-[10px] font-extrabold flex items-center gap-0.5 z-10 border border-white/10 shadow-md">
+                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                  <span>{v.rating || 5}</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-2.5 text-white">
+                  <span className="text-[11px] font-bold leading-snug line-clamp-1 drop-shadow-md">
+                    {v.dishOrItem && v.dishOrItem !== cleanSlug ? v.dishOrItem : (v.author?.name || 'Verified Reviewer')}
+                  </span>
+                </div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                </div>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-2.5 text-white">
-                <span className="text-[11px] font-bold leading-snug line-clamp-1 drop-shadow-md">
-                  {v.dishOrItem && v.dishOrItem !== cleanSlug ? v.dishOrItem : (v.author?.name || 'Verified Reviewer')}
-                </span>
-              </div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                <Play className="w-4 h-4 fill-current ml-0.5" />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
