@@ -714,9 +714,16 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     const candidateName = (video.placeName && !isGenericPlaceName(video.placeName)) ? video.placeName : (domain ? domain : existing.name);
     const updatedName = formatBusinessName(candidateName) || formatBusinessName(existing.name) || formatBusinessName(domain) || "Verified Business";
 
+    const isYoouz = existing.id === 'yoouz.com' || existing.brandDomain === 'yoouz.com' || existing.name?.toLowerCase() === 'yoouz' || domain === 'yoouz.com';
+
     return {
       ...existing,
       name: updatedName,
+      address: isYoouz ? "" : existing.address,
+      city: isYoouz ? "" : existing.city,
+      country: isYoouz ? "" : existing.country,
+      lat: isYoouz ? 0 : existing.lat,
+      lng: isYoouz ? 0 : existing.lng,
       totalReviews: Math.max(existing.totalReviews || 1, (existing.totalReviews || 0) + 1),
       rating: video.rating || existing.rating || 5.0,
       avatarUrl: logo,
@@ -731,14 +738,16 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
   }
 
   const initialDescription = video.placeDescription || "";
+  const isYoouz = cleanId === 'yoouz.com' || cleanId.includes('yoouz') || domain === 'yoouz.com' || (video.placeName && video.placeName.toLowerCase() === 'yoouz');
 
   return {
     id: cleanId,
     name: formatBusinessName(video.placeName || domain) || "Verified Business",
     category: video.placeCategory || "Establishment",
     categoryType: "all",
-    address: video.placeAddress || "",
-    city: video.placeCity || "",
+    address: isYoouz ? "" : (video.placeAddress || ""),
+    city: isYoouz ? "" : (video.placeCity || ""),
+    country: isYoouz ? "" : "",
     lat: 0,
     lng: 0,
     rating: video.rating || 5.0,

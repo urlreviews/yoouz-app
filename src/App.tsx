@@ -3012,6 +3012,18 @@ export function App() {
           photos: found.photos && found.photos.length > 0 ? found.photos : (banner ? [banner] : [])
         };
       }
+
+      const isYoouz = found.id === 'yoouz.com' || (found.name && found.name.toLowerCase() === 'yoouz') || found.brandDomain === 'yoouz.com' || (found.website && found.website.includes('yoouz.com'));
+      if (isYoouz) {
+        found = {
+          ...found,
+          address: '',
+          city: '',
+          country: '',
+          lat: 0,
+          lng: 0,
+        };
+      }
     }
 
     return found;
@@ -3027,6 +3039,14 @@ export function App() {
       .then(res => res.ok ? res.json() : null)
       .then(fetchedPlace => {
         if (fetchedPlace && fetchedPlace.id) {
+          const isYoouz = fetchedPlace.id === 'yoouz.com' || (fetchedPlace.name && fetchedPlace.name.toLowerCase() === 'yoouz') || fetchedPlace.brandDomain === 'yoouz.com' || (fetchedPlace.website && fetchedPlace.website.includes('yoouz.com'));
+          if (isYoouz) {
+            fetchedPlace.address = '';
+            fetchedPlace.city = '';
+            fetchedPlace.country = '';
+            fetchedPlace.lat = 0;
+            fetchedPlace.lng = 0;
+          }
           setPlaces(prev => {
             const exists = prev.some(p => p.id === fetchedPlace.id);
             if (exists) {

@@ -4142,6 +4142,23 @@ app.get('/api/nosql/:collection', async (req, res) => {
                   return;
                 }
               }
+              if (colName === 'places') {
+                const isYoouz = String(row.id) === 'yoouz.com' || parsedData.brandDomain === 'yoouz.com' || parsedData.name?.toLowerCase() === 'yoouz' || String(row.id).includes('yoouz');
+                if (isYoouz) {
+                  parsedData.address = "";
+                  parsedData.city = "";
+                  parsedData.country = "";
+                  parsedData.lat = 0;
+                  parsedData.lng = 0;
+                }
+              }
+              if (colName === 'videoReviews') {
+                const isYoouzRev = String(row.placeId) === 'yoouz.com' || String(parsedData.placeId) === 'yoouz.com' || String(parsedData.placeName).toLowerCase() === 'yoouz';
+                if (isYoouzRev) {
+                  parsedData.placeAddress = "";
+                  parsedData.placeCity = "";
+                }
+              }
               itemMap.set(String(row.id), { id: String(row.id), ...parsedData });
             }
           });
@@ -4654,6 +4671,21 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             }
             if (Array.isArray(parsedData.photos)) {
               parsedData.photos = parsedData.photos.map((p: string) => (p.includes('yoouz.com/og-banner.png') || p.includes('1789810172562')) ? "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg" : p).filter((p: string) => !p.includes('unsplash.com') && !p.includes('placeholder') && !p.includes('mock'));
+            }
+            const isYoouz = row.id === 'yoouz.com' || row.id === 'yoouz' || parsedData.brandDomain === 'yoouz.com' || parsedData.name?.toLowerCase() === 'yoouz' || String(row.id).includes('yoouz');
+            if (isYoouz) {
+              parsedData.address = "";
+              parsedData.city = "";
+              parsedData.country = "";
+              parsedData.lat = 0;
+              parsedData.lng = 0;
+            }
+          }
+          if (colName === 'videoReviews') {
+            const isYoouzRev = String(row.placeId) === 'yoouz.com' || String(parsedData.placeId) === 'yoouz.com' || String(parsedData.placeName).toLowerCase() === 'yoouz';
+            if (isYoouzRev) {
+              parsedData.placeAddress = "";
+              parsedData.placeCity = "";
             }
           }
           
@@ -9037,12 +9069,28 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       // Guarantee that online web platforms without physical addresses (like yoouz.com) have clean empty location fields in BunnyDB
       try {
-        await bunnyDb.execute({
-          sql: `UPDATE places SET address = '', city = '', country = '', latitude = 0, longitude = 0 WHERE id LIKE '%yoouz%' OR brandDomain = 'yoouz.com'`,
+        const pRs = await bunnyDb.execute({
+          sql: `SELECT id, data FROM places WHERE id LIKE '%yoouz%' OR id = 'yoouz.com'`,
           args: []
         });
+        if (pRs && pRs.rows) {
+          for (const pRow of pRs.rows as any[]) {
+            try {
+              const parsed = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {});
+              parsed.address = "";
+              parsed.city = "";
+              parsed.country = "";
+              parsed.lat = 0;
+              parsed.lng = 0;
+              await bunnyDb.execute({
+                sql: `UPDATE places SET address = '', city = '', country = '', latitude = 0, longitude = 0, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [JSON.stringify(parsed), String(pRow.id)]
+              });
+            } catch (e) {}
+          }
+        }
         const yReviews = await bunnyDb.execute({
-          sql: `SELECT id, data FROM videoReviews WHERE placeId LIKE '%yoouz%'`,
+          sql: `SELECT id, data FROM videoReviews WHERE placeId LIKE '%yoouz%' OR placeName = 'Yoouz'`,
           args: []
         });
         if (yReviews && yReviews.rows) {

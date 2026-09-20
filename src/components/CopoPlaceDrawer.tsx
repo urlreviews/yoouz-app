@@ -199,7 +199,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   );
   const displayAddress = (isAddressUrl || !place.address || place.address.trim() === "") ? null : place.address;
 
-  const hasPhysicalLocation = Boolean(
+  const isYoouz = place.id === 'yoouz.com' || (place.name && place.name.toLowerCase() === 'yoouz') || place.brandDomain === 'yoouz.com' || (place.website && place.website.includes('yoouz.com'));
+
+  const hasPhysicalLocation = !isYoouz && Boolean(
     (displayAddress && displayAddress.trim() !== "") ||
     (place.city && 
      place.city.trim() !== "" && 
@@ -815,6 +817,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           )}
           
           {(() => {
+            if (isYoouz) return null;
             const invalidLocations = ["online", "global", "worldwide", "global headquarters", "n/a"];
             const validCity = place.city && !invalidLocations.includes(place.city.toLowerCase().trim()) ? place.city.trim() : "";
             const validCountry = place.country && !invalidLocations.includes(place.country.toLowerCase().trim()) ? place.country.trim() : "";
