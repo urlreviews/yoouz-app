@@ -323,7 +323,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   };
 
   // State to hold live fetched user profile for this creator (initialized synchronously to prevent location blinking)
-  const [liveUserProfile, setLiveUserProfile] = useState<{ avatar?: string; banner?: string; bio?: string; name?: string; location?: string } | null>(() => {
+  const [liveUserProfile, setLiveUserProfile] = useState<{ avatar?: string; banner?: string; bio?: string; name?: string; location?: string; city?: string; state?: string; country?: string } | null>(() => {
     return resolveTargetProfile(author, isOwner, currentUser, allUsers, allVideos);
   });
 
@@ -356,8 +356,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         if (matched && isMounted) {
           setLiveUserProfile((prev) => {
             const next = { ...(prev || {}), ...matched };
-            // Never downgrade or flap location to a shorter or incomplete string
-            if (prev?.location && prev.location.length > (matched.location?.length || 0)) {
+            // Never downgrade or flap location to an incomplete prefix string for the same location
+            if (prev?.location && (!matched.location || (matched.location && prev.location.toLowerCase().startsWith(matched.location.toLowerCase()) && prev.location.length > matched.location.length))) {
               next.location = prev.location;
             }
             return next;
@@ -376,7 +376,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       if (pName === authorIdentifier || pHandle === authorIdentifier || pEmail === authorIdentifier) {
         setLiveUserProfile((prev) => {
           const next = { ...(prev || {}), ...p };
-          if (prev?.location && prev.location.length > (p.location?.length || 0)) {
+          if (prev?.location && (!p.location || (p.location && prev.location.toLowerCase().startsWith(p.location.toLowerCase()) && prev.location.length > p.location.length))) {
             next.location = prev.location;
           }
           return next;

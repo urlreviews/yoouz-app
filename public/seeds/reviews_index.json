@@ -21,13 +21,13 @@
       "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
       "isLocalGuide": true,
       "localGuideLevel": 7,
-      "videoReviewCount": 4,
+      "videoReviewCount": 1,
       "photosCount": 0,
       "isVerified": true,
       "bio": "Verified Yoouz Creator in Miami Beach, Florida, United States",
-      "location": "Miami Beach, Florida, United States",
-      "city": "Miami Beach",
-      "country": "United States"
+      "location": "London, City of London, United Kingdom",
+      "city": "London",
+      "country": "United Kingdom"
     },
     "rating": 5,
     "durationSeconds": 8,
@@ -47,8 +47,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 8,
-    "viewsCount": 8,
+    "views": 62,
+    "viewsCount": 62,
     "sharesCount": 0,
     "tags": [
       "Video Reviews Platform"
@@ -83,14 +83,17 @@
     "placeBannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
     "placeDescription": "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.",
     "author": {
-      "name": "Steven Akan",
+      "name": "",
       "handle": "@stevenakan",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "avatar": "",
       "isLocalGuide": true,
       "localGuideLevel": 7,
       "videoReviewCount": 2,
       "photosCount": 0,
-      "isVerified": true
+      "isVerified": true,
+      "location": "Miami Beach, Florida, United States",
+      "city": "Miami Beach",
+      "country": "United States"
     },
     "rating": 5,
     "durationSeconds": 5,
@@ -223,8 +226,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 166,
-    "viewsCount": 166,
+    "views": 181,
+    "viewsCount": 181,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -247,8 +250,7 @@
     "placeName": "Yoouz",
     "reviewsCount": 2,
     "reviewCount": 2,
-    "totalReviews": 2,
-    "authorName": "Steven Akan"
+    "totalReviews": 2
   },
   {
     "id": "rev-1789421411968-6xx3t",
@@ -275,9 +277,9 @@
       "photosCount": 0,
       "isVerified": true,
       "bio": "Verified Yoouz Creator in Miami Beach, Florida, United States",
-      "location": "Miami Beach, Florida, United States",
-      "city": "Miami Beach",
-      "country": "United States"
+      "location": "London, City of London, United Kingdom",
+      "city": "London",
+      "country": "United Kingdom"
     },
     "rating": 5,
     "durationSeconds": 9,
@@ -330,8 +332,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 133,
-    "viewsCount": 133,
+    "views": 139,
+    "viewsCount": 139,
     "sharesCount": 9,
     "tags": [
       "Website"
@@ -377,9 +379,9 @@
       "photosCount": 0,
       "isVerified": true,
       "bio": "Verified Yoouz Creator in Miami Beach, Florida, United States",
-      "location": "Miami Beach, Florida, United States",
-      "city": "Miami Beach",
-      "country": "United States"
+      "location": "London, City of London, United Kingdom",
+      "city": "London",
+      "country": "United Kingdom"
     },
     "rating": 5,
     "durationSeconds": 10,
@@ -399,8 +401,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 50,
-    "viewsCount": 50,
+    "views": 52,
+    "viewsCount": 52,
     "sharesCount": 5,
     "tags": [
       "Website"
@@ -439,7 +441,7 @@
     "author": {
       "name": "Steven Akan",
       "handle": "@stevenakan",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2228%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2228%22%20fill%3D%22%23E53935%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
       "isLocalGuide": true,
       "localGuideLevel": 7,
       "videoReviewCount": 1,
@@ -515,9 +517,9 @@
       "photosCount": 0,
       "isVerified": true,
       "bio": "Verified Yoouz Creator in Miami Beach, Florida, United States",
-      "location": "Miami Beach, Florida, United States",
-      "city": "Miami Beach",
-      "country": "United States"
+      "location": "London, City of London, United Kingdom",
+      "city": "London",
+      "country": "United Kingdom"
     },
     "rating": 5,
     "durationSeconds": 9,
