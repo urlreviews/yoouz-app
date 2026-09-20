@@ -4094,14 +4094,18 @@ app.get('/api/nosql/:collection', async (req, res) => {
           rs = await bunnyDb.execute({
             sql: colName === 'notifications' 
               ? `SELECT id, recipientEmail, type, text, isRead, data, updatedAt FROM notifications ORDER BY updatedAt DESC`
-              : `SELECT id, data FROM ${colName} ORDER BY updatedAt DESC`,
+              : (colName === 'comments'
+                  ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments ORDER BY updatedAt DESC`
+                  : `SELECT id, data FROM ${colName} ORDER BY updatedAt DESC`),
             args: []
           });
         } catch (e) {
           rs = await bunnyDb.execute({
             sql: colName === 'notifications'
               ? `SELECT id, recipientEmail, type, text, isRead, data, updatedAt FROM notifications`
-              : `SELECT id, data FROM ${colName}`,
+              : (colName === 'comments'
+                  ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments`
+                  : `SELECT id, data FROM ${colName}`),
             args: []
           });
         }
@@ -4157,6 +4161,11 @@ app.get('/api/nosql/:collection', async (req, res) => {
                 if (isYoouzRev) {
                   parsedData.placeAddress = "";
                   parsedData.placeCity = "";
+                }
+              }
+              if (colName === 'comments') {
+                if (!parsedData.videoId && row.videoId) {
+                  parsedData.videoId = String(row.videoId);
                 }
               }
               itemMap.set(String(row.id), { id: String(row.id), ...parsedData });
@@ -4645,7 +4654,9 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
     if (bunnyDb) {
       try {
         const rs = await bunnyDb.execute({
-          sql: `SELECT id, data FROM ${colName} WHERE id = ? LIMIT 1`,
+          sql: colName === 'comments'
+            ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments WHERE id = ? LIMIT 1`
+            : `SELECT id, data FROM ${colName} WHERE id = ? LIMIT 1`,
           args: [id]
         });
         if (rs.rows.length > 0) {
@@ -4686,6 +4697,11 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             if (isYoouzRev) {
               parsedData.placeAddress = "";
               parsedData.placeCity = "";
+            }
+          }
+          if (colName === 'comments') {
+            if (!parsedData.videoId && row.videoId) {
+              parsedData.videoId = String(row.videoId);
             }
           }
           
@@ -7557,10 +7573,17 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       if (!filePath || !fs.existsSync(filePath)) {
         if (!isImageRequest && base && typeof base === "string" && base.startsWith("rev-")) {
-          const bunnyZone = process.env.BUNNY_PULL_ZONE_URL;
+          const bunnyZone = process.env.BUNNY_PULL_ZONE_URL || `https://${process.env.BUNNY_STORAGE_ZONE_NAME || "rev1"}.b-cdn.net`;
           if (bunnyZone) {
             const pullZoneDomain = bunnyZone.replace(/\/$/, '');
             return res.redirect(302, `${pullZoneDomain}/videos/${base}.mp4`);
+          }
+        }
+        if (isImageRequest && base && typeof base === "string" && base.startsWith("rev-")) {
+          const bunnyZone = process.env.BUNNY_PULL_ZONE_URL || `https://${process.env.BUNNY_STORAGE_ZONE_NAME || "rev1"}.b-cdn.net`;
+          if (bunnyZone) {
+            const pullZoneDomain = bunnyZone.replace(/\/$/, '');
+            return res.redirect(302, `${pullZoneDomain}/videos/${base}.jpg`);
           }
         }
         // Fallback to high-performance default video asset immediately (0ms wait)
@@ -7824,9 +7847,20 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         console.warn("Thumbnail generation notice:", thumbErr);
       }
 
-      let publicUrl = `/api/videos/stream/${cleanFileName}`;
+      if (fs.existsSync(mp4FilePath)) {
+        finalVideoPath = mp4FilePath;
+        cleanFileName = mp4FileName;
+        mimeType = "video/mp4";
+      }
+
+      let targetVideoFileName = cleanFileName;
+      if (finalVideoPath.endsWith(".mp4") || fs.existsSync(mp4FilePath)) {
+        targetVideoFileName = mp4FileName;
+      }
+
+      let publicUrl = `/api/videos/stream/${targetVideoFileName}`;
       let thumbnailUrl = "";
-      console.log(`✅ [Server] Stored video ${cleanFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
+      console.log(`✅ [Server] Stored video ${targetVideoFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
 
       // 🐰 Bunny CDN Integration
       const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
@@ -7841,7 +7875,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           const pullZoneDomain = bunnyPullZoneUrl.replace(/\/$/, '');
 
           // 1. Upload Video MP4
-          const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${cleanFileName}`;
+          const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${targetVideoFileName}`;
           const fileBuffer = fs.readFileSync(finalVideoPath);
           const response = await fetch(videoBunnyUrl, {
             method: 'PUT',
@@ -7853,7 +7887,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           });
 
           if (response.ok) {
-            publicUrl = `${pullZoneDomain}/videos/${cleanFileName}`;
+            publicUrl = `${pullZoneDomain}/videos/${targetVideoFileName}`;
             console.log("🐰 [Server] Successfully uploaded video to Bunny CDN:", publicUrl);
           } else {
             console.error("🐰 [Server] Failed to upload video to Bunny CDN:", await response.text());
@@ -9991,7 +10025,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             comment.authorName || "",
             comment.authorAvatar || "",
             comment.text || "",
-            JSON.stringify(comment)
+            JSON.stringify({ ...comment, videoId })
           ]
         });
 
@@ -10526,9 +10560,23 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       const bunnyDb = getBunnyDb();
       let updatedLikesCount = 0;
+      let effectiveIsLiked = isLiked;
+
       if (bunnyDb) {
         const likeId = `like_${userId || 'anon'}_${videoId}`;
-        if (isLiked) {
+        if (typeof effectiveIsLiked !== "boolean") {
+          try {
+            const existing = await bunnyDb.execute({
+              sql: "SELECT id FROM likes WHERE (userId = ? AND videoId = ?) OR id = ? LIMIT 1",
+              args: [userId || "", videoId, likeId]
+            });
+            effectiveIsLiked = !(existing && existing.rows && existing.rows.length > 0);
+          } catch (e) {
+            effectiveIsLiked = true;
+          }
+        }
+
+        if (effectiveIsLiked) {
           await bunnyDb.execute({
             sql: "INSERT OR REPLACE INTO likes (id, userId, videoId, data, updatedAt) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
             args: [likeId, userId || "", videoId, JSON.stringify({ videoId, userId, isLiked: true })]
@@ -10545,7 +10593,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           args: [videoId]
         });
         const dbLikes = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
-        updatedLikesCount = isLiked ? Math.max(1, dbLikes) : Math.max(0, dbLikes);
+        updatedLikesCount = effectiveIsLiked ? Math.max(1, dbLikes) : Math.max(0, dbLikes);
 
         const vRow = await bunnyDb.execute({
           sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
@@ -10623,13 +10671,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       broadcastSseEvent({
         type: "video_liked",
         videoId,
-        isLiked: Boolean(isLiked),
+        isLiked: Boolean(effectiveIsLiked),
         likesCount: updatedLikesCount,
         userId: userId || ""
       });
 
       // Send backend notification if liked
-      if (isLiked) {
+      if (effectiveIsLiked) {
         try {
           let video: any = null;
           if (bunnyDb) {
@@ -10696,7 +10744,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         }
       }
 
-      return res.json({ success: true, likesCount: updatedLikesCount, isLiked: Boolean(isLiked) });
+      return res.json({ success: true, likesCount: updatedLikesCount, isLiked: Boolean(effectiveIsLiked) });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
