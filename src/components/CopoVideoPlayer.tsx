@@ -1374,13 +1374,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
       <div className={`w-full h-full min-h-full max-h-full flex items-center justify-center relative ${
-        isEmbed ? "w-full h-full p-0" : "md:min-h-0 md:max-h-none md:h-auto md:w-auto gap-4 md:max-h-[95vh] md:p-3"
+        isEmbed ? "w-full h-full p-2 sm:p-3 bg-zinc-950" : "md:min-h-0 md:max-h-none md:h-auto md:w-auto gap-4 md:max-h-[95vh] md:p-3"
       }`}>
         {/* Scroll Snap Feed Container */}
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`w-full h-full min-h-full max-h-full overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center ${
+          className={`w-full h-full min-h-full max-h-full overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center justify-center ${
             isEmbed ? "w-full h-full" : "md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:gap-4"
           }`}
           style={{
