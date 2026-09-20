@@ -1,7 +1,7 @@
 import { forceMute } from "./hooks/useGlobalMute";
 import { useFeedPagination } from "./hooks/useFeedPagination";
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, Club, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
+import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
 import { CopoSidebar } from "./components/CopoSidebar";
 import { SEOTags } from "./components/SEOTags";
@@ -23,7 +23,6 @@ import { CopoMoreView } from "./components/CopoMoreView";
 import { CopoBookmarksView } from "./components/CopoBookmarksView";
 import { CopoNotificationsView } from "./components/CopoNotificationsView";
 import { CopoMessagesView } from "./components/CopoMessagesView";
-import { CopoClubsView } from "./components/CopoClubsView";
 import { CopoFollowingView } from "./components/CopoFollowingView";
 import { CopoDiscoverView } from "./components/CopoDiscoverView";
 import { CopoMobileNavDrawer } from "./components/CopoMobileNavDrawer";
@@ -153,7 +152,6 @@ export function App() {
   }, [places]);
 
   const { videos, setVideos, isLoading: isLoadingVideos, loadMore: loadMoreVideos, hasMore } = useFeedPagination();
-  const [clubs, setClubs] = useState<Club[]>([]);
   const [notifications, setNotifications] = useState<CopoNotification[]>([]);
   const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>(() => {
     try {
@@ -196,14 +194,13 @@ export function App() {
       if (pathname === "/messages" || pathname.startsWith("/messages/")) return "messages";
       if (pathname === "/bookmarks" || pathname === "/saved") return "bookmarks";
       if (pathname === "/record_review") return "record_review";
-      if (pathname === "/clubs") return "clubs";
       if (pathname === "/profile" || pathname === "/me") return "profile";
       if (pathname.startsWith("/profile/") || pathname.startsWith("/@")) return "home"; // Drawer opens on top of home
       
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
       const sectionParam = params.get("section") || (hash.startsWith("#/") && !hash.startsWith("#/place/") && !hash.startsWith("#/creator/") && !hash.startsWith("#/video/") ? hash.replace("#/", "") : null);
-      if (sectionParam && ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "business", "search", "record_review", "following", "clubs"].includes(sectionParam)) {
+      if (sectionParam && ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "business", "search", "record_review", "following"].includes(sectionParam)) {
         return sectionParam as NavSection;
       }
     } catch (e) {}
@@ -533,7 +530,6 @@ export function App() {
           if (pathname === "/notifications") sectionParam = "notifications";
           if (pathname === "/messages" || pathname.startsWith("/messages/")) sectionParam = "messages";
           if (pathname === "/bookmarks" || pathname === "/saved") sectionParam = "bookmarks";
-          if (pathname === "/clubs") sectionParam = "clubs";
           if (pathname === "/record_review") sectionParam = "record_review";
           if (pathname === "/profile" || pathname === "/me") sectionParam = "profile";
         }
@@ -684,7 +680,7 @@ export function App() {
           setSelectedAuthorForDrawer(null);
           if (
             sectionParam &&
-            ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "search", "record_review", "following", "clubs"].includes(sectionParam)
+            ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "search", "record_review", "following"].includes(sectionParam)
           ) {
             setActiveSection(sectionParam as NavSection);
           }
@@ -2895,12 +2891,6 @@ export function App() {
   // Sync preferences to LocalStorage
   useEffect(() => {
     try {
-      localStorage.setItem("copo_clubs", JSON.stringify(clubs));
-    } catch (e) { console.warn(e); }
-  }, [clubs]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem("copo_notifications", JSON.stringify(notifications));
     } catch (e) { console.warn(e); }
   }, [notifications]);
@@ -3206,10 +3196,6 @@ export function App() {
     if (activeSubTab === "following") {
       const followed = visibleVideos.filter((v) => v.author.isFollowed || v.feedCategory === "following");
       return followed.length > 0 ? followed : (visibleVideos.length > 0 ? visibleVideos : videos);
-    }
-    if (activeSubTab === "clubs") {
-      const clubVids = visibleVideos.filter((v) => v.clubName || v.feedCategory === "clubs");
-      return clubVids.length > 0 ? clubVids : (visibleVideos.length > 0 ? visibleVideos : videos);
     }
 
     // Emergency Fallback: If we have ANY videos but they are ALL hidden or filtered, show the raw list
@@ -3831,6 +3817,96 @@ export function App() {
             email: currentUser.email
           },
           text: `saved your video review of ${targetVid.placeName || "a place"}`,
+          videoId: targetVid.id,
+          videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
+          placeName: targetVid.placeName
+        }).catch(() => {});
+      }
+    }
+  };
+
+  // Handle Reposts - fully synced with local storage and BunnyDB
+  const handleToggleRepost = async (videoId: string) => {
+    if (!currentUser) {
+      setAuthIntent("repost");
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    let nextReposted = false;
+    let nextCount = 0;
+
+    setVideos((prev) =>
+      prev.map((v) => {
+        if (v.id === videoId) {
+          nextReposted = !(v as any).isReposted;
+          const currentCount = typeof (v as any).repostsCount === 'number' && !isNaN((v as any).repostsCount) ? (v as any).repostsCount : 0;
+          nextCount = nextReposted ? Math.max(1, currentCount + 1) : Math.max(0, currentCount - 1);
+          return {
+            ...v,
+            isReposted: nextReposted,
+            repostsCount: nextCount
+          };
+        }
+        return v;
+      })
+    );
+
+    // Persist to user's reposted list in LocalStorage
+    try {
+      const repostedStr = localStorage.getItem("copo_reposted_video_ids") || "[]";
+      let repostedIds: string[] = [];
+      try { repostedIds = JSON.parse(repostedStr); } catch (e) {}
+      if (nextReposted) {
+        if (!repostedIds.includes(videoId)) repostedIds.push(videoId);
+      } else {
+        repostedIds = repostedIds.filter((id) => id !== videoId);
+      }
+      localStorage.setItem("copo_reposted_video_ids", JSON.stringify(repostedIds));
+    } catch (e) {}
+
+    // Persist to Server and BunnyDB database
+    try {
+      const effectiveUserId = currentUser?.email || auth.currentUser?.uid || "community_user";
+      fetch("/api/interactions/repost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId,
+          userId: effectiveUserId,
+          isReposted: nextReposted
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.repostsCount === 'number') {
+          const authCount = nextReposted ? Math.max(1, data.repostsCount) : data.repostsCount;
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, repostsCount: authCount, isReposted: nextReposted } : v));
+        }
+      })
+      .catch(() => {});
+    } catch (e) {}
+
+    // Send social activity notification to video author for repost
+    if (nextReposted && currentUser) {
+      const targetVid =
+        videos.find((v) => v.id === videoId) ||
+        videosRef.current.find((v) => v.id === videoId) ||
+        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
+      if (targetVid) {
+        const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVid);
+
+        sendSocialNotification({
+          recipientEmail,
+          recipientId,
+          recipientHandle,
+          type: "repost",
+          user: {
+            name: currentUser.name,
+            avatar: currentUser.avatar,
+            email: currentUser.email
+          },
+          text: `reposted your video review of ${targetVid.placeName || "a place"}`,
           videoId: targetVid.id,
           videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
           placeName: targetVid.placeName
@@ -5061,21 +5137,6 @@ export function App() {
     });
   };
 
-  // Handle Club Join
-  const handleToggleJoinClub = (clubId: string) => {
-    setClubs((prev) =>
-      prev.map((c) =>
-        c.id === clubId
-          ? {
-              ...c,
-              isJoined: !c.isJoined,
-              membersCount: c.isJoined ? c.membersCount - 1 : c.membersCount + 1
-            }
-          : c
-      )
-    );
-  };
-
   const bookmarkedVideos = useMemo(() => {
     return videos.filter((v) => v.isBookmarked);
   }, [videos]);
@@ -5732,13 +5793,13 @@ export function App() {
 
       {/* 2. Main Stage Content Switcher */}
       <div className="copo-has-bottom-nav flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950">
-        {/* If in Feed View (Home, Clubs) or Place / Creator drawer views: Display center video player */}
-        {(isPlaceView || isCreatorView || activeSection === "home" || activeSection === "clubs") && (
+        {/* If in Feed View (Home) or Place / Creator drawer views: Display center video player */}
+        {(isPlaceView || isCreatorView || activeSection === "home") && (
             <CopoVideoPlayer
               isPaused={Boolean(
                 isCreateModalOpen || 
                 isAuthModalOpen || 
-                (activeSection !== "home" && activeSection !== "clubs" && !isPlaceView && !isCreatorView) ||
+                (activeSection !== "home" && !isPlaceView && !isCreatorView) ||
                 (typeof window !== 'undefined' && window.innerWidth < 768 && (isPlaceView || isCreatorView))
               )}
               contextKey={currentFeedContextKey}
@@ -5780,6 +5841,7 @@ export function App() {
               onToggleLike={handleToggleLike}
               onToggleBookmark={handleToggleBookmark}
               onToggleFollow={handleToggleFollow}
+              onToggleRepost={handleToggleRepost}
               onGoBack={
                 embedTargetId
                   ? () => {
@@ -5968,7 +6030,6 @@ export function App() {
                 videos={videos}
                 places={places}
                 allUsers={allRegisteredUsers}
-                clubs={clubs}
                 onDeleteUser={handleAdminDeleteUser}
                 onUpdateUser={handleAdminUpdateUser}
                 onPurgeAllUsers={() => {

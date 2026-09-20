@@ -21,6 +21,7 @@ export type AuthIntent =
   | 'profile' 
   | 'comment'
   | 'like'
+  | 'repost'
   | 'claim';
 
 export interface CopoGoogleAuthModalProps {

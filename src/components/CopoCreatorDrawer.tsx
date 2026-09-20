@@ -22,7 +22,9 @@ import {
   BookmarkCheck,
   Bell,
   Building2,
-  ExternalLink
+  ExternalLink,
+  Flag,
+  ShieldAlert
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString } from "../utils/placeUtils";
@@ -734,74 +736,136 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
           )}
 
-          {/* Top Right Action Group - Only for Profile Owner Settings */}
-          {isOwner && (
-            <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
-              <div className="relative" ref={settingsMenuRef}>
-                <button
-                  id="btn-creator-profile-settings"
-                  onClick={() => setIsSettingsMenuOpen((prev) => !prev)}
-                  className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
-                  title={t("profile.accountSettings", "Account & Settings")}
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
+          {/* Top Right Action Group - Settings menu for Owner & Visitor Actions for Guests */}
+          <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
+            <button
+              id="btn-creator-share-top"
+              onClick={() => {
+                triggerHaptic("light");
+                handleShare();
+              }}
+              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+              title={t("profile.shareProfile", "Share Profile")}
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
 
-                {isSettingsMenuOpen && (
-                  <div className="absolute right-0 top-11 w-52 bg-zinc-900 rounded-2xl shadow-xl border border-zinc-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                    <button
-                      onClick={() => {
-                        setIsSettingsMenuOpen(false);
-                        setIsEditModalOpen(true);
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
-                    >
-                      <Edit3 className="w-4 h-4 text-zinc-200" />
-                      <span>{t("profile.editProfile", "Edit Profile")}</span>
-                    </button>
+            <div className="relative" ref={settingsMenuRef}>
+              <button
+                id="btn-creator-profile-settings"
+                onClick={() => setIsSettingsMenuOpen((prev) => !prev)}
+                className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+                title={isOwner ? t("profile.accountSettings", "Account & Settings") : t("profile.moreOptions", "More Options")}
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
 
-                    <button
-                      onClick={() => {
-                        setIsSettingsMenuOpen(false);
-                        handleShare();
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
-                    >
-                      <Share2 className="w-4 h-4 text-zinc-200" />
-                      <span>{t("profile.shareProfileLink", "Share Profile Link")}</span>
-                    </button>
-
-                    {onOpenNotificationSettings && (
-                      <button
-                        id="btn-creator-notification-settings"
-                        onClick={() => {
-                          setIsSettingsMenuOpen(false);
-                          onOpenNotificationSettings();
-                        }}
-                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
-                      >
-                        <Bell className="w-4 h-4 text-zinc-200" />
-                        <span>Notification Preferences</span>
-                      </button>
-                    )}
-
-                    {onSignOut && (
+              {isSettingsMenuOpen && (
+                <div className="absolute right-0 top-11 w-56 bg-zinc-900 rounded-2xl shadow-xl border border-zinc-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  {isOwner ? (
+                    <>
                       <button
                         onClick={() => {
                           setIsSettingsMenuOpen(false);
-                          onSignOut();
+                          setIsEditModalOpen(true);
                         }}
                         className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <LogOut className="w-4 h-4 text-zinc-200" />
-                        <span>{t("profile.signOut", "Sign Out")}</span>
+                        <Edit3 className="w-4 h-4 text-zinc-200" />
+                        <span>{t("profile.editProfile", "Edit Profile")}</span>
                       </button>
-                    )}
-                  </div>
-                )}
-              </div>
+
+                      <button
+                        onClick={() => {
+                          setIsSettingsMenuOpen(false);
+                          handleShare();
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <Share2 className="w-4 h-4 text-zinc-200" />
+                        <span>{t("profile.shareProfileLink", "Share Profile Link")}</span>
+                      </button>
+
+                      {onOpenNotificationSettings && (
+                        <button
+                          id="btn-creator-notification-settings"
+                          onClick={() => {
+                            setIsSettingsMenuOpen(false);
+                            onOpenNotificationSettings();
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        >
+                          <Bell className="w-4 h-4 text-zinc-200" />
+                          <span>Notification Preferences</span>
+                        </button>
+                      )}
+
+                      {onSignOut && (
+                        <button
+                          onClick={() => {
+                            setIsSettingsMenuOpen(false);
+                            onSignOut();
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4 text-zinc-200" />
+                          <span>{t("profile.signOut", "Sign Out")}</span>
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setIsSettingsMenuOpen(false);
+                          handleShare();
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <Share2 className="w-4 h-4 text-zinc-200" />
+                        <span>{t("profile.shareProfileLink", "Share Profile Link")}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setIsSettingsMenuOpen(false);
+                          handleToggleSaveCreator();
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        {isSaved ? (
+                          <>
+                            <BookmarkCheck className="w-4 h-4 text-zinc-200" />
+                            <span>{t("profile.savedReviewer", "Remove from Saved")}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Bookmark className="w-4 h-4 text-zinc-200" />
+                            <span>{t("profile.saveReviewer", "Save Reviewer")}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {onOpenReport && (
+                        <button
+                          id="btn-report-creator-menu"
+                          onClick={() => {
+                            setIsSettingsMenuOpen(false);
+                            triggerHaptic("medium");
+                            if (author) onOpenReport(author);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-red-500/10 flex items-center gap-2.5 transition-colors cursor-pointer border-t border-zinc-800/80"
+                        >
+                          <Flag className="w-4 h-4 text-red-400" />
+                          <span>{t("profile.reportReviewer", "Report or Block Reviewer")}</span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {copiedNotification && (
             <div className="absolute top-14 right-3 bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg z-40 animate-in fade-in border border-zinc-800">
@@ -1026,6 +1090,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </div>
               <span className="font-semibold text-[11px] text-zinc-200">{t("common.share", "Share")}</span>
             </button>
+
+            {!isOwner && onOpenReport && (
+              <button
+                id="btn-report-creator-action"
+                onClick={() => {
+                  triggerHaptic("medium");
+                  if (author) onOpenReport(author);
+                }}
+                className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-red-400 hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                title={t("profile.reportReviewer", "Report or Block Reviewer")}
+              >
+                <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-red-500/10 group-hover:border-red-500/40 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700 transition-colors">
+                  <Flag className="w-4 h-4 text-zinc-200 group-hover:text-red-400 transition-colors" />
+                </div>
+                <span className="font-semibold text-[11px] text-zinc-200 group-hover:text-red-400 transition-colors">{t("common.report", "Report")}</span>
+              </button>
+            )}
           </div>
 
           {/* Tab 1: OVERVIEW */}

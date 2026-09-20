@@ -43,7 +43,8 @@ import {
   ExternalLink,
   Heart,
   Copy,
-  Check
+  Check,
+  Flag
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
@@ -677,6 +678,37 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <ArrowLeft className="w-5 h-5" />
         </button>
 
+        {/* Top-Right Header Actions: Share & Report / Flag */}
+        <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
+          <button
+            onClick={() => {
+              triggerHaptic("light");
+              handleShare();
+            }}
+            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+            title={t("place.shareBusiness", "Share Business")}
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
+          {onOpenReport && (
+            <button
+              id="btn-report-business-header"
+              onClick={() => {
+                triggerHaptic("medium");
+                onOpenReport({
+                  type: "place",
+                  placeName: displayedPlaceName,
+                  placeId: place.id
+                });
+              }}
+              className="w-9 h-9 rounded-full bg-black/60 hover:bg-red-500/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+              title={t("place.reportBusiness", "Report or Flag Business")}
+            >
+              <Flag className="w-4 h-4 text-white" />
+            </button>
+          )}
+        </div>
+
         {copiedNotification && (
           <div className="absolute top-14 right-3 bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg z-40 animate-in fade-in">
             {copiedNotification}
@@ -971,6 +1003,27 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <MessageSquare className="w-5 h-5 text-white" />
                 </div>
                 <span className="font-bold text-[11px] text-white">{t("place.chat", "Chat")}</span>
+              </button>
+            )}
+
+            {onOpenReport && (
+              <button
+                id="btn-report-business-row"
+                onClick={() => {
+                  triggerHaptic("medium");
+                  onOpenReport({
+                    type: "place",
+                    placeName: displayedPlaceName,
+                    placeId: place.id
+                  });
+                }}
+                className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-red-400 hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                title={t("place.reportBusiness", "Report / Flag Business")}
+              >
+                <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:border-red-500/50 group-hover:bg-red-500/10 transition-colors">
+                  <Flag className="w-4 h-4 text-white group-hover:text-red-400 transition-colors" />
+                </div>
+                <span className="font-bold text-[11px] text-white group-hover:text-red-400 transition-colors">{t("common.report", "Report")}</span>
               </button>
             )}
           </div>
@@ -1576,6 +1629,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   )}
                 </div>
               </div>
+
+              {onOpenReport && (
+                <div className="pt-2">
+                  <button
+                    id="btn-report-business-about"
+                    onClick={() => {
+                      triggerHaptic("medium");
+                      onOpenReport({
+                        type: "place",
+                        placeName: displayedPlaceName,
+                        placeId: place.id
+                      });
+                    }}
+                    className="w-full py-2.5 px-4 rounded-xl bg-zinc-900/60 hover:bg-red-500/10 border border-zinc-800 hover:border-red-500/30 text-zinc-300 hover:text-red-400 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <Flag className="w-3.5 h-3.5" />
+                    <span>{t("place.reportInaccurate", "Report inaccurate info or flag business")}</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

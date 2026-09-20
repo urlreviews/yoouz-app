@@ -11243,6 +11243,56 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     }
   });
 
+  // Toggle Video Repost (persisted to Bunny.net and video reviews index)
+  app.post("/api/interactions/repost", async (req, res) => {
+    try {
+      const { videoId, userId, isReposted } = req.body;
+      if (!videoId) return res.status(400).json({ error: "Missing videoId" });
+
+      const bunnyDb = getBunnyDb();
+      let updatedRepostsCount = 0;
+      if (bunnyDb) {
+        const repostId = `repost_${userId || 'anon'}_${videoId}`;
+        if (isReposted) {
+          try {
+            await bunnyDb.execute({
+              sql: "INSERT OR REPLACE INTO shares (id, userId, videoId, platform, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+              args: [
+                repostId,
+                userId || "",
+                videoId,
+                "repost",
+                JSON.stringify({ videoId, userId: userId || "", platform: "repost", isReposted: true, timestamp: Date.now() })
+              ]
+            });
+          } catch (e: any) {
+            console.warn("BunnyDB repost insert notice:", e?.message || e);
+          }
+        } else {
+          try {
+            await bunnyDb.execute({
+              sql: "DELETE FROM shares WHERE id = ? OR (userId = ? AND videoId = ? AND platform = 'repost')",
+              args: [repostId, userId || "", videoId]
+            });
+          } catch (e: any) {}
+        }
+
+        try {
+          const countRes = await bunnyDb.execute({
+            sql: "SELECT COUNT(*) as total FROM shares WHERE videoId = ? AND platform = 'repost'",
+            args: [videoId]
+          });
+          const dbReposts = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+          updatedRepostsCount = isReposted ? Math.max(1, dbReposts) : Math.max(0, dbReposts);
+        } catch (cErr) {}
+      }
+
+      return res.json({ success: true, isReposted: !!isReposted, repostsCount: updatedRepostsCount });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post("/api/interactions/notification", async (req, res) => {
     try {
       const { notification, data } = req.body;

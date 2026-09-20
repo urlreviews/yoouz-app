@@ -19,7 +19,6 @@ export type NavSection =
   | "home"
   | "discover"
   | "following"
-  | "clubs"
   | "search"
   | "map"
   | "messages"
@@ -33,7 +32,7 @@ export type NavSection =
   | "pricing"
   | "business";
 
-export type FeedSubTab = "discover" | "following" | "clubs";
+export type FeedSubTab = "discover" | "following";
 
 export interface ReviewComment {
   id: string;
@@ -168,8 +167,7 @@ export interface VideoReview {
   viewsCount?: number;
   sharesCount?: number;
   recordedAt?: string; // e.g. "a week ago", "3 days ago"
-  feedCategory?: "discover" | "following" | "clubs";
-  clubName?: string;
+  feedCategory?: "discover" | "following";
   transcript?: string;
   tags?: string[];
   ownerResponse?: {
@@ -275,18 +273,6 @@ export interface Place {
   subscriptionTransactionId?: string;
   subscriptionMessagesSent?: number;
   reviews?: any[];
-}
-
-export interface Club {
-  id: string;
-  name: string;
-  avatar: string;
-  banner: string;
-  membersCount: number;
-  videoCount: number;
-  description: string;
-  isJoined: boolean;
-  city: string;
 }
 
 export interface CopoNotification {

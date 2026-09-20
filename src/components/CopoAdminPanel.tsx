@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { VideoReview, Place, Club, ReviewComment, UserProfile } from "../types";
+import { VideoReview, Place, ReviewComment, UserProfile } from "../types";
 import {
   Shield,
   Video,
@@ -110,7 +110,6 @@ interface CopoAdminPanelProps {
   videos: VideoReview[];
   places: Place[];
   allUsers?: any[];
-  clubs?: Club[];
   onDeleteUser?: (user: any) => void;
   onUpdateUser?: (updatedUser: any) => void;
   onPurgeAllUsers?: () => void;
@@ -135,7 +134,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   videos = [],
   places = [],
   allUsers = [],
-  clubs = [],
   onDeleteUser,
   onUpdateUser,
   onPurgeAllUsers,
@@ -1918,7 +1916,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     content_moderation_reporting: "21. Content Flagging & Moderation Queue",
                     pwa_service_worker_cache: "22. PWA Cache Eviction & Service Worker",
                     video_sharing_deep_links: "23. Deep Links, Share & Embed Generator",
-                    category_clubs_discovery: "24. Category Filters & Community Clubs",
+                    category_clubs_discovery: "24. Category Filters & Place Discovery",
                     video_review_feed_retention: "25. Video Review Retention & Feed Disappearance Guard",
                     comments_deduplication_sync: "26. Review ID Leak Guard, Caption Sanitizer & Comments Deduplication",
                     business_profile_review_match_guard: "27. Business Profile Place Review Matching & Empty State Guard",

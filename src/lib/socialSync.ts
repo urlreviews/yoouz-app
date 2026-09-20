@@ -482,6 +482,21 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       continue;
     }
 
+    const notifType = data.type || parsedInner.type || "like";
+
+    // Respect user's in-app notification preferences
+    const prefs = currentUser.notificationSettings;
+    if (prefs) {
+      if (prefs.enabled === false && !isSystemOrGlobal) {
+        continue;
+      }
+      if (notifType === "like" && prefs.likes === false) continue;
+      if (notifType === "comment" && prefs.comments === false) continue;
+      if (notifType === "message" && prefs.messages === false) continue;
+      if (notifType === "follow" && prefs.follows === false) continue;
+      if (notifType === "bookmark" && prefs.bookmarks === false) continue;
+    }
+
     list.push({
       ...data,
       id: String(data.id),

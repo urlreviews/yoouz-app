@@ -69,6 +69,7 @@ interface VideoFeedCardProps {
   onToggleLike: (videoId: string) => void;
   onToggleBookmark: (videoId: string) => void;
   onToggleFollow: (name: string) => void;
+  onToggleRepost?: (videoId: string) => void;
   onOpenMenu?: () => void;
   onGoBack?: () => void;
   feedContextTitle?: string;
@@ -124,6 +125,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onToggleLike,
   onToggleBookmark,
   onToggleFollow,
+  onToggleRepost,
   onOpenMenu,
   onGoBack,
   feedContextTitle,
