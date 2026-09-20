@@ -18391,29 +18391,20 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const authorDisplayWithPrefix = `By ${safeAuthorDisplay}`;
       const authorWidth = getTextAdvanceWidth(authorDisplayWithPrefix, 20, true);
 
-      const line2TotalWidth = starsWidth + subSuffixWidth;
-      const maxBottomWidth = Math.max(authorWidth + 20, line2TotalWidth, videoReviewWidth);
-      const authorPillWidth = Math.min(620, Math.max(310, 76 + maxBottomWidth + 24));
+      const maxBottomWidth = Math.max(authorWidth + 20, starsWidth, videoReviewWidth);
+      const authorPillWidth = Math.min(600, Math.max(280, 76 + maxBottomWidth + 24));
 
       // Top Business Pill calculations
       const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 18, true);
       const ratingValWidth = getTextAdvanceWidth(ratingStr, 14, true);
-      const topSubText = " (Verified Business)";
-      const topSubWidth = getTextAdvanceWidth(topSubText, 13, false);
       
       const topLine1Width = placeWidth + 20; // + badge
-      const topLine2Width = 16 + ratingValWidth + topSubWidth; // star + rating + sub
+      const topLine2Width = 18 + ratingValWidth; // star + rating
       const maxTopWidth = Math.max(topLine1Width, topLine2Width);
-      const placePillWidth = Math.min(560, Math.max(220, 58 + maxTopWidth + 24));
-
-      const watermark = "yoouz.com";
+      const placePillWidth = Math.min(520, Math.max(170, 62 + maxTopWidth + 22));
 
       const initialWidth = getTextAdvanceWidth(authorInitial, 22, true);
       const initialX = 38 - (initialWidth / 2);
-
-      const watermarkWidth = getTextAdvanceWidth(watermark, 19, true);
-      const watermarkPillWidth = 44 + watermarkWidth + 20;
-      const watermarkX = 1200 - 48 - watermarkPillWidth;
 
       if (thumbBuf) {
         const overlaySvg = `
@@ -18430,25 +18421,25 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <!-- Vignette backdrop -->
             <rect width="1200" height="630" fill="url(#vignette)"/>
 
-            <!-- TOP LEFT: Business Logo & Rating Pill (Matching Yoouz App Player) -->
+            <!-- TOP LEFT: Business Squircle Logo & Rating Pill (Matching App Player) -->
             <g transform="translate(48, 40)">
-              <rect width="${placePillWidth}" height="64" rx="22" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <rect width="${placePillWidth}" height="62" rx="22" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               
-              <!-- Left Logo Badge Circle -->
-              <circle cx="28" cy="32" r="20" fill="#18181b" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(16, 20) scale(1.0)"/>
+              <!-- Left Squircle Logo Container -->
+              <rect x="10" y="10" width="42" height="42" rx="13" fill="#18181b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+              <rect x="13" y="13" width="36" height="36" rx="10" fill="#09090b"/>
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(20, 20) scale(0.9)"/>
 
               <!-- Line 1: Place Name + Darkmode White Verified Badge -->
-              ${renderTextPath(safePlaceDisplay, 58, 25, 18, true, '#ffffff')}
-              <g transform="translate(${58 + placeWidth + 6}, 12)">
+              ${renderTextPath(safePlaceDisplay, 62, 25, 18, true, '#ffffff')}
+              <g transform="translate(${62 + placeWidth + 6}, 12)">
                 <circle cx="6.5" cy="6.5" r="6.5" fill="#ffffff"/>
                 <path d="M3.8 6.5l1.8 1.8 3.8-3.8" stroke="#09090b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
               <!-- Line 2: Single Gold Star + Rating Value -->
-              <path d="M7 0l2.16 4.38 4.84.7-3.5 3.41.83 4.82L7 11.04l-4.33 2.27.83-4.82-3.5-3.41 4.84-.7L7 0z" fill="#fbbf24" transform="translate(58, 36)"/>
-              ${renderTextPath(ratingStr, 76, 48, 14, true, '#fbbf24')}
-              ${renderTextPath(topSubText, 76 + ratingValWidth, 48, 13, false, '#94a3b8')}
+              <path d="M7 0l2.16 4.38 4.84.7-3.5 3.41.83 4.82L7 11.04l-4.33 2.27.83-4.82-3.5-3.41 4.84-.7L7 0z" fill="#fbbf24" transform="translate(62, 35)"/>
+              ${renderTextPath(ratingStr, 80, 47, 14, true, '#fbbf24')}
             </g>
 
             <!-- CENTER: Frosted Glass Play Button -->
@@ -18472,20 +18463,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 <path d="M3.8 6.5l1.8 1.8 3.8-3.8" stroke="#09090b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
-              <!-- Line 2: Star Icons + Review Tag -->
+              <!-- Line 2: Star Icons -->
               ${starsSvg}
-              ${renderTextPath(subSuffix, 76 + starsWidth, 46, 14, false, '#cbd5e1')}
 
               <!-- Line 3: Video Review Target Line -->
               ${renderTextPath(videoReviewLine, 76, 68, 14, false, '#94a3b8')}
-            </g>
-
-            <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
-            <g transform="translate(${watermarkX}, 524)">
-              <rect width="${watermarkPillWidth}" height="52" rx="26" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-              <!-- Live Red Pulse Dot -->
-              <circle cx="24" cy="26" r="6" fill="#ef4444"/>
-              ${renderTextPath(watermark, 38, 33, 19, true, '#ffffff')}
             </g>
           </svg>
         `;
@@ -18516,21 +18498,21 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <circle cx="600" cy="315" r="320" fill="url(#centerBlueGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
-          <!-- TOP LEFT: Business Logo & Rating Pill -->
+          <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
           <g transform="translate(48, 40)">
-            <rect width="${placePillWidth}" height="64" rx="22" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-            <circle cx="28" cy="32" r="20" fill="#18181b" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(16, 20) scale(1.0)"/>
+            <rect width="${placePillWidth}" height="62" rx="22" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+            <rect x="10" y="10" width="42" height="42" rx="13" fill="#18181b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+            <rect x="13" y="13" width="36" height="36" rx="10" fill="#09090b"/>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(20, 20) scale(0.9)"/>
 
-            ${renderTextPath(safePlaceDisplay, 58, 25, 18, true, '#ffffff')}
-            <g transform="translate(${58 + placeWidth + 6}, 12)">
+            ${renderTextPath(safePlaceDisplay, 62, 25, 18, true, '#ffffff')}
+            <g transform="translate(${62 + placeWidth + 6}, 12)">
               <circle cx="6.5" cy="6.5" r="6.5" fill="#ffffff"/>
               <path d="M3.8 6.5l1.8 1.8 3.8-3.8" stroke="#09090b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
-            <path d="M7 0l2.16 4.38 4.84.7-3.5 3.41.83 4.82L7 11.04l-4.33 2.27.83-4.82-3.5-3.41 4.84-.7L7 0z" fill="#fbbf24" transform="translate(58, 36)"/>
-            ${renderTextPath(ratingStr, 76, 48, 14, true, '#fbbf24')}
-            ${renderTextPath(topSubText, 76 + ratingValWidth, 48, 13, false, '#94a3b8')}
+            <path d="M7 0l2.16 4.38 4.84.7-3.5 3.41.83 4.82L7 11.04l-4.33 2.27.83-4.82-3.5-3.41 4.84-.7L7 0z" fill="#fbbf24" transform="translate(62, 35)"/>
+            ${renderTextPath(ratingStr, 80, 47, 14, true, '#fbbf24')}
           </g>
 
           <!-- Centered Play Icon -->
@@ -18553,16 +18535,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
             </g>
 
             ${starsSvg}
-            ${renderTextPath(subSuffix, 76 + starsWidth, 46, 14, false, '#cbd5e1')}
 
             ${renderTextPath(videoReviewLine, 76, 68, 14, false, '#94a3b8')}
-          </g>
-
-          <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
-          <g transform="translate(${watermarkX}, 524)">
-            <rect width="${watermarkPillWidth}" height="52" rx="26" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-            <circle cx="24" cy="26" r="6" fill="#ef4444"/>
-            ${renderTextPath(watermark, 38, 33, 19, true, '#ffffff')}
           </g>
         </svg>
       `;
@@ -18574,7 +18548,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     }
 
     // Dedicated clean routes for direct social scraper access
-    app.get(['/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/og-card/v7/:id.png', '/api/og-card/v7/:id', '/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -20041,7 +20015,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-card/v6/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=6`;
+        imageUrl = `${baseUrl}/api/og-card/v7/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=7`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
