@@ -14248,7 +14248,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #09090b; color: #f4f4f5; margin: 0; padding: 24px; }
     .container { max-width: 600px; margin: 0 auto; background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; overflow: hidden; }
-    .header { background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 24px; color: #ffffff; }
+    .header { background: linear-gradient(135deg, #18181b, #09090b); border-bottom: 1px solid #27272a; padding: 24px; color: #ffffff; }
     .header h1 { margin: 0; font-size: 20px; font-weight: 800; }
     .content { padding: 24px; }
     .field-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #27272a; font-size: 13px; }
@@ -17381,7 +17381,7 @@ const isPlaceCard = type === 'place';
         <rect width="1200" height="630" fill="#09090b" fill-opacity="0.75" />
 
         <!-- Luxury premium glow behind the player -->
-        <circle cx="600" cy="315" r="300" fill="#3b82f6" fill-opacity="0.15" filter="url(#bgBlur)"/>
+        <circle cx="600" cy="315" r="300" fill="#ffffff" fill-opacity="0.04" filter="url(#bgBlur)"/>
         
         <!-- Top Left Brand Identity -->
         <g transform="translate(48, 48)">
@@ -17479,7 +17479,7 @@ const isPlaceCard = type === 'place';
         <g transform="translate(72, 180)">
           <!-- Tagline Pill -->
           <rect width="280" height="32" rx="16" fill="#18181b" stroke="#27272a" stroke-width="1"/>
-          <circle cx="16" cy="16" r="4" fill="#3b82f6"/>
+          <circle cx="16" cy="16" r="4" fill="#ffffff"/>
           <text x="28" y="20" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="1">AUTHENTIC VIDEO REVIEWS</text>
 
           <!-- Big Title -->
@@ -17518,7 +17518,7 @@ const isPlaceCard = type === 'place';
             <!-- Pill 3 -->
             <g transform="translate(384, 0)">
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
-              <circle cx="20" cy="20" r="4.5" fill="#3b82f6"/>
+              <circle cx="20" cy="20" r="4.5" fill="#ffffff"/>
               <text x="34" y="25" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Verified Businesses</text>
             </g>
           </g>
@@ -17548,7 +17548,7 @@ const isPlaceCard = type === 'place';
         
         <!-- Accent Glows -->
         <radialGradient id="glowTopRight" cx="1050" cy="120" r="500" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.08"/>
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.05"/>
           <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
         </radialGradient>
         
@@ -18050,8 +18050,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
   }
 
   if (!thumbBase64) {
-    // Fallback colorful gradient data URI
-    thumbBase64 = "data:image/svg+xml;base64," + Buffer.from(`<svg width="300" height="500" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#3b82f6"/></svg>`).toString('base64');
+    // Fallback dark canvas data URI
+    thumbBase64 = "data:image/svg+xml;base64," + Buffer.from(`<svg width="300" height="500" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#18181b"/></svg>`).toString('base64');
   }
 
   // Draw Stars
@@ -18126,7 +18126,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
            <text x="28" y="36" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#ffffff">${authorName.charAt(0)}</text>
         </g>
         <text x="76" y="24" font-family="system-ui, sans-serif" font-size="24" font-weight="800" fill="#ffffff">${authorName}</text>
-        <text x="76" y="48" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#3b82f6">Verified Video Reviewer</text>
+        <text x="76" y="48" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#a1a1aa">Verified Video Reviewer</text>
       </g>
     </g>
 
@@ -18652,11 +18652,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
             ${renderTextPath(ratingStr, 80, 47, 14, true, '#fbbf24')}
           </g>
 
-          <!-- Centered Play Icon -->
-          <g transform="translate(540, 255)">
-            <circle cx="60" cy="60" r="60" fill="#000000" fill-opacity="0.85"/>
-            <circle cx="60" cy="60" r="57" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/>
-            <path d="M48 38 L84 60 L48 82 Z" fill="#ffffff"/>
+          <!-- Centered Dark Squircle Logo Emblem -->
+          <g transform="translate(530, 245)">
+            <rect width="140" height="140" rx="36" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
+            <!-- Crisp White Star Icon -->
+            <path d="M70 28 L81.5 57 L112 57 L87.5 75 L97 104 L70 86 L43 104 L52.5 75 L28 57 L58.5 57 Z" fill="#ffffff"/>
           </g>
 
           <!-- BOTTOM LEFT: Reviewer Profile Pill -->

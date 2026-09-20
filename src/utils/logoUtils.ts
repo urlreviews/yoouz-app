@@ -482,7 +482,7 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
 
   // Modern brand palettes for dark mode contrast
   const PALETTES = [
-    "#2563eb", // blue
+    "#27272a", // dark zinc
     "#7c3aed", // violet
     "#059669", // emerald
     "#d97706", // amber

@@ -233,7 +233,7 @@ export function generateFallbackPoster(businessTitle: string = "Verified Review"
       ctx.fillRect(0, 0, 360, 640);
 
       // Accent pill
-      ctx.fillStyle = "#3b82f6";
+      ctx.fillStyle = "#27272a";
       ctx.beginPath();
       ctx.roundRect(130, 260, 100, 24, 12);
       ctx.fill();
