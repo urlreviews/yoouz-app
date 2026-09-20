@@ -11,6 +11,7 @@ async function fetchBase64(url: string): Promise<string> {
   }
 }
 import express from "express";
+import opentype from "opentype.js";
 import crypto from "crypto";
 import { execSync } from "child_process";
 import { v2 as cloudinary } from 'cloudinary';
@@ -18174,25 +18175,73 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return sanitized;
     }
 
-    function getEmbeddedFontBase64(fontFileName: string): string {
-      const possiblePaths = [
-        `/usr/share/fonts/truetype/liberation/${fontFileName}`,
-        `/usr/share/fonts/liberation/${fontFileName}`,
-        `/usr/share/fonts/truetype/freefont/${fontFileName.replace('LiberationSans', 'FreeSans')}`,
-        `/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf`
+    let fontBold: any = null;
+    let fontReg: any = null;
+
+    function initFonts() {
+      if (fontBold && fontReg) return;
+      const boldPaths = [
+        '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+        '/usr/share/fonts/liberation/LiberationSans-Bold.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+        '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf'
       ];
-      for (const p of possiblePaths) {
+      for (const p of boldPaths) {
         if (fs.existsSync(p)) {
           try {
-            return fs.readFileSync(p).toString('base64');
-          } catch (e) {}
+            const buf = fs.readFileSync(p);
+            fontBold = opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+            if (fontBold) break;
+          } catch(e) {}
         }
       }
-      return '';
+
+      const regPaths = [
+        '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+        '/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/truetype/freefont/FreeSans.ttf'
+      ];
+      for (const p of regPaths) {
+        if (fs.existsSync(p)) {
+          try {
+            const buf = fs.readFileSync(p);
+            fontReg = opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+            if (fontReg) break;
+          } catch(e) {}
+        }
+      }
     }
 
-    const FONT_BOLD_BASE64 = getEmbeddedFontBase64('LiberationSans-Bold.ttf');
-    const FONT_REG_BASE64 = getEmbeddedFontBase64('LiberationSans-Regular.ttf');
+    initFonts();
+
+    function renderTextPath(text: string, x: number, y: number, fontSize: number, isBold: boolean, fill: string): string {
+      initFonts();
+      const font = isBold ? (fontBold || fontReg) : (fontReg || fontBold);
+      if (!font || !text) return '';
+      try {
+        const p = font.getPath(text, x, y, fontSize);
+        return `<path d="${p.toPathData(2)}" fill="${fill}"/>`;
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function getTextAdvanceWidth(text: string, fontSize: number, isBold: boolean): number {
+      initFonts();
+      const font = isBold ? (fontBold || fontReg) : (fontReg || fontBold);
+      if (!font || !text) return (text ? text.length : 0) * fontSize * 0.55;
+      try {
+        let totalAdvance = 0;
+        for (let i = 0; i < text.length; i++) {
+          const glyph = font.charToGlyph(text[i]);
+          totalAdvance += (glyph.advanceWidth || 0) * (fontSize / font.unitsPerEm);
+        }
+        return totalAdvance;
+      } catch (e) {
+        return text.length * fontSize * 0.55;
+      }
+    }
 
     // High-fidelity video share card buffer generator
     async function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
@@ -18296,53 +18345,43 @@ app.get('/api/og-preview-v2', async (req, res) => {
         }
       }
 
-      const placeName = formatBusinessName(queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business");
+      const rawPlace = queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business";
+      const placeName = formatBusinessName(rawPlace);
       const authorName = queryParams.author || foundVideo?.author?.name || foundVideo?.authorName || "Verified Reviewer";
       const rating = Number(queryParams.rating || foundVideo?.rating || 5).toFixed(1);
       
-      const safePlaceDisplay = placeName.length > 20 ? `${placeName.substring(0, 18)}...` : placeName;
-      const safePlaceName = escapeXml(safePlaceDisplay);
-      
+      const safePlaceDisplay = placeName.length > 22 ? `${placeName.substring(0, 20)}...` : placeName;
       const safeAuthorDisplay = authorName.length > 22 ? `${authorName.substring(0, 20)}...` : authorName;
-      const safeAuthorName = escapeXml(safeAuthorDisplay);
-      const authorInitial = escapeXml(authorName.trim().charAt(0).toUpperCase() || "U");
-      const domainName = escapeXml(cleanDomainName(placeName || "yoouz.com"));
+      const authorInitial = (authorName.trim().charAt(0) || "U").toUpperCase();
+      const subtitle = `${safeAuthorDisplay} - 60s Review`;
+      const watermark = "yoouz.com";
 
-      // Calculate dynamic pill dimensions to fit any place name (e.g. Villa Pizza, Yoouz)
-      const estPlaceWidth = Math.min(safePlaceDisplay.length * 13, 280);
-      const placePillWidth = Math.min(520, Math.max(240, 60 + estPlaceWidth + 70));
-      const ratingX = placePillWidth - 55;
+      // Calculate pure vector dimensions
+      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 22, true);
+      const ratingWidth = getTextAdvanceWidth(rating, 20, true);
+      const placePillWidth = Math.min(540, Math.max(170, 56 + placeWidth + 20 + ratingWidth + 20));
+      const ratingX = placePillWidth - 20 - ratingWidth;
 
-      const estAuthorWidth = Math.max(safeAuthorDisplay.length * 12, (safeAuthorDisplay + ' • 60s Review').length * 9.5);
-      const authorPillWidth = Math.min(560, Math.max(340, 85 + estAuthorWidth + 25));
+      const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 21, true);
+      const subWidth = getTextAdvanceWidth(subtitle, 16, false);
+      const authorPillWidth = Math.min(560, Math.max(260, 76 + Math.max(authorWidth, subWidth) + 24));
+
+      const initialWidth = getTextAdvanceWidth(authorInitial, 22, true);
+      const initialX = 38 - (initialWidth / 2);
+
+      const watermarkWidth = getTextAdvanceWidth(watermark, 19, true);
+      const watermarkPillWidth = 44 + watermarkWidth + 20;
+      const watermarkX = 1200 - 48 - watermarkPillWidth;
 
       if (thumbBuf) {
         const overlaySvg = `
           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <style>
-                ${FONT_BOLD_BASE64 ? `
-                @font-face {
-                  font-family: 'YoouzSans';
-                  src: url('data:font/truetype;charset=utf-8;base64,${FONT_BOLD_BASE64}') format('truetype');
-                  font-weight: bold;
-                  font-style: normal;
-                }` : ''}
-                ${FONT_REG_BASE64 ? `
-                @font-face {
-                  font-family: 'YoouzSans';
-                  src: url('data:font/truetype;charset=utf-8;base64,${FONT_REG_BASE64}') format('truetype');
-                  font-weight: normal;
-                  font-style: normal;
-                }` : ''}
-                .bold-txt { font-family: 'YoouzSans', 'Liberation Sans', 'DejaVu Sans', 'FreeSans', sans-serif; font-weight: bold; }
-                .reg-txt { font-family: 'YoouzSans', 'Liberation Sans', 'DejaVu Sans', 'FreeSans', sans-serif; font-weight: normal; }
-              </style>
               <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0.65" />
-                <stop offset="25%" stop-color="#000000" stop-opacity="0.08" />
-                <stop offset="70%" stop-color="#000000" stop-opacity="0.25" />
-                <stop offset="100%" stop-color="#000000" stop-opacity="0.88" />
+                <stop offset="0%" stop-color="#000000" stop-opacity="0.75" />
+                <stop offset="20%" stop-color="#000000" stop-opacity="0.05" />
+                <stop offset="70%" stop-color="#000000" stop-opacity="0.22" />
+                <stop offset="100%" stop-color="#000000" stop-opacity="0.92" />
               </linearGradient>
             </defs>
             
@@ -18351,21 +18390,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
             <!-- TOP LEFT: Place & Rating Pill -->
             <g transform="translate(48, 44)">
-              <rect width="${placePillWidth}" height="56" rx="28" fill="#000000" fill-opacity="0.75" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <rect width="${placePillWidth}" height="56" rx="28" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Gold Star Vector -->
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(18, 14) scale(1.2)"/>
-              <!-- Place Name -->
-              <text x="54" y="36" class="bold-txt" font-size="22" fill="#ffffff">${safePlaceName}</text>
-              <!-- Rating Value -->
-              <text x="${ratingX}" y="36" class="bold-txt" font-size="20" fill="#fbbf24">${rating}</text>
-            </g>
-
-            <!-- TOP RIGHT: Options Button Pill -->
-            <g transform="translate(980, 44)">
-              <rect width="172" height="56" rx="28" fill="#000000" fill-opacity="0.75" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-              <text x="28" y="36" class="bold-txt" font-size="20" fill="#ffffff">Options</text>
-              <!-- Chevron Right -->
-              <path d="M9 18l6-6-6-6" fill="none" stroke="#d1d5db" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(118, 17) scale(0.9)"/>
+              <!-- Place Name (Pure Vector Path) -->
+              ${renderTextPath(safePlaceDisplay, 56, 36, 22, true, '#ffffff')}
+              <!-- Rating Value (Pure Vector Path) -->
+              ${renderTextPath(rating, ratingX, 36, 20, true, '#fbbf24')}
             </g>
 
             <!-- CENTER: Frosted Glass Play Button -->
@@ -18378,21 +18409,21 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <!-- BOTTOM LEFT: Reviewer Profile Pill -->
             <g transform="translate(48, 510)">
               <rect width="${authorPillWidth}" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-              <!-- Avatar Circle (Green) -->
-              <circle cx="38" cy="38" r="26" fill="#65a30d"/>
-              <text x="38" y="46" text-anchor="middle" class="bold-txt" font-size="22" fill="#ffffff">${authorInitial}</text>
-              <!-- Reviewer Name -->
-              <text x="76" y="33" class="bold-txt" font-size="21" fill="#ffffff">${safeAuthorName}</text>
-              <!-- Subtitle -->
-              <text x="76" y="58" class="reg-txt" font-size="16" fill="#cbd5e1">${safeAuthorName} - 60s Review</text>
+              <!-- Avatar Circle (Teal) -->
+              <circle cx="38" cy="38" r="26" fill="#0d9488"/>
+              ${renderTextPath(authorInitial, initialX, 46, 22, true, '#ffffff')}
+              <!-- Reviewer Name (Pure Vector Path) -->
+              ${renderTextPath(safeAuthorDisplay, 76, 33, 21, true, '#ffffff')}
+              <!-- Subtitle (Pure Vector Path) -->
+              ${renderTextPath(subtitle, 76, 58, 16, false, '#cbd5e1')}
             </g>
 
             <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
-            <g transform="translate(960, 524)">
-              <rect width="192" height="52" rx="26" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+            <g transform="translate(${watermarkX}, 524)">
+              <rect width="${watermarkPillWidth}" height="52" rx="26" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Live Red Pulse Dot -->
-              <circle cx="28" cy="26" r="6" fill="#ef4444"/>
-              <text x="46" y="33" class="bold-txt" font-size="19" fill="#ffffff">yoouz.com</text>
+              <circle cx="24" cy="26" r="6" fill="#ef4444"/>
+              ${renderTextPath(watermark, 38, 33, 19, true, '#ffffff')}
             </g>
           </svg>
         `;
@@ -18423,11 +18454,35 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <circle cx="600" cy="315" r="320" fill="url(#centerBlueGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
+          <!-- TOP LEFT: Place & Rating Pill -->
+          <g transform="translate(48, 44)">
+            <rect width="${placePillWidth}" height="56" rx="28" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(18, 14) scale(1.2)"/>
+            ${renderTextPath(safePlaceDisplay, 56, 36, 22, true, '#ffffff')}
+            ${renderTextPath(rating, ratingX, 36, 20, true, '#fbbf24')}
+          </g>
+
           <!-- Centered Play Icon -->
           <g transform="translate(540, 255)">
             <circle cx="60" cy="60" r="60" fill="#2563eb" fill-opacity="0.9"/>
             <circle cx="60" cy="60" r="57" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="3"/>
             <path d="M48 38 L84 60 L48 82 Z" fill="#ffffff"/>
+          </g>
+
+          <!-- BOTTOM LEFT: Reviewer Profile Pill -->
+          <g transform="translate(48, 510)">
+            <rect width="${authorPillWidth}" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+            <circle cx="38" cy="38" r="26" fill="#0d9488"/>
+            ${renderTextPath(authorInitial, initialX, 46, 22, true, '#ffffff')}
+            ${renderTextPath(safeAuthorDisplay, 76, 33, 21, true, '#ffffff')}
+            ${renderTextPath(subtitle, 76, 58, 16, false, '#cbd5e1')}
+          </g>
+
+          <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
+          <g transform="translate(${watermarkX}, 524)">
+            <rect width="${watermarkPillWidth}" height="52" rx="26" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+            <circle cx="24" cy="26" r="6" fill="#ef4444"/>
+            ${renderTextPath(watermark, 38, 33, 19, true, '#ffffff')}
           </g>
         </svg>
       `;
@@ -19896,11 +19951,11 @@ function injectOpenGraphTags(html: string, meta: any) {
            thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
         }
 
-        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=25`;
+        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=30`;
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-image/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=25`;
+        imageUrl = `${baseUrl}/api/og-image/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=30`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
