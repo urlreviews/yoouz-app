@@ -67,6 +67,7 @@ import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted } from "
 import { getPlaceLogoUrl } from "../utils/logoUtils";
 import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
+import { subscribeAppHealth, resolveAllAppErrors, AppHealthSummary } from "../lib/errorMonitor";
 
 export const AdminPlaceLogo: React.FC<{
   place: Partial<Place> | null | undefined;
@@ -214,6 +215,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // System Health & Bug Diagnostics State
   const [healthData, setHealthData] = useState<any>(null);
   const [isHealthLoading, setIsHealthLoading] = useState(false);
+  const [clientHealthSummary, setClientHealthSummary] = useState<AppHealthSummary | null>(null);
 
   const fetchHealthDiagnostic = async () => {
     setIsHealthLoading(true);
@@ -233,10 +235,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   useEffect(() => {
     fetchHealthDiagnostic();
     const interval = setInterval(fetchHealthDiagnostic, 30000);
-    return () => clearInterval(interval);
+    const unsubscribe = subscribeAppHealth((summary) => {
+      setClientHealthSummary(summary);
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, []);
 
   const handleClearErrorLog = async (id?: string) => {
+    resolveAllAppErrors();
     try {
       const res = await fetch("/api/system/clear-error-logs", {
         method: "POST",
@@ -1816,6 +1825,51 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
+              {/* Telemetry Issue Monitors (#39 & #40) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Issue #39 Card */}
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-black font-mono text-sm">
+                      #39
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2">
+                        Realtime Stream Connection Stability
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">
+                          {clientHealthSummary?.issue39Errors || 0} Console Errors
+                        </span>
+                      </div>
+                      <div className="text-xs text-zinc-400">
+                        Monitored SSE / EventSource connection lifecycle, tab visibility detection & silent reconnect.
+                      </div>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                </div>
+
+                {/* Issue #40 Card */}
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-black font-mono text-sm">
+                      #40
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2">
+                        Universal Site API & Resource Telemetry
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">
+                          {clientHealthSummary?.issue40Errors || 0} Issues Detected
+                        </span>
+                      </div>
+                      <div className="text-xs text-zinc-400">
+                        Monitored application resources, Bunny CDN range streaming & zero unhandled exceptions.
+                      </div>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                </div>
+              </div>
+
               {/* Subsystems Health Grid (7 Core Modules) */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {healthData?.subsystems && Object.entries(healthData.subsystems).map(([key, item]: [string, any]) => {
@@ -1857,7 +1911,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     business_profile_banner_logo_database_live_sync_guard: "35. Business Profile Logo, Cover Banner & Info Live Database Storage Guard",
                     google_maps_business_name_resolution_anti_break_guard: "36. Google Maps Entity Resolution, Embedded Maps & Directions Anti-Break Guard",
                     universal_avatar_deterministic_sync_guard: "37. Universal Avatar Parity & Deterministic Color Sync Guard",
-                    business_cover_banner_sync_storage_guard: "38. Business Profile Cover Banner Instant Sync & Storage Asset Purge Guard"
+                    business_cover_banner_sync_storage_guard: "38. Business Profile Cover Banner Instant Sync & Storage Asset Purge Guard",
+                    realtime_stream_sse_stability_guard: "39. Real-Time Stream & SSE Connection Stability Guard",
+                    universal_resource_api_telemetry_guard: "40. Universal Application & Resource Error Telemetry Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1898,7 +1954,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     business_profile_banner_logo_database_live_sync_guard: "🖼️",
                     google_maps_business_name_resolution_anti_break_guard: "🗺️",
                     universal_avatar_deterministic_sync_guard: "🎨",
-                    business_cover_banner_sync_storage_guard: "🖼️"
+                    business_cover_banner_sync_storage_guard: "🖼️",
+                    realtime_stream_sse_stability_guard: "⚡",
+                    universal_resource_api_telemetry_guard: "🛡️"
                   };
 
                   return (

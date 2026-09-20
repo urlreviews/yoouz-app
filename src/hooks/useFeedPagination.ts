@@ -486,6 +486,7 @@ export function useFeedPagination() {
     // 2. Real-Time Server-Sent Events (SSE) stream for instant cross-device deletions & updates
     const setupSse = () => {
       if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      if (typeof document !== "undefined" && document.hidden) return;
       if (sse) {
         try { sse.close(); } catch (e) {}
         sse = null;
@@ -664,14 +665,29 @@ export function useFeedPagination() {
             try { sse.close(); } catch (e) {}
             sse = null;
           }
-          if (active && (typeof navigator === "undefined" || navigator.onLine)) {
+          if (active && (typeof navigator === "undefined" || navigator.onLine) && typeof document !== "undefined" && !document.hidden) {
             if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
             sseReconnectTimeout = setTimeout(setupSse, sseRetryDelay);
-            sseRetryDelay = Math.min(sseRetryDelay * 1.5, 30000);
+            sseRetryDelay = Math.min(sseRetryDelay * 2, 60000);
           }
         };
       } catch (e) {}
     };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (sse) {
+          try { sse.close(); } catch (e) {}
+          sse = null;
+        }
+      } else if (active) {
+        setupSse();
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
 
     setupSse();
 

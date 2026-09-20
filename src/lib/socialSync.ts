@@ -86,6 +86,10 @@ function setupRealtimeStream(user: UserProfile) {
     activeEventSource = null;
   }
 
+  // Do not connect if document is hidden or user is offline
+  if (typeof document !== "undefined" && document.hidden) return;
+  if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
   currentSseUserKey = userKey;
   const query = new URLSearchParams({
     userEmail: email,
@@ -121,17 +125,43 @@ function setupRealtimeStream(user: UserProfile) {
       if (activeEventSource === es) {
         activeEventSource = null;
       }
-      if (!sseReconnectTimer && isNetworkOnline) {
+      // Silently schedule reconnect only if online and tab is active
+      if (!sseReconnectTimer && isNetworkOnline && typeof document !== "undefined" && !document.hidden) {
         sseReconnectTimer = setTimeout(() => {
           sseReconnectTimer = null;
-          if (realtimeListeners.size > 0 && user && isNetworkOnline) {
+          if (realtimeListeners.size > 0 && user && isNetworkOnline && !document.hidden) {
             setupRealtimeStream(user);
           }
         }, sseRetryDelay);
-        sseRetryDelay = Math.min(sseRetryDelay * 1.5, 30000);
+        sseRetryDelay = Math.min(sseRetryDelay * 2, 60000);
       }
     };
   } catch (err) {}
+}
+
+// Global tab visibility listener to cleanly pause/resume realtime stream
+if (typeof window !== "undefined" && typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (activeEventSource) {
+        try {
+          activeEventSource.close();
+        } catch (e) {}
+        activeEventSource = null;
+      }
+    } else {
+      if (currentSseUserKey && realtimeListeners.size > 0) {
+        // Resume stream when tab returns to focus
+        const dummyUser: UserProfile = {
+          email: currentSseUserKey.split(":")[0] || "",
+          handle: currentSseUserKey.split(":")[1] || "",
+          name: currentSseUserKey.split(":")[1] || "User",
+          avatar: ""
+        };
+        setupRealtimeStream(dummyUser);
+      }
+    }
+  });
 }
 
 function registerRealtimeListener(user: UserProfile, handler: RealtimeEventHandler): () => void {
