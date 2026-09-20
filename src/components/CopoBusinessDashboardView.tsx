@@ -2706,10 +2706,72 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       const isPinned = pinnedVideoIds.includes(video.id);
                       const isHidden = hiddenVideoIds.includes(video.id);
 
+                      const authorInfoJSX = (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onOpenCreator && video.author) {
+                              onOpenCreator(video.author);
+                            }
+                          }}
+                          className="flex items-start gap-2.5 text-left group cursor-pointer hover:opacity-90 transition-opacity min-w-0"
+                          title={`View ${video.author?.name || 'Customer'}'s Profile`}
+                        >
+                          <img
+                            src={video.author?.avatar}
+                            alt={video.author?.name}
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} 
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-xs sm:text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
+                                {video.author?.name || 'Customer Review'}
+                              </span>
+                              {isPinned && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[9px] sm:text-[10px] font-bold tracking-wide flex items-center gap-0.5 border border-zinc-700 shrink-0">
+                                  <Pin className="w-2.5 h-2.5 fill-current text-white" /> Pinned
+                                </span>
+                              )}
+                              {isHidden && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[9px] sm:text-[10px] font-bold flex items-center gap-0.5 border border-zinc-700 shrink-0">
+                                  <EyeOff className="w-2.5 h-2.5" /> Hidden
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] sm:text-xs text-zinc-300 flex-wrap">
+                              <div className="flex items-center gap-0.5 text-amber-400 shrink-0">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${
+                                      i < (video.rating || 5)
+                                        ? 'fill-amber-400 text-amber-400'
+                                        : 'fill-zinc-800 text-zinc-700'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-zinc-600 font-bold shrink-0">•</span>
+                              <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
+                              {video.dishOrItem && (
+                                <>
+                                  <span className="text-zinc-600 font-bold shrink-0">•</span>
+                                  <span className="font-semibold text-zinc-200 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] truncate max-w-[120px]">
+                                    {video.dishOrItem}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      );
+
                       return (
                         <div 
                           key={video.id}
-                          className={`rounded-3xl border p-5 sm:p-6 shadow-xs transition-all ${
+                          className={`rounded-3xl border p-4 sm:p-6 shadow-xs transition-all ${
                             isPinned 
                               ? 'border-zinc-700 bg-zinc-900 text-white' 
                               : isHidden 
@@ -2717,175 +2779,134 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-white'
                           }`}
                         >
-                          <div className="flex flex-col md:flex-row gap-5 items-start">
-                            {/* Video Thumbnail Player Viewport */}
-                            <div 
-                              onClick={() => handleOpenBusinessVideo(video)}
-                              className="w-full md:w-44 aspect-9/14 shrink-0 relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-xs cursor-pointer group"
-                              title="Click to play review"
-                            >
-                              <img
-                                src={video.thumbnailUrl || video.author?.avatar}
-                                alt={video.dishOrItem || 'Video Review'}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                referrerPolicy="no-referrer"
-                               onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- {/* Video Badges & Play Overlay */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-3 text-white">
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 border border-white/20">
-                                    <Video className="w-2.5 h-2.5 text-zinc-200" /> 0:{video.durationSeconds || 15}
-                                  </span>
-                                </div>
+                          <div className="flex flex-col md:flex-row gap-4 sm:gap-5 items-start">
+                            
+                            {/* Mobile Top Row: Split layout with Compact Video Player and Author details side-by-side */}
+                            <div className="flex flex-row md:flex-col gap-4 items-start w-full md:w-auto shrink-0">
+                              
+                              {/* Video Thumbnail Player Viewport */}
+                              <div 
+                                onClick={() => handleOpenBusinessVideo(video)}
+                                className="w-24 sm:w-28 md:w-44 aspect-9/14 shrink-0 relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-md cursor-pointer group"
+                                title="Click to play review"
+                              >
+                                <img
+                                  src={video.thumbnailUrl || video.author?.avatar}
+                                  alt={video.dishOrItem || 'Video Review'}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} 
+                                /> 
+                                {/* Video Badges & Play Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-2.5 sm:p-3 text-white">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[9px] sm:text-[10px] font-bold text-white flex items-center gap-1 border border-white/10">
+                                      <Video className="w-2.5 h-2.5 text-zinc-200" /> 0:{video.durationSeconds || 15}
+                                    </span>
+                                  </div>
 
-                                <div className="self-center w-11 h-11 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg border border-white/40 group-hover:scale-110 transition-transform">
-                                  <Play className="w-5 h-5 fill-current ml-0.5" />
-                                </div>
+                                  <div className="self-center w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg border border-white/40 group-hover:scale-110 transition-transform">
+                                    <Play className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-current ml-0.5" />
+                                  </div>
 
-                                <div>
-                                  <span className="text-[11px] font-bold text-white block line-clamp-1">
-                                    {video.dishOrItem || 'Verified Review'}
-                                  </span>
+                                  <div>
+                                    <span className="text-[10px] sm:text-[11px] font-bold text-white block line-clamp-1">
+                                      {video.dishOrItem || 'Verified Review'}
+                                    </span>
+                                  </div>
                                 </div>
+                              </div>
+
+                              {/* Mobile-only Author details (rendered side-by-side next to thumbnail on mobile) */}
+                              <div className="flex-1 min-w-0 md:hidden pt-0.5">
+                                {authorInfoJSX}
                               </div>
                             </div>
 
-                            {/* Review Content & Management Column */}
-                            <div className="flex-1 min-w-0 space-y-4 w-full">
-                              <div className="flex items-start justify-between gap-4 flex-wrap sm:flex-nowrap">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (onOpenCreator && video.author) {
-                                      onOpenCreator(video.author);
-                                    }
-                                  }}
-                                  className="flex items-center gap-3 text-left group cursor-pointer hover:opacity-90 transition-opacity min-w-0"
-                                  title={`View ${video.author?.name || 'Customer'}'s Profile`}
-                                >
-                                  <img
-                                    src={video.author?.avatar}
-                                    alt={video.author?.name}
-                                    className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
-                                    referrerPolicy="no-referrer"
-                                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
- <div className="min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
-                                        {video.author?.name || 'Customer Review'}
-                                      </span>
-                                      {isPinned && (
-                                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-bold tracking-wide flex items-center gap-1 border border-zinc-700">
-                                          <Pin className="w-2.5 h-2.5 fill-current text-white" /> Pinned
-                                        </span>
-                                      )}
-                                      {isHidden && (
-                                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-bold flex items-center gap-1 border border-zinc-700">
-                                          <EyeOff className="w-2.5 h-2.5" /> Hidden
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-200 flex-wrap">
-                                      <div className="flex items-center gap-0.5 text-amber-400">
-                                        {Array.from({ length: 5 }).map((_, i) => (
-                                          <Star
-                                            key={i}
-                                            className={`w-3.5 h-3.5 ${
-                                              i < (video.rating || 5)
-                                                ? 'fill-amber-400 text-amber-400'
-                                                : 'fill-zinc-800 text-zinc-700'
-                                            }`}
-                                          />
-                                        ))}
-                                      </div>
-                                      <span>•</span>
-                                      <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
-                                      {video.dishOrItem && (
-                                        <>
-                                          <span>•</span>
-                                          <span className="font-semibold text-zinc-200 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md text-[11px]">
-                                            {video.dishOrItem}
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
-                                </button>
-
-                                {/* Clean Action Group: Pin, Hide, Reply */}
-                                <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => togglePinVideo(video.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                                      isPinned
-                                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-2xs font-bold'
-                                        : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
-                                    }`}
-                                    title={isPinned ? 'Unpin from website widget' : 'Pin to top of website widget (Max 3)'}
-                                  >
-                                    <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current text-amber-400' : 'text-zinc-300'}`} />
-                                    <span>{isPinned ? 'Pinned' : 'Pin to Widget'}</span>
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleHideVideo(video.id)}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800"
-                                    title={isHidden ? 'Restore to website widget' : 'Hide from website widget'}
-                                  >
-                                    {isHidden ? <Eye className="w-3.5 h-3.5 text-zinc-200" /> : <EyeOff className="w-3.5 h-3.5 text-zinc-200" />}
-                                    <span>{isHidden ? 'Unhide' : 'Hide'}</span>
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleMarkReviewAsRead(video.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                                      seenReviewIds.has(video.id)
-                                        ? 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
-                                        : 'bg-zinc-800 text-zinc-200 border-zinc-700 hover:bg-zinc-700'
-                                    }`}
-                                    title={seenReviewIds.has(video.id) ? 'Review acknowledged. Click to toggle.' : 'Mark this review as reviewed'}
-                                  >
-                                    <Check className={`w-3.5 h-3.5 ${seenReviewIds.has(video.id) ? 'text-zinc-500' : 'text-zinc-300'}`} />
-                                    <span>{seenReviewIds.has(video.id) ? 'Reviewed' : 'Acknowledge'}</span>
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDownloadVideoForAds(video)}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
-                                    title="Export Ultra-HD branded 9:16 video review for TikTok, Meta & Google Ad campaigns"
-                                  >
-                                    <Download className="w-3.5 h-3.5 text-white" />
-                                    <span>Download for Ads</span>
-                                  </button>
-
-                                  {!hasReply && !isReplying && (
-                                    <button
-                                      onClick={() => {
-                                        setActiveReplyId(video.id);
-                                        setReplyText('');
-                                      }}
-                                      className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                                    >
-                                      <MessageSquare className="w-3.5 h-3.5" />
-                                      <span>Reply</span>
-                                    </button>
-                                  )}
-                                </div>
+                            {/* Main Content Column: Transcript, Action controls, and replies */}
+                            <div className="flex-1 min-w-0 space-y-3.5 w-full">
+                              
+                              {/* Desktop-only Author details */}
+                              <div className="hidden md:flex items-start justify-between gap-4">
+                                {authorInfoJSX}
                               </div>
 
                               {/* AI Transcribed Audio Caption Block */}
                               <div className="bg-zinc-900 rounded-2xl p-3.5 border border-zinc-800 space-y-1">
-                                <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-zinc-400 uppercase tracking-wider">
+                                <div className="flex items-center gap-1.5 text-[10px] sm:text-[10.5px] font-bold text-zinc-400 uppercase tracking-wider">
                                   <MessageSquare className="w-3 h-3 text-zinc-400" />
                                   <span>Transcript</span>
                                 </div>
-                                <p className="text-xs text-zinc-200 leading-relaxed font-medium">
+                                <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-medium">
                                   "{video.caption}"
                                 </p>
+                              </div>
+                              
+                              {/* Action Buttons: Responsive labels to guarantee layout consistency on mobile */}
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start sm:justify-end w-full pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => togglePinVideo(video.id)}
+                                  className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                    isPinned
+                                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-2xs font-bold'
+                                      : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+                                  }`}
+                                  title={isPinned ? 'Unpin from website widget' : 'Pin to top of website widget (Max 3)'}
+                                >
+                                  <Pin className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isPinned ? 'fill-current text-amber-400' : 'text-zinc-300'}`} />
+                                  <span className="hidden sm:inline">{isPinned ? 'Pinned' : 'Pin to Widget'}</span>
+                                  <span className="inline sm:hidden">{isPinned ? 'Pinned' : 'Pin'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => toggleHideVideo(video.id)}
+                                  className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800"
+                                  title={isHidden ? 'Restore to website widget' : 'Hide from website widget'}
+                                >
+                                  {isHidden ? <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-200" /> : <EyeOff className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-200" />}
+                                  <span>{isHidden ? 'Unhide' : 'Hide'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => toggleMarkReviewAsRead(video.id)}
+                                  className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                    seenReviewIds.has(video.id)
+                                      ? 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
+                                      : 'bg-zinc-800 text-zinc-200 border-zinc-700 hover:bg-zinc-700'
+                                  }`}
+                                  title={seenReviewIds.has(video.id) ? 'Review acknowledged. Click to toggle.' : 'Mark this review as reviewed'}
+                                >
+                                  <Check className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${seenReviewIds.has(video.id) ? 'text-zinc-500' : 'text-zinc-300'}`} />
+                                  <span className="hidden sm:inline">{seenReviewIds.has(video.id) ? 'Reviewed' : 'Acknowledge'}</span>
+                                  <span className="inline sm:hidden">{seenReviewIds.has(video.id) ? 'Reviewed' : 'Review'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadVideoForAds(video)}
+                                  className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
+                                  title="Export Ultra-HD branded 9:16 video review for TikTok, Meta & Google Ad campaigns"
+                                >
+                                  <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
+                                  <span className="hidden sm:inline">Download for Ads</span>
+                                  <span className="inline sm:hidden">Export</span>
+                                </button>
+
+                                {!hasReply && !isReplying && (
+                                  <button
+                                    onClick={() => {
+                                      setActiveReplyId(video.id);
+                                      setReplyText('');
+                                    }}
+                                    className="px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-[11px] sm:text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                  >
+                                    <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                    <span>Reply</span>
+                                  </button>
+                                )}
                               </div>
 
                               {/* Existing Owner Reply */}
