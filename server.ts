@@ -18181,6 +18181,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
     function initFonts() {
       if (fontBold && fontReg) return;
       const boldPaths = [
+        path.join(process.cwd(), 'assets', 'fonts', 'LiberationSans-Bold.ttf'),
+        path.join(process.cwd(), 'public', 'fonts', 'LiberationSans-Bold.ttf'),
         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
         '/usr/share/fonts/liberation/LiberationSans-Bold.ttf',
         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
@@ -18197,6 +18199,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
 
       const regPaths = [
+        path.join(process.cwd(), 'assets', 'fonts', 'LiberationSans-Regular.ttf'),
+        path.join(process.cwd(), 'public', 'fonts', 'LiberationSans-Regular.ttf'),
         '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
         '/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
         '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
@@ -18218,13 +18222,19 @@ app.get('/api/og-preview-v2', async (req, res) => {
     function renderTextPath(text: string, x: number, y: number, fontSize: number, isBold: boolean, fill: string): string {
       initFonts();
       const font = isBold ? (fontBold || fontReg) : (fontReg || fontBold);
-      if (!font || !text) return '';
-      try {
-        const p = font.getPath(text, x, y, fontSize);
-        return `<path d="${p.toPathData(2)}" fill="${fill}"/>`;
-      } catch (e) {
-        return '';
+      if (font && text) {
+        try {
+          const p = font.getPath(text, x, y, fontSize);
+          const pathData = p.toPathData(2);
+          if (pathData && pathData.length > 5) {
+            return `<path d="${pathData}" fill="${fill}"/>`;
+          }
+        } catch (e) {}
       }
+      if (!text) return '';
+      const esc = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const fw = isBold ? 'font-weight="bold"' : 'font-weight="normal"';
+      return `<text x="${x}" y="${y}" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" ${fw} font-size="${fontSize}" fill="${fill}">${esc}</text>`;
     }
 
     function getTextAdvanceWidth(text: string, fontSize: number, isBold: boolean): number {
@@ -19951,11 +19961,11 @@ function injectOpenGraphTags(html: string, meta: any) {
            thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
         }
 
-        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20260920_vec1`;
+        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20260920_vec2`;
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-image/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20260920_vec1`;
+        imageUrl = `${baseUrl}/api/og-image/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20260920_vec2`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
