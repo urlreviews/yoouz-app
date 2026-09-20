@@ -18317,17 +18317,17 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <!-- Gold Star Vector -->
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(18, 14) scale(1.2)"/>
               <!-- Place Name -->
-              <text x="54" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${safePlaceName}</text>
+              <text x="54" y="36" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${safePlaceName}</text>
               <!-- Rating Value -->
-              <text x="${ratingX}" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#fbbf24">${rating}</text>
+              <text x="${ratingX}" y="36" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#fbbf24">${rating}</text>
             </g>
 
             <!-- TOP RIGHT: Options Button Pill -->
             <g transform="translate(980, 44)">
               <rect width="172" height="56" rx="28" fill="#000000" fill-opacity="0.75" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-              <text x="74" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#ffffff">Options</text>
+              <text x="28" y="36" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#ffffff">Options</text>
               <!-- Chevron Right -->
-              <path d="M9 18l6-6-6-6" fill="none" stroke="#d1d5db" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(136, 17) scale(0.9)"/>
+              <path d="M9 18l6-6-6-6" fill="none" stroke="#d1d5db" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(118, 17) scale(0.9)"/>
             </g>
 
             <!-- CENTER: Frosted Glass Play Button -->
@@ -18342,11 +18342,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect width="${authorPillWidth}" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Avatar Circle (Green) -->
               <circle cx="38" cy="38" r="26" fill="#65a30d"/>
-              <text x="38" y="46" text-anchor="middle" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${authorInitial}</text>
+              <text x="38" y="46" text-anchor="middle" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${authorInitial}</text>
               <!-- Reviewer Name -->
-              <text x="76" y="33" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="21" font-weight="bold" fill="#ffffff">${safeAuthorName}</text>
+              <text x="76" y="33" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="21" font-weight="bold" fill="#ffffff">${safeAuthorName}</text>
               <!-- Subtitle -->
-              <text x="76" y="58" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="16" font-weight="500" fill="#cbd5e1">${safeAuthorName} • 60s Review</text>
+              <text x="76" y="58" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="16" font-weight="500" fill="#cbd5e1">${safeAuthorName} • 60s Review</text>
             </g>
 
             <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
@@ -18354,7 +18354,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect width="192" height="52" rx="26" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               <!-- Live Red Pulse Dot -->
               <circle cx="28" cy="26" r="6" fill="#ef4444"/>
-              <text x="46" y="33" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="19" font-weight="bold" fill="#ffffff">yoouz.com</text>
+              <text x="46" y="33" font-family="Liberation Sans, DejaVu Sans, FreeSans, Arial, sans-serif" font-size="19" font-weight="bold" fill="#ffffff">yoouz.com</text>
             </g>
           </svg>
         `;
@@ -19858,14 +19858,15 @@ function injectOpenGraphTags(html: string, meta: any) {
            thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
         }
 
-        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=15`;
+        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20`;
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-image.png?${queryParams}`;
-        videoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
-        type = "video.other";
-        twitterCard = "player";
+        imageUrl = `${baseUrl}/api/og-image/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20`;
+        const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
+        videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
+        type = "website";
+        twitterCard = "summary_large_image";
         embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(videoId)}`;
             
         structuredData = {
@@ -19878,7 +19879,7 @@ function injectOpenGraphTags(html: string, meta: any) {
               "thumbnailUrl": [imageUrl, foundVideo?.videoThumbnail || foundVideo?.thumbnailUrl || imageUrl].filter(Boolean),
               "uploadDate": foundVideo?.createdAt || new Date().toISOString(),
               "duration": "PT60S",
-              "contentUrl": videoUrl,
+              "contentUrl": rawVideoUrl,
               "embedUrl": embedUrl,
               "author": {
                 "@type": "Person",
