@@ -1894,7 +1894,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   const copyEmbedCode = () => {
     const embedSlug = getPlaceSlug(currentPlace);
-    const iframeSnippet = `<iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
+    const iframeSnippet = `<iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="600" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%;"></iframe>`;
     navigator.clipboard.writeText(iframeSnippet);
     setIsCodeCopied(true);
     setTimeout(() => setIsCodeCopied(false), 2500);
@@ -3494,7 +3494,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 font-mono text-xs">
                       <pre className="text-[10.5px] sm:text-[11px] text-zinc-300 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
-                        {`<iframe src="https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`}
+                        {`<iframe src="https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}" width="100%" height="600" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%;"></iframe>`}
                       </pre>
                     </div>
 
