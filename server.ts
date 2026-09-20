@@ -18504,7 +18504,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     }
 
     // Dedicated clean routes for direct social scraper access
-    app.get(['/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -18516,7 +18516,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
         res.setHeader("Content-Type", "image/png");
         res.setHeader("Content-Length", imgBuf.length);
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
         return res.end(imgBuf);
       } catch (e: any) {
         console.error("Direct Video OG Image Error:", e);
@@ -18618,7 +18620,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Content-Length", finalImage.length);
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
       return res.end(finalImage);
     }
 
@@ -18864,7 +18868,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Content-Length", finalImage.length);
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
       return res.end(finalImage);
     }
 
@@ -19961,11 +19967,11 @@ function injectOpenGraphTags(html: string, meta: any) {
            thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
         }
 
-        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20260920_vec2`;
+        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=3`;
         if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
-        imageUrl = `${baseUrl}/api/og-image/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=20260920_vec2`;
+        imageUrl = `${baseUrl}/api/og-card/v3/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=3`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
