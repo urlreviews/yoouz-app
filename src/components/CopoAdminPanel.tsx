@@ -1935,7 +1935,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     business_cover_banner_sync_storage_guard: "38. Business Profile Cover Banner Instant Sync & Storage Asset Purge Guard",
                     realtime_stream_sse_stability_guard: "39. Real-Time Stream & SSE Connection Stability Guard",
                     universal_resource_api_telemetry_guard: "40. Universal Application & Resource Error Telemetry Guard",
-                    mobile_user_profile_location_layout_stability_guard: "41. Mobile User Profile Location Layout Stability & Anti-Flicker Guard"
+                    mobile_user_profile_location_layout_stability_guard: "41. Mobile User Profile Location Layout Stability & Anti-Flicker Guard",
+                    video_author_user_attribution_integrity_guard: "42. Video Review Author Identity & User Attribution Anti-Collision Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1979,7 +1980,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     business_cover_banner_sync_storage_guard: "🖼️",
                     realtime_stream_sse_stability_guard: "⚡",
                     universal_resource_api_telemetry_guard: "🛡️",
-                    mobile_user_profile_location_layout_stability_guard: "📍"
+                    mobile_user_profile_location_layout_stability_guard: "📍",
+                    video_author_user_attribution_integrity_guard: "🎬"
                   };
 
                   return (

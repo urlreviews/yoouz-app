@@ -1,6 +1,7 @@
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./logoUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
+import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
 export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v30";
 
@@ -598,6 +599,32 @@ export function isAuthorMatch(
   const vName = (video.author?.name || "").trim().toLowerCase();
   const vUserId = (video.userId || "").trim().toLowerCase();
 
+  // Strict Canonical User Cluster Anti-Collision Guard
+  const targetCluster = getCanonicalUserKey({
+    email: targetEmail,
+    name: targetName,
+    handle: targetHandle,
+    id: targetUserId || targetUid
+  });
+  const videoCluster = getCanonicalUserKey({
+    email: vEmail,
+    name: vName,
+    handle: vHandle,
+    id: vUserId
+  });
+
+  if (targetCluster && videoCluster && targetCluster.startsWith("user_group_") && videoCluster.startsWith("user_group_")) {
+    if (targetCluster !== videoCluster) {
+      return false; // Hard barrier: completely forbids matching between distinct known accounts
+    }
+    return true; // Exact cluster match
+  }
+
+  // Prevent distinct valid emails from matching
+  if (targetEmail.includes("@") && vEmail.includes("@") && targetEmail !== vEmail) {
+    return false;
+  }
+
   // 1. Direct handle match
   if (targetHandle && vHandle && targetHandle === vHandle) return true;
 
@@ -1104,6 +1131,28 @@ export function resolveSafeAuthor(
 
   // 4. Resolve authentic candidate avatar
   let candidateAvatar = registryMatch?.avatar || authorObj.avatar || (video as any)?.authorAvatar || (video as any)?.avatar;
+
+  // Strict canonical identity verification
+  const videoCluster = getCanonicalUserKey({
+    email: video?.userEmail || video?.userId,
+    name: rawName,
+    handle: authorObj.handle,
+    id: video?.userId
+  });
+
+  if (videoCluster === "user_group_aouisesmee") {
+    finalName = "Ben Blue";
+    finalHandle = "@benblue";
+    if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("7CB342") || candidateAvatar.includes("%237CB342")) {
+      candidateAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+    }
+  } else if (videoCluster === "user_group_stevenakan") {
+    finalName = "Steven Akan";
+    finalHandle = "@stevenakan";
+    if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("1E88E5") || candidateAvatar.includes("%231E88E5") || candidateAvatar.includes("00897B") || candidateAvatar.includes("%2300897B")) {
+      candidateAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+    }
+  }
 
   // Filter out invalid video file paths mistakenly passed as avatars
   if (
