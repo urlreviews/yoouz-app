@@ -214,10 +214,29 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Automatically scroll main content area back to top when switching tabs
   useEffect(() => {
-    if (mainScrollRef.current) {
-      mainScrollRef.current.scrollTop = 0;
-    }
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const resetScroll = () => {
+      if (mainScrollRef.current) {
+        mainScrollRef.current.scrollTop = 0;
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (typeof document !== 'undefined') {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        const dashboardEl = document.querySelector('.copo-business-dashboard');
+        if (dashboardEl) {
+          dashboardEl.scrollTop = 0;
+        }
+      }
+    };
+
+    resetScroll();
+    const frameId = requestAnimationFrame(resetScroll);
+    const timerId = setTimeout(resetScroll, 50);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timerId);
+    };
   }, [activeTab]);
 
   const [verifiedBusinessSession, setVerifiedBusinessSession] = useState<BusinessSession | null>(() => {

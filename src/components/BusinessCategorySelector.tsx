@@ -108,7 +108,6 @@ export const BusinessCategorySelector: React.FC<BusinessCategorySelectorProps> =
             onChange={(e) => handleCustomChange(e.target.value.slice(0, 50))}
             placeholder="e.g. Technology Company, AI Research Studio, Specialty Matcha Bar..."
             className="w-full bg-zinc-950 border border-zinc-700/90 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-zinc-400 transition-all placeholder:text-zinc-500"
-            autoFocus
           />
           <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
             <span className="text-[10px] text-zinc-400 font-medium pl-1">Quick Suggestions:</span>
