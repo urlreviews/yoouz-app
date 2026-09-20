@@ -551,27 +551,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             {/* FULL SOCIAL PREVIEW CARD (Mobile & Desktop) */}
             <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
               <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
-                {/* Fallback image or direct thumbnail background */}
-                {localPreviewBg && (
-                  <img
-                    src={localPreviewBg}
-                    alt={title}
-                    className="absolute inset-0 w-full h-full object-cover filter brightness-90"
-                  />
-                )}
-
-                {/* Server OG dynamic image overlay */}
+                {/* Clean background thumbnail without duplicate image stacking */}
                 <img
-                  src={previewImageUrl}
-                  alt={`${title} Social Card`}
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                    imageLoaded && !imageError ? "opacity-100" : localPreviewBg ? "opacity-0" : "opacity-100"
-                  }`}
-                  onLoad={() => setImageLoaded(true)}
-                  onError={() => {
-                    setImageError(true);
-                    setImageLoaded(true);
-                  }}
+                  src={localPreviewBg || previewImageUrl}
+                  alt={title}
+                  className="absolute inset-0 w-full h-full object-cover filter brightness-95"
                 />
 
                 {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}

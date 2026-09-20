@@ -18289,49 +18289,60 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0.60" />
-                <stop offset="35%" stop-color="#000000" stop-opacity="0.10" />
-                <stop offset="65%" stop-color="#000000" stop-opacity="0.25" />
-                <stop offset="100%" stop-color="#000000" stop-opacity="0.90" />
+                <stop offset="0%" stop-color="#000000" stop-opacity="0.65" />
+                <stop offset="25%" stop-color="#000000" stop-opacity="0.08" />
+                <stop offset="70%" stop-color="#000000" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="#000000" stop-opacity="0.88" />
               </linearGradient>
             </defs>
-            <rect width="1200" height="630" fill="url(#vignette)"/>
             
-            <!-- Center Glowing Play Button -->
-            <g transform="translate(540, 255)">
-              <circle cx="60" cy="60" r="56" fill="#000000" fill-opacity="0.65"/>
-              <circle cx="60" cy="60" r="55" fill="none" stroke="#ffffff" stroke-opacity="0.85" stroke-width="2.5"/>
-              <path d="M48 38 L84 60 L48 82 Z" fill="#ffffff"/>
-            </g>
+            <!-- Vignette backdrop -->
+            <rect width="1200" height="630" fill="url(#vignette)"/>
 
-            <!-- Top Left: Place Name & Rating Pill -->
+            <!-- TOP LEFT: Place & Rating Pill -->
             <g transform="translate(48, 44)">
-              <rect width="420" height="58" rx="29" fill="#09090b" fill-opacity="0.85" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-              <g transform="translate(20, 15)">
-                <!-- Gold Star -->
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="scale(1.2) translate(-2, -1)"/>
-              </g>
-              <text x="56" y="37" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" fill="#ffffff">${safePlaceName}</text>
-              <text x="350" y="37" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="700" fill="#fbbf24">${rating} ★</text>
+              <rect width="360" height="56" rx="28" fill="#000000" fill-opacity="0.75" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <!-- Gold Star Vector -->
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(18, 14) scale(1.2)"/>
+              <!-- Place Name -->
+              <text x="54" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${safePlaceName}</text>
+              <!-- Rating Value -->
+              <text x="300" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#fbbf24">${rating}</text>
             </g>
 
-            <!-- Top Right: Yoouz Brand Pill -->
-            <g transform="translate(1010, 44)">
-              <rect width="142" height="58" rx="29" fill="#09090b" fill-opacity="0.85" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-              <text x="71" y="36" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="800" fill="#ffffff" letter-spacing="2">YOOUZ</text>
+            <!-- TOP RIGHT: Options Button Pill -->
+            <g transform="translate(980, 44)">
+              <rect width="172" height="56" rx="28" fill="#000000" fill-opacity="0.75" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <text x="74" y="36" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="20" font-weight="bold" fill="#ffffff">Options</text>
+              <!-- Chevron Right -->
+              <path d="M9 18l6-6-6-6" fill="none" stroke="#d1d5db" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(136, 17) scale(0.9)"/>
             </g>
 
-            <!-- Bottom Left: Speaker / Reviewer Info Pill -->
-            <g transform="translate(48, 498)">
-              <rect width="560" height="84" rx="42" fill="#09090b" fill-opacity="0.90" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-              <!-- Author Avatar Circle -->
-              <circle cx="44" cy="42" r="28" fill="#2563eb"/>
-              <text x="44" y="51" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="800" fill="#ffffff">${authorInitial}</text>
-              
-              <!-- Speaker Name -->
-              <text x="88" y="36" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" fill="#ffffff">${safeAuthorName}</text>
-              <!-- Subtitle & Domain -->
-              <text x="88" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="600" fill="#9ca3af">${safeAuthorName} • 60s Review  <tspan fill="#3b82f6">●</tspan>  ${domainName}</text>
+            <!-- CENTER: Frosted Glass Play Button -->
+            <g transform="translate(540, 255)">
+              <circle cx="60" cy="60" r="58" fill="#000000" fill-opacity="0.55"/>
+              <circle cx="60" cy="60" r="57" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2.5"/>
+              <path d="M50 40 L80 60 L50 80 Z" fill="#ffffff"/>
+            </g>
+
+            <!-- BOTTOM LEFT: Reviewer Profile Pill -->
+            <g transform="translate(48, 510)">
+              <rect width="480" height="76" rx="38" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <!-- Avatar Circle (Green) -->
+              <circle cx="38" cy="38" r="26" fill="#65a30d"/>
+              <text x="38" y="46" text-anchor="middle" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">${authorInitial}</text>
+              <!-- Reviewer Name -->
+              <text x="76" y="33" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="21" font-weight="bold" fill="#ffffff">${safeAuthorName}</text>
+              <!-- Subtitle -->
+              <text x="76" y="58" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="16" font-weight="500" fill="#cbd5e1">${safeAuthorName} • 60s Review</text>
+            </g>
+
+            <!-- BOTTOM RIGHT: yoouz.com Watermark Pill -->
+            <g transform="translate(960, 524)">
+              <rect width="192" height="52" rx="26" fill="#000000" fill-opacity="0.78" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <!-- Live Red Pulse Dot -->
+              <circle cx="28" cy="26" r="6" fill="#ef4444"/>
+              <text x="46" y="33" font-family="Liberation Sans, FreeSans, Arial, sans-serif" font-size="19" font-weight="bold" fill="#ffffff">yoouz.com</text>
             </g>
           </svg>
         `;
@@ -18339,11 +18350,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
         return await sharp(thumbBuf)
           .resize(1200, 630, { fit: 'cover', position: 'center' })
           .composite([{ input: Buffer.from(overlaySvg), top: 0, left: 0 }])
-          .png({ quality: 90 })
+          .png({ quality: 92 })
           .toBuffer();
       }
 
-      // Elegant cinema fallback card if no video thumbnail is available
+      // Clean cinema fallback card if no video thumbnail is available
       const fallbackCinemaSvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -18352,39 +18363,21 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <stop offset="50%" stop-color="#121217" />
               <stop offset="100%" stop-color="#181820" />
             </linearGradient>
-            <radialGradient id="centerRedGlow" cx="50%" cy="50%" r="50%">
+            <radialGradient id="centerBlueGlow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25" />
               <stop offset="60%" stop-color="#2563eb" stop-opacity="0.05" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
             </radialGradient>
           </defs>
           <rect width="1200" height="630" fill="url(#bgCinema)"/>
-          <circle cx="600" cy="315" r="320" fill="url(#centerRedGlow)"/>
+          <circle cx="600" cy="315" r="320" fill="url(#centerBlueGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
           <!-- Centered Play Icon -->
-          <g transform="translate(540, 240)">
+          <g transform="translate(540, 255)">
             <circle cx="60" cy="60" r="60" fill="#2563eb" fill-opacity="0.9"/>
             <circle cx="60" cy="60" r="57" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="3"/>
             <path d="M48 38 L84 60 L48 82 Z" fill="#ffffff"/>
-          </g>
-
-          <!-- Top Brand Pill -->
-          <g transform="translate(48, 48)">
-            <rect width="150" height="46" rx="23" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
-            <text x="75" y="29" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="800" fill="#ffffff" letter-spacing="1.5">YOOUZ</text>
-          </g>
-
-          <!-- Top Place Pill -->
-          <g transform="translate(732, 48)">
-            <rect width="420" height="52" rx="26" fill="#18181b" stroke="#3f3f46" stroke-width="1.5"/>
-            <text x="210" y="33" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="700" fill="#ffffff">${safePlaceName} • ${rating} ★</text>
-          </g>
-
-          <!-- Bottom Review Pill -->
-          <g transform="translate(360, 480)">
-            <rect width="480" height="68" rx="34" fill="#18181b" stroke="#3f3f46" stroke-width="2"/>
-            <text x="240" y="42" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#ffffff">${safeAuthorName} • 60s Video Review</text>
           </g>
         </svg>
       `;
