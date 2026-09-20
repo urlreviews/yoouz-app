@@ -737,8 +737,8 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     name: formatBusinessName(video.placeName || domain) || "Verified Business",
     category: video.placeCategory || "Establishment",
     categoryType: "all",
-    address: video.placeAddress || "Online / Verified",
-    city: video.placeCity || "Global",
+    address: video.placeAddress || "",
+    city: video.placeCity || "",
     lat: 0,
     lng: 0,
     rating: video.rating || 5.0,
@@ -1445,9 +1445,6 @@ export function recordDeletedPlacesInLocalStorage(variants: string[]): string[] 
  * Verified headquarters and coordinates for known entities to guarantee 100% pin accuracy in Google Maps previews
  */
 export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; city?: string; state?: string; country?: string; lat?: number; lng?: number }> = {
-  "yoouz.com": { address: "1111 Lincoln Rd", city: "Miami Beach", state: "FL", country: "United States", lat: 25.7907, lng: -80.1408 },
-  "yoouz": { address: "1111 Lincoln Rd", city: "Miami Beach", state: "FL", country: "United States", lat: 25.7907, lng: -80.1408 },
-  "www.yoouz.com": { address: "1111 Lincoln Rd", city: "Miami Beach", state: "FL", country: "United States", lat: 25.7907, lng: -80.1408 },
   "lernerandrowe.com": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowe": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowelaw": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
@@ -1648,8 +1645,6 @@ export function getGoogleMapsEmbedUrl(place?: Partial<Place> | null, customDispl
       lat = 48.8566; lng = 2.3522;
     } else if (cName.includes("auckland")) {
       lat = -36.8485; lng = 174.7633;
-    } else if (placeKey.includes("yoouz")) {
-      lat = 25.7907; lng = -80.1408;
     } else {
       // Default to high-density center (New York Manhattan) so the map is never empty or pointing to 0,0 Null Island
       lat = 40.7128; lng = -74.0060;

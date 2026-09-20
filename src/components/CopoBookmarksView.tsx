@@ -312,8 +312,12 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                             <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
                             <span>{place.rating?.toFixed(1) || "5.0"} ({place.totalReviews || 0})</span>
                           </div>
-                          <span className="text-zinc-750">|</span>
-                          <span className="truncate">{place.address || place.city}</span>
+                          {(place.city || place.address || place.brandDomain || place.website) && (
+                            <>
+                              <span className="text-zinc-750">|</span>
+                              <span className="truncate">{place.city || place.address || place.brandDomain || (place.website ? place.website.replace(/^https?:\/\//, '') : "")}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -192,9 +192,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
      place.address.includes(".com") ||
      place.address.includes(".fr") ||
      place.address.includes(".co.il") ||
-     place.address.includes(".net"))
+     place.address.includes(".net") ||
+     place.address.toLowerCase().startsWith("official domain:") ||
+     place.address.toLowerCase().includes("online") ||
+     place.address.toLowerCase().includes("global headquarters"))
   );
-  const displayAddress = isAddressUrl ? null : place.address;
+  const displayAddress = (isAddressUrl || !place.address || place.address.trim() === "") ? null : place.address;
+
+  const hasPhysicalLocation = Boolean(
+    (displayAddress && displayAddress.trim() !== "") ||
+    (place.city && 
+     place.city.trim() !== "" && 
+     !["online", "global", "worldwide", "global headquarters", "n/a"].includes(place.city.toLowerCase().trim()))
+  );
 
   const rawPlaceVideos = allVideos.filter((v) => isPlaceReviewMatch(v, place));
 
@@ -804,14 +814,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </>
           )}
           
-          {((place.city && place.city !== "Online") || place.country) && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-zinc-700">·</span>
-              <span className="text-zinc-200 text-xs font-medium">
-                {place.city !== "Online" ? place.city : ""}{place.city && place.city !== "Online" && place.country ? ", " : ""}{place.country}
-              </span>
-            </div>
-          )}
+          {(() => {
+            const invalidLocations = ["online", "global", "worldwide", "global headquarters", "n/a"];
+            const validCity = place.city && !invalidLocations.includes(place.city.toLowerCase().trim()) ? place.city.trim() : "";
+            const validCountry = place.country && !invalidLocations.includes(place.country.toLowerCase().trim()) ? place.country.trim() : "";
+            if (!validCity && !validCountry) return null;
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className="text-zinc-700">·</span>
+                <span className="text-zinc-200 text-xs font-medium">
+                  {validCity}{validCity && validCountry ? ", " : ""}{validCountry}
+                </span>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
@@ -856,15 +872,29 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div ref={contentRef} className="flex-1 overflow-y-auto divide-y divide-zinc-800 bg-zinc-950" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
           {/* Action Buttons Row */}
           <div className="px-4 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-1 sm:gap-2">
-            <button
-              onClick={handleOpenDirections}
-              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
-                <Navigation className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-[11px] text-white">{t("place.directions", "Directions")}</span>
-            </button>
+            {hasPhysicalLocation ? (
+              <button
+                onClick={handleOpenDirections}
+                className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
+                  <Navigation className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-bold text-[11px] text-white">{t("place.directions", "Directions")}</span>
+              </button>
+            ) : place.website ? (
+              <a
+                href={place.website.startsWith("http") ? place.website : `https://${place.website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
+                  <Globe className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-bold text-[11px] text-white">{t("place.website", "Website")}</span>
+              </a>
+            ) : null}
 
             <button
               onClick={() => onToggleGrabPlace && onToggleGrabPlace(place)}
@@ -1110,19 +1140,21 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
                   
                   {/* Address Line */}
-                  <div className="px-5 py-3.5 flex items-start justify-between gap-3 hover:bg-zinc-900 transition-colors animate-in slide-in-from-top-1 duration-200">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
-                      <div className="text-xs space-y-0.5">
-                        <p className="text-zinc-200 font-medium leading-relaxed">
-                          {displayAddress || t("place.addressNotProvided", "Address not provided")}
-                        </p>
-                        {place.locatedIn && !isAddressUrl && (
-                          <p className="text-zinc-200 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
-                        )}
+                  {displayAddress && (
+                    <div className="px-5 py-3.5 flex items-start justify-between gap-3 hover:bg-zinc-900 transition-colors animate-in slide-in-from-top-1 duration-200">
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
+                        <div className="text-xs space-y-0.5">
+                          <p className="text-zinc-200 font-medium leading-relaxed">
+                            {displayAddress}
+                          </p>
+                          {place.locatedIn && !isAddressUrl && (
+                            <p className="text-zinc-200 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Hours Line */}
                   <div className="px-5 py-3.5 hover:bg-zinc-900 transition-colors">
@@ -1424,36 +1456,61 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </p>
               </div>
 
-              {/* Maps Integration */}
-              <div className="pt-2">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-bold text-zinc-200">{t("place.locationMap", "Location Map")}</h4>
-                  <button onClick={handleOpenDirections} className="text-[10px] text-zinc-200 hover:text-white font-bold hover:underline flex items-center gap-1">
-                    <Navigation className="w-3 h-3" />
-                    {t("place.getDirections", "Get Directions")}
-                  </button>
-                </div>
-                <div className="w-full h-[200px] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer relative group" onClick={handleOpenDirections}>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
-                     <div className="bg-zinc-900 px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">{t("place.openInMaps", "Open in Maps")}</div>
+              {/* Maps Integration for physical places, or Online Presence for websites */}
+              {hasPhysicalLocation ? (
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-bold text-zinc-200">{t("place.locationMap", "Location Map")}</h4>
+                    <button onClick={handleOpenDirections} className="text-[10px] text-zinc-200 hover:text-white font-bold hover:underline flex items-center gap-1">
+                      <Navigation className="w-3 h-3" />
+                      {t("place.getDirections", "Get Directions")}
+                    </button>
                   </div>
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    frameBorder="0" 
-                    style={{ border: 0, pointerEvents: 'none' }} 
-                    referrerPolicy="no-referrer-when-downgrade" 
-                    src={getGoogleMapsEmbedUrl(place, displayedPlaceName)}
-                    title="Google Maps Location"
-                  />
+                  <div className="w-full h-[200px] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer relative group" onClick={handleOpenDirections}>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
+                       <div className="bg-zinc-900 px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">{t("place.openInMaps", "Open in Maps")}</div>
+                    </div>
+                    <iframe 
+                      width="100%" 
+                      height="100%" 
+                      frameBorder="0" 
+                      style={{ border: 0, pointerEvents: 'none' }} 
+                      referrerPolicy="no-referrer-when-downgrade" 
+                      src={getGoogleMapsEmbedUrl(place, displayedPlaceName)}
+                      title="Google Maps Location"
+                    />
+                  </div>
+                  {displayAddress && (
+                     <div className="flex items-start gap-2 mt-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800">
+                       <MapPin className="w-4 h-4 text-zinc-200 shrink-0 mt-0.5" />
+                       <p className="text-xs text-zinc-200 font-medium">{displayAddress}</p>
+                     </div>
+                  )}
                 </div>
-                {place.address && !place.address.includes("://") && !place.address.includes("www.") && !place.address.endsWith(".com") && !place.address.toLowerCase().startsWith("official domain:") && (
-                   <div className="flex items-start gap-2 mt-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800">
-                     <MapPin className="w-4 h-4 text-zinc-200 shrink-0 mt-0.5" />
-                     <p className="text-xs text-zinc-200 font-medium">{place.address}</p>
-                   </div>
-                )}
-              </div>
+              ) : place.website ? (
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-bold text-zinc-200">{t("place.onlinePresence", "Online Presence")}</h4>
+                  </div>
+                  <a
+                    href={place.website.startsWith("http") ? place.website : `https://${place.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-4 bg-zinc-900/80 hover:bg-zinc-900 rounded-2xl border border-zinc-800 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-white border border-zinc-700">
+                        <Globe className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">{t("place.visitOfficialWebsite", "Visit Official Website")}</p>
+                        <p className="text-xs text-zinc-400 truncate max-w-[200px] sm:max-w-xs">{displayWebsiteClean || place.website}</p>
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+                  </a>
+                </div>
+              ) : null}
 
               <div className="pt-2 space-y-2">
                 <h4 className="text-xs font-bold text-zinc-200">{t("place.accessibilityServices", "Accessibility & Services")}</h4>

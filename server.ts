@@ -4539,8 +4539,9 @@ app.get('/api/nosql/:collection', async (req, res) => {
           name: 'Yoouz',
           category: 'Video Reviews & Discovery Platform',
           categoryType: 'business',
-          address: 'Global Headquarters • yoouz.com',
-          city: 'Brussels',
+          address: '',
+          city: '',
+          country: '',
           rating: 5.0,
           totalReviews: 1,
           website: 'https://yoouz.com',
@@ -7266,8 +7267,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       let coordinatesCount = 0;
 
       const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; city: string; country: string; lat: number; lng: number }> = {
-        "yoouz.com": { name: "Yoouz", address: "1111 Lincoln Rd", city: "Miami Beach, FL", country: "United States", lat: 25.7907, lng: -80.1408 },
-        "yoouz": { name: "Yoouz", address: "1111 Lincoln Rd", city: "Miami Beach, FL", country: "United States", lat: 25.7907, lng: -80.1408 },
         "legal500.com": { name: "The Legal 500", address: "225-227 St John St", city: "London", country: "United Kingdom", lat: 51.5245, lng: -0.1037 },
         "paulpowell.com": { name: "The Paul Powell Law Firm", address: "8918 Spanish Ridge Ave #100", city: "Las Vegas, NV", country: "United States", lat: 36.1042, lng: -115.2863 },
         "jbsimonslaw.com": { name: "Simons Law Office", address: "75 Arlington St #500", city: "Boston, MA", country: "United States", lat: 42.3512, lng: -71.0700 },
@@ -8517,9 +8516,9 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         name: "Yoouz",
         category: "Video Reviews Platform",
         categoryType: "all",
-        address: "yoouz.com",
-        city: "Worldwide",
-        country: "Global",
+        address: "",
+        city: "",
+        country: "",
         lat: 0,
         lng: 0,
         rating: 5,
@@ -8918,8 +8917,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       // 7. Update all existing places and video reviews to replace "Verified Location" / URLs in address with real addresses or clean queries
       const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; city: string; country: string; lat: number; lng: number }> = {
-        "yoouz.com": { name: "Yoouz", address: "1111 Lincoln Rd", city: "Miami Beach, FL", country: "United States", lat: 25.7907, lng: -80.1408 },
-        "yoouz": { name: "Yoouz", address: "1111 Lincoln Rd", city: "Miami Beach, FL", country: "United States", lat: 25.7907, lng: -80.1408 },
         "legal500.com": { name: "The Legal 500", address: "225-227 St John St", city: "London", country: "United Kingdom", lat: 51.5245, lng: -0.1037 },
         "paulpowell.com": { name: "The Paul Powell Law Firm", address: "8918 Spanish Ridge Ave #100", city: "Las Vegas, NV", country: "United States", lat: 36.1042, lng: -115.2863 },
         "jbsimonslaw.com": { name: "Simons Law Office", address: "75 Arlington St #500", city: "Boston, MA", country: "United States", lat: 42.3512, lng: -71.0700 },
@@ -9007,7 +9004,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           let lng = Number(p.longitude || parsed.lng || 0);
           if (lat === 0 && lng === 0) {
             const cityName = String(p.city || parsed.city || "").toLowerCase().trim();
-            if (cityName.includes("miami") || pid.includes("yoouz")) {
+            if (cityName.includes("miami")) {
               lat = 25.7907; lng = -80.1408;
             } else if (cityName.includes("las vegas") || cityName.includes("vegas")) {
               lat = 36.1699; lng = -115.1398;
@@ -9037,6 +9034,31 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           }
         }
       }
+
+      // Guarantee that online web platforms without physical addresses (like yoouz.com) have clean empty location fields in BunnyDB
+      try {
+        await bunnyDb.execute({
+          sql: `UPDATE places SET address = '', city = '', country = '', latitude = 0, longitude = 0 WHERE id LIKE '%yoouz%' OR brandDomain = 'yoouz.com'`,
+          args: []
+        });
+        const yReviews = await bunnyDb.execute({
+          sql: `SELECT id, data FROM videoReviews WHERE placeId LIKE '%yoouz%'`,
+          args: []
+        });
+        if (yReviews && yReviews.rows) {
+          for (const yRow of yReviews.rows as any[]) {
+            try {
+              const parsed = typeof yRow.data === 'string' ? JSON.parse(yRow.data) : (yRow.data || {});
+              parsed.placeAddress = "";
+              parsed.placeCity = "";
+              await bunnyDb.execute({
+                sql: `UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [JSON.stringify(parsed), String(yRow.id)]
+              });
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
 
       console.log(`✅ [Migration] Completed business place canonicalization & video review sync!`);
     } catch (err: any) {
@@ -13450,7 +13472,8 @@ app.post("/api/videos/save-review", async (req, res) => {
               name: matchedPlaceName,
               category: isYoouz ? 'Video Reviews Platform' : 'Verified Business',
               categoryType: 'services',
-              city: isYoouz ? 'Brussels' : 'Global Headquarters',
+              city: '',
+              country: '',
               rating: 5.0,
               reviewCount: 0,
               website: `https://${rawDomain || 'yoouz.com'}`,
@@ -13458,7 +13481,7 @@ app.post("/api/videos/save-review", async (req, res) => {
               description: isYoouz 
                 ? 'Official verified business profile for Yoouz. 100% authentic 60-second video reviews.' 
                 : `Official verified business profile for ${matchedPlaceName}.`,
-              address: isYoouz ? 'Global Headquarters • yoouz.com' : `Official Domain: ${rawDomain}`,
+              address: '',
               isClaimed: true,
               isVerified: true,
               claimedByEmail: cleanEmail,
@@ -13467,7 +13490,7 @@ app.post("/api/videos/save-review", async (req, res) => {
             };
             await bunnyDb.execute({
               sql: `INSERT INTO places (id, name, city, category, data, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-              args: [matchedPlaceId, matchedPlaceName, isYoouz ? 'Brussels' : 'Global Headquarters', isYoouz ? 'Video Reviews Platform' : 'Verified Business', JSON.stringify(placeRecord)]
+              args: [matchedPlaceId, matchedPlaceName, '', isYoouz ? 'Video Reviews Platform' : 'Verified Business', JSON.stringify(placeRecord)]
             });
           }
         }

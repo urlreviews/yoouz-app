@@ -3348,7 +3348,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               {place.name}
                             </h3>
                             <p className="text-xs text-zinc-400 truncate mt-0.5">
-                              {place.category} • {place.city || place.address}
+                              {place.category}{place.city || place.address ? ` • ${place.city || place.address}` : (place.brandDomain || place.website ? ` • ${place.brandDomain || place.website}` : "")}
                             </p>
                           </div>
                         </div>
