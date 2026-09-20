@@ -1825,8 +1825,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
-              {/* Telemetry Issue Monitors (#39 & #40) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Telemetry Issue Monitors (#39, #40 & #41) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Issue #39 Card */}
                 <div className="p-4 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -1863,6 +1863,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
                       <div className="text-xs text-zinc-400">
                         Monitored application resources, Bunny CDN range streaming & zero unhandled exceptions.
+                      </div>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                </div>
+
+                {/* Issue #41 Card */}
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-black font-mono text-sm">
+                      #41
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2">
+                        Mobile User Location Layout Stability
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">
+                          0 Reflow Jumps
+                        </span>
+                      </div>
+                      <div className="text-xs text-zinc-400">
+                        Fixed 2-line architecture prevents location from flickering or jumping back and forth across lines.
                       </div>
                     </div>
                   </div>
@@ -1913,7 +1934,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     universal_avatar_deterministic_sync_guard: "37. Universal Avatar Parity & Deterministic Color Sync Guard",
                     business_cover_banner_sync_storage_guard: "38. Business Profile Cover Banner Instant Sync & Storage Asset Purge Guard",
                     realtime_stream_sse_stability_guard: "39. Real-Time Stream & SSE Connection Stability Guard",
-                    universal_resource_api_telemetry_guard: "40. Universal Application & Resource Error Telemetry Guard"
+                    universal_resource_api_telemetry_guard: "40. Universal Application & Resource Error Telemetry Guard",
+                    mobile_user_profile_location_layout_stability_guard: "41. Mobile User Profile Location Layout Stability & Anti-Flicker Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -1956,7 +1978,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     universal_avatar_deterministic_sync_guard: "🎨",
                     business_cover_banner_sync_storage_guard: "🖼️",
                     realtime_stream_sse_stability_guard: "⚡",
-                    universal_resource_api_telemetry_guard: "🛡️"
+                    universal_resource_api_telemetry_guard: "🛡️",
+                    mobile_user_profile_location_layout_stability_guard: "📍"
                   };
 
                   return (

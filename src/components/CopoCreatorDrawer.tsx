@@ -873,23 +873,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-x-2 gap-y-1 flex-nowrap text-sm text-zinc-300 min-h-[22px]">
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-zinc-200 font-medium">
+          <div className="space-y-1">
+            {/* Line 1: Review count & Follower count */}
+            <div className="flex items-center gap-2 text-sm text-zinc-300 font-medium">
+              <span className="text-zinc-200">
                 {authorVideos.length} {authorVideos.length === 1 ? t("place.review", "review") : t("place.reviews", "reviews")}
               </span>
-              <span className="text-zinc-700">·</span>
-              <span className="text-zinc-200 font-medium">
+              <span className="text-zinc-600">·</span>
+              <span className="text-zinc-200">
                 {author.followersCount || 0} {t("profile.followers", "followers")}
               </span>
             </div>
+
+            {/* Line 2: Dedicated solid location line strictly below stats */}
             {displayLocation && (
-              <div className="flex items-center gap-1.5 min-w-0 max-w-full">
-                <span className="text-zinc-700 hidden sm:inline">·</span>
-                <span className="text-zinc-300 text-xs font-medium flex items-center gap-1 truncate">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  <span className="truncate">{displayLocation}</span>
-                </span>
+              <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium min-w-0 max-w-full">
+                <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                <span className="truncate">{displayLocation}</span>
               </div>
             )}
           </div>
