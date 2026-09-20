@@ -3811,20 +3811,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   </div>
 
                   {/* Clean Primary Action Pair */}
-                  <div className="w-full mt-4 grid grid-cols-2 gap-3">
+                  <div className="w-full mt-4 flex flex-col sm:grid sm:grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={downloadQRCode}
-                      className="py-3 px-4 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                      className="w-full py-3 px-4 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                     >
                       <Download className="w-4 h-4 text-zinc-950 shrink-0" />
-                      <span className="truncate">Download PNG</span>
+                      <span className="truncate">Download QR Code</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setShowPrintModal(true)}
-                      className="py-3 px-4 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-750 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-750 active:scale-95 shadow-md"
+                      className="hidden sm:flex w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-750 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all items-center justify-center gap-2 cursor-pointer border border-zinc-750 active:scale-95 shadow-md"
                     >
                       <Printer className="w-4 h-4 text-zinc-300 shrink-0" />
                       <span className="truncate">Print Standee</span>
@@ -3840,14 +3840,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               <div className="space-y-6 animate-in fade-in duration-200 pb-16 max-w-xl mx-auto">
                 
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Business Profile</h2>
-                    <p className="text-sm text-zinc-400 mt-1">The essential information guests and reviewers see on Yoouz.</p>
+                    <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">Business Profile</h2>
+                    <p className="text-xs sm:text-sm text-zinc-400 mt-0.5 sm:mt-1">The essential information guests and reviewers see on Yoouz.</p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     {isProfileSaved && (
-                      <span className="text-[13px] font-bold text-zinc-300 flex items-center gap-1.5 animate-in zoom-in-95">
+                      <span className="hidden sm:flex text-[13px] font-bold text-zinc-300 items-center gap-1.5 animate-in zoom-in-95">
                         <CheckCircle2 className="w-4 h-4 text-zinc-300" /> Saved
                       </span>
                     )}
@@ -3855,11 +3855,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       type="button"
                       id="btn-save-profile-header"
                       onClick={handleSaveProfile}
-                      className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 rounded-full text-[13px] font-bold shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                      className="px-4 sm:px-5 py-2 sm:py-2.5 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 border border-white rounded-full text-xs sm:text-[13px] font-black shadow-lg transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>
-                          <Check className="w-4 h-4 text-zinc-300" />
+                          <Check className="w-4 h-4 text-zinc-950" />
                           <span>Saved</span>
                         </>
                       ) : (
@@ -4293,11 +4293,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       type="button"
                       id="btn-save-profile-bottom"
                       onClick={handleSaveProfile}
-                      className="w-full py-3.5 px-6 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 hover:border-zinc-600 font-bold text-sm transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3.5 px-6 rounded-2xl bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-black text-sm transition-all active:scale-[0.98] shadow-xl flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>
-                          <Check className="w-4 h-4 text-zinc-300" />
+                          <Check className="w-4 h-4 text-zinc-950" />
                           <span>Profile Updated Successfully</span>
                         </>
                       ) : (
