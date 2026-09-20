@@ -498,17 +498,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     </div>
                     {/* Bottom Gradient Overlay & Meta */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex flex-col justify-end p-3 pointer-events-none">
-                      <div className="flex items-start gap-1.5 mb-1">
-                        <CopoBrandLogo
-                          domain={video.placeWebsite || video.placeName}
-                          name={video.placeName}
-                          className="w-4 h-4 rounded-xs border border-white/20 bg-zinc-900 overflow-hidden shrink-0 mt-0.5"
-                          imageClassName="w-full h-full object-contain"
-                        />
-                        <span className="text-xs text-white font-bold drop-shadow-md leading-tight line-clamp-2 break-all">
-                          {getDisplayUrlAsDomain(video)}
-                        </span>
-                      </div>
+                      <span className="text-xs text-white font-bold drop-shadow-md leading-tight line-clamp-2 break-all mb-0.5">
+                        {getDisplayUrlAsDomain(video)}
+                      </span>
                       <p className="text-zinc-200 text-xs line-clamp-1">{video.caption}</p>
                     </div>
                   </div>
