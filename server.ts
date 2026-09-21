@@ -16985,17 +16985,120 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
-Sitemap: https://yoouz.com/sitemap.xml
+Sitemap: https://www.yoouz.com/sitemap.xml
+Sitemap: https://www.yoouz.com/video-sitemap.xml
 `;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.send(content);
   });
 
+  // Dedicated Google Video XML Sitemap (/video-sitemap.xml & /sitemap-video.xml)
+  app.get(['/video-sitemap.xml', '/sitemap-video.xml'], async (_req: any, res: any) => {
+    try {
+      const baseUrl = 'https://www.yoouz.com';
+      const now = new Date().toISOString();
+      const nowDate = now.split('T')[0];
+
+      let allVideos: any[] = [];
+      try {
+        if (db) {
+          const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
+          const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const mergedVideos = [...dbVideos, ...localVideos];
+          const videoMap = new Map();
+          mergedVideos.forEach(v => {
+            if (v && v.id) videoMap.set(v.id, v);
+          });
+          allVideos = Array.from(videoMap.values());
+        }
+      } catch (err) {
+        console.warn('Video sitemap data fetch warning:', err);
+      }
+
+      if (allVideos.length === 0 && typeof readReviewsIndex === 'function') {
+        allVideos = readReviewsIndex();
+      }
+
+      const escapeXml = (unsafe: string) => {
+        return (unsafe || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+      };
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+`;
+
+      allVideos.forEach((v) => {
+        if (!v || !v.id) return;
+        const videoPageUrl = `${baseUrl}/video/${encodeURIComponent(v.id)}`;
+        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
+        const authorHandle = v.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
+        const rawPlace = v.placeName || '';
+        const placeName = formatBusinessName(rawPlace || cleanDomainName(v.placeWebsite || v.placeId || rawPlace)) || 'Local Business';
+        const title = `${authorName}'s 60-Second Video Review of ${placeName}`;
+        const desc = v.caption || `Watch this authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Reviews.`;
+        
+        let thumb = v.thumbnailUrl || v.videoThumbnail || '';
+        if (!thumb && v.id.startsWith('rev-')) {
+          thumb = `https://rev1.b-cdn.net/videos/${v.id}.jpg`;
+        }
+        if (!thumb) {
+          thumb = `${baseUrl}/api/og-card/v9/${encodeURIComponent(v.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${v.rating || 5}&v=9`;
+        }
+        
+        const contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+        const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
+        const pubDate = v.createdAt 
+          ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt))
+          : now;
+        const viewCount = v.views || v.viewCount || (v.likesCount ? v.likesCount * 3 + 12 : 24);
+
+        xml += `  <url>
+    <loc>${escapeXml(videoPageUrl)}</loc>
+    <lastmod>${escapeXml(pubDate.split('T')[0] || nowDate)}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <video:video>
+      <video:thumbnail_loc>${escapeXml(thumb)}</video:thumbnail_loc>
+      <video:title>${escapeXml(title)}</video:title>
+      <video:description>${escapeXml(desc)}</video:description>
+      <video:content_loc>${escapeXml(contentUrl)}</video:content_loc>
+      <video:player_loc allow_embed="yes" autoplay="ap=1">${escapeXml(playerUrl)}</video:player_loc>
+      <video:duration>60</video:duration>
+      <video:rating>${Number(v.rating || 5).toFixed(1)}</video:rating>
+      <video:view_count>${viewCount}</video:view_count>
+      <video:publication_date>${escapeXml(pubDate)}</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+      <video:tag>${escapeXml(placeName)}</video:tag>
+      <video:tag>video review</video:tag>
+      <video:tag>verified customer review</video:tag>
+      <video:category>Reviews</video:category>
+      <video:uploader info="${baseUrl}/@${encodeURIComponent(authorHandle)}">${escapeXml(authorName)}</video:uploader>
+    </video:video>
+  </url>\n`;
+      });
+
+      xml += `</urlset>`;
+
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=1800');
+      return res.send(xml);
+    } catch (err: any) {
+      console.error("Video sitemap generation error:", err);
+      return res.status(500).send("Error generating video sitemap");
+    }
+  });
+
   // SEO Dynamic XML Sitemap with Google Video & Image Sitemap Extensions
   app.get('/sitemap.xml', async (_req: any, res: any) => {
     try {
-      const baseUrl = 'https://yoouz.com';
+      const baseUrl = 'https://www.yoouz.com';
       const now = new Date().toISOString().split('T')[0];
 
       // Fetch all places & video reviews
@@ -17103,13 +17206,23 @@ Sitemap: https://yoouz.com/sitemap.xml
 
       // Add Video Reviews with Google Video schema
       allVideos.forEach((v) => {
-        const videoUrl = `${baseUrl}/?video=${encodeURIComponent(v.id)}`;
+        const videoUrl = `${baseUrl}/video/${encodeURIComponent(v.id)}`;
         const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
-        const placeName = v.placeName || 'Business Review';
+        const rawPlace = v.placeName || '';
+        const placeName = formatBusinessName(rawPlace || cleanDomainName(v.placeWebsite || v.placeId || rawPlace)) || 'Business Review';
         const title = `${authorName}'s 60-Second Video Review of ${placeName}`;
         const desc = v.caption || `Watch this authentic 60-second video review by ${authorName} for ${placeName} on Yoouz.`;
-        const thumb = v.thumbnailUrl || `${baseUrl}/api/og-image?title=${encodeURIComponent(title)}&rating=${v.rating || 5}`;
-        const contentUrl = v.videoUrl || '';
+        
+        let thumb = v.thumbnailUrl || v.videoThumbnail || '';
+        if (!thumb && v.id.startsWith('rev-')) {
+          thumb = `https://rev1.b-cdn.net/videos/${v.id}.jpg`;
+        }
+        if (!thumb) {
+          thumb = `${baseUrl}/api/og-card/v9/${encodeURIComponent(v.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${v.rating || 5}&v=9`;
+        }
+
+        const contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+        const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
 
         xml += `  <url>
     <loc>${escapeXml(videoUrl)}</loc>
@@ -17121,9 +17234,9 @@ Sitemap: https://yoouz.com/sitemap.xml
       <video:title>${escapeXml(title)}</video:title>
       <video:description>${escapeXml(desc)}</video:description>
       ${contentUrl ? `<video:content_loc>${escapeXml(contentUrl)}</video:content_loc>` : ''}
-      <video:player_loc allow_embed="yes">${escapeXml(videoUrl)}</video:player_loc>
+      <video:player_loc allow_embed="yes" autoplay="ap=1">${escapeXml(playerUrl)}</video:player_loc>
       <video:duration>60</video:duration>
-      <video:rating>${(v.rating || 5).toFixed(1)}</video:rating>
+      <video:rating>${Number(v.rating || 5).toFixed(1)}</video:rating>
       <video:publication_date>${now}</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
       <video:uploader info="${baseUrl}/@${encodeURIComponent(v.author?.handle || authorName)}">${escapeXml(authorName)}</video:uploader>
@@ -20232,13 +20345,31 @@ function injectOpenGraphTags(html: string, meta: any) {
           "@graph": [
             {
               "@type": "VideoObject",
+              "@id": `${baseUrl}/video/${encodeURIComponent(videoId)}#video`,
               "name": title,
               "description": description,
-              "thumbnailUrl": [imageUrl, foundVideo?.videoThumbnail || foundVideo?.thumbnailUrl || imageUrl].filter(Boolean),
-              "uploadDate": foundVideo?.createdAt || new Date().toISOString(),
+              "thumbnailUrl": [
+                imageUrl,
+                foundVideo?.videoThumbnail,
+                foundVideo?.thumbnailUrl,
+                `https://rev1.b-cdn.net/videos/${videoId}.jpg`
+              ].filter(Boolean),
+              "uploadDate": foundVideo?.createdAt ? (typeof foundVideo.createdAt === 'number' ? new Date(foundVideo.createdAt).toISOString() : String(foundVideo.createdAt)) : new Date().toISOString(),
               "duration": "PT60S",
               "contentUrl": rawVideoUrl,
               "embedUrl": embedUrl,
+              "inLanguage": "en",
+              "isFamilyFriendly": true,
+              "transcript": caption || `Authentic 60-second customer video review of ${foundVideo?.placeName || placeName} on Yoouz.`,
+              "potentialAction": {
+                "@type": "WatchAction",
+                "target": fullUrl
+              },
+              "interactionStatistic": {
+                "@type": "InteractionCounter",
+                "interactionType": { "@type": "WatchAction" },
+                "userInteractionCount": foundVideo?.likes || foundVideo?.likesCount || 15
+              },
               "author": {
                 "@type": "Person",
                 "name": authorName,
@@ -20254,6 +20385,7 @@ function injectOpenGraphTags(html: string, meta: any) {
               "publisher": {
                 "@type": "Organization",
                 "name": "Yoouz",
+                "url": "https://www.yoouz.com",
                 "logo": {
                   "@type": "ImageObject",
                   "url": `${baseUrl}/favicon.svg`
@@ -20348,6 +20480,44 @@ function injectOpenGraphTags(html: string, meta: any) {
         imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=20`;
         twitterCard = "summary_large_image";
 
+        // Generate top-level VideoObjects for each video review to maximize Google Video indexing
+        const topLevelVideoObjects = placeVideos.slice(0, 10).map((v: any) => {
+          const vAuthor = v.author?.name || v.authorName || (v.userEmail ? v.userEmail.split('@')[0] : "Customer");
+          const vTitle = `${vAuthor}'s 60-Second Video Review of ${placeName}`;
+          const vDesc = v.caption || `Watch this verified 60-second customer video review of ${placeName} on Yoouz. 100% Real Video Proof.`;
+          const vThumb = v.videoThumbnail || v.thumbnailUrl || `https://rev1.b-cdn.net/videos/${v.id}.jpg` || imageUrl;
+          const vDate = v.createdAt ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt)) : new Date().toISOString();
+          const vContentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+          const vEmbedUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
+          return {
+            "@type": "VideoObject",
+            "@id": `${baseUrl}/video/${encodeURIComponent(v.id)}#video`,
+            "name": vTitle,
+            "description": vDesc,
+            "thumbnailUrl": [vThumb, imageUrl].filter(Boolean),
+            "uploadDate": vDate,
+            "duration": "PT60S",
+            "contentUrl": vContentUrl,
+            "embedUrl": vEmbedUrl,
+            "inLanguage": "en",
+            "isFamilyFriendly": true,
+            "transcript": v.caption || `Authentic customer video review of ${placeName}.`,
+            "author": {
+              "@type": "Person",
+              "name": vAuthor
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Yoouz",
+              "url": "https://www.yoouz.com",
+              "logo": {
+                "@type": "ImageObject",
+                "url": `${baseUrl}/favicon.svg`
+              }
+            }
+          };
+        });
+
         // Generate rich LocalBusiness + FAQPage Schema with VideoObjects for Google & AI search
         structuredData = {
           "@context": "https://schema.org",
@@ -20382,11 +20552,13 @@ function injectOpenGraphTags(html: string, meta: any) {
                   "description": v.caption || `Watch this verified 60s video review of ${placeName}`,
                   "thumbnailUrl": v.videoThumbnail || v.thumbnailUrl || imageUrl,
                   "uploadDate": v.createdAt || new Date().toISOString(),
-                  "contentUrl": v.videoUrl || "",
+                  "duration": "PT60S",
+                  "contentUrl": v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`,
                   "embedUrl": `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`
                 }
               }))
             },
+            ...topLevelVideoObjects,
             {
               "@type": "FAQPage",
               "mainEntity": [

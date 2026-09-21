@@ -31,6 +31,9 @@ Allow: /
 User-agent: Googlebot-Image
 Allow: /
 
+User-agent: Googlebot-Video
+Allow: /
+
 User-agent: Google Favicon
 Allow: /
 
@@ -56,7 +59,8 @@ User-agent: cohere-ai
 Allow: /
 
 # Sitemaps and LLM Knowledge Files
-Sitemap: https://yoouz.com/sitemap.xml
+Sitemap: https://www.yoouz.com/sitemap.xml
+Sitemap: https://www.yoouz.com/video-sitemap.xml
 # LLMs knowledge standard
 # Reference: https://llmstxt.org/
 # Knowledge files for AI Models (Perplexity, ChatGPT, Claude, Gemini, etc.)
