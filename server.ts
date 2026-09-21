@@ -12135,6 +12135,39 @@ app.delete("/api/videos/owner-response", async (req, res) => {
   }
 });
 
+// Automated Search Engine Notification (Google & Bing/IndexNow)
+async function triggerSearchEngineIndexing(videoId: string) {
+  try {
+    const videoUrl = `https://www.yoouz.com/video/${encodeURIComponent(videoId)}`;
+    const sitemapUrl = `https://www.yoouz.com/video-sitemap.xml`;
+    
+    console.log(`📡 [SEO Automation] Triggering automated search engine notification for video: ${videoId}`);
+
+    // 1. Google Sitemap ping notification
+    fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`, { method: 'GET', signal: AbortSignal.timeout(5000) })
+      .catch(() => {});
+
+    // 2. Bing Sitemap ping notification
+    fetch(`https://www.bing.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`, { method: 'GET', signal: AbortSignal.timeout(5000) })
+      .catch(() => {});
+
+    // 3. IndexNow instant URL submission (Used by Bing, Yahoo, Naver, Yandex)
+    fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({
+        host: 'www.yoouz.com',
+        key: 'yoouz_instant_indexing_v1',
+        urlList: [videoUrl, `https://www.yoouz.com/video-sitemap.xml`]
+      }),
+      signal: AbortSignal.timeout(5000)
+    }).catch(() => {});
+
+  } catch (e: any) {
+    console.warn('Search engine automated ping error:', e?.message || e);
+  }
+}
+
 app.post("/api/videos/save-review", async (req, res) => {
     try {
       const rawReview = req.body;
@@ -12363,6 +12396,11 @@ app.post("/api/videos/save-review", async (req, res) => {
         } catch (sqlErr) {
           console.warn("SQL database sync in save-review notice:", (sqlErr as any)?.message || sqlErr);
         }
+      }
+
+      // Trigger Automated Search Engine Indexing Notification (Google & Bing/IndexNow)
+      if (review?.id) {
+        triggerSearchEngineIndexing(review.id).catch(() => {});
       }
 
       return res.json({ success: true, review });
@@ -16838,14 +16876,15 @@ Return JSON:
       return renderFallbackSvg("Y");
     }
 
-    if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz") {
-      const svgPath = path.join(process.cwd(), "public", "favicon.svg");
-      if (fs.existsSync(svgPath)) {
-        res.setHeader("Content-Type", "image/svg+xml");
-        res.setHeader("Cache-Control", "public, max-age=604800");
-        return res.sendFile(svgPath);
-      }
-      return renderFallbackSvg("Y");
+    if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz")) {
+      const yoouzSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#09090b"/>
+        <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" stroke-width="0.8"/>
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
+      </svg>`;
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+      return res.status(200).send(yoouzSvg);
     }
 
     try {

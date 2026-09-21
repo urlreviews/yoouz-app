@@ -1,10 +1,18 @@
 import { Place } from "../types";
 
+export const YOOUZ_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" fill="none">
+  <rect width="24" height="24" rx="6" fill="#09090b"/>
+  <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" stroke-width="0.8"/>
+  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
+</svg>`;
+
+export const YOOUZ_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(YOOUZ_LOGO_SVG)}`;
+
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
-  "yoouz.com": "/favicon.svg",
-  "www.yoouz.com": "/favicon.svg",
-  "yoouz": "/favicon.svg",
+  "yoouz.com": YOOUZ_LOGO_DATA_URI,
+  "www.yoouz.com": YOOUZ_LOGO_DATA_URI,
+  "yoouz": YOOUZ_LOGO_DATA_URI,
   "zoom.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="22" fill="#2D8CFF"/>
@@ -451,12 +459,10 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
   const clean = raw.replace(/\.(com|org|net|io|co|ai|be|ae|uk|co\.uk)$/i, "").trim();
   
   if (clean.toLowerCase() === "yoouz" || clean.toLowerCase() === "yoouz.com" || clean.toLowerCase() === "www.yoouz.com") {
-    const starSvg = `<svg width="${size}" height="${size}" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="512" height="512" rx="140" fill="#09090b"/>
-      <rect x="2" y="2" width="508" height="508" rx="138" stroke="rgba(255, 255, 255, 0.1)" stroke-width="4"/>
-      <g transform="translate(86, 86) scale(14.166)">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
-      </g>
+    const starSvg = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="24" height="24" rx="6" fill="#09090b"/>
+      <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" stroke-width="0.8"/>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
     </svg>`;
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(starSvg)}`;
   }
@@ -523,8 +529,8 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
   }
 
   const cleanDomain = extractDomain(domain || url);
-  if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz")) {
-    return "/favicon.svg";
+  if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz"))) {
+    return YOOUZ_LOGO_DATA_URI;
   }
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
     return KNOWN_BRAND_LOGOS[cleanDomain];
@@ -572,8 +578,8 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 
   const cleanDomain = domain?.trim().replace(/^www\./, "").toLowerCase();
 
-  if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) {
-    return "/favicon.svg";
+  if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz") || cleanDomain?.includes("yoouz")) {
+    return YOOUZ_LOGO_DATA_URI;
   }
 
   // 2. Direct match for known high-quality brand vector logos

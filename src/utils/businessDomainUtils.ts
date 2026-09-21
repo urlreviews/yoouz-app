@@ -1,5 +1,5 @@
 import { Place } from '../types';
-import { KNOWN_BRAND_LOGOS } from './logoUtils';
+import { KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI } from './logoUtils';
 import { formatBusinessName } from './placeUtils';
 
 /**
@@ -91,7 +91,7 @@ export function derivePlaceFromEmailOrDomain(
   // Special case: Yoouz official website
   const isYoouz = cleanDomain === 'yoouz.com' || cleanDomain === 'www.yoouz.com' || cleanDomain.includes('yoouz');
   const businessName = isYoouz ? 'Yoouz' : (cleanDomain ? formatBusinessNameFromDomain(cleanDomain) : 'Verified Business');
-  const logoUrl = isYoouz ? '/favicon.svg' : getDomainLogoUrl(cleanDomain);
+  const logoUrl = isYoouz ? YOOUZ_LOGO_DATA_URI : getDomainLogoUrl(cleanDomain);
   const placeId = cleanDomain ? cleanDomain : 'place-custom';
 
   return {

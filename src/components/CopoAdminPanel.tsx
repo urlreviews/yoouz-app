@@ -64,7 +64,7 @@ import {
   Briefcase
 } from "lucide-react";
 import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted } from "../utils/placeUtils";
-import { getPlaceLogoUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, YOOUZ_LOGO_DATA_URI } from "../utils/logoUtils";
 import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { subscribeAppHealth, resolveAllAppErrors, AppHealthSummary } from "../lib/errorMonitor";
@@ -931,7 +931,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         isClaimed: true,
         isVerified: true,
         claimedByEmail: 'info@yoouz.com',
-        logoUrl: '/favicon.svg'
+        logoUrl: YOOUZ_LOGO_DATA_URI
       });
     } else {
       const existingYoouz = canonicalMap.get('yoouz.com')!;
@@ -943,7 +943,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         isClaimed: true,
         isVerified: true,
         claimedByEmail: existingYoouz.claimedByEmail || 'info@yoouz.com',
-        category: existingYoouz.category || 'Technology & Video Review Platform'
+        category: existingYoouz.category || 'Technology & Video Review Platform',
+        logoUrl: existingYoouz.logoUrl || YOOUZ_LOGO_DATA_URI
       });
     }
 
@@ -4377,19 +4378,75 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">Logo / Avatar Image URL</label>
-                  <input
-                    type="text"
-                    value={editPlaceModal.logoUrl || editPlaceModal.avatarUrl || ""}
-                    onChange={(e) =>
-                      setEditPlaceModal({
-                        ...editPlaceModal,
-                        logoUrl: e.target.value,
-                        avatarUrl: e.target.value
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-zinc-200">Logo / Avatar Image URL</label>
+                    <div className="flex items-center gap-1.5">
+                      {Boolean(editPlaceModal.website) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const dom = editPlaceModal.website?.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
+                            if (!dom) return;
+                            if (dom.includes('yoouz')) {
+                              setEditPlaceModal({ ...editPlaceModal, logoUrl: YOOUZ_LOGO_DATA_URI, avatarUrl: YOOUZ_LOGO_DATA_URI });
+                              showToast("Set Yoouz official logo");
+                              return;
+                            }
+                            try {
+                              showToast("Fetching website logo...");
+                              const res = await fetch(`/api/url-metadata?url=${encodeURIComponent(dom)}`);
+                              const data = await res.json();
+                              if (data && data.logo) {
+                                setEditPlaceModal({ ...editPlaceModal, logoUrl: data.logo, avatarUrl: data.logo });
+                                showToast("Logo fetched successfully!");
+                              } else {
+                                const fav = `/api/favicon?domain=${dom}`;
+                                setEditPlaceModal({ ...editPlaceModal, logoUrl: fav, avatarUrl: fav });
+                                showToast("Using high-res domain favicon!");
+                              }
+                            } catch {
+                              const fav = `/api/favicon?domain=${dom}`;
+                              setEditPlaceModal({ ...editPlaceModal, logoUrl: fav, avatarUrl: fav });
+                              showToast("Applied domain favicon");
+                            }
+                          }}
+                          className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 cursor-pointer"
+                        >
+                          Auto-Detect
+                        </button>
+                      )}
+                      {(editPlaceModal.name?.toLowerCase().includes('yoouz') || editPlaceModal.id?.toLowerCase().includes('yoouz')) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditPlaceModal({ ...editPlaceModal, logoUrl: YOOUZ_LOGO_DATA_URI, avatarUrl: YOOUZ_LOGO_DATA_URI });
+                            showToast("Set Yoouz official vector logo");
+                          }}
+                          className="text-[10px] text-zinc-200 hover:text-white font-bold bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700 cursor-pointer"
+                        >
+                          Reset Yoouz Logo
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-inner">
+                      <AdminPlaceLogo place={editPlaceModal} size="sm" className="w-full h-full object-contain" />
+                    </div>
+                    <input
+                      type="text"
+                      value={editPlaceModal.logoUrl || editPlaceModal.avatarUrl || ""}
+                      onChange={(e) =>
+                        setEditPlaceModal({
+                          ...editPlaceModal,
+                          logoUrl: e.target.value,
+                          avatarUrl: e.target.value
+                        })
+                      }
+                      placeholder="https://... or data:image/..."
+                      className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white text-xs focus:outline-none focus:border-zinc-600"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-zinc-200 mb-1">Merchant Claim Email</label>

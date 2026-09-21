@@ -49,9 +49,34 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       resolvedDomain === "yoouz" ||
       (typeof name === "string" && name.toLowerCase().trim().includes("yoouz")) ||
       (typeof domain === "string" && domain.toLowerCase().trim().includes("yoouz")) ||
-      (typeof website === "string" && website.toLowerCase().trim().includes("yoouz"))
+      (typeof website === "string" && website.toLowerCase().trim().includes("yoouz")) ||
+      (typeof logoUrl === "string" && (logoUrl.toLowerCase().includes("yoouz") || logoUrl.includes("favicon.svg")))
     );
-  }, [resolvedDomain, name, domain, website]);
+  }, [resolvedDomain, name, domain, website, logoUrl]);
+
+  // If Yoouz, render the official emblem directly as native vector SVG.
+  // This guarantees 100% immediate rendering with zero network delay, no 404, no cache failure,
+  // and no WebKit image decode failure during high GPU activity (video playback or camera recording).
+  if (isYoouz) {
+    return (
+      <div className={className} id="copo-brand-logo-yoouz">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className={imageClassName}
+          aria-label="Yoouz"
+        >
+          <rect width="24" height="24" rx="6" fill="#09090b" />
+          <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="0.8" />
+          <path
+            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            fill="#ffffff"
+          />
+        </svg>
+      </div>
+    );
+  }
 
   // Reset error & fallback ONLY if the incoming source itself fundamentally changes
   useEffect(() => {

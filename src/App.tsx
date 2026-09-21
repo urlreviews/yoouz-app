@@ -43,7 +43,7 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, YOOUZ_VIDEOS_CACHE_KEY } from "./utils/placeUtils";
-import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./utils/logoUtils";
+import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
 import {
@@ -96,8 +96,8 @@ export function App() {
       country: '',
       website: 'https://yoouz.com',
       brandDomain: 'yoouz.com',
-      logoUrl: '/favicon.svg',
-      avatarUrl: '/favicon.svg',
+      logoUrl: YOOUZ_LOGO_DATA_URI,
+      avatarUrl: YOOUZ_LOGO_DATA_URI,
       isClaimed: true,
       isVerified: true,
       claimedByEmail: 'info@yoouz.com',
@@ -124,6 +124,8 @@ export function App() {
               const isYoouz = p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz') || p.brandDomain === 'yoouz.com';
               return {
                 ...p,
+                logoUrl: isYoouz ? YOOUZ_LOGO_DATA_URI : p.logoUrl,
+                avatarUrl: isYoouz ? YOOUZ_LOGO_DATA_URI : p.avatarUrl,
                 address: isYoouz ? "" : (p.address?.includes("1111 Lincoln") ? "" : p.address),
                 city: isYoouz ? "" : (p.city?.includes("Miami Beach") ? "" : p.city),
                 country: isYoouz ? "" : p.country,
