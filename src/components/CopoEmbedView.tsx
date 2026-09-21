@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
-import { getPlaceSlug } from "../utils/placeUtils";
+import { getPlaceSlug, formatBusinessName, extractCleanDomain } from "../utils/placeUtils";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoPlayer } from "./CopoVideoPlayer";
 import { Star, Play, ArrowLeft } from "lucide-react";
 
@@ -132,23 +133,40 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         pSlug === cleanSlug ||
         p.id === cleanSlug ||
         p.name.toLowerCase().trim() === cleanSlug ||
-        (p.website && getPlaceSlug(p.website) === cleanSlug)
+        (p.website && getPlaceSlug(p.website) === cleanSlug) ||
+        (p.brandDomain && extractCleanDomain(p.brandDomain) === cleanSlug)
       );
     });
 
     if (found) return found;
 
+    // Check if any matching video in database has place info
+    const sampleVideo = videos.find((v) => {
+      if (!v) return false;
+      const vSlug = getPlaceSlug(v.placeId || v.placeName);
+      return (
+        vSlug === cleanSlug ||
+        v.placeId === cleanSlug ||
+        (v.placeName && v.placeName.toLowerCase().trim() === cleanSlug) ||
+        (v.placeWebsite && extractCleanDomain(v.placeWebsite) === cleanSlug)
+      );
+    });
+
     const isYoouz = cleanSlug === "yoouz.com" || cleanSlug === "yoouz";
+    const derivedName = sampleVideo?.placeName || (isYoouz ? "Yoouz" : formatBusinessName(cleanSlug));
+    const derivedWebsite = sampleVideo?.placeWebsite || (isYoouz ? "https://yoouz.com" : (cleanSlug.includes(".") ? `https://${cleanSlug}` : undefined));
+    const derivedLogo = isYoouz ? "/favicon.svg" : (sampleVideo?.placeLogoUrl || undefined);
+
     return {
       id: isYoouz ? "yoouz.com" : cleanSlug,
-      name: isYoouz ? "Yoouz" : cleanSlug.split(".")[0].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-      rating: 5.0,
-      totalReviews: 2,
-      website: isYoouz ? "https://yoouz.com" : `https://www.${cleanSlug}`,
-      logoUrl: isYoouz ? "/favicon.svg" : undefined,
+      name: derivedName,
+      rating: sampleVideo?.rating || 5.0,
+      totalReviews: 1,
+      website: derivedWebsite,
+      logoUrl: derivedLogo,
       isClaimed: true
     } as Place;
-  }, [places, cleanSlug]);
+  }, [places, cleanSlug, videos]);
 
   // Filter videos belonging strictly to this business / place
   const matchingVideos: VideoReview[] = useMemo(() => {
@@ -166,7 +184,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       return (
         vSlug === cleanSlug ||
         v.placeId === cleanSlug ||
-        (v.placeName && v.placeName.toLowerCase().trim() === cleanSlug)
+        (v.placeName && v.placeName.toLowerCase().trim() === cleanSlug) ||
+        (v.placeWebsite && extractCleanDomain(v.placeWebsite) === cleanSlug)
       );
     });
 
@@ -241,7 +260,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     setViewMode("player");
   };
 
-  // If in Player View (Expanded full vertical player - Screenshot 3)
+  // If in Player View (Expanded full vertical player)
   if (viewMode === "player") {
     return (
       <div
@@ -278,7 +297,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     );
   }
 
-  // Otherwise in Widget View (Card overview - Screenshot 1)
+  // Otherwise in Widget View (Card overview)
   const displayVideos = matchingVideos.length > 0 ? matchingVideos : videos.slice(0, 2);
   const totalReviewsCount = Math.max(displayVideos.length, targetPlace.totalReviews || 0);
 
@@ -292,11 +311,19 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         className="w-full max-w-[460px] bg-zinc-950 border border-zinc-850 rounded-[28px] p-4 sm:p-5 shadow-2xl flex flex-col gap-4 relative transition-all"
         style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
       >
-        {/* Top Header Card */}
+        {/* Top Header Card with Real Company Brand Logo */}
         <div className="flex items-center gap-3.5 bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-3.5 shadow-sm">
-          <div className="w-11 h-11 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-white shrink-0 shadow-inner">
-            <Star className="w-5 h-5 fill-white text-white" />
-          </div>
+          <CopoBrandLogo
+            domain={extractCleanDomain(targetPlace.website || targetPlace.brandDomain || targetPlace.id || cleanSlug)}
+            name={targetPlace.name}
+            website={targetPlace.website}
+            logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl}
+            className="w-11 h-11 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-white shrink-0 shadow-inner p-1 overflow-hidden"
+            imageClassName="w-full h-full object-contain rounded-lg"
+            fallbackTextClassName="font-black text-sm text-white"
+            loading="eager"
+            fetchPriority="high"
+          />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
@@ -321,14 +348,16 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           </div>
         </div>
 
-        {/* Video Grid (Side-by-side reviews) */}
-        <div className="grid grid-cols-2 gap-3 w-full">
+        {/* Video Grid (Centered if 1 review, Side-by-side if 2+ reviews) */}
+        <div className={`w-full ${displayVideos.length === 1 ? "flex justify-center" : "grid grid-cols-2 gap-3"}`}>
           {displayVideos.slice(0, 2).map((video, idx) => (
             <div
               key={video.id || idx}
               id={`embed-video-card-${idx}`}
               onClick={() => handleSelectVideoCard(idx)}
-              className="group relative aspect-[9/13.5] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800/90 shadow-md cursor-pointer transition-all duration-200 hover:border-zinc-600 hover:shadow-xl active:scale-[0.98]"
+              className={`group relative aspect-[9/13.5] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800/90 shadow-md cursor-pointer transition-all duration-200 hover:border-zinc-600 hover:shadow-xl active:scale-[0.98] ${
+                displayVideos.length === 1 ? "w-full max-w-[240px]" : "w-full"
+              }`}
             >
               {/* Video Thumbnail */}
               <img
