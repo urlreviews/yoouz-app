@@ -2,8 +2,7 @@ import React, { useState, useMemo, useRef, useCallback } from "react";
 import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
 import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor, getSafeAvatarUrl } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
-import { CopoVideoPlayer } from "./CopoVideoPlayer";
-import { Star, Play, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Play, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -43,96 +42,32 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   videos,
   currentUser,
   allUsers = [],
-  onOpenComments,
-  onOpenShare,
-  onOpenPlace,
-  onOpenCreator,
-  onToggleLike,
-  onToggleBookmark,
-  onToggleFollow,
-  onOpenReport,
-  onRecordReview,
+  onOpenComments: _onOpenComments,
+  onOpenShare: _onOpenShare,
+  onOpenPlace: _onOpenPlace,
+  onOpenCreator: _onOpenCreator,
+  onToggleLike: _onToggleLike,
+  onToggleBookmark: _onToggleBookmark,
+  onToggleFollow: _onToggleFollow,
+  onOpenReport: _onOpenReport,
+  onRecordReview: _onRecordReview,
   onOpenAuth: _onOpenAuth,
   onOpenMenu: _onOpenMenu,
   onOpenSearch: _onOpenSearch,
   onSelectSection: _onSelectSection,
   unreadNotifsCount: _unreadNotifsCount = 0,
   unreadMessagesCount: _unreadMessagesCount = 0,
-  onCloseEmbed
+  onCloseEmbed: _onCloseEmbed
 }) => {
-  // Check if URL parameters request direct player mode
-  const initialMode = useMemo(() => {
-    try {
-      const search = window.location.search;
-      const params = new URLSearchParams(search);
-      if (params.get("view") === "player" || params.get("mode") === "player") {
-        return "player";
-      }
-    } catch (e) {}
-    return "widget";
-  }, []);
-
-  const [viewMode, setViewMode] = useState<"widget" | "player">(initialMode);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [pageIndex, setPageIndex] = useState<number>(0);
-  const [localLikedMap, setLocalLikedMap] = useState<Record<string, boolean>>({});
-  const [localBookmarkedMap, setLocalBookmarkedMap] = useState<Record<string, boolean>>({});
-  const [localFollowedMap, setLocalFollowedMap] = useState<Record<string, boolean>>({});
-
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [isVideoPaused, setIsVideoPaused] = useState<boolean>(false);
   const touchStartXRef = useRef<number | null>(null);
-
-  // Close handler function
-  const handleCloseEmbed = () => {
-    // If inside player mode, back button takes us back to widget mode first
-    if (viewMode === "player") {
-      setViewMode("widget");
-      return;
-    }
-
-    // 1. Send postMessages to parent window if embedded in an iframe
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: "YOOUZ_EMBED_CLOSE", action: "close" }, "*");
-        window.parent.postMessage({ type: "YOOUZ_CLOSE_MODAL", action: "close" }, "*");
-        window.parent.postMessage("yoouz_close", "*");
-      }
-    } catch (e) {}
-
-    // 2. Invoke parent onCloseEmbed callback if present
-    if (onCloseEmbed) {
-      onCloseEmbed();
-      return;
-    }
-
-    // 3. If navigated directly from an external website, return to referrer page
-    if (document.referrer && !document.referrer.includes(window.location.host)) {
-      window.location.href = document.referrer;
-      return;
-    }
-
-    // 4. Otherwise cleanly reset state & URL to main app feed
-    try {
-      window.history.replaceState(null, "", "/");
-    } catch (e) {}
-    if (window.history && window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = "/";
-    }
-  };
-
-  // Check if embedId matches a specific video directly
-  const specificVideo = useMemo(() => {
-    if (!embedId) return null;
-    const clean = embedId.toLowerCase().trim();
-    return videos.find((v) => v && (v.id === embedId || v.id.toLowerCase() === clean)) || null;
-  }, [videos, embedId]);
 
   // Normalize embed ID / slug
   let cleanSlug = (embedId || "yoouz.com").toLowerCase().trim();
-  if (specificVideo) {
-    cleanSlug = getPlaceSlug(specificVideo.placeId || specificVideo.placeName);
-  } else if (cleanSlug.includes("place-custom") || cleanSlug.includes("yoouz")) {
+  if (cleanSlug.includes("place-custom") || cleanSlug.includes("yoouz")) {
     cleanSlug = "yoouz.com";
   }
 
@@ -200,78 +135,13 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       );
     });
 
-    let result = matched;
-    if (specificVideo) {
-      result = [specificVideo, ...matched.filter((v) => v.id !== specificVideo.id)];
+    if (matched.length === 0) {
+      return videos.slice(0, 10);
     }
+    return matched;
+  }, [videos, cleanSlug]);
 
-    if (result.length === 0) {
-      if (specificVideo) return [specificVideo];
-      return videos.slice(0, 2);
-    }
-
-    return result.map((v) => ({
-      ...v,
-      isLiked: localLikedMap[v.id] !== undefined ? localLikedMap[v.id] : v.isLiked,
-      likes: (v.likes || 0) + (localLikedMap[v.id] && !v.isLiked ? 1 : 0),
-      isBookmarked: localBookmarkedMap[v.id] !== undefined ? localBookmarkedMap[v.id] : v.isBookmarked,
-      author: {
-        ...v.author,
-        isFollowed:
-          v.author?.name && localFollowedMap[v.author.name] !== undefined
-            ? localFollowedMap[v.author.name]
-            : v.author?.isFollowed
-      }
-    }));
-  }, [videos, cleanSlug, specificVideo, localLikedMap, localBookmarkedMap, localFollowedMap]);
-
-  const handleLike = (videoId: string) => {
-    if (onToggleLike) {
-      onToggleLike(videoId);
-    } else {
-      setLocalLikedMap((prev) => ({ ...prev, [videoId]: !prev[videoId] }));
-    }
-  };
-
-  const handleBookmark = (videoId: string) => {
-    if (onToggleBookmark) {
-      onToggleBookmark(videoId);
-    } else {
-      setLocalBookmarkedMap((prev) => ({ ...prev, [videoId]: !prev[videoId] }));
-    }
-  };
-
-  const handleFollow = (handle: string) => {
-    if (onToggleFollow) {
-      onToggleFollow(handle);
-    } else {
-      setLocalFollowedMap((prev) => ({ ...prev, [handle]: !prev[handle] }));
-    }
-  };
-
-  const handleOpenPlaceLink = (placeId: string) => {
-    if (onOpenPlace) {
-      onOpenPlace(placeId);
-    } else {
-      window.open(`https://yoouz.com/place/${encodeURIComponent(placeId)}`, "_blank");
-    }
-  };
-
-  const handleOpenCreatorLink = (author: VideoAuthor) => {
-    if (onOpenCreator) {
-      onOpenCreator(author);
-    } else {
-      window.open(`https://yoouz.com/@${encodeURIComponent(author.name)}`, "_blank");
-    }
-  };
-
-  // Click on a video card from the widget to play inline
-  const handleSelectVideoCard = (realIndex: number) => {
-    setCurrentIndex(realIndex);
-    setViewMode("player");
-  };
-
-  // Pagination calculation for 2-at-a-time display
+  // Display list (supports 1, 2, 10, 100, 1000 reviews)
   const displayVideos = matchingVideos.length > 0 ? matchingVideos : videos.slice(0, 2);
   const itemsPerPage = displayVideos.length === 1 ? 1 : 2;
   const totalPages = Math.ceil(displayVideos.length / itemsPerPage);
@@ -281,10 +151,14 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
   const handlePrevPage = useCallback(() => {
     setPageIndex((prev) => (prev > 0 ? prev - 1 : totalPages - 1));
+    setPlayingVideoId(null);
+    setIsVideoPaused(false);
   }, [totalPages]);
 
   const handleNextPage = useCallback(() => {
     setPageIndex((prev) => (prev < totalPages - 1 ? prev + 1 : 0));
+    setPlayingVideoId(null);
+    setIsVideoPaused(false);
   }, [totalPages]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -296,13 +170,20 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartXRef.current - touchEndX;
     if (diff > 45) {
-      // Swiped left -> next
       handleNextPage();
     } else if (diff < -45) {
-      // Swiped right -> prev
       handlePrevPage();
     }
     touchStartXRef.current = null;
+  };
+
+  const handleCardClick = (video: VideoReview) => {
+    if (playingVideoId === video.id) {
+      setIsVideoPaused((prev) => !prev);
+    } else {
+      setPlayingVideoId(video.id);
+      setIsVideoPaused(false);
+    }
   };
 
   // Calculate overall rating score
@@ -317,44 +198,6 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   const ratingTier = getRatingTierLabel(overallRating);
   const totalReviewsCount = Math.max(displayVideos.length, targetPlace.totalReviews || 0);
 
-  // If in Player View (Expanded vertical player)
-  if (viewMode === "player") {
-    return (
-      <div
-        id="copo-embed-player-root"
-        className="w-full h-[100dvh] bg-black text-white flex flex-col items-center justify-center relative overflow-hidden font-sans select-none antialiased"
-      >
-        <div className="w-full h-full relative bg-zinc-950 flex flex-col overflow-hidden z-10">
-          <CopoVideoPlayer
-            videos={matchingVideos}
-            places={places}
-            currentIndex={currentIndex}
-            onSelectVideoIndex={setCurrentIndex}
-            activeSubTab="discover"
-            onSelectSubTab={() => {}}
-            onOpenComments={onOpenComments || (() => {})}
-            onOpenPlace={handleOpenPlaceLink}
-            onOpenCreator={handleOpenCreatorLink}
-            onOpenShare={onOpenShare || (() => {})}
-            onToggleLike={handleLike}
-            onToggleBookmark={handleBookmark}
-            onToggleFollow={handleFollow}
-            onOpenReport={onOpenReport}
-            onOpenCreateModal={onRecordReview ? () => onRecordReview(targetPlace) : undefined}
-            currentUser={currentUser}
-            allUsers={allUsers}
-            feedContextTitle={targetPlace?.name}
-            onGoBack={() => setViewMode("widget")}
-            isEmbed={true}
-            hideFloatingNav={false}
-            onCloseEmbed={handleCloseEmbed}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // Otherwise in Widget View (Card overview)
   return (
     <div
       id="copo-embed-widget-root"
@@ -418,41 +261,99 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             {currentPair.map((video, idx) => {
               const realIndex = safePageIndex * 2 + idx;
               const safeAuthor = resolveSafeAuthor(video.author, currentUser);
+              const isPlaying = playingVideoId === video.id;
 
               return (
                 <div
                   key={video.id || realIndex}
                   id={`embed-video-card-${realIndex}`}
-                  onClick={() => handleSelectVideoCard(realIndex)}
+                  onClick={() => handleCardClick(video)}
                   className={`group relative aspect-[9/13.5] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800/90 shadow-lg cursor-pointer transition-all duration-200 hover:border-zinc-600 hover:shadow-2xl active:scale-[0.98] ${
                     displayVideos.length === 1 ? "w-full max-w-[240px]" : "w-full"
                   }`}
                 >
-                  {/* Video Thumbnail */}
-                  <img
-                    src={
-                      video.thumbnailUrl ||
-                      video.bannerUrl ||
-                      video.ogImage ||
-                      `https://rev1.b-cdn.net/videos/${video.id}.jpg`
-                    }
-                    alt={video.caption || video.placeName || "Yoouz Review"}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
-                    }}
-                  />
+                  {/* Inline Video Playback or Thumbnail */}
+                  {isPlaying ? (
+                    <div className="relative w-full h-full bg-black">
+                      <video
+                        ref={(el) => {
+                          if (el) {
+                            if (isVideoPaused) {
+                              el.pause();
+                            } else {
+                              el.play().catch(() => {});
+                            }
+                          }
+                        }}
+                        src={video.videoUrl}
+                        poster={
+                          video.thumbnailUrl ||
+                          video.bannerUrl ||
+                          video.ogImage ||
+                          `https://rev1.b-cdn.net/videos/${video.id}.jpg`
+                        }
+                        playsInline
+                        autoPlay
+                        loop
+                        muted={isMuted}
+                        className="w-full h-full object-cover"
+                      />
 
-                  {/* Center Play Button */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-11 h-11 rounded-full bg-white text-zinc-950 shadow-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                      <Play className="w-4.5 h-4.5 fill-zinc-950 text-zinc-950 ml-0.5" />
+                      {/* Subdued Sound Toggle in Top-Right */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsMuted((prev) => !prev);
+                        }}
+                        className="absolute top-2 right-2 z-20 w-6 h-6 rounded-full bg-black/75 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/95 active:scale-95 transition-all shadow-md"
+                        title={isMuted ? "Unmute" : "Mute"}
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-3 h-3 text-white" />
+                        ) : (
+                          <Volume2 className="w-3 h-3 text-white" />
+                        )}
+                      </button>
+
+                      {/* Paused Overlay Indicator */}
+                      {isVideoPaused && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                          <div className="w-11 h-11 rounded-full bg-white text-zinc-950 shadow-2xl flex items-center justify-center">
+                            <Play className="w-4.5 h-4.5 fill-zinc-950 text-zinc-950 ml-0.5" />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      {/* Video Thumbnail */}
+                      <img
+                        src={
+                          video.thumbnailUrl ||
+                          video.bannerUrl ||
+                          video.ogImage ||
+                          `https://rev1.b-cdn.net/videos/${video.id}.jpg`
+                        }
+                        alt={video.caption || video.placeName || "Yoouz Review"}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
+                        }}
+                      />
+
+                      {/* Center Play Button */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-11 h-11 rounded-full bg-white text-zinc-950 shadow-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                          <Play className="w-4.5 h-4.5 fill-zinc-950 text-zinc-950 ml-0.5" />
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {/* Bottom User Avatar, Author Name, 5 Stars & Review Subtitle Pill */}
-                  <div className="absolute inset-x-2 bottom-2 p-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex items-center gap-2 shadow-lg">
+                  <div className="absolute inset-x-2 bottom-2 p-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex items-center gap-2 shadow-lg z-20 pointer-events-none">
                     {/* User Avatar */}
                     <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border border-white/20 shrink-0 flex items-center justify-center text-white text-[10px] font-bold">
                       <img
@@ -518,7 +419,11 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 {Array.from({ length: totalPages }).map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => setPageIndex(i)}
+                    onClick={() => {
+                      setPageIndex(i);
+                      setPlayingVideoId(null);
+                      setIsVideoPaused(false);
+                    }}
                     className={`h-1.5 rounded-full transition-all ${
                       i === safePageIndex ? "w-4 bg-white" : "w-1.5 bg-zinc-700 hover:bg-zinc-500"
                     }`}
