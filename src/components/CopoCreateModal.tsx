@@ -944,7 +944,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       }
 
       setUploadProgress(88);
-      setPublishingStage("Optimizing audio & CDN stream...");
+      setPublishingStage("Optimizing video & audio...");
 
       if (uploadResult && uploadResult.downloadUrl) {
         uploadedPublicUrl = uploadResult.downloadUrl;
@@ -1440,20 +1440,20 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </div>
                 </div>
 
-                {/* Center Big Play / Pause Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-25">
+                {/* Center Big Play / Pause Overlay (Optically centered in video framing area) */}
+                <div className="absolute inset-0 pb-24 md:pb-16 flex items-center justify-center pointer-events-none z-25">
                   <button
                     type="button"
                     onClick={togglePlay}
-                    className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-white text-black flex items-center justify-center shadow-2xl transition-all pointer-events-auto cursor-pointer border-2 border-white/30 hover:scale-110 active:scale-90 ${
+                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white text-black flex items-center justify-center shadow-2xl transition-all pointer-events-auto cursor-pointer border-2 border-white/40 hover:scale-110 active:scale-90 ${
                       isPlaying ? "opacity-0 hover:opacity-80" : "opacity-100 scale-100"
                     }`}
                     title={isPlaying ? "Pause" : "Play Recording"}
                   >
                     {isPlaying ? (
-                      <Pause className="w-8 h-8 fill-black" />
+                      <Pause className="w-8 h-8 fill-black text-black" />
                     ) : (
-                      <Play className="w-8 h-8 fill-black ml-1" />
+                      <Play className="w-8 h-8 fill-black text-black ml-1" />
                     )}
                   </button>
                 </div>
@@ -1525,7 +1525,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       </div>
                       <p className="text-[10.5px] text-zinc-300 text-center font-medium leading-tight pt-0.5">
                         {uploadProgress >= 90
-                          ? "Finalizing CDN stream & saving review to feed..."
+                          ? "Adding review to the live feed..."
                           : "Please do not close or reload this browser tab."}
                       </p>
                     </div>
