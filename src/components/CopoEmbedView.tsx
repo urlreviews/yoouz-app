@@ -251,10 +251,23 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         className="w-full max-w-[440px] bg-zinc-950 border border-zinc-800/80 rounded-[28px] p-4 sm:p-5 shadow-2xl flex flex-col gap-4 relative transition-all"
         style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
       >
-        {/* Top Header Card: Centered Independent Rating Trust Badge (Google/Trustpilot format) */}
-        <div className="flex flex-col items-center justify-center text-center bg-zinc-900/90 border border-white/10 rounded-2xl py-3.5 px-4 sm:py-4 sm:px-5 shadow-md relative">
+        {/* Top Header Card: Centered Luxury Trust Badge with Company Identity */}
+        <div className="flex flex-col items-center justify-center text-center bg-zinc-900/90 border border-white/10 rounded-2xl py-3.5 px-4 sm:py-4 sm:px-5 shadow-lg relative">
+          {/* Company / Business Name with Verified Badge */}
+          <div className="flex items-center justify-center gap-1.5 mb-1.5 max-w-full">
+            <span className="font-extrabold text-sm sm:text-[15px] text-white tracking-tight truncate max-w-[280px]">
+              {targetPlace.name || formatBusinessName(cleanSlug)}
+            </span>
+            <span
+              className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-zinc-950 text-[10px] font-black shrink-0 shadow-sm"
+              title="Verified on Yoouz"
+            >
+              ✓
+            </span>
+          </div>
+
           {/* Rating Tier Title */}
-          <span className="font-black text-sm sm:text-base tracking-wider uppercase text-white drop-shadow-sm">
+          <span className="font-black text-xs sm:text-[13px] tracking-[0.14em] uppercase text-zinc-300 drop-shadow-sm">
             {ratingTier}
           </span>
 
@@ -263,7 +276,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`w-5 h-5 sm:w-5.5 sm:h-5.5 ${
+                className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${
                   i < Math.round(overallRating)
                     ? "fill-amber-400 text-amber-400 drop-shadow-sm"
                     : "fill-zinc-700 text-zinc-700"
@@ -273,17 +286,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           </div>
 
           {/* Review Count Subtitle */}
-          <span className="text-xs sm:text-[13px] text-zinc-300 font-medium">
-            Based on {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
+          <span className="text-[11.5px] sm:text-xs text-zinc-400 font-medium">
+            Based on {totalReviewsCount} verified {totalReviewsCount === 1 ? "review" : "reviews"}
           </span>
-
-          {/* Verified Authority Seal */}
-          <div className="flex items-center justify-center gap-1.5 mt-2">
-            <span className="font-extrabold text-[13px] sm:text-sm text-white tracking-tight">Yoouz</span>
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-zinc-950 text-[10px] font-black shrink-0 shadow-sm">
-              ✓
-            </span>
-          </div>
         </div>
 
         {/* Video Display Container (1 Centered Card or 2-by-2 Grid with Left/Right navigation) */}
@@ -397,9 +402,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
                       {/* Paused Overlay Indicator */}
                       {isVideoPaused && (
-                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                          <div className="w-11 h-11 rounded-full bg-white text-zinc-950 shadow-2xl flex items-center justify-center">
-                            <Play className="w-4.5 h-4.5 fill-zinc-950 text-zinc-950 ml-0.5" />
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/35 backdrop-blur-[1px]">
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/30 text-white shadow-2xl flex items-center justify-center">
+                            <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white ml-0.5" />
                           </div>
                         </div>
                       )}
@@ -422,10 +427,10 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                         }}
                       />
 
-                      {/* Center Play Button */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-11 h-11 rounded-full bg-white text-zinc-950 shadow-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                          <Play className="w-4.5 h-4.5 fill-zinc-950 text-zinc-950 ml-0.5" />
+                      {/* Compact Luxury Play Button */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/30 text-white shadow-2xl flex items-center justify-center group-hover:scale-110 group-hover:bg-black/80 transition-all duration-300">
+                          <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white ml-0.5" />
                         </div>
                       </div>
                     </>
