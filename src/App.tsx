@@ -521,7 +521,7 @@ export function App() {
           }
         }
         if (!creatorParam) {
-          const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)/);
+          const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)/) || pathname.match(/^\/user\/([^\/]+)/);
           if (cMatch) {
             creatorParam = cMatch[1];
           }
@@ -637,21 +637,42 @@ export function App() {
               return;
             }
 
+            const rawClean = rawParam.replace(/^@+/, "").toLowerCase().trim();
+            const rawCompact = rawClean.replace(/[^a-z0-9]/g, "");
+            const rawSlug = rawClean.replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "");
+
             const matchingVid = videosRef.current.find((v) => {
               if (!v.author) return false;
-              const h = (v.author.name || "").replace(/^@+/, "").toLowerCase().trim();
-              const n = (v.author.name || "")
-                .toLowerCase()
-                .trim()
-                .replace(/^@+/, "")
-                .replace(/\s+/g, "-")
-                .replace(/[^a-z0-9_-]/g, "")
-                .replace(/-+/g, "-");
-              return h === rawParam || n === rawParam;
+              const authorName = (v.author.name || "").trim().toLowerCase();
+              const authorHandle = (v.author.handle || "").replace(/^@+/, "").trim().toLowerCase();
+              const nameSlug = authorName.replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "");
+              const nameCompact = authorName.replace(/[^a-z0-9]/g, "");
+              const handleCompact = authorHandle.replace(/[^a-z0-9]/g, "");
+              const userEmail = (v as any).userEmail ? (v as any).userEmail.split("@")[0].toLowerCase() : "";
+
+              return (
+                authorHandle === rawClean ||
+                authorHandle === rawSlug ||
+                authorName === rawClean ||
+                nameSlug === rawSlug ||
+                (rawCompact.length > 2 && (nameCompact === rawCompact || handleCompact === rawCompact)) ||
+                (userEmail && userEmail === rawClean)
+              );
             });
 
             if (matchingVid && matchingVid.author) {
               setSelectedAuthorForDrawer(matchingVid.author);
+              setSelectedPlaceIdForDrawer(null);
+            } else if (KNOWN_COMMUNITY_USERS[rawClean] || KNOWN_COMMUNITY_USERS[rawSlug] || KNOWN_COMMUNITY_USERS[rawCompact]) {
+              const ku = KNOWN_COMMUNITY_USERS[rawClean] || KNOWN_COMMUNITY_USERS[rawSlug] || KNOWN_COMMUNITY_USERS[rawCompact];
+              setSelectedAuthorForDrawer({
+                name: ku.name,
+                avatar: ku.avatar || `/api/avatar?name=${encodeURIComponent(ku.name)}&background=27272a&color=fff&bold=true&size=128`,
+                bio: ku.bio || "Verified video reviewer on Yoouz.",
+                location: ku.location || "",
+                isVerified: true,
+                isFollowed: false
+              });
               setSelectedPlaceIdForDrawer(null);
             } else {
               // Check registered users for authentic profile
@@ -660,10 +681,18 @@ export function App() {
                 .then(usersList => {
                   if (Array.isArray(usersList)) {
                     const matched = usersList.find((u: any) => {
-                      const uName = (u.name || "").trim().toLowerCase().replace(/\s+/g, "-");
+                      const uName = (u.name || "").trim().toLowerCase();
+                      const uNameSlug = uName.replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "");
                       const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
                       const uEmail = (u.email || "").split("@")[0].toLowerCase();
-                      return uName === rawParam || uHandle === rawParam || uEmail === rawParam;
+                      const uCompact = uName.replace(/[^a-z0-9]/g, "");
+                      return (
+                        uName === rawClean ||
+                        uNameSlug === rawSlug ||
+                        uHandle === rawClean ||
+                        uEmail === rawClean ||
+                        (rawCompact.length > 2 && (uCompact === rawCompact || uHandle.replace(/[^a-z0-9]/g, "") === rawCompact))
+                      );
                     });
                     if (matched && matched.name && matched.name.toLowerCase() !== "reviewer") {
                       setSelectedAuthorForDrawer({

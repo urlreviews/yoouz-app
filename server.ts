@@ -861,7 +861,36 @@ const defaultCommunityUsers: Array<{
   followersCount: number;
 }> = [];
 
-const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {};
+const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {
+  "stevenakan": {
+    name: "Steven Akan",
+    handle: "@stevenakan",
+    avatar: "/api/avatar?name=Steven+Akan&background=689f38&color=fff&bold=true&size=128",
+    bio: "Verified video reviewer on Yoouz.",
+    location: "Auckland, New Zealand"
+  },
+  "steven-akan": {
+    name: "Steven Akan",
+    handle: "@stevenakan",
+    avatar: "/api/avatar?name=Steven+Akan&background=689f38&color=fff&bold=true&size=128",
+    bio: "Verified video reviewer on Yoouz.",
+    location: "Auckland, New Zealand"
+  },
+  "benblue": {
+    name: "Ben Blue",
+    handle: "@benblue",
+    avatar: "/api/avatar?name=Ben+Blue&background=1976d2&color=fff&bold=true&size=128",
+    bio: "Authentic food & venue explorer on Yoouz.",
+    location: "Sydney, Australia"
+  },
+  "ben-blue": {
+    name: "Ben Blue",
+    handle: "@benblue",
+    avatar: "/api/avatar?name=Ben+Blue&background=1976d2&color=fff&bold=true&size=128",
+    bio: "Authentic food & venue explorer on Yoouz.",
+    location: "Sydney, Australia"
+  }
+};
 
 // Global Multi-Layer User Profile Resolver (Checks memory, BunnyDB, SQL, BunnyDB, and Review Indexes)
 async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted: boolean = false): Promise<any | null> {
@@ -1050,6 +1079,46 @@ async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted
           if (!isDeletedUserServer(candidateProfile)) {
             return candidateProfile;
           }
+        }
+      }
+    }
+  } catch (err) {}
+
+  // Layer 6: Check authentic reviews index for author profile
+  try {
+    const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+    for (const v of localList) {
+      if (!v || !v.author) continue;
+      const a = v.author;
+      const aName = (a.name || '').trim();
+      const aHandle = (a.handle || '').replace(/^@+/, '').trim().toLowerCase();
+      const aSlug = aName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '');
+      const aCompact = aName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (
+        aHandle === cleanWithoutAt ||
+        aSlug === cleanWithoutAt ||
+        aCompact === alphaOnly ||
+        aName.toLowerCase() === slugWithSpaces ||
+        (v.userEmail && v.userEmail.toLowerCase().trim() === clean) ||
+        (v.userId && v.userId.toLowerCase().trim() === clean)
+      ) {
+        const candidateProfile = {
+          uid: v.userId || `usr_${aSlug}`,
+          id: v.userId || `usr_${aSlug}`,
+          email: v.userEmail || `${aSlug}@users.yoouz.com`,
+          name: aName,
+          firstName: aName.split(' ')[0] || aName,
+          lastName: aName.includes(' ') ? aName.split(' ').slice(1).join(' ') : '',
+          avatar: a.avatar || `/api/avatar?name=${encodeURIComponent(aName)}&background=27272a&color=fff&bold=true&size=128`,
+          handle: a.handle ? (a.handle.startsWith('@') ? a.handle : `@${a.handle}`) : `@${aSlug}`,
+          bio: a.bio || "Verified community reviewer on Yoouz.",
+          location: a.location || '',
+          isVerified: a.isVerified !== false,
+          role: 'user',
+          isNewUser: false
+        };
+        if (!isDeletedUserServer(candidateProfile)) {
+          return candidateProfile;
         }
       }
     }
@@ -20072,7 +20141,8 @@ function injectOpenGraphTags(html: string, meta: any) {
     const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9_\-\.]+)/);
     const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
-                         pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/);
+                         pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/) ||
+                         pathname.match(/^\/user\/([a-zA-Z0-9_.-]+)$/);
     let placeId = placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null);
     if (placeId && placeId.startsWith('www-')) {
       placeId = placeId.replace(/^www-/, '');

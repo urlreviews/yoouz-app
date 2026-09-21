@@ -779,7 +779,36 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
   };
 }
 
-export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {};
+export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {
+  "stevenakan": {
+    name: "Steven Akan",
+    handle: "@stevenakan",
+    avatar: generateGoogleLetterAvatarSvg("Steven Akan", 128, "@stevenakan"),
+    bio: "Verified video reviewer on Yoouz.",
+    location: "Auckland, New Zealand"
+  },
+  "steven-akan": {
+    name: "Steven Akan",
+    handle: "@stevenakan",
+    avatar: generateGoogleLetterAvatarSvg("Steven Akan", 128, "@stevenakan"),
+    bio: "Verified video reviewer on Yoouz.",
+    location: "Auckland, New Zealand"
+  },
+  "benblue": {
+    name: "Ben Blue",
+    handle: "@benblue",
+    avatar: generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue"),
+    bio: "Authentic food & venue explorer on Yoouz.",
+    location: "Sydney, Australia"
+  },
+  "ben-blue": {
+    name: "Ben Blue",
+    handle: "@benblue",
+    avatar: generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue"),
+    bio: "Authentic food & venue explorer on Yoouz.",
+    location: "Sydney, Australia"
+  }
+};
 
 /**
  * Deleted Users Helpers: Synchronized across localStorage, SSE, and server index
