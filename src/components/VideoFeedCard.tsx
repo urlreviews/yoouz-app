@@ -676,11 +676,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       ref={cardRef}
       data-video-index={index}
       id={`copo-video-card-${video.id}`}
-      className={`snap-start snap-always shrink-0 relative bg-black select-none flex flex-col justify-end group overflow-hidden ${
-        isEmbed
-          ? "h-full max-h-full aspect-[9/16] max-w-[420px] mx-auto rounded-2xl shadow-2xl border border-zinc-800/80"
-          : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
-      }`}
+      className="snap-start snap-always shrink-0 relative w-full h-full min-h-full max-h-full bg-black select-none flex flex-col justify-end group overflow-hidden md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
     >
       {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
       <div
@@ -860,11 +856,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               fallbackTextClassName="font-extrabold text-[11px] text-white"
             />
             <div className="min-w-0 flex-1 py-0.5">
-              <div className="flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] min-w-0">
-                <span className="truncate min-w-0">{businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}</span>
+              <span className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                <span className="truncate">{businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}</span>
                 <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
-              </div>
-              <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5 whitespace-nowrap">
+              </span>
+              <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
                 <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
                 <span>{effectiveRating}</span>
                 <span className="text-zinc-300 font-normal">({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})</span>

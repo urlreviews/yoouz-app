@@ -362,43 +362,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (v !== activeVid) {
         v.muted = true;
         try {
-          v.volume = 0;
-        } catch (e) {}
-        try {
           v.pause();
         } catch (e) {}
-        // Remove from DOM if not the upcoming or previous prewarmed slot
-        if (
-          (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id)) &&
-          (!prevVideo || v !== slotBindingRef.current.get(prevVideo?.id || ""))
-        ) {
-          try {
-            v.remove();
-          } catch (e) {}
-        }
       }
     });
 
-    // Mount activeVid into its target card slot with robust multi-tick fallback
+    // Mount activeVid into its target card slot
     const mountActive = () => {
-      if (!activeVideo || !activeVid) return;
       const activeSlot = document.getElementById(`video-slot-${activeVideo.id}`);
-      if (activeSlot && activeVid.parentElement !== activeSlot) {
-        Array.from(activeSlot.querySelectorAll("video")).forEach((oldV) => {
-          if (oldV !== activeVid) {
-            oldV.muted = true;
-            try { oldV.pause(); } catch (e) {}
-            oldV.remove();
-          }
-        });
+      if (activeSlot && activeVid && activeVid.parentElement !== activeSlot) {
         activeSlot.appendChild(activeVid);
       }
     };
     mountActive();
-    const raf1 = requestAnimationFrame(mountActive);
-    const t1 = setTimeout(mountActive, 50);
-    const t2 = setTimeout(mountActive, 150);
-    const t3 = setTimeout(mountActive, 350);
+    const raf = requestAnimationFrame(mountActive);
 
     // Point feedVideoRef to the active video element
     feedVideoRef.current = activeVid;
@@ -620,10 +597,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }, 1000);
 
     return () => {
-      cancelAnimationFrame(raf1);
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      cancelAnimationFrame(raf);
       clearTimeout(prewarmTimer);
       clearTimeout(viewTimer);
     };
@@ -1399,16 +1373,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       className="flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]"
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      <div className={`w-full h-full min-h-full max-h-full flex items-center justify-center relative ${
-        isEmbed ? "w-full h-full p-2 sm:p-3 bg-zinc-950" : "md:min-h-0 md:max-h-none md:h-auto md:w-auto gap-4 md:max-h-[95vh] md:p-3"
-      }`}>
+      <div className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto flex items-center md:justify-center gap-4 relative md:max-h-[95vh] md:p-3">
         {/* Scroll Snap Feed Container */}
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`w-full h-full min-h-full max-h-full overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center justify-center ${
-            isEmbed ? "w-full h-full" : "md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:gap-4"
-          }`}
+          className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollSnapType: "y mandatory",

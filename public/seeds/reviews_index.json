@@ -47,9 +47,9 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 131,
-    "viewsCount": 131,
-    "sharesCount": 15,
+    "views": 62,
+    "viewsCount": 62,
+    "sharesCount": 0,
     "tags": [
       "Video Reviews Platform"
     ],
@@ -60,7 +60,7 @@
     "createdAt": "2026-09-19 18:15:29",
     "likesCount": 1,
     "bookmarks": 0,
-    "shares": 15,
+    "shares": 0,
     "bannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
     "logoUrl": "/favicon.svg",
     "ogImage": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
@@ -85,7 +85,7 @@
     "author": {
       "name": "Steven Akan",
       "handle": "@stevenakan",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20Google%20Sans%2C%20Segoe%20UI%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
       "isLocalGuide": true,
       "localGuideLevel": 7,
       "videoReviewCount": 2,
@@ -227,9 +227,9 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 191,
-    "viewsCount": 191,
-    "sharesCount": 2,
+    "views": 181,
+    "viewsCount": 181,
+    "sharesCount": 0,
     "tags": [
       "Website"
     ],
@@ -240,7 +240,7 @@
     "createdAt": "2026-09-16 16:44:47",
     "likesCount": 1,
     "bookmarks": 0,
-    "shares": 2,
+    "shares": 0,
     "logoUrl": "/favicon.svg",
     "ownerResponse": {
       "text": "great",
@@ -252,8 +252,7 @@
     "reviewsCount": 2,
     "reviewCount": 2,
     "totalReviews": 2,
-    "authorName": "Steven Akan",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20Google%20Sans%2C%20Segoe%20UI%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+    "authorName": "Steven Akan"
   },
   {
     "id": "rev-1789421411968-6xx3t",
@@ -335,9 +334,9 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 150,
-    "viewsCount": 150,
-    "sharesCount": 11,
+    "views": 139,
+    "viewsCount": 139,
+    "sharesCount": 9,
     "tags": [
       "Website"
     ],
@@ -345,7 +344,7 @@
     "isLocalUpload": false,
     "bannerUrl": "https://nevadalegalservices.org/wp-content/uploads/2021/01/weathered-hands-of-african-woman-1024x819-1.jpg",
     "ogImage": "https://nevadalegalservices.org/wp-content/uploads/2021/01/weathered-hands-of-african-woman-1024x819-1.jpg",
-    "shares": 11,
+    "shares": 9,
     "authorName": "Ben Blue",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 60,
@@ -404,9 +403,9 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 66,
-    "viewsCount": 66,
-    "sharesCount": 13,
+    "views": 52,
+    "viewsCount": 52,
+    "sharesCount": 5,
     "tags": [
       "Website"
     ],
@@ -414,7 +413,7 @@
     "isLocalUpload": false,
     "bannerUrl": "",
     "ogImage": "",
-    "shares": 13,
+    "shares": 5,
     "authorName": "Ben Blue",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 60,
@@ -444,7 +443,7 @@
     "author": {
       "name": "Steven Akan",
       "handle": "@stevenakan",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2228%22%20fill%3D%22%23E53935%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2228%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
       "isLocalGuide": true,
       "localGuideLevel": 7,
       "videoReviewCount": 1,
@@ -473,9 +472,9 @@
     "bookmarksCount": 1,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 43,
-    "viewsCount": 43,
-    "sharesCount": 3,
+    "views": 36,
+    "viewsCount": 36,
+    "sharesCount": 0,
     "tags": [
       "Website"
     ],
@@ -489,7 +488,7 @@
     "duration": 60,
     "createdAt": "2026-09-14 21:26:27",
     "likesCount": 1,
-    "shares": 3,
+    "shares": 0,
     "logoUrl": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb/699e1239b47daf53a6847818_MF%20Webclip%20brand%20256.png",
     "reviewsCount": 1,
     "reviewCount": 1,
@@ -542,9 +541,9 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 32,
-    "viewsCount": 32,
-    "sharesCount": 1,
+    "views": 26,
+    "viewsCount": 26,
+    "sharesCount": 0,
     "tags": [
       "Website"
     ],
@@ -558,7 +557,7 @@
     "createdAt": "2026-09-14 21:08:23",
     "likesCount": 1,
     "bookmarks": 0,
-    "shares": 1,
+    "shares": 0,
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1

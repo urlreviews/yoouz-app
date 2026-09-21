@@ -662,7 +662,6 @@ function readReviewsIndex(): any[] {
             }
             return r;
           });
-
         if (dirty) {
           try {
             fs.writeFileSync(reviewsIndexPath, JSON.stringify(processed, null, 2), "utf8");

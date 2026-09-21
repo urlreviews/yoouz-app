@@ -395,19 +395,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
   if (!author) return null;
 
-  // Filter and sort videos belonging to this author (newest first)
-  const getReviewTime = (v: any) => {
-    if (!v) return 0;
-    const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
-    const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
-    const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
-    const res = Math.max(isNaN(fromDt) ? 0 : fromDt, isNaN(fromMs) ? 0 : fromMs, isNaN(fromId) ? 0 : fromId);
-    return isNaN(res) ? 0 : res;
-  };
-
-  const authorVideos = allVideos
-    .filter((v) => isAuthorMatch(v, author))
-    .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+  // Filter videos belonging to this author
+  const authorVideos = allVideos.filter((v) => isAuthorMatch(v, author));
 
   // Check if any video by this author contains a genuine Google / high-res avatar
   const videoWithAuthenticAvatar = authorVideos.find((v) => {

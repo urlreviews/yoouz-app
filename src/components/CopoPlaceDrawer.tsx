@@ -225,19 +225,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       list = list.filter((v) => Math.round(v.rating) === starFilter);
     }
 
-    const getReviewTime = (v: any) => {
-      if (!v) return 0;
-      const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
-      const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
-      const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
-      const res = Math.max(isNaN(fromDt) ? 0 : fromDt, isNaN(fromMs) ? 0 : fromMs, isNaN(fromId) ? 0 : fromId);
-      return isNaN(res) ? 0 : res;
-    };
-
     // Sort order
     list.sort((a, b) => {
-      const timeA = getReviewTime(a);
-      const timeB = getReviewTime(b);
+      const timeA = a.createdAtMs || (a.recordedAt ? new Date(a.recordedAt).getTime() : 0) || 0;
+      const timeB = b.createdAtMs || (b.recordedAt ? new Date(b.recordedAt).getTime() : 0) || 0;
 
       if (reviewSort === "latest") {
         return timeB - timeA;
@@ -252,7 +243,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         return a.rating - b.rating;
       }
       if (reviewSort === "popular") {
-        return (b.likes || 0) - (a.likes || 0);
+        return b.likes - a.likes;
       }
       return 0;
     });

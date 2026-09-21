@@ -3086,24 +3086,18 @@ export function App() {
   }, [isPlaceView, drawerPlace, selectedPlaceIdForDrawer, isCreatorView, selectedAuthorForDrawer, fullscreenFeedContext, activeSection, activeSubTab]);
 
   const userVideos = useMemo(() => {
-    let filtered: VideoReview[] = [];
+    let filtered = videos;
     if (!currentUser) {
       // If user isn't explicitly signed in, show reviews created in this session or marked 'me'
-      const localSaved = (() => {
-        try {
-          return JSON.parse(localStorage.getItem("yoouz_local_created_reviews") || "[]");
-        } catch { return []; }
-      })();
-      const localIds = new Set(localSaved.map((r: any) => r && r.id));
-      filtered = videos.filter((v) => v.author?.name === "me" || v.userId === "me" || localIds.has(v.id));
+      filtered = videos.filter((v) => v.author?.name === "me" || v.userId === "me" || v.id.startsWith("rev-"));
     } else {
       filtered = videos.filter((v) => {
         // Robust author match using placeUtils
         if (isAuthorMatch(v, currentUser)) return true;
-        if (v.userId === currentUser.id || v.userEmail === currentUser.email) return true;
-        if (v.author?.handle && currentUser.handle && v.author.handle.replace(/^@/, "").toLowerCase() === currentUser.handle.replace(/^@/, "").toLowerCase()) return true;
         // Author handle = "me"
         if (v.author?.name === "me" || v.userId === "me") return true;
+        // User recorded video review check
+        if (v.id.startsWith("rev-")) return true;
         return false;
       });
     }
@@ -3119,8 +3113,7 @@ export function App() {
       const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
       const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
       const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
-      const res = Math.max(isNaN(fromDt) ? 0 : fromDt, isNaN(fromMs) ? 0 : fromMs, isNaN(fromId) ? 0 : fromId);
-      return isNaN(res) ? 0 : res;
+      return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
     };
 
     return [...filtered].sort((a, b) => {
@@ -3131,7 +3124,7 @@ export function App() {
     });
   }, [videos, currentUser, profileVideoSort, profileVideoFilter]);
 
-  // Active Feed Videos (Filtered by Fullscreen Context, Drawer state, or active section)
+  // Active Feed Videos (Filtered by Fullscreen Context or Drawer state if active, otherwise Home feed)
   const activeFeedVideos = useMemo(() => {
     // Filter out hidden/blocked videos
     const visibleVideos = videos.filter((v) => !hiddenVideoIds.includes(v.id));
@@ -3193,21 +3186,21 @@ export function App() {
       }
     }
 
-    // Priority 1: Place Drawer context (business profile open on desktop or mobile)
-    if (isPlaceView && drawerPlace) {
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+
+    // Priority 1: Place Drawer context (business profile open on desktop/mobile)
+    if (isDesktop && isPlaceView && drawerPlace) {
       const pId = drawerPlace.id;
       const pName = drawerPlace.name;
-      const matchedPlaceVids = visibleVideos.filter(v => 
+      return visibleVideos.filter(v => 
         (pId && (v.placeId === pId || isPlaceReviewMatch(v, pId))) ||
         (pName && (v.placeName === pName || isPlaceReviewMatch(v, pName)))
       );
-      if (matchedPlaceVids.length > 0) return matchedPlaceVids;
     }
 
-    // Priority 2: Creator Drawer context (creator profile open on desktop or mobile)
-    if (isCreatorView && selectedAuthorForDrawer) {
-      const matchedCreatorVids = visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
-      if (matchedCreatorVids.length > 0) return matchedCreatorVids;
+    // Priority 2: Creator Drawer context (creator profile open on desktop/mobile)
+    if (isDesktop && isCreatorView && selectedAuthorForDrawer) {
+      return visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
     }
 
     // Priority 3: User Profile context
@@ -3229,17 +3222,6 @@ export function App() {
 
     return visibleVideos;
   }, [videos, activeSubTab, hiddenVideoIds, fullscreenFeedContext, isPlaceView, drawerPlace, isCreatorView, selectedAuthorForDrawer, activeSection, userVideos, embedTargetId]);
-
-  // Automatically reset currentVideoIndex to 0 when feed context changes (e.g. switching between homepage, business profile, user profile)
-  const prevFeedContextKeyRef = useRef<string>(currentFeedContextKey);
-  useEffect(() => {
-    if (prevFeedContextKeyRef.current !== currentFeedContextKey) {
-      prevFeedContextKeyRef.current = currentFeedContextKey;
-      if (!pendingVideoId) {
-        setCurrentVideoIndex(0);
-      }
-    }
-  }, [currentFeedContextKey, pendingVideoId]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
@@ -3306,8 +3288,6 @@ export function App() {
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
 
     previousVideoIndexRef.current = currentVideoIndex; // Save background feed index before going fullscreen
-    setPendingVideoId(videoId);
-
     if (source === "creator" || isCreatorView) {
       const author = targetVid.author || selectedAuthorForDrawer;
       if (!author) return;
@@ -3319,6 +3299,8 @@ export function App() {
         // Desktop: keep drawer open, update current video index within author vids
         if (idx !== -1) {
           setCurrentVideoIndex(idx);
+        } else {
+          setPendingVideoId(videoId);
         }
       } else {
         // Mobile: go fullscreen feed context
@@ -3334,6 +3316,8 @@ export function App() {
 
         if (idx !== -1) {
           setCurrentVideoIndex(idx);
+        } else {
+          setPendingVideoId(videoId);
         }
       }
     } else if (source === "place" || isPlaceView) {
@@ -3353,6 +3337,8 @@ export function App() {
         // Desktop: keep drawer open, update current video index within place vids
         if (idx !== -1) {
           setCurrentVideoIndex(idx);
+        } else {
+          setPendingVideoId(videoId);
         }
       } else {
         // Mobile: go fullscreen feed context
@@ -3368,6 +3354,8 @@ export function App() {
 
         if (idx !== -1) {
           setCurrentVideoIndex(idx);
+        } else {
+          setPendingVideoId(videoId);
         }
       }
     } else if (source === "profile") {
@@ -3382,17 +3370,22 @@ export function App() {
       const idx = userVideos.findIndex((v) => v.id === videoId);
       if (idx !== -1) {
         setCurrentVideoIndex(idx);
+      } else {
+        setPendingVideoId(videoId);
       }
     } else {
-      // Default (search, map, bookmarks, notifications, home reels): play in main home feed
+      // Default (search, map, bookmarks, home): open place view with this video as the ONLY context
       setFullscreenFeedContext(null);
-      setSelectedPlaceIdForDrawer(null);
+      setSelectedPlaceIdForDrawer(targetVid.placeId);
       setSelectedAuthorForDrawer(null);
       setActiveSection("home");
       
-      const idx = videos.filter((v) => !hiddenVideoIds.includes(v.id)).findIndex(v => v.id === videoId);
+      const vids = videos.filter((v) => v.placeId === targetVid.placeId || v.placeName === targetVid.placeName);
+      const idx = vids.findIndex(v => v.id === videoId);
       if (idx !== -1) {
         setCurrentVideoIndex(idx);
+      } else {
+        setPendingVideoId(videoId);
       }
     }
   };
