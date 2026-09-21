@@ -1959,7 +1959,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     mobile_user_profile_location_layout_stability_guard: "41. Mobile User Profile Location Layout Stability & Anti-Flicker Guard",
                     video_author_user_attribution_integrity_guard: "42. Video Review Author Identity & User Attribution Anti-Collision Guard",
                     video_review_metadata_sharing_social_preview_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
-                    user_profile_location_canonicalization_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard"
+                    user_profile_location_canonicalization_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
+                    video_feed_chronological_ordering_context_isolation_guard: "44. Video Feed Chronological Ordering, Context Isolation & Embed Feed Integrity Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -2006,7 +2007,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     mobile_user_profile_location_layout_stability_guard: "📍",
                     video_author_user_attribution_integrity_guard: "🎬",
                     video_review_metadata_sharing_social_preview_guard: "🔗",
-                    user_profile_location_canonicalization_guard: "🔗"
+                    user_profile_location_canonicalization_guard: "🔗",
+                    video_feed_chronological_ordering_context_isolation_guard: "🎬"
                   };
 
                   return (
