@@ -35,6 +35,7 @@ import { InAppNotificationToast, InAppToastPayload } from "./components/InAppNot
 import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { CopoNotificationSettingsModal } from "./components/CopoNotificationSettingsModal";
 import { CopoEmbedView } from "./components/CopoEmbedView";
+import { CopoTestEmbedView } from "./components/CopoTestEmbedView";
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "./utils/videoUtils";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleBunnyDBError, OperationType } from "./lib/bunnydb";
@@ -185,6 +186,7 @@ export function App() {
     try {
       const pathname = window.location.pathname;
       if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin")) return "admin";
+      if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") return "testembed";
       if (pathname === "/business" || pathname.startsWith("/business/") || pathname === "/portal" || pathname === "/business-dashboard") return "business";
       if (pathname === "/discover") return "discover";
       if (pathname === "/following") return "following";
@@ -240,6 +242,7 @@ export function App() {
   const [embedTargetId, setEmbedTargetId] = useState<string | null>(() => {
     try {
       const pathname = window.location.pathname;
+      if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") return null;
       const params = new URLSearchParams(window.location.search);
       if (params.get("embed")) return decodeURIComponent(params.get("embed")!);
       const vidMatch = pathname.match(/^\/embed\/(?:video|v)\/([^\/]+)/i);
@@ -454,6 +457,12 @@ export function App() {
         const pathname = window.location.pathname;
         const params = new URLSearchParams(window.location.search);
         
+        if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") {
+          setEmbedTargetId(null);
+          setActiveSection("testembed");
+          return;
+        }
+
         const vidMatch = pathname.match(/^\/embed\/(?:video|v)\/([^\/]+)/i);
         const placeMatch = pathname.match(/^\/embed\/(?:place|p)\/([^\/]+)/i);
         const match = pathname.match(/^\/(?:embed|e)\/([^\/]+)/i);
@@ -6035,6 +6044,20 @@ export function App() {
                 videos={videos}
                 onOpenPlace={handleOpenPlaceDrawer}
                 onSelectVideo={handleSelectVideoById}
+              />
+            )}
+
+            {/* Live Embed Tester View */}
+            {activeSection === "testembed" && (
+              <CopoTestEmbedView
+                places={places}
+                videos={videos}
+                onExit={() => {
+                  setActiveSection("home");
+                  try {
+                    window.history.pushState(null, "", "/");
+                  } catch (e) {}
+                }}
               />
             )}
 

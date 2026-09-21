@@ -3494,20 +3494,28 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 font-mono text-xs">
                       <pre className="text-[10.5px] sm:text-[11px] text-zinc-300 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
-                        {`<iframe src="https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`}
+                        {`<iframe src="https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}" width="100%" height="580" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="max-width:460px; border-radius:28px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;"></iframe>`}
                       </pre>
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
-                      <a
-                        href={`/embed/${getPlaceSlug(currentPlace)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 transition-colors"
-                      >
-                        <span>Test player</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                      <div className="flex items-center gap-3">
+                        <a
+                          href={`/embed/${getPlaceSlug(currentPlace)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 transition-colors"
+                        >
+                          <span>Test player</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                        <a
+                          href="/testembed"
+                          className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors"
+                        >
+                          <span>Open Live Embed Tester</span>
+                        </a>
+                      </div>
 
                       <button
                         type="button"
