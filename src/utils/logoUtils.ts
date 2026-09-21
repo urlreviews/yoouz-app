@@ -241,6 +241,15 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#eab308" text-anchor="middle" letter-spacing="-1">L500</text>
       <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#eab308"/>
     </svg>`),
+  "nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
+  "www.nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
+  "nevadalegalservices": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
+  "lernerandrowe.com": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://lernerandrowe.com&size=256",
+  "www.lernerandrowe.com": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://lernerandrowe.com&size=256",
+  "mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb/699e1239b47daf53a6847818_MF%20Webclip%20brand%20256.png",
+  "www.mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb/699e1239b47daf53a6847818_MF%20Webclip%20brand%20256.png",
+  "vanlawfirm.com": "https://vanlawfirm.com/wp-content/themes/vanlawfirm-rebuild/assets/favicon/apple-touch-icon.png",
+  "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/themes/vanlawfirm-rebuild/assets/favicon/apple-touch-icon.png",
   "districtuae.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" rx="20" fill="#18181b"/>
@@ -415,7 +424,15 @@ export const KNOWN_BRAND_BANNERS: Record<string, string> = {
   "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png",
   "hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
   "www.hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
-  "hertz": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg"
+  "hertz": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
+  "nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2020/09/LogoHeader-1024x170.png",
+  "www.nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2020/09/LogoHeader-1024x170.png",
+  "lernerandrowe.com": "https://lernerandrowe.com/wp-content/uploads/2022/07/injury-lawyer.jpg",
+  "www.lernerandrowe.com": "https://lernerandrowe.com/wp-content/uploads/2022/07/injury-lawyer.jpg",
+  "mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb%2F6a0e5821afe1e53006b02834_Homepage%20video_poster.0000000.jpg",
+  "www.mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb%2F6a0e5821afe1e53006b02834_Homepage%20video_poster.0000000.jpg",
+  "vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png",
+  "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png"
 };
 
 /**

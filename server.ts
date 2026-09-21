@@ -219,31 +219,40 @@ function writePlacesIndex(list: any[]): void {
   } catch (e) {}
 }
 
+const inMemoryDeletedReviewsSet = new Set<string>();
+
 function readDeletedReviewsIndex(): string[] {
   try {
     if (fs.existsSync(deletedReviewsIndexPath)) {
       const raw = fs.readFileSync(deletedReviewsIndexPath, "utf8");
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed.map(String);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((id) => inMemoryDeletedReviewsSet.add(String(id)));
+        return Array.from(inMemoryDeletedReviewsSet);
+      }
     }
   } catch (e) {}
-  return [];
+  return Array.from(inMemoryDeletedReviewsSet);
 }
 
 function recordDeletedReviewId(id: string): void {
   if (!id) return;
   try {
-    const list = readDeletedReviewsIndex();
     const strId = String(id);
-    if (!list.includes(strId)) {
-      list.push(strId);
-      try {
-        if (!fs.existsSync(globalUploadsDir)) {
-          fs.mkdirSync(globalUploadsDir, { recursive: true });
-        }
-      } catch (e) {}
-      fs.writeFileSync(deletedReviewsIndexPath, JSON.stringify(list, null, 2), "utf8");
-    }
+    inMemoryDeletedReviewsSet.add(strId);
+    const list = Array.from(inMemoryDeletedReviewsSet);
+    try {
+      if (!fs.existsSync(globalUploadsDir)) {
+        fs.mkdirSync(globalUploadsDir, { recursive: true });
+      }
+    } catch (e) {}
+    fs.writeFileSync(deletedReviewsIndexPath, JSON.stringify(list, null, 2), "utf8");
+    try {
+      const pubPath = path.join(process.cwd(), "public", "deleted_reviews_index.json");
+      const pubDir = path.dirname(pubPath);
+      if (!fs.existsSync(pubDir)) fs.mkdirSync(pubDir, { recursive: true });
+      fs.writeFileSync(pubPath, JSON.stringify(list, null, 2), "utf8");
+    } catch (e) {}
   } catch (e) {}
 }
 
@@ -4939,6 +4948,13 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
   try {
     const { collection: colName, id } = req.params;
     const { data, merge } = req.body;
+
+    if (colName === 'videoReviews' || colName === 'videos') {
+      const deletedIds = readDeletedReviewsIndex();
+      if (deletedIds.includes(String(id))) {
+        return res.json({ success: false, error: "Review was deleted", deleted: true });
+      }
+    }
 
     // 1. Write to Bunny Database (Cloud libSQL) if configured
     const bunnyDb = getBunnyDb();
@@ -12208,6 +12224,10 @@ app.post("/api/videos/save-review", async (req, res) => {
       if (!rawReview || !rawReview.id) {
         return res.status(400).json({ error: "Missing review object or review.id" });
       }
+      const deletedIds = readDeletedReviewsIndex();
+      if (deletedIds.includes(String(rawReview.id))) {
+        return res.json({ success: false, error: "Review was deleted", deleted: true });
+      }
       const review = enrichReviewPlaceAssets(rawReview);
       
       // Ensure clean thumbnail URL: prevent bloated base64 data URIs from polluting database
@@ -16265,7 +16285,8 @@ Return JSON:
                   'app-store', 'appstore', 'google-play', 'googleplay', 'play-store',
                   'payment', 'visa', 'mastercard', 'amex', 'paypal', 'stripe',
                   'award', 'badge', 'banner', 'hero', 'slider', 'carousel',
-                  'arrow', 'close', 'search', 'cart', 'menu', 'spinner', 'loading'
+                  'arrow', 'close', 'search', 'cart', 'menu', 'spinner', 'loading',
+                  'logoheader', '1024x170', '1024x', '1200x', '1920x'
                 ];
                 for (const kw of badKeywords) {
                   if (s.includes(kw) && !domain.toLowerCase().includes(kw)) {
@@ -16279,6 +16300,15 @@ Return JSON:
                 "yoouz.com": "https://yoouz.com/favicon.svg",
                 "www.yoouz.com": "https://yoouz.com/favicon.svg",
                 "yoouz": "https://yoouz.com/favicon.svg",
+                "nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
+                "www.nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
+                "nevadalegalservices": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
+                "lernerandrowe.com": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://lernerandrowe.com&size=256",
+                "www.lernerandrowe.com": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://lernerandrowe.com&size=256",
+                "mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb/699e1239b47daf53a6847818_MF%20Webclip%20brand%20256.png",
+                "www.mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb/699e1239b47daf53a6847818_MF%20Webclip%20brand%20256.png",
+                "vanlawfirm.com": "https://vanlawfirm.com/wp-content/themes/vanlawfirm-rebuild/assets/favicon/apple-touch-icon.png",
+                "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/themes/vanlawfirm-rebuild/assets/favicon/apple-touch-icon.png",
                 "hertz.com": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",
                 "www.hertz.com": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",
                 "hertz": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",

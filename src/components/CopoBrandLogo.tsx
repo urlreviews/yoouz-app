@@ -99,12 +99,23 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const effectiveSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
 
+    // 0. Known high quality vector/authentic logo by domain ALWAYS takes top priority
+    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
+      return KNOWN_BRAND_LOGOS[resolvedDomain];
+    }
+    const cleanName = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (cleanName && KNOWN_BRAND_LOGOS[cleanName]) {
+      return KNOWN_BRAND_LOGOS[cleanName];
+    }
+
     // 1. Explicit clean Logo URL from place record or metadata
     if (
       logoUrl &&
       !logoUrl.includes("brandfetch.io") &&
       logoUrl !== "data:;" &&
       !logoUrl.startsWith("data:;") &&
+      !logoUrl.includes("LogoHeader") &&
+      !logoUrl.includes("1024x170") &&
       (logoUrl.startsWith("/") || logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image"))
     ) {
       if (logoUrl.startsWith("/api/proxy-image?url=")) {
@@ -117,18 +128,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return logoUrl;
     }
 
-    // 2. Known high quality vector logo by domain
-    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
-      return KNOWN_BRAND_LOGOS[resolvedDomain];
-    }
-
-    // 3. Known domain lookup by clean name
-    const cleanName = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (KNOWN_BRAND_LOGOS[cleanName]) {
-      return KNOWN_BRAND_LOGOS[cleanName];
-    }
-
-    // 4. High-resolution authentic favicon endpoint
+    // 2. High-resolution authentic favicon endpoint
     if (googleFaviconUrl) {
       return googleFaviconUrl;
     }

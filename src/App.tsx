@@ -767,14 +767,23 @@ export function App() {
     };
   }, []);
 
-  // Self-healing synchronization: push any locally cached/created user reviews to server & BunnyDB on boot
+  // Self-healing synchronization: push any locally cached/created user reviews to server & BunnyDB on boot (skipping deleted)
   useEffect(() => {
     try {
+      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+      let deletedIds: string[] = [];
+      try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
+      const delSet = new Set(deletedIds.map(String));
+
       const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
       if (localPubStr) {
         const list = JSON.parse(localPubStr);
         if (Array.isArray(list) && list.length > 0) {
-          list.forEach((rev: any) => {
+          const nonDeleted = list.filter((rev: any) => rev && rev.id && !delSet.has(String(rev.id)));
+          if (nonDeleted.length !== list.length) {
+            localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(nonDeleted));
+          }
+          nonDeleted.forEach((rev: any) => {
             if (rev && rev.id) {
               fetch("/api/videos/save-review", {
                 method: "POST",
@@ -786,6 +795,54 @@ export function App() {
         }
       }
     } catch (e) {}
+  }, []);
+
+  // Global cross-device & cross-tab real-time deletion synchronization
+  useEffect(() => {
+    const handleDeletedEvent = (e: any) => {
+      const targetId = e?.detail?.videoId;
+      if (!targetId) return;
+      const strId = String(targetId);
+
+      // Instantly update places state reviews
+      setPlaces(prev => prev.map(p => {
+        const remainingReviews = (p.reviews || []).filter(r => String(r.id) !== strId);
+        const wasInPlace = (p.reviews || []).some(r => String(r.id) === strId);
+        return {
+          ...p,
+          reviews: remainingReviews,
+          totalReviews: Math.max(0, (p.totalReviews || 0) - (wasInPlace ? 1 : 0))
+        };
+      }));
+
+      // Close comments or share modals if they belonged to the deleted video
+      setActiveCommentVideo(prev => (prev && String(prev.id) === strId ? null : prev));
+      setActiveShareVideo(prev => (prev && String(prev.id) === strId ? null : prev));
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "copo_deleted_videos" && e.newValue) {
+        try {
+          const deletedIds: string[] = JSON.parse(e.newValue);
+          if (Array.isArray(deletedIds) && deletedIds.length > 0) {
+            const delSet = new Set(deletedIds.map(String));
+            setVideos(prev => prev.filter(v => !delSet.has(String(v.id))));
+            setPlaces(prev => prev.map(p => ({
+              ...p,
+              reviews: (p.reviews || []).filter(r => !delSet.has(String(r.id)))
+            })));
+          }
+        } catch (err) {}
+      }
+    };
+
+    window.addEventListener("copo-video-deleted", handleDeletedEvent);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("copo-video-deleted", handleDeletedEvent);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   const handleAdminDeleteVideo = async (id: string) => {

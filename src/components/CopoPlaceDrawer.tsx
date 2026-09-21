@@ -449,13 +449,21 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const hasAuthenticPhoto = allPhotos.length > 0;
 
   const primaryLogoUrl = React.useMemo(() => {
-    if (place.logoUrl && !place.logoUrl.startsWith("data:;") && place.logoUrl.trim() !== "") return getCleanLogoUrl(place.logoUrl, drawerDomain);
-    if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;") && place.avatarUrl.trim() !== "") return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
+
+    // Priority 1: Video review logo is the authentic source of truth recorded by users!
+    const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") && v.placeLogoUrl.trim() !== "" && !v.placeLogoUrl.includes("LogoHeader") && !v.placeLogoUrl.includes("1024x170")));
+    if (matchingVidWithLogo?.placeLogoUrl) {
+      return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain);
+    }
+
+    // Priority 2: Place record logo (ignoring wide header banners)
+    if (place.logoUrl && !place.logoUrl.startsWith("data:;") && place.logoUrl.trim() !== "" && !place.logoUrl.includes("LogoHeader") && !place.logoUrl.includes("1024x170")) return getCleanLogoUrl(place.logoUrl, drawerDomain);
+    if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;") && place.avatarUrl.trim() !== "" && !place.avatarUrl.includes("LogoHeader") && !place.avatarUrl.includes("1024x170")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);
     return null;
-  }, [place, drawerDomain]);
+  }, [place, drawerDomain, rawPlaceVideos]);
 
   // Genuine check filters
   const hasGenuinePhone = Boolean(

@@ -363,18 +363,20 @@ export function useFeedPagination() {
                 }
               });
 
-              // Keep only real, non-purged local pending uploads or recently created reviews
+              // Keep only real, non-purged local pending uploads currently recording on this client
               let localSavedReviews: any[] = [];
               try {
                 const ls = localStorage.getItem("yoouz_local_created_reviews");
                 if (ls) {
                   const parsed = JSON.parse(ls);
-                  if (Array.isArray(parsed)) localSavedReviews = parsed;
+                  if (Array.isArray(parsed)) {
+                    localSavedReviews = parsed.filter((r: any) => r && r.id && !allDeletedSet.has(String(r.id)));
+                  }
                 }
               } catch (e) {}
 
               const pendingCandidateList = [
-                ...prev.filter((v) => v && (Boolean((v as any).isLocalUpload) || (v.createdAtMs ? (Date.now() - v.createdAtMs < 900000) : false))),
+                ...prev.filter((v) => v && (Boolean((v as any).isLocalUpload) && !allDeletedSet.has(String(v.id)))),
                 ...localSavedReviews
               ];
 
@@ -540,6 +542,14 @@ export function useFeedPagination() {
             } else if (payload.type === "users_purged") {
               window.dispatchEvent(new CustomEvent("copo-users-purged"));
             } else if (payload.type === "init") {
+              if (Array.isArray(payload.deletedIds) && payload.deletedIds.length > 0) {
+                const serverDelSet = new Set(payload.deletedIds.map(String));
+                payload.deletedIds.forEach((id: string) => recordClientDeletedId(id));
+                setVideos((prev) => prev.filter((v) => !serverDelSet.has(String(v.id))));
+                payload.deletedIds.forEach((id: string) => {
+                  window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: id } }));
+                });
+              }
               if (Array.isArray(payload.deletedPlaceIds)) {
                 window.dispatchEvent(new CustomEvent("copo-init-deleted-places", { detail: { deletedPlaceIds: payload.deletedPlaceIds } }));
               }
@@ -663,10 +673,6 @@ export function useFeedPagination() {
                 localStorage.removeItem("yoouz_cached_videos_v16");
               } catch (e) {}
               window.dispatchEvent(new CustomEvent("copo-videos-purged"));
-            } else if (payload.type === "init" && Array.isArray(payload.deletedIds)) {
-              const serverDelSet = new Set(payload.deletedIds.map(String));
-              payload.deletedIds.forEach((id: string) => recordClientDeletedId(id));
-              setVideos((prev) => prev.filter((v) => !serverDelSet.has(v.id)));
             }
           } catch (e) {}
         };
