@@ -1217,10 +1217,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="relative shrink-0 w-7 h-7 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center p-0.5">
                       <CopoBrandLogo
-                        domain={placeWebsite || video?.placeWebsite}
+                        domain={video?.placeWebsite}
                         name={placeName || video?.placeName}
-                        website={placeWebsite || video?.placeWebsite}
-                        logoUrl={placeLogoUrl || video?.placeLogoUrl}
+                        website={video?.placeWebsite}
+                        logoUrl={placeLogoUrlProp || video?.placeLogoUrl}
                         className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
                         imageClassName="w-full h-full object-contain"
                         fallbackTextClassName="text-[9px] font-black text-zinc-950"
@@ -1251,10 +1251,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 {(isUserOwner || postAsOwner) ? (
                   <div className="w-8 h-8 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center shrink-0 p-0.5">
                     <CopoBrandLogo
-                      domain={placeWebsite || video?.placeWebsite}
+                      domain={video?.placeWebsite}
                       name={placeName || video?.placeName}
-                      website={placeWebsite || video?.placeWebsite}
-                      logoUrl={placeLogoUrl || video?.placeLogoUrl}
+                      website={video?.placeWebsite}
+                      logoUrl={placeLogoUrlProp || video?.placeLogoUrl}
                       className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
                       imageClassName="w-full h-full object-contain"
                       fallbackTextClassName="text-[10px] font-black text-zinc-950"

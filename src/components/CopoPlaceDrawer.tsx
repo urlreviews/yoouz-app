@@ -121,6 +121,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
+  const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
   // Reset image errors and banner state when place changes
   useEffect(() => {
@@ -128,7 +129,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
     setPhotoIndex(0);
     setLogoError(false);
     setFetchedBannerUrl(null);
-    fetchedTargetUrlRef.current = null;
+    fetchedTargetUrlsRef.current.clear();
   }, [place?.id]);
 
   // Tab switching with scroll to top
@@ -334,8 +335,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     }
     return null;
   }, [place, rawPlaceVideos, allVideos]);
-
-  const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
   // Background auto-enrichment: Fetch and sync rich metadata & business description from URL
   useEffect(() => {
