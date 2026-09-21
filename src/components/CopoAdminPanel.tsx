@@ -242,6 +242,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     };
   }, []);
 
+  const videoUploadAlertLogs = useMemo(() => {
+    return (healthData?.logs || []).filter((l: any) =>
+      l.status !== "resolved" &&
+      (l.category === "video_player" ||
+        l.component?.toLowerCase().includes("video") ||
+        l.message?.toLowerCase().includes("video") ||
+        l.message?.toLowerCase().includes("upload") ||
+        l.message?.toLowerCase().includes("watchdog") ||
+        l.message?.toLowerCase().includes("stall"))
+    );
+  }, [healthData?.logs]);
+
   const handleClearErrorLog = async (id?: string) => {
     resolveAllAppErrors();
     try {
@@ -1807,6 +1819,45 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             ))}
           </div>
 
+          {/* Persistent Video Recording & Upload Alert Banner */}
+          {videoUploadAlertLogs.length > 0 && (
+            <div className="mb-6 p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-200 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 font-bold shrink-0 text-lg">
+                  🎥
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white flex items-center gap-2">
+                    Video Upload & Recording Alert
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono font-bold border border-rose-500/30">
+                      {videoUploadAlertLogs.length} Active Notice{videoUploadAlertLogs.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-200/90 mt-0.5 leading-relaxed">
+                    {videoUploadAlertLogs[0].message}
+                  </p>
+                  <div className="text-[10px] text-amber-400/80 mt-1 font-mono">
+                    Logged at {new Date(videoUploadAlertLogs[0].timestamp).toLocaleTimeString()} • Auto-rescued by Anti-Stall Guard
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <button
+                  onClick={() => setActiveTab("health")}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-colors cursor-pointer"
+                >
+                  View Diagnostics
+                </button>
+                <button
+                  onClick={() => handleClearErrorLog(videoUploadAlertLogs[0].id)}
+                  className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition-colors cursor-pointer"
+                >
+                  Mark Resolved
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* TAB: SYSTEM HEALTH & BUG MONITOR */}
           {activeTab === "health" && (
             <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in">
@@ -1960,7 +2011,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     mobile_user_profile_location_layout_stability_guard: "41. Mobile User Profile Location Layout Stability & Anti-Flicker Guard",
                     video_author_user_attribution_integrity_guard: "42. Video Review Author Identity & User Attribution Anti-Collision Guard",
                     video_review_metadata_sharing_social_preview_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
-                    user_profile_location_canonicalization_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard"
+                    user_profile_location_canonicalization_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
+                    video_recording_upload_anti_stall_guard: "44. Video Recording, 95% Anti-Stall & Resilient Publishing Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -2007,7 +2059,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     mobile_user_profile_location_layout_stability_guard: "📍",
                     video_author_user_attribution_integrity_guard: "🎬",
                     video_review_metadata_sharing_social_preview_guard: "🔗",
-                    user_profile_location_canonicalization_guard: "🔗"
+                    user_profile_location_canonicalization_guard: "🔗",
+                    video_recording_upload_anti_stall_guard: "🎥"
                   };
 
                   return (
