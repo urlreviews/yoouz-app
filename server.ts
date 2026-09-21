@@ -662,6 +662,17 @@ function readReviewsIndex(): any[] {
             }
             return r;
           });
+
+        const getRevTimeServer = (v: any) => {
+          if (!v) return 0;
+          const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+          const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
+          const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
+          const res = Math.max(isNaN(fromDt) ? 0 : fromDt, isNaN(fromMs) ? 0 : fromMs, isNaN(fromId) ? 0 : fromId);
+          return isNaN(res) ? 0 : res;
+        };
+        processed.sort((a: any, b: any) => getRevTimeServer(b) - getRevTimeServer(a));
+
         if (dirty) {
           try {
             fs.writeFileSync(reviewsIndexPath, JSON.stringify(processed, null, 2), "utf8");
