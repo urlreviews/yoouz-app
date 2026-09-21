@@ -14,6 +14,10 @@ interface CopoBrandLogoProps {
   fetchPriority?: "high" | "low" | "auto";
 }
 
+// Global in-memory cache to prevent re-fetching and eliminate flicker during view transitions
+const KNOWN_LOADED_LOGOS = new Set<string>();
+const KNOWN_FAILED_LOGOS = new Set<string>();
+
 export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   domain,
   name,
@@ -36,7 +40,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const resolvedDomain = useMemo(() => {
     if (domain) return extractDomain(domain);
     if (website) return extractDomain(website);
-    if (logoUrl && !logoUrl.includes("brandfetch.io")) return extractDomain(logoUrl);
+    if (logoUrl && !logoUrl.includes("brandfetch.io") && !logoUrl.startsWith("/api/")) return extractDomain(logoUrl);
     if (name) return extractDomain(name);
     return null;
   }, [domain, website, logoUrl, name]);
@@ -55,8 +59,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }, [resolvedDomain, name, domain, website, logoUrl]);
 
   // If Yoouz, render the official emblem directly as native vector SVG.
-  // This guarantees 100% immediate rendering with zero network delay, no 404, no cache failure,
-  // and no WebKit image decode failure during high GPU activity (video playback or camera recording).
   if (isYoouz) {
     return (
       <div className={className} id="copo-brand-logo-yoouz">
@@ -78,13 +80,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     );
   }
 
-  // Reset error & fallback ONLY if the incoming source itself fundamentally changes
+  // Reset error & fallback ONLY if the domain identity fundamentally changes
   useEffect(() => {
     setHasError(false);
     setTriedProxy(false);
     setTriedFallback(false);
     setTriedDuckFallback(false);
-  }, [resolvedDomain, logoUrl, name]);
+  }, [resolvedDomain]);
 
   // Background auto-enrichment from live url-metadata ONLY if logoUrl was not directly provided and domain is unknown
   useEffect(() => {
@@ -125,12 +127,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }, [resolvedDomain, isYoouz]);
 
   const effectiveSrc = useMemo(() => {
-    // 0. Yoouz official dark emblem with white star
-    if (isYoouz) {
-      return "/favicon.svg";
-    }
+    if (isYoouz) return "/favicon.svg";
 
-    // 1. Explicit clean Logo URL from place record, database, or API
+    // 1. Explicit clean Logo URL from place record or metadata
     const targetLogo = logoUrl || fetchedLogo;
     if (
       targetLogo &&
@@ -154,13 +153,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return KNOWN_BRAND_LOGOS[resolvedDomain];
     }
 
-    // 3. Known domain lookup by name
+    // 3. Known domain lookup by clean name
     const cleanName = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     if (KNOWN_BRAND_LOGOS[cleanName]) {
       return KNOWN_BRAND_LOGOS[cleanName];
     }
 
-    // 4. High-resolution authentic 256px favicon if domain is known
+    // 4. High-resolution authentic favicon endpoint
     if (googleFaviconUrl) {
       return googleFaviconUrl;
     }
@@ -179,7 +178,19 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return effectiveSrc || googleFaviconUrl || duckFaviconUrl;
   }, [isYoouz, hasError, triedDuckFallback, triedFallback, triedProxy, duckFaviconUrl, googleFaviconUrl, effectiveSrc]);
 
-  if (hasError || !currentSrc) {
+  const [imgLoaded, setImgLoaded] = useState<boolean>(() => {
+    if (isYoouz) return true;
+    if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) return true;
+    return false;
+  });
+
+  useEffect(() => {
+    if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
+      setImgLoaded(true);
+    }
+  }, [currentSrc]);
+
+  if (hasError || !currentSrc || (currentSrc && KNOWN_FAILED_LOGOS.has(currentSrc))) {
     return (
       <div className={className}>
         <img
@@ -195,16 +206,32 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }
 
   return (
-    <div className={className}>
+    <div className={`relative ${className}`}>
+      {/* Background Monogram Canvas (Immediate zero-delay rendering while image loads) */}
+      {!imgLoaded && (
+        <img
+          src={monogramSvg}
+          alt={name || "Brand Logo Fallback"}
+          className={`absolute inset-0 w-full h-full ${imageClassName}`}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Primary Brand Logo */}
       <img
         src={currentSrc}
         alt={name || "Brand Logo"}
         loading={loading}
         fetchPriority={fetchPriority}
         decoding="async"
-        className={imageClassName}
+        className={`${imageClassName} relative z-10 transition-opacity duration-150 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
         referrerPolicy="no-referrer"
+        onLoad={() => {
+          if (currentSrc) KNOWN_LOADED_LOGOS.add(currentSrc);
+          setImgLoaded(true);
+        }}
         onError={() => {
+          if (currentSrc) KNOWN_FAILED_LOGOS.add(currentSrc);
           if (isYoouz) {
             setHasError(true);
             return;

@@ -623,9 +623,9 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             website={place.website}
                             logoUrl={place.logoUrl || place.avatarUrl}
                             bannerUrl={place.bannerUrl || place.ogImage}
-                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-zinc-900 p-1.5 border border-zinc-800 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform ring-1 ring-white/10"
-                            imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
-                            fallbackTextClassName="font-extrabold text-xs text-white"
+                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white p-1.5 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform ring-1 ring-white/10"
+                            imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(0,0,0,0.25))]"
+                            fallbackTextClassName="font-extrabold text-xs text-zinc-950"
                           />
 
                           {/* Business Info: Streamlined 2-Line Layout */}

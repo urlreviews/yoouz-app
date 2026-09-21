@@ -297,8 +297,9 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                         website={place.website}
                         logoUrl={place.logoUrl || place.avatarUrl}
                         bannerUrl={place.bannerUrl}
-                        className="w-12 h-12 rounded-xl bg-zinc-900 p-1.5 border border-zinc-800 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform ring-1 ring-white/10"
+                        className="w-12 h-12 rounded-xl bg-white p-1.5 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform ring-1 ring-white/10"
                         imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+                        fallbackTextClassName="font-extrabold text-xs text-zinc-950"
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">

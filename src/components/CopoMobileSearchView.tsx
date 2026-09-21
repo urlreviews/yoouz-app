@@ -29,11 +29,12 @@ const SearchBusinessBadge: React.FC<{
 
   if (isBusinessOrDomain) {
     const domain = cleanDomain || term;
+    const displayName = place?.name || formatBusinessName(domain) || domain;
     return (
       <div className="w-8 h-8 rounded-lg bg-white shadow-sm ring-1 ring-white/20 border border-zinc-200/60 flex items-center justify-center shrink-0 p-1 overflow-hidden">
         <CopoBrandLogo
           domain={domain}
-          name={domain}
+          name={displayName}
           website={place?.website || (domain.includes(".") ? `https://${domain}` : undefined)}
           logoUrl={logoUrl || place?.logoUrl || place?.avatarUrl}
           bannerUrl={place?.bannerUrl || place?.ogImage}

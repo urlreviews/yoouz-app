@@ -860,9 +860,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               bannerUrl={businessBannerUrl || video.placeBannerUrl}
               loading={isActive || isNear ? "eager" : "lazy"}
               fetchPriority={isActive ? "high" : "auto"}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md"
               imageClassName="w-full h-full object-contain rounded-lg"
-              fallbackTextClassName="font-extrabold text-[11px] text-white"
+              fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
             />
             <div className="min-w-0 flex-1 py-0.5">
               <span className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
