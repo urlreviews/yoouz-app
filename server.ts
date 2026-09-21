@@ -7916,81 +7916,30 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       const mp4FilePath = path.join(serverUploadsDir, mp4FileName);
       let finalVideoPath = filePath;
 
-      // 1. Audio Silence Detection & Universal Transcoding with Auto-Trim for dead leading, middle, and trailing air
+      // 1. High-Compatibility Universal H.264 Transcoding (yuv420p + faststart for 100% mobile & web playback)
       try {
-        let totalDuration = 0;
-        const speechSegments: { start: number; end: number }[] = [];
-
-        try {
-          const durRaw = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`, { timeout: 8000 }).toString().trim();
-          totalDuration = parseFloat(durRaw) || 0;
-
-          // Detect silence periods with -32dB threshold (minimum silence 0.4s)
-          const detectOut = execSync(`ffmpeg -i "${filePath}" -af "silencedetect=noise=-32dB:d=0.4" -f null - 2>&1`, { timeout: 8000 }).toString();
-
-          const silenceBlocks: { start: number; end: number }[] = [];
-          const startMatches = Array.from(detectOut.matchAll(/silence_start:\s*([\d\.]+)/g));
-          const endMatches = Array.from(detectOut.matchAll(/silence_end:\s*([\d\.]+)/g));
-
-          for (let i = 0; i < startMatches.length; i++) {
-            const s = parseFloat(startMatches[i][1]);
-            const e = endMatches[i] ? parseFloat(endMatches[i][1]) : totalDuration;
-            if (!isNaN(s) && !isNaN(e) && e > s) {
-              silenceBlocks.push({ start: s, end: e });
-            }
-          }
-
-          if (silenceBlocks.length > 0 && totalDuration > 0) {
-            let cursor = 0;
-            for (const sb of silenceBlocks) {
-              const segEnd = Math.min(totalDuration, sb.start + 0.08);
-              const segStart = Math.max(0, cursor);
-              if (segEnd - segStart >= 0.3) {
-                speechSegments.push({ start: segStart, end: segEnd });
-              }
-              cursor = Math.max(0, sb.end - 0.08);
-            }
-            if (totalDuration - cursor >= 0.3) {
-              speechSegments.push({ start: Math.max(0, cursor), end: totalDuration });
-            }
-          }
-        } catch (detectErr) {
-          console.warn("Silence scan notice:", detectErr);
-        }
-
-        console.log(`🎬 [Server] Transcoding & Smart Jump-Cut Silence Removal for ${cleanFileName} (duration=${totalDuration.toFixed(2)}s, speechSegments=${speechSegments.length})...`);
-
-        if (speechSegments.length === 1) {
-          // Single continuous segment: trim start and end silence
-          const seg = speechSegments[0];
-          execSync(`ffmpeg -i "${filePath}" -ss ${seg.start.toFixed(3)} -to ${seg.end.toFixed(3)} -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { timeout: 10000, stdio: 'ignore' });
-        } else if (speechSegments.length > 1) {
-          // Multiple speech segments: cut out middle dead pauses and stitch speech segments seamlessly
-          const filterParts: string[] = [];
-          const concatInputs: string[] = [];
-          speechSegments.forEach((seg, idx) => {
-            filterParts.push(`[0:v]trim=start=${seg.start.toFixed(3)}:end=${seg.end.toFixed(3)},setpts=PTS-STARTPTS[v${idx}]`);
-            filterParts.push(`[0:a]atrim=start=${seg.start.toFixed(3)}:end=${seg.end.toFixed(3)},asetpts=PTS-STARTPTS[a${idx}]`);
-            concatInputs.push(`[v${idx}][a${idx}]`);
-          });
-          const filterComplex = `${filterParts.join(';')};${concatInputs.join('')}concat=n=${speechSegments.length}:v=1:a=1[outv][outa]`;
-          execSync(`ffmpeg -i "${filePath}" -filter_complex "${filterComplex}" -map "[outv]" -map "[outa]" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { timeout: 10000, stdio: 'ignore' });
-        } else {
-          // Standard transcoding pass if no pauses found
-          execSync(`ffmpeg -i "${filePath}" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { timeout: 10000, stdio: 'ignore' });
-        }
+        console.log(`🎬 [Server] Transcoding ${cleanFileName} with universal H.264 (yuv420p, faststart, aac)...`);
+        execSync(
+          `ffmpeg -i "${filePath}" -c:v libx264 -profile:v main -level 3.1 -pix_fmt yuv420p -preset ultrafast -crf 23 -c:a aac -b:a 128k -ar 44100 -ac 2 -movflags +faststart "${mp4FilePath}" -y`,
+          { timeout: 20000, stdio: 'ignore' }
+        );
 
         finalVideoPath = mp4FilePath;
         cleanFileName = mp4FileName;
         mimeType = "video/mp4";
       } catch (ffErr) {
-        console.warn("FFmpeg transcode/trim notice (using standard pass):", ffErr);
+        console.warn("FFmpeg primary transcode notice (using fast fallback pass):", ffErr);
         try {
-          execSync(`ffmpeg -i "${filePath}" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`, { timeout: 8000, stdio: 'ignore' });
+          execSync(
+            `ffmpeg -i "${filePath}" -c:v libx264 -pix_fmt yuv420p -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`,
+            { timeout: 15000, stdio: 'ignore' }
+          );
           finalVideoPath = mp4FilePath;
           cleanFileName = mp4FileName;
           mimeType = "video/mp4";
-        } catch (e2) {}
+        } catch (e2) {
+          console.warn("FFmpeg secondary transcode fallback:", e2);
+        }
       }
 
       // 2. High-speed poster thumbnail extraction or conversion to crisp JPEG
@@ -8243,17 +8192,33 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     if (logo) logo = sanitizeProxyUrl(logo);
 
     const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-    const resolvedVideoUrl = r.videoUrl || r.url || r.src || r.video_url || r.mediaUrl || r.playbackUrl || r.hlsUrl || r.streamUrl || (r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : null) || (r.id ? `/api/videos/stream/${r.id}` : `${pullZoneDomain}/sample-review.mp4`);
+    let resolvedVideoUrl = r.videoUrl || r.url || r.src || r.video_url || r.mediaUrl || r.playbackUrl || r.hlsUrl || r.streamUrl;
+    if (resolvedVideoUrl && typeof resolvedVideoUrl === "string" && resolvedVideoUrl.startsWith("blob:")) {
+      resolvedVideoUrl = "";
+    }
+    if (!resolvedVideoUrl) {
+      resolvedVideoUrl = r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : (r.id ? `/api/videos/stream/${r.id}.mp4` : `${pullZoneDomain}/sample-review.mp4`);
+    }
 
-    return {
+    const cleanFallbacks = Array.isArray(r.fallbackVideoUrls) 
+      ? r.fallbackVideoUrls.filter((u: any) => typeof u === "string" && !u.startsWith("blob:"))
+      : [];
+
+    const cleanResult = {
       ...r,
       videoUrl: resolvedVideoUrl,
+      fallbackVideoUrls: cleanFallbacks.length > 0 ? cleanFallbacks : [resolvedVideoUrl],
       placeBannerUrl: banner || r.placeBannerUrl || "",
       bannerUrl: banner || r.bannerUrl || "",
       ogImage: banner || r.ogImage || "",
       placeLogoUrl: logo || r.placeLogoUrl || "",
       placeWebsite: website || r.placeWebsite || ""
     };
+
+    delete cleanResult.localBlobUrl;
+    delete cleanResult.blobUrl;
+
+    return cleanResult;
   };
 
   // Canonical Comment Tree Builder: De-duplicates comments, places replies inside parent's replies, eliminates duplicate top-level entries, and computes exact total count

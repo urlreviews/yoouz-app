@@ -481,61 +481,109 @@ export function extractDomain(str: string | null | undefined): string | null {
   return clean;
 }
 
-export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 128): string {
-  const raw = (nameOrDomain || "Place").replace(/^https?:\/\//i, "").replace(/^www\./i, "").trim();
-  const clean = raw.replace(/\.(com|org|net|io|co|ai|be|ae|uk|co\.uk)$/i, "").trim();
-  
-  if (clean.toLowerCase() === "yoouz" || clean.toLowerCase() === "yoouz.com" || clean.toLowerCase() === "www.yoouz.com") {
-    const starSvg = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="24" height="24" rx="6" fill="#09090b"/>
-      <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" stroke-width="0.8"/>
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
-    </svg>`;
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(starSvg)}`;
+// Unified Deterministic Brand Theme Engine
+export interface DeterministicBrandTheme {
+  letters: string;
+  bgColor: string;
+  textColor: string;
+  isGold: boolean;
+}
+
+export const BRAND_COLOR_PALETTES = [
+  "#2563eb", // royal blue
+  "#7c3aed", // violet
+  "#059669", // emerald
+  "#d97706", // amber
+  "#dc2626", // red
+  "#0891b2", // cyan
+  "#4f46e5", // indigo
+  "#c026d3", // fuchsia
+  "#0284c7", // sky
+  "#db2777", // pink
+];
+
+export function getDeterministicBrandTheme(nameOrDomain?: string | null, domainStr?: string | null): DeterministicBrandTheme {
+  const cleanDomain = extractDomain(domainStr || nameOrDomain || "business") || "business";
+  const rawName = (nameOrDomain || domainStr || cleanDomain || "Business").trim();
+
+  if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || rawName.toLowerCase().includes("yoouz")) {
+    return {
+      letters: "Y",
+      bgColor: "#09090b",
+      textColor: "#ffffff",
+      isGold: false
+    };
   }
 
+  // Check special cases
+  if (cleanDomain.includes("legal500") || cleanDomain.includes("l500") || rawName.toLowerCase().includes("legal 500")) {
+    return {
+      letters: "L500",
+      bgColor: "#09090b",
+      textColor: "#eab308",
+      isGold: true
+    };
+  }
+
+  // Extract Letters
   let letters = "";
-  if (clean.toLowerCase().startsWith("l500") || clean.toLowerCase() === "legal500" || clean.toLowerCase() === "legal 500") {
-    letters = "L500";
-  } else {
-    // If multiple words, take first letter of each (up to 3 words)
-    const words = clean.split(/[\s\-_\.]+/).filter(w => w.length > 0);
-    if (words.length >= 2) {
-      letters = words.slice(0, 3).map(w => w[0].toUpperCase()).join("");
-    } else if (clean.length > 0) {
-      letters = clean.substring(0, Math.min(3, clean.length)).toUpperCase();
+  // Strip common protocols / extensions from name if it looks like a URL
+  const nameCleaned = rawName.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\.(com|org|net|io|co|ai|be|ae|uk|co\.uk)$/i, "").trim();
+  const words = nameCleaned.split(/[\s\-_\.]+/).filter(w => w.length > 0 && !["inc", "llc", "ltd", "corp", "co"].includes(w.toLowerCase()));
+
+  if (words.length >= 2) {
+    letters = words.slice(0, 3).map(w => w[0].toUpperCase()).join("");
+  } else if (words.length === 1 && words[0].length <= 3) {
+    letters = words[0].toUpperCase();
+  } else if (cleanDomain && cleanDomain.includes(".")) {
+    const domainBase = cleanDomain.split(".")[0];
+    if (domainBase.length <= 3) {
+      letters = domainBase.toUpperCase();
     } else {
-      letters = "Y";
+      // Check camelCase or hyphen separation in domain
+      const subWords = domainBase.split(/[\-_]+/).filter(Boolean);
+      if (subWords.length >= 2) {
+        letters = subWords.slice(0, 3).map(w => w[0].toUpperCase()).join("");
+      } else {
+        letters = domainBase.substring(0, Math.min(2, domainBase.length)).toUpperCase();
+      }
     }
+  } else if (nameCleaned.length > 0) {
+    letters = nameCleaned.substring(0, Math.min(2, nameCleaned.length)).toUpperCase();
+  } else {
+    letters = "B";
   }
 
-  const isGold = letters === "L500" || letters.startsWith("L5");
-  const textColor = isGold ? "#eab308" : "#ffffff";
-  const fontSize = letters.length > 3 ? Math.round(size * 0.28) : letters.length > 2 ? Math.round(size * 0.34) : Math.round(size * 0.44);
-
-  // Modern high-contrast brand palettes for optimal dark mode & light mode legibility
-  const PALETTES = [
-    "#2563eb", // royal blue
-    "#7c3aed", // violet
-    "#059669", // emerald
-    "#d97706", // amber
-    "#dc2626", // red
-    "#0891b2", // cyan
-    "#4f46e5", // indigo
-    "#c026d3", // fuchsia
-    "#0284c7", // sky
-    "#db2777", // pink
-  ];
+  // Hash key is STRICTLY canonical domain base for 100% deterministic background across every screen & device
+  const hashKey = cleanDomain.replace(/\.(com|org|net|io|co|ai|be|ae|uk|co\.uk)$/i, "").toLowerCase();
   let hash = 0;
-  for (let i = 0; i < clean.length; i++) {
-    hash = (hash << 5) - hash + clean.charCodeAt(i);
+  for (let i = 0; i < hashKey.length; i++) {
+    hash = (hash << 5) - hash + hashKey.charCodeAt(i);
     hash |= 0;
   }
-  const bgColor = isGold ? "#09090b" : PALETTES[Math.abs(hash) % PALETTES.length];
+  const bgColor = BRAND_COLOR_PALETTES[Math.abs(hash) % BRAND_COLOR_PALETTES.length];
+
+  return {
+    letters,
+    bgColor,
+    textColor: "#ffffff",
+    isGold: false
+  };
+}
+
+export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 128): string {
+  const theme = getDeterministicBrandTheme(nameOrDomain, nameOrDomain);
+  
+  if (theme.letters === "Y" && theme.bgColor === "#09090b") {
+    return YOOUZ_LOGO_DATA_URI;
+  }
+
+  const fontSize = theme.letters.length > 3 ? Math.round(size * 0.28) : theme.letters.length > 2 ? Math.round(size * 0.34) : Math.round(size * 0.44);
+  const rx = Math.round(size * 0.22);
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="${bgColor}"/>
-    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${letters}</text>
+    <rect width="${size}" height="${size}" rx="${rx}" fill="${theme.bgColor}"/>
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${theme.textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${theme.letters}</text>
   </svg>`;
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

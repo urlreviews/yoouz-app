@@ -967,12 +967,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const newReview: VideoReview = {
       ...fallbackReview,
-      videoUrl: uploadedPublicUrl,
+      videoUrl: uploadedPublicUrl || defaultStreamUrl,
       bunnyVideoId: finalBunnyId,
-      fallbackVideoUrls: [recordedVideoUrl, uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
-      thumbnailUrl: resolvedSafeThumbnail,
-      localBlobUrl: recordedVideoUrl || undefined,
-      blobUrl: recordedVideoUrl || undefined
+      fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
+      thumbnailUrl: resolvedSafeThumbnail
     } as any;
 
     // 4. Save metadata locally first so it is immune to network dropouts or reloads

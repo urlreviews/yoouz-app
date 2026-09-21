@@ -359,12 +359,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       place.name.toLowerCase() === "website";
 
     const needsBanner = !reviewBannerUrl && !place.bannerUrl && !place.ogImage;
-    const needsLogo = !place.logoUrl || 
-      place.logoUrl.startsWith("data:;") || 
-      place.logoUrl.includes("760X310") || 
-      place.logoUrl.includes("gstatic.com") || 
-      place.logoUrl.includes("faviconV2") || 
-      place.logoUrl.includes("fallback");
+    const hasValidLogo = Boolean(
+      place.logoUrl &&
+      place.logoUrl.trim() !== "" &&
+      !place.logoUrl.startsWith("data:;") &&
+      !place.logoUrl.includes("760X310") &&
+      !place.logoUrl.includes("fallback")
+    );
+    const needsLogo = !hasValidLogo;
 
     if (targetUrl && (isGenericDesc || isGenericName || needsBanner || needsLogo)) {
       fetchedTargetUrlRef.current = targetUrl;
@@ -376,15 +378,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             if (data.image) {
               setFetchedBannerUrl(data.image);
             }
-            if (onUpdatePlace && (data.image || data.logo || data.title || data.description)) {
+            if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description)) {
               onUpdatePlace({
                 ...place,
                 name: (data.title && isGenericName) ? data.title : place.name,
                 description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
                 bannerUrl: place.bannerUrl || data.image || "",
                 ogImage: place.ogImage || data.image || "",
-                logoUrl: (place.logoUrl && !place.logoUrl.startsWith("data:;") && !place.logoUrl.includes("gstatic.com") && !place.logoUrl.includes("faviconV2")) ? place.logoUrl : (data.logo || ""),
-                avatarUrl: (place.avatarUrl && !place.avatarUrl.startsWith("data:;") && !place.avatarUrl.includes("gstatic.com") && !place.avatarUrl.includes("faviconV2")) ? place.avatarUrl : (data.logo || ""),
+                logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
+                avatarUrl: hasValidLogo ? place.avatarUrl : (data.logo || place.avatarUrl || ""),
                 brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
                 photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
               });

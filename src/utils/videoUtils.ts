@@ -109,20 +109,12 @@ export function resolvePlayableVideoSourcesCascade(
   const sources: string[] = [];
   const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
 
-  // 1. Fresh active session IndexedDB blob URL or locally attached blob URL (instant 0ms local playback for creator)
-  const explicitBlob = cachedLocalBlobUrl || (video as any)?.localBlobUrl || (video as any)?.blobUrl;
-  if (explicitBlob && typeof explicitBlob === "string" && explicitBlob.startsWith("blob:")) {
-    sources.push(explicitBlob);
+  // 1. Fresh active session IndexedDB blob URL (ONLY if explicitly passed from local browser IndexedDB in current session)
+  if (cachedLocalBlobUrl && typeof cachedLocalBlobUrl === "string" && cachedLocalBlobUrl.startsWith("blob:")) {
+    sources.push(cachedLocalBlobUrl);
   }
 
-  // 2. Direct specified videoUrl on the video review (if it's a blob, push it first)
-  if (video.videoUrl && typeof video.videoUrl === "string") {
-    if (video.videoUrl.startsWith("blob:") && !sources.includes(video.videoUrl)) {
-      sources.push(video.videoUrl);
-    }
-  }
-
-  // 3. Local Server streaming endpoint (direct stream for rev-* IDs, available 0ms after upload before CDN edge sync)
+  // 2. Direct clean server streaming endpoint (Always works for newly uploaded videos, 0ms latency)
   if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const serverStream = `/api/videos/stream/${cleanId}.mp4`;
@@ -131,30 +123,15 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 4. Direct specified videoUrl on the video review (Authoritative URL from upload/storage)
-  if (video.videoUrl && typeof video.videoUrl === "string") {
+  // 3. Direct specified videoUrl on the video review (if it is a valid non-blob http/https/relative URL)
+  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:")) {
     const norm = normalizeVideoUrl(video.videoUrl);
     if (norm && !sources.includes(norm)) {
       sources.push(norm);
     }
   }
 
-  // 5. Base64 data URI (if present)
-  if (video.videoData && video.videoData.startsWith("data:video/")) {
-    sources.push(video.videoData);
-  }
-
-  // 6. Fallback video URLs from document
-  if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
-    for (const fb of video.fallbackVideoUrls) {
-      const norm = normalizeVideoUrl(fb);
-      if (norm && !sources.includes(norm)) {
-        sources.push(norm);
-      }
-    }
-  }
-
-  // 7. Bunny CDN Edge URL fallback
+  // 4. Bunny CDN Edge URL fallback
   if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
@@ -163,7 +140,24 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 8. Static default MP4 asset
+  // 5. Fallback video URLs from document (excluding any foreign blob URLs)
+  if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
+    for (const fb of video.fallbackVideoUrls) {
+      if (fb && typeof fb === "string" && !fb.startsWith("blob:")) {
+        const norm = normalizeVideoUrl(fb);
+        if (norm && !sources.includes(norm)) {
+          sources.push(norm);
+        }
+      }
+    }
+  }
+
+  // 6. Base64 data URI (if present)
+  if (video.videoData && video.videoData.startsWith("data:video/")) {
+    sources.push(video.videoData);
+  }
+
+  // 7. Static default MP4 asset
   if (!sources.includes("/default-review.mp4")) {
     sources.push("/default-review.mp4");
   }

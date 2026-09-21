@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, generateBrandMonogramSvg } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getDeterministicBrandTheme } from "../utils/logoUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -30,10 +30,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   loading = "lazy",
   fetchPriority = "auto"
 }) => {
-  const [fetchedLogo, setFetchedLogo] = useState<string | null>(null);
   const [triedProxy, setTriedProxy] = useState(false);
-  const [triedFallback, setTriedFallback] = useState(false);
-  const [triedDuckFallback, setTriedDuckFallback] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   // Extract clean domain from any source
@@ -57,6 +54,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       (typeof logoUrl === "string" && (logoUrl.toLowerCase().includes("yoouz") || logoUrl.includes("favicon.svg")))
     );
   }, [resolvedDomain, name, domain, website, logoUrl]);
+
+  // Deterministic Brand Theme (Letters & Color)
+  const brandTheme = useMemo(() => {
+    return getDeterministicBrandTheme(name || resolvedDomain, resolvedDomain);
+  }, [name, resolvedDomain]);
 
   // If Yoouz, render the official emblem directly as native vector SVG.
   if (isYoouz) {
@@ -84,31 +86,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   useEffect(() => {
     setHasError(false);
     setTriedProxy(false);
-    setTriedFallback(false);
-    setTriedDuckFallback(false);
   }, [resolvedDomain]);
-
-  // Background auto-enrichment from live url-metadata ONLY if logoUrl was not directly provided and domain is unknown
-  useEffect(() => {
-    if (!logoUrl && !isYoouz && resolvedDomain && resolvedDomain.includes(".") && !KNOWN_BRAND_LOGOS[resolvedDomain]) {
-      let isMounted = true;
-      fetch(`/api/url-metadata?url=${encodeURIComponent(resolvedDomain)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (isMounted && data && data.logo && typeof data.logo === "string" && data.logo.trim() !== "") {
-            setFetchedLogo(data.logo);
-          }
-        })
-        .catch(() => {});
-      return () => {
-        isMounted = false;
-      };
-    }
-  }, [resolvedDomain, logoUrl, isYoouz]);
-
-  const monogramSvg = useMemo(() => {
-    return generateBrandMonogramSvg(name || resolvedDomain || "Place", 128);
-  }, [name, resolvedDomain]);
 
   const googleFaviconUrl = useMemo(() => {
     if (isYoouz) return null;
@@ -118,34 +96,25 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [resolvedDomain, isYoouz]);
 
-  const duckFaviconUrl = useMemo(() => {
-    if (isYoouz) return null;
-    if (resolvedDomain && resolvedDomain.includes(".")) {
-      return `https://icons.duckduckgo.com/ip3/${resolvedDomain}.ico`;
-    }
-    return null;
-  }, [resolvedDomain, isYoouz]);
-
   const effectiveSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
 
     // 1. Explicit clean Logo URL from place record or metadata
-    const targetLogo = logoUrl || fetchedLogo;
     if (
-      targetLogo &&
-      !targetLogo.includes("brandfetch.io") &&
-      targetLogo !== "data:;" &&
-      !targetLogo.startsWith("data:;") &&
-      (targetLogo.startsWith("/") || targetLogo.startsWith("http://") || targetLogo.startsWith("https://") || targetLogo.startsWith("data:image"))
+      logoUrl &&
+      !logoUrl.includes("brandfetch.io") &&
+      logoUrl !== "data:;" &&
+      !logoUrl.startsWith("data:;") &&
+      (logoUrl.startsWith("/") || logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image"))
     ) {
-      if (targetLogo.startsWith("/api/proxy-image?url=")) {
+      if (logoUrl.startsWith("/api/proxy-image?url=")) {
         try {
-          return decodeURIComponent(targetLogo.replace("/api/proxy-image?url=", ""));
+          return decodeURIComponent(logoUrl.replace("/api/proxy-image?url=", ""));
         } catch (e) {
-          return targetLogo;
+          return logoUrl;
         }
       }
-      return targetLogo;
+      return logoUrl;
     }
 
     // 2. Known high quality vector logo by domain
@@ -165,24 +134,20 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     return null;
-  }, [isYoouz, resolvedDomain, logoUrl, fetchedLogo, name, googleFaviconUrl]);
+  }, [isYoouz, resolvedDomain, logoUrl, name, googleFaviconUrl]);
 
   const currentSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
     if (hasError) return null;
-    if (triedDuckFallback) return duckFaviconUrl;
-    if (triedFallback) return googleFaviconUrl || duckFaviconUrl;
     if (triedProxy && effectiveSrc && (effectiveSrc.startsWith("http://") || effectiveSrc.startsWith("https://"))) {
       return `/api/proxy-image?url=${encodeURIComponent(effectiveSrc)}`;
     }
-    return effectiveSrc || googleFaviconUrl || duckFaviconUrl;
-  }, [isYoouz, hasError, triedDuckFallback, triedFallback, triedProxy, duckFaviconUrl, googleFaviconUrl, effectiveSrc]);
+    return effectiveSrc || googleFaviconUrl;
+  }, [isYoouz, hasError, triedProxy, googleFaviconUrl, effectiveSrc]);
 
-  const [imgLoaded, setImgLoaded] = useState<boolean>(() => {
-    if (isYoouz) return true;
-    if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) return true;
-    return false;
-  });
+  const isKnownLoaded = currentSrc ? KNOWN_LOADED_LOGOS.has(currentSrc) : false;
+  const isKnownFailed = currentSrc ? KNOWN_FAILED_LOGOS.has(currentSrc) : false;
+  const [imgLoaded, setImgLoaded] = useState<boolean>(isKnownLoaded);
 
   useEffect(() => {
     if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
@@ -190,63 +155,49 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
   }, [currentSrc]);
 
-  if (hasError || !currentSrc || (currentSrc && KNOWN_FAILED_LOGOS.has(currentSrc))) {
-    return (
-      <div className={className}>
+  const shouldAttemptImage = !hasError && !!currentSrc && !isKnownFailed;
+
+  return (
+    <div className={`relative overflow-hidden ${className}`}>
+      {/* 1. Rock-Solid Deterministic Monogram Base Layer (Immediate zero-delay rendering, never fails) */}
+      <div
+        className={`absolute inset-0 w-full h-full flex items-center justify-center select-none ${imageClassName}`}
+        style={{ backgroundColor: brandTheme.bgColor }}
+      >
+        <span
+          className={`font-black tracking-tight leading-none ${fallbackTextClassName}`}
+          style={{ color: brandTheme.textColor }}
+        >
+          {brandTheme.letters}
+        </span>
+      </div>
+
+      {/* 2. Primary Brand Logo / Favicon Layer (Fades in on load, perfectly graceful) */}
+      {shouldAttemptImage && (
         <img
-          src={monogramSvg}
+          src={currentSrc}
           alt={name || "Brand Logo"}
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
-          className={imageClassName}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className={`relative ${className}`}>
-      {/* Background Monogram Canvas (Immediate zero-delay rendering while image loads) */}
-      {!imgLoaded && (
-        <img
-          src={monogramSvg}
-          alt={name || "Brand Logo Fallback"}
-          className={`absolute inset-0 w-full h-full ${imageClassName}`}
-          aria-hidden="true"
+          className={`${imageClassName} relative z-10 transition-opacity duration-200 ${
+            imgLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          referrerPolicy="no-referrer"
+          onLoad={() => {
+            if (currentSrc) KNOWN_LOADED_LOGOS.add(currentSrc);
+            setImgLoaded(true);
+          }}
+          onError={() => {
+            if (currentSrc) KNOWN_FAILED_LOGOS.add(currentSrc);
+            if (!triedProxy && effectiveSrc && (effectiveSrc.startsWith("http://") || effectiveSrc.startsWith("https://")) && !effectiveSrc.startsWith("/api/")) {
+              setTriedProxy(true);
+            } else {
+              setHasError(true);
+            }
+          }}
         />
       )}
-
-      {/* Primary Brand Logo */}
-      <img
-        src={currentSrc}
-        alt={name || "Brand Logo"}
-        loading={loading}
-        fetchPriority={fetchPriority}
-        decoding="async"
-        className={`${imageClassName} relative z-10 transition-opacity duration-150 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-        referrerPolicy="no-referrer"
-        onLoad={() => {
-          if (currentSrc) KNOWN_LOADED_LOGOS.add(currentSrc);
-          setImgLoaded(true);
-        }}
-        onError={() => {
-          if (currentSrc) KNOWN_FAILED_LOGOS.add(currentSrc);
-          if (isYoouz) {
-            setHasError(true);
-            return;
-          }
-          if (!triedProxy && effectiveSrc && (effectiveSrc.startsWith("http://") || effectiveSrc.startsWith("https://")) && !effectiveSrc.startsWith("/api/")) {
-            setTriedProxy(true);
-          } else if (!triedFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
-            setTriedFallback(true);
-          } else if (!triedDuckFallback && duckFaviconUrl && currentSrc !== duckFaviconUrl) {
-            setTriedDuckFallback(true);
-          } else {
-            setHasError(true);
-          }
-        }}
-      />
     </div>
   );
 };
