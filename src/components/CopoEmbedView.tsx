@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback } from "react";
+import React, { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
 import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor, getSafeAvatarUrl } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
@@ -63,6 +63,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isVideoPaused, setIsVideoPaused] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartXRef = useRef<number | null>(null);
+  const dragDistanceRef = useRef<number>(0);
   const touchStartXRef = useRef<number | null>(null);
 
   // Normalize embed ID / slug
@@ -147,7 +150,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   const totalPages = Math.ceil(displayVideos.length / itemsPerPage);
 
   const safePageIndex = Math.min(pageIndex, Math.max(0, totalPages - 1));
-  const currentPair = displayVideos.slice(safePageIndex * 2, safePageIndex * 2 + 2);
+  const currentPair = displayVideos.slice(safePageIndex * itemsPerPage, (safePageIndex + 1) * itemsPerPage);
 
   const handlePrevPage = useCallback(() => {
     setPageIndex((prev) => (prev > 0 ? prev - 1 : totalPages - 1));
@@ -161,6 +164,20 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     setIsVideoPaused(false);
   }, [totalPages]);
 
+  // Keyboard navigation (Arrow keys)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        handlePrevPage();
+      } else if (e.key === "ArrowRight") {
+        handleNextPage();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handlePrevPage, handleNextPage]);
+
+  // Mobile Touch Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartXRef.current = e.touches[0].clientX;
   };
@@ -169,15 +186,41 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     if (touchStartXRef.current === null) return;
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartXRef.current - touchEndX;
-    if (diff > 45) {
+    if (diff > 40) {
       handleNextPage();
-    } else if (diff < -45) {
+    } else if (diff < -40) {
       handlePrevPage();
     }
     touchStartXRef.current = null;
   };
 
+  // Desktop Mouse Drag Handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStartXRef.current = e.clientX;
+    dragDistanceRef.current = 0;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || dragStartXRef.current === null) return;
+    dragDistanceRef.current = e.clientX - dragStartXRef.current;
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging && dragStartXRef.current !== null) {
+      if (dragDistanceRef.current < -40) {
+        handleNextPage();
+      } else if (dragDistanceRef.current > 40) {
+        handlePrevPage();
+      }
+    }
+    setIsDragging(false);
+    dragStartXRef.current = null;
+  };
+
   const handleCardClick = (video: VideoReview) => {
+    if (Math.abs(dragDistanceRef.current) > 10) return; // Ignore drag release clicks
+
     if (playingVideoId === video.id) {
       setIsVideoPaused((prev) => !prev);
     } else {
@@ -208,60 +251,96 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         className="w-full max-w-[440px] bg-zinc-950 border border-zinc-800/80 rounded-[28px] p-4 sm:p-5 shadow-2xl flex flex-col gap-4 relative transition-all"
         style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
       >
-        {/* Top Header Card: Independent Rating Badge (Google/Trustpilot format with Yoouz branding) */}
-        <div className="flex items-center gap-3.5 bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-3.5 sm:p-4 shadow-sm">
-          {/* Yoouz Icon Logo on Left */}
-          <div className="w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 shadow-inner">
-            <Star className="w-6 h-6 fill-white text-white drop-shadow-sm" />
+        {/* Top Header Card: Centered Independent Rating Trust Badge (Google/Trustpilot format) */}
+        <div className="flex flex-col items-center justify-center text-center bg-zinc-900/90 border border-white/10 rounded-2xl py-3.5 px-4 sm:py-4 sm:px-5 shadow-md relative">
+          {/* Rating Tier Title */}
+          <span className="font-black text-sm sm:text-base tracking-wider uppercase text-white drop-shadow-sm">
+            {ratingTier}
+          </span>
+
+          {/* 5 Gold Stars Row */}
+          <div className="flex items-center justify-center gap-1.5 my-1.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={`w-5 h-5 sm:w-5.5 sm:h-5.5 ${
+                  i < Math.round(overallRating)
+                    ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                    : "fill-zinc-700 text-zinc-700"
+                }`}
+              />
+            ))}
           </div>
 
-          {/* Rating Calculation & Verification */}
-          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-            <div className="flex items-center justify-between gap-1.5">
-              <span className="font-black text-xs sm:text-[13px] tracking-wider uppercase text-white drop-shadow-sm">
-                {ratingTier}
-              </span>
-              <div className="flex items-center gap-1 shrink-0">
-                <span className="font-extrabold text-[12px] text-white">Yoouz</span>
-                <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-white text-zinc-950 text-[9px] font-black shrink-0">
-                  ✓
-                </span>
-              </div>
-            </div>
+          {/* Review Count Subtitle */}
+          <span className="text-xs sm:text-[13px] text-zinc-300 font-medium">
+            Based on {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
+          </span>
 
-            {/* 5 Gold Stars Row */}
-            <div className="flex items-center gap-1 my-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
-                    i < Math.round(overallRating)
-                      ? "fill-amber-400 text-amber-400 drop-shadow-sm"
-                      : "fill-zinc-700 text-zinc-700"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Review count subtitle */}
-            <span className="text-[11.5px] text-zinc-400 font-medium leading-none">
-              Based on {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
+          {/* Verified Authority Seal */}
+          <div className="flex items-center justify-center gap-1.5 mt-2">
+            <span className="font-extrabold text-[13px] sm:text-sm text-white tracking-tight">Yoouz</span>
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-zinc-950 text-[10px] font-black shrink-0 shadow-sm">
+              ✓
             </span>
           </div>
         </div>
 
         {/* Video Display Container (1 Centered Card or 2-by-2 Grid with Left/Right navigation) */}
         <div
-          className="relative w-full"
+          className="relative w-full select-none cursor-grab active:cursor-grabbing group/carousel"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
+          {/* Floating Left Navigation Arrow */}
+          {totalPages > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevPage();
+              }}
+              className="absolute -left-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-zinc-950/90 hover:bg-zinc-900 border border-white/20 text-white flex items-center justify-center shadow-2xl transition-all duration-200 active:scale-90 hover:scale-105"
+              aria-label="Previous reviews"
+              title="Previous reviews"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Floating Right Navigation Arrow */}
+          {totalPages > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextPage();
+              }}
+              className="absolute -right-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-zinc-950/90 hover:bg-zinc-900 border border-white/20 text-white flex items-center justify-center shadow-2xl transition-all duration-200 active:scale-90 hover:scale-105"
+              aria-label="Next reviews"
+              title="Next reviews"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Video Grid */}
           <div className={`w-full ${displayVideos.length === 1 ? "flex justify-center" : "grid grid-cols-2 gap-3"}`}>
             {currentPair.map((video, idx) => {
-              const realIndex = safePageIndex * 2 + idx;
-              const safeAuthor = resolveSafeAuthor(video.author, currentUser);
+              const realIndex = safePageIndex * itemsPerPage + idx;
+              const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
               const isPlaying = playingVideoId === video.id;
+
+              // Extract actual author avatar from video review / database
+              const reviewerAvatarUrl =
+                safeAuthor.avatar ||
+                video.author?.avatar ||
+                (video as any)?.authorAvatar ||
+                getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle);
 
               return (
                 <div
@@ -306,13 +385,13 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                           e.stopPropagation();
                           setIsMuted((prev) => !prev);
                         }}
-                        className="absolute top-2 right-2 z-20 w-6 h-6 rounded-full bg-black/75 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/95 active:scale-95 transition-all shadow-md"
+                        className="absolute top-2 right-2 z-20 w-7 h-7 rounded-full bg-black/80 backdrop-blur-md border border-white/25 flex items-center justify-center text-white hover:bg-black active:scale-95 transition-all shadow-md"
                         title={isMuted ? "Unmute" : "Mute"}
                       >
                         {isMuted ? (
-                          <VolumeX className="w-3 h-3 text-white" />
+                          <VolumeX className="w-3.5 h-3.5 text-white" />
                         ) : (
-                          <Volume2 className="w-3 h-3 text-white" />
+                          <Volume2 className="w-3.5 h-3.5 text-white" />
                         )}
                       </button>
 
@@ -352,17 +431,21 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                     </>
                   )}
 
-                  {/* Bottom User Avatar, Author Name, 5 Stars & Review Subtitle Pill */}
+                  {/* Bottom User Avatar, Author Name & 5 Stars Pill */}
                   <div className="absolute inset-x-2 bottom-2 p-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex items-center gap-2 shadow-lg z-20 pointer-events-none">
-                    {/* User Avatar */}
+                    {/* Real Reviewer Avatar / Photo from Database */}
                     <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border border-white/20 shrink-0 flex items-center justify-center text-white text-[10px] font-bold">
                       <img
-                        src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle)}
+                        src={reviewerAvatarUrl}
                         alt={safeAuthor.name}
                         className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
-                          target.src = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 64);
+                          const fallback = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 64, safeAuthor.handle || safeAuthor.name);
+                          if (target.src !== fallback) {
+                            target.src = fallback;
+                          }
                         }}
                       />
                     </div>
@@ -390,10 +473,6 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                           />
                         ))}
                       </div>
-
-                      <p className="text-[9px] text-zinc-400 truncate leading-tight mt-0.5">
-                        Video review for {extractCleanDomain(video.placeWebsite || video.placeId || video.placeName) || targetPlace.name}
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -401,9 +480,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             })}
           </div>
 
-          {/* Pagination Controls when there are >2 videos */}
+          {/* Pagination Controls when there are multiple pages */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2.5 px-1">
+            <div className="flex items-center justify-between pt-3 px-1">
               <button
                 type="button"
                 onClick={handlePrevPage}
@@ -414,22 +493,27 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              {/* Dots indicator */}
-              <div className="flex items-center gap-1.5">
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setPageIndex(i);
-                      setPlayingVideoId(null);
-                      setIsVideoPaused(false);
-                    }}
-                    className={`h-1.5 rounded-full transition-all ${
-                      i === safePageIndex ? "w-4 bg-white" : "w-1.5 bg-zinc-700 hover:bg-zinc-500"
-                    }`}
-                    aria-label={`Page ${i + 1}`}
-                  />
-                ))}
+              {/* Dots indicator & Count */}
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setPageIndex(i);
+                        setPlayingVideoId(null);
+                        setIsVideoPaused(false);
+                      }}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === safePageIndex ? "w-4 bg-white" : "w-1.5 bg-zinc-700 hover:bg-zinc-500"
+                      }`}
+                      aria-label={`Page ${i + 1}`}
+                    />
+                  ))}
+                </div>
+                <span className="text-[10px] text-zinc-400 font-medium">
+                  {safePageIndex * itemsPerPage + 1}–{Math.min((safePageIndex + 1) * itemsPerPage, displayVideos.length)} of {displayVideos.length} reviews
+                </span>
               </div>
 
               <button
