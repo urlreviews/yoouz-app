@@ -4458,7 +4458,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   )}
 
                   {/* Left-Aligned Squircle Logo Frame */}
-                  <div className="absolute -bottom-4 left-4 w-16 h-16 sm:w-20 sm:h-20 rounded-[18px] border-[3px] border-zinc-900 bg-zinc-900 shadow-xl flex items-center justify-center z-20 p-1.5 ring-1 ring-white/15 overflow-hidden">
+                  <div className="absolute -bottom-4 left-4 w-16 h-16 sm:w-20 sm:h-20 rounded-[18px] border-[3px] border-zinc-900 bg-white shadow-xl flex items-center justify-center z-20 p-1 ring-1 ring-white/20 overflow-hidden">
                     <CopoBrandLogo
                       domain={editPlaceModal.website || editPlaceModal.id}
                       name={editPlaceModal.name}
