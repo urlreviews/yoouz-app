@@ -267,15 +267,7 @@ export function useFeedPagination() {
       }
     } catch (e) {}
     // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
-    const getReviewTimeLocal = (v: any) => {
-      if (!v) return 0;
-      const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
-      const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
-      const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
-      return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
-    };
     const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
-    seeds.sort((a, b) => getReviewTimeLocal(b) - getReviewTimeLocal(a));
     return seeds;
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);

@@ -1119,6 +1119,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
     if (currentIndexRef.current < maxIdx) {
       const nextIdx = currentIndexRef.current + 1;
+      if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
+        feedVideoRef.current.muted = false;
+        safeSetVolume(feedVideoRef.current, 1);
+        feedVideoRef.current.play().catch(() => {});
+      }
       scrollToCard(nextIdx, "smooth");
     }
   }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
@@ -1129,6 +1134,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
     if (currentIndexRef.current > 0) {
       const prevIdx = currentIndexRef.current - 1;
+      if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
+        feedVideoRef.current.muted = false;
+        safeSetVolume(feedVideoRef.current, 1);
+        feedVideoRef.current.play().catch(() => {});
+      }
       scrollToCard(prevIdx, "smooth");
     }
   }, [scrollToCard, isSessionAudioUnlocked, isMuted]);

@@ -3241,13 +3241,6 @@ export function App() {
     }
   }, [currentFeedContextKey, pendingVideoId]);
 
-  // Bounds guard: ensure currentVideoIndex never exceeds activeFeedVideos length
-  useEffect(() => {
-    if (activeFeedVideos.length > 0 && currentVideoIndex >= activeFeedVideos.length) {
-      setCurrentVideoIndex(Math.max(0, activeFeedVideos.length - 1));
-    }
-  }, [activeFeedVideos.length, currentVideoIndex]);
-
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
   useEffect(() => {
