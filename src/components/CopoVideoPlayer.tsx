@@ -1370,15 +1370,23 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       ref={mainRef}
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
-      className="flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]"
+      className={`flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] ${
+        isEmbed ? "bg-black p-0 sm:p-2" : "bg-black md:bg-zinc-950"
+      }`}
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      <div className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto flex items-center md:justify-center gap-4 relative md:max-h-[95vh] md:p-3">
+      <div className={`w-full h-full flex items-center justify-center relative ${
+        isEmbed ? "p-0" : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto md:justify-center gap-4 md:max-h-[95vh] md:p-3"
+      }`}>
         {/* Scroll Snap Feed Container */}
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col md:gap-4 items-center"
+          className={`w-full h-full overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center ${
+            isEmbed
+              ? "gap-3 p-1 justify-center"
+              : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:gap-4"
+          }`}
           style={{
             WebkitOverflowScrolling: "touch",
             scrollSnapType: "y mandatory",

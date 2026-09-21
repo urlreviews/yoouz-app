@@ -676,7 +676,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       ref={cardRef}
       data-video-index={index}
       id={`copo-video-card-${video.id}`}
-      className="snap-start snap-always shrink-0 relative w-full h-full min-h-full max-h-full bg-black select-none flex flex-col justify-end group overflow-hidden md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
+      className={`snap-start snap-always shrink-0 relative bg-black select-none flex flex-col justify-end group overflow-hidden ${
+        isEmbed
+          ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-2xl border border-zinc-800/90 mx-auto"
+          : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
+      }`}
     >
       {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
       <div

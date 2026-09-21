@@ -1894,7 +1894,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   const copyEmbedCode = () => {
     const embedSlug = getPlaceSlug(currentPlace);
-    const iframeSnippet = `<iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
+    const iframeSnippet = `<iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="700" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="max-width:440px; aspect-ratio:9/16; border-radius:28px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;"></iframe>`;
     navigator.clipboard.writeText(iframeSnippet);
     setIsCodeCopied(true);
     setTimeout(() => setIsCodeCopied(false), 2500);
@@ -3494,7 +3494,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                     <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 font-mono text-xs">
                       <pre className="text-[10.5px] sm:text-[11px] text-zinc-300 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
-                        {`<iframe src="https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}" width="100%" height="580" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="max-width:460px; border-radius:28px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;"></iframe>`}
+                        {`<iframe src="https://www.yoouz.com/embed/${getPlaceSlug(currentPlace)}" width="100%" height="700" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="max-width:440px; aspect-ratio:9/16; border-radius:28px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;"></iframe>`}
                       </pre>
                     </div>
 

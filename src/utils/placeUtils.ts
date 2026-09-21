@@ -301,6 +301,12 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "www-nevadalegalservices-org": "Nevada Legal Services",
   "mcveaghfleming": "McVeagh Fleming Lawyers",
   "mcveaghfleming.co.nz": "McVeagh Fleming Lawyers",
+  "mcveaghfleminglawyers": "McVeagh Fleming Lawyers",
+  "mcveaghfleminglawyers.co.nz": "McVeagh Fleming Lawyers",
+  "mcveagh fleming": "McVeagh Fleming Lawyers",
+  "mc veagh fleming": "McVeagh Fleming Lawyers",
+  "mc veagh fleming lawyer s": "McVeagh Fleming Lawyers",
+  "mcveagh fleming lawyer s": "McVeagh Fleming Lawyers",
   "www-mcveaghfleming-co-nz": "McVeagh Fleming Lawyers"
 };
 
@@ -316,8 +322,8 @@ export function splitCompoundWords(str: string): string {
   // 3. Known brand/locational prefixes
   s = s.replace(/^(al|el|the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
   
-  // 4. Known compound word boundaries & suffixes
-  const commonWords = /(lerner|rowe|and|benson|bingham|injury|accident|lawyer|lawyers|attorney|attorneys|lawfirm|dental|clinic|center|centre|park|hotels?|avenue|valley|therapy|services?|solutions?|group|media|news|technology|tech|studios?|travel|cafe|coffee|bar|suites?|hospitals?|stores?|shops?|markets?|clubs?|fitness|gym|labs?|care|health|spa|salon|resorts?|villas?|restaurants?|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations?|motors?|auto|rentals?|logistics|express|trust|trusted|capital|consulting|associates?|partners?|properties|realestate|agency|law|firm|dentists?|orthodontics|wellness|massage|towers?|plaza|square|malls?|hubs?|holdings|globals?|international|world|networks?|systems?|software|security|design|creative|productions?|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  // 4. Known compound word boundaries & suffixes (Longer/plural terms ordered before shorter prefixes)
+  const commonWords = /(lerner|rowe|and|benson|bingham|injury|accident|lawyers|lawyer|attorneys|attorney|lawfirm|dentists|dentist|dental|clinic|center|centre|park|hotels|hotel|avenue|valley|therapy|services|service|solutions|solution|group|media|news|technology|tech|studios|studio|travel|cafe|coffee|bar|suites|suite|hospitals|hospital|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spa|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations|cancellation|motors|motor|auto|rentals|rental|logistics|express|trusted|trust|capital|consulting|associates|associate|partners|partner|properties|realestate|agency|law|firm|orthodontics|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
   
   // Apply word splitting if no spaces yet
   const parts = s.split(" ").map(p => {
