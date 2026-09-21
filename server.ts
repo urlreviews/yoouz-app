@@ -7976,8 +7976,10 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           fs.writeFileSync(thumbFilePath, Buffer.from(b64, "base64"));
           hasThumb = true;
         } else {
-          execSync(`ffmpeg -ss 00:00:00.500 -i "${finalVideoPath}" -vframes 1 -q:v 2 "${thumbFilePath}" -y`, { timeout: 5000, stdio: 'ignore' });
-          hasThumb = true;
+          try {
+            execSync(`ffmpeg -ss 00:00:00.500 -i "${finalVideoPath}" -vframes 1 -q:v 2 "${thumbFilePath}" -y`, { timeout: 3000, stdio: 'ignore' });
+            hasThumb = true;
+          } catch (e) {}
         }
       } catch (thumbErr) {
         console.warn("Thumbnail generation notice:", thumbErr);
@@ -7994,89 +7996,73 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         targetVideoFileName = mp4FileName;
       }
 
-      let publicUrl = `/api/videos/stream/${targetVideoFileName}`;
-      let thumbnailUrl = "";
-      console.log(`✅ [Server] Stored video ${targetVideoFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
-
-      // 🐰 Bunny CDN Integration
       const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
       const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
       const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL || `https://${bunnyStorageZone}.b-cdn.net`;
       const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
+      const pullZoneDomain = bunnyPullZoneUrl.replace(/\/$/, '');
+
+      let publicUrl = `/api/videos/stream/${targetVideoFileName}`;
+      let thumbnailUrl = hasThumb ? `/uploads/${thumbFileName}` : "";
 
       if (bunnyAccessKey && bunnyStorageZone) {
-        console.log("🐰 [Server] Uploading video and thumbnail to Bunny CDN Storage...");
-        try {
-          const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-          const pullZoneDomain = bunnyPullZoneUrl.replace(/\/$/, '');
+        publicUrl = `${pullZoneDomain}/videos/${targetVideoFileName}`;
+        thumbnailUrl = `${pullZoneDomain}/videos/${thumbFileName}`;
+      }
 
-          // 1. Upload Video MP4 (with 12s timeout)
-          const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${targetVideoFileName}`;
-          const fileBuffer = fs.readFileSync(finalVideoPath);
-          const response = await fetch(videoBunnyUrl, {
-            method: 'PUT',
-            headers: {
-              'AccessKey': bunnyAccessKey,
-              'Content-Type': 'video/mp4',
-            },
-            body: fileBuffer,
-            signal: AbortSignal.timeout(12000)
-          });
+      console.log(`✅ [Server] Stored video ${targetVideoFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
 
-          if (response.ok) {
-            publicUrl = `${pullZoneDomain}/videos/${targetVideoFileName}`;
-            console.log("🐰 [Server] Successfully uploaded video to Bunny CDN:", publicUrl);
-          } else {
-            console.error("🐰 [Server] Failed to upload video to Bunny CDN:", await response.text());
-          }
+      // Respond immediately to client so mobile upload completes in under 1 second without stalling
+      res.json({ success: true, url: publicUrl, thumbnailUrl, fileName: targetVideoFileName, bunnyVideoId: base });
 
-          // 2. Upload Thumbnail JPG (with 8s timeout)
-          if (hasThumb && fs.existsSync(thumbFilePath)) {
-            const thumbBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${thumbFileName}`;
-            const thumbBuffer = fs.readFileSync(thumbFilePath);
-            const thumbRes = await fetch(thumbBunnyUrl, {
+      // Run background Bunny CDN sync asynchronously without holding the HTTP response
+      (async () => {
+        if (bunnyAccessKey && bunnyStorageZone) {
+          try {
+            const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
+
+            // 1. Upload Video MP4 to Bunny CDN
+            const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${targetVideoFileName}`;
+            const fileBuffer = fs.readFileSync(finalVideoPath);
+            await fetch(videoBunnyUrl, {
               method: 'PUT',
               headers: {
                 'AccessKey': bunnyAccessKey,
-                'Content-Type': 'image/jpeg',
+                'Content-Type': 'video/mp4',
               },
-              body: thumbBuffer,
-              signal: AbortSignal.timeout(8000)
-            });
-            if (thumbRes.ok) {
-              thumbnailUrl = `${pullZoneDomain}/videos/${thumbFileName}`;
-              console.log("🐰 [Server] Successfully uploaded thumbnail to Bunny CDN:", thumbnailUrl);
+              body: fileBuffer,
+              signal: AbortSignal.timeout(30000)
+            }).then(async (r) => {
+              if (r.ok) {
+                console.log("🐰 [Server Async] Successfully uploaded video to Bunny CDN:", `${pullZoneDomain}/videos/${targetVideoFileName}`);
+              } else {
+                console.warn("🐰 [Server Async] Bunny CDN video upload notice:", await r.text());
+              }
+            }).catch((err) => console.warn("🐰 [Server Async] Bunny CDN video error:", err?.message || err));
+
+            // 2. Upload Thumbnail JPG to Bunny CDN
+            if (hasThumb && fs.existsSync(thumbFilePath)) {
+              const thumbBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${thumbFileName}`;
+              const thumbBuffer = fs.readFileSync(thumbFilePath);
+              await fetch(thumbBunnyUrl, {
+                method: 'PUT',
+                headers: {
+                  'AccessKey': bunnyAccessKey,
+                  'Content-Type': 'image/jpeg',
+                },
+                body: thumbBuffer,
+                signal: AbortSignal.timeout(15000)
+              }).then(async (r) => {
+                if (r.ok) {
+                  console.log("🐰 [Server Async] Successfully uploaded thumbnail to Bunny CDN:", `${pullZoneDomain}/videos/${thumbFileName}`);
+                }
+              }).catch((err) => console.warn("🐰 [Server Async] Bunny CDN thumbnail error:", err?.message || err));
             }
+          } catch (bunnyErr) {
+            console.warn("🐰 [Server Async] Error syncing to Bunny CDN:", bunnyErr);
           }
-        } catch (bunnyErr) {
-          console.error("🐰 [Server] Error uploading to Bunny CDN:", bunnyErr);
         }
-      }
-
-      if (!thumbnailUrl && publicUrl.includes("b-cdn.net") && bunnyPullZoneUrl) {
-        thumbnailUrl = `${bunnyPullZoneUrl.replace(/\/$/, '')}/videos/${base}.jpg`;
-      }
-
-      const uploadDurationMs = Date.now() - uploadStartTime;
-      console.log(`🚀 [Server] Video upload & processing completed in ${uploadDurationMs}ms for ${cleanFileName}`);
-
-      if (uploadDurationMs > 9000) {
-        // Slow upload detected - notify admin telemetry proactively
-        systemErrorLogs.unshift({
-          id: `err-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          timestamp: new Date().toISOString(),
-          message: `Notice: Video upload/processing for "${cleanFileName}" took ${(uploadDurationMs / 1000).toFixed(1)}s. File safely transcoded and streamed.`,
-          component: "Video Upload & Transcode Engine",
-          category: "video_player",
-          url: "/api/videos/upload",
-          userAgent: String(req.headers["user-agent"] || "").slice(0, 120),
-          status: "unresolved",
-          testSteps: "Check network throughput and FFmpeg execution latency on server container."
-        });
-        saveSystemErrorLogs();
-      }
-
-      return res.json({ success: true, url: publicUrl, thumbnailUrl, fileName: cleanFileName, bunnyVideoId: base });
+      })();
     } catch (err: any) {
       console.error("Video upload error:", err);
       systemErrorLogs.unshift({
@@ -12256,6 +12242,13 @@ app.post("/api/videos/save-review", async (req, res) => {
         feedCache.videos.unshift(review);
       }
       feedCache.lastFetched = Date.now();
+
+      // Real-Time Cross-Device SSE Broadcast: instantly displays the newly published video on all active computers, phones, and tablets worldwide
+      try {
+        broadcastSseEvent({ type: "new_video", video: review });
+      } catch (sseErr) {
+        console.warn("SSE broadcast new_video error:", sseErr);
+      }
 
       // Return instant success response to client immediately so mobile & desktop users never hang
       res.json({ success: true, review });

@@ -829,25 +829,22 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       recordedAt: "Just now"
     };
 
-    // 🛡️ Anti-Stall Watchdog: Guarantees that neither mobile nor desktop ever freezes at 95%
-    publishWatchdogRef.current = setTimeout(() => {
+    // 🛡️ Anti-Stall Watchdog: Safety timer that guarantees completion while ensuring server sync
+    publishWatchdogRef.current = setTimeout(async () => {
       if (isPublishingRef.current) {
-        console.warn("⚠️ [Watchdog] Video publishing safety watchdog triggered. Auto-completing to prevent 95% hang.");
+        console.warn("⚠️ [Watchdog] Video publishing safety watchdog triggered. Auto-completing and saving to server feed.");
         
-        // Notify admin panel telemetry of auto-rescue
-        fetch("/api/system/report-error", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: `Video upload auto-rescued by 12s client watchdog for place "${cleanPlaceName}". Prevented 95% stall.`,
-            component: "Video Upload & Watchdog",
-            category: "video_player",
-            url: window.location.href,
-            userAgent: navigator.userAgent,
-            status: "resolved",
-            testSteps: "Check network throughput and FFmpeg execution latency on server container."
-          })
-        }).catch(() => {});
+        // Post review to server so it is globally visible to all devices immediately
+        try {
+          await fetch("/api/videos/save-review", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fallbackReview),
+            signal: AbortSignal.timeout(10000)
+          });
+        } catch (e) {
+          console.warn("Watchdog server save notice:", e);
+        }
 
         // Store review in localStorage
         try {
@@ -870,7 +867,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         onClose();
         onPublishVideoReview(fallbackReview);
       }
-    }, 12000);
+    }, 25000);
 
     // 1. Save raw blob to IndexedDB
     if (recordedVideoBlob) {
@@ -999,10 +996,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newReview),
-        signal: AbortSignal.timeout(4000)
+        signal: AbortSignal.timeout(12000)
       });
     } catch (saveErr) {
       console.warn("Server video review save notice:", saveErr);
+      // Secondary immediate retry
+      try {
+        await fetch("/api/videos/save-review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newReview),
+          signal: AbortSignal.timeout(12000)
+        });
+      } catch (retryErr) {}
     }
 
     // Secondary cloud sync calls run asynchronously without blocking the UI

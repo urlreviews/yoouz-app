@@ -504,7 +504,18 @@ export function useFeedPagination() {
           sseRetryDelay = 5000;
           try {
             const payload = JSON.parse(event.data);
-            if (payload.type === "video_deleted" && payload.videoId) {
+            if (payload.type === "new_video" && payload.video) {
+              const freshVideo = normalizeReview(payload.video);
+              setVideos((prev) => {
+                const filtered = prev.filter((v) => v.id !== freshVideo.id);
+                const updated = [freshVideo, ...filtered];
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated.slice(0, 50)));
+                } catch (e) {}
+                return updated;
+              });
+              window.dispatchEvent(new CustomEvent("copo-video-created", { detail: { video: freshVideo } }));
+            } else if (payload.type === "video_deleted" && payload.videoId) {
               const targetId = String(payload.videoId);
               recordClientDeletedId(targetId);
               setVideos((prev) => prev.filter((v) => v.id !== targetId));
