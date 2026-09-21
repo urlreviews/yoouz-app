@@ -158,6 +158,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const [showQuickRecommend, setShowQuickRecommend] = useState(false);
   const [recommendSearch, setRecommendSearch] = useState("");
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [actionThread, setActionThread] = useState<CopoMessage | null>(null);
   const [showBlockConfirmModal, setShowBlockConfirmModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -167,15 +168,37 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
 
-  // Close options menu when clicking outside
+  // Close options menu when clicking outside or pressing Escape
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const targetEl = event.target as HTMLElement | null;
+      if (targetEl?.closest?.("[data-chat-options-modal]")) {
+        return;
+      }
       if (optionsRef.current && !optionsRef.current.contains(event.target as Node)) {
         setIsOptionsOpen(false);
+        setActionThread(null);
       }
     };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOptionsOpen(false);
+        setActionThread(null);
+        setShowBlockConfirmModal(false);
+        setShowDeleteConfirmModal(false);
+        setShowNewChatModal(false);
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   // Show temporary toast notification
@@ -545,6 +568,18 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     });
   }, [activeThread, blockedUserIds]);
 
+  const targetActionThread = actionThread || activeThread;
+
+  const isActionTargetBlocked = useMemo(() => {
+    if (!targetActionThread) return false;
+    const sId = (targetActionThread.senderId || "").toLowerCase().trim().replace(/^@/, "");
+    const sName = (targetActionThread.senderName || "").toLowerCase().trim();
+    return blockedUserIds.some((bId) => {
+      const cleanB = (bId || "").toLowerCase().trim().replace(/^@/, "");
+      return cleanB === sId || cleanB === sName || (sId.includes(cleanB) && cleanB.length > 2);
+    });
+  }, [targetActionThread, blockedUserIds]);
+
   // Total unread count for the header info
   const unreadCount = useMemo(() => {
     return messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0);
@@ -681,50 +716,77 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     setReplyText("");
   };
 
+  const handleMarkAsReadAction = () => {
+    const target = targetActionThread;
+    if (!target) return;
+    if (onMarkThreadRead) {
+      onMarkThreadRead(target.id);
+    }
+    const updated = messages.map((m) =>
+      m.id === target.id ? { ...m, unreadCount: 0 } : m
+    );
+    onUpdateMessages(updated);
+    setIsOptionsOpen(false);
+    setActionThread(null);
+    showToast("Marked conversation as read.");
+  };
+
   const handleBlockUserAction = () => {
-    if (!activeThread) return;
-    const targetId = activeThread.senderId || activeThread.senderName;
+    const target = targetActionThread;
+    if (!target) return;
+    const targetId = target.senderId || target.senderName;
     if (onBlockUser) {
-      onBlockUser(targetId, activeThread.senderName);
+      onBlockUser(targetId, target.senderName);
     }
     setShowBlockConfirmModal(false);
     setIsOptionsOpen(false);
-    showToast(`Blocked @${activeThread.senderName}. You will no longer receive messages.`);
+    setActionThread(null);
+    showToast(`Blocked @${target.senderName}. You will no longer receive messages.`);
   };
 
   const handleUnblockUserAction = () => {
-    if (!activeThread) return;
-    const targetId = activeThread.senderId || activeThread.senderName;
+    const target = targetActionThread;
+    if (!target) return;
+    const targetId = target.senderId || target.senderName;
     if (onUnblockUser) {
       onUnblockUser(targetId);
     }
-    showToast(`Unblocked @${activeThread.senderName}.`);
+    setIsOptionsOpen(false);
+    setActionThread(null);
+    showToast(`Unblocked @${target.senderName}.`);
   };
 
   const handleDeleteConversation = () => {
-    if (!activeThread) return;
+    const target = targetActionThread;
+    if (!target) return;
     if (onDeleteThread) {
-      onDeleteThread(activeThread.id);
+      onDeleteThread(target.id);
     } else {
-      const remaining = messages.filter((m) => m.id !== activeThread.id);
+      const remaining = messages.filter((m) => m.id !== target.id);
       onUpdateMessages(remaining);
+    }
+    if (target.id === selectedThreadId) {
+      setLocalSelectedThreadId("");
+      setIsMobileThreadViewOpen(false);
+      if (onSelectThreadId) onSelectThreadId("");
     }
     setShowDeleteConfirmModal(false);
     setIsOptionsOpen(false);
-    setIsMobileThreadViewOpen(false);
+    setActionThread(null);
     showToast("Conversation deleted.");
   };
 
   const handleReportAction = () => {
-    if (!activeThread) return;
+    const target = targetActionThread;
+    if (!target) return;
     setIsOptionsOpen(false);
+    setActionThread(null);
     if (onOpenReport) {
       onOpenReport({
         type: "user",
         author: {
-          name: activeThread.senderName,
-          //handle: activeThread.senderId || activeThread.senderName.toLowerCase().replace(/\s+/g, ""),
-          avatar: activeThread.senderAvatar,
+          name: target.senderName,
+          avatar: target.senderAvatar,
           isVerified: true
         }
       });
@@ -1074,7 +1136,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       </div>
                       
                       <div className="flex-1 min-w-0 space-y-0.5">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-1">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1090,17 +1152,33 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               </span>
                             )}
                           </button>
-                          <span className="text-[10px] text-zinc-200 font-bold shrink-0">{formatRecordedDate(thread.timestamp, thread.createdAtMs)}</span>
+                          <span className="text-[10px] text-zinc-400 font-bold shrink-0">{formatRecordedDate(thread.timestamp, thread.createdAtMs)}</span>
                         </div>
                         <p className={`text-[11px] truncate ${isUnread ? "text-white font-black" : "text-zinc-200 font-medium"}`}>
                           {thread.lastMessage || "Direct conversation"}
                         </p>
                       </div>
 
-                      {/* White badge for unread count */}
-                      {isUnread && (
-                        <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
-                      )}
+                      {/* Right side controls: Unread badge & 3-dots options button */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {isUnread && (
+                          <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
+                        )}
+                        <button
+                          type="button"
+                          id={`btn-thread-options-${thread.id}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActionThread(thread);
+                            setIsOptionsOpen(true);
+                          }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors active:scale-95 cursor-pointer shrink-0"
+                          title={`Options for ${thread.senderName}`}
+                          aria-label={`Options for ${thread.senderName}`}
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })
@@ -1169,30 +1247,24 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <div className="flex items-center gap-2 relative" ref={optionsRef}>
                     <button
                       id="btn-chat-options-menu"
-                      onClick={() => setIsOptionsOpen(!isOptionsOpen)}
+                      onClick={() => {
+                        setActionThread(activeThread);
+                        setIsOptionsOpen(!isOptionsOpen);
+                      }}
                       className="w-9 h-9 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-zinc-800 transition-all active:scale-95 cursor-pointer"
                       title="Chat options & safety"
+                      aria-label="Chat options & safety"
                     >
                       <MoreVertical className="w-5 h-5" />
                     </button>
 
-                    {/* Options Dropdown Menu */}
-                    {isOptionsOpen && (
-                      <div className="absolute right-0 top-11 w-56 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+                    {/* Desktop Dropdown Menu (hidden on mobile, uses full bottom action sheet on mobile) */}
+                    {isOptionsOpen && targetActionThread && (
+                      <div className="hidden md:block absolute right-0 top-11 w-56 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
                         {/* Mark as read option */}
                         <button
                           id="btn-mark-chat-read"
-                          onClick={() => {
-                            if (activeThread?.id) {
-                              onMarkThreadRead?.(activeThread.id);
-                              const updated = messages.map((m) =>
-                                m.id === activeThread.id ? { ...m, unreadCount: 0 } : m
-                              );
-                              onUpdateMessages(updated);
-                            }
-                            setIsOptionsOpen(false);
-                            showToast("Marked conversation as read.");
-                          }}
+                          onClick={handleMarkAsReadAction}
                           className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
                           <CheckCheck className="w-4 h-4 text-emerald-400" />
@@ -1212,17 +1284,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         </button>
 
                         {/* Block/Unblock toggle */}
-                        {isSenderBlocked ? (
+                        {isActionTargetBlocked ? (
                           <button
                             id="btn-unblock-chat-user"
-                            onClick={() => {
-                              handleUnblockUserAction();
-                              setIsOptionsOpen(false);
-                            }}
+                            onClick={handleUnblockUserAction}
                             className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-emerald-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                            <span>Unblock {activeThread.senderName}</span>
+                            <span>Unblock {targetActionThread.senderName}</span>
                           </button>
                         ) : (
                           <button
@@ -1234,7 +1303,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <UserX className="w-4 h-4 text-zinc-200" />
-                            <span>Block {activeThread.senderName}</span>
+                            <span>Block {targetActionThread.senderName}</span>
                           </button>
                         )}
 
@@ -1619,8 +1688,137 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
       </div>
 
+      {/* Universal Chat Options (Action Sheet on Mobile & Modal on Desktop for Thread List) */}
+      {isOptionsOpen && targetActionThread && (
+        <div
+          data-chat-options-modal="true"
+          className="fixed inset-0 z-50 flex flex-col justify-end md:justify-center md:items-center bg-black/70 backdrop-blur-xs p-0 md:p-4 animate-in fade-in duration-200"
+          onClick={() => {
+            setIsOptionsOpen(false);
+            setActionThread(null);
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full md:max-w-sm bg-zinc-900 border-t md:border border-zinc-800 rounded-t-3xl md:rounded-3xl p-5 space-y-3 shadow-2xl animate-in slide-in-from-bottom md:zoom-in-95 duration-200 pb-8 md:pb-5"
+          >
+            {/* Mobile drag bar */}
+            <div className="md:hidden w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-2" />
+
+            {/* Target profile preview header */}
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+              <div className="flex items-center gap-3 min-w-0">
+                <img
+                  src={getSafeAvatarUrl(targetActionThread.senderAvatar, targetActionThread.senderName, targetActionThread.senderId)}
+                  alt={targetActionThread.senderName}
+                  className="w-10 h-10 rounded-full object-cover border border-zinc-700 shrink-0"
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.src = getSafeAvatarUrl(null, targetActionThread.senderName, targetActionThread.senderId);
+                  }}
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white truncate">
+                    {targetActionThread.senderName}
+                  </p>
+                  <p className="text-[11px] text-zinc-400">Conversation options</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOptionsOpen(false);
+                  setActionThread(null);
+                }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Action options */}
+            <div className="space-y-1">
+              {/* Mark as Read */}
+              <button
+                type="button"
+                id="btn-options-mark-read"
+                onClick={handleMarkAsReadAction}
+                className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
+              >
+                <CheckCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>Mark as Read</span>
+              </button>
+
+              {/* Report option */}
+              <button
+                type="button"
+                id="btn-options-report-user"
+                onClick={handleReportAction}
+                className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
+              >
+                <Flag className="w-5 h-5 text-red-500 shrink-0" />
+                <span>Report User or Messages</span>
+              </button>
+
+              {/* Block / Unblock toggle */}
+              {isActionTargetBlocked ? (
+                <button
+                  type="button"
+                  id="btn-options-unblock-user"
+                  onClick={handleUnblockUserAction}
+                  className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-emerald-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
+                >
+                  <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <span>Unblock {targetActionThread.senderName}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  id="btn-options-block-user"
+                  onClick={() => {
+                    setIsOptionsOpen(false);
+                    setShowBlockConfirmModal(true);
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
+                >
+                  <UserX className="w-5 h-5 text-zinc-400 shrink-0" />
+                  <span>Block {targetActionThread.senderName}</span>
+                </button>
+              )}
+
+              {/* Delete Conversation */}
+              <button
+                type="button"
+                id="btn-options-delete-conversation"
+                onClick={() => {
+                  setIsOptionsOpen(false);
+                  setShowDeleteConfirmModal(true);
+                }}
+                className="w-full px-4 py-3 text-left text-sm font-bold text-red-400 hover:bg-zinc-800 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
+              >
+                <Trash2 className="w-5 h-5 text-red-500 shrink-0" />
+                <span>Delete Conversation</span>
+              </button>
+            </div>
+
+            {/* Cancel button */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsOptionsOpen(false);
+                setActionThread(null);
+              }}
+              className="w-full py-3 rounded-2xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-300 font-bold text-sm text-center active:scale-[0.99] transition-all cursor-pointer mt-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Block Confirmation Modal Dialog */}
-      {showBlockConfirmModal && activeThread && (
+      {showBlockConfirmModal && targetActionThread && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-zinc-800 animate-in zoom-in-95 duration-150">
             <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
@@ -1629,7 +1827,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             
             <div className="text-center space-y-1.5">
               <h3 className="text-base font-black text-white">
-                Block {activeThread.senderName}?
+                Block {targetActionThread.senderName}?
               </h3>
               <p className="text-xs text-zinc-200 leading-relaxed">
                 They will not be able to message you or see your direct chat history. You can unblock them at any time.
@@ -1640,14 +1838,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowBlockConfirmModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-200 font-bold text-xs hover:bg-zinc-800 transition-colors"
+                className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-200 font-bold text-xs hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleBlockUserAction}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-black text-xs hover:bg-red-700 transition-colors shadow-xs"
+                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-black text-xs hover:bg-red-700 transition-colors shadow-xs cursor-pointer"
               >
                 Block User
               </button>
@@ -1789,7 +1987,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       )}
 
       {/* Delete Conversation Confirmation Modal */}
-      {showDeleteConfirmModal && activeThread && (
+      {showDeleteConfirmModal && targetActionThread && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-zinc-800 animate-in zoom-in-95 duration-150">
             <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
@@ -1801,7 +1999,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 Delete this conversation?
               </h3>
               <p className="text-xs text-zinc-200 leading-relaxed">
-                This will delete the chat thread with {activeThread.senderName}. This action cannot be undone.
+                This will delete the chat thread with {targetActionThread.senderName}. This action cannot be undone.
               </p>
             </div>
 

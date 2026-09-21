@@ -1179,20 +1179,47 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         };
       });
 
-      threads.push({
-        id: String(data.id),
-        senderId: otherId,
-        senderName: otherName,
-        senderAvatar: otherAvatar,
-        senderEmail: data.senderEmail,
-        recipientEmail: data.recipientEmail,
-        lastMessage: data.lastMessage || (processedHistory[processedHistory.length - 1]?.text ?? "Conversation started"),
-        timestamp: data.timestamp || "Just now",
-        createdAtMs: data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now(),
-        unreadCount: Number(unreadCount) || 0,
-        videoPreviewUrl: data.videoPreviewUrl,
-        history: processedHistory
+      // Deduplicate threads with the same participant to prevent duplicate conversations
+      const existingThreadIdx = threads.findIndex((t) => {
+        const sameId = t.senderId && otherId && t.senderId.toLowerCase().trim() === otherId.toLowerCase().trim();
+        const sameName = t.senderName && otherName && t.senderName.toLowerCase().trim() === otherName.toLowerCase().trim();
+        return Boolean(sameId || sameName);
       });
+
+      if (existingThreadIdx >= 0) {
+        const existing = threads[existingThreadIdx];
+        const mergedHistory = deduplicateChatHistory([...(existing.history || []), ...processedHistory]);
+        const newestCreatedAt = Math.max(
+          existing.createdAtMs || 0,
+          data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now()
+        );
+        const lastMsg = (mergedHistory[mergedHistory.length - 1]?.text) || existing.lastMessage || data.lastMessage || "Direct conversation";
+        const combinedUnread = Math.max(existing.unreadCount, Number(unreadCount) || 0);
+
+        threads[existingThreadIdx] = {
+          ...existing,
+          history: mergedHistory,
+          lastMessage: lastMsg,
+          createdAtMs: newestCreatedAt,
+          unreadCount: combinedUnread,
+          videoPreviewUrl: data.videoPreviewUrl || existing.videoPreviewUrl
+        };
+      } else {
+        threads.push({
+          id: String(data.id),
+          senderId: otherId,
+          senderName: otherName,
+          senderAvatar: otherAvatar,
+          senderEmail: data.senderEmail,
+          recipientEmail: data.recipientEmail,
+          lastMessage: data.lastMessage || (processedHistory[processedHistory.length - 1]?.text ?? "Conversation started"),
+          timestamp: data.timestamp || "Just now",
+          createdAtMs: data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now(),
+          unreadCount: Number(unreadCount) || 0,
+          videoPreviewUrl: data.videoPreviewUrl,
+          history: processedHistory
+        });
+      }
     }
   }
 
