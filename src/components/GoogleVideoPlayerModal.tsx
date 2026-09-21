@@ -401,7 +401,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                   onOpenCreator(currentReview.author);
                 }
               }}
-              className="flex items-center gap-2.5 text-left group cursor-pointer hover:opacity-85 transition-opacity"
+              className="flex items-center gap-2.5 text-left group cursor-pointer hover:opacity-85 active:scale-[0.98] transition-all no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
               title={`View ${currentReview.author?.name || 'Customer'}'s Profile`}
             >
               <img

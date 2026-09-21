@@ -275,30 +275,30 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     }
   };
 
-  // Canonical place profile URL on Yoouz (e.g. https://yoouz.com/place/mcveaghfleming-co-nz or https://yoouz.com/)
+  // Canonical place profile URL on Yoouz (e.g. https://www.yoouz.com/place/lernerandrowe.com or https://www.yoouz.com/)
   const placeProfileUrl = useMemo(() => {
     const slug = getPlaceSlug(targetPlace) || targetPlace.id || cleanSlug;
-    if (!slug || slug === "yoouz.com" || slug === "yoouz") {
-      return "https://yoouz.com/";
+    if (!slug || slug === "yoouz.com" || slug === "yoouz" || slug === "www.yoouz.com") {
+      return "https://www.yoouz.com/";
     }
-    return `https://yoouz.com/place/${encodeURIComponent(slug)}`;
+    return `https://www.yoouz.com/place/${encodeURIComponent(slug)}`;
   }, [targetPlace, cleanSlug]);
 
-  // Canonical reviewer user profile URL on Yoouz (e.g. https://yoouz.com/@stevenakan or https://yoouz.com/@steven-akan)
+  // Canonical reviewer user profile URL on Yoouz (e.g. https://www.yoouz.com/@ben-blue or https://www.yoouz.com/@benblue)
   const reviewerProfileUrl = useMemo(() => {
     const rawHandle = safeAuthor.handle ? safeAuthor.handle.replace(/^@+/, "").trim() : "";
     const rawName = (safeAuthor.name || "").trim();
-    const candidate = rawHandle || rawName;
-    const cleanSlugCandidate = candidate
-      .toLowerCase()
-      .replace(/^@+/, "")
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9_-]/g, "");
+    let cleanSlugCandidate = "";
+    if (rawHandle && rawHandle !== "user" && rawHandle !== "reviewer") {
+      cleanSlugCandidate = rawHandle.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    } else if (rawName) {
+      cleanSlugCandidate = rawName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "");
+    }
 
     if (!cleanSlugCandidate || cleanSlugCandidate === "reviewer" || cleanSlugCandidate === "user" || cleanSlugCandidate === "registered-user") {
       return placeProfileUrl;
     }
-    return `https://yoouz.com/@${encodeURIComponent(cleanSlugCandidate)}`;
+    return `https://www.yoouz.com/@${encodeURIComponent(cleanSlugCandidate)}`;
   }, [safeAuthor, placeProfileUrl]);
 
   return (
@@ -381,7 +381,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             href={placeProfileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 max-w-[calc(100%-48px)] group/biz"
+            className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 max-w-[calc(100%-48px)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
             title={`View verified reviews for ${displayBusinessName} on Yoouz`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -393,16 +393,16 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               bannerUrl={targetPlace.bannerUrl}
               loading="eager"
               fetchPriority="high"
-              className="w-8 h-8 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md group-hover/biz:scale-105 transition-transform"
+              className="w-8 h-8 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md transition-transform"
               imageClassName="w-full h-full object-contain rounded-lg"
               fallbackTextClassName="font-extrabold text-[11px] text-white"
             />
             <div className="min-w-0 flex-1 py-0.5">
-              <div className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                <span className="truncate group-hover/biz:underline">{displayBusinessName}</span>
+              <div className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] no-underline">
+                <span className="truncate no-underline">{displayBusinessName}</span>
                 <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-amber-400 font-extrabold leading-none mt-0.5">
+              <div className="flex items-center gap-1 text-[11px] text-amber-400 font-extrabold leading-none mt-0.5 no-underline">
                 <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
                 <span>{overallRating.toFixed(1)}</span>
                 <span className="text-zinc-300 font-normal">
@@ -469,7 +469,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               href={reviewerProfileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md hover:scale-105 hover:border-white/60 transition-all cursor-pointer"
+              className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md hover:scale-105 hover:border-white/60 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
               title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -498,11 +498,11 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 href={reviewerProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group/reviewer flex items-center gap-1.5 hover:opacity-95 transition-opacity cursor-pointer min-w-0 w-fit"
+                className="flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer min-w-0 w-fit no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
                 title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <span className="text-[13.5px] sm:text-[14px] font-black text-white group-hover/reviewer:underline truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                <span className="text-[13.5px] sm:text-[14px] font-black text-white no-underline truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                   By {safeAuthor.name}
                 </span>
                 {safeAuthor.isVerified && (
@@ -545,7 +545,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 href={placeProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
                 onClick={(e) => e.stopPropagation()}
               >
                 Live Sync Powered by Yoouz

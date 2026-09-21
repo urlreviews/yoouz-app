@@ -845,7 +845,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
               onOpenPlace(targetPlaceId);
             }}
-            className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[280px] sm:max-w-[340px] md:max-w-[420px] text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0"
+            className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[280px] sm:max-w-[340px] md:max-w-[420px] text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
           >
             <CopoBrandLogo
               domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
@@ -963,10 +963,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}
-              className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] flex items-center gap-1.5 hover:underline cursor-pointer bg-transparent border-0 p-0 text-left w-fit"
+              className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
               title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
             >
-              <span className="whitespace-nowrap truncate leading-tight">{t("video.by", "By")} {safeAuthor.name}</span>
+              <span className="whitespace-nowrap truncate leading-tight no-underline">{t("video.by", "By")} {safeAuthor.name}</span>
               {safeAuthor.isVerified && (
                 <CheckCircle className="w-4 h-4 fill-white text-black inline shrink-0" />
               )}
@@ -1024,7 +1024,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border border-white/30 hover:border-white/60 overflow-hidden bg-black transition-colors cursor-pointer shadow-xl"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border border-white/30 hover:border-white/60 active:scale-95 overflow-hidden bg-black transition-all cursor-pointer shadow-xl outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
               title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
             >
               <img

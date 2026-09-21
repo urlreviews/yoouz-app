@@ -3034,6 +3034,16 @@ async function startServer() {
     next();
   });
 
+  // Apex Domain Canonicalization: Ensure all traffic to yoouz.com redirects to https://www.yoouz.com preserving the exact path & query
+  app.use((req: any, res: any, next: any) => {
+    const rawHost = (req.headers['x-forwarded-host'] || req.headers.host || '').toString().toLowerCase();
+    const host = rawHost.split(':')[0];
+    if (host === 'yoouz.com') {
+      return res.redirect(301, `https://www.yoouz.com${req.originalUrl || req.url}`);
+    }
+    next();
+  });
+
   app.use(express.json({ limit: "50mb" }));
 
   app.use((req, res, next) => {
@@ -20444,9 +20454,12 @@ function injectOpenGraphTags(html: string, meta: any) {
           try {
             const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
             const cleanLower = cleanH.toLowerCase();
+            const cleanCompact = cleanLower.replace(/[^a-z0-9]/g, '');
             const match = localList.find((v: any) => 
               (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === cleanLower) ||
-              (v.author?.name && v.author.name.toLowerCase().replace(/\s+/g, '') === cleanLower)
+              (v.author?.name && v.author.name.toLowerCase().replace(/\s+/g, '') === cleanLower) ||
+              (v.author?.handle && v.author.handle.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanCompact) ||
+              (v.author?.name && v.author.name.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanCompact)
             );
             if (match && match.author) {
               if (match.author.name && match.author.name !== "Registered User") authorName = match.author.name;
