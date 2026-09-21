@@ -3014,7 +3014,7 @@ async function startServer() {
       }
 
       const placeName = foundVideo?.placeName || "Business";
-      const authorName = foundVideo?.author?.name || foundVideo?.authorName || "Verified Customer";
+      const authorName = foundVideo?.author?.name || foundVideo?.authorName || (foundVideo?.userEmail ? foundVideo.userEmail.split('@')[0] : "Steven Akan");
       const title = foundVideo ? `${authorName}'s 60-Second Video Review of ${placeName}` : "Yoouz - Authentic 60-Second Video Reviews";
       const embedUrl = foundVideo ? `${baseUrl}/embed/video/${encodeURIComponent(foundVideo.id)}` : `${baseUrl}/embed`;
       const thumbnailUrl = foundVideo?.videoThumbnail || foundVideo?.thumbnailUrl || `${baseUrl}/og-banner.png`;
@@ -17025,7 +17025,7 @@ Sitemap: https://yoouz.com/sitemap.xml
       // Add Video Reviews with Google Video schema
       allVideos.forEach((v) => {
         const videoUrl = `${baseUrl}/?video=${encodeURIComponent(v.id)}`;
-        const authorName = v.author?.name || (v as any).authorName || 'Verified Customer';
+        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
         const placeName = v.placeName || 'Business Review';
         const title = `${authorName}'s 60-Second Video Review of ${placeName}`;
         const desc = v.caption || `Watch this authentic 60-second video review by ${authorName} for ${placeName} on Yoouz.`;
@@ -20106,7 +20106,7 @@ function injectOpenGraphTags(html: string, meta: any) {
             }
         }
         
-        const authorName = foundVideo?.author?.name || foundVideo?.authorName || "Verified Customer";
+        const authorName = foundVideo?.author?.name || foundVideo?.authorName || (foundVideo?.userEmail ? foundVideo.userEmail.split('@')[0] : "Steven Akan");
         const authorHandle = foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
         const rawPlace = foundVideo?.placeName || "";
         const rawDomain = foundVideo?.placeWebsite || foundVideo?.website || foundVideo?.placeId || rawPlace || "";
@@ -20293,7 +20293,7 @@ function injectOpenGraphTags(html: string, meta: any) {
                 },
                 "author": {
                   "@type": "Person",
-                  "name": v.author?.name || v.authorName || "Verified Customer"
+                  "name": v.author?.name || v.authorName || (v.userEmail ? v.userEmail.split('@')[0] : "Steven Akan")
                 },
                 "reviewBody": v.caption || `Authentic 60-second video review for ${placeName}.`,
                 "video": {
@@ -20583,7 +20583,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       for (const r of list) {
         if (!r || !r.id) continue;
         const placeName = formatBusinessName(r.placeName || (r.placeId ? cleanDomainName(r.placeId) : "Local Business"));
-        const authorName = r.author?.name || r.authorName || "Verified Customer";
+        const authorName = r.author?.name || r.authorName || (r.userEmail ? r.userEmail.split('@')[0] : "Steven Akan");
         const rating = r.rating || 5.0;
 
         let thumbArg = r.videoThumbnail || r.videoPreviewUrl || r.coverUrl || r.thumbnailUrl || "";

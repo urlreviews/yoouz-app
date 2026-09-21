@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
-import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor, getSafeAvatarUrl } from "../utils/placeUtils";
+import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor, getSafeAvatarUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { Star, Play, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe } from "lucide-react";
+import { Star, Play, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock } from "lucide-react";
+import { formatRecordedDate } from "../utils/dateUtils";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -250,6 +251,21 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     (currentVideo as any)?.authorAvatar ||
     getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle);
 
+  const captionText = useMemo(() => {
+    let trimmed = (currentVideo?.caption || "").trim();
+    trimmed = trimmed
+      .replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com")
+      .replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
+    if (/^video review (for|of)\b/i.test(trimmed)) {
+      const cleanDomain = getDisplayUrlAsDomain(currentVideo) || displayDomain;
+      return `Video review for ${cleanDomain}`;
+    }
+    if (!trimmed) {
+      return `Video review for ${displayDomain}`;
+    }
+    return trimmed;
+  }, [currentVideo, displayDomain]);
+
   const handleTogglePlay = (video: VideoReview) => {
     if (playingVideoId === video.id) {
       setIsVideoPaused((prev) => !prev);
@@ -333,92 +349,58 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           )}
         </div>
 
-        {/* TOP OVERLAY: Story Progress & Brand Trust Pill */}
-        <div className="relative z-30 flex flex-col gap-2 p-3 sm:p-3.5 pointer-events-auto">
-          {/* Story Progress Bars for multiple reviews */}
-          {totalCount > 1 && (
-            <div className="flex items-center gap-1.5 w-full">
-              {displayVideos.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPageIndex(i);
-                    if (playingVideoId) {
-                      setPlayingVideoId(displayVideos[i]?.id || null);
-                    }
-                    setIsVideoPaused(false);
-                  }}
-                  className="h-1 flex-1 rounded-full overflow-hidden bg-white/25 hover:bg-white/40 transition-all relative cursor-pointer"
-                  aria-label={`Jump to review ${i + 1}`}
-                >
-                  <div
-                    className={`h-full transition-all duration-300 ${
-                      i === safeActiveIndex
-                        ? "w-full bg-white shadow-sm"
-                        : i < safeActiveIndex
-                        ? "w-full bg-white/70"
-                        : "w-0"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Brand Trust Header Pill + Sound Toggle */}
-          <div className="flex items-center justify-between gap-2">
-            <a
-              href={`https://yoouz.com/${cleanSlug === "yoouz.com" ? "" : `place/${encodeURIComponent(targetPlace.id || cleanSlug)}`}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 rounded-full py-1.5 px-3 shadow-lg transition-all active:scale-95 max-w-[calc(100%-44px)]"
-              title="View verified reviews on Yoouz"
-            >
-              <CopoBrandLogo
-                domain={displayDomain}
-                name={displayBusinessName}
-                website={targetPlace.website}
-                logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl || targetPlace.ogImage}
-                bannerUrl={targetPlace.bannerUrl}
-                loading="eager"
-                fetchPriority="high"
-                className="w-5 h-5 rounded-full bg-zinc-950 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm"
-                imageClassName="w-full h-full object-contain rounded-full"
-                fallbackTextClassName="font-black text-[10px] text-white"
-              />
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="font-bold text-xs text-white truncate max-w-[120px] sm:max-w-[160px]">
-                  {displayBusinessName}
+        {/* TOP OVERLAY: Brand Trust Header Pill + Sound Toggle */}
+        <div className="relative z-30 p-3 sm:p-3.5 flex items-start justify-between gap-2 pointer-events-auto">
+          <a
+            href={`https://yoouz.com/${cleanSlug === "yoouz.com" ? "" : `place/${encodeURIComponent(targetPlace.id || cleanSlug)}`}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 max-w-[calc(100%-48px)]"
+            title="View verified reviews on Yoouz"
+          >
+            <CopoBrandLogo
+              domain={displayDomain}
+              name={displayBusinessName}
+              website={targetPlace.website}
+              logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl || targetPlace.ogImage}
+              bannerUrl={targetPlace.bannerUrl}
+              loading="eager"
+              fetchPriority="high"
+              className="w-8 h-8 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md"
+              imageClassName="w-full h-full object-contain rounded-lg"
+              fallbackTextClassName="font-extrabold text-[11px] text-white"
+            />
+            <div className="min-w-0 flex-1 py-0.5">
+              <div className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                <span className="truncate">{displayBusinessName}</span>
+                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
+              </div>
+              <div className="flex items-center gap-1 text-[11px] text-amber-400 font-extrabold leading-none mt-0.5">
+                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                <span>{overallRating.toFixed(1)}</span>
+                <span className="text-zinc-300 font-normal">
+                  ({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})
                 </span>
-                <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
               </div>
-              <div className="h-3 w-[1px] bg-white/20 shrink-0" />
-              <div className="flex items-center gap-1 shrink-0">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span className="font-extrabold text-xs text-white">{overallRating.toFixed(1)}</span>
-                <span className="text-zinc-300 text-[10.5px]">({totalReviewsCount})</span>
-              </div>
-            </a>
+            </div>
+          </a>
 
-            {/* Mute / Unmute Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMuted((prev) => !prev);
-              }}
-              className="w-8 h-8 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0"
-              title={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted ? (
-                <VolumeX className="w-3.5 h-3.5 text-white" />
-              ) : (
-                <Volume2 className="w-3.5 h-3.5 text-white" />
-              )}
-            </button>
-          </div>
+          {/* Mute / Unmute Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMuted((prev) => !prev);
+            }}
+            className="w-8 h-8 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0 mt-0.5"
+            title={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? (
+              <VolumeX className="w-3.5 h-3.5 text-white" />
+            ) : (
+              <Volume2 className="w-3.5 h-3.5 text-white" />
+            )}
+          </button>
         </div>
 
         {/* SIDE CHEVRONS (Desktop hover or tap navigation) */}
@@ -454,9 +436,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         {/* BOTTOM OVERLAY: Reviewer Frosted Glass Card & Yoouz Sync */}
         <div className="relative z-30 p-3 sm:p-3.5 flex flex-col gap-2 pointer-events-auto">
           {/* Reviewer Glass Pill */}
-          <div className="bg-black/75 backdrop-blur-xl border border-white/15 rounded-2xl p-2.5 shadow-2xl flex items-center justify-between gap-2.5">
+          <div className="bg-black/75 backdrop-blur-xl border border-white/15 rounded-2xl p-2.5 sm:p-3 shadow-2xl flex items-center justify-between gap-2.5">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-800 border border-white/25 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-sm">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-800 border border-white/25 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-sm">
                 <img
                   src={reviewerAvatarUrl}
                   alt={safeAuthor.name}
@@ -476,36 +458,46 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 />
               </div>
 
-              <div className="min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-bold text-white truncate leading-tight">
+              <div className="min-w-0 flex flex-col gap-0.5">
+                {/* Line 1: Author Name with Verified Check */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-extrabold text-white truncate leading-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                     By {safeAuthor.name}
                   </span>
                   {safeAuthor.isVerified && (
-                    <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
+                    <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 mt-0.5">
+                {/* Line 2: Rating Stars & Recorded Time */}
+                <div className="flex items-center gap-1.5">
                   <div className="flex items-center gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-3 h-3 ${
+                        className={`w-3.5 h-3.5 ${
                           i < Math.round(currentVideo?.rating || 5)
-                            ? "fill-amber-400 text-amber-400"
-                            : "fill-zinc-600 text-zinc-600"
+                            ? "fill-amber-400 text-amber-400 drop-shadow-xs"
+                            : "fill-zinc-600/70 text-zinc-200/80"
                         }`}
                       />
                     ))}
                   </div>
-                  <span className="text-[10.5px] text-zinc-300 font-medium">Verified Customer</span>
+                  <span className="text-white/90 text-[11px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1 shrink-0">
+                    <Clock className="w-3 h-3 text-white/80 shrink-0" />
+                    <span>{formatRecordedDate(currentVideo?.recordedAt, currentVideo?.createdAtMs)}</span>
+                  </span>
                 </div>
+
+                {/* Line 3: Caption (e.g. Video review for yoouz.com) */}
+                <p className="text-white/95 text-[11.5px] font-medium line-clamp-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-0.5">
+                  {captionText}
+                </p>
               </div>
             </div>
 
             {totalCount > 1 && (
-              <span className="text-[11px] font-semibold text-zinc-300 bg-white/10 px-2 py-0.5 rounded-full shrink-0">
+              <span className="text-[11px] font-semibold text-zinc-300 bg-white/10 px-2 py-0.5 rounded-full shrink-0 self-start mt-0.5">
                 {safeActiveIndex + 1} of {totalCount}
               </span>
             )}

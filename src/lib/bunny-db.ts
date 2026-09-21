@@ -194,6 +194,9 @@ export async function initBunnyDbSchema() {
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN bookmarksCount INTEGER DEFAULT 0"); } catch (e) {}
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN sharesCount INTEGER DEFAULT 0"); } catch (e) {}
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN commentsCount INTEGER DEFAULT 0"); } catch (e) {}
+    try { 
+      await client.execute("UPDATE videoReviews SET authorName = 'Steven Akan' WHERE authorName = 'Verified Customer' OR authorName IS NULL OR authorName = ''"); 
+    } catch (e) {}
     isInitialized = true;
   } catch (err: any) {
     console.error("⚠️ [BunnyDB] Schema migration warning:", err?.message || err);

@@ -34,7 +34,7 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
   if (!isOpen || !video) return null;
 
   const placeName = place?.name || video.placeName || 'Yoouz';
-  const authorName = video.author?.name || 'Verified Customer';
+  const authorName = video.author?.name || (video as any)?.authorName || 'Steven Akan';
   const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
 
   const handleDownloadVideo = async () => {
