@@ -238,15 +238,15 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   return (
     <div
       id="copo-embed-widget-root"
-      className="w-full h-full min-h-[100dvh] bg-zinc-950 sm:bg-black/95 text-white flex flex-col items-center justify-center p-3 sm:p-4 select-none antialiased font-sans"
+      className="w-full h-full min-h-0 bg-zinc-950 text-white flex flex-col items-center justify-center p-2 sm:p-3 select-none antialiased font-sans"
     >
       <div
         id="copo-embed-card"
-        className="w-full max-w-[440px] bg-zinc-950 border border-zinc-800/80 rounded-[28px] p-4 sm:p-5 shadow-2xl flex flex-col gap-4 relative transition-all"
+        className="w-full max-w-[420px] bg-zinc-950 border border-zinc-800/80 rounded-[24px] p-3 sm:p-3.5 shadow-2xl flex flex-col gap-2.5 relative transition-all"
         style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
       >
         {/* Top Header Card: Ultra-Luxury Business Trust Card matching search & video header */}
-        <div className="flex flex-col items-center justify-center text-center bg-zinc-900/90 border border-white/10 rounded-2xl py-3 px-4 sm:py-3.5 sm:px-5 shadow-lg relative">
+        <div className="flex flex-col items-center justify-center text-center bg-zinc-900/90 border border-white/10 rounded-2xl py-2.5 px-3.5 sm:py-3 sm:px-4 shadow-lg relative">
           {/* Company / Business Name with Brand Logo & Sleek Verified Badge */}
           <div className="flex items-center justify-center gap-2 max-w-full">
             <CopoBrandLogo
@@ -257,29 +257,29 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               bannerUrl={targetPlace.bannerUrl}
               loading="eager"
               fetchPriority="high"
-              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-zinc-950 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm"
+              className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-zinc-950 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm"
               imageClassName="w-full h-full object-contain rounded-md"
-              fallbackTextClassName="font-black text-[10px] sm:text-[11px] text-white"
+              fallbackTextClassName="font-black text-[10px] text-white"
             />
-            <span className="font-black text-base sm:text-[17px] text-white tracking-tight truncate max-w-[260px]">
+            <span className="font-black text-sm sm:text-base text-white tracking-tight truncate max-w-[260px]">
               {displayBusinessName}
             </span>
-            <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
+            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
           </div>
 
           {/* Domain URL with Globe Icon */}
-          <div className="flex items-center justify-center gap-1.5 text-[12px] sm:text-[12.5px] text-zinc-400 font-medium mt-0.5">
-            <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+          <div className="flex items-center justify-center gap-1.5 text-[11.5px] sm:text-xs text-zinc-400 font-medium mt-0.5">
+            <Globe className="w-3 h-3 text-zinc-400 shrink-0" />
             <span className="truncate max-w-[260px]">{displayDomain}</span>
           </div>
 
           {/* 5 Gold Stars + Numeric Score + Review Count */}
-          <div className="flex items-center justify-center gap-1.5 mt-2">
+          <div className="flex items-center justify-center gap-1.5 mt-1.5">
             <div className="flex items-center gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 sm:w-4.5 sm:h-4.5 ${
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
                     i < Math.round(overallRating)
                       ? "fill-amber-400 text-amber-400 drop-shadow-sm"
                       : "fill-zinc-700 text-zinc-700"
@@ -287,10 +287,10 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 />
               ))}
             </div>
-            <span className="font-extrabold text-[13px] sm:text-sm text-white ml-0.5">
+            <span className="font-extrabold text-xs sm:text-[13px] text-white ml-0.5">
               {overallRating.toFixed(1)}
             </span>
-            <span className="text-zinc-400 text-xs font-normal">
+            <span className="text-zinc-400 text-[11px] sm:text-xs font-normal">
               ({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})
             </span>
           </div>
@@ -490,63 +490,35 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             })}
           </div>
 
-          {/* Pagination Controls when there are multiple pages */}
+          {/* Compact Pagination Dots when there are multiple pages */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-3 px-1">
-              <button
-                type="button"
-                onClick={handlePrevPage}
-                className="w-7 h-7 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white hover:border-zinc-600 active:scale-90 transition-all shadow"
-                aria-label="Previous reviews"
-                title="Previous"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {/* Dots indicator & Count */}
-              <div className="flex flex-col items-center gap-1">
-                <div className="flex items-center gap-1.5">
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setPageIndex(i);
-                        setPlayingVideoId(null);
-                        setIsVideoPaused(false);
-                      }}
-                      className={`h-1.5 rounded-full transition-all ${
-                        i === safePageIndex ? "w-4 bg-white" : "w-1.5 bg-zinc-700 hover:bg-zinc-500"
-                      }`}
-                      aria-label={`Page ${i + 1}`}
-                    />
-                  ))}
-                </div>
-                <span className="text-[10px] text-zinc-400 font-medium">
-                  {safePageIndex * itemsPerPage + 1}–{Math.min((safePageIndex + 1) * itemsPerPage, displayVideos.length)} of {displayVideos.length} reviews
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleNextPage}
-                className="w-7 h-7 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white hover:border-zinc-600 active:scale-90 transition-all shadow"
-                aria-label="Next reviews"
-                title="Next"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+            <div className="flex items-center justify-center gap-1.5 pt-2">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setPageIndex(i);
+                    setPlayingVideoId(null);
+                    setIsVideoPaused(false);
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === safePageIndex ? "w-4 bg-white" : "w-1.5 bg-zinc-700 hover:bg-zinc-500"
+                  }`}
+                  aria-label={`Page ${i + 1}`}
+                />
+              ))}
             </div>
           )}
         </div>
 
         {/* Live Sync Powered by Yoouz Footer (Clickable to visit application) */}
-        <div className="flex items-center justify-center gap-2 pt-0.5 pb-0.5">
-          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+        <div className="flex items-center justify-center gap-1.5 pt-0.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           <a
             href={`https://yoouz.com/${cleanSlug === "yoouz.com" ? "" : `place/${encodeURIComponent(targetPlace.id || cleanSlug)}`}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[12px] font-medium text-zinc-400 hover:text-white transition-colors"
+            className="text-[11px] font-medium text-zinc-400 hover:text-white transition-colors"
           >
             Live Sync Powered by Yoouz
           </a>

@@ -51,7 +51,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
   };
 
   const iframeSrc = `/embed/${encodeURIComponent(testSlug)}`;
-  const fullEmbedSnippet = `<iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="700" style="max-width:440px;aspect-ratio:9/16;border-radius:28px;border:none;box-shadow:0 20px 40px rgba(0,0,0,0.5);overflow:hidden;" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" title="Yoouz Authentic Video Reviews"></iframe>`;
+  const fullEmbedSnippet = `<iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="480" style="max-width:420px;border-radius:24px;border:none;box-shadow:0 20px 40px rgba(0,0,0,0.5);overflow:hidden;" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" title="Yoouz Authentic Video Reviews"></iframe>`;
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(fullEmbedSnippet);
@@ -174,14 +174,14 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
           </div>
 
           {/* Frame Container */}
-          <div className="p-4 sm:p-8 bg-zinc-950/80 flex items-center justify-center min-h-[600px]">
+          <div className="p-4 sm:p-8 bg-zinc-950/80 flex items-center justify-center min-h-[500px]">
             <div
-              className={`transition-all duration-300 relative shadow-2xl rounded-[32px] overflow-hidden border border-zinc-800 bg-black ${
+              className={`transition-all duration-300 relative shadow-2xl rounded-[28px] overflow-hidden border border-zinc-800 bg-black ${
                 previewDevice === "desktop"
-                  ? "w-full max-w-[440px] h-[700px]"
+                  ? "w-full max-w-[420px] h-[480px]"
                   : previewDevice === "mobile"
-                  ? "w-[375px] h-[667px]"
-                  : "w-full max-w-[800px] h-[720px]"
+                  ? "w-[360px] h-[480px]"
+                  : "w-full max-w-[700px] h-[520px]"
               }`}
             >
               <iframe

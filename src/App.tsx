@@ -5355,7 +5355,7 @@ export function App() {
     return (
       <div
         id="copo-app-root"
-        className="w-screen h-[100dvh] bg-black text-white flex flex-col items-center justify-center overflow-hidden font-sans select-none antialiased relative"
+        className="w-full h-full min-h-0 bg-black text-white flex flex-col items-center justify-center overflow-hidden font-sans select-none antialiased relative"
       >
         <SEOTags title={`Embedded Video Review Player - Yoouz`} description={`Watch authentic 60-second video reviews for ${embedTargetId}`} url={seoUrl} />
         
