@@ -171,7 +171,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
                foundPlace = {
                  ...foundPlace,
-                 name: (data.title && (isGenericName(foundPlace.name) || foundPlace.name === foundPlace.brandDomain)) ? data.title : foundPlace.name,
+                 name: (isGenericName(foundPlace.name) || foundPlace.name === foundPlace.brandDomain) ? (formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || foundPlace.name) : foundPlace.name,
                  logoUrl: (foundPlace.logoUrl && isValidLogo(foundPlace.logoUrl)) ? foundPlace.logoUrl : (fetchedLogo || instantLogo),
                  avatarUrl: (foundPlace.avatarUrl && isValidLogo(foundPlace.avatarUrl)) ? foundPlace.avatarUrl : (fetchedLogo || instantLogo),
                  bannerUrl: (foundPlace.bannerUrl && !foundPlace.bannerUrl.includes("unsplash.com")) ? foundPlace.bannerUrl : (fetchedBanner || ""),
@@ -186,7 +186,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              } else {
                const newPlace: Place = {
                  id: (data.domain || domain || "website").toLowerCase(),
-                 name: data.title || data.domain || instantName,
+                 name: formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || data.domain || domain,
                  category: "Website",
                  categoryType: "all",
                  address: "",

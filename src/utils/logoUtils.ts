@@ -81,6 +81,30 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <rect width="100" height="100" rx="20" fill="#000000"/>
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="1">UBER</text>
     </svg>`),
+  "hertz.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+      <circle cx="72" cy="72" r="72" fill="#f3c300"/>
+      <g>
+        <polygon fill="#ffffff" points="89.41 115.25 36.89 115.25 39.5 102.94 92.04 102.93 89.41 115.25"/>
+        <polygon fill="#18181b" points="93.35 28.75 86.78 59.59 62.61 59.59 69.17 28.75 55.27 28.75 41.22 94.94 55.11 94.94 59.96 72.01 84.14 72.01 79.27 94.94 93.05 94.94 107.11 28.75 93.35 28.75"/>
+      </g>
+    </svg>`),
+  "www.hertz.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+      <circle cx="72" cy="72" r="72" fill="#f3c300"/>
+      <g>
+        <polygon fill="#ffffff" points="89.41 115.25 36.89 115.25 39.5 102.94 92.04 102.93 89.41 115.25"/>
+        <polygon fill="#18181b" points="93.35 28.75 86.78 59.59 62.61 59.59 69.17 28.75 55.27 28.75 41.22 94.94 55.11 94.94 59.96 72.01 84.14 72.01 79.27 94.94 93.05 94.94 107.11 28.75 93.35 28.75"/>
+      </g>
+    </svg>`),
+  "hertz": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+      <circle cx="72" cy="72" r="72" fill="#f3c300"/>
+      <g>
+        <polygon fill="#ffffff" points="89.41 115.25 36.89 115.25 39.5 102.94 92.04 102.93 89.41 115.25"/>
+        <polygon fill="#18181b" points="93.35 28.75 86.78 59.59 62.61 59.59 69.17 28.75 55.27 28.75 41.22 94.94 55.11 94.94 59.96 72.01 84.14 72.01 79.27 94.94 93.05 94.94 107.11 28.75 93.35 28.75"/>
+      </g>
+    </svg>`),
   "spotify.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <circle cx="50" cy="50" r="50" fill="#1DB954"/>
@@ -388,7 +412,10 @@ export const KNOWN_BRAND_BANNERS: Record<string, string> = {
   "kempinski.com": "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg",
   "timehotels.com": "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png",
   "freecancellations.com": "https://metasearch-cdn.azureedge.net/azure/seo-images/us/new-york-state/CDD5D4910706645C4CAD830CC6C07D52.jpg?quality=80&mode=crop&w=1200&h=800&scale=both&anchor=middlecenter",
-  "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png"
+  "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png",
+  "hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
+  "www.hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
+  "hertz": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg"
 };
 
 /**

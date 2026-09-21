@@ -253,6 +253,11 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "brettlevy.com": "Brett Levy",
   "yoouz": "Yoouz",
   "yoouz.com": "Yoouz",
+  "hertz": "Hertz",
+  "hertz.com": "Hertz",
+  "www-hertz-com": "Hertz",
+  "wwwhertzcom": "Hertz",
+  "hertzcom": "Hertz",
   "apple": "Apple",
   "apple.com": "Apple",
   "github": "GitHub",
@@ -374,7 +379,21 @@ export function isGenericPlaceName(name?: string | null): boolean {
   return false;
 }
 
-export function formatBusinessName(name?: string | null): string {
+export function formatBusinessName(name?: string | null, domain?: string | null): string {
+  const cleanDom = domain ? extractCleanDomain(domain) : "";
+  const domRoot = cleanDom ? cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] : "";
+
+  // If domain is provided and matches known official brands directly
+  if (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) {
+    return KNOWN_OFFICIAL_NAMES[cleanDom];
+  }
+  if (domRoot && KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()]) {
+    return KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()];
+  }
+
+  if (!name && cleanDom) {
+    return formatBusinessName(cleanDom);
+  }
   if (!name) return "";
   let trimmed = name.trim();
 
@@ -405,17 +424,27 @@ export function formatBusinessName(name?: string | null): string {
   // 3. Clean up scraped SEO titles (e.g., "Home | Van Law Firm : Nevada's Premiere...")
   const rawParts = trimmed.split(/\s*(?:[|\-–—•]|:)\s*/).map(p => p.trim()).filter(Boolean);
   if (rawParts.length > 1) {
-    const nonGenericParts = rawParts.filter(p => !isGenericPlaceName(p));
-    if (nonGenericParts.length > 0) {
-      const validCandidates = nonGenericParts.filter(p => p.length >= 2 && p.length <= 45);
-      if (validCandidates.length > 0) {
-        const best = validCandidates.find(p => !/^(the best|official site|welcome to|premiere|leading|top rated|personal injury|attorneys at law)/i.test(p)) || validCandidates[0];
-        trimmed = best;
-      } else {
-        trimmed = nonGenericParts[0];
+    // If domain root is known, check if one of the parts matches the domain brand!
+    if (domRoot) {
+      const matchPart = rawParts.find(p => p.toLowerCase().includes(domRoot.toLowerCase()) && p.length <= 35 && !isGenericPlaceName(p));
+      if (matchPart) {
+        trimmed = matchPart;
       }
-    } else {
-      trimmed = "";
+    }
+
+    if (!domRoot || trimmed === name) {
+      const nonGenericParts = rawParts.filter(p => !isGenericPlaceName(p));
+      if (nonGenericParts.length > 0) {
+        const validCandidates = nonGenericParts.filter(p => p.length >= 2 && p.length <= 45);
+        if (validCandidates.length > 0) {
+          const best = validCandidates.find(p => !/^(the best|official site|welcome to|premiere|leading|top rated|personal injury|attorneys at law)/i.test(p)) || validCandidates[0];
+          trimmed = best;
+        } else {
+          trimmed = nonGenericParts[0];
+        }
+      } else {
+        trimmed = "";
+      }
     }
   }
 
@@ -428,6 +457,45 @@ export function formatBusinessName(name?: string | null): string {
   const strippedKey = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (strippedKey && KNOWN_OFFICIAL_NAMES[strippedKey]) {
     return KNOWN_OFFICIAL_NAMES[strippedKey];
+  }
+
+  // 3b. Detect if the string is a long marketing sentence/slogan
+  const lowerTrimmed = trimmed.toLowerCase();
+  const sentenceWords = lowerTrimmed.split(/[\s,–—\-_/:]+/).filter(Boolean);
+  
+  // If sentence has foreign or localized marketing terms or is overly long
+  const isMarketingSentence = 
+    sentenceWords.length >= 3 && (
+      lowerTrimmed.includes("huren") ||
+      lowerTrimmed.includes("autoverhuur") ||
+      lowerTrimmed.includes("wereldwijd") ||
+      lowerTrimmed.includes("auto huren") ||
+      lowerTrimmed.includes("mietwagen") ||
+      lowerTrimmed.includes("autovermietung") ||
+      lowerTrimmed.includes("location de") ||
+      lowerTrimmed.includes("car rental") ||
+      lowerTrimmed.includes("rent a car") ||
+      lowerTrimmed.includes("best rates") ||
+      lowerTrimmed.includes("save more on") ||
+      lowerTrimmed.includes("official site") ||
+      lowerTrimmed.includes("goedkoopste") ||
+      lowerTrimmed.includes("prijs garantie") ||
+      lowerTrimmed.includes("just do it") ||
+      lowerTrimmed.includes("find deals") ||
+      lowerTrimmed.includes("cheap flights")
+    );
+
+  if (isMarketingSentence || sentenceWords.length >= 4) {
+    // Check if any individual word matches a known brand
+    for (const w of sentenceWords) {
+      if (w.length >= 3 && KNOWN_OFFICIAL_NAMES[w]) {
+        return KNOWN_OFFICIAL_NAMES[w];
+      }
+    }
+    // If domain root exists and name is an overly long slogan, fall back to clean domain brand
+    if (domRoot && domRoot.length >= 2) {
+      return domRoot.charAt(0).toUpperCase() + domRoot.slice(1);
+    }
   }
 
   // 4. If it is an explicit URL, domain, or domain-like string (e.g. "https://...", "www.domain.com", "domain.com", "tajhotels-com", "bhol.co.il", "digitalpark.ae")

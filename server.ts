@@ -15796,9 +15796,10 @@ Return JSON:
       try {
         const fetchResponse = await fetch(url, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9'
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US; language=en; country=US; locale=en_US'
           },
           redirect: 'follow',
           signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
@@ -15806,11 +15807,45 @@ Return JSON:
         
         if (fetchResponse.ok) {
           finalUrl = fetchResponse.url;
-          const html = await fetchResponse.text();
+          let html = await fetchResponse.text();
           
           if (html && html.length < 5000000) {
             try {
-              const $ = cheerio.load(html);
+              let $ = cheerio.load(html);
+
+              // Prioritize English version if server responded with localized non-English content
+              const pageLang = ($('html').attr('lang') || $('meta[http-equiv="content-language"]').attr('content') || '').toLowerCase();
+              if (pageLang && !pageLang.startsWith('en') && !pageLang.startsWith('x-default')) {
+                const enAlt = $('link[rel="alternate"][hreflang="en-US"]').attr('href') ||
+                              $('link[rel="alternate"][hreflang="en"]').attr('href') ||
+                              $('link[rel="alternate"][hreflang="en-GB"]').attr('href') ||
+                              $('link[rel="alternate"][hreflang="x-default"]').attr('href');
+                if (enAlt) {
+                  try {
+                    const enUrl = new URL(enAlt, finalUrl).toString();
+                    if (enUrl !== finalUrl) {
+                      const altResp = await fetch(enUrl, {
+                        headers: {
+                          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                          'Accept-Language': 'en-US,en;q=0.9',
+                          'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US; language=en; country=US; locale=en_US; hl=en'
+                        },
+                        redirect: 'follow',
+                        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
+                      });
+                      if (altResp.ok) {
+                        const altHtml = await altResp.text();
+                        if (altHtml && altHtml.length > 500) {
+                          html = altHtml;
+                          $ = cheerio.load(html);
+                          finalUrl = altResp.url || enUrl;
+                        }
+                      }
+                    }
+                  } catch (altErr) {}
+                }
+              }
               
               const getMetaContent = (key: string) => {
                 return $(`meta[property="og:${key}"]`).attr('content') ||
@@ -16236,6 +16271,7 @@ Return JSON:
                 if (!src || typeof src !== 'string') return false;
                 if (src.startsWith('data:') && !src.startsWith('data:image/svg') && !src.startsWith('data:image/png')) return false;
                 if (src.includes('brandfetch.io') || src.includes('clearbit.com')) return false;
+                if (src.includes('wikimedia.org') || src.includes('wikipedia.org')) return false;
                 if (isCandidateWhiteOrInverted(src)) return false;
 
                 const s = src.toLowerCase();
@@ -16258,6 +16294,9 @@ Return JSON:
                 "yoouz.com": "https://yoouz.com/favicon.svg",
                 "www.yoouz.com": "https://yoouz.com/favicon.svg",
                 "yoouz": "https://yoouz.com/favicon.svg",
+                "hertz.com": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",
+                "www.hertz.com": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",
+                "hertz": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",
                 "zoom.com": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
                 "zoom.us": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
                 "apple.com": "https://www.apple.com/ac/structured-data/images/open_graph_logo.png",
@@ -16285,27 +16324,41 @@ Return JSON:
 
               // Priority 2: Large Multi-resolution Favicons (e.g. 192x192, 180x180, 512x512, SVG)
               if (!logo) {
-                const largeIcons = $('link[rel="icon"][sizes], link[rel="shortcut icon"][sizes]');
+                const largeIcons = $('link[rel="icon"][sizes], link[rel="shortcut icon"][sizes], link[rel="icon"][type="image/svg+xml"]');
                 let bestSize = 0;
                 largeIcons.each((i, el) => {
                   const sizesAttr = $(el).attr('sizes');
                   const href = $(el).attr('href');
-                  if (sizesAttr && href && isValidCandidateLogo(href)) {
-                    const width = parseInt(sizesAttr.split('x')[0], 10);
-                    if (width > bestSize) {
-                      bestSize = width;
+                  if (href && isValidCandidateLogo(href)) {
+                    if (sizesAttr) {
+                      const width = parseInt(sizesAttr.split('x')[0], 10);
+                      if (width > bestSize) {
+                        bestSize = width;
+                        logo = href;
+                      }
+                    } else if ($(el).attr('type') === 'image/svg+xml' && !logo) {
                       logo = href;
                     }
                   }
                 });
               }
 
-              // Priority 3: JSON-LD direct logo schemas
+              // Priority 3: Standard Favicons declared in head (more authentic than arbitrary regex in scripts)
+              if (!logo) {
+                const standardFavicon = $('link[rel="icon"]').first().attr('href') || 
+                                       $('link[rel="shortcut icon"]').first().attr('href') ||
+                                       $('link[rel="fluid-icon"]').first().attr('href');
+                if (standardFavicon && isValidCandidateLogo(standardFavicon)) {
+                  logo = standardFavicon;
+                }
+              }
+
+              // Priority 4: JSON-LD direct logo schemas
               if (!logo && jsonLdLogo && isValidCandidateLogo(jsonLdLogo)) {
                 logo = jsonLdLogo;
               }
 
-              // Priority 4: Brand-specific DOM Logo Selectors
+              // Priority 5: Brand-specific DOM Logo Selectors
               if (!logo) {
                 const domLogoSelectors = [
                   'header img.custom-logo',
@@ -16338,7 +16391,7 @@ Return JSON:
                 }
               }
 
-              // Priority 5: Meta logo tags
+              // Priority 6: Meta logo tags
               if (!logo) {
                 const metaLogo = getMetaContent('logo');
                 if (metaLogo && isValidCandidateLogo(metaLogo)) {
@@ -16346,21 +16399,11 @@ Return JSON:
                 }
               }
 
-              // Priority 6: Script / JS bundle discovered logos
+              // Priority 7: Script / JS bundle discovered logos (fallback only)
               if (!logo && scriptLogos.length > 0) {
                 const bestLogo = scriptLogos.find(l => isValidCandidateLogo(l) && (l.toLowerCase().includes('no-background') || l.toLowerCase().includes('logo'))) || scriptLogos.find(l => isValidCandidateLogo(l));
                 if (bestLogo) {
                   logo = bestLogo;
-                }
-              }
-
-              // Priority 7: Standard favicon
-              if (!logo) {
-                const standardFavicon = $('link[rel="icon"]').first().attr('href') || 
-                                       $('link[rel="shortcut icon"]').first().attr('href') ||
-                                       $('link[rel="fluid-icon"]').first().attr('href');
-                if (standardFavicon && isValidCandidateLogo(standardFavicon)) {
-                  logo = standardFavicon;
                 }
               }
 
@@ -16436,7 +16479,9 @@ Return JSON:
         "ups.com": "UPS",
         "cnn.com": "CNN",
         "kempinski.com": "Kempinski Hotels",
-        "tajhotels.com": "Taj Hotels"
+        "tajhotels.com": "Taj Hotels",
+        "hertz.com": "Hertz",
+        "www.hertz.com": "Hertz"
       };
 
       if (domainTitles[cleanDomain]) {
@@ -16458,7 +16503,9 @@ Return JSON:
         "londontrustedtherapy.com": "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp",
         "kempinski.com": "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg",
         "timehotels.com": "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png",
-        "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png"
+        "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png",
+        "hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
+        "www.hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg"
       };
 
       if (!image || image.includes("unsplash.com")) {
@@ -16479,7 +16526,8 @@ Return JSON:
         "legal500.com": "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.",
         "digitalpark.ae": "Digital Park offers cutting-edge digital solutions, technology consulting, and enterprise software services.",
         "aldhabidental.ae": "Premier dental clinic in the UAE delivering comprehensive oral healthcare, cosmetic dentistry, and dental implants.",
-        "plomberiebruxelles24.be": "Service de plomberie et dépannage d'urgence 24h/24 et 7j/7 à Bruxelles et environs."
+        "plomberiebruxelles24.be": "Service de plomberie et dépannage d'urgence 24h/24 et 7j/7 à Bruxelles et environs.",
+        "hertz.com": "Hertz is a premier global car rental company offering passenger and commercial vehicle rentals in over 160 countries worldwide."
       };
       if (!description && domainDescriptions[cleanDomain]) {
         description = domainDescriptions[cleanDomain];
@@ -17036,12 +17084,9 @@ Return JSON:
       });
 
       if (!response.ok) {
-        // Deterministic fallback avatar SVG instead of throwing an error
-        const initial = targetUrl.split('/').pop()?.charAt(0)?.toUpperCase() || 'U';
-        const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#27272a"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">${initial}</text></svg>`;
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=86400');
-        return res.send(fallbackSvg);
+        return res.status(response.status >= 400 && response.status < 600 ? response.status : 502).json({ 
+          error: `Upstream image request failed with status ${response.status}` 
+        });
       }
 
       const contentType = response.headers.get('content-type') || 'image/jpeg';

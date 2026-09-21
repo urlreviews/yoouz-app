@@ -1090,7 +1090,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           } else {
             foundPlace = {
               id: placeId,
-              name: data.title || data.domain,
+              name: formatBusinessName(data.siteName || data.title, data.domain || domain) || formatBusinessName(data.domain || domain) || (data.domain || domain),
               category: "Website",
               categoryType: "all",
               address: "",

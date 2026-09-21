@@ -4,7 +4,7 @@ import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch } from "../utils/placeUtils";
+import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 
 interface CopoMobileSearchViewProps {
@@ -131,7 +131,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               const fetchedBanner = data.image || "";
               const newPlace: Place = {
                 id: (data.domain || cleanDom).toLowerCase(),
-                name: data.title || data.domain || cleanDom,
+                name: formatBusinessName(data.siteName || data.title, data.domain || cleanDom) || formatBusinessName(cleanDom) || cleanDom,
                 category: "Website",
                 categoryType: "all",
                 address: "",
