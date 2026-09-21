@@ -4433,6 +4433,51 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
+              {/* Live Profile Header Preview (Matching Place & Creator Profile left-aligned squircle frame) */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                  Live Profile Header Preview
+                </label>
+                <div className="relative h-36 w-full rounded-2xl bg-zinc-950 border border-zinc-800 overflow-hidden shadow-inner flex items-center justify-center">
+                  {/* Banner Image / Gradient */}
+                  {editPlaceModal.bannerUrl || editPlaceModal.ogImage ? (
+                    <img
+                      src={editPlaceModal.bannerUrl || editPlaceModal.ogImage}
+                      alt={editPlaceModal.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center">
+                      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]" />
+                      <span className="text-white/40 text-[10px] font-bold tracking-widest uppercase">Verified Listing</span>
+                    </div>
+                  )}
+
+                  {/* Left-Aligned Squircle Logo Frame */}
+                  <div className="absolute -bottom-4 left-4 w-16 h-16 sm:w-20 sm:h-20 rounded-[18px] border-[3px] border-zinc-900 bg-zinc-900 shadow-xl flex items-center justify-center z-20 p-1.5 ring-1 ring-white/15 overflow-hidden">
+                    <CopoBrandLogo
+                      domain={editPlaceModal.website || editPlaceModal.id}
+                      name={editPlaceModal.name}
+                      website={editPlaceModal.website}
+                      logoUrl={editPlaceModal.logoUrl || editPlaceModal.avatarUrl}
+                      bannerUrl={editPlaceModal.bannerUrl || editPlaceModal.ogImage}
+                      className="w-full h-full rounded-xl bg-white flex items-center justify-center overflow-hidden"
+                      imageClassName="w-full h-full object-contain rounded-xl"
+                      fallbackTextClassName="font-black text-xl text-zinc-950"
+                    />
+                  </div>
+
+                  {/* Top-Right Badge */}
+                  <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-bold text-white flex items-center gap-1">
+                    <span>{editPlaceModal.category || "Business"}</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -4506,19 +4551,47 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">Merchant Claim Email</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-zinc-200">Banner / Cover Image URL</label>
+                    {Boolean(editPlaceModal.website) && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const dom = editPlaceModal.website?.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
+                          if (!dom) return;
+                          try {
+                            showToast("Fetching website banner...");
+                            const res = await fetch(`/api/url-metadata?url=${encodeURIComponent(dom)}`);
+                            const data = await res.json();
+                            if (data && (data.banner || data.image || data.ogImage)) {
+                              const banner = data.banner || data.image || data.ogImage;
+                              setEditPlaceModal({ ...editPlaceModal, bannerUrl: banner, ogImage: banner });
+                              showToast("Banner fetched successfully!");
+                            } else {
+                              showToast("No banner found on website");
+                            }
+                          } catch {
+                            showToast("Could not fetch banner");
+                          }
+                        }}
+                        className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 cursor-pointer"
+                      >
+                        Auto-Detect
+                      </button>
+                    )}
+                  </div>
                   <input
-                    type="email"
-                    value={editPlaceModal.claimedByEmail || ""}
+                    type="text"
+                    value={editPlaceModal.bannerUrl || editPlaceModal.ogImage || ""}
                     onChange={(e) =>
                       setEditPlaceModal({
                         ...editPlaceModal,
-                        claimedByEmail: e.target.value,
-                        isClaimed: Boolean(e.target.value.trim())
+                        bannerUrl: e.target.value,
+                        ogImage: e.target.value
                       })
                     }
-                    placeholder="merchant@business.com"
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
+                    placeholder="https://... cover photo or banner"
+                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white text-xs focus:outline-none focus:border-zinc-600"
                   />
                 </div>
               </div>

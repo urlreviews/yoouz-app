@@ -157,8 +157,21 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   const shouldAttemptImage = !hasError && !!currentSrc && !isKnownFailed;
 
+  const hasPosition =
+    className.includes("absolute") ||
+    className.includes("relative") ||
+    className.includes("fixed") ||
+    className.includes("sticky");
+  const hasOverflow = className.includes("overflow-");
+
+  const containerClasses = [
+    !hasPosition ? "relative" : "",
+    !hasOverflow ? "overflow-hidden" : "",
+    className
+  ].filter(Boolean).join(" ");
+
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={containerClasses}>
       {/* 1. Rock-Solid Deterministic Monogram Base Layer (Immediate zero-delay rendering, never fails) */}
       <div
         className={`absolute inset-0 w-full h-full flex items-center justify-center select-none ${imageClassName}`}
