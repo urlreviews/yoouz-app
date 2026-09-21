@@ -335,13 +335,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return null;
   }, [place, rawPlaceVideos, allVideos]);
 
-  const fetchedTargetUrlRef = React.useRef<string | null>(null);
+  const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
   // Background auto-enrichment: Fetch and sync rich metadata & business description from URL
   useEffect(() => {
     const targetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
     
-    if (!targetUrl || fetchedTargetUrlRef.current === targetUrl) {
+    if (!targetUrl || fetchedTargetUrlsRef.current.has(targetUrl)) {
       return;
     }
 
@@ -369,7 +369,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsLogo = !hasValidLogo;
 
     if (targetUrl && (isGenericDesc || isGenericName || needsBanner || needsLogo)) {
-      fetchedTargetUrlRef.current = targetUrl;
+      fetchedTargetUrlsRef.current.add(targetUrl);
       let isMounted = true;
       fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
         .then((res) => (res.ok ? res.json() : null))
@@ -398,7 +398,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         isMounted = false;
       };
     }
-  }, [place.id, place.website, place.description, place.name, drawerDomain, reviewBannerUrl, onUpdatePlace, place]);
+  }, [place.id, place.website, drawerDomain, reviewBannerUrl, onUpdatePlace]);
 
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
   const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
