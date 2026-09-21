@@ -461,10 +461,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     };
   }, [isScrubbing, calculatePctFromClientX, updateSeekPosition, onScrubEnd]);
 
-  // High-fidelity poster URL
+  // High-fidelity poster URL with graceful fallback
+  const [posterLoadError, setPosterLoadError] = useState(false);
   const posterUrl = React.useMemo(() => {
-    return resolveVideoPosterUrl(video);
-  }, [video]);
+    if (posterLoadError) {
+      return video.placeBannerUrl || video.placeLogoUrl || "";
+    }
+    return resolveVideoPosterUrl(video) || video.placeBannerUrl || video.placeLogoUrl || "";
+  }, [video, posterLoadError]);
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
   useEffect(() => {
@@ -696,6 +700,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           loading={isActive || isNear ? "eager" : "lazy"}
           decoding="async"
           fetchPriority={isActive ? "high" : "auto"}
+          onError={() => setPosterLoadError(true)}
           className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
             isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}

@@ -151,6 +151,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const lastLoadedVideoIdRef = useRef<string | null>(null);
   const activeVideoRef = useRef<VideoReview | null>(null);
 
+  // Local blob URLs for instant 0ms playback of newly recorded reviews
+  const [localBlobUrls, setLocalBlobUrls] = useState<Record<string, string>>({});
+  const localBlobUrlsRef = useRef<Record<string, string>>({});
+
   // Grace period state: prevents brief 1-frame pop-up of "No Video Reviews Yet" during feed hydration
   const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
 
@@ -253,7 +257,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             if (active) {
               const currentSrc = vid.currentSrc || vid.src;
               console.warn(`[Video Playback Error] Failed to play video ${active.id} (code: ${vid.error?.code}, src: ${currentSrc})`);
-              const cascade = resolvePlayableVideoSourcesCascade(active);
+              const localBlob = localBlobUrlsRef.current[active.id] || (active as any)?.localBlobUrl || (active as any)?.blobUrl;
+              const cascade = resolvePlayableVideoSourcesCascade(active, localBlob);
               const nextCandidate = cascade.find(
                 (s) => s && s !== currentSrc && !currentSrc.endsWith(s)
               );
@@ -391,8 +396,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     };
 
-    // Load active source if not matching
-    const activeSrc = resolvePlayableVideoSource(activeVideo);
+    // Load active source if not matching (prioritizing local blob if available)
+    const localBlob = localBlobUrlsRef.current[activeVideo.id] || localBlobUrls[activeVideo.id] || (activeVideo as any)?.localBlobUrl || (activeVideo as any)?.blobUrl;
+    const activeSrc = resolvePlayableVideoSource(activeVideo, localBlob);
     activeVid.preload = "auto";
     if (!isSameSrc(activeVid.src, activeSrc)) {
       activeVid.src = activeSrc;
@@ -772,7 +778,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
-  const [localBlobUrls, setLocalBlobUrls] = useState<Record<string, string>>({});
 
   // Safety clamp if a video deletion causes currentIndex to exceed new feed bounds
   useEffect(() => {
@@ -787,9 +792,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     let active = true;
     if (videos && videos.length > 0) {
       videos.forEach((vid) => {
-        if (vid?.id && !localBlobUrls[vid.id]) {
+        if (vid?.id && !localBlobUrlsRef.current[vid.id]) {
           getVideoBlobFromIndexedDB(vid.id).then((url) => {
             if (active && url) {
+              localBlobUrlsRef.current[vid.id] = url;
               setLocalBlobUrls((prev) => ({
                 ...prev,
                 [vid.id]: url

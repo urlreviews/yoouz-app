@@ -688,7 +688,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         setRecordedVideoBlob(blob);
         const url = URL.createObjectURL(blob);
         setRecordedVideoUrl(url);
-        setIsPlaying(false);
+        setIsPlaying(true);
         setCurrentTime(0);
         stopCamera();
 
@@ -972,9 +972,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       ...fallbackReview,
       videoUrl: uploadedPublicUrl,
       bunnyVideoId: finalBunnyId,
-      fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean),
-      thumbnailUrl: resolvedSafeThumbnail
-    };
+      fallbackVideoUrls: [recordedVideoUrl, uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
+      thumbnailUrl: resolvedSafeThumbnail,
+      localBlobUrl: recordedVideoUrl || undefined,
+      blobUrl: recordedVideoUrl || undefined
+    } as any;
 
     // 4. Save metadata locally first so it is immune to network dropouts or reloads
     try {
@@ -1354,6 +1356,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   ref={playbackVideoRef}
                   src={recordedVideoUrl}
                   playsInline
+                  autoPlay
+                  loop
                   preload="auto"
                   muted={isMuted}
                   className="w-full h-full object-cover cursor-pointer"
@@ -1368,18 +1372,24 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   onLoadedMetadata={() => {
                     if (playbackVideoRef.current) {
                       setDuration(playbackVideoRef.current.duration || 0);
+                      playbackVideoRef.current.play().catch(() => {});
                     }
                   }}
                   onCanPlay={() => {
-                    if (playbackVideoRef.current && !duration) {
-                      setDuration(playbackVideoRef.current.duration || 0);
+                    if (playbackVideoRef.current) {
+                      if (!duration) {
+                        setDuration(playbackVideoRef.current.duration || 0);
+                      }
+                      playbackVideoRef.current.play().catch(() => {});
                     }
                   }}
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
                   onEnded={() => {
-                    setIsPlaying(false);
-                    setCurrentTime(0);
+                    if (playbackVideoRef.current) {
+                      playbackVideoRef.current.currentTime = 0;
+                      playbackVideoRef.current.play().catch(() => {});
+                    }
                   }}
                   onClick={togglePlay}
                 >
