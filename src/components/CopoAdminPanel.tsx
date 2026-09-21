@@ -2013,7 +2013,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     video_review_metadata_sharing_social_preview_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
                     user_profile_location_canonicalization_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
                     video_recording_upload_anti_stall_guard: "44. Video Recording, 95% Anti-Stall & Resilient Publishing Guard",
-                    video_cross_device_instant_live_sync_guard: "45. Video Review Cross-Device Instant Live Feed Broadcast & Global Cloud Sync Guard"
+                    video_cross_device_instant_live_sync_guard: "45. Video Review Cross-Device Instant Live Feed Broadcast & Global Cloud Sync Guard",
+                    business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -2062,7 +2063,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     video_review_metadata_sharing_social_preview_guard: "🔗",
                     user_profile_location_canonicalization_guard: "🔗",
                     video_recording_upload_anti_stall_guard: "🎥",
-                    video_cross_device_instant_live_sync_guard: "⚡"
+                    video_cross_device_instant_live_sync_guard: "⚡",
+                    business_web_listing_logo_banner_contrast_guard: "🎨"
                   };
 
                   return (

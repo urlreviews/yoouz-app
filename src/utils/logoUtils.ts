@@ -513,9 +513,9 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
   const textColor = isGold ? "#eab308" : "#ffffff";
   const fontSize = letters.length > 3 ? Math.round(size * 0.28) : letters.length > 2 ? Math.round(size * 0.34) : Math.round(size * 0.44);
 
-  // Modern brand palettes for dark mode contrast
+  // Modern high-contrast brand palettes for optimal dark mode & light mode legibility
   const PALETTES = [
-    "#27272a", // dark zinc
+    "#2563eb", // royal blue
     "#7c3aed", // violet
     "#059669", // emerald
     "#d97706", // amber
@@ -523,6 +523,8 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
     "#0891b2", // cyan
     "#4f46e5", // indigo
     "#c026d3", // fuchsia
+    "#0284c7", // sky
+    "#db2777", // pink
   ];
   let hash = 0;
   for (let i = 0; i < clean.length; i++) {
@@ -537,6 +539,38 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
   </svg>`;
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * Generates rich, deterministic brand gradient themes for web listings that don't have custom cover images.
+ * This guarantees no web listing has an empty pitch-black void.
+ */
+export function getDomainBrandGradient(domainOrName?: string | null): {
+  from: string;
+  via: string;
+  to: string;
+  accent: string;
+  glow: string;
+} {
+  const raw = (domainOrName || "business").toLowerCase().replace(/[^a-z0-9]/g, "");
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash << 5) - hash + raw.charCodeAt(i);
+    hash |= 0;
+  }
+
+  const GRADIENTS = [
+    { from: "#0f172a", via: "#1e1b4b", to: "#09090b", accent: "#6366f1", glow: "rgba(99, 102, 241, 0.25)" }, // Indigo Midnight
+    { from: "#022c22", via: "#064e3b", to: "#09090b", accent: "#10b981", glow: "rgba(16, 185, 129, 0.25)" }, // Emerald Forest
+    { from: "#1e1b4b", via: "#3b0764", to: "#09090b", accent: "#a855f7", glow: "rgba(168, 85, 247, 0.25)" }, // Royal Purple
+    { from: "#450a0a", via: "#1c1917", to: "#09090b", accent: "#ef4444", glow: "rgba(239, 68, 68, 0.25)" },  // Crimson Slate
+    { from: "#082f49", via: "#0c4a6e", to: "#09090b", accent: "#38bdf8", glow: "rgba(56, 189, 248, 0.25)" }, // Oceanic Cyan
+    { from: "#451a03", via: "#292524", to: "#09090b", accent: "#f59e0b", glow: "rgba(245, 158, 11, 0.25)" }, // Amber Obsidian
+    { from: "#172554", via: "#1e3a8a", to: "#09090b", accent: "#3b82f6", glow: "rgba(59, 130, 246, 0.25)" }, // Sapphire Blue
+    { from: "#500724", via: "#3b0764", to: "#09090b", accent: "#ec4899", glow: "rgba(236, 72, 153, 0.25)" }, // Velvet Rose
+  ];
+
+  return GRADIENTS[Math.abs(hash) % GRADIENTS.length];
 }
 
 export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null): string | null {

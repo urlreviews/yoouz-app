@@ -30,16 +30,16 @@ const SearchBusinessBadge: React.FC<{
   if (isBusinessOrDomain) {
     const domain = cleanDomain || term;
     return (
-      <div className="w-8 h-8 rounded-lg bg-zinc-900 shadow-sm ring-1 ring-white/10 border border-zinc-800 flex items-center justify-center shrink-0 p-1 overflow-hidden">
+      <div className="w-8 h-8 rounded-lg bg-white shadow-sm ring-1 ring-white/20 border border-zinc-200/60 flex items-center justify-center shrink-0 p-1 overflow-hidden">
         <CopoBrandLogo
           domain={domain}
           name={domain}
           website={place?.website || (domain.includes(".") ? `https://${domain}` : undefined)}
           logoUrl={logoUrl || place?.logoUrl || place?.avatarUrl}
           bannerUrl={place?.bannerUrl || place?.ogImage}
-          className="w-full h-full flex items-center justify-center p-0 overflow-hidden"
-          imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
-          fallbackTextClassName="font-black text-xs text-white uppercase"
+          className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"
+          imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
+          fallbackTextClassName="font-black text-xs text-zinc-950 uppercase"
         />
       </div>
     );
@@ -235,6 +235,42 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     try {
       localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
     } catch {}
+
+    // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
+    if (!matchedPlace && onAddPlace) {
+      const instantLogo = getCleanLogoUrl(null, cleanUrl) || "";
+      const instantName = formatBusinessName(cleanUrl) || cleanUrl;
+      const optimisticPlace: Place = {
+        id: cleanUrl.toLowerCase(),
+        name: instantName,
+        category: "Website",
+        categoryType: "all",
+        address: "",
+        city: "Online",
+        lat: 0,
+        lng: 0,
+        rating: 5,
+        totalReviews: 1,
+        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: instantLogo,
+        logoUrl: instantLogo,
+        bannerUrl: "",
+        ogImage: "",
+        photos: [],
+        openingHours: "Available 24/7",
+        isOpen: true,
+        phone: "",
+        website: `https://${cleanUrl}`,
+        priceRange: "N/A",
+        plusCode: "",
+        description: "",
+        popularKeywords: [],
+        amenities: [],
+        topDishes: [],
+        brandDomain: cleanUrl
+      };
+      onAddPlace(optimisticPlace);
+    }
     
     setQuery(cleanUrl);
     setSubmittedQuery(cleanUrl);

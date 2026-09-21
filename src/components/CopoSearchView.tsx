@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -139,6 +139,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       };
 
       setSearchedPlace(instantPlace);
+      if (onAddPlace) {
+        onAddPlace(instantPlace);
+      }
       
       // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta
       try {
@@ -358,58 +361,68 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
           <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 shadow-xl overflow-hidden mb-8">
             {/* Top Hero Banner Canvas */}
-            <div className="w-full h-64 sm:h-80 bg-zinc-950 relative overflow-hidden flex items-center justify-center group">
-              {(searchedPlace.bannerUrl || searchedPlace.ogImage) ? (
-                <>
-                  <img 
-                    src={searchedPlace.bannerUrl || searchedPlace.ogImage} 
-                    alt="Banner" 
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-60"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const target = e.target as HTMLElement;
-                      const parent = target.parentElement;
-                      if (parent) {
-                        const fallback = parent.querySelector('.banner-fallback');
-                        if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                      }
-                      target.style.display = "none";
+            {(() => {
+              const brandTheme = getDomainBrandGradient(searchedPlace.brandDomain || searchedPlace.name);
+              const domainInitial = (searchedPlace.brandDomain || searchedPlace.name || "B").charAt(0).toUpperCase();
+
+              return (
+                <div 
+                  className="w-full h-64 sm:h-80 relative overflow-hidden flex items-center justify-center group"
+                  style={{
+                    background: `linear-gradient(135deg, ${brandTheme.from} 0%, ${brandTheme.via} 50%, ${brandTheme.to} 100%)`
+                  }}
+                >
+                  {/* Glowing Ambient Mesh Backdrop */}
+                  <div 
+                    className="absolute inset-0 pointer-events-none opacity-80"
+                    style={{
+                      backgroundImage: `radial-gradient(circle at 50% 30%, ${brandTheme.glow}, transparent 70%)`
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent z-10" />
-                  
-                  {/* Banner Fallback */}
-                  <div className="banner-fallback absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-800 to-black hidden items-center justify-center">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/30" />
-                    <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest z-10">
-                      <Globe className="w-4 h-4" />
-                      <span>{t("search.verifiedListing", "Verified Web Listing")}</span>
-                    </div>
+                  <div className="absolute inset-0 opacity-15 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+                  {/* Watermark Brand Typography Emblem */}
+                  <div className="absolute right-6 -bottom-8 pointer-events-none select-none opacity-10 font-black text-9xl sm:text-[140px] text-white tracking-tighter uppercase leading-none">
+                    {domainInitial}
                   </div>
-                </>
-              ) : (
-                /* Fallback Gradient Canvas for websites without any image */
-                <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-800 to-black flex items-center justify-center">
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/30" />
-                  <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest z-10">
-                    <Globe className="w-4 h-4" />
-                    <span>{t("search.verifiedListing", "Verified Web Listing")}</span>
+
+                  {/* Dynamic Listing Pill */}
+                  <div className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-lg">
+                    <Globe className="w-3.5 h-3.5 text-white/80" />
+                    <span className="text-white/90 text-xs font-semibold tracking-wide">
+                      {t("search.verifiedListing", "Verified Web Listing")}
+                    </span>
                   </div>
+
+                  {(searchedPlace.bannerUrl || searchedPlace.ogImage) && (
+                    <>
+                      <img 
+                        src={searchedPlace.bannerUrl || searchedPlace.ogImage} 
+                        alt="Banner" 
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-75 z-10"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent z-10 pointer-events-none" />
+                    </>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             <div className="p-6 sm:p-8 pt-16 sm:pt-20 relative">
-              {/* Overlapping High-Res Brand Logo Badge */}
+              {/* Overlapping High-Res Brand Logo Badge with High-Contrast Canvas */}
               <CopoBrandLogo
                 domain={searchedPlace.brandDomain}
                 name={formatBusinessName(searchedPlace.name)}
                 website={searchedPlace.website}
                 logoUrl={searchedPlace.logoUrl}
                 bannerUrl={searchedPlace.bannerUrl || searchedPlace.ogImage}
-                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-800 bg-zinc-900 shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-2.5 z-30 ring-1 ring-white/15"
-                imageClassName="w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
-                fallbackTextClassName="font-extrabold text-2xl sm:text-3xl text-white"
+                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-900 bg-white shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-2.5 z-30 ring-1 ring-white/20"
+                imageClassName="w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]"
+                fallbackTextClassName="font-extrabold text-2xl sm:text-3xl text-zinc-950"
               />
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">

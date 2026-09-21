@@ -754,9 +754,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           website={place.website}
           logoUrl={primaryLogoUrl || place.logoUrl}
           bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-          className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-800 bg-zinc-900 shadow-2xl flex items-center justify-center z-20 p-2 sm:p-3 ring-1 ring-white/15"
-          imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[18px] [image-rendering:-webkit-optimize-contrast] [filter:drop-shadow(0px_0px_1px_rgba(255,255,255,0.25))]"
-          fallbackTextClassName="font-black text-3xl sm:text-5xl text-white drop-shadow-md"
+          className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-3 ring-1 ring-white/20"
+          imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[18px] [image-rendering:-webkit-optimize-contrast]"
+          fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
         />
       </div>
 
