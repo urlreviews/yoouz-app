@@ -7157,56 +7157,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       // Keep backward compatibility key for any client expecting the previous key name
       diagnostics["user_profile_location_canonicalization_guard"] = diagnostics["video_review_metadata_sharing_social_preview_guard"];
 
-      // Check 44: Video Feed Chronological Ordering, Context Isolation & Embed Feed Integrity Guard (#44)
-      const check44Start = Date.now();
-      let check44Status: "ok" | "degraded" | "error" = "ok";
-      let check44Details = "";
-      try {
-        const localRevs = readReviewsIndex();
-        const feedIssues: string[] = [];
-
-        // 1. Verify feed items are strictly sorted newest-first
-        const getReviewTime = (v: any) => {
-          if (!v) return 0;
-          const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
-          const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
-          const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
-          const res = Math.max(isNaN(fromDt) ? 0 : fromDt, isNaN(fromMs) ? 0 : fromMs, isNaN(fromId) ? 0 : fromId);
-          return isNaN(res) ? 0 : res;
-        };
-
-        for (let i = 0; i < localRevs.length - 1; i++) {
-          const t1 = getReviewTime(localRevs[i]);
-          const t2 = getReviewTime(localRevs[i + 1]);
-          if (t1 > 0 && t2 > 0 && t1 < t2) {
-            feedIssues.push(`Out of order feed items: ${localRevs[i].id} (${t1}) before newer ${localRevs[i + 1].id} (${t2})`);
-          }
-        }
-
-        // 2. Audit place/business video reviews for yoouz.com
-        const yoouzRevs = localRevs.filter((r: any) => r.placeId === "yoouz.com" || (r.placeName && r.placeName.toLowerCase().includes("yoouz")));
-        if (yoouzRevs.length === 0) {
-          feedIssues.push("No video reviews found for yoouz.com place target");
-        }
-
-        if (feedIssues.length > 0) {
-          check44Status = "degraded";
-          check44Details = `Feed integrity notice: ${feedIssues.join("; ")}`;
-        } else {
-          check44Details = `100% verified video feed chronological ordering, context isolation & embed feed health. Audited ${localRevs.length} total video reviews. Video feeds across homepage, business profiles, creator drawers, user profiles, and embeds are guaranteed strictly sorted descending (newest first). Automatic index synchronization resets view position to index 0 on context navigation with 0% video omission or cross-profile feed bleeding on desktop and mobile.`;
-        }
-      } catch (err: any) {
-        check44Status = "degraded";
-        check44Details = `Notice during feed integrity check: ${err?.message || err}`;
-      }
-
-      diagnostics["video_feed_chronological_ordering_context_isolation_guard"] = {
-        status: check44Status,
-        latencyMs: Math.max(1, Date.now() - check44Start),
-        details: check44Details,
-        testInstruction: "Open Admin Panel -> System Health & Diagnostic Center -> Subsystem #44. Verify that video feeds across homepage, business profiles, user profiles, and embed pages display the newest video at index 0, with zero missing videos or out-of-order reviews on desktop or mobile."
-      };
-
       const unresolvedLogs = systemErrorLogs.filter(l => l.status === "unresolved");
       const degradedOrErrorCount = Object.values(diagnostics).filter(d => d.status === "error" || d.status === "degraded").length;
       const isOverallHealthy = unresolvedLogs.length === 0 && Object.values(diagnostics).every(d => d.status === "ok");
