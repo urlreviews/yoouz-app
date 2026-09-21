@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
-import { getPlaceSlug, formatBusinessName, extractCleanDomain } from "../utils/placeUtils";
-import { CopoBrandLogo } from "./CopoBrandLogo";
+import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor, getSafeAvatarUrl } from "../utils/placeUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoVideoPlayer } from "./CopoVideoPlayer";
-import { Star, Play, ArrowLeft } from "lucide-react";
+import { Star, Play, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -27,6 +27,14 @@ export interface CopoEmbedViewProps {
   unreadNotifsCount?: number;
   unreadMessagesCount?: number;
   onCloseEmbed?: () => void;
+}
+
+function getRatingTierLabel(rating: number): string {
+  if (rating >= 4.5) return "EXCELLENT";
+  if (rating >= 4.0) return "GREAT";
+  if (rating >= 3.0) return "GOOD";
+  if (rating >= 2.0) return "AVERAGE";
+  return "POOR";
 }
 
 export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
@@ -66,9 +74,12 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
   const [viewMode, setViewMode] = useState<"widget" | "player">(initialMode);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [pageIndex, setPageIndex] = useState<number>(0);
   const [localLikedMap, setLocalLikedMap] = useState<Record<string, boolean>>({});
   const [localBookmarkedMap, setLocalBookmarkedMap] = useState<Record<string, boolean>>({});
   const [localFollowedMap, setLocalFollowedMap] = useState<Record<string, boolean>>({});
+
+  const touchStartXRef = useRef<number | null>(null);
 
   // Close handler function
   const handleCloseEmbed = () => {
@@ -254,13 +265,59 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     }
   };
 
-  // Click on a video card from the widget
-  const handleSelectVideoCard = (index: number) => {
-    setCurrentIndex(index);
+  // Click on a video card from the widget to play inline
+  const handleSelectVideoCard = (realIndex: number) => {
+    setCurrentIndex(realIndex);
     setViewMode("player");
   };
 
-  // If in Player View (Expanded full vertical player)
+  // Pagination calculation for 2-at-a-time display
+  const displayVideos = matchingVideos.length > 0 ? matchingVideos : videos.slice(0, 2);
+  const itemsPerPage = displayVideos.length === 1 ? 1 : 2;
+  const totalPages = Math.ceil(displayVideos.length / itemsPerPage);
+
+  const safePageIndex = Math.min(pageIndex, Math.max(0, totalPages - 1));
+  const currentPair = displayVideos.slice(safePageIndex * 2, safePageIndex * 2 + 2);
+
+  const handlePrevPage = useCallback(() => {
+    setPageIndex((prev) => (prev > 0 ? prev - 1 : totalPages - 1));
+  }, [totalPages]);
+
+  const handleNextPage = useCallback(() => {
+    setPageIndex((prev) => (prev < totalPages - 1 ? prev + 1 : 0));
+  }, [totalPages]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartXRef.current - touchEndX;
+    if (diff > 45) {
+      // Swiped left -> next
+      handleNextPage();
+    } else if (diff < -45) {
+      // Swiped right -> prev
+      handlePrevPage();
+    }
+    touchStartXRef.current = null;
+  };
+
+  // Calculate overall rating score
+  const overallRating = useMemo(() => {
+    if (displayVideos.length > 0) {
+      const sum = displayVideos.reduce((acc, v) => acc + (v.rating || 5), 0);
+      return Number((sum / displayVideos.length).toFixed(1));
+    }
+    return targetPlace.rating || 5.0;
+  }, [displayVideos, targetPlace]);
+
+  const ratingTier = getRatingTierLabel(overallRating);
+  const totalReviewsCount = Math.max(displayVideos.length, targetPlace.totalReviews || 0);
+
+  // If in Player View (Expanded vertical player)
   if (viewMode === "player") {
     return (
       <div
@@ -298,9 +355,6 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   }
 
   // Otherwise in Widget View (Card overview)
-  const displayVideos = matchingVideos.length > 0 ? matchingVideos : videos.slice(0, 2);
-  const totalReviewsCount = Math.max(displayVideos.length, targetPlace.totalReviews || 0);
-
   return (
     <div
       id="copo-embed-widget-root"
@@ -308,98 +362,186 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     >
       <div
         id="copo-embed-card"
-        className="w-full max-w-[460px] bg-zinc-950 border border-zinc-850 rounded-[28px] p-4 sm:p-5 shadow-2xl flex flex-col gap-4 relative transition-all"
+        className="w-full max-w-[440px] bg-zinc-950 border border-zinc-800/80 rounded-[28px] p-4 sm:p-5 shadow-2xl flex flex-col gap-4 relative transition-all"
         style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
       >
-        {/* Top Header Card with Real Company Brand Logo */}
-        <div className="flex items-center gap-3.5 bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-3.5 shadow-sm">
-          <CopoBrandLogo
-            domain={extractCleanDomain(targetPlace.website || targetPlace.brandDomain || targetPlace.id || cleanSlug)}
-            name={targetPlace.name}
-            website={targetPlace.website}
-            logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl}
-            className="w-11 h-11 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-white shrink-0 shadow-inner p-1 overflow-hidden"
-            imageClassName="w-full h-full object-contain rounded-lg"
-            fallbackTextClassName="font-black text-sm text-white"
-            loading="eager"
-            fetchPriority="high"
-          />
+        {/* Top Header Card: Independent Rating Badge (Google/Trustpilot format with Yoouz branding) */}
+        <div className="flex items-center gap-3.5 bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-3.5 sm:p-4 shadow-sm">
+          {/* Yoouz Icon Logo on Left */}
+          <div className="w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 shadow-inner">
+            <Star className="w-6 h-6 fill-white text-white drop-shadow-sm" />
+          </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-base font-bold text-white truncate tracking-tight">
-                {targetPlace.name}
-              </h2>
-              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-zinc-950 text-[10px] font-black shrink-0">
-                ✓
+          {/* Rating Calculation & Verification */}
+          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <div className="flex items-center justify-between gap-1.5">
+              <span className="font-black text-xs sm:text-[13px] tracking-wider uppercase text-white drop-shadow-sm">
+                {ratingTier}
               </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="font-extrabold text-[12px] text-white">Yoouz</span>
+                <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-white text-zinc-950 text-[9px] font-black shrink-0">
+                  ✓
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-zinc-300 mt-0.5 font-medium">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-              <span className="font-bold text-amber-400">
-                {(targetPlace.rating || 5.0).toFixed(1)}
-              </span>
-              <span className="text-zinc-500">·</span>
-              <span className="text-zinc-300">
-                {totalReviewsCount} {totalReviewsCount === 1 ? "Review" : "Reviews"}
-              </span>
+            {/* 5 Gold Stars Row */}
+            <div className="flex items-center gap-1 my-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+                    i < Math.round(overallRating)
+                      ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                      : "fill-zinc-700 text-zinc-700"
+                  }`}
+                />
+              ))}
             </div>
+
+            {/* Review count subtitle */}
+            <span className="text-[11.5px] text-zinc-400 font-medium leading-none">
+              Based on {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
+            </span>
           </div>
         </div>
 
-        {/* Video Grid (Centered if 1 review, Side-by-side if 2+ reviews) */}
-        <div className={`w-full ${displayVideos.length === 1 ? "flex justify-center" : "grid grid-cols-2 gap-3"}`}>
-          {displayVideos.slice(0, 2).map((video, idx) => (
-            <div
-              key={video.id || idx}
-              id={`embed-video-card-${idx}`}
-              onClick={() => handleSelectVideoCard(idx)}
-              className={`group relative aspect-[9/13.5] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800/90 shadow-md cursor-pointer transition-all duration-200 hover:border-zinc-600 hover:shadow-xl active:scale-[0.98] ${
-                displayVideos.length === 1 ? "w-full max-w-[240px]" : "w-full"
-              }`}
-            >
-              {/* Video Thumbnail */}
-              <img
-                src={
-                  video.thumbnailUrl ||
-                  video.bannerUrl ||
-                  video.ogImage ||
-                  `https://rev1.b-cdn.net/videos/${video.id}.jpg`
-                }
-                alt={video.caption || video.placeName || "Yoouz Review"}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
-                }}
-              />
+        {/* Video Display Container (1 Centered Card or 2-by-2 Grid with Left/Right navigation) */}
+        <div
+          className="relative w-full"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Video Grid */}
+          <div className={`w-full ${displayVideos.length === 1 ? "flex justify-center" : "grid grid-cols-2 gap-3"}`}>
+            {currentPair.map((video, idx) => {
+              const realIndex = safePageIndex * 2 + idx;
+              const safeAuthor = resolveSafeAuthor(video.author, currentUser);
 
-              {/* Star Rating Badge (Top Right) */}
-              <div className="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur-md px-2 py-0.5 rounded-full text-[11px] font-bold text-white border border-white/15 flex items-center gap-1 shadow-md">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span>{video.rating || 5}</span>
-              </div>
+              return (
+                <div
+                  key={video.id || realIndex}
+                  id={`embed-video-card-${realIndex}`}
+                  onClick={() => handleSelectVideoCard(realIndex)}
+                  className={`group relative aspect-[9/13.5] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800/90 shadow-lg cursor-pointer transition-all duration-200 hover:border-zinc-600 hover:shadow-2xl active:scale-[0.98] ${
+                    displayVideos.length === 1 ? "w-full max-w-[240px]" : "w-full"
+                  }`}
+                >
+                  {/* Video Thumbnail */}
+                  <img
+                    src={
+                      video.thumbnailUrl ||
+                      video.bannerUrl ||
+                      video.ogImage ||
+                      `https://rev1.b-cdn.net/videos/${video.id}.jpg`
+                    }
+                    alt={video.caption || video.placeName || "Yoouz Review"}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
+                    }}
+                  />
 
-              {/* Center Play Button */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-white text-zinc-950 shadow-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                  <Play className="w-5 h-5 fill-zinc-950 text-zinc-950 ml-0.5" />
+                  {/* Center Play Button */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-full bg-white text-zinc-950 shadow-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                      <Play className="w-4.5 h-4.5 fill-zinc-950 text-zinc-950 ml-0.5" />
+                    </div>
+                  </div>
+
+                  {/* Bottom User Avatar, Author Name, 5 Stars & Review Subtitle Pill */}
+                  <div className="absolute inset-x-2 bottom-2 p-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex items-center gap-2 shadow-lg">
+                    {/* User Avatar */}
+                    <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border border-white/20 shrink-0 flex items-center justify-center text-white text-[10px] font-bold">
+                      <img
+                        src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle)}
+                        alt={safeAuthor.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.src = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 64);
+                        }}
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[11px] font-bold text-white truncate leading-tight">
+                          By {safeAuthor.name}
+                        </span>
+                        {safeAuthor.isVerified && (
+                          <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
+                        )}
+                      </div>
+
+                      {/* 5 gold stars */}
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-2.5 h-2.5 ${
+                              i < Math.round(video.rating || 5)
+                                ? "fill-amber-400 text-amber-400"
+                                : "fill-zinc-600 text-zinc-600"
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <p className="text-[9px] text-zinc-400 truncate leading-tight mt-0.5">
+                        Video review for {extractCleanDomain(video.placeWebsite || video.placeId || video.placeName) || targetPlace.name}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination Controls when there are >2 videos */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2.5 px-1">
+              <button
+                type="button"
+                onClick={handlePrevPage}
+                className="w-7 h-7 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white hover:border-zinc-600 active:scale-90 transition-all shadow"
+                aria-label="Previous reviews"
+                title="Previous"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Dots indicator */}
+              <div className="flex items-center gap-1.5">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPageIndex(i)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === safePageIndex ? "w-4 bg-white" : "w-1.5 bg-zinc-700 hover:bg-zinc-500"
+                    }`}
+                    aria-label={`Page ${i + 1}`}
+                  />
+                ))}
               </div>
 
-              {/* Bottom Gradient Overlay & Place/Review Title */}
-              <div className="absolute inset-x-0 bottom-0 p-3 pt-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end">
-                <p className="text-xs font-bold text-white tracking-wide truncate drop-shadow-md">
-                  {video.dishOrItem || video.placeName || targetPlace.name}
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={handleNextPage}
+                className="w-7 h-7 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white hover:border-zinc-600 active:scale-90 transition-all shadow"
+                aria-label="Next reviews"
+                title="Next"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-          ))}
+          )}
         </div>
 
-        {/* Live Sync Powered by Yoouz Footer */}
-        <div className="flex items-center justify-center gap-2 pt-1 pb-0.5">
+        {/* Live Sync Powered by Yoouz Footer (Clickable to visit application) */}
+        <div className="flex items-center justify-center gap-2 pt-0.5 pb-0.5">
           <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           <a
             href={`https://yoouz.com/${cleanSlug === "yoouz.com" ? "" : `place/${encodeURIComponent(targetPlace.id || cleanSlug)}`}`}

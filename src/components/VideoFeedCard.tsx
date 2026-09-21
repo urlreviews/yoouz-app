@@ -864,11 +864,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 <span className="truncate">{businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}</span>
                 <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
               </span>
-              <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
-                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
-                <span>{effectiveRating}</span>
-                <span className="text-zinc-300 font-normal">({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})</span>
-              </div>
+              {!isEmbed && (
+                <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
+                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                  <span>{effectiveRating}</span>
+                  <span className="text-zinc-300 font-normal">({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})</span>
+                </div>
+              )}
             </div>
           </button>
         </div>
