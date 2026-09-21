@@ -1215,14 +1215,17 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
               {isUserOwner && (
                 <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="relative shrink-0">
-                      <img
-                        src={placeLogoUrl || video?.placeLogoUrl || "/favicon.svg"}
-                        alt={placeName || video.placeName}
-                        className="w-7 h-7 rounded-full object-cover border border-zinc-700 bg-black"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/favicon.svg'; }}
+                    <div className="relative shrink-0 w-7 h-7 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center p-0.5">
+                      <CopoBrandLogo
+                        domain={placeWebsite || video?.placeWebsite}
+                        name={placeName || video?.placeName}
+                        website={placeWebsite || video?.placeWebsite}
+                        logoUrl={placeLogoUrl || video?.placeLogoUrl}
+                        className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+                        imageClassName="w-full h-full object-contain"
+                        fallbackTextClassName="text-[9px] font-black text-zinc-950"
                       />
-                      <ShieldCheck className="w-3.5 h-3.5 text-white absolute -bottom-1 -right-1 bg-black rounded-full" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-white absolute -bottom-1 -right-1 bg-zinc-950 rounded-full" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-[11px] font-bold text-white truncate flex items-center gap-1.5">
@@ -1245,31 +1248,35 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
               {/* Input Form */}
               <form onSubmit={handleSubmit} className="flex items-center gap-2.5">
                 {/* Author Avatar (Uses Business Logo when posting as owner) */}
-                <img
-                  src={
-                    (isUserOwner || postAsOwner)
-                      ? (placeLogoUrl || video?.placeLogoUrl || "/favicon.svg")
-                      : getAuthorAvatar(
-                          currentUser?.name || "You",
-                          currentUser?.email?.split("@")[0],
-                          currentUser?.avatar,
-                          false
-                        )
-                  }
-                  alt={(isUserOwner || postAsOwner) ? (placeName || video.placeName) : (currentUser?.name || "You")}
-                  className={`w-8 h-8 rounded-full object-cover shrink-0 ${
-                    (isUserOwner || postAsOwner) ? "border border-zinc-700 bg-black shadow-md" : "border border-zinc-800"
-                  }`}
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement;
-                    if (isUserOwner || postAsOwner) {
-                      target.src = '/favicon.svg';
-                    } else if (!target.src.includes('/api/avatar')) {
-                      target.src = '/api/avatar?name=User&background=27272a&color=fff';
-                    }
-                  }}
-                /> 
-                 <div className="relative flex-1">
+                {(isUserOwner || postAsOwner) ? (
+                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center shrink-0 p-0.5">
+                    <CopoBrandLogo
+                      domain={placeWebsite || video?.placeWebsite}
+                      name={placeName || video?.placeName}
+                      website={placeWebsite || video?.placeWebsite}
+                      logoUrl={placeLogoUrl || video?.placeLogoUrl}
+                      className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+                      imageClassName="w-full h-full object-contain"
+                      fallbackTextClassName="text-[10px] font-black text-zinc-950"
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={getAuthorAvatar(
+                      currentUser?.name || "You",
+                      currentUser?.email?.split("@")[0],
+                      currentUser?.avatar,
+                      false
+                    )}
+                    alt={currentUser?.name || "You"}
+                    className="w-8 h-8 rounded-full object-cover shrink-0 border border-zinc-800"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = generateGoogleLetterAvatarSvg(currentUser?.name || "You");
+                    }}
+                  />
+                )}
+                <div className="relative flex-1">
                   <input
                     ref={inputRef}
                     type="text"

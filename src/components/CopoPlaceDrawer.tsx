@@ -452,15 +452,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
 
-    // Priority 1: Video review logo is the authentic source of truth recorded by users!
+    // Priority 1: Canonical place record logo (ignoring wide header banners)
+    const canonicalPlaceLogo = getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl;
+    if (canonicalPlaceLogo && !canonicalPlaceLogo.startsWith("data:;") && canonicalPlaceLogo.trim() !== "" && !canonicalPlaceLogo.includes("LogoHeader") && !canonicalPlaceLogo.includes("1024x170")) {
+      return getCleanLogoUrl(canonicalPlaceLogo, drawerDomain);
+    }
+
+    // Priority 2: Video review logo
     const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") && v.placeLogoUrl.trim() !== "" && !v.placeLogoUrl.includes("LogoHeader") && !v.placeLogoUrl.includes("1024x170")));
     if (matchingVidWithLogo?.placeLogoUrl) {
       return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain);
     }
 
-    // Priority 2: Place record logo (ignoring wide header banners)
-    if (place.logoUrl && !place.logoUrl.startsWith("data:;") && place.logoUrl.trim() !== "" && !place.logoUrl.includes("LogoHeader") && !place.logoUrl.includes("1024x170")) return getCleanLogoUrl(place.logoUrl, drawerDomain);
-    if (place.avatarUrl && !place.avatarUrl.includes("favicons") && !place.avatarUrl.startsWith("data:;") && place.avatarUrl.trim() !== "" && !place.avatarUrl.includes("LogoHeader") && !place.avatarUrl.includes("1024x170")) return getCleanLogoUrl(place.avatarUrl, drawerDomain);
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);
     return null;
   }, [place, drawerDomain, rawPlaceVideos]);
@@ -1567,8 +1570,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     className="flex items-center justify-between p-4 bg-zinc-900/80 hover:bg-zinc-900 rounded-2xl border border-zinc-800 transition-colors group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-white border border-zinc-700">
-                        <Globe className="w-5 h-5" />
+                      <div className="w-10 h-10 rounded-xl bg-white shadow-xs border border-white/20 flex items-center justify-center shrink-0 p-1 overflow-hidden">
+                        <CopoBrandLogo
+                          domain={drawerDomain || place.brandDomain}
+                          name={displayedPlaceName}
+                          website={place.website}
+                          logoUrl={primaryLogoUrl || place.logoUrl}
+                          bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
+                          className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden bg-transparent"
+                          imageClassName="w-full h-full object-contain rounded-lg"
+                          fallbackTextClassName="font-black text-xs text-zinc-950"
+                        />
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">{t("place.visitOfficialWebsite", "Visit Official Website")}</p>
