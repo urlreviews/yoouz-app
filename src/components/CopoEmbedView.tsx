@@ -433,87 +433,87 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           </>
         )}
 
-        {/* BOTTOM OVERLAY: Reviewer Frosted Glass Card & Yoouz Sync */}
+        {/* BOTTOM OVERLAY: Clean Original Video Feed Layout */}
         <div className="relative z-30 p-3 sm:p-3.5 flex flex-col gap-2 pointer-events-auto">
-          {/* Reviewer Glass Pill */}
-          <div className="bg-black/75 backdrop-blur-xl border border-white/15 rounded-2xl p-2.5 sm:p-3 shadow-2xl flex items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-800 border border-white/25 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-sm">
-                <img
-                  src={reviewerAvatarUrl}
-                  alt={safeAuthor.name}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement;
-                    const fallback = generateGoogleLetterAvatarSvg(
-                      safeAuthor.name || "User",
-                      64,
-                      safeAuthor.handle || safeAuthor.name
-                    );
-                    if (target.src !== fallback) {
-                      target.src = fallback;
-                    }
-                  }}
-                />
+          {/* Reviewer Metadata (Frameless, clean overlay matching original Yoouz video feed) */}
+          <div className="flex items-start gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md">
+              <img
+                src={reviewerAvatarUrl}
+                alt={safeAuthor.name}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  const fallback = generateGoogleLetterAvatarSvg(
+                    safeAuthor.name || "User",
+                    64,
+                    safeAuthor.handle || safeAuthor.name
+                  );
+                  if (target.src !== fallback) {
+                    target.src = fallback;
+                  }
+                }}
+              />
+            </div>
+
+            <div className="min-w-0 flex flex-col gap-0.5">
+              {/* Line 1: Author Name with Verified Check */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[13.5px] sm:text-[14px] font-black text-white truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                  By {safeAuthor.name}
+                </span>
+                {safeAuthor.isVerified && (
+                  <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
+                )}
               </div>
 
-              <div className="min-w-0 flex flex-col gap-0.5">
-                {/* Line 1: Author Name with Verified Check */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] font-extrabold text-white truncate leading-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                    By {safeAuthor.name}
-                  </span>
-                  {safeAuthor.isVerified && (
-                    <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
-                  )}
+              {/* Line 2: Rating Stars & Recorded Time */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-3.5 h-3.5 ${
+                        i < Math.round(currentVideo?.rating || 5)
+                          ? "fill-amber-400 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                          : "fill-zinc-500/70 text-zinc-300/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                      }`}
+                    />
+                  ))}
                 </div>
-
-                {/* Line 2: Rating Stars & Recorded Time */}
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3.5 h-3.5 ${
-                          i < Math.round(currentVideo?.rating || 5)
-                            ? "fill-amber-400 text-amber-400 drop-shadow-xs"
-                            : "fill-zinc-600/70 text-zinc-200/80"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-white/90 text-[11px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1 shrink-0">
-                    <Clock className="w-3 h-3 text-white/80 shrink-0" />
-                    <span>{formatRecordedDate(currentVideo?.recordedAt, currentVideo?.createdAtMs)}</span>
-                  </span>
-                </div>
-
-                {/* Line 3: Caption (e.g. Video review for yoouz.com) */}
-                <p className="text-white/95 text-[11.5px] font-medium line-clamp-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-0.5">
-                  {captionText}
-                </p>
+                <span className="text-white text-[11px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] flex items-center gap-1 shrink-0">
+                  <Clock className="w-3 h-3 text-white/80 shrink-0" />
+                  <span>{formatRecordedDate(currentVideo?.recordedAt, currentVideo?.createdAtMs)}</span>
+                </span>
               </div>
+
+              {/* Line 3: Caption (e.g. Video review for yoouz.com) */}
+              <p className="text-white text-[12px] sm:text-[12.5px] font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] mt-0.5 leading-snug">
+                {captionText}
+              </p>
+            </div>
+          </div>
+
+          {/* Footer Bar: Live Sync on Left, Video Count (1 of 3) on Right */}
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/10 mt-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <a
+                href={`https://yoouz.com/${cleanSlug === "yoouz.com" ? "" : `place/${encodeURIComponent(targetPlace.id || cleanSlug)}`}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+              >
+                Live Sync Powered by Yoouz
+              </a>
             </div>
 
             {totalCount > 1 && (
-              <span className="text-[11px] font-semibold text-zinc-300 bg-white/10 px-2 py-0.5 rounded-full shrink-0 self-start mt-0.5">
+              <span className="text-[10.5px] font-extrabold text-white/90 bg-black/45 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 drop-shadow-sm shrink-0">
                 {safeActiveIndex + 1} of {totalCount}
               </span>
             )}
-          </div>
-
-          {/* Live Sync Powered by Yoouz Footer (Clickable to visit application) */}
-          <div className="flex items-center justify-center gap-1.5 pt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <a
-              href={`https://yoouz.com/${cleanSlug === "yoouz.com" ? "" : `place/${encodeURIComponent(targetPlace.id || cleanSlug)}`}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] font-medium text-zinc-300 hover:text-white transition-colors"
-            >
-              Live Sync Powered by Yoouz
-            </a>
           </div>
         </div>
       </div>
