@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
 import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor, getSafeAvatarUrl } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
-import { Star, Play, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
+import { Star, Play, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe } from "lucide-react";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -26,14 +26,6 @@ export interface CopoEmbedViewProps {
   unreadNotifsCount?: number;
   unreadMessagesCount?: number;
   onCloseEmbed?: () => void;
-}
-
-function getRatingTierLabel(rating: number): string {
-  if (rating >= 4.5) return "EXCELLENT";
-  if (rating >= 4.0) return "GREAT";
-  if (rating >= 3.0) return "GOOD";
-  if (rating >= 2.0) return "AVERAGE";
-  return "POOR";
 }
 
 export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
@@ -238,8 +230,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     return targetPlace.rating || 5.0;
   }, [displayVideos, targetPlace]);
 
-  const ratingTier = getRatingTierLabel(overallRating);
   const totalReviewsCount = Math.max(displayVideos.length, targetPlace.totalReviews || 0);
+  const displayDomain = extractCleanDomain(targetPlace.website || targetPlace.id || cleanSlug) || cleanSlug;
+  const displayBusinessName = targetPlace.name || formatBusinessName(cleanSlug);
 
   return (
     <div
@@ -251,44 +244,43 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         className="w-full max-w-[440px] bg-zinc-950 border border-zinc-800/80 rounded-[28px] p-4 sm:p-5 shadow-2xl flex flex-col gap-4 relative transition-all"
         style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
       >
-        {/* Top Header Card: Centered Luxury Trust Badge with Company Identity */}
-        <div className="flex flex-col items-center justify-center text-center bg-zinc-900/90 border border-white/10 rounded-2xl py-3.5 px-4 sm:py-4 sm:px-5 shadow-lg relative">
-          {/* Company / Business Name with Verified Badge */}
-          <div className="flex items-center justify-center gap-1.5 mb-1.5 max-w-full">
-            <span className="font-extrabold text-sm sm:text-[15px] text-white tracking-tight truncate max-w-[280px]">
-              {targetPlace.name || formatBusinessName(cleanSlug)}
+        {/* Top Header Card: Ultra-Luxury Business Trust Card matching search & video header */}
+        <div className="flex flex-col items-center justify-center text-center bg-zinc-900/90 border border-white/10 rounded-2xl py-3 px-4 sm:py-3.5 sm:px-5 shadow-lg relative">
+          {/* Company / Business Name with Sleek Verified Badge */}
+          <div className="flex items-center justify-center gap-1.5 max-w-full">
+            <span className="font-black text-base sm:text-[17px] text-white tracking-tight truncate max-w-[280px]">
+              {displayBusinessName}
             </span>
-            <span
-              className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-zinc-950 text-[10px] font-black shrink-0 shadow-sm"
-              title="Verified on Yoouz"
-            >
-              ✓
-            </span>
+            <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
           </div>
 
-          {/* Rating Tier Title */}
-          <span className="font-black text-xs sm:text-[13px] tracking-[0.14em] uppercase text-zinc-300 drop-shadow-sm">
-            {ratingTier}
-          </span>
-
-          {/* 5 Gold Stars Row */}
-          <div className="flex items-center justify-center gap-1.5 my-1.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${
-                  i < Math.round(overallRating)
-                    ? "fill-amber-400 text-amber-400 drop-shadow-sm"
-                    : "fill-zinc-700 text-zinc-700"
-                }`}
-              />
-            ))}
+          {/* Domain URL with Globe Icon */}
+          <div className="flex items-center justify-center gap-1.5 text-[12px] sm:text-[12.5px] text-zinc-400 font-medium mt-0.5">
+            <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+            <span className="truncate max-w-[260px]">{displayDomain}</span>
           </div>
 
-          {/* Review Count Subtitle */}
-          <span className="text-[11.5px] sm:text-xs text-zinc-400 font-medium">
-            Based on {totalReviewsCount} verified {totalReviewsCount === 1 ? "review" : "reviews"}
-          </span>
+          {/* 5 Gold Stars + Numeric Score + Review Count */}
+          <div className="flex items-center justify-center gap-1.5 mt-2">
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-4 h-4 sm:w-4.5 sm:h-4.5 ${
+                    i < Math.round(overallRating)
+                      ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                      : "fill-zinc-700 text-zinc-700"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="font-extrabold text-[13px] sm:text-sm text-white ml-0.5">
+              {overallRating.toFixed(1)}
+            </span>
+            <span className="text-zinc-400 text-xs font-normal">
+              ({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})
+            </span>
+          </div>
         </div>
 
         {/* Video Display Container (1 Centered Card or 2-by-2 Grid with Left/Right navigation) */}
