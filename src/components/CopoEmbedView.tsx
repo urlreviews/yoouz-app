@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../types";
 import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor, getSafeAvatarUrl } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 import { Star, Play, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe } from "lucide-react";
 
 export interface CopoEmbedViewProps {
@@ -246,9 +247,21 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       >
         {/* Top Header Card: Ultra-Luxury Business Trust Card matching search & video header */}
         <div className="flex flex-col items-center justify-center text-center bg-zinc-900/90 border border-white/10 rounded-2xl py-3 px-4 sm:py-3.5 sm:px-5 shadow-lg relative">
-          {/* Company / Business Name with Sleek Verified Badge */}
-          <div className="flex items-center justify-center gap-1.5 max-w-full">
-            <span className="font-black text-base sm:text-[17px] text-white tracking-tight truncate max-w-[280px]">
+          {/* Company / Business Name with Brand Logo & Sleek Verified Badge */}
+          <div className="flex items-center justify-center gap-2 max-w-full">
+            <CopoBrandLogo
+              domain={displayDomain}
+              name={displayBusinessName}
+              website={targetPlace.website}
+              logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl || targetPlace.ogImage}
+              bannerUrl={targetPlace.bannerUrl}
+              loading="eager"
+              fetchPriority="high"
+              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-zinc-950 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-sm"
+              imageClassName="w-full h-full object-contain rounded-md"
+              fallbackTextClassName="font-black text-[10px] sm:text-[11px] text-white"
+            />
+            <span className="font-black text-base sm:text-[17px] text-white tracking-tight truncate max-w-[260px]">
               {displayBusinessName}
             </span>
             <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
