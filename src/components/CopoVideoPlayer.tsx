@@ -362,20 +362,43 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (v !== activeVid) {
         v.muted = true;
         try {
+          v.volume = 0;
+        } catch (e) {}
+        try {
           v.pause();
         } catch (e) {}
+        // Remove from DOM if not the upcoming or previous prewarmed slot
+        if (
+          (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id)) &&
+          (!prevVideo || v !== slotBindingRef.current.get(prevVideo?.id || ""))
+        ) {
+          try {
+            v.remove();
+          } catch (e) {}
+        }
       }
     });
 
-    // Mount activeVid into its target card slot
+    // Mount activeVid into its target card slot with robust multi-tick fallback
     const mountActive = () => {
+      if (!activeVideo || !activeVid) return;
       const activeSlot = document.getElementById(`video-slot-${activeVideo.id}`);
-      if (activeSlot && activeVid && activeVid.parentElement !== activeSlot) {
+      if (activeSlot && activeVid.parentElement !== activeSlot) {
+        Array.from(activeSlot.querySelectorAll("video")).forEach((oldV) => {
+          if (oldV !== activeVid) {
+            oldV.muted = true;
+            try { oldV.pause(); } catch (e) {}
+            oldV.remove();
+          }
+        });
         activeSlot.appendChild(activeVid);
       }
     };
     mountActive();
-    const raf = requestAnimationFrame(mountActive);
+    const raf1 = requestAnimationFrame(mountActive);
+    const t1 = setTimeout(mountActive, 50);
+    const t2 = setTimeout(mountActive, 150);
+    const t3 = setTimeout(mountActive, 350);
 
     // Point feedVideoRef to the active video element
     feedVideoRef.current = activeVid;
@@ -597,7 +620,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }, 1000);
 
     return () => {
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(raf1);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       clearTimeout(prewarmTimer);
       clearTimeout(viewTimer);
     };

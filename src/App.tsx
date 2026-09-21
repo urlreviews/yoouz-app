@@ -3306,6 +3306,8 @@ export function App() {
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
 
     previousVideoIndexRef.current = currentVideoIndex; // Save background feed index before going fullscreen
+    setPendingVideoId(videoId);
+
     if (source === "creator" || isCreatorView) {
       const author = targetVid.author || selectedAuthorForDrawer;
       if (!author) return;
@@ -3317,8 +3319,6 @@ export function App() {
         // Desktop: keep drawer open, update current video index within author vids
         if (idx !== -1) {
           setCurrentVideoIndex(idx);
-        } else {
-          setPendingVideoId(videoId);
         }
       } else {
         // Mobile: go fullscreen feed context
@@ -3334,8 +3334,6 @@ export function App() {
 
         if (idx !== -1) {
           setCurrentVideoIndex(idx);
-        } else {
-          setPendingVideoId(videoId);
         }
       }
     } else if (source === "place" || isPlaceView) {
@@ -3355,8 +3353,6 @@ export function App() {
         // Desktop: keep drawer open, update current video index within place vids
         if (idx !== -1) {
           setCurrentVideoIndex(idx);
-        } else {
-          setPendingVideoId(videoId);
         }
       } else {
         // Mobile: go fullscreen feed context
@@ -3372,8 +3368,6 @@ export function App() {
 
         if (idx !== -1) {
           setCurrentVideoIndex(idx);
-        } else {
-          setPendingVideoId(videoId);
         }
       }
     } else if (source === "profile") {
@@ -3388,22 +3382,17 @@ export function App() {
       const idx = userVideos.findIndex((v) => v.id === videoId);
       if (idx !== -1) {
         setCurrentVideoIndex(idx);
-      } else {
-        setPendingVideoId(videoId);
       }
     } else {
-      // Default (search, map, bookmarks, home): open place view with this video as the ONLY context
+      // Default (search, map, bookmarks, notifications, home reels): play in main home feed
       setFullscreenFeedContext(null);
-      setSelectedPlaceIdForDrawer(targetVid.placeId);
+      setSelectedPlaceIdForDrawer(null);
       setSelectedAuthorForDrawer(null);
       setActiveSection("home");
       
-      const vids = videos.filter((v) => v.placeId === targetVid.placeId || v.placeName === targetVid.placeName);
-      const idx = vids.findIndex(v => v.id === videoId);
+      const idx = videos.filter((v) => !hiddenVideoIds.includes(v.id)).findIndex(v => v.id === videoId);
       if (idx !== -1) {
         setCurrentVideoIndex(idx);
-      } else {
-        setPendingVideoId(videoId);
       }
     }
   };
