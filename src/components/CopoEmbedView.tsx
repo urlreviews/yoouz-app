@@ -58,9 +58,53 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isVideoPaused, setIsVideoPaused] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const dragStartXRef = useRef<number | null>(null);
   const dragDistanceRef = useRef<number>(0);
   const touchStartXRef = useRef<number | null>(null);
+
+  // Stop and silence video playback immediately upon transfer/navigation
+  const handleStopVideo = useCallback(() => {
+    setIsVideoPaused(true);
+    setPlayingVideoId(null);
+    setIsMuted(true);
+    if (videoElementRef.current) {
+      try {
+        videoElementRef.current.pause();
+        videoElementRef.current.muted = true;
+      } catch {
+        // ignore
+      }
+    }
+    try {
+      document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+        try {
+          v.pause();
+          v.muted = true;
+        } catch {}
+      });
+    } catch {}
+  }, []);
+
+  // When window loses focus or page is hidden (e.g. transferred to our website or opened new tab), stop video
+  useEffect(() => {
+    const handlePause = () => {
+      handleStopVideo();
+    };
+    window.addEventListener("blur", handlePause);
+    window.addEventListener("pagehide", handlePause);
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleStopVideo();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("blur", handlePause);
+      window.removeEventListener("pagehide", handlePause);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [handleStopVideo]);
 
   // Normalize embed ID / slug
   let cleanSlug = (embedId || "yoouz.com").toLowerCase().trim();
@@ -147,12 +191,22 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     setPageIndex((prev) => (prev > 0 ? prev - 1 : totalCount - 1));
     setPlayingVideoId(null);
     setIsVideoPaused(false);
+    if (videoElementRef.current) {
+      try {
+        videoElementRef.current.pause();
+      } catch {}
+    }
   }, [totalCount]);
 
   const handleNextVideo = useCallback(() => {
     setPageIndex((prev) => (prev < totalCount - 1 ? prev + 1 : 0));
     setPlayingVideoId(null);
     setIsVideoPaused(false);
+    if (videoElementRef.current) {
+      try {
+        videoElementRef.current.pause();
+      } catch {}
+    }
   }, [totalCount]);
 
   // Keyboard navigation (Arrow keys)
@@ -323,8 +377,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           {isPlaying ? (
             <video
               ref={(el) => {
+                videoElementRef.current = el;
                 if (el) {
-                  if (isVideoPaused) {
+                  if (isVideoPaused || !playingVideoId) {
                     el.pause();
                   } else {
                     el.play().catch(() => {});
@@ -383,7 +438,10 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             rel="noopener noreferrer"
             className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 max-w-[calc(100%-48px)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
             title={`View verified reviews for ${displayBusinessName} on Yoouz`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStopVideo();
+            }}
           >
             <CopoBrandLogo
               domain={displayDomain}
@@ -471,7 +529,10 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               rel="noopener noreferrer"
               className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md hover:scale-105 hover:border-white/60 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
               title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStopVideo();
+              }}
             >
               <img
                 src={reviewerAvatarUrl}
@@ -500,7 +561,10 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer min-w-0 w-fit no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
                 title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleStopVideo();
+                }}
               >
                 <span className="text-[13.5px] sm:text-[14px] font-black text-white no-underline truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                   By {safeAuthor.name}
@@ -546,7 +610,10 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleStopVideo();
+                }}
               >
                 Live Sync Powered by Yoouz
               </a>
