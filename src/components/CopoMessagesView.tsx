@@ -114,6 +114,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const [draftThread, setDraftThread] = useState<CopoMessage | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [deletedThreadKeys, setDeletedThreadKeys] = useState<Set<string>>(() => new Set());
+  const [swipedThreadId, setSwipedThreadId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -131,7 +132,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     }
   }, []);
 
-  const selectedThreadId = localSelectedThreadId || propSelectedThreadId || draftThread?.id || messages[0]?.id || "";
+  // On desktop (width >= 768), default to first thread if none selected; on mobile only select if user actively opened
+  const selectedThreadId = localSelectedThreadId || propSelectedThreadId || draftThread?.id || (typeof window !== "undefined" && window.innerWidth >= 768 ? messages[0]?.id : "") || "";
 
   const setSelectedThreadId = (id: string) => {
     setLocalSelectedThreadId(id);
@@ -229,9 +231,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Mark selected thread as read immediately upon load, change, or incoming message
+  // Mark selected thread as read only when actually viewing the thread
   useEffect(() => {
     if (!selectedThreadId) return;
+    const isViewing = typeof window !== "undefined" && window.innerWidth >= 768 ? Boolean(localSelectedThreadId || propSelectedThreadId) : isMobileThreadViewOpen;
+    if (!isViewing) return;
+
     const thread = messages.find((m) => m.id === selectedThreadId);
     if (thread && (thread.unreadCount || 0) > 0) {
       if (onMarkThreadRead) {
@@ -244,7 +249,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     } else if (selectedThreadId && onMarkThreadRead) {
       onMarkThreadRead(selectedThreadId);
     }
-  }, [selectedThreadId, messages]);
+  }, [selectedThreadId, isMobileThreadViewOpen, localSelectedThreadId, propSelectedThreadId]);
 
   // Scroll to bottom of chat when active thread changes or new message arrives
   useEffect(() => {
@@ -1227,7 +1232,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     {t("nav.messages", "Messages")}
                   </h1>
                   {unreadCount > 0 && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black bg-white text-zinc-950 flex items-center justify-center shadow-xs">
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black bg-rose-500 text-white flex items-center justify-center shadow-xs">
                       {unreadCount}
                     </span>
                   )}
@@ -1235,8 +1240,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <p className="text-xs text-zinc-400 font-medium truncate">
                   {unreadCount > 0
                     ? `${unreadCount} unread message${unreadCount > 1 ? "s" : ""}`
-                    : messages.length > 0
-                    ? `${messages.length} conversation${messages.length > 1 ? "s" : ""}`
+                    : filteredThreads.length > 0
+                    ? `${filteredThreads.length} conversation${filteredThreads.length > 1 ? "s" : ""}`
                     : "No conversations yet"}
                 </p>
               </div>
@@ -1338,40 +1343,51 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         key={`chat-thread-${thread.id}`}
                         initial={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
-                        className="relative overflow-hidden bg-zinc-950 group"
+                        className="relative overflow-hidden bg-zinc-950 group select-none"
                       >
-                        {/* Mobile Swipe-to-delete Red Backdrop (Active on mobile touch screens) */}
-                        {isTouchDevice && (
-                          <div
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteConversation(thread);
-                            }}
-                            onTouchEnd={(e) => {
-                              e.stopPropagation();
-                              handleDeleteConversation(thread);
-                            }}
-                            onPointerDown={(e) => {
-                              e.stopPropagation();
-                            }}
-                            className="sm:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-800 z-0"
-                          >
-                            <Trash2 className="w-4 h-4 shrink-0" />
-                            <span>Delete</span>
-                          </div>
-                        )}
+                        {/* Swipe-to-reveal Red Delete Button (Behind card) */}
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteConversation(thread);
+                            setSwipedThreadId(null);
+                          }}
+                          onTouchEnd={(e) => {
+                            e.stopPropagation();
+                            handleDeleteConversation(thread);
+                            setSwipedThreadId(null);
+                          }}
+                          className="absolute inset-y-0 right-0 w-24 bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-800 z-0"
+                        >
+                          <Trash2 className="w-4 h-4 shrink-0" />
+                          <span>Delete</span>
+                        </div>
 
-                        {/* Thread Card (drag to delete on mobile touch screens) */}
+                        {/* Thread Card (drag to reveal Delete button on touch screens) */}
                         <motion.div
                           drag={isTouchDevice ? "x" : false}
-                          dragConstraints={isTouchDevice ? { left: -96, right: 0 } : undefined}
-                          dragElastic={isTouchDevice ? 0.15 : false}
+                          dragConstraints={{ left: -96, right: 0 }}
+                          dragElastic={0.12}
+                          animate={{ x: swipedThreadId === thread.id ? -96 : 0 }}
+                          transition={{ type: "spring", stiffness: 450, damping: 32 }}
                           onDragEnd={isTouchDevice ? (_, info) => {
-                            if (info.offset.x < -70 || info.velocity.x < -200) {
-                              handleDeleteConversation(thread);
+                            // If dragged left past threshold, reveal delete button. Otherwise snap back closed.
+                            if (info.offset.x < -35 || info.velocity.x < -200) {
+                              setSwipedThreadId(thread.id);
+                            } else {
+                              setSwipedThreadId(null);
                             }
                           } : undefined}
-                          onClick={() => setSelectedThreadId(thread.id)}
+                          onClick={() => {
+                            if (swipedThreadId === thread.id) {
+                              setSwipedThreadId(null);
+                              return;
+                            }
+                            if (swipedThreadId) {
+                              setSwipedThreadId(null);
+                            }
+                            setSelectedThreadId(thread.id);
+                          }}
                           className={`p-3.5 sm:p-4 flex items-center gap-3.5 cursor-pointer transition-colors relative z-10 bg-zinc-950 ${
                             isActive
                               ? "bg-zinc-900 border-l-4 border-white"
@@ -1461,9 +1477,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           </div>
 
                           {/* Right side controls: Unread badge & action buttons */}
-                          <div className="flex items-center gap-1 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             {isUnread && (
-                              <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
+                              <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white font-black text-[10px] flex items-center justify-center shrink-0 shadow-xs ring-2 ring-zinc-950">
+                                {thread.unreadCount > 99 ? "99+" : (thread.unreadCount || 1)}
+                              </span>
                             )}
                             <button
                               type="button"

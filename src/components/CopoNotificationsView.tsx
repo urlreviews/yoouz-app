@@ -69,6 +69,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [swipedNotifId, setSwipedNotifId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -77,7 +78,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
           'ontouchstart' in window ||
           navigator.maxTouchPoints > 0 ||
           window.matchMedia('(pointer: coarse)').matches ||
-          window.innerWidth < 640
+          window.innerWidth < 768
         );
       };
       checkTouch();
@@ -471,28 +472,46 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
                   className="relative overflow-hidden bg-zinc-950 group"
                 >
-                  {/* Mobile Swipe-to-delete Red Backdrop (Only active on mobile touch screens) */}
-                  {isTouchDevice && (
-                    <div 
-                      onClick={(e) => handleDismiss(notif.id, e)}
-                      className="sm:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete</span>
-                    </div>
-                  )}
+                  {/* Mobile Swipe-to-delete Red Backdrop (Active on mobile touch screens) */}
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDismiss(notif.id, e);
+                      setSwipedNotifId(null);
+                    }}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation();
+                      handleDismiss(notif.id, e);
+                      setSwipedNotifId(null);
+                    }}
+                    className="absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
+                  >
+                    <Trash2 className="w-4 h-4 shrink-0" />
+                    <span>Delete</span>
+                  </div>
 
                   {/* Notification Card */}
                   <motion.div
                     drag={isTouchDevice ? "x" : false}
-                    dragConstraints={isTouchDevice ? { left: -90, right: 0 } : undefined}
-                    dragElastic={isTouchDevice ? 0.1 : false}
+                    dragConstraints={{ left: -96, right: 0 }}
+                    dragElastic={0.12}
+                    animate={{ x: swipedNotifId === notif.id ? -96 : 0 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
                     onDragEnd={isTouchDevice ? (_, info) => {
-                      if (info.offset.x < -60 || info.velocity.x < -250) {
-                        handleDismiss(notif.id);
+                      if (info.offset.x < -35 || info.velocity.x < -200) {
+                        setSwipedNotifId(notif.id);
+                      } else {
+                        setSwipedNotifId(null);
                       }
                     } : undefined}
                     onClick={() => {
+                      if (swipedNotifId === notif.id) {
+                        setSwipedNotifId(null);
+                        return;
+                      }
+                      if (swipedNotifId) {
+                        setSwipedNotifId(null);
+                      }
                       handleMarkAsRead(notif.id);
                       if (notif.type === "message" && onNavigateToMessages) {
                         const targetKey = notif.user?.email || (notif.user as any)?.id || notif.user?.name;
