@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { getProxiedImageUrl } from '../utils/logoUtils';
 
 export function useCriticalImagesLoaded(urls: (string | undefined | null)[], timeoutMs = 1500) {
   const [loaded, setLoaded] = useState(false);
@@ -25,7 +26,13 @@ export function useCriticalImagesLoaded(urls: (string | undefined | null)[], tim
 
     const timer = setTimeout(trigger, timeoutMs);
 
-    validUrls.forEach(url => {
+    validUrls.forEach(rawUrl => {
+      const proxied = getProxiedImageUrl(rawUrl);
+      if (!proxied) {
+        loadedCount++;
+        if (loadedCount === validUrls.length) trigger();
+        return;
+      }
       const img = new window.Image();
       img.onload = () => {
         loadedCount++;
@@ -35,7 +42,7 @@ export function useCriticalImagesLoaded(urls: (string | undefined | null)[], tim
         loadedCount++;
         if (loadedCount === validUrls.length) trigger();
       };
-      img.src = url;
+      img.src = proxied;
     });
 
     return () => clearTimeout(timer);

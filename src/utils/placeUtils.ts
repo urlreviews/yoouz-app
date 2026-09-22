@@ -748,7 +748,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     if (t.includes("unsplash.com") || t.includes("placeholder") || t.includes("mock")) {
       return "";
     }
-    return t;
+    return getProxiedImageUrl(t);
   };
 
   const existing = existingPlaces.find((p) => isPlaceReviewMatch(video, p));

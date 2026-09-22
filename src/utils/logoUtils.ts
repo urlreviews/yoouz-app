@@ -428,7 +428,7 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
-export const KNOWN_BRAND_BANNERS: Record<string, string> = {
+const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
@@ -457,6 +457,10 @@ export const KNOWN_BRAND_BANNERS: Record<string, string> = {
   "vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png",
   "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png"
 };
+
+export const KNOWN_BRAND_BANNERS: Record<string, string> = Object.fromEntries(
+  Object.entries(RAW_KNOWN_BRAND_BANNERS).map(([k, v]) => [k, getProxiedImageUrl(v)])
+);
 
 /**
  * Checks if a logo URL is broken or invalid.
