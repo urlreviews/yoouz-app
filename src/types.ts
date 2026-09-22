@@ -307,6 +307,8 @@ export interface CopoMessage {
   recipientId?: string;
   recipientName?: string;
   recipientAvatar?: string;
+  isBusiness?: boolean;
+  placeId?: string;
   participants?: string[];
   lastMessage: string;
   timestamp: string;

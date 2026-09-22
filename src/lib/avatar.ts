@@ -1,3 +1,5 @@
+import { YOOUZ_LOGO_DATA_URI } from "../utils/logoUtils";
+
 /**
  * Deterministic, Google-style single-letter avatar generator
  * Uses the first letter of the user's first name with a vibrant, distinct color background.
@@ -110,6 +112,18 @@ export function getAvatarColor(nameOrSeed?: string, colorSeed?: string): { bg: s
   } else if (nameOrSeed && nameOrSeed.trim() !== '') {
     seed = normalizeAvatarSeed(nameOrSeed);
   }
+
+  // Exact canonical colors for known personas
+  if (seed === 'benblue') {
+    return { bg: '#1E88E5', text: '#FFFFFF', name: 'blue' }; // Material Blue 600
+  }
+  if (seed === 'stevenakan') {
+    return { bg: '#7CB342', text: '#FFFFFF', name: 'lightGreen' }; // Material Light Green 600
+  }
+  if (seed === 'bizriv') {
+    return { bg: '#8E24AA', text: '#FFFFFF', name: 'purple' }; // Material Purple 600
+  }
+
   const index = hashString(seed) % GOOGLE_AVATAR_PALETTE.length;
   return GOOGLE_AVATAR_PALETTE[index];
 }
@@ -120,6 +134,11 @@ export function getAvatarColor(nameOrSeed?: string, colorSeed?: string): { bg: s
  * Always renders a full-square (no embedded rx) so CSS border-radius applies smoothly.
  */
 export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string): string {
+  const norm = (nameOrSeed || colorSeed || '').toLowerCase().trim().replace(/^@/, '');
+  if (norm === 'yoouz' || norm === 'yoouz.com' || norm === 'yoouz beta' || norm.includes('yoouz')) {
+    return YOOUZ_LOGO_DATA_URI;
+  }
+
   const letter = getFirstLetter(nameOrSeed || colorSeed);
   const color = getAvatarColor(nameOrSeed, colorSeed);
   const fontSize = Math.round(size * 0.52);

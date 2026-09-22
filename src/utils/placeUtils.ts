@@ -1,5 +1,5 @@
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImageUrl } from "./logoUtils";
+import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImageUrl, YOOUZ_LOGO_DATA_URI } from "./logoUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
@@ -1229,6 +1229,15 @@ export function getUserFromRegistry(key: string): any {
  * and never replaced with generic fallback initial icons or placeholder names.
  */
 export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null, handle?: string | null): string {
+  const isTargetYoouz = 
+    (name && (name.toLowerCase().trim() === "yoouz" || name.toLowerCase().trim() === "yoouz beta")) ||
+    (handle && (handle.toLowerCase().trim() === "@yoouz" || handle.toLowerCase().trim() === "yoouz" || handle.toLowerCase().trim() === "yoouz.com")) ||
+    (avatarUrl && (avatarUrl.toLowerCase().includes("yoouz") || avatarUrl.includes("favicon.svg")));
+
+  if (isTargetYoouz) {
+    return YOOUZ_LOGO_DATA_URI;
+  }
+
   if (!avatarUrl || avatarUrl === "data:;" || avatarUrl.trim() === "" || avatarUrl.includes("/api/avatar") || avatarUrl.includes("ui-avatars") || avatarUrl.includes("dicebear")) {
     return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
   }
@@ -1362,13 +1371,13 @@ export function resolveSafeAuthor(
     finalName = "Ben Blue";
     finalHandle = "@benblue";
     if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("7CB342") || candidateAvatar.includes("%237CB342")) {
-      candidateAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+      candidateAvatar = generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue");
     }
   } else if (videoCluster === "user_group_stevenakan") {
     finalName = "Steven Akan";
     finalHandle = "@stevenakan";
     if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("1E88E5") || candidateAvatar.includes("%231E88E5") || candidateAvatar.includes("00897B") || candidateAvatar.includes("%2300897B")) {
-      candidateAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+      candidateAvatar = generateGoogleLetterAvatarSvg("Steven Akan", 128, "@stevenakan");
     }
   }
 

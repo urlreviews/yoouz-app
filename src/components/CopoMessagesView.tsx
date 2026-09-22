@@ -615,6 +615,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     }
 
     const newId = `thread_${Date.now()}`;
+    const isBizRecipient = Boolean(
+      recipient.isBusiness === true ||
+      recipient.id === "yoouz.com" ||
+      recipient.id === "yoouz" ||
+      (recipient.name && recipient.name.toLowerCase().trim() === "yoouz")
+    );
+
     const newThread: CopoMessage = {
       id: newId,
       senderId: recipient.id || finalEmail || `usr_${Date.now()}`,
@@ -625,6 +632,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       recipientName: recipient.name,
       recipientAvatar: recipient.avatar,
       recipientEmail: finalEmail,
+      isBusiness: isBizRecipient,
+      placeId: isBizRecipient && recipient.id !== "yoouz" && recipient.id !== "yoouz.com" ? (recipient.id as any) : undefined,
       lastMessage: "",
       timestamp: "Just now",
       createdAtMs: Date.now(),
@@ -1264,16 +1273,19 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                       >
                         {Boolean(
-                          (thread as any).placeId ||
-                          (thread as any).isBusiness ||
                           (thread.senderName && thread.senderName.toLowerCase().trim() === "yoouz") ||
                           (thread.senderId && (thread.senderId === "yoouz.com" || thread.senderId === "yoouz")) ||
-                          (places || []).some(
-                            (p) =>
-                              (p.id && String(p.id).toLowerCase().trim() === (thread.senderId || "").toLowerCase().trim()) ||
-                              (p.name && thread.senderName && p.name.toLowerCase().trim() === thread.senderName.toLowerCase().trim()) ||
-                              (p.brandDomain && (thread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
-                          )
+                          (thread as any).isBusiness === true ||
+                          ((thread as any).isBusiness !== false && (thread as any).placeId) ||
+                          ((thread as any).isBusiness !== false &&
+                            !thread.senderId?.includes("@") &&
+                            !thread.senderId?.startsWith("usr_") &&
+                            !thread.senderId?.startsWith("user_") &&
+                            (places || []).some(
+                              (p) =>
+                                (p.id && String(p.id).toLowerCase().trim() === (thread.senderId || "").toLowerCase().trim()) ||
+                                (p.brandDomain && (thread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
+                            ))
                         ) ? (
                           <CopoBrandLogo
                             domain={thread.senderId}
@@ -1376,16 +1388,19 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                     >
                       {Boolean(
-                        (activeThread as any).placeId ||
-                        (activeThread as any).isBusiness ||
                         (activeThread.senderName && activeThread.senderName.toLowerCase().trim() === "yoouz") ||
                         (activeThread.senderId && (activeThread.senderId === "yoouz.com" || activeThread.senderId === "yoouz")) ||
-                        (places || []).some(
-                          (p) =>
-                            (p.id && String(p.id).toLowerCase().trim() === (activeThread.senderId || "").toLowerCase().trim()) ||
-                            (p.name && activeThread.senderName && p.name.toLowerCase().trim() === activeThread.senderName.toLowerCase().trim()) ||
-                            (p.brandDomain && (activeThread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
-                        )
+                        (activeThread as any).isBusiness === true ||
+                        ((activeThread as any).isBusiness !== false && (activeThread as any).placeId) ||
+                        ((activeThread as any).isBusiness !== false &&
+                          !activeThread.senderId?.includes("@") &&
+                          !activeThread.senderId?.startsWith("usr_") &&
+                          !activeThread.senderId?.startsWith("user_") &&
+                          (places || []).some(
+                            (p) =>
+                              (p.id && String(p.id).toLowerCase().trim() === (activeThread.senderId || "").toLowerCase().trim()) ||
+                              (p.brandDomain && (activeThread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
+                          ))
                       ) ? (
                         <CopoBrandLogo
                           domain={activeThread.senderId}
@@ -1600,11 +1615,56 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           }}
                           className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                         >
-                          <img
-                            src={msg.isMe ? getSafeAvatarUrl(currentUser?.avatar || msg.senderAvatar, currentUser?.name || msg.senderName, currentUser?.email) : getSafeAvatarUrl(msg.senderAvatar, msg.senderName, msg.senderId)}
-                            alt={msg.isMe ? (currentUser?.name || msg.senderName) : msg.senderName}
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
-                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, msg.senderName, msg.senderId); }} />
+                          {(() => {
+                            const isBusinessThread = Boolean(
+                              (activeThread.senderName && activeThread.senderName.toLowerCase().trim() === "yoouz") ||
+                              (activeThread.senderId && (activeThread.senderId === "yoouz.com" || activeThread.senderId === "yoouz")) ||
+                              (activeThread as any).isBusiness === true ||
+                              ((activeThread as any).isBusiness !== false && (activeThread as any).placeId) ||
+                              ((activeThread as any).isBusiness !== false &&
+                                !activeThread.senderId?.includes("@") &&
+                                !activeThread.senderId?.startsWith("usr_") &&
+                                !activeThread.senderId?.startsWith("user_") &&
+                                (places || []).some(
+                                  (p) =>
+                                    (p.id && String(p.id).toLowerCase().trim() === (activeThread.senderId || "").toLowerCase().trim()) ||
+                                    (p.brandDomain && (activeThread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
+                                ))
+                            );
+
+                            if (msg.isMe) {
+                              return (
+                                <img
+                                  src={getSafeAvatarUrl(currentUser?.avatar || msg.senderAvatar, currentUser?.name || msg.senderName, currentUser?.email || (currentUser as any)?.handle)}
+                                  alt={currentUser?.name || msg.senderName}
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
+                                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, currentUser?.name || msg.senderName, currentUser?.email); }}
+                                />
+                              );
+                            }
+
+                            if (isBusinessThread) {
+                              return (
+                                <CopoBrandLogo
+                                  domain={activeThread.senderId}
+                                  name={activeThread.senderName}
+                                  logoUrl={msg.senderAvatar || activeThread.senderAvatar}
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white p-0.5 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                                  imageClassName="w-full h-full object-contain rounded-sm"
+                                  fallbackTextClassName="font-extrabold text-[10px] text-zinc-950"
+                                />
+                              );
+                            }
+
+                            return (
+                              <img
+                                src={getSafeAvatarUrl(msg.senderAvatar || activeThread.senderAvatar, msg.senderName || activeThread.senderName, msg.senderId || activeThread.senderId)}
+                                alt={msg.senderName}
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
+                                onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, msg.senderName, msg.senderId); }}
+                              />
+                            );
+                          })()}
                         </button>
                         <div className={`flex flex-col space-y-1 max-w-sm sm:max-w-md ${msg.isMe ? "items-end text-right" : "items-start text-left"}`}>
                           <button
