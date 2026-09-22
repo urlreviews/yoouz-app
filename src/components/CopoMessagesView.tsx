@@ -1144,7 +1144,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     return null;
   };
 
-  const handleOpenAuthorProfile = (name?: string, id?: string, avatar?: string) => {
+  const handleOpenAuthorProfile = (
+    name?: string,
+    id?: string,
+    avatar?: string,
+    explicitPlaceId?: string,
+    isBiz?: boolean
+  ) => {
     const cleanId = (id || "").toLowerCase().trim();
     const cleanName = (name || "").toLowerCase().trim();
 
@@ -1174,16 +1180,23 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       }
     }
 
+    const targetExplicit = (explicitPlaceId || "").toLowerCase().trim();
     const matchingPlace = (places || []).find((p) => {
       const pId = (p.id || "").toLowerCase().trim();
       const pName = (p.name || "").toLowerCase().trim();
-      const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].trim();
+      const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "")
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .split("/")[0]
+        .trim();
       const pSlug = pName.replace(/[^a-z0-9]/g, "");
       const nSlug = cleanName.replace(/[^a-z0-9]/g, "");
 
       if (pId === "yoouz.com" || pName === "yoouz" || pDomain === "yoouz.com") return false;
 
       return (
+        (targetExplicit && (pId === targetExplicit || pDomain === targetExplicit)) ||
         (cleanId && (pId === cleanId || pDomain === cleanId || pId === `${cleanId}.com` || pDomain === `${cleanId}.com`)) ||
         pId === cleanName ||
         pId === `${cleanName}.com` ||
@@ -1197,6 +1210,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     if (matchingPlace) {
       if (onSelectPlace) {
         onSelectPlace(matchingPlace.id);
+        return;
+      }
+    }
+
+    if (explicitPlaceId || isBiz || (cleanId && (cleanId.includes(".") || cleanId.startsWith("place-")))) {
+      const targetPlaceId = explicitPlaceId || (cleanId.includes(".") ? cleanId : `${cleanId}.com`);
+      if (onSelectPlace && targetPlaceId && targetPlaceId !== "yoouz.com") {
+        onSelectPlace(targetPlaceId);
         return;
       }
     }
@@ -1426,7 +1447,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           <div
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar);
+                              handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar, (thread as any).placeId, (thread as any).isBusiness);
                             }}
                             className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                           >
@@ -1476,7 +1497,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar);
+                                  handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar, (thread as any).placeId, (thread as any).isBusiness);
                                 }}
                                 className={`text-xs font-black truncate flex items-center gap-1.5 hover:opacity-80 cursor-pointer text-left transition-opacity ${isActive ? "text-white" : "text-zinc-200"}`}
                               >
@@ -1569,7 +1590,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar)}
+                      onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, (activeThread as any).placeId, (activeThread as any).isBusiness)}
                       className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                     >
                       {Boolean(
@@ -1609,7 +1630,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <div className="min-w-0">
                       <button
                         type="button"
-                        onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar)}
+                        onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, (activeThread as any).placeId, (activeThread as any).isBusiness)}
                         className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-white hover:text-zinc-200 cursor-pointer text-left transition-colors"
                       >
                         <span className="truncate">{activeThread.senderName}</span>
@@ -1766,7 +1787,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             if (msg.isMe && currentUser) {
                               handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
                             } else {
-                              handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar);
+                              handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, (activeThread as any).placeId, (activeThread as any).isBusiness);
                             }
                           }}
                           className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
@@ -1829,7 +1850,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               if (msg.isMe && currentUser) {
                                 handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
                               } else {
-                                handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar);
+                                handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, (activeThread as any).placeId, (activeThread as any).isBusiness);
                               }
                             }}
                             className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors"
