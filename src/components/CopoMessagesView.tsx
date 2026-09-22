@@ -113,6 +113,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const [isMobileThreadViewOpen, setIsMobileThreadViewOpen] = useState(false);
   const [draftThread, setDraftThread] = useState<CopoMessage | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [deletedThreadKeys, setDeletedThreadKeys] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -121,7 +122,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
           'ontouchstart' in window ||
           navigator.maxTouchPoints > 0 ||
           window.matchMedia('(pointer: coarse)').matches ||
-          window.innerWidth < 640
+          window.innerWidth < 768
         );
       };
       checkTouch();
@@ -754,16 +755,29 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     return messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0);
   }, [messages]);
 
-  // Filter threads based on search with deduplication
+  // Filter threads based on search with deduplication and instant local deleted filter
   const filteredThreads = useMemo(() => {
     const deduped = deduplicateChatThreads(messages);
-    if (!searchTerm.trim()) return deduped;
+    const visible = deduped.filter((m) => {
+      if (!m) return false;
+      const mId = String(m.id || "").trim();
+      const mPartnerKey = getThreadPartnerKey(m);
+      const mName = (m.senderName || "").toLowerCase().trim();
+      const mIdKey = (m.senderId || "").toLowerCase().trim();
+      if (deletedThreadKeys.has(mId)) return false;
+      if (mPartnerKey && deletedThreadKeys.has(mPartnerKey)) return false;
+      if (mName && deletedThreadKeys.has(mName)) return false;
+      if (mIdKey && deletedThreadKeys.has(mIdKey)) return false;
+      return true;
+    });
+
+    if (!searchTerm.trim()) return visible;
     const q = searchTerm.toLowerCase();
-    return deduped.filter((m) =>
+    return visible.filter((m) =>
       m.senderName.toLowerCase().includes(q) ||
       (m.lastMessage && m.lastMessage !== "Conversation started" && m.lastMessage.toLowerCase().includes(q))
     );
-  }, [messages, searchTerm]);
+  }, [messages, searchTerm, deletedThreadKeys]);
 
   // Clean, filtered messages for the active conversation
   const activeThreadMessages = useMemo(() => {
@@ -941,14 +955,39 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     if (!target) return;
     
     const partnerKey = getThreadPartnerKey(target);
+    const tId = String(target.id || "").trim();
+    const sName = (target.senderName || "").toLowerCase().trim();
+    const sId = (target.senderId || "").toLowerCase().trim();
+    const sEmail = (target.senderEmail || target.lastSenderEmail || "").toLowerCase().trim();
+
+    // 0. Mark as deleted in local set for INSTANT 0ms DOM removal and collapse animation
+    setDeletedThreadKeys((prev) => {
+      const next = new Set(prev);
+      if (tId) next.add(tId);
+      if (partnerKey) next.add(partnerKey);
+      if (sName) next.add(sName);
+      if (sId) next.add(sId);
+      if (sEmail) next.add(sEmail);
+      return next;
+    });
 
     // 1. Instantly filter messages in local state for 0ms visual feedback
-    const remaining = messages.filter((m) => m.id !== target.id && (!partnerKey || getThreadPartnerKey(m) !== partnerKey));
+    const remaining = messages.filter((m) => {
+      const mId = String(m.id || "").trim();
+      const mPartnerKey = getThreadPartnerKey(m);
+      const mName = (m.senderName || "").toLowerCase().trim();
+      const mIdKey = (m.senderId || "").toLowerCase().trim();
+      if (tId && mId === tId) return false;
+      if (partnerKey && mPartnerKey === partnerKey) return false;
+      if (sName && mName === sName) return false;
+      if (sId && mIdKey === sId) return false;
+      return true;
+    });
     onUpdateMessages(remaining);
 
     // 2. Call parent to persist deletion in BunnyDB & local deletion cache
     if (onDeleteThread) {
-      onDeleteThread(target.id, partnerKey);
+      onDeleteThread(target.id, target as any);
     }
     
     // 3. Clear active selection if the deleted thread was currently open
@@ -1308,9 +1347,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               e.stopPropagation();
                               handleDeleteConversation(thread);
                             }}
-                            className="sm:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
+                            onTouchEnd={(e) => {
+                              e.stopPropagation();
+                              handleDeleteConversation(thread);
+                            }}
+                            onPointerDown={(e) => {
+                              e.stopPropagation();
+                            }}
+                            className="sm:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-800 z-0"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 shrink-0" />
                             <span>Delete</span>
                           </div>
                         )}
@@ -1318,15 +1364,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         {/* Thread Card (drag to delete on mobile touch screens) */}
                         <motion.div
                           drag={isTouchDevice ? "x" : false}
-                          dragConstraints={isTouchDevice ? { left: -90, right: 0 } : undefined}
-                          dragElastic={isTouchDevice ? 0.1 : false}
+                          dragConstraints={isTouchDevice ? { left: -96, right: 0 } : undefined}
+                          dragElastic={isTouchDevice ? 0.15 : false}
                           onDragEnd={isTouchDevice ? (_, info) => {
-                            if (info.offset.x < -60 || info.velocity.x < -250) {
+                            if (info.offset.x < -70 || info.velocity.x < -200) {
                               handleDeleteConversation(thread);
                             }
                           } : undefined}
                           onClick={() => setSelectedThreadId(thread.id)}
-                          className={`p-3.5 sm:p-4 flex items-center gap-3.5 cursor-pointer transition-all relative z-10 bg-zinc-950 ${
+                          className={`p-3.5 sm:p-4 flex items-center gap-3.5 cursor-pointer transition-colors relative z-10 bg-zinc-950 ${
                             isActive
                               ? "bg-zinc-900 border-l-4 border-white"
                               : "hover:bg-zinc-900/60 border-l-4 border-transparent"
@@ -1414,11 +1460,23 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             </p>
                           </div>
 
-                          {/* Right side controls: Unread badge & 3-dots options button */}
+                          {/* Right side controls: Unread badge & action buttons */}
                           <div className="flex items-center gap-1 shrink-0">
                             {isUnread && (
                               <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
                             )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteConversation(thread);
+                              }}
+                              className="hidden sm:flex w-8 h-8 rounded-full items-center justify-center text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 transition-all active:scale-95 cursor-pointer shrink-0 opacity-0 group-hover:opacity-100"
+                              title={`Delete conversation with ${thread.senderName}`}
+                              aria-label={`Delete conversation with ${thread.senderName}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                             <button
                               type="button"
                               id={`btn-thread-options-${thread.id}`}

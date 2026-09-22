@@ -6629,8 +6629,20 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onDeleteThread={(threadId, targetPartnerKey) => {
+                  const pKey = typeof targetPartnerKey === "string" ? targetPartnerKey : (targetPartnerKey ? getThreadPartnerKey(targetPartnerKey) : "");
+                  const sName = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderName || "").toLowerCase().trim() : "");
+                  const sId = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderId || "").toLowerCase().trim() : "");
                   deleteChatThreadFromBunnyDB(threadId, currentUser, targetPartnerKey);
-                  setMessages((prev) => prev.filter((m) => m.id !== threadId && (!targetPartnerKey || getThreadPartnerKey(m) !== targetPartnerKey)));
+                  setMessages((prev) => prev.filter((m) => {
+                    if (!m) return false;
+                    if (threadId && m.id === threadId) return false;
+                    if (pKey && getThreadPartnerKey(m) === pKey) return false;
+                    const mName = (m.senderName || "").toLowerCase().trim();
+                    const mId = (m.senderId || "").toLowerCase().trim();
+                    if (sName && mName === sName) return false;
+                    if (sId && mId === sId) return false;
+                    return true;
+                  }));
                 }}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt) => {
                   if (currentUser) {
@@ -6803,8 +6815,20 @@ export function App() {
                   );
                 }}
                 onDeleteThread={(threadId, targetPartnerKey) => {
+                  const pKey = typeof targetPartnerKey === "string" ? targetPartnerKey : (targetPartnerKey ? getThreadPartnerKey(targetPartnerKey) : "");
+                  const sName = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderName || "").toLowerCase().trim() : "");
+                  const sId = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderId || "").toLowerCase().trim() : "");
                   deleteChatThreadFromBunnyDB(threadId, effectiveMessagingUser as any, targetPartnerKey);
-                  setMessages((prev) => prev.filter((m) => m.id !== threadId && (!targetPartnerKey || getThreadPartnerKey(m) !== targetPartnerKey)));
+                  setMessages((prev) => prev.filter((m) => {
+                    if (!m) return false;
+                    if (threadId && m.id === threadId) return false;
+                    if (pKey && getThreadPartnerKey(m) === pKey) return false;
+                    const mName = (m.senderName || "").toLowerCase().trim();
+                    const mId = (m.senderId || "").toLowerCase().trim();
+                    if (sName && mName === sName) return false;
+                    if (sId && mId === sId) return false;
+                    return true;
+                  }));
                 }}
                 onMarkThreadRead={(threadId) => {
                   if (effectiveMessagingUser) {
