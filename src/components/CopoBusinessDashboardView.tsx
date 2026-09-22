@@ -1445,12 +1445,24 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       const notifRecipient = ((n as any).recipientEmail || '').toLowerCase().trim();
       const bizEmail = ((currentPlace as any)?.claimedByEmail || verifiedBusinessSession?.businessEmail || '').toLowerCase().trim();
 
+      // Exclude self-actions: If the notification was sent by the business owner themselves, filter it out!
+      const senderEmail = (n.user?.email || '').toLowerCase().trim();
+      if (senderEmail && bizEmail && senderEmail === bizEmail) {
+        return false;
+      }
+
+      const isMyReceivedMessage = n.type === 'message' && (
+        (notifRecipient && bizEmail && notifRecipient === bizEmail) ||
+        (notifPlaceId && pId && notifPlaceId === pId) ||
+        (notifPlaceName && pName && notifPlaceName === pName)
+      );
+
       const matchesThisPlace = Boolean(
         (pId && notifPlaceId && notifPlaceId === pId) ||
         (pName && notifPlaceName && notifPlaceName === pName) ||
         (n.videoId && placeVideoIds.has(n.videoId)) ||
         (notifRecipient && bizEmail && notifRecipient === bizEmail) ||
-        (n.type === 'message')
+        isMyReceivedMessage
       );
 
       if (!matchesThisPlace) {

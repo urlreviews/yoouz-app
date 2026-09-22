@@ -512,9 +512,8 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
 
     // Exclude accidental pure self-action unless explicitly testing or addressed
     const isPureSelfAction =
-      !isYoouzBizUser &&
-      ((userEmail && senderEmail && senderEmail === userEmail && !senderEmail.includes("test")) ||
-      (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail) && !userName.includes("test")));
+      (userEmail && senderEmail && senderEmail === userEmail && !senderEmail.includes("test")) ||
+      (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail) && !userName.includes("test"));
 
     if (isPureSelfAction && !isSystemOrGlobal) {
       continue;
