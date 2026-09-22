@@ -98,9 +98,9 @@ export const AdminPlaceLogo: React.FC<{
       website={place?.website}
       logoUrl={resolvedUrl}
       bannerUrl={place?.bannerUrl || place?.ogImage}
-      className={`${sizeClasses} rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-sm ring-1 ring-white/10 ${className}`}
+      className={`${sizeClasses} rounded-xl bg-white border border-zinc-200/60 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-sm ring-1 ring-white/10 ${className}`}
       imageClassName="w-full h-full object-contain rounded-lg [image-rendering:-webkit-optimize-contrast]"
-      fallbackTextClassName="font-black text-xs text-white"
+      fallbackTextClassName="font-black text-xs text-zinc-950"
     />
   );
 };

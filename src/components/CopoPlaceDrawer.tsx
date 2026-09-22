@@ -759,8 +759,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {/* Overlapping Business Logo - Clean squircle frame matching video player */}
-        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-zinc-900 shadow-2xl flex items-center justify-center z-20 p-0 ring-1 ring-white/20 overflow-hidden group">
+        {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
+        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group">
           <CopoBrandLogo
             domain={drawerDomain || place.brandDomain}
             name={displayedPlaceName}
@@ -768,7 +768,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             logoUrl={primaryLogoUrl || place.logoUrl}
             bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
             className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-            imageClassName="w-full h-full object-cover [image-rendering:-webkit-optimize-contrast]"
+            imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
             fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
           />
         </div>

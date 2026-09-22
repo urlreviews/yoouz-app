@@ -2203,9 +2203,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     domain={currentPlace.website || currentPlace.id}
                     name={currentPlace.name}
                     logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                    className="w-full h-full rounded-full border border-zinc-700/80 bg-zinc-950 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5"
+                    className="w-full h-full rounded-full border border-zinc-200/60 bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5"
                     imageClassName="w-full h-full object-contain rounded-full"
-                    fallbackTextClassName="font-black text-xs text-white"
+                    fallbackTextClassName="font-black text-xs text-zinc-950"
                   />
                 </button>
 
@@ -2218,9 +2218,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           domain={currentPlace.website || currentPlace.id}
                           name={currentPlace.name}
                           logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                          className="w-8 h-8 rounded-xl border border-zinc-700/80 bg-zinc-950 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs p-1"
+                          className="w-8 h-8 rounded-xl border border-zinc-200/60 bg-white flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs p-1"
                           imageClassName="w-full h-full object-contain rounded-lg"
-                          fallbackTextClassName="font-black text-xs text-white"
+                          fallbackTextClassName="font-black text-xs text-zinc-950"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1">
@@ -3611,9 +3611,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             domain={currentPlace.website || currentPlace.id}
                             name={currentPlace.name}
                             logoUrl={profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl}
-                            className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-700/80 shadow-md shrink-0 flex items-center justify-center p-1.5 overflow-hidden"
+                            className="w-10 h-10 rounded-xl bg-white border border-zinc-200/60 shadow-md shrink-0 flex items-center justify-center p-1.5 overflow-hidden"
                             imageClassName="w-full h-full object-contain"
-                            fallbackTextClassName="font-bold text-base text-white"
+                            fallbackTextClassName="font-bold text-base text-zinc-950"
                           />
 
                           <div className="min-w-0">
@@ -3734,9 +3734,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       domain={currentPlace.website || currentPlace.id}
                       name={currentPlace.name}
                       logoUrl={currentPlace.logoUrl}
-                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-950 p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-750 overflow-hidden"
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-200/60 overflow-hidden"
                       imageClassName="w-full h-full object-contain"
-                      fallbackTextClassName="font-black text-lg text-white"
+                      fallbackTextClassName="font-black text-lg text-zinc-950"
                     />
 
                     {/* Venue Title & Verified Badge */}
@@ -3956,14 +3956,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       onClick={() => logoFileInputRef.current?.click()}
                       title="Click to change profile picture"
                     >
-                      <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center p-2.5 transition-all group-hover:border-zinc-500">
+                      <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-white flex items-center justify-center p-2.5 transition-all group-hover:border-zinc-500">
                         <CopoBrandLogo
                           domain={currentPlace.website || currentPlace.id}
                           name={profileName || currentPlace.name}
                           logoUrl={profileLogoUrl || currentPlace.logoUrl}
                           className="w-full h-full bg-transparent overflow-hidden flex items-center justify-center border-0 p-0 shadow-none ring-0"
                           imageClassName="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
-                          fallbackTextClassName="text-2xl font-black text-white uppercase"
+                          fallbackTextClassName="text-2xl font-black text-zinc-950 uppercase"
                         />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 backdrop-blur-xs">
                           <Camera className="w-5 h-5 text-white" />
