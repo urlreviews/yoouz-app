@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { extractCleanDomain } from "../utils/placeUtils";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 import {
   Bell,
   BellOff,
@@ -524,19 +525,24 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                       title={notif.user?.name ? `View ${notif.user.name}'s profile` : "View profile"}
                     >
                       {(() => {
-                        const isYoouzTeam =
-                          (notif.user.name || "").toLowerCase().includes("yoouz") ||
-                          (notif.user.email || "").toLowerCase().includes("yoouz") ||
-                          (notif.user.email || "").toLowerCase().includes("admin") ||
-                          (notif.user.avatar || "").includes("yoouz");
+                        const userName = notif.user.name || "";
+                        const userDomain = extractCleanDomain(userName || notif.user.avatar || "");
+                        const isBusinessNotif = Boolean(
+                          userName.includes(".") ||
+                          userName.toLowerCase().includes("yoouz") ||
+                          (notif.user.avatar && (notif.user.avatar.includes("/logos/") || notif.user.avatar.includes("/api/logo") || notif.user.avatar.includes("logo")))
+                        );
 
-                        if (isYoouzTeam) {
+                        if (isBusinessNotif) {
                           return (
-                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-700 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all shrink-0">
-                              <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-5.5 sm:h-5.5 fill-white">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                            </div>
+                            <CopoBrandLogo
+                              domain={userDomain || userName}
+                              name={userName}
+                              logoUrl={notif.user.avatar}
+                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white p-1 border border-zinc-200/60 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all shrink-0 flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                              imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+                              fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                            />
                           );
                         }
 

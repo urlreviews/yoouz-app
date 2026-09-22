@@ -40,6 +40,7 @@ import { deduplicateChatHistory } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 import { getSafeAvatarUrl, formatBusinessName } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 
 interface CopoMessagesViewProps {
   messages: CopoMessage[];
@@ -434,10 +435,23 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       });
     });
 
-    // 3. Ingest businesses from places
+    // 3. Ingest businesses from places - STRICT RULE: Only claimed businesses can receive direct messages
     (places || []).forEach((p: Place) => {
       if (!p || !p.id) return;
       const pId = String(p.id).trim();
+
+      // Only allow claimed businesses or Yoouz official
+      const isClaimed = Boolean(
+        p.isClaimed === true ||
+        (p.claimedByEmail && p.claimedByEmail.trim() !== "") ||
+        p.subscriptionPlan === "pro" ||
+        p.subscriptionPlan === "premium" ||
+        pId === "yoouz.com" ||
+        pId === "yoouz" ||
+        pId === "yoouz-com"
+      );
+      if (!isClaimed) return; // Completely hide unclaimed businesses from direct message directory
+
       const pDomain = (p.brandDomain || p.website || pId).toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].trim();
       const pName = formatBusinessName(p.name || p.brandDomain || pId) || "Business";
       const pEmail = (p.claimedByEmail || p.email || (pId === "yoouz.com" || pId === "yoouz" ? "info@yoouz.com" : "")).toLowerCase().trim();
@@ -537,6 +551,34 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     category?: string;
     domain?: string;
   }) => {
+    // Check if recipient is an unclaimed business
+    if (recipient.isBusiness) {
+      const rId = (recipient.id || "").toLowerCase().trim();
+      const rName = (recipient.name || "").toLowerCase().trim();
+      const matchingPlace = (places || []).find((p) => {
+        const pId = String(p.id || "").toLowerCase().trim();
+        const pName = (p.name || "").toLowerCase().trim();
+        const pDom = (p.brandDomain || "").toLowerCase().trim();
+        return pId === rId || pName === rName || pDom === rId;
+      });
+
+      if (matchingPlace) {
+        const isClaimed = Boolean(
+          matchingPlace.isClaimed === true ||
+          (matchingPlace.claimedByEmail && matchingPlace.claimedByEmail.trim() !== "") ||
+          matchingPlace.subscriptionPlan === "pro" ||
+          matchingPlace.subscriptionPlan === "premium" ||
+          matchingPlace.id === "yoouz.com" ||
+          matchingPlace.id === "yoouz"
+        );
+        if (!isClaimed) {
+          setToastMessage("This business is not yet claimed on Yoouz.");
+          setTimeout(() => setToastMessage(""), 3500);
+          return;
+        }
+      }
+    }
+
     let finalEmail = recipient.email;
     const rName = (recipient.name || "").toLowerCase().trim();
     const rId = (recipient.id || "").toLowerCase().trim();
@@ -1221,11 +1263,34 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         }}
                         className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                       >
-                        <img
-                          src={getSafeAvatarUrl(thread.senderAvatar, thread.senderName, thread.senderId)}
-                          alt={thread.senderName}
-                          className="w-11 h-11 rounded-full object-cover border border-zinc-800"
-                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, thread.senderName, thread.senderId); }} /> 
+                        {Boolean(
+                          (thread as any).placeId ||
+                          (thread as any).isBusiness ||
+                          (thread.senderName && thread.senderName.toLowerCase().trim() === "yoouz") ||
+                          (thread.senderId && (thread.senderId === "yoouz.com" || thread.senderId === "yoouz")) ||
+                          (places || []).some(
+                            (p) =>
+                              (p.id && String(p.id).toLowerCase().trim() === (thread.senderId || "").toLowerCase().trim()) ||
+                              (p.name && thread.senderName && p.name.toLowerCase().trim() === thread.senderName.toLowerCase().trim()) ||
+                              (p.brandDomain && (thread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
+                          )
+                        ) ? (
+                          <CopoBrandLogo
+                            domain={thread.senderId}
+                            name={thread.senderName}
+                            logoUrl={thread.senderAvatar}
+                            className="w-11 h-11 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                            imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+                            fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                          />
+                        ) : (
+                          <img
+                            src={getSafeAvatarUrl(thread.senderAvatar, thread.senderName, thread.senderId)}
+                            alt={thread.senderName}
+                            className="w-11 h-11 rounded-full object-cover border border-zinc-800"
+                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, thread.senderName, thread.senderId); }} 
+                          />
+                        )}
                         {threadBlocked ? (
                           <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-red-500 ring-2 ring-zinc-950 flex items-center justify-center text-white" title="Blocked user">
                             <X className="w-2.5 h-2.5" />
@@ -1310,11 +1375,34 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar)}
                       className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                     >
-                      <img
-                        src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
-                        alt={activeThread.senderName}
-                        className="w-10 h-10 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800"
-                        onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }} />
+                      {Boolean(
+                        (activeThread as any).placeId ||
+                        (activeThread as any).isBusiness ||
+                        (activeThread.senderName && activeThread.senderName.toLowerCase().trim() === "yoouz") ||
+                        (activeThread.senderId && (activeThread.senderId === "yoouz.com" || activeThread.senderId === "yoouz")) ||
+                        (places || []).some(
+                          (p) =>
+                            (p.id && String(p.id).toLowerCase().trim() === (activeThread.senderId || "").toLowerCase().trim()) ||
+                            (p.name && activeThread.senderName && p.name.toLowerCase().trim() === activeThread.senderName.toLowerCase().trim()) ||
+                            (p.brandDomain && (activeThread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
+                        )
+                      ) ? (
+                        <CopoBrandLogo
+                          domain={activeThread.senderId}
+                          name={activeThread.senderName}
+                          logoUrl={activeThread.senderAvatar}
+                          className="w-10 h-10 sm:w-10 sm:h-10 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                          imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+                          fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                        />
+                      ) : (
+                        <img
+                          src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
+                          alt={activeThread.senderName}
+                          className="w-10 h-10 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800"
+                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }} 
+                        />
+                      )}
                       <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
                     </button>
 
@@ -1995,7 +2083,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 onClick={() => setRecipientFilterTab("businesses")}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   recipientFilterTab === "businesses"
-                    ? "bg-blue-600/30 text-blue-300 border border-blue-500/30 shadow-xs"
+                    ? "bg-zinc-850 text-white border border-zinc-700 shadow-xs"
                     : "text-zinc-400 hover:text-white"
                 }`}
               >
@@ -2079,43 +2167,46 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <div
                     key={`recip-${recipient.id}`}
                     onClick={() => handleStartNewUserChat(recipient)}
-                    className="p-3 flex items-center justify-between gap-3 hover:bg-zinc-800/60 rounded-2xl cursor-pointer transition-colors group"
+                    className="p-3 flex items-center justify-between gap-3 hover:bg-zinc-850/80 rounded-2xl cursor-pointer transition-colors group border border-transparent hover:border-zinc-800"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={
-                          recipient.isBusiness
-                            ? (recipient.avatar || "/favicon.svg")
-                            : getSafeAvatarUrl(recipient.avatar, recipient.name, recipient.id)
-                        }
-                        alt={recipient.name}
-                        className={`w-10 h-10 object-cover border border-zinc-800 shrink-0 ${
-                          recipient.isBusiness ? "rounded-xl bg-zinc-800 p-0.5" : "rounded-full"
-                        }`}
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.src = recipient.isBusiness
-                            ? "/favicon.svg"
-                            : getSafeAvatarUrl(null, recipient.name, recipient.id);
-                        }}
-                      />
+                      {recipient.isBusiness ? (
+                        <CopoBrandLogo
+                          domain={recipient.domain || recipient.id}
+                          name={recipient.name}
+                          logoUrl={recipient.avatar}
+                          className="w-10 h-10 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                          imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+                          fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                        />
+                      ) : (
+                        <img
+                          src={getSafeAvatarUrl(recipient.avatar, recipient.name, recipient.id)}
+                          alt={recipient.name}
+                          className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.src = getSafeAvatarUrl(null, recipient.name, recipient.id);
+                          }}
+                        />
+                      )}
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-xs font-bold text-white truncate group-hover:text-blue-300 transition-colors">
+                          <p className="text-xs font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                             {recipient.name}
                           </p>
                           {recipient.isVerified && (
-                            <CheckCircle2 className="w-3.5 h-3.5 fill-blue-500 text-zinc-950 shrink-0" />
+                            <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
                           )}
                           {recipient.isBusiness && (
-                            <span className="px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/25 text-[9px] font-bold shrink-0">
+                            <span className="px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700/80 text-[9px] font-bold shrink-0">
                               Business
                             </span>
                           )}
                         </div>
                         {recipient.location ? (
                           <div className="flex items-center gap-1 text-[11px] text-zinc-400 truncate">
-                            <MapPin className="w-3 h-3 text-zinc-500 shrink-0" />
+                            <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
                             <span className="truncate">{recipient.location}</span>
                           </div>
                         ) : (
@@ -2132,7 +2223,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         e.stopPropagation();
                         handleStartNewUserChat(recipient);
                       }}
-                      className="px-3.5 py-1.5 rounded-xl bg-zinc-800 group-hover:bg-blue-600 text-zinc-200 group-hover:text-white text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-xs"
+                      className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs border border-zinc-700/60"
                     >
                       Chat
                     </button>
