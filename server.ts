@@ -16985,48 +16985,50 @@ Return JSON:
     }
   });
 
+  const renderFallbackSvg = (res: any, domainStr: string) => {
+    const clean = (domainStr || "B").replace(/^(https?:\/\/)?(www\.)?/, "").split(".")[0] || "B";
+    let letters = "B";
+    if (clean.length <= 3) {
+      letters = clean.toUpperCase();
+    } else {
+      const words = clean.split(/[\s\-_\.]+/).filter(w => w.length > 0 && !["inc", "llc", "ltd", "corp", "co"].includes(w.toLowerCase()));
+      if (words.length >= 2) {
+        letters = words.slice(0, 3).map(w => w[0].toUpperCase()).join("");
+      } else if (clean.length > 0) {
+        letters = clean.substring(0, Math.min(3, clean.length)).toUpperCase();
+      }
+    }
+
+    const PALETTES = [
+      "#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626",
+      "#0891b2", "#4f46e5", "#c026d3", "#0284c7", "#db2777"
+    ];
+    let hash = 0;
+    for (let i = 0; i < clean.length; i++) {
+      hash = (hash << 5) - hash + clean.charCodeAt(i);
+      hash |= 0;
+    }
+    const bgColor = PALETTES[Math.abs(hash) % PALETTES.length];
+    const fontSize = letters.length > 3 ? 65 : letters.length > 2 ? 80 : 105;
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+      <rect width="256" height="256" rx="56" fill="${bgColor}"/>
+      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-1px">${letters}</text>
+    </svg>`;
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    return res.status(200).send(svg);
+  };
+
   // Proxy for Google Favicon CDN to bypass mobile tracking blockers (e.g. iOS Safari) and prevent 404 errors
   app.get("/api/favicon", async (req, res) => {
     const rawDomain = req.query.domain ? req.query.domain.toString() : "";
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
-    const renderFallbackSvg = (domainStr: string) => {
-      const clean = (domainStr || "B").replace(/^(https?:\/\/)?(www\.)?/, "").split(".")[0] || "B";
-      let letters = "B";
-      if (clean.length <= 3) {
-        letters = clean.toUpperCase();
-      } else {
-        const words = clean.split(/[\s\-_\.]+/).filter(w => w.length > 0);
-        if (words.length >= 2) {
-          letters = words.slice(0, 3).map(w => w[0].toUpperCase()).join("");
-        } else if (clean.length > 0) {
-          letters = clean.substring(0, Math.min(3, clean.length)).toUpperCase();
-        }
-      }
-
-      const PALETTES = [
-        "#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626",
-        "#0891b2", "#4f46e5", "#c026d3", "#0284c7", "#db2777"
-      ];
-      let hash = 0;
-      for (let i = 0; i < clean.length; i++) {
-        hash = (hash << 5) - hash + clean.charCodeAt(i);
-        hash |= 0;
-      }
-      const bgColor = PALETTES[Math.abs(hash) % PALETTES.length];
-      const fontSize = letters.length > 3 ? 65 : letters.length > 2 ? 80 : 105;
-
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-        <rect width="256" height="256" rx="56" fill="${bgColor}"/>
-        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-1px">${letters}</text>
-      </svg>`;
-      res.setHeader("Content-Type", "image/svg+xml");
-      res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-      return res.status(200).send(svg);
-    };
-
     if (!cleanDomain) {
-      return renderFallbackSvg("Y");
+      return renderFallbackSvg(res, "Y");
     }
 
     if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz")) {
@@ -17051,21 +17053,21 @@ Return JSON:
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        return renderFallbackSvg(cleanDomain);
+        return renderFallbackSvg(res, cleanDomain);
       }
 
       const contentType = response.headers.get("content-type") || "image/png";
       const arrayBuffer = await response.arrayBuffer();
       // If image is empty or matches Google's default 726-byte grey placeholder globe
       if (!arrayBuffer || arrayBuffer.byteLength < 100 || arrayBuffer.byteLength === 726 || arrayBuffer.byteLength === 730) {
-        return renderFallbackSvg(cleanDomain);
+        return renderFallbackSvg(res, cleanDomain);
       }
 
       res.setHeader("Content-Type", contentType);
       res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
       return res.status(200).send(Buffer.from(arrayBuffer));
     } catch (e) {
-      return renderFallbackSvg(cleanDomain);
+      return renderFallbackSvg(res, cleanDomain);
     }
   });
 
@@ -17074,10 +17076,7 @@ Return JSON:
     try {
       const rawUrl = req.query.url;
       if (!rawUrl || typeof rawUrl !== 'string') {
-        const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#18181b"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">Y</text></svg>`;
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=86400');
-        return res.send(fallbackSvg);
+        return renderFallbackSvg(res, "Y");
       }
 
       // Recursively unwrap if nested or URL encoded
@@ -17092,12 +17091,7 @@ Return JSON:
 
       targetUrl = targetUrl.trim();
       if (!targetUrl || targetUrl === 'undefined' || targetUrl === 'null' || targetUrl === 'data:;') {
-        const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#18181b"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">Y</text></svg>`;
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=86400');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-        return res.send(fallbackSvg);
+        return renderFallbackSvg(res, "Y");
       }
       
       // If it is already a data URI or SVG
@@ -17124,12 +17118,31 @@ Return JSON:
       });
 
       if (!response.ok) {
-        const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#18181b"/><stop offset="100%" stop-color="#09090b"/></linearGradient></defs><rect width="800" height="400" fill="url(#g)"/></svg>`;
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=86400');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-        return res.status(200).send(fallbackSvg);
+        let cleanDomain = "";
+        try {
+          const parsed = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
+          cleanDomain = parsed.hostname.replace(/^www\./, "");
+        } catch (e) {
+          cleanDomain = targetUrl.replace(/^(https?:\/\/)?(www\.)?/, "").split('/')[0];
+        }
+
+        const isBanner = targetUrl.toLowerCase().includes('banner') || 
+                         targetUrl.toLowerCase().includes('header') || 
+                         targetUrl.toLowerCase().includes('hero') || 
+                         targetUrl.toLowerCase().includes('cover') || 
+                         targetUrl.toLowerCase().includes('og-image') ||
+                         targetUrl.toLowerCase().includes('uploads');
+
+        if (isBanner) {
+          const bannerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="50%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></linearGradient></defs><rect width="1200" height="600" fill="url(#bg)"/></svg>`;
+          res.setHeader('Content-Type', 'image/svg+xml');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+          return res.status(200).send(bannerSvg);
+        }
+
+        return renderFallbackSvg(res, cleanDomain || "Y");
       }
 
       const contentType = response.headers.get('content-type') || 'image/jpeg';

@@ -241,9 +241,24 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <text x="50" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#facc15" text-anchor="middle" letter-spacing="-1">L500</text>
       <rect x="25" y="68" width="50" height="3" rx="1.5" fill="#facc15"/>
     </svg>`),
-  "nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
-  "www.nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
-  "nevadalegalservices": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
+  "nevadalegalservices.org": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#1e3a8a"/>
+      <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#3b82f6" stroke-width="2"/>
+      <text x="50" y="60" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="32" fill="#ffffff" text-anchor="middle" letter-spacing="-1">NLS</text>
+    </svg>`),
+  "www.nevadalegalservices.org": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#1e3a8a"/>
+      <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#3b82f6" stroke-width="2"/>
+      <text x="50" y="60" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="32" fill="#ffffff" text-anchor="middle" letter-spacing="-1">NLS</text>
+    </svg>`),
+  "nevadalegalservices": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <rect width="100" height="100" rx="20" fill="#1e3a8a"/>
+      <rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="#3b82f6" stroke-width="2"/>
+      <text x="50" y="60" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="32" fill="#ffffff" text-anchor="middle" letter-spacing="-1">NLS</text>
+    </svg>`),
   "lernerandrowe.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" fill="#f59e0b"/>

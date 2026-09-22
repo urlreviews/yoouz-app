@@ -28,6 +28,7 @@ import {
 import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug, isPlaceReviewMatch } from "../utils/placeUtils";
+import { getProxiedImageUrl } from "../utils/logoUtils";
 import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
@@ -465,9 +466,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const [posterLoadError, setPosterLoadError] = useState(false);
   const posterUrl = React.useMemo(() => {
     if (posterLoadError) {
-      return video.placeBannerUrl || video.placeLogoUrl || "";
+      return getProxiedImageUrl(video.placeBannerUrl || video.placeLogoUrl || "");
     }
-    return resolveVideoPosterUrl(video) || video.placeBannerUrl || video.placeLogoUrl || "";
+    const rawPoster = resolveVideoPosterUrl(video) || video.placeBannerUrl || video.placeLogoUrl || "";
+    return getProxiedImageUrl(rawPoster);
   }, [video, posterLoadError]);
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
