@@ -3527,6 +3527,49 @@ async function purgeVideoFromAllStores(videoId: string) {
         });
       } catch (e) {}
       console.log(`🐰 [Server] BunnyDB successfully purged review ${videoId}`);
+
+      // Synchronize affected business place in BunnyDB places table to reflect accurate review count
+      const pId = existingVideoObj?.placeId;
+      const pName = existingVideoObj?.placeName;
+      const pWeb = existingVideoObj?.placeWebsite;
+      if (pId || pName || pWeb) {
+        try {
+          const placeSearchKeys = [pId, pName, pWeb].filter(Boolean);
+          for (const pk of placeSearchKeys) {
+            const plRows = await bunnyClient.execute({
+              sql: `SELECT id, name, data FROM places WHERE id = ? OR name = ? OR id LIKE ? LIMIT 1`,
+              args: [pk, pk, `%${pk}%`]
+            });
+            if (plRows && plRows.rows && plRows.rows[0]) {
+              const pRow: any = plRows.rows[0];
+              let pData: any = {};
+              try { pData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {}); } catch (e) {}
+
+              // Count remaining active reviews for this place across videoReviews
+              const countRows = await bunnyClient.execute({
+                sql: `SELECT COUNT(*) as cnt, AVG(rating) as avgRating FROM videoReviews WHERE (placeId = ? OR placeName = ? OR data LIKE ?) AND id != ?`,
+                args: [pRow.id, pRow.name, `%"${pRow.id}"%`, videoId]
+              });
+              const remCount = Number((countRows?.rows?.[0] as any)?.cnt || 0);
+              const remAvg = (countRows?.rows?.[0] as any)?.avgRating;
+              const newRating = remCount > 0 ? Number(Number(remAvg || 5.0).toFixed(1)) : (pData.rating || 5.0);
+
+              pData.totalReviews = remCount;
+              pData.videoReviewCount = remCount;
+              pData.rating = newRating;
+
+              await bunnyClient.execute({
+                sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [JSON.stringify(pData), pRow.id]
+              });
+              console.log(`🐰 [BunnyDB] Synchronized place ${pRow.id} review count to ${remCount} after video deletion`);
+              break;
+            }
+          }
+        } catch (pSyncErr) {
+          console.warn("Could not update place review count in BunnyDB:", pSyncErr);
+        }
+      }
     } catch (bErr: any) {
       console.warn("BunnyDB video purge error:", bErr?.message || bErr);
     }

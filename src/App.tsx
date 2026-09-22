@@ -849,19 +849,58 @@ export function App() {
     if (!id) return;
     const targetId = String(id);
 
-    // 1. Instantly remove from local videos state
-    setVideos(prev => prev.filter(v => v.id !== targetId));
+    // Identify target video before deletion
+    const targetVideo = videos.find(v => String(v.id) === targetId);
 
-    // 2. Remove from places reviews list & recalculate counts
-    setPlaces(prev => prev.map(p => {
-      const remainingReviews = (p.reviews || []).filter(r => r.id !== targetId);
-      const wasInPlace = (p.reviews || []).some(r => r.id === targetId);
-      return {
-        ...p,
-        reviews: remainingReviews,
-        totalReviews: Math.max(0, (p.totalReviews || 0) - (wasInPlace ? 1 : 0))
-      };
-    }));
+    // 1. Instantly remove from local videos state
+    const remainingVideos = videos.filter(v => String(v.id) !== targetId);
+    setVideos(remainingVideos);
+
+    // 2. Remove from places reviews list & recalculate counts accurately
+    setPlaces(prev => {
+      const updated = prev.map(p => {
+        const placeRemainingVideos = remainingVideos.filter(v => isPlaceReviewMatch(v, p));
+        const newCount = placeRemainingVideos.length;
+        const newRating = newCount > 0
+          ? Number((placeRemainingVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / newCount).toFixed(1))
+          : (p.rating || 5.0);
+
+        const isAffected = targetVideo ? isPlaceReviewMatch(targetVideo, p) : false;
+
+        const updatedPlace = {
+          ...p,
+          reviews: (p.reviews || []).filter(r => String(r.id) !== targetId),
+          totalReviews: newCount,
+          videoReviewCount: newCount,
+          rating: newRating
+        };
+
+        if (isAffected && p.id) {
+          // Persist the updated count directly to BunnyDB
+          fetch(`/api/nosql/places/${encodeURIComponent(p.id)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              data: {
+                ...updatedPlace,
+                totalReviews: newCount,
+                videoReviewCount: newCount,
+                rating: newRating
+              }, 
+              merge: true 
+            })
+          }).catch(() => {});
+        }
+
+        return updatedPlace;
+      });
+
+      try {
+        localStorage.setItem("yoouz_cached_places", JSON.stringify(updated));
+      } catch (e) {}
+
+      return updated;
+    });
 
     // 3. Dismiss any active modal/drawer viewing this deleted video
     setActiveCommentVideo(prev => (prev?.id === targetId ? null : prev));
@@ -951,13 +990,33 @@ export function App() {
     const idSet = new Set(targetIds);
 
     // 1. Instantly remove from local videos state
-    setVideos(prev => prev.filter(v => !idSet.has(v.id)));
+    const remainingVideos = videos.filter(v => !idSet.has(String(v.id)));
+    setVideos(remainingVideos);
 
-    // 2. Remove from places reviews list
-    setPlaces(prev => prev.map(p => ({
-      ...p,
-      reviews: (p.reviews || []).filter(r => !idSet.has(r.id))
-    })));
+    // 2. Remove from places reviews list & accurately recalculate counts
+    setPlaces(prev => {
+      const updated = prev.map(p => {
+        const placeRemainingVideos = remainingVideos.filter(v => isPlaceReviewMatch(v, p));
+        const newCount = placeRemainingVideos.length;
+        const newRating = newCount > 0
+          ? Number((placeRemainingVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / newCount).toFixed(1))
+          : (p.rating || 5.0);
+
+        return {
+          ...p,
+          reviews: (p.reviews || []).filter(r => !idSet.has(String(r.id))),
+          totalReviews: newCount,
+          videoReviewCount: newCount,
+          rating: newRating
+        };
+      });
+
+      try {
+        localStorage.setItem("yoouz_cached_places", JSON.stringify(updated));
+      } catch (e) {}
+
+      return updated;
+    });
 
     // 3. Dismiss any active modal/drawer viewing any of these deleted videos
     setActiveCommentVideo(prev => (prev && idSet.has(prev.id) ? null : prev));
@@ -2990,12 +3049,39 @@ export function App() {
 
       next.forEach((p, index) => {
         const matchingV = videos.filter(v => !isPlaceDeleted(v.placeId || v.placeWebsite || v.placeName, currentDeleted) && isPlaceReviewMatch(v, p));
-        const computedCount = matchingV.length > 0 ? matchingV.length : (p.totalReviews || 0);
+        const computedCount = matchingV.length;
+        const computedRating = matchingV.length > 0 
+          ? Number((matchingV.reduce((acc, v) => acc + (v.rating || 5), 0) / matchingV.length).toFixed(1))
+          : (p.rating || 5.0);
+
         if (p.totalReviews !== computedCount || p.videoReviewCount !== computedCount) {
-          next[index] = { ...p, totalReviews: computedCount, videoReviewCount: computedCount };
+          next[index] = { ...p, totalReviews: computedCount, videoReviewCount: computedCount, rating: computedRating };
           modified = true;
+
+          // Sync to BunnyDB if review count changed
+          if (p.id) {
+            fetch(`/api/nosql/places/${encodeURIComponent(p.id)}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                data: {
+                  ...next[index],
+                  totalReviews: computedCount,
+                  videoReviewCount: computedCount,
+                  rating: computedRating
+                }, 
+                merge: true 
+              })
+            }).catch(() => {});
+          }
         }
       });
+
+      if (modified) {
+        try {
+          localStorage.setItem("yoouz_cached_places", JSON.stringify(next));
+        } catch (e) {}
+      }
 
       return modified ? next : prev;
     });
@@ -3044,8 +3130,8 @@ export function App() {
           city: "",
           country: "",
           rating: 5.0,
-          totalReviews: 1,
-          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          totalReviews: 0,
+          ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
           photos: [],
           openingHours: "",
           isOpen: undefined,

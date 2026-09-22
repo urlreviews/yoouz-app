@@ -18,7 +18,7 @@ import {
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch } from "../utils/placeUtils";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
 interface CopoFollowingViewProps {
@@ -233,20 +233,24 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         const matchingVideos = videos.filter(
           (v) =>
             v.placeId === p.id ||
+            isPlaceReviewMatch(v, p) ||
             v.placeName?.toLowerCase() === p.name?.toLowerCase() ||
             (v.placeWebsite && extractCleanDomain(v.placeWebsite) === extractCleanDomain(p.website))
         );
-        const reviewCount = Math.max(matchingVideos.length, p.videoReviewCount || p.totalReviews || 0);
-        let dynamicRating = p.rating || 5.0;
+        const reviewCount = matchingVideos.length;
+        let dynamicRating = 5.0;
         if (matchingVideos.length > 0) {
           const sum = matchingVideos.reduce((acc, v) => acc + (v.rating || 5), 0);
           dynamicRating = Number((sum / matchingVideos.length).toFixed(1));
+        } else if (typeof p.rating === "number" && p.rating > 0) {
+          dynamicRating = p.rating;
         }
 
         list.push({
           ...p,
           rating: dynamicRating,
           totalReviews: reviewCount,
+          videoReviewCount: reviewCount,
           isFollowed: true
         });
       }
@@ -264,6 +268,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         const matchingVideos = videos.filter(
           (v) =>
             v.placeId.toLowerCase() === pidLower ||
+            isPlaceReviewMatch(v, pid) ||
             v.placeName?.toLowerCase() === formattedName.toLowerCase() ||
             (v.placeWebsite && extractCleanDomain(v.placeWebsite) === cleanDomain)
         );
@@ -290,8 +295,9 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
           lat: 25.7617,
           lng: -80.1918,
           rating: dynamicRating,
-          totalReviews: reviewCount || 1,
-          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          totalReviews: reviewCount,
+          videoReviewCount: reviewCount,
+          ratingDistribution: reviewCount > 0 ? { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 } : { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
           avatarUrl: logoUrl,
           bannerUrl: sampleVid?.placeBannerUrl || "",
           photos: [],
@@ -406,9 +412,33 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         const pidLower = p.id.toLowerCase().trim();
         const pSlugLower = extractCleanDomain(p.website || p.name || p.id).replace(/[^a-z0-9]/g, "-");
         const isFollowed = followedPlacesSet.has(pidLower) || followedPlacesSet.has(pSlugLower);
-        return { ...p, isFollowed };
+
+        // Dynamically compute review count and rating from actual live videos
+        const matchingVideos = videos.filter(
+          (v) =>
+            v.placeId === p.id ||
+            isPlaceReviewMatch(v, p) ||
+            v.placeName?.toLowerCase() === p.name?.toLowerCase() ||
+            (v.placeWebsite && extractCleanDomain(v.placeWebsite) === extractCleanDomain(p.website))
+        );
+        const reviewCount = matchingVideos.length;
+        let dynamicRating = 5.0;
+        if (matchingVideos.length > 0) {
+          const sum = matchingVideos.reduce((acc, v) => acc + (v.rating || 5), 0);
+          dynamicRating = Number((sum / matchingVideos.length).toFixed(1));
+        } else if (typeof p.rating === "number" && p.rating > 0) {
+          dynamicRating = p.rating;
+        }
+
+        return {
+          ...p,
+          rating: dynamicRating,
+          totalReviews: reviewCount,
+          videoReviewCount: reviewCount,
+          isFollowed
+        };
       });
-  }, [followedPlacesList, searchQuery, places, followedPlacesSet]);
+  }, [followedPlacesList, searchQuery, places, followedPlacesSet, videos]);
 
   const filteredFollowers = useMemo(() => {
     if (!searchQuery.trim()) return myFollowers;
@@ -644,14 +674,22 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             {/* Row 2: Star Rating + Video Review Count + Location / Website */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
                               <div className="flex items-center gap-1.5 shrink-0">
-                                <span className="text-amber-400 font-bold flex items-center gap-0.5 shrink-0">
-                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                                  {typeof place.rating === "number" ? place.rating.toFixed(1) : "5.0"}
-                                </span>
-                                <span className="text-zinc-600 shrink-0">·</span>
-                                <span className="shrink-0">
-                                  {place.totalReviews || 1} {place.totalReviews === 1 ? "video review" : "video reviews"}
-                                </span>
+                                {(place.totalReviews || 0) > 0 ? (
+                                  <>
+                                    <span className="text-amber-400 font-bold flex items-center gap-0.5 shrink-0">
+                                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                      {typeof place.rating === "number" ? place.rating.toFixed(1) : "5.0"}
+                                    </span>
+                                    <span className="text-zinc-600 shrink-0">·</span>
+                                    <span className="shrink-0">
+                                      {place.totalReviews} {place.totalReviews === 1 ? "video review" : "video reviews"}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="text-zinc-400 text-xs shrink-0">
+                                    0 video reviews
+                                  </span>
+                                )}
                               </div>
                               {(place.city || place.address) && (
                                 <>

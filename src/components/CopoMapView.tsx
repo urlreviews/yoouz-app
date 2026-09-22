@@ -317,7 +317,7 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                 ))}
               </div>
               <span className="text-zinc-200 font-medium">
-                ({(placeVideos.length > 0 ? placeVideos.length : (selectedPlace.totalReviews || 1)).toLocaleString()})
+                ({(placeVideos.length > 0 ? placeVideos.length : (selectedPlace.totalReviews || 0)).toLocaleString()})
               </span>
               <span className="text-zinc-600">·</span>
               <span className="text-zinc-200 font-medium">
