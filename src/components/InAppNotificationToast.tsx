@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MessageSquare, Bell, Heart, UserPlus, Bookmark, Repeat2, Mail, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
 
 export interface InAppToastPayload {
   id: string;
@@ -9,6 +10,7 @@ export interface InAppToastPayload {
   title: string;
   subtitle: string;
   avatar?: string;
+  userName?: string;
   threadId?: string;
   onAction?: () => void;
 }
@@ -134,26 +136,19 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
                   );
                 }
 
-                if (toast.avatar) {
-                  return (
-                    <img
-                      src={toast.avatar}
-                      alt={toast.title}
-                      className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-700/80"
-                      onError={(e) => {
-                        const target = e.currentTarget as HTMLImageElement;
-                        if (!target.src.includes("/api/avatar")) {
-                          target.src = `/api/avatar?name=${encodeURIComponent(toast.title || "User")}&background=27272a&color=fff`;
-                        }
-                      }}
-                    />
-                  );
-                }
+                const effectiveName = toast.userName || (toast.title && !toast.title.startsWith("1 new") ? toast.title : "User");
+                const avatarSrc = getSafeAvatarUrl(toast.avatar, effectiveName, effectiveName);
 
                 return (
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-zinc-800 text-white`}>
-                    <ActionIcon className="w-5 h-5" />
-                  </div>
+                  <img
+                    src={avatarSrc}
+                    alt={effectiveName}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-700/80 shrink-0"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = getSafeAvatarUrl(null, effectiveName, effectiveName);
+                    }}
+                  />
                 );
               })()}
 

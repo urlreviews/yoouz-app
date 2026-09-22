@@ -1238,16 +1238,24 @@ export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null
     return YOOUZ_LOGO_DATA_URI;
   }
 
-  if (!avatarUrl || avatarUrl === "data:;" || avatarUrl.trim() === "" || avatarUrl.includes("/api/avatar") || avatarUrl.includes("ui-avatars") || avatarUrl.includes("dicebear")) {
+  let candidateAvatar = avatarUrl;
+  if (!candidateAvatar || candidateAvatar === "data:;" || candidateAvatar.trim() === "" || candidateAvatar.includes("/api/avatar") || candidateAvatar.includes("ui-avatars") || candidateAvatar.includes("dicebear")) {
+    const regUser = (handle ? getUserFromRegistry(handle) : null) || (name ? getUserFromRegistry(name) : null);
+    if (regUser && regUser.avatar && !regUser.avatar.includes("/api/avatar") && !regUser.avatar.includes("data:;") && regUser.avatar.trim() !== "") {
+      candidateAvatar = regUser.avatar;
+    }
+  }
+
+  if (!candidateAvatar || candidateAvatar === "data:;" || candidateAvatar.trim() === "" || candidateAvatar.includes("/api/avatar") || candidateAvatar.includes("ui-avatars") || candidateAvatar.includes("dicebear")) {
     return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
   }
 
   // Filter out video files or paths accidentally stored as avatars
   if (
-    avatarUrl.includes(".mp4") ||
-    avatarUrl.includes("/api/videos/") ||
-    avatarUrl.includes("rev-") ||
-    avatarUrl.startsWith("blob:")
+    candidateAvatar.includes(".mp4") ||
+    candidateAvatar.includes("/api/videos/") ||
+    candidateAvatar.includes("rev-") ||
+    candidateAvatar.startsWith("blob:")
   ) {
     return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
   }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { extractCleanDomain } from "../utils/placeUtils";
+import { extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import {
   Bell,
@@ -574,9 +574,11 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           );
                         }
 
-                        const avatarSrc =
-                          notif.user.avatar ||
-                          `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
+                        const avatarSrc = getSafeAvatarUrl(
+                          notif.user.avatar,
+                          notif.user.name,
+                          (notif.user as any).email || (notif.user as any).id || notif.user.name
+                        );
 
                         return (
                           <img
@@ -585,8 +587,11 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-zinc-800/80 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all"
                             referrerPolicy="no-referrer"
                             onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src =
-                                `/api/avatar?name=${encodeURIComponent(notif.user.name || "User")}&background=27272a&color=fff`;
+                              (e.currentTarget as HTMLImageElement).src = getSafeAvatarUrl(
+                                null,
+                                notif.user.name,
+                                (notif.user as any).email || (notif.user as any).id || notif.user.name
+                              );
                             }}
                           />
                         );

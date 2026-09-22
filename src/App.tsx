@@ -1943,6 +1943,7 @@ export function App() {
           title: title,
           subtitle: newIncoming.text ? `${newIncoming.user.name} ${newIncoming.text}` : `${newIncoming.user.name} interacted with you`,
           avatar: newIncoming.user.avatar,
+          userName: newIncoming.user.name,
           onAction: () => {
             if (newIncoming.type === "message") {
               setActiveSection("messages");
@@ -2062,6 +2063,7 @@ export function App() {
                 title: `1 new message from ${t.senderName}`,
                 subtitle: lastMsg.text || t.lastMessage || "sent you a message",
                 avatar: t.senderAvatar || lastMsg.senderAvatar,
+                userName: t.senderName,
                 threadId: t.id,
                 onAction: () => {
                   setActiveSection("messages");
