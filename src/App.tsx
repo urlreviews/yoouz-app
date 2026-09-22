@@ -6548,7 +6548,26 @@ export function App() {
                 onOpenCreator={handleOpenCreatorDrawer}
                 onSuccessAuth={(user) => setCurrentUser(user)}
                 onSelectNotificationVideo={(vidId) => vidId && handleSelectVideoById(vidId)}
-                onNavigateToMessages={() => setActiveSection("messages")}
+                onNavigateToMessages={(targetKey) => {
+                  setActiveSection("messages");
+                  if (targetKey) {
+                    const normTarget = String(targetKey).toLowerCase().trim();
+                    const match = messages.find(
+                      (m) =>
+                        m.id === targetKey ||
+                        (m.senderId && m.senderId.toLowerCase().trim() === normTarget) ||
+                        (m.senderEmail && m.senderEmail.toLowerCase().trim() === normTarget) ||
+                        (m.senderName && m.senderName.toLowerCase().trim() === normTarget) ||
+                        (m.recipientEmail && m.recipientEmail.toLowerCase().trim() === normTarget) ||
+                        (m.recipientName && m.recipientName.toLowerCase().trim() === normTarget) ||
+                        (normTarget.includes("ben") && ((m.senderName || "").toLowerCase().includes("ben") || (m.senderEmail || "").toLowerCase().includes("aouisesmee"))) ||
+                        (normTarget.includes("steven") && ((m.senderName || "").toLowerCase().includes("steven") || (m.senderEmail || "").toLowerCase().includes("avr6566gd")))
+                    );
+                    if (match) {
+                      setActiveThreadId(match.id);
+                    }
+                  }
+                }}
                 onNavigateHome={handleGoHome}
                 onUpdateNotifications={setNotifications}
                 onMarkRead={(id) => {

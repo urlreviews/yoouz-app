@@ -33,7 +33,7 @@ interface CopoNotificationsViewProps {
   onOpenHelp?: () => void;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
   onSelectNotificationVideo: (videoId?: string) => void;
-  onNavigateToMessages?: () => void;
+  onNavigateToMessages?: (targetKey?: string) => void;
   onNavigateHome?: () => void;
   onUpdateNotifications?: (updated: CopoNotification[]) => void;
   onMarkRead?: (id: string) => void;
@@ -45,7 +45,7 @@ interface CopoNotificationsViewProps {
   onOpenCreator?: (author: any) => void;
 }
 
-type FilterType = "all" | "unread" | "likes" | "comments" | "people" | "bookmarks";
+type FilterType = "all" | "unread" | "messages" | "likes" | "comments" | "people" | "bookmarks";
 
 export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   notifications,
@@ -144,6 +144,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   const filteredNotifications = useMemo(() => {
     return notifications.filter((n) => {
       if (activeFilter === "unread") return !n.isRead;
+      if (activeFilter === "messages") return n.type === "message";
       if (activeFilter === "likes") return n.type === "like";
       if (activeFilter === "comments") return n.type === "comment";
       if (activeFilter === "people") return n.type === "follow";
@@ -161,6 +162,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   const filterPills: { label: string; value: FilterType; count?: number }[] = [
     { label: "All", value: "all" },
     { label: "Unread", value: "unread", count: unreadCount > 0 ? unreadCount : undefined },
+    { label: "Messages", value: "messages" },
     { label: "Likes", value: "likes" },
     { label: "Comments", value: "comments" },
     { label: "Followers", value: "people" },
@@ -493,7 +495,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     onClick={() => {
                       handleMarkAsRead(notif.id);
                       if (notif.type === "message" && onNavigateToMessages) {
-                        onNavigateToMessages();
+                        const targetKey = notif.user?.email || (notif.user as any)?.id || notif.user?.name;
+                        onNavigateToMessages(targetKey);
                       } else if (notif.type === "follow" && notif.user?.name && onOpenCreator) {
                         const isYoouzTeam =
                           (notif.user.name || "").toLowerCase().includes("yoouz") ||

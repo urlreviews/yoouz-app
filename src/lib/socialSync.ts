@@ -1031,6 +1031,44 @@ export function getDeletedThreadsKey(currentUser?: UserProfile | null): string {
   return id ? `yoouz_deleted_threads_${id}` : "yoouz_deleted_threads";
 }
 
+export function getDeletedThreadsMap(currentUser?: UserProfile | null): Map<string, number> {
+  const map = new Map<string, number>();
+  if (typeof window === "undefined") return map;
+  try {
+    const userDelKey = getDeletedThreadsKey(currentUser);
+    const raw = localStorage.getItem(userDelKey);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (typeof item === "string") {
+            map.set(item.trim(), 1);
+          } else if (item && typeof item === "object" && item.id) {
+            map.set(String(item.id).trim(), Number(item.deletedAt) || 1);
+          }
+        }
+      } else if (parsed && typeof parsed === "object") {
+        for (const [k, v] of Object.entries(parsed)) {
+          map.set(k.trim(), Number(v) || 1);
+        }
+      }
+    }
+  } catch (e) {}
+  return map;
+}
+
+export function saveDeletedThreadsMap(map: Map<string, number>, currentUser?: UserProfile | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    const userDelKey = getDeletedThreadsKey(currentUser);
+    const obj: Record<string, number> = {};
+    for (const [k, v] of map.entries()) {
+      obj[k] = v;
+    }
+    localStorage.setItem(userDelKey, JSON.stringify(obj));
+  } catch (e) {}
+}
+
 /**
  * Filter and format chat threads for the current user
  */
@@ -1039,37 +1077,40 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
   const userHandle = (currentUser.name || currentUser.handle || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
   const userName = (currentUser.name || "").toLowerCase().trim();
+  const userFirstName = userName.split(/\s+/)[0] || "";
   const userId = (currentUser.userId || (currentUser as any).id || (currentUser as any).uid || "").toLowerCase().trim();
   const isBusinessUser = Boolean((currentUser as any).isBusiness || userId.startsWith("place_") || (currentUser as any).placeId);
 
-  let deletedThreadsSet = new Set<string>();
-  try {
-    const userDelKey = getDeletedThreadsKey(currentUser);
-    const storedDel = localStorage.getItem(userDelKey);
-    if (storedDel) {
-      const parsedDel = JSON.parse(storedDel);
-      if (Array.isArray(parsedDel)) {
-        parsedDel.forEach((id: string) => deletedThreadsSet.add(String(id).trim()));
-      }
-    }
-  } catch (e) {}
+  const deletedThreadsMap = getDeletedThreadsMap(currentUser);
+  let deletedThreadsModified = false;
 
   const threads: CopoMessage[] = [];
 
   for (const data of rawItems) {
     if (!data) continue;
     const threadId = String(data.id || "").trim();
-    if (threadId && deletedThreadsSet.has(threadId)) continue;
+    if (!threadId) continue;
 
-    const deletedForUsers: string[] = Array.isArray(data.deletedForUsers)
-      ? data.deletedForUsers.map((u: string) => String(u || '').toLowerCase().trim())
-      : [];
-    if (
-      (userId && deletedForUsers.includes(userId)) ||
-      (userEmail && deletedForUsers.includes(userEmail))
-    ) {
-      continue;
+    // Determine latest activity timestamp for this thread
+    const latestMsgTime = Math.max(
+      Number(data.updatedAt || 0),
+      Number(data.createdAt || data.createdAtMs || 0),
+      ...(Array.isArray(data.history) ? data.history.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)) : [])
+    );
+
+    // If user previously deleted this thread locally: check if new messages arrived since deletion
+    const deletedTimestamp = deletedThreadsMap.get(threadId);
+    if (deletedTimestamp !== undefined) {
+      if (latestMsgTime > deletedTimestamp + 500) {
+        // A new message arrived after deletion: un-delete the thread so recipient sees the conversation
+        deletedThreadsMap.delete(threadId);
+        deletedThreadsModified = true;
+      } else {
+        // Conversation has no new messages since deletion: keep hidden
+        continue;
+      }
     }
+
     const participants: string[] = Array.isArray(data.participants)
       ? data.participants.map((p: string) => (p || "").toLowerCase().trim().replace(/^@/, ""))
       : [];
@@ -1081,9 +1122,39 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const recipientId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
     const recipientName = (data.recipientName || "").toLowerCase().trim();
 
-    const isAvtErtuop = userEmail.includes("avr6566gd") || userName === "avt ertuop" || userHandle === "avtertuop" || userId.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avt");
-    const isAouisesmee = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userEmail.includes("aouisesme") || userEmail.includes("aouiseme") || userName.includes("aouisesmee") || userName.includes("aouisemee") || userName.includes("aouisesme") || userName.includes("aouiseme") || userHandle.includes("aouisesmee") || userHandle.includes("aouisemee") || userHandle.includes("aouisesme") || userHandle.includes("aouiseme") || userId.includes("aouisesmee") || userId.includes("aouisemee") || userId.includes("aouisesme") || userId.includes("aouiseme");
-    const isBizRiv = userEmail.includes("louis42111") || userName === "biz riv" || userHandle === "bizriv" || userId.includes("louis42111") || userEmail.includes("biz") || userName.includes("biz");
+    // Known Personas Matching (Steven Akan / Ben Blue / Biz Riv / Yoouz)
+    const isStevenAkan =
+      userEmail.includes("avr6566gd") ||
+      userName.includes("steven") ||
+      userHandle.includes("steven") ||
+      userFirstName === "steven" ||
+      userName === "avt ertuop" ||
+      userHandle === "avtertuop" ||
+      userId.includes("avr6566gd") ||
+      userName.includes("avt") ||
+      userHandle.includes("avt") ||
+      userId.includes("avt");
+
+    const isBenBlue =
+      userEmail.includes("aouisesmee") ||
+      userEmail.includes("aouisemee") ||
+      userEmail.includes("aouisesme") ||
+      userEmail.includes("aouiseme") ||
+      userName.includes("ben") ||
+      userHandle.includes("ben") ||
+      userFirstName === "ben" ||
+      userName.includes("aouisesmee") ||
+      userHandle.includes("aouisesmee") ||
+      userId.includes("aouisesmee");
+
+    const isBizRiv =
+      userEmail.includes("louis42111") ||
+      userName === "biz riv" ||
+      userHandle === "bizriv" ||
+      userFirstName === "biz" ||
+      userId.includes("louis42111") ||
+      userEmail.includes("biz") ||
+      userName.includes("biz");
 
     let isParticipant = false;
 
@@ -1101,20 +1172,24 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     } else {
       const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
 
-      const matchesAvtErtuop = isAvtErtuop && (
-        participants.some(p => p.includes("avr6566gd") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
+      const matchesStevenAkan = isStevenAkan && (
+        participants.some(p => p.includes("avr6566gd") || p.includes("steven") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
         senderEmail.includes("avr6566gd") || senderEmail.includes("avt") || recipientEmail.includes("avr6566gd") || recipientEmail.includes("avt") ||
-        senderName.includes("avt") || recipientName.includes("avt")
+        senderName.includes("steven") || recipientName.includes("steven") || senderName.includes("avt") || recipientName.includes("avt") ||
+        senderId.includes("steven") || recipientId.includes("steven") || senderId.includes("avr6566gd") || recipientId.includes("avr6566gd")
       );
-      const matchesAouisesmee = isAouisesmee && (
-        participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("aouisesme") || p.includes("aouiseme")) ||
-        senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderEmail.includes("aouisesme") || senderEmail.includes("aouiseme") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientEmail.includes("aouisesme") || recipientEmail.includes("aouiseme") ||
-        senderName.includes("aouisesmee") || senderName.includes("aouisemee") || senderName.includes("aouisesme") || senderName.includes("aouiseme") || recipientName.includes("aouisesmee") || recipientName.includes("aouisemee") || recipientName.includes("aouisesme") || recipientName.includes("aouiseme")
+
+      const matchesBenBlue = isBenBlue && (
+        participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("ben")) ||
+        senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") ||
+        senderName.includes("ben") || recipientName.includes("ben") ||
+        senderId.includes("ben") || recipientId.includes("ben") || senderId.includes("aouisesmee") || recipientId.includes("aouisesmee")
       );
+
       const matchesBizRiv = isBizRiv && (
         participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("biz")) ||
         senderEmail.includes("louis42111") || senderEmail.includes("biz") || recipientEmail.includes("louis42111") || recipientEmail.includes("biz") ||
-        senderName.includes("biz") || recipientName.includes("biz")
+        senderName.includes("biz") || recipientName.includes("biz") || senderId.includes("biz") || recipientId.includes("biz")
       );
 
       const historyHasUser = Array.isArray(data.history) && data.history.some((m: any) => {
@@ -1124,12 +1199,12 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         const mSN = (m.senderName || "").toLowerCase().trim();
         return (
           (userEmail && (mSE === userEmail || mSI === userEmail || mSE.includes(userEmail))) ||
-          (emailPrefix && (mSE.startsWith(emailPrefix) || mSI === emailPrefix)) ||
-          (userHandle && (mSI === userHandle || mSN === userHandle)) ||
-          (!isGenericName && mSN === userName) ||
-          (userId && mSI === userId) ||
-          (isAouisesmee && (mSE.includes("aouisesmee") || mSE.includes("aouisemee") || mSE.includes("aouisesme") || mSE.includes("aouiseme") || mSN.includes("aouisesmee") || mSN.includes("aouisemee") || mSN.includes("aouisesme") || mSN.includes("aouiseme"))) ||
-          (isAvtErtuop && (mSE.includes("avr6566gd") || mSN.includes("avt") || mSI.includes("avt"))) ||
+          (emailPrefix && emailPrefix.length >= 3 && (mSE.startsWith(emailPrefix) || mSI === emailPrefix)) ||
+          (userHandle && userHandle.length >= 3 && (mSI === userHandle || mSN === userHandle)) ||
+          (!isGenericName && (mSN === userName || (userFirstName.length >= 3 && mSN.includes(userFirstName)))) ||
+          (userId && (mSI === userId || mSE === userId)) ||
+          (isBenBlue && (mSE.includes("aouisesmee") || mSE.includes("aouisemee") || mSN.includes("ben") || mSI.includes("ben"))) ||
+          (isStevenAkan && (mSE.includes("avr6566gd") || mSN.includes("steven") || mSN.includes("avt") || mSI.includes("steven") || mSI.includes("avt"))) ||
           (isBizRiv && (mSE.includes("louis42111") || mSN.includes("biz") || mSI.includes("biz")))
         );
       });
@@ -1137,23 +1212,26 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       const threadIdStr = String(data.id || "").toLowerCase();
       const threadIdMatchesUser = Boolean(
         (userEmail && threadIdStr.includes(userEmail)) ||
-        (emailPrefix && threadIdStr.includes(emailPrefix)) ||
-        (userHandle && threadIdStr.includes(userHandle)) ||
-        (isAouisesmee && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("aouisemee") || threadIdStr.includes("aouisesme") || threadIdStr.includes("aouiseme"))) ||
-        (isAvtErtuop && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("avt"))) ||
+        (emailPrefix && emailPrefix.length >= 3 && threadIdStr.includes(emailPrefix)) ||
+        (userHandle && userHandle.length >= 3 && threadIdStr.includes(userHandle)) ||
+        (isBenBlue && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("ben"))) ||
+        (isStevenAkan && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("steven") || threadIdStr.includes("avt"))) ||
         (isBizRiv && (threadIdStr.includes("louis42111") || threadIdStr.includes("biz")))
       );
 
+      const first3 = userFirstName.length >= 3 ? userFirstName : "";
+
       isParticipant = Boolean(
-        matchesAvtErtuop ||
-        matchesAouisesmee ||
+        matchesStevenAkan ||
+        matchesBenBlue ||
         matchesBizRiv ||
         historyHasUser ||
         threadIdMatchesUser ||
         (userEmail && (participants.some(p => p.includes(userEmail)) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
-        (emailPrefix && (participants.some(p => p.includes(emailPrefix)) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
-        (userHandle && (participants.some(p => p.includes(userHandle)) || senderId === userHandle || recipientId === userHandle)) ||
+        (emailPrefix && emailPrefix.length >= 3 && (participants.some(p => p.includes(emailPrefix)) || senderId === emailPrefix || recipientId === emailPrefix || senderEmail.startsWith(emailPrefix) || recipientEmail.startsWith(emailPrefix))) ||
+        (userHandle && userHandle.length >= 3 && (participants.some(p => p.includes(userHandle)) || senderId === userHandle || recipientId === userHandle)) ||
         (!isGenericName && (participants.includes(userName) || senderName === userName || recipientName === userName)) ||
+        (first3 && (participants.some(p => p.includes(first3)) || senderName.includes(first3) || recipientName.includes(first3))) ||
         (userId && (participants.some(p => p.includes(userId)) || senderId === userId || recipientId === userId))
       );
     }
@@ -1172,8 +1250,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             normK === userHandle ||
             normK === userName ||
             normK === userId ||
-            (isAouisesmee && (normK.includes("aouisesmee") || normK.includes("aouisemee") || normK.includes("aouisesme") || normK.includes("aouiseme"))) ||
-            (isAvtErtuop && (normK.includes("avr6566gd") || normK.includes("avt"))) ||
+            (isBenBlue && (normK.includes("aouisesmee") || normK.includes("ben"))) ||
+            (isStevenAkan && (normK.includes("avr6566gd") || normK.includes("steven") || normK.includes("avt"))) ||
             (isBizRiv && (normK.includes("louis42111") || normK.includes("biz")))
           );
           return !isKeyMe;
@@ -1210,8 +1288,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           data.unreadCounts[userHandle] ??
           data.unreadCounts[userName] ??
           data.unreadCounts[userId] ??
-          (isAvtErtuop ? (data.unreadCounts["avr6566gd@gmail.com"] ?? data.unreadCounts["avr6566gd"] ?? data.unreadCounts["avt ertuop"] ?? data.unreadCounts["avtertuop"] ?? data.unreadCounts["avt"]) : undefined) ??
-          (isAouisesmee ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisemee@gmail.com"] ?? data.unreadCounts["aouisesmee"] ?? data.unreadCounts["aouisemee"]) : undefined) ??
+          (isStevenAkan ? (data.unreadCounts["avr6566gd@gmail.com"] ?? data.unreadCounts["avr6566gd"] ?? data.unreadCounts["steven akan"] ?? data.unreadCounts["stevenakan"] ?? data.unreadCounts["steven"] ?? data.unreadCounts["avt ertuop"] ?? data.unreadCounts["avtertuop"] ?? data.unreadCounts["avt"]) : undefined) ??
+          (isBenBlue ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisemee@gmail.com"] ?? data.unreadCounts["ben blue"] ?? data.unreadCounts["benblue"] ?? data.unreadCounts["ben"] ?? data.unreadCounts["aouisesmee"] ?? data.unreadCounts["aouisemee"]) : undefined) ??
           (isBizRiv ? (data.unreadCounts["louis42111@gmail.com"] ?? data.unreadCounts["louis42111"] ?? data.unreadCounts["biz riv"] ?? data.unreadCounts["bizriv"]) : undefined) ??
           0;
       } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
@@ -1230,8 +1308,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           (userHandle && (msgSenderId === userHandle || msgSenderName === userHandle)) ||
           (userName && msgSenderName === userName) ||
           (userId && msgSenderId === userId) ||
-          (isAouisesmee && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderEmail.includes("aouisesme") || msgSenderEmail.includes("aouiseme") || msgSenderName.includes("aouisesmee") || msgSenderName.includes("aouisemee") || msgSenderName.includes("aouisesme") || msgSenderName.includes("aouiseme"))) ||
-          (isAvtErtuop && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("avt") || msgSenderId.includes("avt"))) ||
+          (isBenBlue && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderName.includes("ben") || msgSenderId.includes("ben"))) ||
+          (isStevenAkan && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) ||
           (isBizRiv && (msgSenderEmail.includes("louis42111") || msgSenderName.includes("biz") || msgSenderId.includes("biz")));
 
         return {
@@ -1289,6 +1367,10 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         });
       }
     }
+  }
+
+  if (deletedThreadsModified) {
+    saveDeletedThreadsMap(deletedThreadsMap, currentUser);
   }
 
   // Sort threads newest first
@@ -1387,20 +1469,25 @@ export function subscribeToChats(
 
   // 0. Immediate load from LocalStorage cache so messages never disappear on refresh
   try {
-    const userDelKey = getDeletedThreadsKey(currentUser);
-    let deletedThreadsSet = new Set<string>();
-    try {
-      const storedDel = localStorage.getItem(userDelKey);
-      if (storedDel) {
-        JSON.parse(storedDel).forEach((id: string) => deletedThreadsSet.add(String(id).trim()));
-      }
-    } catch (e) {}
+    const deletedMap = getDeletedThreadsMap(currentUser);
 
     const rawCache = localStorage.getItem(cacheKey);
     if (rawCache) {
       const parsed = JSON.parse(rawCache);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const filteredParsed = parsed.filter((t: any) => !t || !deletedThreadsSet.has(String(t.id || "").trim()));
+        const filteredParsed = parsed.filter((t: any) => {
+          if (!t) return false;
+          const tId = String(t.id || "").trim();
+          const delTime = deletedMap.get(tId);
+          if (delTime !== undefined) {
+            const latestMsg = Math.max(
+              Number(t.createdAtMs || t.updatedAt || 0),
+              ...(Array.isArray(t.history) ? t.history.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)) : [])
+            );
+            return latestMsg > delTime + 500;
+          }
+          return true;
+        });
         cachedThreads = filteredParsed;
         onUpdate(filteredParsed);
       }
@@ -1419,19 +1506,10 @@ export function subscribeToChats(
         const json = await res.json();
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
         if (Array.isArray(items) && !isDisposed) {
-          const userDelKey = getDeletedThreadsKey(currentUser);
-          let deletedThreadsSet = new Set<string>();
-          try {
-            const storedDel = localStorage.getItem(userDelKey);
-            if (storedDel) {
-              JSON.parse(storedDel).forEach((id: string) => deletedThreadsSet.add(String(id).trim()));
-            }
-          } catch (e) {}
-
           const processed = processChatThreadsForUser(items, currentUser);
           const serverThreadIds = new Set(processed.map((t) => t.id));
-          const pendingThreads = cachedThreads.filter((t) => t && !serverThreadIds.has(t.id) && !deletedThreadsSet.has(String(t.id || "").trim()));
-          const merged = [...pendingThreads, ...processed].filter((t) => t && !deletedThreadsSet.has(String(t.id || "").trim()));
+          const pendingThreads = cachedThreads.filter((t) => t && !serverThreadIds.has(t.id));
+          const merged = [...pendingThreads, ...processed];
           updateThreads(merged);
         }
       }
@@ -1617,23 +1695,23 @@ export async function sendChatMessage(
   if (userName.toLowerCase() === "yoouz" || userEmail === "info@yoouz.com" || userEmail.endsWith("@yoouz.com")) {
     canonicalAliases.push("info@yoouz.com", "yoouz.com", "yoouz");
   }
-  if (recipientName.toLowerCase() === "avt ertuop" || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientId.includes("avt")) {
-    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
+  if (recipientName.toLowerCase().includes("steven") || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("steven") || recipientId.includes("avtertuop") || recipientId.includes("avt")) {
+    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "steven akan", "stevenakan", "steven", "avt ertuop", "avtertuop", "avt");
+  }
+  if (userName.toLowerCase().includes("steven") || userEmail === "avr6566gd@gmail.com" || userHandle.includes("steven") || userEmail.includes("avt") || userName.toLowerCase().includes("avt")) {
+    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "steven akan", "stevenakan", "steven", "avt ertuop", "avtertuop", "avt");
+  }
+  if (recipientName.toLowerCase().includes("ben") || recipientEmail.includes("aouisesmee") || recipientId.includes("ben") || recipientId.includes("aouisesmee")) {
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "ben blue", "benblue", "ben");
+  }
+  if (userName.toLowerCase().includes("ben") || userEmail.includes("aouisesmee") || userHandle.includes("ben")) {
+    canonicalAliases.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "ben blue", "benblue", "ben");
   }
   if (recipientName.toLowerCase() === "biz riv" || recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientId.includes("biz")) {
     canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
   }
-  if (recipientName.toLowerCase().includes("aouisesmee") || recipientEmail === "aouisesmee@gmail.com" || recipientId.includes("aouisesmee")) {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee");
-  }
-  if (userName.toLowerCase() === "avt ertuop" || userEmail === "avr6566gd@gmail.com" || userEmail.includes("avt") || userName.toLowerCase().includes("avt")) {
-    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
-  }
   if (userName.toLowerCase() === "biz riv" || userEmail === "louis42111@gmail.com" || userEmail.includes("biz") || userName.toLowerCase().includes("biz")) {
     canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
-  }
-  if (userName.toLowerCase().includes("aouisesmee") || userEmail === "aouisesmee@gmail.com") {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisesmee");
   }
 
   const participantsList = Array.from(
@@ -1658,6 +1736,7 @@ export async function sendChatMessage(
   const threadData = sanitizeData({
     id: threadId,
     participants: participantsList,
+    deletedForUsers: [],
     participantProfiles: {
       [userEmail || userHandle || "sender"]: {
         name: currentUser.name,
@@ -1693,12 +1772,24 @@ export async function sendChatMessage(
       ...(recipientId && { [recipientId.toLowerCase()]: nextUnreadCount, [recipientId.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
       ...(recipientHandle && { [recipientHandle.toLowerCase()]: nextUnreadCount, [recipientHandle.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
       ...(recipientName && { [recipientName.toLowerCase()]: nextUnreadCount, [recipientName.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
-      ...((recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientName.toLowerCase() === "avt ertuop" || recipientId.includes("avt")) ? {
+      ...((recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("steven") || recipientName.toLowerCase().includes("steven") || recipientId.includes("avt") || recipientName.toLowerCase().includes("avt")) ? {
         "avr6566gd@gmail.com": nextUnreadCount,
         "avr6566gd": nextUnreadCount,
+        "steven akan": nextUnreadCount,
+        "stevenakan": nextUnreadCount,
+        "steven": nextUnreadCount,
         "avt ertuop": nextUnreadCount,
         "avtertuop": nextUnreadCount,
         "avt": nextUnreadCount
+      } : {}),
+      ...((recipientEmail.includes("aouisesmee") || recipientId.includes("ben") || recipientName.toLowerCase().includes("ben")) ? {
+        "aouisesmee@gmail.com": nextUnreadCount,
+        "aouisemee@gmail.com": nextUnreadCount,
+        "aouisesmee": nextUnreadCount,
+        "aouisemee": nextUnreadCount,
+        "ben blue": nextUnreadCount,
+        "benblue": nextUnreadCount,
+        "ben": nextUnreadCount
       } : {}),
       ...((recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientName.toLowerCase() === "biz riv" || recipientId.includes("biz")) ? {
         "louis42111@gmail.com": nextUnreadCount,
@@ -1849,20 +1940,11 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
 export async function deleteChatThread(threadId: string, currentUser?: UserProfile | null): Promise<void> {
   if (!threadId) return;
 
-  const userDelKey = getDeletedThreadsKey(currentUser);
-
-  // 0. Add to persistent deleted threads blacklist in localStorage for this specific user/business
+  // 0. Add to persistent deleted threads map with current timestamp for this specific user/business
   try {
-    let deletedList: string[] = [];
-    const stored = localStorage.getItem(userDelKey);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) deletedList = parsed;
-    }
-    if (!deletedList.includes(threadId)) {
-      deletedList.push(threadId);
-      localStorage.setItem(userDelKey, JSON.stringify(deletedList));
-    }
+    const map = getDeletedThreadsMap(currentUser);
+    map.set(threadId, Date.now());
+    saveDeletedThreadsMap(map, currentUser);
   } catch (e) {}
   
   // 1. Remove from local storage chat cache for this user/business profile
