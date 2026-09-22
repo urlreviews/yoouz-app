@@ -105,6 +105,8 @@ export interface UserProfile {
   savedPlaceIds?: string[];
   savedCreators?: string[];
   notificationSettings?: NotificationPreferences;
+  isDeactivated?: boolean;
+  deactivatedAt?: string;
 }
 
 export interface VideoReview {

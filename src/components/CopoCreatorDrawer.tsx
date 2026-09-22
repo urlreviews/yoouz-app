@@ -24,7 +24,8 @@ import {
   Building2,
   ExternalLink,
   Flag,
-  ShieldAlert
+  ShieldAlert,
+  EyeOff
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString } from "../utils/placeUtils";
@@ -59,6 +60,7 @@ interface CopoCreatorDrawerProps {
   onRecordReview?: (place: any) => void;
   onDeleteVideo?: (videoId: string) => void;
   onSignOut?: () => void;
+  onDeactivateProfile?: () => Promise<void>;
   onDeleteProfile?: () => Promise<void>;
   isSaved?: boolean;
   onToggleSaveCreator?: (author: VideoAuthor) => void;
@@ -81,6 +83,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   onRecordReview,
   onDeleteVideo,
   onSignOut,
+  onDeactivateProfile,
   onDeleteProfile,
   isSaved: propIsSaved,
   onToggleSaveCreator,
@@ -92,6 +95,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const { t, currentLanguageMeta } = useLanguage();
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const [isDeactivateAccountModalOpen, setIsDeactivateAccountModalOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const [videoToDeleteInDrawer, setVideoToDeleteInDrawer] = useState<VideoReview | null>(null);
   const [copiedNotification, setCopiedNotification] = useState("");
@@ -1355,6 +1359,52 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         </div>
       </aside>
 
+      {/* Deactivate Account / Profile Confirmation Modal */}
+      {isDeactivateAccountModalOpen && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setIsDeactivateAccountModalOpen(false)}
+        >
+          <div
+            className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+              <EyeOff className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1.5">
+              <h3 className="text-base font-black text-white">{t("profile.deactivateAccountTitle", "Deactivate Profile & Account?")}</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                {t("profile.deactivateAccountDesc", "Your profile, videos, and comments will be temporarily hidden from the public feed. Nothing will be deleted. You can restore and reactivate your account at any time simply by logging back in.")}
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsDeactivateAccountModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-xs font-bold text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                {t("common.cancel", "Cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsDeactivateAccountModalOpen(false);
+                  if (onDeactivateProfile) {
+                    await onDeactivateProfile();
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs font-black transition-colors shadow-sm cursor-pointer"
+              >
+                {t("profile.deactivateAccountBtn", "Deactivate Account")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Account / Profile Confirmation Modal */}
       {isDeleteAccountModalOpen && (
         <div
@@ -1615,29 +1665,61 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </div>
 
               {/* Account Management & Danger Zone */}
-              {onDeleteProfile && (
-                <div className="pt-3 border-t border-zinc-800 space-y-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-200 block">
+              {(onDeactivateProfile || onDeleteProfile) && (
+                <div className="pt-3 border-t border-zinc-800 space-y-2.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">
                     {t("profile.accountManagement", "Account Management")}
                   </span>
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800">
-                    <div className="space-y-0.5 pr-2">
-                      <p className="text-xs font-bold text-zinc-200">{t("profile.deleteAccountTitle", "Delete Profile & Account")}</p>
-                      <p className="text-[11px] text-zinc-200 leading-snug">
-                        {t("profile.deleteAccountDesc", "Permanently remove your profile, videos, and review data.")}
-                      </p>
+
+                  {/* Deactivate Option (Temporary & Safe) */}
+                  {onDeactivateProfile && (
+                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 transition-colors">
+                      <div className="space-y-0.5 pr-2">
+                        <div className="flex items-center gap-1.5">
+                          <EyeOff className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <p className="text-xs font-bold text-zinc-200">{t("profile.deactivateAccountTitle", "Deactivate Account")}</p>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/20">
+                            {t("profile.reversible", "Reversible")}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 leading-snug">
+                          {t("profile.deactivateAccountDescShort", "Hide your profile & videos. Reactivate anytime simply by logging back in.")}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditModalOpen(false);
+                          setIsDeactivateAccountModalOpen(true);
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 hover:text-amber-200 text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
+                      >
+                        {t("profile.deactivateBtn", "Deactivate")}
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditModalOpen(false);
-                        setIsDeleteAccountModalOpen(true);
-                      }}
-                      className="px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-zinc-200 hover:bg-zinc-800 hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
-                    >
-                      {t("common.delete", "Delete")}
-                    </button>
-                  </div>
+                  )}
+
+                  {/* Delete Option (Permanent) */}
+                  {onDeleteProfile && (
+                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800">
+                      <div className="space-y-0.5 pr-2">
+                        <p className="text-xs font-bold text-zinc-200">{t("profile.deleteAccountTitle", "Delete Profile & Account")}</p>
+                        <p className="text-[11px] text-zinc-400 leading-snug">
+                          {t("profile.deleteAccountDesc", "Permanently remove your profile, videos, and review data.")}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditModalOpen(false);
+                          setIsDeleteAccountModalOpen(true);
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-zinc-200 hover:bg-zinc-800 hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
+                      >
+                        {t("common.delete", "Delete")}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </form>

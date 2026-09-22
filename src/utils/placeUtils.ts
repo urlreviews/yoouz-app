@@ -1053,6 +1053,112 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
 }
 
 /**
+ * Deactivated Users Helpers:
+ * When an account is deactivated, their profile and reviews are hidden from public views.
+ * When they log back in, they are immediately reactivated and restored without glitches.
+ */
+export function getDeactivatedUserIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("yoouz_deactivated_users");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map((s) => String(s).toLowerCase().trim()).filter(Boolean) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function recordDeactivatedUsersInLocalStorage(ids: string[]): void {
+  if (typeof window === "undefined" || !Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const current = getDeactivatedUserIds();
+    const set = new Set(current);
+    let changed = false;
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).toLowerCase().trim();
+      const withoutAt = clean.replace(/^@+/, "");
+      const username = clean.includes("@") ? clean.split("@")[0] : withoutAt;
+      const variants = [clean, withoutAt, username];
+      for (const v of variants) {
+        if (v && !set.has(v)) {
+          set.add(v);
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      localStorage.setItem("yoouz_deactivated_users", JSON.stringify(Array.from(set)));
+    }
+  } catch (e) {}
+}
+
+export function unrecordDeactivatedUsersInLocalStorage(ids: string[]): void {
+  if (typeof window === "undefined" || !Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const current = getDeactivatedUserIds();
+    const set = new Set(current);
+    let changed = false;
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).toLowerCase().trim();
+      const withoutAt = clean.replace(/^@+/, "");
+      const username = clean.includes("@") ? clean.split("@")[0] : withoutAt;
+      const variants = [clean, withoutAt, username];
+      for (const v of variants) {
+        if (set.has(v)) {
+          set.delete(v);
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      localStorage.setItem("yoouz_deactivated_users", JSON.stringify(Array.from(set)));
+    }
+  } catch (e) {}
+}
+
+export function isUserDeactivated(userOrIdOrEmail: any, deactivatedIds?: string[]): boolean {
+  if (!userOrIdOrEmail) return false;
+  const list = deactivatedIds || getDeactivatedUserIds();
+  if (!list || list.length === 0) return false;
+  const set = new Set(list.map((s) => String(s).toLowerCase().trim()).filter(Boolean));
+
+  const checkVal = (v: any): boolean => {
+    if (!v) return false;
+    const s = String(v).toLowerCase().trim();
+    if (!s) return false;
+    if (set.has(s)) return true;
+    const withoutAt = s.replace(/^@+/, "");
+    if (set.has(withoutAt)) return true;
+    const username = s.includes("@") ? s.split("@")[0] : withoutAt;
+    if (set.has(username)) return true;
+    return false;
+  };
+
+  if (typeof userOrIdOrEmail === "string") {
+    return checkVal(userOrIdOrEmail);
+  }
+
+  if (typeof userOrIdOrEmail === "object") {
+    const u = userOrIdOrEmail;
+    if (u.isDeactivated === true) return true;
+    if (u.id && checkVal(u.id)) return true;
+    if (u.uid && checkVal(u.uid)) return true;
+    if (u.userId && checkVal(u.userId)) return true;
+    if (u.email && checkVal(u.email)) return true;
+    if (u.userEmail && checkVal(u.userEmail)) return true;
+    if (u.handle && checkVal(u.handle)) return true;
+    if (u.name && checkVal(u.name)) return true;
+    if (u.username && checkVal(u.username)) return true;
+    if (u.author && isUserDeactivated(u.author, list)) return true;
+  }
+
+  return false;
+}
+
+/**
  * Global User Registry and in-memory cache for instant synchronous resolution across all views
  */
 let memoryUserRegistry: Record<string, any> = {};

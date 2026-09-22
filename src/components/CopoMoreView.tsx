@@ -37,7 +37,8 @@ import {
   HelpCircle as QuestionIcon,
   Loader2,
   Download,
-  Smartphone
+  Smartphone,
+  EyeOff
 } from "lucide-react";
 import { UserProfile, NavSection } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -49,6 +50,7 @@ interface CopoMoreViewProps {
   onSuccessAuth?: (user: UserProfile) => void;
   onSignOut: () => void;
   onNavigate: (section: NavSection) => void;
+  onDeactivateProfile?: () => Promise<void>;
   onDeleteProfile: () => Promise<void>;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
   onOpenComparison?: (competitor?: string) => void;
@@ -67,6 +69,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   currentUser,
   onSignOut,
   onNavigate,
+  onDeactivateProfile,
   onDeleteProfile,
   onOpenLegal,
   onOpenComparison,
@@ -86,6 +89,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteInputText, setDeleteInputText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Deactivate Confirmation Modal State
+  const [isDeactivateConfirmOpen, setIsDeactivateConfirmOpen] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   // Contact Support Form State
   const [contactCategory, setContactCategory] = useState("support");
@@ -906,6 +913,40 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 </div>
               </div>
 
+              {/* Deactivate Account (Temporary & Safe - Only for signed in user) */}
+              {currentUser && onDeactivateProfile && (
+                <div className="bg-zinc-900 rounded-3xl p-8 border border-amber-500/30 shadow-xs space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                      <EyeOff className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-black text-white">{t("trustCenter.deactivateAccountTitle", "Deactivate Account (Temporary Hide)")}</h3>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/20">
+                          {t("profile.reversible", "Reversible")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-300 leading-relaxed">
+                        {t("trustCenter.deactivateAccountDesc", "Take a break without losing any of your data. Your profile and reviews will be temporarily hidden from the public feed. When you log back in, everything is instantly restored.")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-amber-500/20 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <p className="text-xs text-zinc-400 font-medium">
+                      {t("trustCenter.deactivateAccountWarning", "Confirming will log you out and hide your content until you sign in again.")}
+                    </p>
+                    <button
+                      onClick={() => setIsDeactivateConfirmOpen(true)}
+                      className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs font-black shadow-md shadow-amber-500/15 transition-all cursor-pointer shrink-0"
+                    >
+                      {t("trustCenter.deactivateAccountBtn", "Deactivate Account")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Danger Zone: Account Deletion (Only for signed in user) */}
               {currentUser && (
                 <div className="bg-zinc-900 rounded-3xl p-8 border border-rose-900/50 shadow-xs space-y-4">
@@ -1302,6 +1343,60 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           </div>
         </footer>
       </main>
+
+      {/* Deactivate Confirmation Modal */}
+      {isDeactivateConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsDeactivateConfirmOpen(false)}
+        >
+          <div
+            className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+              <EyeOff className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1.5">
+              <h3 className="text-base font-black text-white">{t("trustCenter.deactivateAccountConfirmTitle", "Deactivate Your Account?")}</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                {t("trustCenter.deactivateAccountConfirmDesc", "Your profile and videos will be temporarily hidden from the public feed. None of your data is erased. You can reactivate at any time simply by logging back in.")}
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsDeactivateConfirmOpen(false)}
+                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-200 text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                {t("common.cancel", "Cancel")}
+              </button>
+              <button
+                type="button"
+                disabled={isDeactivating}
+                onClick={async () => {
+                  setIsDeactivating(true);
+                  try {
+                    if (onDeactivateProfile) {
+                      await onDeactivateProfile();
+                    }
+                    setIsDeactivateConfirmOpen(false);
+                  } catch (e) {
+                    console.error(e);
+                  } finally {
+                    setIsDeactivating(false);
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-zinc-950 text-xs font-black shadow-md shadow-amber-500/15 transition-all cursor-pointer"
+              >
+                {isDeactivating ? t("trustCenter.deactivating", "Deactivating...") : t("trustCenter.confirmDeactivate", "Deactivate")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {isDeleteConfirmOpen && (

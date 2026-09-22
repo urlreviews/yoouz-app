@@ -539,6 +539,12 @@ export function useFeedPagination() {
             } else if (payload.type === "user_restored") {
               const uIds = Array.isArray(payload.userIds) ? payload.userIds : [payload.userId, payload.email].filter(Boolean);
               window.dispatchEvent(new CustomEvent("copo-user-restored", { detail: { ids: uIds } }));
+            } else if (payload.type === "user_deactivated") {
+              const uIds = Array.isArray(payload.userIds) ? payload.userIds : [payload.userId, payload.email, payload.name, payload.handle].filter(Boolean);
+              window.dispatchEvent(new CustomEvent("copo-user-deactivated", { detail: { userIds: uIds, email: payload.email, name: payload.name, handle: payload.handle } }));
+            } else if (payload.type === "user_reactivated") {
+              const uIds = Array.isArray(payload.userIds) ? payload.userIds : [payload.userId, payload.email, payload.name, payload.handle].filter(Boolean);
+              window.dispatchEvent(new CustomEvent("copo-user-reactivated", { detail: { userIds: uIds, email: payload.email, name: payload.name, handle: payload.handle } }));
             } else if (payload.type === "users_purged") {
               window.dispatchEvent(new CustomEvent("copo-users-purged"));
             } else if (payload.type === "init") {
@@ -555,6 +561,9 @@ export function useFeedPagination() {
               }
               if (Array.isArray(payload.deletedUserIds)) {
                 window.dispatchEvent(new CustomEvent("copo-init-deleted-users", { detail: { deletedUserIds: payload.deletedUserIds } }));
+              }
+              if (Array.isArray(payload.deactivatedUserIds)) {
+                window.dispatchEvent(new CustomEvent("copo-init-deactivated-users", { detail: { deactivatedUserIds: payload.deactivatedUserIds } }));
               }
             } else if (payload.type === "bulk_videos_deleted" && Array.isArray(payload.videoIds)) {
               const idSet = new Set(payload.videoIds.map(String));

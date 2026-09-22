@@ -42,7 +42,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, YOOUZ_VIDEOS_CACHE_KEY } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -415,6 +415,7 @@ export function App() {
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState<boolean>(false);
   const [comparisonCompetitor, setComparisonCompetitor] = useState<string>('yelp');
   const [deleteSuccessToast, setDeleteSuccessToast] = useState<boolean>(false);
+  const [deactivateSuccessToast, setDeactivateSuccessToast] = useState<boolean>(false);
 
   const forceLogoutUser = (reason?: string) => {
     try {
@@ -1430,13 +1431,28 @@ export function App() {
               const lName = data.user.lastName || "";
               const avatarSvg = generateGoogleLetterAvatarSvg(fName, 128, data.user.email || magicEmail);
               const profile: UserProfile = {
+                id: data.user.uid || data.user.id,
                 name: data.user.name || fName,
                 email: data.user.email || magicEmail,
-                avatar: avatarSvg,
-                bio: "Food explorer linking real businesses and websites with authentic 60-second video reviews.",
-                memberSince: "August 2026"
+                avatar: data.user.avatar || avatarSvg,
+                handle: data.user.handle,
+                bio: data.user.bio || "Food explorer linking real businesses and websites with authentic 60-second video reviews.",
+                memberSince: data.user.memberSince || "August 2026",
+                isDeactivated: false
               };
+              const reactivateIds = [magicEmail, data.user.email, data.user.id, data.user.uid, profile.name, profile.handle].filter(Boolean);
+              unrecordDeactivatedUsersInLocalStorage(reactivateIds);
+              unrecordDeletedUsersInLocalStorage(reactivateIds);
+              fetch('/api/user/reactivate-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: profile.id, email: profile.email, name: profile.name, handle: profile.handle })
+              }).catch(() => {});
+              window.dispatchEvent(new CustomEvent("copo-user-reactivated", {
+                detail: { userIds: reactivateIds }
+              }));
               setCurrentUser(profile);
+              localStorage.setItem("copo_user", JSON.stringify(profile));
               localStorage.setItem("copo_user_profile", JSON.stringify(profile));
               // Clean query parameters from URL
               const cleanUrl = window.location.pathname;
@@ -1577,6 +1593,16 @@ export function App() {
 
         if (user.email || user.uid) {
           unrecordDeletedUsersInLocalStorage([user.email || "", user.uid || "", profileObj.id, profileObj.name]);
+          const reactivateIds = [user.email || "", user.uid || "", profileObj.id, profileObj.name, profileObj.handle].filter(Boolean);
+          unrecordDeactivatedUsersInLocalStorage(reactivateIds);
+          fetch('/api/user/reactivate-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: profileObj.id, uid: user.uid, email: user.email, name: profileObj.name, handle: profileObj.handle })
+          }).catch(() => {});
+          window.dispatchEvent(new CustomEvent("copo-user-reactivated", {
+            detail: { userIds: reactivateIds }
+          }));
         }
         setCurrentUser(profileObj);
         try {
@@ -1633,10 +1659,16 @@ export function App() {
                 followingCount: fAuthors.length + fPlaces.length,
                 followersCount: typeof data.followersCount === "number" ? data.followersCount : (profileObj.followersCount || 0),
                 followers: Array.isArray(data.followers) ? data.followers : (profileObj.followers || []),
+                isDeactivated: false,
                 notificationSettings: data.notificationSettings
                   ? { ...DEFAULT_NOTIFICATION_PREFERENCES, ...data.notificationSettings }
                   : profileObj.notificationSettings
               };
+              if (data.isDeactivated) {
+                updateDoc(doc(db, "users", user.uid), {
+                  isDeactivated: false
+                }).catch(() => {});
+              }
               setCurrentUser(updatedProfile);
               try {
                 localStorage.setItem("copo_user_profile", JSON.stringify(updatedProfile));
@@ -2252,6 +2284,106 @@ export function App() {
 
       return nextProfile;
     });
+  };
+
+  const handleDeactivateProfile = async () => {
+    const userToDeactivate = {
+      id: currentUser?.uid || currentUser?.id || auth.currentUser?.uid || "",
+      uid: currentUser?.uid || currentUser?.id || auth.currentUser?.uid || "",
+      email: currentUser?.email || "",
+      name: currentUser?.name || "",
+      handle: currentUser?.handle || ""
+    };
+
+    const userIdentifiers = [
+      userToDeactivate.id,
+      userToDeactivate.uid,
+      userToDeactivate.email,
+      userToDeactivate.name,
+      userToDeactivate.handle
+    ].filter(Boolean);
+
+    // 1. Record in local deactivated list so profile and videos are instantly hidden from public feeds
+    recordDeactivatedUsersInLocalStorage(userIdentifiers);
+
+    // 2. Immediately strip videos authored by this user from active feed
+    setVideos((prev) => prev.filter((v) => !isAuthorMatch(v, userToDeactivate)));
+
+    // 3. Immediately hide reviews authored by this user from places state
+    setPlaces((prev) =>
+      prev.map((p) => ({
+        ...p,
+        reviews: (p.reviews || []).filter((r) => !isAuthorMatch(r, userToDeactivate))
+      }))
+    );
+
+    // 4. Remove from all registered users in local memory
+    setAllRegisteredUsers((prev) => prev.filter((u) => !isAuthorMatch(u, userToDeactivate)));
+
+    // 5. Close drawer if open
+    setSelectedAuthorForDrawer(null);
+
+    // 6. Dispatch instant local event for real-time reactivity across all components
+    window.dispatchEvent(
+      new CustomEvent("copo-user-deactivated", {
+        detail: {
+          userIds: userIdentifiers,
+          email: userToDeactivate.email,
+          name: userToDeactivate.name,
+          handle: userToDeactivate.handle
+        }
+      })
+    );
+
+    // 7. Notify backend to hide from public feeds & mark deactivated
+    try {
+      await fetch('/api/user/deactivate-account', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...userToDeactivate,
+          isDeactivated: true,
+          deactivatedAt: new Date().toISOString()
+        })
+      });
+    } catch (err) {
+      console.warn("Backend deactivate request failed:", err);
+    }
+
+    // 8. Update in BunnyDB
+    try {
+      const docId = userToDeactivate.id || userToDeactivate.uid;
+      if (docId) {
+        await updateDoc(doc(db, "users", docId), {
+          isDeactivated: true,
+          deactivatedAt: new Date().toISOString()
+        }).catch(() => {});
+      }
+    } catch (e) {}
+
+    // 9. Clean sign out
+    try {
+      await logOutUser();
+    } catch (e) {
+      console.warn("Failed to log out user during profile deactivation:", e);
+    }
+
+    // 10. Clear active session (data remains 100% intact on server/storage!)
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem("copo_user_profile");
+      localStorage.removeItem("copo_user");
+      localStorage.removeItem("copo_business_verified_session");
+      sessionStorage.removeItem("copo_temp_user");
+      sessionStorage.removeItem("copo_business_session");
+    } catch (e) {}
+
+    setDeactivateSuccessToast(true);
+    setTimeout(() => {
+      setDeactivateSuccessToast(false);
+    }, 5000);
+
+    setActiveSection("home");
   };
 
   const handleDeleteProfile = async () => {
@@ -2906,11 +3038,45 @@ export function App() {
       }
     };
 
+    const handleInitDeactivatedUsers = (e: any) => {
+      const serverDeactivated = e.detail?.deactivatedUserIds;
+      if (Array.isArray(serverDeactivated) && serverDeactivated.length > 0) {
+        recordDeactivatedUsersInLocalStorage(serverDeactivated);
+        setAllRegisteredUsers(prev => prev.filter(u => !isUserDeactivated(u)));
+        setVideos(prev => prev.filter(v => !isUserDeactivated(v.author || v.userId || v.authorName)));
+      }
+    };
+
     const handleUserRestored = (e: any) => {
       const ids = e.detail?.ids || [];
       if (Array.isArray(ids) && ids.length > 0) {
         unrecordDeletedUsersInLocalStorage(ids);
       }
+    };
+
+    const handleUserDeactivated = (e: any) => {
+      const userIdentifiers = e.detail?.userIds || [];
+      if (Array.isArray(userIdentifiers) && userIdentifiers.length > 0) {
+        recordDeactivatedUsersInLocalStorage(userIdentifiers);
+      }
+      setAllRegisteredUsers(prev => prev.filter(u => !isUserDeactivated(u)));
+      setVideos(prev => prev.filter(v => !isUserDeactivated(v.author || v.userId || v.authorName)));
+      setSelectedAuthorForDrawer(prev => (prev && isUserDeactivated(prev)) ? null : prev);
+    };
+
+    const handleUserReactivated = (e: any) => {
+      const ids = e.detail?.userIds || [];
+      if (Array.isArray(ids) && ids.length > 0) {
+        unrecordDeactivatedUsersInLocalStorage(ids);
+      }
+      fetch('/api/videos')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setVideos(data);
+          }
+        })
+        .catch(() => {});
     };
 
     const checkActiveUserDeleted = () => {
@@ -2925,6 +3091,10 @@ export function App() {
         checkActiveUserDeleted();
         setAllRegisteredUsers(prev => prev.filter(u => !isUserDeleted(u)));
         setVideos(prev => prev.filter(v => !isUserDeleted(v.author || v.userId || v.authorName)));
+      }
+      if (e.key === "yoouz_deactivated_users") {
+        setAllRegisteredUsers(prev => prev.filter(u => !isUserDeactivated(u)));
+        setVideos(prev => prev.filter(v => !isUserDeactivated(v.author || v.userId || v.authorName)));
       }
     };
 
@@ -2944,8 +3114,11 @@ export function App() {
     window.addEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
     window.addEventListener("copo-user-deleted", handleUserDeleted);
     window.addEventListener("copo-user-restored", handleUserRestored);
+    window.addEventListener("copo-user-deactivated", handleUserDeactivated);
+    window.addEventListener("copo-user-reactivated", handleUserReactivated);
     window.addEventListener("copo-users-purged", handleUsersPurged);
     window.addEventListener("copo-init-deleted-users", handleInitDeletedUsers);
+    window.addEventListener("copo-init-deactivated-users", handleInitDeactivatedUsers);
     window.addEventListener("copo-place-updated", handlePlaceUpdatedEvent);
     window.addEventListener("yoouz-place-updated", handlePlaceUpdatedEvent);
     window.addEventListener("storage", handleStorageChange);
@@ -2960,8 +3133,11 @@ export function App() {
       window.removeEventListener("copo-init-deleted-places", handleInitDeletedPlaces);
       window.removeEventListener("copo-user-deleted", handleUserDeleted);
       window.removeEventListener("copo-user-restored", handleUserRestored);
+      window.removeEventListener("copo-user-deactivated", handleUserDeactivated);
+      window.removeEventListener("copo-user-reactivated", handleUserReactivated);
       window.removeEventListener("copo-users-purged", handleUsersPurged);
       window.removeEventListener("copo-init-deleted-users", handleInitDeletedUsers);
+      window.removeEventListener("copo-init-deactivated-users", handleInitDeactivatedUsers);
       window.removeEventListener("copo-place-updated", handlePlaceUpdatedEvent);
       window.removeEventListener("yoouz-place-updated", handlePlaceUpdatedEvent);
       window.removeEventListener("storage", handleStorageChange);
@@ -3309,8 +3485,8 @@ export function App() {
 
   // Active Feed Videos (Filtered by Fullscreen Context or Drawer state if active, otherwise Home feed)
   const activeFeedVideos = useMemo(() => {
-    // Filter out hidden/blocked videos
-    const visibleVideos = videos.filter((v) => !hiddenVideoIds.includes(v.id));
+    // Filter out hidden/blocked videos and deactivated users
+    const visibleVideos = videos.filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName));
 
     if (embedTargetId) {
       const cleanSlug = embedTargetId.toLowerCase().trim();
@@ -3397,10 +3573,10 @@ export function App() {
       return followed.length > 0 ? followed : (visibleVideos.length > 0 ? visibleVideos : videos);
     }
 
-    // Emergency Fallback: If we have ANY videos but they are ALL hidden or filtered, show the raw list
+    // Emergency Fallback: If we have ANY videos but they are ALL hidden or filtered, show non-deactivated
     if (visibleVideos.length === 0 && videos.length > 0) {
-      console.warn("[DEBUG App.tsx] Emergency fallback triggered: visibleVideos is empty but videos has items.");
-      return videos;
+      const nonDeactivated = videos.filter((v) => !isUserDeactivated(v.author || v.userId || v.authorName));
+      return nonDeactivated;
     }
 
     return visibleVideos;
@@ -5649,6 +5825,34 @@ export function App() {
             onClose={handleCloseDrawers}
             onSelectVideo={(videoId) => handleSelectVideoById(videoId, "creator")}
             onToggleFollow={handleToggleFollow}
+            onStartChat={handleStartChat}
+            onUpdateProfile={handleUpdateProfile}
+            onOpenReport={(author) => handleOpenReport({ type: "user", author })}
+            onRecordReview={handleOpenCreateReview}
+            onDeleteVideo={handleDeleteUserVideo}
+            isSaved={selectedAuthorForDrawer ? savedCreators.includes(selectedAuthorForDrawer.name.toLowerCase()) : false}
+            onToggleSaveCreator={handleToggleSaveCreator}
+            onSignOut={async () => {
+              await logOutUser();
+              setCurrentUser(null);
+              try {
+                localStorage.removeItem("copo_user_profile");
+              } catch (e) {}
+              handleCloseDrawers();
+            }}
+            onDeactivateProfile={async () => {
+              await handleDeactivateProfile();
+              handleCloseDrawers();
+            }}
+            onDeleteProfile={async () => {
+              await handleDeleteProfile();
+              handleCloseDrawers();
+            }}
+            onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
+            onOpenPlace={(placeId) => {
+              setSelectedAuthorForDrawer(null);
+              setSelectedPlaceIdForDrawer(placeId);
+            }}
           />
         )}
 
@@ -5889,6 +6093,10 @@ export function App() {
             try {
               localStorage.removeItem("copo_user_profile");
             } catch (e) {}
+            handleCloseDrawers();
+          }}
+          onDeactivateProfile={async () => {
+            await handleDeactivateProfile();
             handleCloseDrawers();
           }}
           onDeleteProfile={async () => {
@@ -6642,6 +6850,7 @@ export function App() {
                     setActiveSection(section);
                   }
                 }}
+                onDeactivateProfile={handleDeactivateProfile}
                 onDeleteProfile={handleDeleteProfile}
               />
             )}
@@ -6874,6 +7083,17 @@ export function App() {
           handleOpenLegal(tab);
         }}
         onSuccess={(user) => {
+          const anyUser = user as any;
+          const userIds = [anyUser.id || anyUser.uid, anyUser.email, anyUser.name, anyUser.handle].filter(Boolean);
+          unrecordDeactivatedUsersInLocalStorage(userIds);
+          fetch('/api/user/reactivate-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: anyUser.id || anyUser.uid, email: anyUser.email, name: anyUser.name, handle: anyUser.handle })
+          }).catch(() => {});
+          window.dispatchEvent(new CustomEvent("copo-user-reactivated", {
+            detail: { userIds }
+          }));
           setCurrentUser(user);
           setIsAuthModalOpen(false);
           if (authIntent === 'record') {
@@ -6981,6 +7201,21 @@ export function App() {
           <div className="space-y-0.5">
             <p className="text-xs font-black">Profile Successfully Deleted</p>
             <p className="text-[10px] text-zinc-200 font-semibold">Your profile data has been cleared permanently.</p>
+          </div>
+        </div>
+      )}
+
+      {deactivateSuccessToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white rounded-2xl px-5 py-4 border border-zinc-800 shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-xs font-black">Account Deactivated</p>
+            <p className="text-[10px] text-zinc-300 font-semibold">Your profile and reviews are now hidden. Sign in anytime to reactivate!</p>
           </div>
         </div>
       )}

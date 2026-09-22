@@ -180,6 +180,7 @@ const placesIndexPath = path.join(globalUploadsDir, "places_index.json");
 const deletedReviewsIndexPath = path.join(globalUploadsDir, "deleted_reviews_index.json");
 const deletedPlacesIndexPath = path.join(globalUploadsDir, "deleted_places_index.json");
 const deletedUsersIndexPath = path.join(globalUploadsDir, "deleted_users_index.json");
+const deactivatedUsersIndexPath = path.join(globalUploadsDir, "deactivated_users_index.json");
 const deletedCommentsIndexPath = path.join(globalUploadsDir, "deleted_comments_index.json");
 
 function readPlacesIndex(): any[] {
@@ -507,6 +508,111 @@ function recordDeletedUserIds(ids: string[]): void {
   } catch (e) {}
 }
 
+function readDeactivatedUsersIndex(): string[] {
+  try {
+    if (fs.existsSync(deactivatedUsersIndexPath)) {
+      const raw = fs.readFileSync(deactivatedUsersIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function isDeactivatedUserServer(itemOrIdOrEmail: any, deactivatedSet?: Set<string>): boolean {
+  if (!itemOrIdOrEmail) return false;
+  const list = readDeactivatedUsersIndex();
+  const set = deactivatedSet || new Set(list.map(s => s.toLowerCase().trim()).filter(Boolean));
+  if (set.size === 0) return false;
+
+  const extractAndCheck = (val: string): boolean => {
+    if (!val || typeof val !== 'string') return false;
+    const clean = val.toLowerCase().trim();
+    if (!clean) return false;
+    const cleanWithoutAt = clean.replace(/^@+/, '');
+    const username = clean.includes('@') ? clean.split('@')[0] : cleanWithoutAt;
+    const usrKey = clean.startsWith('usr_') ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    return set.has(clean) || set.has(cleanWithoutAt) || set.has(username) || set.has(usrKey);
+  };
+
+  if (typeof itemOrIdOrEmail === 'string') {
+    return extractAndCheck(itemOrIdOrEmail);
+  }
+
+  if (typeof itemOrIdOrEmail === 'object') {
+    const u = itemOrIdOrEmail;
+    if (u.isDeactivated === true) return true;
+    if (u.id && extractAndCheck(String(u.id))) return true;
+    if (u.uid && extractAndCheck(String(u.uid))) return true;
+    if (u.userId && extractAndCheck(String(u.userId))) return true;
+    if (u.email && extractAndCheck(String(u.email))) return true;
+    if (u.userEmail && extractAndCheck(String(u.userEmail))) return true;
+    if (u.handle && extractAndCheck(String(u.handle))) return true;
+    if (u.name && extractAndCheck(String(u.name))) return true;
+    if (u.username && extractAndCheck(String(u.username))) return true;
+    if (u.author && isDeactivatedUserServer(u.author, set)) return true;
+    if (u.authorName && extractAndCheck(String(u.authorName))) return true;
+    if (u.authorHandle && extractAndCheck(String(u.authorHandle))) return true;
+  }
+
+  return false;
+}
+
+function unrecordDeactivatedUserIds(ids: string[]): void {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const list = readDeactivatedUsersIndex();
+    const set = new Set(list.map(s => s.toLowerCase().trim()).filter(Boolean));
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).trim().toLowerCase();
+      const withoutAt = clean.replace(/^@+/, '');
+      const username = clean.includes('@') ? clean.split('@')[0] : withoutAt;
+      const usrKey = clean.startsWith('usr_') ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+      set.delete(clean);
+      set.delete(withoutAt);
+      set.delete(username);
+      set.delete(usrKey);
+    }
+    const updated = Array.from(set);
+    if (!fs.existsSync(globalUploadsDir)) {
+      fs.mkdirSync(globalUploadsDir, { recursive: true });
+    }
+    fs.writeFileSync(deactivatedUsersIndexPath, JSON.stringify(updated, null, 2), "utf8");
+    try {
+      feedCache.lastFetched = 0;
+    } catch (cacheErr) {}
+  } catch (e) {}
+}
+
+function recordDeactivatedUserIds(ids: string[]): void {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  try {
+    const list = readDeactivatedUsersIndex();
+    const set = new Set(list.map(s => s.toLowerCase().trim()).filter(Boolean));
+    for (const rawId of ids) {
+      if (!rawId) continue;
+      const clean = String(rawId).trim().toLowerCase();
+      const withoutAt = clean.replace(/^@+/, '');
+      const username = clean.includes('@') ? clean.split('@')[0] : withoutAt;
+      const usrKey = clean.startsWith('usr_') ? clean : `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+      if (clean) set.add(clean);
+      if (withoutAt) set.add(withoutAt);
+      if (username) set.add(username);
+      if (usrKey) set.add(usrKey);
+    }
+    if (!fs.existsSync(globalUploadsDir)) {
+      fs.mkdirSync(globalUploadsDir, { recursive: true });
+    }
+    fs.writeFileSync(deactivatedUsersIndexPath, JSON.stringify(Array.from(set), null, 2), "utf8");
+    try {
+      feedCache.lastFetched = 0;
+    } catch (cacheErr) {}
+  } catch (e) {}
+}
+
 function readDeletedCommentsIndex(): string[] {
   try {
     if (fs.existsSync(deletedCommentsIndexPath)) {
@@ -544,6 +650,7 @@ function recordDeletedCommentId(id: string): void {
 function readReviewsIndex(): any[] {
   const deletedSet = new Set(readDeletedReviewsIndex());
   const deletedCommentsSet = new Set(readDeletedCommentsIndex());
+  const deactivatedSet = new Set(readDeactivatedUsersIndex().map(s => s.toLowerCase().trim()).filter(Boolean));
   try {
     if (fs.existsSync(reviewsIndexPath)) {
       const raw = fs.readFileSync(reviewsIndexPath, "utf8");
@@ -552,7 +659,7 @@ function readReviewsIndex(): any[] {
         let dirty = false;
         const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
         const processed = parsed
-          .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)))
+          .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)) && !isDeactivatedUserServer(r.author || r.userId || r.userEmail, deactivatedSet))
           .map((r: any) => {
             if (Array.isArray(r.comments) && r.comments.length > 0) {
               const prevLen = r.comments.length;
@@ -4746,7 +4853,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
       ensureWelcomeNotificationsForAllUsers().catch(() => {});
       items = items.filter((u: any) => {
         if (!u) return false;
-        return !isDeletedUserServer(u);
+        return !isDeletedUserServer(u) && !isDeactivatedUserServer(u);
       });
     }
 
@@ -5372,6 +5479,104 @@ app.post('/api/user/delete-account', express.json(), async (req, res) => {
     const { id, uid, email, name, handle } = req.body || {};
     const result = await purgeUserFromAllStores(id || uid, email, name, handle);
     res.json({ success: true, message: "Account permanently deleted and purged from all records.", ...result });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/user/deactivate-account', express.json(), async (req, res) => {
+  try {
+    const { id, uid, email, name, handle } = req.body || {};
+    const identifiers = [id, uid, email, name, handle].filter(Boolean);
+    recordDeactivatedUserIds(identifiers);
+
+    // Update user document if it exists in local store
+    const userKey = id || uid || (email ? `usr_${email.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}` : '');
+    if (userKey) {
+      try {
+        const userDocPath = path.join(process.cwd(), "uploads", "nosql", "users", `${encodeURIComponent(userKey)}.json`);
+        if (fs.existsSync(userDocPath)) {
+          const raw = fs.readFileSync(userDocPath, "utf8");
+          const userObj = JSON.parse(raw);
+          userObj.isDeactivated = true;
+          userObj.deactivatedAt = new Date().toISOString();
+          fs.writeFileSync(userDocPath, JSON.stringify(userObj, null, 2), "utf8");
+        }
+      } catch (e) {}
+    }
+
+    // Refresh feed cache to hide deactivated user's videos from public feed
+    if (feedCache.videos) {
+      const deactSet = new Set(readDeactivatedUsersIndex().map(s => s.toLowerCase().trim()));
+      feedCache.videos = feedCache.videos.filter((v: any) => !isDeactivatedUserServer(v.author || v.userId || v.userEmail, deactSet));
+    }
+
+    // Broadcast SSE event
+    try {
+      broadcastSseEvent({
+        type: "user_deactivated",
+        userIds: identifiers,
+        email,
+        name,
+        handle
+      });
+    } catch (sseErr) {}
+
+    res.json({ success: true, message: "Account deactivated. Profile and reviews are now hidden." });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/user/reactivate-account', express.json(), async (req, res) => {
+  try {
+    const { id, uid, email, name, handle } = req.body || {};
+    const identifiers = [id, uid, email, name, handle].filter(Boolean);
+    unrecordDeactivatedUserIds(identifiers);
+
+    // Restore user document in local store
+    const userKey = id || uid || (email ? `usr_${email.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}` : '');
+    if (userKey) {
+      try {
+        const userDocPath = path.join(process.cwd(), "uploads", "nosql", "users", `${encodeURIComponent(userKey)}.json`);
+        if (fs.existsSync(userDocPath)) {
+          const raw = fs.readFileSync(userDocPath, "utf8");
+          const userObj = JSON.parse(raw);
+          userObj.isDeactivated = false;
+          delete userObj.deactivatedAt;
+          fs.writeFileSync(userDocPath, JSON.stringify(userObj, null, 2), "utf8");
+        }
+      } catch (e) {}
+    }
+
+    // Refresh video feed cache so user's reviews immediately reappear
+    try {
+      const refreshedReviews = readReviewsIndex();
+      feedCache.videos = refreshedReviews;
+      feedCache.lastFetched = Date.now();
+    } catch (e) {}
+
+    // Broadcast SSE event
+    try {
+      broadcastSseEvent({
+        type: "user_reactivated",
+        userIds: identifiers,
+        email,
+        name,
+        handle
+      });
+    } catch (sseErr) {}
+
+    res.json({ success: true, message: "Account reactivated. Profile and reviews restored." });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/users/deactivated-list', (_req, res) => {
+  try {
+    const list = readDeactivatedUsersIndex();
+    res.json({ deactivatedUserIds: list });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -9495,8 +9700,9 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     const deletedIds = readDeletedReviewsIndex();
     const deletedPlaceIds = readDeletedPlacesIndex();
     const deletedUserIds = readDeletedUsersIndex();
+    const deactivatedUserIds = readDeactivatedUsersIndex();
     try {
-      res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, deletedPlaceIds, deletedUserIds, timestamp: Date.now() })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, deletedPlaceIds, deletedUserIds, deactivatedUserIds, timestamp: Date.now() })}\n\n`);
     } catch (e) {}
 
     // Heartbeat every 15 seconds to keep Cloud Run / reverse proxy connection alive
@@ -13299,6 +13505,14 @@ app.post("/api/videos/save-review", async (req, res) => {
       };
 
       unrecordDeletedUserIds([userSession.uid, userSession.id, cleanEmail, userSession.name, userSession.handle]);
+      unrecordDeactivatedUserIds([userSession.uid, userSession.id, cleanEmail, userSession.name, userSession.handle]);
+      broadcastSseEvent({
+        type: "user_reactivated",
+        userId: userSession.uid,
+        email: cleanEmail,
+        name: userSession.name,
+        handle: userSession.handle
+      });
 
       // Save/update user session in Bunny Database & Drizzle SQL unconditionally
       try {

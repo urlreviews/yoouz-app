@@ -280,6 +280,14 @@ export interface TranslationSchema {
     dangerZoneDesc?: string;
     deleteAccountBtn?: string;
     deleteAccountWarning?: string;
+    deactivateAccountTitle?: string;
+    deactivateAccountDesc?: string;
+    deactivateAccountBtn?: string;
+    deactivateAccountWarning?: string;
+    deactivateAccountConfirmTitle?: string;
+    deactivateAccountConfirmDesc?: string;
+    confirmDeactivate?: string;
+    deactivating?: string;
     supportDeskTitle?: string;
     supportDeskDesc?: string;
     fullNameLabel?: string;
@@ -788,6 +796,14 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       dangerZoneDesc: "Permanently erase your user profile details, bio, avatar, and cached session information. This action cannot be reversed.",
       deleteAccountBtn: "Delete Account",
       deleteAccountWarning: "Confirming will sign you out immediately and purge your profile record.",
+      deactivateAccountTitle: "Deactivate Account (Temporary Hide)",
+      deactivateAccountDesc: "Take a break without losing any of your data. Your profile and reviews will be temporarily hidden from the public feed. When you log back in, everything is instantly restored.",
+      deactivateAccountBtn: "Deactivate Account",
+      deactivateAccountWarning: "Confirming will log you out and hide your content until you sign in again.",
+      deactivateAccountConfirmTitle: "Deactivate Your Account?",
+      deactivateAccountConfirmDesc: "Your profile and videos will be temporarily hidden from the public feed. None of your data is erased. You can reactivate at any time simply by logging back in.",
+      confirmDeactivate: "Deactivate",
+      deactivating: "Deactivating...",
       supportDeskTitle: "Official Yoouz Support Desk",
       supportDeskDesc: "Submit support inquiries, business domain claim requests, or report community guideline infractions.",
       fullNameLabel: "Your Full Name *",
