@@ -642,25 +642,33 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </div>
 
                             {/* Row 2: Star Rating + Video Review Count + Location / Website */}
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium truncate mt-0.5">
-                              <span className="text-amber-400 font-bold flex items-center gap-0.5 shrink-0">
-                                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                                {typeof place.rating === "number" ? place.rating.toFixed(1) : "5.0"}
-                              </span>
-                              <span className="text-zinc-600 shrink-0">·</span>
-                              <span className="shrink-0">
-                                {place.totalReviews || 1} {place.totalReviews === 1 ? "video review" : "video reviews"}
-                              </span>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-amber-400 font-bold flex items-center gap-0.5 shrink-0">
+                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                  {typeof place.rating === "number" ? place.rating.toFixed(1) : "5.0"}
+                                </span>
+                                <span className="text-zinc-600 shrink-0">·</span>
+                                <span className="shrink-0">
+                                  {place.totalReviews || 1} {place.totalReviews === 1 ? "video review" : "video reviews"}
+                                </span>
+                              </div>
                               {(place.city || place.address) && (
                                 <>
-                                  <span className="text-zinc-600 shrink-0">·</span>
-                                  <span className="truncate">{place.city || place.address}</span>
+                                  <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
+                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
+                                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
+                                    <span className="truncate">{place.city || place.address}</span>
+                                  </span>
                                 </>
                               )}
                               {!place.city && !place.address && cleanDomain && (
                                 <>
-                                  <span className="text-zinc-600 shrink-0">·</span>
-                                  <span className="truncate">{cleanDomain}</span>
+                                  <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
+                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
+                                    <Globe className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
+                                    <span className="truncate">{cleanDomain}</span>
+                                  </span>
                                 </>
                               )}
                             </div>
@@ -738,16 +746,19 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </div>
 
                             {/* Row 2: Video Reviews Count + Location */}
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium truncate mt-0.5">
-                              <span className="shrink-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
+                              <span className="shrink-0 text-zinc-300 text-xs">
                                 {author.videoReviewCount
                                   ? `${author.videoReviewCount} ${author.videoReviewCount === 1 ? "video review" : "video reviews"}`
                                   : author.bio || "Community reviewer"}
                               </span>
                               {author.location && (
                                 <>
-                                  <span className="text-zinc-600 shrink-0">·</span>
-                                  <span className="truncate">{author.location}</span>
+                                  <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
+                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
+                                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
+                                    <span className="truncate">{author.location}</span>
+                                  </span>
                                 </>
                               )}
                             </div>
@@ -847,14 +858,17 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             </h3>
                           </div>
 
-                          <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium truncate mt-0.5">
-                            <span className="shrink-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
+                            <span className="shrink-0 text-zinc-300 text-xs">
                               {follower.bio || "Community reviewer"}
                             </span>
                             {follower.location && (
                               <>
-                                <span className="text-zinc-600 shrink-0">·</span>
-                                <span className="truncate">{follower.location}</span>
+                                <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
+                                <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
+                                  <MapPin className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
+                                  <span className="truncate">{follower.location}</span>
+                                </span>
                               </>
                             )}
                           </div>
