@@ -17124,9 +17124,12 @@ Return JSON:
       });
 
       if (!response.ok) {
-        return res.status(response.status >= 400 && response.status < 600 ? response.status : 502).json({ 
-          error: `Upstream image request failed with status ${response.status}` 
-        });
+        const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="24" fill="#18181b"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">Y</text></svg>`;
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        return res.status(200).send(fallbackSvg);
       }
 
       const contentType = response.headers.get('content-type') || 'image/jpeg';

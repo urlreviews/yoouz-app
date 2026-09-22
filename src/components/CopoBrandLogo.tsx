@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getDeterministicBrandTheme } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getDeterministicBrandTheme, getProxiedImageUrl } from "../utils/logoUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -139,11 +139,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const currentSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
     if (hasError) return null;
-    if (triedProxy && effectiveSrc && (effectiveSrc.startsWith("http://") || effectiveSrc.startsWith("https://"))) {
-      return `/api/proxy-image?url=${encodeURIComponent(effectiveSrc)}`;
-    }
-    return effectiveSrc || googleFaviconUrl;
-  }, [isYoouz, hasError, triedProxy, googleFaviconUrl, effectiveSrc]);
+    const base = effectiveSrc || googleFaviconUrl;
+    if (!base) return null;
+    return getProxiedImageUrl(base);
+  }, [isYoouz, hasError, googleFaviconUrl, effectiveSrc]);
 
   const isKnownLoaded = currentSrc ? KNOWN_LOADED_LOGOS.has(currentSrc) : false;
   const isKnownFailed = currentSrc ? KNOWN_FAILED_LOGOS.has(currentSrc) : false;

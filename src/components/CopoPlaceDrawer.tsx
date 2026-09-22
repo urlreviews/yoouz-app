@@ -47,7 +47,7 @@ import {
   Flag
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -731,7 +731,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="absolute inset-0 w-full h-full bg-black overflow-hidden flex items-center justify-center group">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
-              src={allPhotos[photoIndex] || allPhotos[0]}
+              src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
               alt={displayedPlaceName}
               loading="eager"
               decoding="sync"

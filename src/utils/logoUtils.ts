@@ -729,4 +729,28 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   return null;
 }
 
+export function getProxiedImageUrl(url: string | null | undefined): string {
+  if (!url || typeof url !== "string") return "";
+  const clean = url.trim();
+  if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
+
+  if (
+    clean.startsWith("/") ||
+    clean.startsWith("data:") ||
+    clean.startsWith("blob:")
+  ) {
+    return clean;
+  }
+
+  if (clean.startsWith("/api/proxy-image")) {
+    return clean;
+  }
+
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
+  }
+
+  return clean;
+}
+
 
