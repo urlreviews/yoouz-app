@@ -2875,7 +2875,7 @@ export function App() {
         const raw = customEvent.detail;
         const updated = (raw.place || raw) as Place;
         if (updated && updated.id) {
-          handleUpdatePlace(updated);
+          handleUpdatePlace(updated, true);
         }
       }
     };
@@ -5086,7 +5086,8 @@ export function App() {
   };
 
   // Handle Updating Business Information (Claim, Edit, Add Phone/Website/Hours)
-  const handleUpdatePlace = (updatedPlace: Place) => {
+  const handleUpdatePlace = (updatedPlace: Place, skipServerSync = false) => {
+    if (!updatedPlace || !updatedPlace.id) return;
     const updatedSlug = getPlaceSlug(updatedPlace.id);
     const updatedDomain = extractCleanDomain(updatedPlace.brandDomain || updatedPlace.website || updatedPlace.id);
 
@@ -5116,7 +5117,9 @@ export function App() {
       return finalList;
     });
 
-    // Mirror updates to BunnyDB (libSQL/SQLite) and BunnyDB so they persist forever (even after page refresh!)
+    if (skipServerSync) return;
+
+    // Mirror updates to BunnyDB so they persist forever
     try {
       fetch(`/api/nosql/places/${encodeURIComponent(updatedPlace.id)}`, {
         method: "POST",
@@ -5124,19 +5127,8 @@ export function App() {
         body: JSON.stringify({ data: updatedPlace, merge: true })
       }).catch((e) => console.error("Error updating place in BunnyDB:", e));
 
-      fetch(`/api/nosql/business_profiles/${encodeURIComponent(updatedPlace.id)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: updatedPlace, merge: true })
-      }).catch(() => {});
-
       if (updatedPlace.id.includes('yoouz') || updatedPlace.name?.toLowerCase() === 'yoouz') {
         fetch(`/api/nosql/places/yoouz.com`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: updatedPlace, merge: true })
-        }).catch(() => {});
-        fetch(`/api/nosql/business_profiles/yoouz.com`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ data: updatedPlace, merge: true })
