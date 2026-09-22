@@ -21,6 +21,7 @@ import {
 import { Place, VideoReview } from "../types";
 import { isValidLatLng, sanitizeLatLng, getCachedUserLocation } from "../utils/geo";
 import { isPlaceReviewMatch, getGoogleMapsDirectionsUrl } from "../utils/placeUtils";
+import { getProxiedImageUrl } from "../utils/logoUtils";
 
 interface CopoMapViewProps {
   places: Place[];
@@ -274,14 +275,14 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
             {selectedPlace.bannerUrl || selectedPlace.photos?.[0] ? (
               <>
                 <img
-                  src={selectedPlace.bannerUrl || selectedPlace.photos?.[0]}
+                  src={getProxiedImageUrl(selectedPlace.bannerUrl || selectedPlace.photos?.[0])}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-125 select-none pointer-events-none"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40 pointer-events-none z-10" />
                 <img
-                  src={selectedPlace.bannerUrl || selectedPlace.photos?.[0]}
+                  src={getProxiedImageUrl(selectedPlace.bannerUrl || selectedPlace.photos?.[0])}
                   alt={selectedPlace.name}
                   className="relative z-20 max-w-full max-h-full object-contain p-2"
                   referrerPolicy="no-referrer"

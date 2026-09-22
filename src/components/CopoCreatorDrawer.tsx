@@ -29,6 +29,7 @@ import {
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
+import { getProxiedImageUrl } from "../utils/logoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
 import { CountrySelector } from "./CountrySelector";
@@ -1464,7 +1465,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <div className="relative group cursor-pointer w-full" onClick={() => bannerInputRef.current?.click()}>
                   <div className="w-full h-32 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950">
                     {editBanner || currentUser?.banner ? (
-                      <img src={editBanner || currentUser?.banner} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" referrerPolicy="no-referrer" />
+                      <img src={getProxiedImageUrl(editBanner || currentUser?.banner)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" referrerPolicy="no-referrer" />
                     ) : (
                       <div className="w-full h-full bg-zinc-900" />
                     )}

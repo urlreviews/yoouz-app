@@ -64,7 +64,7 @@ import {
   Briefcase
 } from "lucide-react";
 import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted } from "../utils/placeUtils";
-import { getPlaceLogoUrl, YOOUZ_LOGO_DATA_URI } from "../utils/logoUtils";
+import { getPlaceLogoUrl, YOOUZ_LOGO_DATA_URI, getProxiedImageUrl } from "../utils/logoUtils";
 import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { subscribeAppHealth, resolveAllAppErrors, AppHealthSummary } from "../lib/errorMonitor";
@@ -4442,7 +4442,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   {/* Banner Image / Gradient */}
                   {editPlaceModal.bannerUrl || editPlaceModal.ogImage ? (
                     <img
-                      src={editPlaceModal.bannerUrl || editPlaceModal.ogImage}
+                      src={getProxiedImageUrl(editPlaceModal.bannerUrl || editPlaceModal.ogImage)}
                       alt={editPlaceModal.name}
                       className="absolute inset-0 w-full h-full object-cover"
                       referrerPolicy="no-referrer"

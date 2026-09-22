@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -397,7 +397,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   {(searchedPlace.bannerUrl || searchedPlace.ogImage) && (
                     <>
                       <img 
-                        src={searchedPlace.bannerUrl || searchedPlace.ogImage} 
+                        src={getProxiedImageUrl(searchedPlace.bannerUrl || searchedPlace.ogImage)} 
                         alt="Banner" 
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-75 z-10"
                         referrerPolicy="no-referrer"
