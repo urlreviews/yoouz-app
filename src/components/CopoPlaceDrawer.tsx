@@ -47,7 +47,7 @@ import {
   Flag
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -130,16 +130,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
     setLogoError(false);
     setFetchedBannerUrl(null);
     fetchedTargetUrlsRef.current.clear();
-
-    if (place) {
-      if (place.bannerUrl) prewarmBannerImage(place.bannerUrl);
-      if (place.ogImage) prewarmBannerImage(place.ogImage);
-      if (drawerDomain) {
-        if (KNOWN_BRAND_BANNERS[drawerDomain]) prewarmBannerImage(KNOWN_BRAND_BANNERS[drawerDomain]);
-        if (KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) prewarmBannerImage(KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]);
-      }
-    }
-  }, [place?.id, place?.bannerUrl, place?.ogImage, drawerDomain]);
+  }, [place?.id]);
 
   // Tab switching with scroll to top
   const handleTabClick = (tab: "overview" | "reviews" | "about") => {
@@ -273,6 +264,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanFromName && cleanFromName.includes(".")) return cleanFromName;
     return null;
   }, [place]);
+
+  useEffect(() => {
+    if (place) {
+      if (place.bannerUrl) prewarmBannerImage(place.bannerUrl);
+      if (place.ogImage) prewarmBannerImage(place.ogImage);
+      if (drawerDomain) {
+        if (KNOWN_BRAND_BANNERS[drawerDomain]) prewarmBannerImage(KNOWN_BRAND_BANNERS[drawerDomain]);
+        if (KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) prewarmBannerImage(KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]);
+      }
+    }
+  }, [place?.id, place?.bannerUrl, place?.ogImage, drawerDomain]);
 
   // Clean, official human-readable business name for the Place Page and Drawer
   const displayedPlaceName = React.useMemo(() => {
