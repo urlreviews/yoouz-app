@@ -249,7 +249,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
       notifId = `notif_comment_${params.videoId}_${(targetEmail || targetId).replace(/[^a-z0-9]/gi, '_')}_${cleanSnippet}`;
     } else if (params.type === "like" && params.videoId) {
       notifId = `notif_like_${(canonSenderEmail || 'anon').replace(/[^a-z0-9]/gi, '_')}_${params.videoId}`;
-    } else if ((params.type === "repost" || params.type === "share") && params.videoId) {
+    } else if (((params.type as string) === "repost" || (params.type as string) === "share") && params.videoId) {
       notifId = `notif_share_${(canonSenderEmail || 'anon').replace(/[^a-z0-9]/gi, '_')}_${params.videoId}`;
     } else if (params.type === "bookmark" && params.videoId) {
       notifId = `notif_bookmark_${(canonSenderEmail || 'anon').replace(/[^a-z0-9]/gi, '_')}_${params.videoId}`;
@@ -635,7 +635,7 @@ export function subscribeToNotifications(
     const seen = new Set<string>();
     for (const item of newItems) {
       if (!item || !item.id) continue;
-      const rec = (item.recipientEmail || item.recipientId || "").toLowerCase().trim();
+      const rec = ((item as any).recipientEmail || (item as any).recipientId || "").toLowerCase().trim();
       const type = (item.type || "").toLowerCase().trim();
       const text = (item.text || "").toLowerCase().trim();
       const vid = (item.videoId || "").trim();
@@ -751,7 +751,7 @@ export function subscribeToNotifications(
           const freshType = (freshItem.type || "").toLowerCase().trim();
           const freshText = (freshItem.text || "").toLowerCase().trim();
           const freshVid = (freshItem.videoId || "").trim();
-          const freshRec = (freshItem.recipientEmail || freshItem.recipientId || "").toLowerCase().trim();
+          const freshRec = ((freshItem as any).recipientEmail || (freshItem as any).recipientId || "").toLowerCase().trim();
           const freshDedupeKey = `${freshRec}|${freshType}|${freshSender}|${freshVid}|${freshText}`;
 
           const existingIdx = cachedNotifs.findIndex((n) => {
@@ -760,7 +760,7 @@ export function subscribeToNotifications(
             const nType = (n.type || "").toLowerCase().trim();
             const nText = (n.text || "").toLowerCase().trim();
             const nVid = (n.videoId || "").trim();
-            const nRec = (n.recipientEmail || n.recipientId || "").toLowerCase().trim();
+            const nRec = ((n as any).recipientEmail || (n as any).recipientId || "").toLowerCase().trim();
             return `${nRec}|${nType}|${nSender}|${nVid}|${nText}` === freshDedupeKey;
           });
 

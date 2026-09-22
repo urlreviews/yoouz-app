@@ -10,7 +10,6 @@ import {
   CornerDownRight,
   ChevronDown,
   ChevronUp,
-  Sparkles,
   ArrowUpDown,
   Trash2,
   Edit2,
@@ -963,38 +962,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                             <CornerDownRight className="w-3 h-3" />
                             <span>{t("comments.reply", "Reply")}</span>
                           </button>
-
-                          {/* Creator Hearted Indicator / Bestow Creator Heart */}
-                          {comment.likedByCreator ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (isUserCreator && onToggleCreatorHeart && video) {
-                                  onToggleCreatorHeart(video.id, comment.id);
-                                }
-                              }}
-                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-950/70 text-red-400 text-[10px] font-bold border border-red-900/60 shadow-xs ${
-                                isUserCreator ? "cursor-pointer hover:bg-red-900/80" : ""
-                              }`}
-                              title={isUserCreator ? "Click to remove Creator Heart" : "Liked by creator"}
-                            >
-                              <Heart className="w-2.5 h-2.5 fill-red-400 text-red-400" />
-                              <span>{t("comments.likedByCreator", "Liked by creator")}</span>
-                            </button>
-                          ) : (
-                            isUserCreator &&
-                            onToggleCreatorHeart && (
-                              <button
-                                type="button"
-                                onClick={() => video && onToggleCreatorHeart(video.id, comment.id)}
-                                className="text-amber-400 hover:text-amber-300 transition-colors text-[11px] flex items-center gap-1 font-semibold cursor-pointer"
-                                title="Give Creator Heart"
-                              >
-                                <Sparkles className="w-3 h-3 text-amber-400" />
-                                <span>{t("comments.creatorHeart", "Creator Heart")}</span>
-                              </button>
-                            )
-                          )}
 
                           {/* Delete option for comment author or business owner */}
                           {(isCurrentUserComment || isUserOwner || isUserCreator) &&
