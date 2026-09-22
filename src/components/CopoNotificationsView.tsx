@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { extractCleanDomain } from "../utils/placeUtils";
@@ -70,15 +70,16 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [swipedNotifId, setSwipedNotifId] = useState<string | null>(null);
+  const isDraggingRef = useRef(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const checkTouch = () => {
         setIsTouchDevice(
-          'ontouchstart' in window ||
-          navigator.maxTouchPoints > 0 ||
-          window.matchMedia('(pointer: coarse)').matches ||
-          window.innerWidth < 768
+          window.innerWidth < 768 &&
+          ('ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            window.matchMedia('(pointer: coarse)').matches)
         );
       };
       checkTouch();
@@ -473,38 +474,43 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   className="relative overflow-hidden bg-zinc-950 group"
                 >
                   {/* Mobile Swipe-to-delete Red Backdrop (Active on mobile touch screens) */}
-                  <div 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDismiss(notif.id, e);
-                      setSwipedNotifId(null);
-                    }}
-                    onTouchEnd={(e) => {
-                      e.stopPropagation();
-                      handleDismiss(notif.id, e);
-                      setSwipedNotifId(null);
-                    }}
-                    className="absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
-                  >
-                    <Trash2 className="w-4 h-4 shrink-0" />
-                    <span>Delete</span>
-                  </div>
+                  {isTouchDevice && (
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isDraggingRef.current) return;
+                        handleDismiss(notif.id, e);
+                        setSwipedNotifId(null);
+                      }}
+                      className="md:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
+                    >
+                      <Trash2 className="w-4 h-4 shrink-0" />
+                      <span>Delete</span>
+                    </div>
+                  )}
 
                   {/* Notification Card */}
                   <motion.div
                     drag={isTouchDevice ? "x" : false}
-                    dragConstraints={{ left: -96, right: 0 }}
-                    dragElastic={0.12}
-                    animate={{ x: swipedNotifId === notif.id ? -96 : 0 }}
+                    dragConstraints={isTouchDevice ? { left: -96, right: 0 } : undefined}
+                    dragElastic={isTouchDevice ? 0.12 : false}
+                    animate={{ x: isTouchDevice && swipedNotifId === notif.id ? -96 : 0 }}
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    onDragStart={() => {
+                      isDraggingRef.current = true;
+                    }}
                     onDragEnd={isTouchDevice ? (_, info) => {
                       if (info.offset.x < -35 || info.velocity.x < -200) {
                         setSwipedNotifId(notif.id);
                       } else {
                         setSwipedNotifId(null);
                       }
+                      setTimeout(() => {
+                        isDraggingRef.current = false;
+                      }, 300);
                     } : undefined}
                     onClick={() => {
+                      if (isDraggingRef.current) return;
                       if (swipedNotifId === notif.id) {
                         setSwipedNotifId(null);
                         return;

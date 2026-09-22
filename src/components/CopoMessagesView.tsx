@@ -115,15 +115,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [deletedThreadKeys, setDeletedThreadKeys] = useState<Set<string>>(() => new Set());
   const [swipedThreadId, setSwipedThreadId] = useState<string | null>(null);
+  const isDraggingRef = useRef(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const checkTouch = () => {
         setIsTouchDevice(
-          'ontouchstart' in window ||
-          navigator.maxTouchPoints > 0 ||
-          window.matchMedia('(pointer: coarse)').matches ||
-          window.innerWidth < 768
+          window.innerWidth < 768 &&
+          ('ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            window.matchMedia('(pointer: coarse)').matches)
         );
       };
       checkTouch();
@@ -1345,31 +1346,32 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
                         className="relative overflow-hidden bg-zinc-950 group select-none"
                       >
-                        {/* Swipe-to-reveal Red Delete Button (Behind card) */}
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteConversation(thread);
-                            setSwipedThreadId(null);
-                          }}
-                          onTouchEnd={(e) => {
-                            e.stopPropagation();
-                            handleDeleteConversation(thread);
-                            setSwipedThreadId(null);
-                          }}
-                          className="absolute inset-y-0 right-0 w-24 bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-800 z-0"
-                        >
-                          <Trash2 className="w-4 h-4 shrink-0" />
-                          <span>Delete</span>
-                        </div>
+                        {/* Swipe-to-reveal Red Delete Button (Behind card - Mobile Touch Only) */}
+                        {isTouchDevice && (
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isDraggingRef.current) return;
+                              handleDeleteConversation(thread);
+                              setSwipedThreadId(null);
+                            }}
+                            className="md:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-800 z-0"
+                          >
+                            <Trash2 className="w-4 h-4 shrink-0" />
+                            <span>Delete</span>
+                          </div>
+                        )}
 
                         {/* Thread Card (drag to reveal Delete button on touch screens) */}
                         <motion.div
                           drag={isTouchDevice ? "x" : false}
-                          dragConstraints={{ left: -96, right: 0 }}
-                          dragElastic={0.12}
-                          animate={{ x: swipedThreadId === thread.id ? -96 : 0 }}
+                          dragConstraints={isTouchDevice ? { left: -96, right: 0 } : undefined}
+                          dragElastic={isTouchDevice ? 0.12 : false}
+                          animate={{ x: isTouchDevice && swipedThreadId === thread.id ? -96 : 0 }}
                           transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                          onDragStart={() => {
+                            isDraggingRef.current = true;
+                          }}
                           onDragEnd={isTouchDevice ? (_, info) => {
                             // If dragged left past threshold, reveal delete button. Otherwise snap back closed.
                             if (info.offset.x < -35 || info.velocity.x < -200) {
@@ -1377,8 +1379,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             } else {
                               setSwipedThreadId(null);
                             }
+                            setTimeout(() => {
+                              isDraggingRef.current = false;
+                            }, 300);
                           } : undefined}
                           onClick={() => {
+                            if (isDraggingRef.current) return;
                             if (swipedThreadId === thread.id) {
                               setSwipedThreadId(null);
                               return;
