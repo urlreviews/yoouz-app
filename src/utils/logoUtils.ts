@@ -601,12 +601,12 @@ export function getDeterministicBrandTheme(nameOrDomain?: string | null, domainS
     hash = (hash << 5) - hash + hashKey.charCodeAt(i);
     hash |= 0;
   }
-  const bgColor = BRAND_COLOR_PALETTES[Math.abs(hash) % BRAND_COLOR_PALETTES.length];
+  const accentColor = BRAND_COLOR_PALETTES[Math.abs(hash) % BRAND_COLOR_PALETTES.length];
 
   return {
     letters,
-    bgColor,
-    textColor: "#ffffff",
+    bgColor: "#ffffff",
+    textColor: accentColor,
     isGold: false
   };
 }
@@ -614,15 +614,14 @@ export function getDeterministicBrandTheme(nameOrDomain?: string | null, domainS
 export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 128): string {
   const theme = getDeterministicBrandTheme(nameOrDomain, nameOrDomain);
   
-  if (theme.letters === "Y" && theme.bgColor === "#09090b") {
+  if (theme.letters === "Y" && (nameOrDomain || "").toLowerCase().includes("yoouz")) {
     return YOOUZ_LOGO_DATA_URI;
   }
 
   const fontSize = theme.letters.length > 3 ? Math.round(size * 0.28) : theme.letters.length > 2 ? Math.round(size * 0.34) : Math.round(size * 0.44);
-  const rx = Math.round(size * 0.22);
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" fill="${theme.bgColor}"/>
+    <rect width="${size}" height="${size}" fill="#ffffff"/>
     <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${theme.textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${theme.letters}</text>
   </svg>`;
 
