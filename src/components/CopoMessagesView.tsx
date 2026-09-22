@@ -38,7 +38,8 @@ import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
 import { deduplicateChatHistory } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
-import { getSafeAvatarUrl } from "../utils/placeUtils";
+import { getSafeAvatarUrl, formatBusinessName } from "../utils/placeUtils";
+import { getPlaceLogoUrl } from "../utils/logoUtils";
 
 interface CopoMessagesViewProps {
   messages: CopoMessage[];
@@ -163,6 +164,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatSearch, setNewChatSearch] = useState("");
+  const [recipientFilterTab, setRecipientFilterTab] = useState<"all" | "businesses" | "members">("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -250,6 +252,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       bio?: string;
       location?: string;
       isVerified?: boolean;
+      isBusiness?: boolean;
+      category?: string;
+      domain?: string;
     }>();
 
     // Check deleted users in localStorage so deleted accounts are never shown
@@ -429,31 +434,117 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       });
     });
 
+    // 3. Ingest businesses from places
+    (places || []).forEach((p: Place) => {
+      if (!p || !p.id) return;
+      const pId = String(p.id).trim();
+      const pDomain = (p.brandDomain || p.website || pId).toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].trim();
+      const pName = formatBusinessName(p.name || p.brandDomain || pId) || "Business";
+      const pEmail = (p.claimedByEmail || p.email || (pId === "yoouz.com" || pId === "yoouz" ? "info@yoouz.com" : "")).toLowerCase().trim();
+
+      // Don't show the business to its own manager if logged in as that business
+      const myUserEmail = (currentUser?.email || "").toLowerCase().trim();
+      if (myUserEmail && pEmail && myUserEmail === pEmail) return;
+
+      const pKey = `place_${pId.toLowerCase()}`;
+      if (map.has(pKey)) return;
+
+      const placeLogo = getPlaceLogoUrl(p) || p.avatarUrl || p.logoUrl || `/api/avatar?name=${encodeURIComponent(pName)}&background=27272a&color=fff`;
+      const location = [p.city, p.country].filter(Boolean).join(", ") || p.address || "Business";
+      const bio = p.category || (p.description ? p.description.slice(0, 70) : "Verified Business");
+
+      map.set(pKey, {
+        id: pId,
+        name: pName,
+        avatar: placeLogo,
+        email: pEmail || (pId === "yoouz.com" ? "info@yoouz.com" : undefined),
+        bio: bio,
+        location: location,
+        isVerified: Boolean(p.isVerified || p.isClaimed || pId === "yoouz.com" || pId === "yoouz-com"),
+        isBusiness: true,
+        category: p.category || "Business",
+        domain: pDomain
+      });
+    });
+
+    // Guarantee Yoouz Official platform is always reachable unless currentUser is info@yoouz.com
+    if (!map.has("place_yoouz.com") && !map.has("place_yoouz")) {
+      const myUserEmail = (currentUser?.email || "").toLowerCase().trim();
+      if (myUserEmail !== "info@yoouz.com") {
+        map.set("place_yoouz.com", {
+          id: "yoouz.com",
+          name: "Yoouz",
+          avatar: "/favicon.svg",
+          email: "info@yoouz.com",
+          bio: "Official Yoouz Support & Community",
+          location: "Global Platform",
+          isVerified: true,
+          isBusiness: true,
+          category: "Platform Support",
+          domain: "yoouz.com"
+        });
+      }
+    }
+
     return Array.from(map.values());
-  }, [allUsers, allVideos, currentUser]);
+  }, [allUsers, allVideos, places, currentUser]);
 
   // Recipient search: Do not pre-dump the entire directory when opening modal.
-  // User must search by name/keyword to see matching results.
+  // User can search by name/keyword, or switch to "Businesses" to browse directory.
   const filteredRecipients = useMemo(() => {
     const q = newChatSearch.toLowerCase().trim().replace(/^@/, "");
-    if (!q) return [];
 
-    return availableRecipients.filter((r) => {
+    let pool = availableRecipients;
+    if (recipientFilterTab === "businesses") {
+      pool = pool.filter((r) => r.isBusiness);
+    } else if (recipientFilterTab === "members") {
+      pool = pool.filter((r) => !r.isBusiness);
+    }
+
+    if (!q) {
+      if (recipientFilterTab === "businesses") {
+        return pool.slice(0, 50);
+      }
+      return [];
+    }
+
+    return pool.filter((r) => {
       const name = (r.name || "").toLowerCase();
       const email = (r.email || "").toLowerCase();
       const location = (r.location || "").toLowerCase();
       const bio = (r.bio || "").toLowerCase();
-      return name.includes(q) || email.includes(q) || location.includes(q) || bio.includes(q);
+      const category = (r.category || "").toLowerCase();
+      const domain = (r.domain || "").toLowerCase();
+      const id = (r.id || "").toLowerCase();
+      return (
+        name.includes(q) ||
+        email.includes(q) ||
+        location.includes(q) ||
+        bio.includes(q) ||
+        category.includes(q) ||
+        domain.includes(q) ||
+        id.includes(q)
+      );
     });
-  }, [availableRecipients, newChatSearch]);
+  }, [availableRecipients, newChatSearch, recipientFilterTab]);
 
-  const handleStartNewUserChat = (recipient: { id: string; name: string; avatar: string; email?: string }) => {
+  const handleStartNewUserChat = (recipient: {
+    id: string;
+    name: string;
+    avatar: string;
+    email?: string;
+    isBusiness?: boolean;
+    category?: string;
+    domain?: string;
+  }) => {
     let finalEmail = recipient.email;
     const rName = (recipient.name || "").toLowerCase().trim();
     const rId = (recipient.id || "").toLowerCase().trim();
     if (!finalEmail || !finalEmail.includes("@")) {
       if (rId.includes("@")) {
         finalEmail = rId;
+      } else if (rName === "yoouz" || rId === "yoouz.com" || rId === "yoouz") {
+        finalEmail = "info@yoouz.com";
       } else if (rName === "avt ertuop" || rId.includes("avtertuop") || rId.includes("avr6566gd")) {
         finalEmail = "avr6566gd@gmail.com";
       } else if (rName === "biz riv" || rId.includes("bizriv") || rId.includes("louis42111")) {
@@ -466,9 +557,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     // Check if an existing thread exists
     const existing = messages.find(
       (m) =>
+        m.id === recipient.id ||
         m.senderId === recipient.id ||
-        (finalEmail && (m.senderId === finalEmail || m.senderEmail === finalEmail)) ||
-        (m.senderName && m.senderName.toLowerCase() === recipient.name.toLowerCase())
+        (m as any).recipientId === recipient.id ||
+        (finalEmail && (m.senderId === finalEmail || m.senderEmail === finalEmail || (m as any).recipientEmail === finalEmail)) ||
+        (m.senderName && m.senderName.toLowerCase() === recipient.name.toLowerCase()) ||
+        ((m as any).recipientName && (m as any).recipientName.toLowerCase() === recipient.name.toLowerCase())
     );
 
     if (existing) {
@@ -485,6 +579,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       senderName: recipient.name,
       senderAvatar: recipient.avatar,
       senderEmail: finalEmail,
+      recipientId: recipient.id,
+      recipientName: recipient.name,
+      recipientAvatar: recipient.avatar,
+      recipientEmail: finalEmail,
       lastMessage: "",
       timestamp: "Just now",
       createdAtMs: Date.now(),
@@ -513,7 +611,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         finalEmail,
         finalEmail ? finalEmail.split("@")[0] : "",
         recipient.id,
+        recipient.id.toLowerCase(),
         recipient.name.toLowerCase(),
+        ...(rName === "yoouz" || rId === "yoouz.com" || finalEmail === "info@yoouz.com" ? ["yoouz.com", "yoouz", "info@yoouz.com"] : []),
         ...(rName === "avt ertuop" || finalEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop"] : []),
         ...(rName === "biz riv" || finalEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv"] : []),
         ...(rName.includes("aouisesmee") || finalEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee"] : [])
@@ -1865,7 +1965,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-white">New Direct Message</h3>
-                  <p className="text-[10px] text-zinc-200">Message community members and creators</p>
+                  <p className="text-[10px] text-zinc-400">Message businesses, community members, and creators</p>
                 </div>
               </div>
               <button
@@ -1877,12 +1977,57 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               </button>
             </div>
 
-            {/* Search member */}
+            {/* Filter Tabs: All / Businesses / Members */}
+            <div className="flex items-center gap-1.5 p-1 bg-zinc-950 rounded-xl border border-zinc-800/80">
+              <button
+                type="button"
+                onClick={() => setRecipientFilterTab("all")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  recipientFilterTab === "all"
+                    ? "bg-zinc-800 text-white shadow-xs"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecipientFilterTab("businesses")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  recipientFilterTab === "businesses"
+                    ? "bg-blue-600/30 text-blue-300 border border-blue-500/30 shadow-xs"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Businesses</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecipientFilterTab("members")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  recipientFilterTab === "members"
+                    ? "bg-zinc-800 text-white shadow-xs"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Members</span>
+              </button>
+            </div>
+
+            {/* Search input */}
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-200" />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
               <input
                 type="text"
-                placeholder="Search reviewer or member by name..."
+                placeholder={
+                  recipientFilterTab === "businesses"
+                    ? "Search business by name, category, or city..."
+                    : recipientFilterTab === "members"
+                    ? "Search reviewer or member by name..."
+                    : "Search business, reviewer, or member by name..."
+                }
                 value={newChatSearch}
                 onChange={(e) => setNewChatSearch(e.target.value)}
                 autoFocus
@@ -1892,33 +2037,41 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setNewChatSearch("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white p-0.5 rounded-full"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-0.5 rounded-full cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
 
-            {/* List of members / search prompt */}
+            {/* List of recipients / search prompt */}
             <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/50 min-h-[220px] max-h-[360px] pr-1">
-              {!newChatSearch.trim() ? (
-                <div className="py-12 px-4 text-center text-zinc-200 space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 text-zinc-200 flex items-center justify-center mx-auto shadow-inner">
-                    <Search className="w-5 h-5 text-zinc-200" />
+              {!newChatSearch.trim() && recipientFilterTab !== "businesses" ? (
+                <div className="py-12 px-4 text-center text-zinc-400 space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 text-zinc-300 flex items-center justify-center mx-auto shadow-inner">
+                    <Search className="w-5 h-5 text-zinc-300" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-zinc-200">Search members by name</p>
-                    <p className="text-[11px] text-zinc-200 max-w-xs mx-auto">
-                      Type a name above to find community members and creators to message.
+                    <p className="text-xs font-bold text-zinc-200">
+                      {recipientFilterTab === "members" ? "Search community members" : "Search businesses & members"}
+                    </p>
+                    <p className="text-[11px] text-zinc-400 max-w-xs mx-auto">
+                      {recipientFilterTab === "members"
+                        ? "Type a reviewer or member name above to message them directly."
+                        : "Type a business or member name above, or switch to the Businesses tab."}
                     </p>
                   </div>
                 </div>
               ) : filteredRecipients.length === 0 ? (
-                <div className="py-12 px-4 text-center text-zinc-200 space-y-2">
-                  <User className="w-8 h-8 mx-auto text-zinc-600" />
-                  <p className="text-xs font-bold text-zinc-200">No members found</p>
-                  <p className="text-[11px] text-zinc-200">
-                    No member matches &ldquo;{newChatSearch.trim()}&rdquo;. Try another name.
+                <div className="py-12 px-4 text-center text-zinc-400 space-y-2">
+                  {recipientFilterTab === "businesses" ? (
+                    <Building2 className="w-8 h-8 mx-auto text-zinc-600" />
+                  ) : (
+                    <User className="w-8 h-8 mx-auto text-zinc-600" />
+                  )}
+                  <p className="text-xs font-bold text-zinc-200">No results found</p>
+                  <p className="text-[11px] text-zinc-400">
+                    No {recipientFilterTab === "businesses" ? "business" : recipientFilterTab === "members" ? "member" : "business or member"} matches &ldquo;{newChatSearch.trim()}&rdquo;.
                   </p>
                 </div>
               ) : (
@@ -1930,30 +2083,45 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <img
-                        src={getSafeAvatarUrl(recipient.avatar, recipient.name, recipient.id)}
+                        src={
+                          recipient.isBusiness
+                            ? (recipient.avatar || "/favicon.svg")
+                            : getSafeAvatarUrl(recipient.avatar, recipient.name, recipient.id)
+                        }
                         alt={recipient.name}
-                        className="w-10 h-10 rounded-full object-cover border border-zinc-800 shrink-0"
+                        className={`w-10 h-10 object-cover border border-zinc-800 shrink-0 ${
+                          recipient.isBusiness ? "rounded-xl bg-zinc-800 p-0.5" : "rounded-full"
+                        }`}
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
-                          target.src = getSafeAvatarUrl(null, recipient.name, recipient.id);
+                          target.src = recipient.isBusiness
+                            ? "/favicon.svg"
+                            : getSafeAvatarUrl(null, recipient.name, recipient.id);
                         }}
                       />
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-bold text-white truncate group-hover:text-white transition-colors">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-xs font-bold text-white truncate group-hover:text-blue-300 transition-colors">
                             {recipient.name}
                           </p>
                           {recipient.isVerified && (
-                            <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                            <CheckCircle2 className="w-3.5 h-3.5 fill-blue-500 text-zinc-950 shrink-0" />
+                          )}
+                          {recipient.isBusiness && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/25 text-[9px] font-bold shrink-0">
+                              Business
+                            </span>
                           )}
                         </div>
                         {recipient.location ? (
-                          <div className="flex items-center gap-1 text-[11px] text-zinc-200 truncate">
-                            <MapPin className="w-3 h-3 text-zinc-200 shrink-0" />
+                          <div className="flex items-center gap-1 text-[11px] text-zinc-400 truncate">
+                            <MapPin className="w-3 h-3 text-zinc-500 shrink-0" />
                             <span className="truncate">{recipient.location}</span>
                           </div>
                         ) : (
-                          <p className="text-[11px] text-zinc-200 truncate">{recipient.bio || "Community reviewer"}</p>
+                          <p className="text-[11px] text-zinc-400 truncate">
+                            {recipient.bio || (recipient.isBusiness ? "Verified Business" : "Community reviewer")}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -1964,7 +2132,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         e.stopPropagation();
                         handleStartNewUserChat(recipient);
                       }}
-                      className="px-3.5 py-1.5 rounded-xl bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 group-hover:text-white text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-xs"
+                      className="px-3.5 py-1.5 rounded-xl bg-zinc-800 group-hover:bg-blue-600 text-zinc-200 group-hover:text-white text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-xs"
                     >
                       Chat
                     </button>

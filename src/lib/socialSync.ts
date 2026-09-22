@@ -1534,6 +1534,8 @@ export async function sendChatMessage(
   if (!recipientEmail || !recipientEmail.includes("@")) {
     if (recipientId.includes("@")) {
       recipientEmail = recipientId.toLowerCase();
+    } else if (recipientId === "yoouz.com" || recipientId === "yoouz" || recipientName.toLowerCase() === "yoouz") {
+      recipientEmail = "info@yoouz.com";
     } else if (recipientName.toLowerCase() === "avt ertuop" || recipientId.includes("avtertuop") || recipientId.includes("avr6566gd")) {
       recipientEmail = "avr6566gd@gmail.com";
     } else if (recipientName.toLowerCase() === "biz riv" || recipientId.includes("bizriv") || recipientId.includes("louis42111")) {
@@ -1609,6 +1611,12 @@ export async function sendChatMessage(
   const fullHistory = deduplicateChatHistory([...existingHistory, newMessage]);
 
   const canonicalAliases: string[] = [];
+  if (recipientName.toLowerCase() === "yoouz" || recipientEmail === "info@yoouz.com" || recipientId.includes("yoouz")) {
+    canonicalAliases.push("info@yoouz.com", "yoouz.com", "yoouz");
+  }
+  if (userName.toLowerCase() === "yoouz" || userEmail === "info@yoouz.com" || userEmail.endsWith("@yoouz.com")) {
+    canonicalAliases.push("info@yoouz.com", "yoouz.com", "yoouz");
+  }
   if (recipientName.toLowerCase() === "avt ertuop" || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("avtertuop") || recipientId.includes("avt")) {
     canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
   }

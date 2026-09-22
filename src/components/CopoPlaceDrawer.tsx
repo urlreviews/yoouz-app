@@ -552,11 +552,28 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   );
 
   const isUserOwner = Boolean(
-    (currentUser &&
-      ((place.claimedByEmail && currentUser.email === place.claimedByEmail) ||
-       (place.ownerId && currentUser.id === place.ownerId) ||
-       (place.staffEmails && currentUser.email && place.staffEmails.includes(currentUser.email)))) ||
     (() => {
+      // 1. Official Yoouz platform listing:
+      // Only official team accounts (info@yoouz.com or @yoouz.com) are considered owners.
+      // All other users (consumers, mobile users, community reviewers) are customers/visitors who can chat.
+      if (isYoouzBusiness) {
+        const uEmail = (currentUser?.email || "").toLowerCase().trim();
+        return uEmail === "info@yoouz.com" || uEmail.endsWith("@yoouz.com");
+      }
+
+      // 2. If logged in as an authenticated user:
+      // Ownership is strictly tied to verified user identity, never stale device storage.
+      if (currentUser && currentUser.email) {
+        const uEmail = currentUser.email.toLowerCase().trim();
+        const claimedEmail = (place.claimedByEmail || "").toLowerCase().trim();
+        if (claimedEmail && uEmail === claimedEmail) return true;
+        if (place.ownerId && currentUser.id === place.ownerId) return true;
+        if (place.staffEmails && Array.isArray(place.staffEmails) && place.staffEmails.some(e => (e || "").toLowerCase().trim() === uEmail)) return true;
+        return false;
+      }
+
+      // 3. Fallback for unauthenticated local business portal session:
+      // Only treat as owner if explicitly logged into the business portal with a verified session for THIS specific business
       try {
         if (typeof window === "undefined") return false;
         const rawSession = localStorage.getItem("copo_business_verified_session");
@@ -564,12 +581,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           const sess = JSON.parse(rawSession);
           if (
             sess &&
+            sess.businessEmail &&
             (sess.placeId === place.id ||
               sess.placeId === place.brandDomain ||
               (sess.domain &&
                 (place.id.includes(sess.domain) ||
                   (place.website && place.website.includes(sess.domain)))))
           ) {
+            if (isYoouzBusiness) {
+              const sessEmail = (sess.businessEmail || "").toLowerCase().trim();
+              return sessEmail === "info@yoouz.com" || sessEmail.endsWith("@yoouz.com");
+            }
             return true;
           }
         }

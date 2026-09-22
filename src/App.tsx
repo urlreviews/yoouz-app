@@ -2666,16 +2666,27 @@ export function App() {
     let targetEmail = senderId && senderId.includes("@") ? senderId : undefined;
     const sName = (senderName || "").toLowerCase().trim();
     if (!targetEmail) {
-      if (sName === "avt ertuop" || senderId.includes("avtertuop") || senderId.includes("avr6566gd")) targetEmail = "avr6566gd@gmail.com";
-      else if (sName === "biz riv" || senderId.includes("bizriv") || senderId.includes("louis42111")) targetEmail = "louis42111@gmail.com";
-      else if (sName.includes("aouisesmee") || senderId.includes("aouisesmee")) targetEmail = "aouisesmee@gmail.com";
+      if (matchingPlace?.claimedByEmail) {
+        targetEmail = matchingPlace.claimedByEmail;
+      } else if (senderId === "yoouz.com" || senderId === "yoouz" || sName === "yoouz") {
+        targetEmail = "info@yoouz.com";
+      } else if (sName === "avt ertuop" || senderId.includes("avtertuop") || senderId.includes("avr6566gd")) {
+        targetEmail = "avr6566gd@gmail.com";
+      } else if (sName === "biz riv" || senderId.includes("bizriv") || senderId.includes("louis42111")) {
+        targetEmail = "louis42111@gmail.com";
+      } else if (sName.includes("aouisesmee") || senderId.includes("aouisesmee")) {
+        targetEmail = "aouisesmee@gmail.com";
+      }
     }
 
     const existingThread = messages.find(
       (m) =>
+        m.id === senderId ||
         m.senderId === senderId ||
-        (targetEmail && (m.senderId === targetEmail || m.senderEmail === targetEmail)) ||
-        (m.senderName && senderName && m.senderName.toLowerCase() === senderName.toLowerCase())
+        (m as any).recipientId === senderId ||
+        (targetEmail && (m.senderId === targetEmail || m.senderEmail === targetEmail || (m as any).recipientEmail === targetEmail)) ||
+        (m.senderName && senderName && m.senderName.toLowerCase() === senderName.toLowerCase()) ||
+        ((m as any).recipientName && senderName && (m as any).recipientName.toLowerCase() === senderName.toLowerCase())
     );
 
     setActiveSection("messages");
@@ -2722,6 +2733,7 @@ export function App() {
         targetEmail ? targetEmail.split("@")[0] : "",
         senderId,
         senderName.toLowerCase(),
+        ...(sName === "yoouz" || senderId === "yoouz.com" || targetEmail === "info@yoouz.com" ? ["yoouz.com", "yoouz", "info@yoouz.com"] : []),
         ...(sName === "avt ertuop" || targetEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop"] : []),
         ...(sName === "biz riv" || targetEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv"] : []),
         ...(sName.includes("aouisesmee") || targetEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee"] : [])
