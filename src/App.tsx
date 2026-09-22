@@ -618,15 +618,30 @@ export function App() {
               pDomain === `${rawParam}.com` ||
               pName === rawParam ||
               (rSlug.length > 2 && pSlug === rSlug) ||
-              rawParam === "yoouz" ||
-              rawParam === "yoouz.com" ||
               rawParam === "legal500" ||
               rawParam === "legal500.com"
             );
           });
 
-          if (matchingPlace || rawParam === "yoouz" || rawParam === "yoouz.com" || rawParam === "legal500" || rawParam === "legal500.com") {
-            const targetPlaceId = matchingPlace ? matchingPlace.id : (rawParam.includes("legal500") ? "legal500.com" : "yoouz.com");
+          if (rawParam === "yoouz" || rawParam === "yoouz.com") {
+            setSelectedPlaceIdForDrawer(null);
+            setSelectedAuthorForDrawer({
+              name: "Yoouz",
+              handle: "@yoouz",
+              email: "info@yoouz.com",
+              id: "yoouz",
+              userId: "yoouz",
+              avatar: "/favicon.svg",
+              bio: "Official Yoouz Support & Community Platform",
+              location: "Global Platform",
+              isVerified: true,
+              followersCount: 10000,
+            });
+            try {
+              window.history.replaceState(null, "", `/@yoouz`);
+            } catch (e) {}
+          } else if (matchingPlace || rawParam === "legal500" || rawParam === "legal500.com") {
+            const targetPlaceId = matchingPlace ? matchingPlace.id : "legal500.com";
             setSelectedPlaceIdForDrawer(targetPlaceId);
             setSelectedAuthorForDrawer(null);
             try {
@@ -3921,6 +3936,8 @@ export function App() {
       const pSlug = pName.replace(/[^a-z0-9]/g, "");
       const aSlug = authorIdentifier.replace(/[^a-z0-9]/g, "");
 
+      if (pId === "yoouz.com" || pName === "yoouz" || pDomain === "yoouz.com") return false;
+
       return (
         pId === authorIdentifier ||
         pId === `${authorIdentifier}.com` ||
@@ -3928,25 +3945,43 @@ export function App() {
         pDomain === `${authorIdentifier}.com` ||
         pName === authorLower ||
         (aSlug.length > 2 && pSlug === aSlug) ||
-        authorLower === "yoouz" ||
-        authorLower === "yoouz.com" ||
-        authorIdentifier === "yoouz" ||
-        authorIdentifier === "yoouz.com" ||
         authorLower === "legal 500" ||
         authorLower === "legal500" ||
         authorLower === "legal500.com"
       );
     });
 
-    if (
-      matchingPlace ||
+    const isYoouzOfficial =
       authorLower === "yoouz" ||
       authorLower === "yoouz.com" ||
+      authorLower === "yoouz beta" ||
       authorIdentifier === "yoouz" ||
-      authorIdentifier === "yoouz.com" ||
-      authorLower.includes("legal500")
-    ) {
-      const targetPlaceId = matchingPlace ? matchingPlace.id : (authorLower.includes("legal500") ? "legal500.com" : "yoouz.com");
+      authorIdentifier === "yoouz.com";
+
+    if (isYoouzOfficial) {
+      if (!selectedPlaceIdForDrawer && !selectedAuthorForDrawer) {
+        savedHomeVideoIndexRef.current = currentVideoIndex;
+        previousSectionRef.current = activeSection;
+      }
+      setFullscreenFeedContext(null);
+      setSelectedPlaceIdForDrawer(null);
+      setSelectedAuthorForDrawer({
+        name: "Yoouz",
+        handle: "@yoouz",
+        email: "info@yoouz.com",
+        id: "yoouz",
+        userId: "yoouz",
+        avatar: "/favicon.svg",
+        bio: "Official Yoouz Support & Community Platform",
+        location: "Global Platform",
+        isVerified: true,
+        followersCount: 10000,
+      });
+      return;
+    }
+
+    if (matchingPlace || authorLower.includes("legal500")) {
+      const targetPlaceId = matchingPlace ? matchingPlace.id : "legal500.com";
       handleOpenPlaceDrawer(targetPlaceId);
       return;
     }

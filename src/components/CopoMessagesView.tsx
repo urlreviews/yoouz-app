@@ -1148,12 +1148,40 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const cleanId = (id || "").toLowerCase().trim();
     const cleanName = (name || "").toLowerCase().trim();
 
+    // Check if clicking Official Yoouz Support / Platform
+    const isYoouzOfficial =
+      cleanName === "yoouz" ||
+      cleanName === "yoouz.com" ||
+      cleanName === "yoouz beta" ||
+      cleanId === "yoouz" ||
+      cleanId === "yoouz.com";
+
+    if (isYoouzOfficial) {
+      if (onOpenCreator) {
+        onOpenCreator({
+          name: "Yoouz",
+          handle: "@yoouz",
+          email: "info@yoouz.com",
+          id: "yoouz",
+          userId: "yoouz",
+          avatar: "/favicon.svg",
+          bio: "Official Yoouz Support & Community Platform",
+          location: "Global Platform",
+          isVerified: true,
+          followersCount: 10000,
+        });
+        return;
+      }
+    }
+
     const matchingPlace = (places || []).find((p) => {
       const pId = (p.id || "").toLowerCase().trim();
       const pName = (p.name || "").toLowerCase().trim();
       const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].trim();
       const pSlug = pName.replace(/[^a-z0-9]/g, "");
       const nSlug = cleanName.replace(/[^a-z0-9]/g, "");
+
+      if (pId === "yoouz.com" || pName === "yoouz" || pDomain === "yoouz.com") return false;
 
       return (
         (cleanId && (pId === cleanId || pDomain === cleanId || pId === `${cleanId}.com` || pDomain === `${cleanId}.com`)) ||
@@ -1162,18 +1190,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         pDomain === cleanName ||
         pDomain === `${cleanName}.com` ||
         pName === cleanName ||
-        (nSlug.length > 2 && pSlug === nSlug) ||
-        cleanName === "yoouz" ||
-        cleanName === "yoouz.com" ||
-        cleanId === "yoouz" ||
-        cleanId === "yoouz.com"
+        (nSlug.length > 2 && pSlug === nSlug)
       );
     });
 
-    if (matchingPlace || cleanName === "yoouz" || cleanName === "yoouz.com" || cleanId === "yoouz" || cleanId === "yoouz.com") {
-      const targetPlaceId = matchingPlace ? matchingPlace.id : "yoouz.com";
+    if (matchingPlace) {
       if (onSelectPlace) {
-        onSelectPlace(targetPlaceId);
+        onSelectPlace(matchingPlace.id);
         return;
       }
     }

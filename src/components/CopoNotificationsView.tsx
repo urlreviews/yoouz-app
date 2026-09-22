@@ -301,7 +301,21 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       (notif.user.email || "").toLowerCase().includes("yoouz") ||
       (notif.user.email || "").toLowerCase().includes("admin");
 
-    if (isYoouzTeam) return;
+    if (isYoouzTeam) {
+      onOpenCreator({
+        name: "Yoouz",
+        handle: "@yoouz",
+        email: "info@yoouz.com",
+        id: "yoouz",
+        userId: "yoouz",
+        avatar: "/favicon.svg",
+        bio: "Official Yoouz Support & Community Platform",
+        location: "Global Platform",
+        isVerified: true,
+        followersCount: 10000,
+      });
+      return;
+    }
 
     onOpenCreator({
       name: notif.user.name,
