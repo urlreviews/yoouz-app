@@ -5852,6 +5852,178 @@ app.post('/api/admin/chats/purge-all', express.json(), async (_req, res) => {
   }
 });
 
+// Admin Get All Chats
+app.get('/api/admin/chats', async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+
+    const result = await bunnyDb.execute("SELECT id, participants, lastMessage, lastSenderEmail, data FROM chats ORDER BY rowid DESC");
+    const chats = result.rows.map(r => {
+      let d: any = {};
+      try { d = typeof r.data === 'string' ? JSON.parse(String(r.data)) : (r.data || {}); } catch(e){}
+      return {
+        id: r.id,
+        participants: r.participants,
+        lastMessage: r.lastMessage,
+        lastSenderEmail: r.lastSenderEmail,
+        ...d
+      };
+    });
+    res.json({ success: true, count: chats.length, chats });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Deduplicate & Merge Duplicate Chats
+app.post('/api/admin/chats/deduplicate', express.json(), async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+
+    const normalizeKey = (str: any): string => {
+      if (!str) return '';
+      const s = String(str).toLowerCase().trim().replace(/^@/, '');
+      if (s.includes('avr6566gd') || s.includes('steven') || s.includes('avt')) return 'usr_steven_akan';
+      if (s.includes('aouisesmee') || s.includes('aouisemee') || s.includes('ben')) return 'usr_ben_blue';
+      if (s.includes('louis42111') || s.includes('biz')) return 'usr_biz_riv';
+      if (s.includes('info@yoouz.com') || s === 'yoouz.com' || s === 'yoouz') return 'usr_yoouz_official';
+      return s.replace(/[^a-z0-9]/g, '_');
+    };
+
+    const rowsRes = await bunnyDb.execute("SELECT id, data FROM chats");
+    const groups = new Map<string, { id: string; data: any }[]>();
+    let purgedEmptyCount = 0;
+
+    for (const r of rowsRes.rows) {
+      let d: any = {};
+      try { d = typeof r.data === 'string' ? JSON.parse(String(r.data)) : (r.data || {}); } catch(e){}
+      const threadId = String(r.id || d.id || '').trim();
+      if (!threadId) continue;
+
+      const sEmail = d.senderEmail || d.lastSenderEmail || '';
+      const rEmail = d.recipientEmail || '';
+      const sName = d.senderName || d.lastSenderName || '';
+      const rName = d.recipientName || '';
+      const sId = d.senderId || '';
+      const rId = d.recipientId || '';
+
+      const keyA = normalizeKey(sEmail || sName || sId);
+      const keyB = normalizeKey(rEmail || rName || rId);
+
+      if (!keyA && !keyB) {
+        await bunnyDb.execute({ sql: "DELETE FROM chats WHERE id = ?", args: [threadId] });
+        purgedEmptyCount++;
+        continue;
+      }
+
+      const groupKey = [keyA, keyB].sort().join('__');
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, []);
+      }
+      groups.get(groupKey)!.push({ id: threadId, data: d });
+    }
+
+    let mergedCount = 0;
+    let deletedDuplicates = 0;
+
+    for (const [groupKey, threadList] of groups.entries()) {
+      if (threadList.length <= 1) continue;
+
+      const primary = threadList[0];
+      const mergedHistory: any[] = [];
+      let newestUpdatedAt = 0;
+      const allParticipants = new Set<string>();
+      const mergedProfiles: Record<string, any> = {};
+
+      for (const t of threadList) {
+        const d = t.data;
+        if (Array.isArray(d.history)) mergedHistory.push(...d.history);
+        if (Array.isArray(d.participants)) d.participants.forEach((p: string) => allParticipants.add(p));
+        if (d.participantProfiles && typeof d.participantProfiles === 'object') {
+          Object.assign(mergedProfiles, d.participantProfiles);
+        }
+        const time = Math.max(Number(d.updatedAt || 0), Number(d.createdAt || d.createdAtMs || 0));
+        if (time > newestUpdatedAt) newestUpdatedAt = time;
+      }
+
+      const seenMsg = new Set<string>();
+      const uniqueHistory: any[] = [];
+      for (const msg of mergedHistory) {
+        if (!msg) continue;
+        const mKey = (msg.id && !msg.id.includes('random')) ? msg.id : (msg.text + '_' + (msg.createdAt || msg.createdAtMs || msg.timestamp));
+        if (!seenMsg.has(mKey)) {
+          seenMsg.add(mKey);
+          uniqueHistory.push(msg);
+        }
+      }
+      uniqueHistory.sort((a, b) => (a.createdAt || a.createdAtMs || 0) - (b.createdAt || b.createdAtMs || 0));
+
+      const lastMsg = uniqueHistory.length > 0 ? uniqueHistory[uniqueHistory.length - 1].text : (primary.data.lastMessage || 'Conversation started');
+
+      const updatedData = {
+        ...primary.data,
+        participants: Array.from(allParticipants),
+        participantProfiles: mergedProfiles,
+        history: uniqueHistory,
+        lastMessage: lastMsg,
+        updatedAt: newestUpdatedAt || Date.now()
+      };
+
+      await bunnyDb.execute({
+        sql: "UPDATE chats SET data = ?, lastMessage = ?, participants = ? WHERE id = ?",
+        args: [JSON.stringify(updatedData), lastMsg, JSON.stringify(Array.from(allParticipants)), primary.id]
+      });
+      mergedCount++;
+
+      for (let i = 1; i < threadList.length; i++) {
+        await bunnyDb.execute({ sql: "DELETE FROM chats WHERE id = ?", args: [threadList[i].id] });
+        deletedDuplicates++;
+      }
+    }
+
+    broadcastSseEvent({ type: "chats_deduplicated", mergedCount, deletedDuplicates, purgedEmptyCount });
+    res.json({
+      success: true,
+      mergedCount,
+      deletedDuplicates,
+      purgedEmptyCount,
+      totalScanned: rowsRes.rows.length,
+      remainingThreads: rowsRes.rows.length - deletedDuplicates - purgedEmptyCount
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Purge Empty Chats
+app.post('/api/admin/chats/purge-empty', express.json(), async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+
+    const rowsRes = await bunnyDb.execute("SELECT id, data FROM chats");
+    let deletedCount = 0;
+
+    for (const r of rowsRes.rows) {
+      let d: any = {};
+      try { d = typeof r.data === 'string' ? JSON.parse(String(r.data)) : (r.data || {}); } catch(e){}
+      const hasHistory = Array.isArray(d.history) && d.history.length > 0;
+      const hasText = Boolean(d.lastMessage && d.lastMessage.trim() !== '' && d.lastMessage !== 'Conversation started');
+      if (!hasHistory && !hasText) {
+        await bunnyDb.execute({ sql: "DELETE FROM chats WHERE id = ?", args: [r.id] });
+        deletedCount++;
+      }
+    }
+
+    broadcastSseEvent({ type: "chats_purged", deletedCount });
+    res.json({ success: true, deletedCount });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/comments/purge-all', express.json(), async (_req, res) => {
   try {
     const bunnyDb = getBunnyDb();

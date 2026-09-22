@@ -127,7 +127,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "broadcast" | "database";
+type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "messages" | "broadcast" | "database";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,
@@ -209,6 +209,85 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [editUserModal, setEditUserModal] = useState<any | null>(null);
   const [broadcastData, setBroadcastData] = useState({ title: "", message: "", targetUrl: "" });
   const [isBroadcastSending, setIsBroadcastSending] = useState(false);
+
+  // Admin Direct Messages & Chats State
+  const [adminChats, setAdminChats] = useState<any[]>([]);
+  const [isLoadingChats, setIsLoadingChats] = useState(false);
+  const [isDeduplicatingChats, setIsDeduplicatingChats] = useState(false);
+  const [inspectChatModal, setInspectChatModal] = useState<any | null>(null);
+
+  const fetchAdminChats = async () => {
+    setIsLoadingChats(true);
+    try {
+      const res = await fetch("/api/admin/chats");
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.chats)) {
+        setAdminChats(data.chats);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch admin chats:", e);
+    } finally {
+      setIsLoadingChats(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "messages") {
+      fetchAdminChats();
+    }
+  }, [activeTab]);
+
+  const handleDeduplicateChats = async () => {
+    setIsDeduplicatingChats(true);
+    try {
+      const res = await fetch("/api/admin/chats/deduplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(`Deduplicated: ${data.mergedCount} thread(s) merged, ${data.deletedDuplicates} duplicate(s) removed.`);
+        fetchAdminChats();
+      } else {
+        showToast("No duplicates found or error deduplicating.");
+      }
+    } catch (e) {
+      showToast("Failed to deduplicate chats.");
+    } finally {
+      setIsDeduplicatingChats(false);
+    }
+  };
+
+  const handlePurgeEmptyChats = async () => {
+    if (!confirm("Are you sure you want to purge all empty/orphan chat threads with 0 messages?")) return;
+    try {
+      const res = await fetch("/api/admin/chats/purge-empty", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(`Purged ${data.deletedCount || 0} empty thread(s).`);
+        fetchAdminChats();
+      }
+    } catch (e) {
+      showToast("Failed to purge empty threads.");
+    }
+  };
+
+  const handleDeleteAdminChat = async (chatId: string) => {
+    if (!confirm(`Delete chat thread "${chatId}" permanently from database?`)) return;
+    try {
+      const res = await fetch(`/api/nosql/chats/${chatId}`, { method: "DELETE" });
+      if (res.ok) {
+        setAdminChats((prev) => prev.filter((c) => c.id !== chatId));
+        if (inspectChatModal?.id === chatId) setInspectChatModal(null);
+        showToast("Thread deleted successfully.");
+      }
+    } catch (e) {
+      showToast("Error deleting thread.");
+    }
+  };
 
   // System Health & Bug Diagnostics State
   const [healthData, setHealthData] = useState<any>(null);
@@ -1772,6 +1851,23 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab("messages")}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "messages"
+                  ? "bg-white text-zinc-950 shadow-lg"
+                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4" />
+                Messages & Chats
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "messages" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+                {adminChats.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("broadcast")}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "broadcast"
@@ -1826,6 +1922,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
                 ["videos", `Videos (${videos.length})`],
                 ["comments", "Moderation"],
+                ["messages", `Messages (${adminChats.length})`],
                 ["broadcast", "Broadcast"],
                 ["database", "Database"]
               ] as const
@@ -4016,6 +4113,210 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* TAB: DIRECT MESSAGES & MODERATION */}
+          {activeTab === "messages" && (
+            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-5 rounded-3xl border border-zinc-800 shadow-md">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <h2 className="text-xl font-black text-white tracking-tight">Direct Messages & Chat Sync</h2>
+                  </div>
+                  <p className="text-xs text-zinc-200 mt-1">
+                    Manage active chat threads stored in Bunny Cloud Database. Inspect message histories, deduplicate duplicate boxes, or purge empty threads.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    onClick={handleDeduplicateChats}
+                    disabled={isDeduplicatingChats}
+                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                    title="Merge duplicate threads between the same participants and unite chat histories"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {isDeduplicatingChats ? "Merging..." : "Deduplicate & Merge"}
+                  </button>
+
+                  <button
+                    onClick={handlePurgeEmptyChats}
+                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold rounded-xl transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer"
+                    title="Purge threads with 0 messages"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    Purge Empty
+                  </button>
+
+                  <button
+                    onClick={fetchAdminChats}
+                    disabled={isLoadingChats}
+                    className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold rounded-xl transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingChats ? "animate-spin" : ""}`} />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {/* Thread List Table / Cards */}
+              <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden shadow-md">
+                <div className="p-4 border-b border-zinc-800 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-zinc-200">
+                    <span>Total Database Threads:</span>
+                    <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-white font-mono">{adminChats.length}</span>
+                  </div>
+                </div>
+
+                {isLoadingChats ? (
+                  <div className="py-20 text-center text-zinc-400 flex flex-col items-center justify-center gap-3">
+                    <RefreshCw className="w-6 h-6 animate-spin text-blue-400" />
+                    <span className="text-xs font-bold">Querying Bunny Cloud Database chats...</span>
+                  </div>
+                ) : adminChats.length === 0 ? (
+                  <div className="py-20 text-center text-zinc-400 space-y-2">
+                    <Mail className="w-8 h-8 mx-auto text-zinc-600" />
+                    <p className="text-sm font-bold text-white">No active chat threads found</p>
+                    <p className="text-xs text-zinc-200">All direct message conversations have been cleanly pruned.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-zinc-800/60">
+                    {adminChats.map((chat) => {
+                      const historyCount = Array.isArray(chat.history) ? chat.history.length : 0;
+                      const sender = chat.senderName || chat.lastSenderName || chat.senderEmail || "Unknown Sender";
+                      const recipient = chat.recipientName || chat.recipientEmail || "Unknown Recipient";
+                      const lastMsg = chat.lastMessage || (historyCount > 0 ? chat.history[historyCount - 1]?.text : "Conversation started");
+                      const updatedAt = chat.updatedAt || chat.createdAt || chat.createdAtMs;
+
+                      return (
+                        <div key={chat.id} className="p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-zinc-850/50 transition-colors">
+                          <div className="space-y-1.5 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700">
+                                {chat.id}
+                              </span>
+                              <span className="text-xs font-black text-white">
+                                {sender} ↔ {recipient}
+                              </span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950/60 text-blue-400 border border-blue-800/40 font-bold">
+                                {historyCount} message{historyCount === 1 ? "" : "s"}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-zinc-200 truncate max-w-xl">
+                              <span className="text-zinc-400 font-medium">Last message:</span> &ldquo;{lastMsg}&rdquo;
+                            </p>
+
+                            {Array.isArray(chat.participants) && chat.participants.length > 0 && (
+                              <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                <span className="text-[10px] text-zinc-400 font-bold">Aliases / Participants:</span>
+                                {chat.participants.map((p: string, pIdx: number) => (
+                                  <span key={pIdx} className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800/80 text-zinc-200 border border-zinc-700/50">
+                                    {p}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                            <button
+                              onClick={() => setInspectChatModal(chat)}
+                              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold rounded-xl transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Search className="w-3.5 h-3.5" />
+                              Inspect Messages
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteAdminChat(chat.id)}
+                              className="p-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300 rounded-xl transition-all border border-red-800/40 cursor-pointer"
+                              title="Delete thread permanently"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal: Inspect Thread Messages */}
+              {inspectChatModal && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+                  <div className="bg-zinc-900 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-150 overflow-hidden">
+                    <div className="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-black text-white truncate">
+                          Thread Inspection: {inspectChatModal.id}
+                        </h3>
+                        <p className="text-xs text-zinc-200">
+                          {inspectChatModal.senderName || inspectChatModal.senderEmail} ↔ {inspectChatModal.recipientName || inspectChatModal.recipientEmail}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setInspectChatModal(null)}
+                        className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 divide-y divide-zinc-800/40">
+                      {!Array.isArray(inspectChatModal.history) || inspectChatModal.history.length === 0 ? (
+                        <div className="py-12 text-center text-zinc-400 space-y-2">
+                          <MessageSquare className="w-6 h-6 mx-auto text-zinc-600" />
+                          <p className="text-xs font-bold">No individual messages recorded in history.</p>
+                        </div>
+                      ) : (
+                        inspectChatModal.history.map((msg: any, idx: number) => (
+                          <div key={msg.id || idx} className="pt-3 first:pt-0 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-white">
+                                {msg.senderName || msg.senderEmail || "User"}
+                              </span>
+                              <span className="text-[10px] text-zinc-400 font-mono">
+                                {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString() : msg.timestamp || ""}
+                              </span>
+                            </div>
+                            <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800/80 text-xs text-zinc-200 leading-relaxed break-words">
+                              {msg.text || "(Empty text / media attachment)"}
+                            </div>
+                            {msg.videoThumbnail && (
+                              <div className="mt-2 rounded-xl overflow-hidden max-w-xs border border-zinc-800">
+                                <img src={msg.videoThumbnail} alt="Attached video" className="w-full h-28 object-cover" />
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="p-4 border-t border-zinc-800 flex items-center justify-between gap-3 bg-zinc-950">
+                      <button
+                        onClick={() => handleDeleteAdminChat(inspectChatModal.id)}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-black text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete Entire Thread
+                      </button>
+                      <button
+                        onClick={() => setInspectChatModal(null)}
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white font-bold text-xs rounded-xl transition-all cursor-pointer border border-zinc-700"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

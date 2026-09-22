@@ -1025,6 +1025,16 @@ export async function clearAllNotifications(notificationIds: string[], currentUs
   }
 }
 
+export function getCanonicalDirectChatThreadId(userAKey: string, userBKey: string, isBusiness?: boolean, placeId?: string): string {
+  if (isBusiness && placeId) {
+    return `thread_biz_${placeId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+  }
+  const cleanA = (userAKey || "").toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, "_");
+  const cleanB = (userBKey || "").toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, "_");
+  const sorted = [cleanA, cleanB].sort().join("__");
+  return `thread_dm_${sorted}`;
+}
+
 export function getDeletedThreadsKey(currentUser?: UserProfile | null): string {
   if (!currentUser) return "yoouz_deleted_threads";
   const id = (currentUser.userId || currentUser.id || (currentUser as any).uid || (currentUser as any).placeId || currentUser.email || "").toLowerCase().trim();
@@ -1042,14 +1052,14 @@ export function getDeletedThreadsMap(currentUser?: UserProfile | null): Map<stri
       if (Array.isArray(parsed)) {
         for (const item of parsed) {
           if (typeof item === "string") {
-            map.set(item.trim(), 1);
+            map.set(item.trim(), Date.now());
           } else if (item && typeof item === "object" && item.id) {
-            map.set(String(item.id).trim(), Number(item.deletedAt) || 1);
+            map.set(String(item.id).trim(), Number(item.deletedAt) || Date.now());
           }
         }
       } else if (parsed && typeof parsed === "object") {
         for (const [k, v] of Object.entries(parsed)) {
-          map.set(k.trim(), Number(v) || 1);
+          map.set(k.trim(), Number(v) || Date.now());
         }
       }
     }
@@ -1091,22 +1101,37 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const threadId = String(data.id || "").trim();
     if (!threadId) continue;
 
-    // Determine latest activity timestamp for this thread
-    const latestMsgTime = Math.max(
-      Number(data.updatedAt || 0),
-      Number(data.createdAt || data.createdAtMs || 0),
-      ...(Array.isArray(data.history) ? data.history.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)) : [])
-    );
+    // Check if deleted specifically on the server record
+    const deletedForUsers = Array.isArray(data.deletedForUsers)
+      ? data.deletedForUsers.map((u: string) => (u || "").toLowerCase().trim())
+      : [];
+    if (userEmail && deletedForUsers.includes(userEmail)) {
+      continue;
+    }
+    if (userId && deletedForUsers.includes(userId)) {
+      continue;
+    }
 
-    // If user previously deleted this thread locally: check if new messages arrived since deletion
+    // If user previously deleted this thread locally: check if new messages arrived since deletion from OTHER party
     const deletedTimestamp = deletedThreadsMap.get(threadId);
     if (deletedTimestamp !== undefined) {
-      if (latestMsgTime > deletedTimestamp + 500) {
-        // A new message arrived after deletion: un-delete the thread so recipient sees the conversation
+      const rawHistory = Array.isArray(data.history) ? data.history : [];
+      const hasNewIncomingMsg = rawHistory.some((m: any) => {
+        const msgTime = Number(m?.createdAt || m?.createdAtMs || 0);
+        if (msgTime <= deletedTimestamp + 1000) return false;
+        const msgSenderEmail = (m?.senderEmail || '').toLowerCase().trim();
+        const msgSenderName = (m?.senderName || '').toLowerCase().trim();
+        const msgSenderId = (m?.senderId || '').toLowerCase().trim();
+        const isMyMsg = (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
+                        (userName && (msgSenderName === userName || msgSenderId === userName)) ||
+                        (userId && msgSenderId === userId);
+        return !isMyMsg;
+      });
+
+      if (hasNewIncomingMsg) {
         deletedThreadsMap.delete(threadId);
         deletedThreadsModified = true;
       } else {
-        // Conversation has no new messages since deletion: keep hidden
         continue;
       }
     }
@@ -1325,11 +1350,21 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         };
       });
 
-      // Deduplicate threads with the same participant to prevent duplicate conversations
+      // Deduplicate threads with the same participant to prevent duplicate conversation boxes
+      const normalizePartnerKey = (name?: string, id?: string, email?: string): string => {
+        const s = `${name || ''} ${id || ''} ${email || ''}`.toLowerCase();
+        if (s.includes('steven') || s.includes('avr6566gd') || s.includes('avt')) return 'partner_steven';
+        if (s.includes('ben') || s.includes('aouisesmee') || s.includes('aouisemee')) return 'partner_ben';
+        if (s.includes('biz') || s.includes('louis42111')) return 'partner_biz';
+        if (s.includes('yoouz') || s.includes('info@yoouz.com')) return 'partner_yoouz';
+        return (email || id || name || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+      };
+
+      const partnerKey = normalizePartnerKey(otherName, otherId, data.senderEmail !== userEmail ? data.senderEmail : data.recipientEmail);
+
       const existingThreadIdx = threads.findIndex((t) => {
-        const sameId = t.senderId && otherId && t.senderId.toLowerCase().trim() === otherId.toLowerCase().trim();
-        const sameName = t.senderName && otherName && t.senderName.toLowerCase().trim() === otherName.toLowerCase().trim();
-        return Boolean(sameId || sameName);
+        const existingPartnerKey = normalizePartnerKey(t.senderName, t.senderId, t.senderEmail || (t as any).recipientEmail);
+        return existingPartnerKey === partnerKey;
       });
 
       if (existingThreadIdx >= 0) {

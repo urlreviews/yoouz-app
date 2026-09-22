@@ -70,7 +70,7 @@ interface CopoMessagesViewProps {
   onDeleteThread?: (threadId: string) => void;
   blockedUserIds?: string[];
   onBlockUser?: (userId: string, userName: string) => void;
-  onUnblockUser?: (userId: string) => void;
+  onUnblockUser?: (userId: string, userName?: string) => void;
   onNavigateToNotifications?: () => void;
   onNavigateHome?: () => void;
   unreadNotifsCount?: number;
@@ -867,8 +867,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     setReplyText("");
   };
 
-  const handleMarkAsReadAction = () => {
-    const target = targetActionThread;
+  const handleMarkAsReadAction = (targetOverride?: CopoMessage | null) => {
+    const target = targetOverride || targetActionThread;
     if (!target) return;
     if (onMarkThreadRead) {
       onMarkThreadRead(target.id);
@@ -882,8 +882,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     showToast("Marked conversation as read.");
   };
 
-  const handleBlockUserAction = () => {
-    const target = targetActionThread;
+  const handleBlockUserAction = (targetOverride?: CopoMessage | null) => {
+    const target = targetOverride || targetActionThread;
     if (!target) return;
     const targetId = target.senderId || target.senderName;
     if (onBlockUser) {
@@ -895,40 +895,47 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     showToast(`Blocked @${target.senderName}. You will no longer receive messages.`);
   };
 
-  const handleUnblockUserAction = () => {
-    const target = targetActionThread;
+  const handleUnblockUserAction = (targetOverride?: CopoMessage | null) => {
+    const target = targetOverride || targetActionThread;
     if (!target) return;
     const targetId = target.senderId || target.senderName;
     if (onUnblockUser) {
-      onUnblockUser(targetId);
+      onUnblockUser(targetId, target.senderName);
     }
     setIsOptionsOpen(false);
     setActionThread(null);
     showToast(`Unblocked @${target.senderName}.`);
   };
 
-  const handleDeleteConversation = () => {
-    const target = targetActionThread;
+  const handleDeleteConversation = (targetOverride?: CopoMessage | null) => {
+    const target = targetOverride || targetActionThread;
     if (!target) return;
+    
+    // 1. Instantly filter messages in local state for 0ms visual feedback
+    const remaining = messages.filter((m) => m.id !== target.id);
+    onUpdateMessages(remaining);
+
+    // 2. Call parent to persist deletion in BunnyDB & local deletion cache
     if (onDeleteThread) {
       onDeleteThread(target.id);
-    } else {
-      const remaining = messages.filter((m) => m.id !== target.id);
-      onUpdateMessages(remaining);
     }
-    if (target.id === selectedThreadId) {
+    
+    // 3. Clear active selection if the deleted thread was currently open
+    if (target.id === selectedThreadId || target.id === localSelectedThreadId) {
       setLocalSelectedThreadId("");
       setIsMobileThreadViewOpen(false);
       if (onSelectThreadId) onSelectThreadId("");
     }
+    
+    // 4. Close all action modals and reset state
     setShowDeleteConfirmModal(false);
     setIsOptionsOpen(false);
     setActionThread(null);
     showToast("Conversation deleted.");
   };
 
-  const handleReportAction = () => {
-    const target = targetActionThread;
+  const handleReportAction = (targetOverride?: CopoMessage | null) => {
+    const target = targetOverride || targetActionThread;
     if (!target) return;
     setIsOptionsOpen(false);
     setActionThread(null);
@@ -1467,7 +1474,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         {/* Mark as read option */}
                         <button
                           id="btn-mark-chat-read"
-                          onClick={handleMarkAsReadAction}
+                          onClick={() => handleMarkAsReadAction(targetActionThread)}
                           className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
                           <CheckCheck className="w-4 h-4 text-emerald-400" />
@@ -1479,7 +1486,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         {/* Report option */}
                         <button
                           id="btn-report-chat-user"
-                          onClick={handleReportAction}
+                          onClick={() => handleReportAction(targetActionThread)}
                           className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
                           <Flag className="w-4 h-4 text-red-500" />
@@ -1490,7 +1497,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         {isActionTargetBlocked ? (
                           <button
                             id="btn-unblock-chat-user"
-                            onClick={handleUnblockUserAction}
+                            onClick={() => handleUnblockUserAction(targetActionThread)}
                             className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-emerald-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -1499,10 +1506,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         ) : (
                           <button
                             id="btn-block-chat-user"
-                            onClick={() => {
-                              setIsOptionsOpen(false);
-                              setShowBlockConfirmModal(true);
-                            }}
+                            onClick={() => handleBlockUserAction(targetActionThread)}
                             className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <UserX className="w-4 h-4 text-zinc-200" />
@@ -1515,10 +1519,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         {/* Delete Conversation */}
                         <button
                           id="btn-delete-chat-thread"
-                          onClick={() => {
-                            setIsOptionsOpen(false);
-                            setShowDeleteConfirmModal(true);
-                          }}
+                          onClick={() => handleDeleteConversation(targetActionThread)}
                           className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
@@ -1539,8 +1540,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       </span>
                     </div>
                     <button
-                      onClick={handleUnblockUserAction}
-                      className="px-2.5 py-1 bg-red-600 text-white rounded-lg font-bold text-[11px] hover:bg-red-700 transition-colors shadow-2xs"
+                      onClick={() => handleUnblockUserAction(activeThread)}
+                      className="px-2.5 py-1 bg-red-600 text-white rounded-lg font-bold text-[11px] hover:bg-red-700 transition-colors shadow-2xs cursor-pointer"
                     >
                       Unblock
                     </button>
@@ -1991,7 +1992,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               <button
                 type="button"
                 id="btn-options-mark-read"
-                onClick={handleMarkAsReadAction}
+                onClick={() => handleMarkAsReadAction(targetActionThread)}
                 className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
               >
                 <CheckCheck className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -2002,7 +2003,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               <button
                 type="button"
                 id="btn-options-report-user"
-                onClick={handleReportAction}
+                onClick={() => handleReportAction(targetActionThread)}
                 className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
               >
                 <Flag className="w-5 h-5 text-red-500 shrink-0" />
@@ -2014,7 +2015,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <button
                   type="button"
                   id="btn-options-unblock-user"
-                  onClick={handleUnblockUserAction}
+                  onClick={() => handleUnblockUserAction(targetActionThread)}
                   className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-emerald-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
                 >
                   <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
@@ -2024,10 +2025,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <button
                   type="button"
                   id="btn-options-block-user"
-                  onClick={() => {
-                    setIsOptionsOpen(false);
-                    setShowBlockConfirmModal(true);
-                  }}
+                  onClick={() => handleBlockUserAction(targetActionThread)}
                   className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
                 >
                   <UserX className="w-5 h-5 text-zinc-400 shrink-0" />
@@ -2039,10 +2037,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               <button
                 type="button"
                 id="btn-options-delete-conversation"
-                onClick={() => {
-                  setIsOptionsOpen(false);
-                  setShowDeleteConfirmModal(true);
-                }}
+                onClick={() => handleDeleteConversation(targetActionThread)}
                 className="w-full px-4 py-3 text-left text-sm font-bold text-red-400 hover:bg-zinc-800 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
               >
                 <Trash2 className="w-5 h-5 text-red-500 shrink-0" />
@@ -2092,7 +2087,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               </button>
               <button
                 type="button"
-                onClick={handleBlockUserAction}
+                onClick={() => handleBlockUserAction(targetActionThread)}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-black text-xs hover:bg-red-700 transition-colors shadow-xs cursor-pointer"
               >
                 Block User
@@ -2332,7 +2327,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               </button>
               <button
                 type="button"
-                onClick={handleDeleteConversation}
+                onClick={() => handleDeleteConversation(targetActionThread)}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-black text-xs hover:bg-red-700 transition-colors shadow-xs cursor-pointer"
               >
                 Delete

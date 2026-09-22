@@ -300,10 +300,16 @@ export function App() {
     });
   };
 
-  const handleUnblockUser = (userId: string) => {
+  const handleUnblockUser = (userId: string, userName?: string) => {
     setBlockedUserIds((prev) => {
       const cleanId = (userId || "").toLowerCase().trim().replace(/^@/, "");
-      const next = prev.filter((id) => id !== cleanId && !cleanId.includes(id));
+      const cleanName = (userName || "").toLowerCase().trim().replace(/^@/, "");
+      const next = prev.filter((id) => {
+        const item = (id || "").toLowerCase().trim().replace(/^@/, "");
+        if (cleanId && (item === cleanId || item.includes(cleanId) || cleanId.includes(item))) return false;
+        if (cleanName && (item === cleanName || item.includes(cleanName) || cleanName.includes(item))) return false;
+        return true;
+      });
       try {
         localStorage.setItem("yoouz_blocked_users", JSON.stringify(next));
       } catch (e) {}
