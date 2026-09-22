@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getProxiedImageUrl } from '../utils/logoUtils';
+import { getProxiedImageUrl, KNOWN_LOADED_BANNERS } from '../utils/logoUtils';
 
 export function useCriticalImagesLoaded(urls: (string | undefined | null)[], timeoutMs = 1500) {
   const [loaded, setLoaded] = useState(false);
   const cacheKey = useMemo(() => urls.join(','), [urls]);
 
   useEffect(() => {
-    setLoaded(false); // Reset on URL change
     const validUrls = urls.filter(url => typeof url === 'string' && url.trim().length > 0) as string[];
     
     if (validUrls.length === 0) {
@@ -24,17 +23,15 @@ export function useCriticalImagesLoaded(urls: (string | undefined | null)[], tim
       }
     };
 
-    const timer = setTimeout(trigger, timeoutMs);
-
     validUrls.forEach(rawUrl => {
       const proxied = getProxiedImageUrl(rawUrl);
-      if (!proxied) {
+      if (!proxied || KNOWN_LOADED_BANNERS.has(proxied)) {
         loadedCount++;
-        if (loadedCount === validUrls.length) trigger();
         return;
       }
       const img = new window.Image();
       img.onload = () => {
+        KNOWN_LOADED_BANNERS.add(proxied);
         loadedCount++;
         if (loadedCount === validUrls.length) trigger();
       };
@@ -44,6 +41,13 @@ export function useCriticalImagesLoaded(urls: (string | undefined | null)[], tim
       };
       img.src = proxied;
     });
+
+    if (loadedCount === validUrls.length) {
+      setLoaded(true);
+      return;
+    }
+
+    const timer = setTimeout(trigger, timeoutMs);
 
     return () => clearTimeout(timer);
   }, [cacheKey, timeoutMs]);

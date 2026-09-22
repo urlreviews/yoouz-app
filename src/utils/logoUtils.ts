@@ -455,12 +455,31 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb%2F6a0e5821afe1e53006b02834_Homepage%20video_poster.0000000.jpg",
   "www.mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb%2F6a0e5821afe1e53006b02834_Homepage%20video_poster.0000000.jpg",
   "vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png",
-  "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png"
+  "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png",
+  "mylawyersadvice.com": "https://mylawyersadvice.com/wp-content/uploads/2024/10/justice-lady-e1729752845566.avif",
+  "www.mylawyersadvice.com": "https://mylawyersadvice.com/wp-content/uploads/2024/10/justice-lady-e1729752845566.avif"
 };
+
+export const KNOWN_LOADED_BANNERS = new Set<string>();
 
 export const KNOWN_BRAND_BANNERS: Record<string, string> = Object.fromEntries(
   Object.entries(RAW_KNOWN_BRAND_BANNERS).map(([k, v]) => [k, getProxiedImageUrl(v)])
 );
+
+/**
+ * Pre-warms image memory cache so banners load instantly without visual delay.
+ */
+export function prewarmBannerImage(url?: string | null): void {
+  if (!url || typeof url !== "string") return;
+  const proxied = getProxiedImageUrl(url);
+  if (!proxied || KNOWN_LOADED_BANNERS.has(proxied)) return;
+  
+  const img = new Image();
+  img.src = proxied;
+  img.onload = () => {
+    KNOWN_LOADED_BANNERS.add(proxied);
+  };
+}
 
 /**
  * Checks if a logo URL is broken or invalid.
@@ -741,7 +760,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 
 export function getProxiedImageUrl(url: string | null | undefined): string {
   if (!url || typeof url !== "string") return "";
-  const clean = url.trim();
+  let clean = url.trim();
   if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
 
   if (
@@ -756,11 +775,53 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
     return clean;
   }
 
-  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+  // Upgrade http:// to https:// to prevent mixed content warnings
+  if (clean.startsWith("http://")) {
+    clean = "https://" + clean.slice(7);
+  }
+
+  if (clean.startsWith("https://")) {
     return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
   }
 
   return clean;
+}
+
+/**
+ * Returns a high-res proxied place banner synchronously.
+ */
+export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
+  if (!place) return "";
+  
+  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !place.bannerUrl.includes("placeholder")) {
+    return getProxiedImageUrl(place.bannerUrl);
+  }
+  if (place.ogImage && place.ogImage.trim() !== "" && !place.ogImage.includes("placeholder")) {
+    return getProxiedImageUrl(place.ogImage);
+  }
+
+  let domain = place.brandDomain;
+  if (!domain && place.website) {
+    domain = extractDomain(place.website);
+  }
+  if (!domain && place.id) {
+    domain = extractDomain(place.id);
+  }
+  if (!domain && place.name) {
+    domain = extractDomain(place.name);
+  }
+
+  const cleanDomain = domain?.trim().replace(/^www\./, "").toLowerCase();
+  if (cleanDomain) {
+    if (KNOWN_BRAND_BANNERS[cleanDomain]) {
+      return KNOWN_BRAND_BANNERS[cleanDomain];
+    }
+    if (KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) {
+      return KNOWN_BRAND_BANNERS[`www.${cleanDomain}`];
+    }
+  }
+
+  return "";
 }
 
 

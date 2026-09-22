@@ -47,7 +47,7 @@ import {
   Flag
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -420,6 +420,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     cleanReviewBanner ||
     cleanFetchedBanner ||
     (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]) ||
+    (drawerDomain && KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) ||
+    getPlaceBannerUrl(place) ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
     "";
 
@@ -431,6 +433,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       cleanOgImage,
       ...(place.photos || []).filter(p => !isBadBanner(p)),
       (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]),
+      (drawerDomain && KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]),
+      getPlaceBannerUrl(place),
       (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
     ])
   ).filter((p): p is string => {
@@ -738,6 +742,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               fetchPriority="high"
               className="absolute inset-0 w-full h-full object-cover p-0 z-10"
               referrerPolicy="no-referrer"
+              onLoad={() => {
+                const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
+                if (currentSrc) KNOWN_LOADED_BANNERS.add(currentSrc);
+              }}
               onError={() => {
                 if (photoIndex + 1 < allPhotos.length) {
                   setPhotoIndex(prev => prev + 1);
