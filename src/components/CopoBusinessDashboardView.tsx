@@ -3244,9 +3244,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       {author.videoReviewCount || 0} {(author.videoReviewCount === 1) ? 'video review' : 'video reviews'}
                                     </span>
                                     <span className="hidden sm:inline text-zinc-600 shrink-0">•</span>
-                                    <span className="text-[11px] sm:text-xs text-zinc-400 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
-                                      <MapPin className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
-                                      <span className="truncate">{author.location || 'Local Contributor'}</span>
+                                    <span className="text-[11px] sm:text-xs text-zinc-400 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
+                                      <MapPin className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
+                                      <span className="whitespace-normal break-words">{author.location || 'Local Contributor'}</span>
                                     </span>
                                   </div>
                                 </div>

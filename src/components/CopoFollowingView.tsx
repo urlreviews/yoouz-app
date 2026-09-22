@@ -656,18 +656,18 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                               {(place.city || place.address) && (
                                 <>
                                   <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
-                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
-                                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
-                                    <span className="truncate">{place.city || place.address}</span>
+                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
+                                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
+                                    <span className="whitespace-normal break-words">{place.city || place.address}</span>
                                   </span>
                                 </>
                               )}
                               {!place.city && !place.address && cleanDomain && (
                                 <>
                                   <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
-                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
-                                    <Globe className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
-                                    <span className="truncate">{cleanDomain}</span>
+                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
+                                    <Globe className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
+                                    <span className="whitespace-normal break-words">{cleanDomain}</span>
                                   </span>
                                 </>
                               )}
@@ -722,12 +722,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         onClick={() => onOpenCreator(author)}
                         className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                       >
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                        <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                           {/* Circular Reviewer Avatar */}
                           <img
                             src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
                             alt={author.name}
-                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform mt-0.5 sm:mt-0"
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
                               if (!target.src.includes("/api/avatar")) {
@@ -755,9 +755,9 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                               {author.location && (
                                 <>
                                   <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
-                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
-                                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
-                                    <span className="truncate">{author.location}</span>
+                                  <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
+                                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
+                                    <span className="whitespace-normal break-words">{author.location}</span>
                                   </span>
                                 </>
                               )}
@@ -839,11 +839,11 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                       onClick={() => onOpenCreator({ name: follower.name, avatar: follower.avatar } as any)}
                       className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                     >
-                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                         <img
                           src={follower.avatar}
                           alt={follower.name}
-                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform mt-0.5 sm:mt-0"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
                             if (!target.src.includes("/api/avatar")) {
@@ -865,9 +865,9 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             {follower.location && (
                               <>
                                 <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
-                                <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 truncate flex items-center gap-1 mt-0.5 sm:mt-0">
-                                  <MapPin className="w-3 h-3 text-zinc-400 shrink-0 sm:hidden" />
-                                  <span className="truncate">{follower.location}</span>
+                                <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
+                                  <MapPin className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
+                                  <span className="whitespace-normal break-words">{follower.location}</span>
                                 </span>
                               </>
                             )}
