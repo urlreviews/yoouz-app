@@ -474,11 +474,19 @@ export function prewarmBannerImage(url?: string | null): void {
   const proxied = getProxiedImageUrl(url);
   if (!proxied || KNOWN_LOADED_BANNERS.has(proxied)) return;
   
+  KNOWN_LOADED_BANNERS.add(proxied);
   const img = new Image();
   img.src = proxied;
   img.onload = () => {
     KNOWN_LOADED_BANNERS.add(proxied);
   };
+}
+
+// Auto-prewarm all known brand banners in memory on app startup
+if (typeof window !== "undefined") {
+  Object.values(KNOWN_BRAND_BANNERS).forEach(u => {
+    if (u) prewarmBannerImage(u);
+  });
 }
 
 /**
@@ -763,15 +771,17 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
   let clean = url.trim();
   if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
 
+  while (clean.includes("/api/proxy-image?url=")) {
+    const parts = clean.split("/api/proxy-image?url=");
+    clean = decodeURIComponent(parts[parts.length - 1]);
+  }
+  clean = clean.trim();
+
   if (
     clean.startsWith("/") ||
     clean.startsWith("data:") ||
     clean.startsWith("blob:")
   ) {
-    return clean;
-  }
-
-  if (clean.startsWith("/api/proxy-image")) {
     return clean;
   }
 

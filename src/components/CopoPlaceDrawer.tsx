@@ -130,7 +130,16 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
     setLogoError(false);
     setFetchedBannerUrl(null);
     fetchedTargetUrlsRef.current.clear();
-  }, [place?.id]);
+
+    if (place) {
+      if (place.bannerUrl) prewarmBannerImage(place.bannerUrl);
+      if (place.ogImage) prewarmBannerImage(place.ogImage);
+      if (drawerDomain) {
+        if (KNOWN_BRAND_BANNERS[drawerDomain]) prewarmBannerImage(KNOWN_BRAND_BANNERS[drawerDomain]);
+        if (KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) prewarmBannerImage(KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]);
+      }
+    }
+  }, [place?.id, place?.bannerUrl, place?.ogImage, drawerDomain]);
 
   // Tab switching with scroll to top
   const handleTabClick = (tab: "overview" | "reviews" | "about") => {
@@ -414,40 +423,45 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const cleanReviewBanner = !isBadBanner(reviewBannerUrl) ? reviewBannerUrl : "";
   const cleanFetchedBanner = !isBadBanner(fetchedBannerUrl) ? fetchedBannerUrl : "";
 
+  const knownDomainBanner =
+    (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]) ||
+    (drawerDomain && KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) ||
+    getPlaceBannerUrl(place);
+
   const effectiveBanner =
     cleanBannerUrl ||
     cleanOgImage ||
+    knownDomainBanner ||
     cleanReviewBanner ||
     cleanFetchedBanner ||
-    (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]) ||
-    (drawerDomain && KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) ||
-    getPlaceBannerUrl(place) ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
     "";
 
   // Check if photos are authentic place photos
-  const allPhotos = Array.from(
-    new Set([
-      effectiveBanner,
-      cleanBannerUrl,
-      cleanOgImage,
-      ...(place.photos || []).filter(p => !isBadBanner(p)),
-      (drawerDomain && KNOWN_BRAND_BANNERS[drawerDomain]),
-      (drawerDomain && KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]),
-      getPlaceBannerUrl(place),
-      (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
-    ])
-  ).filter((p): p is string => {
-    if (!p || p.startsWith("blob:")) return false;
-    if (p.startsWith("data:image/")) return true;
-    if (isBadBanner(p)) return false;
-    if (p === effectiveBanner || p === cleanBannerUrl || p === cleanOgImage || p === YOOUZ_CDN_BANNER) return true;
-    const lower = p.toLowerCase();
-    if (lower.includes("favicon") || lower.includes(".ico")) {
-      return false;
-    }
-    return true;
-  });
+  const allPhotos = React.useMemo(() => {
+    return Array.from(
+      new Set([
+        effectiveBanner,
+        cleanBannerUrl,
+        cleanOgImage,
+        knownDomainBanner,
+        cleanReviewBanner,
+        cleanFetchedBanner,
+        ...(place.photos || []).filter(p => !isBadBanner(p)),
+        (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
+      ])
+    ).filter((p): p is string => {
+      if (!p || p.startsWith("blob:")) return false;
+      if (p.startsWith("data:image/")) return true;
+      if (isBadBanner(p)) return false;
+      if (p === effectiveBanner || p === cleanBannerUrl || p === cleanOgImage || p === YOOUZ_CDN_BANNER) return true;
+      const lower = p.toLowerCase();
+      if (lower.includes("favicon") || lower.includes(".ico")) {
+        return false;
+      }
+      return true;
+    });
+  }, [effectiveBanner, cleanBannerUrl, cleanOgImage, knownDomainBanner, cleanReviewBanner, cleanFetchedBanner, place.photos, isYoouzPlace]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
 

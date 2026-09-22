@@ -28,13 +28,17 @@ export function SEOTags({ title, description, image, url, jsonLd, updateTitle = 
     // 3. Update Open Graph Tags
     const updateOGTag = (property: string, content: string) => {
       if (!content) return;
+      let cleanContent = content.trim();
+      if (cleanContent.startsWith('http://')) {
+        cleanContent = 'https://' + cleanContent.slice(7);
+      }
       let tag = document.querySelector(`meta[property="${property}"]`);
       if (!tag) {
         tag = document.createElement('meta');
         tag.setAttribute('property', property);
         document.head.appendChild(tag);
       }
-      tag.setAttribute('content', content);
+      tag.setAttribute('content', cleanContent);
     };
 
     updateOGTag('og:title', title);

@@ -8195,10 +8195,22 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     const sanitizeProxyUrl = (urlStr?: string | null): string => {
       if (!urlStr || typeof urlStr !== "string") return "";
       let clean = urlStr.trim();
-      while (clean.startsWith("/api/proxy-image?url=")) {
-        clean = decodeURIComponent(clean.replace("/api/proxy-image?url=", ""));
+      while (clean.includes("/api/proxy-image?url=")) {
+        const parts = clean.split("/api/proxy-image?url=");
+        clean = decodeURIComponent(parts[parts.length - 1]);
       }
-      if (clean.includes("framerusercontent.com") || clean.includes("googleusercontent.com")) {
+      clean = clean.trim();
+      if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
+      if (clean.startsWith("/") || clean.startsWith("data:image/") || clean.startsWith("blob:")) {
+        return clean;
+      }
+      if (clean.startsWith("http://")) {
+        clean = "https://" + clean.slice(7);
+      }
+      if (clean.startsWith("https://")) {
+        if (clean.includes("yoouz.com") || clean.includes("b-cdn.net")) {
+          return clean;
+        }
         return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
       }
       return clean;
@@ -16580,10 +16592,22 @@ Return JSON:
       const sanitizeProxy = (u?: string | null): string => {
         if (!u || typeof u !== 'string') return '';
         let c = u.trim();
-        while (c.startsWith('/api/proxy-image?url=')) {
-          c = decodeURIComponent(c.replace('/api/proxy-image?url=', ''));
+        while (c.includes('/api/proxy-image?url=')) {
+          const parts = c.split('/api/proxy-image?url=');
+          c = decodeURIComponent(parts[parts.length - 1]);
         }
-        if (c.includes('framerusercontent.com') || c.includes('googleusercontent.com')) {
+        c = c.trim();
+        if (!c || c === 'data:;' || c.startsWith('data:;')) return '';
+        if (c.startsWith('/') || c.startsWith('data:image/') || c.startsWith('blob:')) {
+          return c;
+        }
+        if (c.startsWith('http://')) {
+          c = 'https://' + c.slice(7);
+        }
+        if (c.startsWith('https://')) {
+          if (c.includes('yoouz.com') || c.includes('b-cdn.net')) {
+            return c;
+          }
           return `/api/proxy-image?url=${encodeURIComponent(c)}`;
         }
         return c;
@@ -17092,6 +17116,13 @@ Return JSON:
       targetUrl = targetUrl.trim();
       if (!targetUrl || targetUrl === 'undefined' || targetUrl === 'null' || targetUrl === 'data:;') {
         return renderFallbackSvg(res, "Y");
+      }
+
+      if (targetUrl.startsWith('http://')) {
+        targetUrl = 'https://' + targetUrl.slice(7);
+      }
+      if (!targetUrl.startsWith('https://') && !targetUrl.startsWith('/') && !targetUrl.startsWith('data:')) {
+        targetUrl = 'https://' + targetUrl;
       }
       
       // If it is already a data URI or SVG
