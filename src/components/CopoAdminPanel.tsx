@@ -4190,7 +4190,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       const historyCount = Array.isArray(chat.history) ? chat.history.length : 0;
                       const sender = chat.senderName || chat.lastSenderName || chat.senderEmail || "Unknown Sender";
                       const recipient = chat.recipientName || chat.recipientEmail || "Unknown Recipient";
-                      const lastMsg = chat.lastMessage || (historyCount > 0 ? chat.history[historyCount - 1]?.text : "Conversation started");
+                      const lastMsg = (chat.lastMessage && chat.lastMessage !== "Conversation started" && chat.lastMessage !== "Direct conversation") ? chat.lastMessage : (historyCount > 0 ? (chat.history[historyCount - 1]?.text || "Shared a video") : "No messages yet");
                       const updatedAt = chat.updatedAt || chat.createdAt || chat.createdAtMs;
 
                       return (

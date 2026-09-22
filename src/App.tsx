@@ -57,7 +57,9 @@ import {
   sendChatMessageToBunnyDB,
   markChatThreadAsRead,
   deleteChatThreadFromBunnyDB,
-  deduplicateChatHistory
+  deduplicateChatHistory,
+  getThreadPartnerKey,
+  deduplicateChatThreads
 } from "./lib/socialSync";
 import { buildCommentTree } from "./utils/commentUtils";
 
@@ -1984,11 +1986,15 @@ export function App() {
             ...(thread.history || [])
           ]);
 
+          const cleanLastMsg = (thread.lastMessage && thread.lastMessage !== "Conversation started" && thread.lastMessage !== "Direct conversation") ? thread.lastMessage : "";
+          const histLastMsg = (mergedHistory[mergedHistory.length - 1]?.text) || "";
+          const prevCleanMsg = (prevThread.lastMessage && prevThread.lastMessage !== "Conversation started" && prevThread.lastMessage !== "Direct conversation") ? prevThread.lastMessage : "";
+
           return {
             ...prevThread,
             ...thread,
             history: mergedHistory,
-            lastMessage: thread.lastMessage || (mergedHistory[mergedHistory.length - 1]?.text ?? prevThread.lastMessage)
+            lastMessage: histLastMsg || cleanLastMsg || prevCleanMsg || ""
           };
         });
 
@@ -2022,7 +2028,7 @@ export function App() {
           }
         });
 
-        return [...pendingLocal, ...mergedThreads];
+        return deduplicateChatThreads([...pendingLocal, ...mergedThreads]);
       });
 
       if (isFirstChatLoadRef.current) {
@@ -6622,9 +6628,9 @@ export function App() {
                 onUnblockUser={handleUnblockUser}
                 allUsers={allRegisteredUsers}
                 onOpenCreator={handleOpenCreatorDrawer}
-                onDeleteThread={(threadId) => {
-                  deleteChatThreadFromBunnyDB(threadId, currentUser);
-                  setMessages((prev) => prev.filter((m) => m.id !== threadId));
+                onDeleteThread={(threadId, targetPartnerKey) => {
+                  deleteChatThreadFromBunnyDB(threadId, currentUser, targetPartnerKey);
+                  setMessages((prev) => prev.filter((m) => m.id !== threadId && (!targetPartnerKey || getThreadPartnerKey(m) !== targetPartnerKey)));
                 }}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt) => {
                   if (currentUser) {
@@ -6796,9 +6802,9 @@ export function App() {
                     customCreatedAt
                   );
                 }}
-                onDeleteThread={(threadId) => {
-                  deleteChatThreadFromBunnyDB(threadId, effectiveMessagingUser as any);
-                  setMessages((prev) => prev.filter((m) => m.id !== threadId));
+                onDeleteThread={(threadId, targetPartnerKey) => {
+                  deleteChatThreadFromBunnyDB(threadId, effectiveMessagingUser as any, targetPartnerKey);
+                  setMessages((prev) => prev.filter((m) => m.id !== threadId && (!targetPartnerKey || getThreadPartnerKey(m) !== targetPartnerKey)));
                 }}
                 onMarkThreadRead={(threadId) => {
                   if (effectiveMessagingUser) {

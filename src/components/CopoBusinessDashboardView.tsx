@@ -147,7 +147,7 @@ interface CopoBusinessDashboardViewProps {
     customMessageId?: string,
     customCreatedAt?: number
   ) => Promise<void>;
-  onDeleteThread?: (threadId: string) => void;
+  onDeleteThread?: (threadId: string, targetPartnerKey?: string) => void;
   onMarkThreadRead?: (threadId: string) => void;
   onUpdateMessages?: (updated: CopoMessage[]) => void;
   onSelectVideo?: (videoId: string, source?: string) => void;

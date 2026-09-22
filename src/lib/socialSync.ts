@@ -1,4 +1,5 @@
 import { CopoNotification, CopoMessage, UserProfile } from "../types";
+import { getCanonicalUserKey } from "./userCanonicalization";
 
 export interface CreateNotificationParams {
   recipientEmail?: string;
@@ -1322,85 +1323,57 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       }
 
       const rawHistory = Array.isArray(data.history) ? data.history : [];
-      const processedHistory = rawHistory.map((m: any) => {
-        const msgSenderEmail = (m.senderEmail || "").toLowerCase().trim();
-        const msgSenderId = (m.senderId || "").toLowerCase().trim().replace(/^@/, "");
-        const msgSenderName = (m.senderName || "").toLowerCase().trim();
+      const processedHistory = rawHistory
+        .map((m: any) => {
+          const msgSenderEmail = (m.senderEmail || "").toLowerCase().trim();
+          const msgSenderId = (m.senderId || "").toLowerCase().trim().replace(/^@/, "");
+          const msgSenderName = (m.senderName || "").toLowerCase().trim();
 
-        const isSender =
-          (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
-          (emailPrefix && (msgSenderEmail.startsWith(emailPrefix) || msgSenderId === emailPrefix)) ||
-          (userHandle && (msgSenderId === userHandle || msgSenderName === userHandle)) ||
-          (userName && msgSenderName === userName) ||
-          (userId && msgSenderId === userId) ||
-          (isBenBlue && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderName.includes("ben") || msgSenderId.includes("ben"))) ||
-          (isStevenAkan && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) ||
-          (isBizRiv && (msgSenderEmail.includes("louis42111") || msgSenderName.includes("biz") || msgSenderId.includes("biz")));
+          const isSender =
+            (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
+            (emailPrefix && (msgSenderEmail.startsWith(emailPrefix) || msgSenderId === emailPrefix)) ||
+            (userHandle && (msgSenderId === userHandle || msgSenderName === userHandle)) ||
+            (userName && msgSenderName === userName) ||
+            (userId && msgSenderId === userId) ||
+            (isBenBlue && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderName.includes("ben") || msgSenderId.includes("ben"))) ||
+            (isStevenAkan && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) ||
+            (isBizRiv && (msgSenderEmail.includes("louis42111") || msgSenderName.includes("biz") || msgSenderId.includes("biz")));
 
-        return {
-          id: m.id || `msg_${Date.now()}_${Math.random()}`,
-          senderName: m.senderName || "Member",
-          senderAvatar: m.senderAvatar || `/api/avatar?name=${encodeURIComponent(m.senderName || "User")}&background=27272a&color=fff`,
-          text: m.text || "",
-          timestamp: m.timestamp || "Just now",
-          createdAtMs: m.createdAt,
-          isMe: Boolean(isSender),
-          videoThumbnail: m.videoThumbnail,
-          videoId: m.videoId
-        };
-      });
-
-      // Deduplicate threads with the same participant to prevent duplicate conversation boxes
-      const normalizePartnerKey = (name?: string, id?: string, email?: string): string => {
-        const s = `${name || ''} ${id || ''} ${email || ''}`.toLowerCase();
-        if (s.includes('steven') || s.includes('avr6566gd') || s.includes('avt')) return 'partner_steven';
-        if (s.includes('ben') || s.includes('aouisesmee') || s.includes('aouisemee')) return 'partner_ben';
-        if (s.includes('biz') || s.includes('louis42111')) return 'partner_biz';
-        if (s.includes('yoouz') || s.includes('info@yoouz.com')) return 'partner_yoouz';
-        return (email || id || name || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
-      };
-
-      const partnerKey = normalizePartnerKey(otherName, otherId, data.senderEmail !== userEmail ? data.senderEmail : data.recipientEmail);
-
-      const existingThreadIdx = threads.findIndex((t) => {
-        const existingPartnerKey = normalizePartnerKey(t.senderName, t.senderId, t.senderEmail || (t as any).recipientEmail);
-        return existingPartnerKey === partnerKey;
-      });
-
-      if (existingThreadIdx >= 0) {
-        const existing = threads[existingThreadIdx];
-        const mergedHistory = deduplicateChatHistory([...(existing.history || []), ...processedHistory]);
-        const newestCreatedAt = Math.max(
-          existing.createdAtMs || 0,
-          data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now()
-        );
-        const lastMsg = (mergedHistory[mergedHistory.length - 1]?.text) || existing.lastMessage || data.lastMessage || "Direct conversation";
-        const combinedUnread = Math.max(existing.unreadCount, Number(unreadCount) || 0);
-
-        threads[existingThreadIdx] = {
-          ...existing,
-          history: mergedHistory,
-          lastMessage: lastMsg,
-          createdAtMs: newestCreatedAt,
-          unreadCount: combinedUnread,
-          videoPreviewUrl: data.videoPreviewUrl || existing.videoPreviewUrl
-        };
-      } else {
-        threads.push({
-          id: String(data.id),
-          senderId: otherId,
-          senderName: otherName,
-          senderAvatar: otherAvatar,
-          senderEmail: data.senderEmail,
-          recipientEmail: data.recipientEmail,
-          lastMessage: data.lastMessage || (processedHistory[processedHistory.length - 1]?.text ?? "Conversation started"),
-          timestamp: data.timestamp || "Just now",
-          createdAtMs: data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now(),
-          unreadCount: Number(unreadCount) || 0,
-          videoPreviewUrl: data.videoPreviewUrl,
-          history: processedHistory
+          return {
+            id: m.id || `msg_${Date.now()}_${Math.random()}`,
+            senderName: m.senderName || "Member",
+            senderAvatar: m.senderAvatar || `/api/avatar?name=${encodeURIComponent(m.senderName || "User")}&background=27272a&color=fff`,
+            text: m.text || "",
+            timestamp: m.timestamp || "Just now",
+            createdAtMs: m.createdAt,
+            isMe: Boolean(isSender),
+            videoThumbnail: m.videoThumbnail,
+            videoId: m.videoId
+          };
+        })
+        .filter((m: any) => {
+          const t = (m.text || "").trim();
+          if (t === "Conversation started" || t === "Direct conversation") return false;
+          return Boolean(t || m.videoThumbnail || m.videoId);
         });
-      }
+
+      const cleanRawLastMsg = (data.lastMessage && data.lastMessage !== "Conversation started" && data.lastMessage !== "Direct conversation") ? data.lastMessage.trim() : "";
+      const lastMsg = (processedHistory[processedHistory.length - 1]?.text) || cleanRawLastMsg || "";
+
+      threads.push({
+        id: String(data.id),
+        senderId: otherId,
+        senderName: otherName,
+        senderAvatar: otherAvatar,
+        senderEmail: data.senderEmail,
+        recipientEmail: data.recipientEmail,
+        lastMessage: lastMsg,
+        timestamp: data.timestamp || "Just now",
+        createdAtMs: data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now(),
+        unreadCount: Number(unreadCount) || 0,
+        videoPreviewUrl: data.videoPreviewUrl,
+        history: processedHistory
+      });
     }
   }
 
@@ -1408,14 +1381,119 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     saveDeletedThreadsMap(deletedThreadsMap, currentUser);
   }
 
+  return deduplicateChatThreads(threads);
+}
+
+/**
+ * Returns a normalized canonical partner key for chat thread deduplication.
+ */
+export function getThreadPartnerKey(thread: any): string {
+  if (!thread) return "";
+  const sName = (thread.senderName || "").toLowerCase().trim();
+  const sId = (thread.senderId || "").toLowerCase().trim();
+  const sEmail = (thread.senderEmail || (thread as any).recipientEmail || "").toLowerCase().trim();
+  const rName = (thread.recipientName || "").toLowerCase().trim();
+  const rId = (thread.recipientId || "").toLowerCase().trim();
+
+  // If business / place
+  if (thread.isBusiness || (thread.placeId && thread.placeId !== "yoouz" && thread.placeId !== "yoouz.com")) {
+    const pId = (thread.placeId || thread.senderId || "").toLowerCase().trim();
+    if (pId) return `biz_${pId}`;
+  }
+  if (sName === "yoouz" || sId === "yoouz" || sId === "yoouz.com" || sEmail.includes("info@yoouz.com") || sEmail.endsWith("@yoouz.com")) {
+    return "biz_yoouz";
+  }
+
+  // Canonical user key for sender
+  const senderKey = getCanonicalUserKey({
+    email: sEmail,
+    name: sName,
+    handle: sId,
+    id: sId
+  });
+  if (senderKey) return senderKey;
+
+  const recipientKey = getCanonicalUserKey({
+    email: (thread.recipientEmail || "").toLowerCase().trim(),
+    name: rName,
+    handle: rId,
+    id: rId
+  });
+  if (recipientKey) return recipientKey;
+
+  // Fallback
+  return (sEmail || sId || sName || rId || rName || String(thread.id || "")).toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+}
+
+/**
+ * Deduplicates and merges multiple thread objects pointing to the same conversation partner.
+ */
+export function deduplicateChatThreads(threads: CopoMessage[]): CopoMessage[] {
+  if (!Array.isArray(threads)) return [];
+  const result: CopoMessage[] = [];
+  const partnerIndexMap = new Map<string, number>();
+
+  for (const raw of threads) {
+    if (!raw) continue;
+    const partnerKey = getThreadPartnerKey(raw);
+    const existingIdx = partnerKey ? partnerIndexMap.get(partnerKey) : undefined;
+
+    const rawHist = Array.isArray(raw.history) ? raw.history : [];
+    const cleanHist = deduplicateChatHistory(rawHist).filter((m: any) => {
+      const t = (m.text || "").trim();
+      if (t === "Conversation started" || t === "Direct conversation") return false;
+      return Boolean(t || m.videoThumbnail || m.videoId);
+    });
+
+    const cleanRawMsg = (raw.lastMessage && raw.lastMessage !== "Conversation started" && raw.lastMessage !== "Direct conversation") ? raw.lastMessage.trim() : "";
+    const lastHistText = cleanHist.length > 0 ? (cleanHist[cleanHist.length - 1]?.text || "").trim() : "";
+    const effectiveLastMsg = lastHistText || cleanRawMsg;
+
+    if (existingIdx !== undefined && existingIdx >= 0) {
+      const existing = result[existingIdx];
+      const mergedHist = deduplicateChatHistory([...(existing.history || []), ...cleanHist]);
+      const mergedLastHistText = mergedHist.length > 0 ? (mergedHist[mergedHist.length - 1]?.text || "").trim() : "";
+      const existingCleanMsg = (existing.lastMessage && existing.lastMessage !== "Conversation started" && existing.lastMessage !== "Direct conversation") ? existing.lastMessage.trim() : "";
+      const finalLastMsg = mergedLastHistText || effectiveLastMsg || existingCleanMsg;
+
+      const newestTime = Math.max(
+        Number(existing.createdAtMs || (existing as any).updatedAt || 0),
+        Number(raw.createdAtMs || (raw as any).updatedAt || 0),
+        ...(mergedHist.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
+      );
+
+      result[existingIdx] = {
+        ...existing,
+        senderName: existing.senderName && !existing.senderName.startsWith("Member") ? existing.senderName : raw.senderName,
+        senderAvatar: existing.senderAvatar || raw.senderAvatar,
+        history: mergedHist,
+        lastMessage: finalLastMsg,
+        createdAtMs: newestTime || Date.now(),
+        unreadCount: Math.max(existing.unreadCount || 0, raw.unreadCount || 0),
+        videoPreviewUrl: raw.videoPreviewUrl || existing.videoPreviewUrl
+      };
+    } else {
+      const newThread: CopoMessage = {
+        ...raw,
+        history: cleanHist,
+        lastMessage: effectiveLastMsg,
+        unreadCount: Number(raw.unreadCount) || 0
+      };
+      if (partnerKey) {
+        partnerIndexMap.set(partnerKey, result.length);
+      }
+      result.push(newThread);
+    }
+  }
+
   // Sort threads newest first
-  threads.sort((a, b) => {
-    const timeA = a.createdAtMs || (a as any).updatedAt || 0;
-    const timeB = b.createdAtMs || (b as any).updatedAt || 0;
+  result.sort((a, b) => {
+    const timeA = Number(a.createdAtMs || (a as any).updatedAt || 0);
+    const timeB = Number(b.createdAtMs || (b as any).updatedAt || 0);
     return timeB - timeA;
   });
 
-  return threads;
+  return result;
 }
 
 /**
@@ -1434,10 +1512,12 @@ export function deduplicateChatHistory(messages: any[]): any[] {
 
   for (const m of sorted) {
     if (!m) continue;
+    const mText = (m.text || "").trim();
+    if (mText === "Conversation started" || mText === "Direct conversation") continue;
+    if (!mText && !m.videoThumbnail && !m.videoId) continue;
+
     const msgId = String(m.id || "");
     if (msgId && seenIds.has(msgId)) continue;
-
-    const mText = (m.text || "").trim();
     const mSender = (m.senderEmail || m.senderId || m.senderName || (m.isMe ? "me" : "")).toLowerCase().trim();
     const mTime = Number(m.createdAtMs || m.createdAt || 0);
 
@@ -1495,11 +1575,12 @@ export function subscribeToChats(
 
   const updateThreads = (newThreads: CopoMessage[]) => {
     if (isDisposed) return;
-    cachedThreads = newThreads;
+    const deduped = deduplicateChatThreads(newThreads);
+    cachedThreads = deduped;
     try {
-      localStorage.setItem(cacheKey, JSON.stringify(newThreads));
+      localStorage.setItem(cacheKey, JSON.stringify(deduped));
     } catch (e) {}
-    onUpdate(newThreads);
+    onUpdate(deduped);
   };
 
   // 0. Immediate load from LocalStorage cache so messages never disappear on refresh
@@ -1513,7 +1594,8 @@ export function subscribeToChats(
         const filteredParsed = parsed.filter((t: any) => {
           if (!t) return false;
           const tId = String(t.id || "").trim();
-          const delTime = deletedMap.get(tId);
+          const pKey = getThreadPartnerKey(t);
+          const delTime = deletedMap.get(tId) ?? (pKey ? deletedMap.get(pKey) : undefined);
           if (delTime !== undefined) {
             const latestMsg = Math.max(
               Number(t.createdAtMs || t.updatedAt || 0),
@@ -1523,8 +1605,9 @@ export function subscribeToChats(
           }
           return true;
         });
-        cachedThreads = filteredParsed;
-        onUpdate(filteredParsed);
+        const dedupedInitial = deduplicateChatThreads(filteredParsed);
+        cachedThreads = dedupedInitial;
+        onUpdate(dedupedInitial);
       }
     }
   } catch (e) {}
@@ -1542,9 +1625,10 @@ export function subscribeToChats(
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
         if (Array.isArray(items) && !isDisposed) {
           const processed = processChatThreadsForUser(items, currentUser);
+          const serverPartnerKeys = new Set(processed.map((t) => getThreadPartnerKey(t)));
           const serverThreadIds = new Set(processed.map((t) => t.id));
-          const pendingThreads = cachedThreads.filter((t) => t && !serverThreadIds.has(t.id));
-          const merged = [...pendingThreads, ...processed];
+          const pendingThreads = cachedThreads.filter((t) => t && !serverThreadIds.has(t.id) && !serverPartnerKeys.has(getThreadPartnerKey(t)));
+          const merged = deduplicateChatThreads([...pendingThreads, ...processed]);
           updateThreads(merged);
         }
       }
@@ -1563,7 +1647,8 @@ export function subscribeToChats(
         const processed = processChatThreadsForUser([threadData], currentUser);
         if (processed.length > 0) {
           const freshThread = processed[0];
-          const existingIdx = cachedThreads.findIndex((t) => t.id === freshThread.id);
+          const freshPartnerKey = getThreadPartnerKey(freshThread);
+          const existingIdx = cachedThreads.findIndex((t) => t.id === freshThread.id || (freshPartnerKey && getThreadPartnerKey(t) === freshPartnerKey));
           let nextThreads: CopoMessage[];
           if (existingIdx >= 0) {
             const existingThread = cachedThreads[existingIdx];
@@ -1582,8 +1667,8 @@ export function subscribeToChats(
           } else {
             nextThreads = [freshThread, ...cachedThreads];
           }
-          nextThreads.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-          updateThreads(nextThreads);
+          const dedupedNext = deduplicateChatThreads(nextThreads);
+          updateThreads(dedupedNext);
         }
       }
     }
@@ -1972,13 +2057,18 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
 /**
  * Delete a chat thread from Bunny Cloud Database and local caches for a specific user or business
  */
-export async function deleteChatThread(threadId: string, currentUser?: UserProfile | null): Promise<void> {
-  if (!threadId) return;
+export async function deleteChatThread(threadId: string, currentUser?: UserProfile | null, partnerKeyOrTarget?: string | any): Promise<void> {
+  if (!threadId && !partnerKeyOrTarget) return;
+
+  const targetPartnerKey = typeof partnerKeyOrTarget === "string" 
+    ? partnerKeyOrTarget 
+    : (partnerKeyOrTarget ? getThreadPartnerKey(partnerKeyOrTarget) : "");
 
   // 0. Add to persistent deleted threads map with current timestamp for this specific user/business
   try {
     const map = getDeletedThreadsMap(currentUser);
-    map.set(threadId, Date.now());
+    if (threadId) map.set(threadId, Date.now());
+    if (targetPartnerKey) map.set(targetPartnerKey, Date.now());
     saveDeletedThreadsMap(map, currentUser);
   } catch (e) {}
   
@@ -1997,7 +2087,12 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
       if (rawCache) {
         const parsed = JSON.parse(rawCache);
         if (Array.isArray(parsed)) {
-          const filtered = parsed.filter((t: any) => t.id !== threadId);
+          const filtered = parsed.filter((t: any) => {
+            if (!t) return false;
+            if (threadId && t.id === threadId) return false;
+            if (targetPartnerKey && getThreadPartnerKey(t) === targetPartnerKey) return false;
+            return true;
+          });
           localStorage.setItem(key, JSON.stringify(filtered));
         }
       }
@@ -2005,7 +2100,7 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
   } catch (e) {}
 
   // 2. Soft delete on BunnyDB by adding user to deletedForUsers array
-  if (currentUser) {
+  if (currentUser && threadId) {
     const uId = (currentUser.userId || currentUser.id || (currentUser as any).uid || (currentUser as any).placeId || currentUser.email || "").toLowerCase().trim();
     try {
       const res = await fetch(`/api/nosql/chats/${threadId}`);
@@ -2031,9 +2126,11 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
   }
 
   // Fallback: Primary delete in BunnyDB if no user context provided
-  fetch(`/api/nosql/chats/${threadId}`, {
-    method: "DELETE"
-  }).catch(() => {});
+  if (threadId) {
+    fetch(`/api/nosql/chats/${threadId}`, {
+      method: "DELETE"
+    }).catch(() => {});
+  }
 }
 
 // Aliases for seamless backward compatibility

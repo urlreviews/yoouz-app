@@ -31,12 +31,13 @@ import {
   CheckCheck
 } from "lucide-react";
 import { CopoMessage, Place, UserProfile, VideoAuthor, VideoReview } from "../types";
+import { motion, AnimatePresence } from "motion/react";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
-import { deduplicateChatHistory } from "../lib/socialSync";
+import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 import { getSafeAvatarUrl, formatBusinessName } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
@@ -67,7 +68,7 @@ interface CopoMessagesViewProps {
   onSelectPlace?: (placeId: string) => void;
   onOpenCreator?: (author: VideoAuthor) => void;
   onOpenReport?: (target: ReportTarget) => void;
-  onDeleteThread?: (threadId: string) => void;
+  onDeleteThread?: (threadId: string, targetPartnerKey?: string) => void;
   blockedUserIds?: string[];
   onBlockUser?: (userId: string, userName: string) => void;
   onUnblockUser?: (userId: string, userName?: string) => void;
@@ -111,6 +112,23 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const [localSelectedThreadId, setLocalSelectedThreadId] = useState<string>("");
   const [isMobileThreadViewOpen, setIsMobileThreadViewOpen] = useState(false);
   const [draftThread, setDraftThread] = useState<CopoMessage | null>(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const checkTouch = () => {
+        setIsTouchDevice(
+          'ontouchstart' in window ||
+          navigator.maxTouchPoints > 0 ||
+          window.matchMedia('(pointer: coarse)').matches ||
+          window.innerWidth < 640
+        );
+      };
+      checkTouch();
+      window.addEventListener('resize', checkTouch);
+      return () => window.removeEventListener('resize', checkTouch);
+    }
+  }, []);
 
   const selectedThreadId = localSelectedThreadId || propSelectedThreadId || draftThread?.id || messages[0]?.id || "";
 
@@ -736,14 +754,25 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     return messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0);
   }, [messages]);
 
-  // Filter threads based on search
+  // Filter threads based on search with deduplication
   const filteredThreads = useMemo(() => {
-    if (!searchTerm.trim()) return messages;
-    return messages.filter((m) =>
-      m.senderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
+    const deduped = deduplicateChatThreads(messages);
+    if (!searchTerm.trim()) return deduped;
+    const q = searchTerm.toLowerCase();
+    return deduped.filter((m) =>
+      m.senderName.toLowerCase().includes(q) ||
+      (m.lastMessage && m.lastMessage !== "Conversation started" && m.lastMessage.toLowerCase().includes(q))
     );
   }, [messages, searchTerm]);
+
+  // Clean, filtered messages for the active conversation
+  const activeThreadMessages = useMemo(() => {
+    return deduplicateChatHistory(activeThread?.history || []).filter((m: any) => {
+      const t = (m.text || "").trim();
+      if (t === "Conversation started" || t === "Direct conversation") return false;
+      return Boolean(t || m.videoThumbnail || m.videoId);
+    });
+  }, [activeThread?.history]);
 
   // Search places for recommendation
   const filteredPlacesForRecommend = useMemo(() => {
@@ -911,13 +940,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const target = targetOverride || targetActionThread;
     if (!target) return;
     
+    const partnerKey = getThreadPartnerKey(target);
+
     // 1. Instantly filter messages in local state for 0ms visual feedback
-    const remaining = messages.filter((m) => m.id !== target.id);
+    const remaining = messages.filter((m) => m.id !== target.id && (!partnerKey || getThreadPartnerKey(m) !== partnerKey));
     onUpdateMessages(remaining);
 
     // 2. Call parent to persist deletion in BunnyDB & local deletion cache
     if (onDeleteThread) {
-      onDeleteThread(target.id);
+      onDeleteThread(target.id, partnerKey);
     }
     
     // 3. Clear active selection if the deleted thread was currently open
@@ -1252,120 +1283,162 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   </button>
                 </div>
               ) : (
-                filteredThreads.map((thread) => {
-                  const isActive = thread.id === selectedThreadId;
-                  const isUnread = thread.unreadCount > 0;
-                  const threadBlocked = blockedUserIds.some((b) => {
-                    const cb = (b || "").toLowerCase().replace(/^@/, "").trim();
-                    const sId = (thread.senderId || "").toLowerCase().replace(/^@/, "").trim();
-                    const sName = (thread.senderName || "").toLowerCase().trim();
-                    return cb === sId || cb === sName;
-                  });
+                <AnimatePresence initial={false}>
+                  {filteredThreads.map((thread) => {
+                    const isActive = thread.id === selectedThreadId;
+                    const isUnread = thread.unreadCount > 0;
+                    const threadBlocked = blockedUserIds.some((b) => {
+                      const cb = (b || "").toLowerCase().replace(/^@/, "").trim();
+                      const sId = (thread.senderId || "").toLowerCase().replace(/^@/, "").trim();
+                      const sName = (thread.senderName || "").toLowerCase().trim();
+                      return cb === sId || cb === sName;
+                    });
 
-                  return (
-                    <div
-                      key={`chat-thread-${thread.id}`}
-                      onClick={() => setSelectedThreadId(thread.id)}
-                      className={`p-3.5 sm:p-4 flex items-center gap-3.5 cursor-pointer transition-all relative ${
-                        isActive
-                          ? "bg-zinc-900 border-l-4 border-white"
-                          : "hover:bg-zinc-900/60 border-l-4 border-transparent"
-                      }`}
-                    >
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar);
-                        }}
-                        className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
+                    return (
+                      <motion.div
+                        key={`chat-thread-${thread.id}`}
+                        initial={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
+                        className="relative overflow-hidden bg-zinc-950 group"
                       >
-                        {Boolean(
-                          (thread.senderName && thread.senderName.toLowerCase().trim() === "yoouz") ||
-                          (thread.senderId && (thread.senderId === "yoouz.com" || thread.senderId === "yoouz")) ||
-                          (thread as any).isBusiness === true ||
-                          ((thread as any).isBusiness !== false && (thread as any).placeId) ||
-                          ((thread as any).isBusiness !== false &&
-                            !thread.senderId?.includes("@") &&
-                            !thread.senderId?.startsWith("usr_") &&
-                            !thread.senderId?.startsWith("user_") &&
-                            (places || []).some(
-                              (p) =>
-                                (p.id && String(p.id).toLowerCase().trim() === (thread.senderId || "").toLowerCase().trim()) ||
-                                (p.brandDomain && (thread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
-                            ))
-                        ) ? (
-                          <CopoBrandLogo
-                            domain={thread.senderId}
-                            name={thread.senderName}
-                            logoUrl={thread.senderAvatar}
-                            className="w-11 h-11 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
-                            imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
-                            fallbackTextClassName="font-extrabold text-xs text-zinc-950"
-                          />
-                        ) : (
-                          <img
-                            src={getSafeAvatarUrl(thread.senderAvatar, thread.senderName, thread.senderId)}
-                            alt={thread.senderName}
-                            className="w-11 h-11 rounded-full object-cover border border-zinc-800"
-                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, thread.senderName, thread.senderId); }} 
-                          />
+                        {/* Mobile Swipe-to-delete Red Backdrop (Active on mobile touch screens) */}
+                        {isTouchDevice && (
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteConversation(thread);
+                            }}
+                            className="sm:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Delete</span>
+                          </div>
                         )}
-                        {threadBlocked ? (
-                          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-red-500 ring-2 ring-zinc-950 flex items-center justify-center text-white" title="Blocked user">
-                            <X className="w-2.5 h-2.5" />
-                          </span>
-                        ) : (
-                          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
-                        )}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0 space-y-0.5">
-                        <div className="flex items-center justify-between gap-1">
-                          <button
-                            type="button"
+
+                        {/* Thread Card (drag to delete on mobile touch screens) */}
+                        <motion.div
+                          drag={isTouchDevice ? "x" : false}
+                          dragConstraints={isTouchDevice ? { left: -90, right: 0 } : undefined}
+                          dragElastic={isTouchDevice ? 0.1 : false}
+                          onDragEnd={isTouchDevice ? (_, info) => {
+                            if (info.offset.x < -60 || info.velocity.x < -250) {
+                              handleDeleteConversation(thread);
+                            }
+                          } : undefined}
+                          onClick={() => setSelectedThreadId(thread.id)}
+                          className={`p-3.5 sm:p-4 flex items-center gap-3.5 cursor-pointer transition-all relative z-10 bg-zinc-950 ${
+                            isActive
+                              ? "bg-zinc-900 border-l-4 border-white"
+                              : "hover:bg-zinc-900/60 border-l-4 border-transparent"
+                          }`}
+                        >
+                          <div
                             onClick={(e) => {
                               e.stopPropagation();
                               handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar);
                             }}
-                            className={`text-xs font-black truncate flex items-center gap-1.5 hover:opacity-80 cursor-pointer text-left transition-opacity ${isActive ? "text-white" : "text-zinc-200"}`}
+                            className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                           >
-                            <span>{thread.senderName}</span>
-                            {threadBlocked && (
-                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-950/60 text-red-400">
-                                Blocked
-                              </span>
+                            {Boolean(
+                              (thread.senderName && thread.senderName.toLowerCase().trim() === "yoouz") ||
+                              (thread.senderId && (thread.senderId === "yoouz.com" || thread.senderId === "yoouz")) ||
+                              (thread as any).isBusiness === true ||
+                              ((thread as any).isBusiness !== false && (thread as any).placeId) ||
+                              ((thread as any).isBusiness !== false &&
+                                !thread.senderId?.includes("@") &&
+                                !thread.senderId?.startsWith("usr_") &&
+                                !thread.senderId?.startsWith("user_") &&
+                                (places || []).some(
+                                  (p) =>
+                                    (p.id && String(p.id).toLowerCase().trim() === (thread.senderId || "").toLowerCase().trim()) ||
+                                    (p.brandDomain && (thread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
+                                ))
+                            ) ? (
+                              <CopoBrandLogo
+                                domain={thread.senderId}
+                                name={thread.senderName}
+                                logoUrl={thread.senderAvatar}
+                                className="w-11 h-11 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                                imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+                                fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                              />
+                            ) : (
+                              <img
+                                src={getSafeAvatarUrl(thread.senderAvatar, thread.senderName, thread.senderId)}
+                                alt={thread.senderName}
+                                className="w-11 h-11 rounded-full object-cover border border-zinc-800"
+                                onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, thread.senderName, thread.senderId); }} 
+                              />
                             )}
-                          </button>
-                          <span className="text-[10px] text-zinc-400 font-bold shrink-0">{formatRecordedDate(thread.timestamp, thread.createdAtMs)}</span>
-                        </div>
-                        <p className={`text-[11px] truncate ${isUnread ? "text-white font-black" : "text-zinc-200 font-medium"}`}>
-                          {thread.lastMessage || "Direct conversation"}
-                        </p>
-                      </div>
+                            {threadBlocked ? (
+                              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-red-500 ring-2 ring-zinc-950 flex items-center justify-center text-white" title="Blocked user">
+                                <X className="w-2.5 h-2.5" />
+                              </span>
+                            ) : (
+                              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-center justify-between gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar);
+                                }}
+                                className={`text-xs font-black truncate flex items-center gap-1.5 hover:opacity-80 cursor-pointer text-left transition-opacity ${isActive ? "text-white" : "text-zinc-200"}`}
+                              >
+                                <span>{thread.senderName}</span>
+                                {threadBlocked && (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-950/60 text-red-400">
+                                    Blocked
+                                  </span>
+                                )}
+                              </button>
+                              <span className="text-[10px] text-zinc-400 font-bold shrink-0">{formatRecordedDate(thread.timestamp, thread.createdAtMs)}</span>
+                            </div>
+                            <p className={`text-[11px] truncate ${isUnread ? "text-white font-black" : "text-zinc-300 font-medium"}`}>
+                              {(() => {
+                                const raw = (thread.lastMessage || "").trim();
+                                if (raw && raw !== "Conversation started" && raw !== "Direct conversation") {
+                                  return raw;
+                                }
+                                const hist = thread.history || [];
+                                const lastHistMsg = hist.length > 0 ? (hist[hist.length - 1]?.text || "").trim() : "";
+                                if (lastHistMsg && lastHistMsg !== "Conversation started" && lastHistMsg !== "Direct conversation") {
+                                  return lastHistMsg;
+                                }
+                                return <span className="italic text-zinc-500 font-normal">No messages yet</span>;
+                              })()}
+                            </p>
+                          </div>
 
-                      {/* Right side controls: Unread badge & 3-dots options button */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        {isUnread && (
-                          <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
-                        )}
-                        <button
-                          type="button"
-                          id={`btn-thread-options-${thread.id}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActionThread(thread);
-                            setIsOptionsOpen(true);
-                          }}
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors active:scale-95 cursor-pointer shrink-0"
-                          title={`Options for ${thread.senderName}`}
-                          aria-label={`Options for ${thread.senderName}`}
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
+                          {/* Right side controls: Unread badge & 3-dots options button */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {isUnread && (
+                              <span className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
+                            )}
+                            <button
+                              type="button"
+                              id={`btn-thread-options-${thread.id}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActionThread(thread);
+                                setIsOptionsOpen(true);
+                              }}
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors active:scale-95 cursor-pointer shrink-0"
+                              title={`Options for ${thread.senderName}`}
+                              aria-label={`Options for ${thread.senderName}`}
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
               )}
             </div>
           </div>
@@ -1550,9 +1623,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                 {/* Messages Log area */}
                 <div className="flex-1 p-3.5 sm:p-5 overflow-y-auto space-y-4 overscroll-contain">
-                  {/* Default introductory message if history is empty */}
-                  {(!activeThread.history || activeThread.history.length === 0) && (!activeThread.lastMessage || !activeThread.lastMessage.trim()) ? (
-                    <div className="flex flex-col items-center justify-center text-center py-10 px-4 space-y-4 my-auto animate-in fade-in duration-300">
+                  {/* Introductory profile greeting when conversation has no messages yet */}
+                  {activeThreadMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center py-12 px-4 space-y-3.5 my-auto animate-in fade-in duration-300">
                       <div className="relative">
                         <img
                           src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
@@ -1563,44 +1636,21 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-zinc-950" />
                       </div>
 
-                      <div className="space-y-1">
+                      <div className="space-y-1 max-w-sm">
                         <div className="flex items-center justify-center gap-1.5 font-bold text-base text-white">
                           <span>{activeThread.senderName}</span>
                           <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
                         </div>
-                        <p className="text-xs text-zinc-200 max-w-xs">
-                          Reviewer on Yoouz
+                        <p className="text-xs text-zinc-400 font-medium">
+                          Active on Yoouz
+                        </p>
+                        <p className="text-[11px] text-zinc-500 pt-1.5 font-medium">
+                          No messages yet. Say hello or share a recommendation to start the conversation!
                         </p>
                       </div>
                     </div>
-                  ) : (!activeThread.history || activeThread.history.length === 0) ? (
-                    <div className="flex items-start gap-3 animate-in fade-in">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar)}
-                        className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
-                      >
-                        <img
-                          src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
-                          alt={activeThread.senderName}
-                          className="w-8 h-8 rounded-full object-cover border border-zinc-800"
-                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }} />
-                      </button>
-                      <div className="space-y-1 max-w-md">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar)}
-                          className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors"
-                        >
-                          {activeThread.senderName} · {formatRecordedDate(activeThread.timestamp, activeThread.createdAtMs)}
-                        </button>
-                        <div className="bg-zinc-900 p-3.5 rounded-2xl rounded-tl-none text-xs text-zinc-100 border border-zinc-800 shadow-2xs leading-relaxed">
-                          <p>{activeThread.lastMessage}</p>
-                        </div>
-                      </div>
-                    </div>
                   ) : (
-                    deduplicateChatHistory(activeThread.history || []).map((msg) => (
+                    activeThreadMessages.map((msg) => (
                       <div
                         key={`msg-log-${msg.id}`}
                         className={`flex items-start gap-2.5 sm:gap-3 ${msg.isMe ? "flex-row-reverse" : ""} animate-in fade-in duration-200`}
