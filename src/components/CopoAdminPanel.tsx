@@ -2614,7 +2614,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             onClick={() => setPreviewVideo(v)}
                             className="w-10 h-14 rounded-lg bg-zinc-900 overflow-hidden relative shrink-0 cursor-pointer group"
                           >
-                            <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                            <img src={getProxiedImageUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <Play className="w-4 h-4 text-white" />
                             </div>
@@ -2958,7 +2958,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               onClick={() => setPreviewVideo(v)}
                               className="w-12 h-16 rounded-lg bg-zinc-950 overflow-hidden relative cursor-pointer group"
                             >
-                              <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                              <img src={getProxiedImageUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover" />
                               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Play className="w-4 h-4 text-white fill-white" />
                               </div>

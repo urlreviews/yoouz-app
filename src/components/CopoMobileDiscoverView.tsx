@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Search, Clock, TrendingUp, X } from "lucide-react";
 import { VideoReview, UserProfile, VideoAuthor } from "../types";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
 import { CopoDiscoverView } from "./CopoDiscoverView";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -168,7 +169,7 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
                   >
                     <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
                       {u.avatar ? (
-                        <img src={u.avatar} alt="" className="w-full h-full object-cover" />
+                        <img src={getSafeAvatarUrl(u.avatar, u.name, u.handle)} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold">
                           {(u.name || u.handle || "?")[0].toUpperCase()}
@@ -207,7 +208,7 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
                       >
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
                           {user?.avatar ? (
-                            <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                            <img src={getSafeAvatarUrl(user.avatar, user.name, user.handle)} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold">
                               {(s || "?")[0].toUpperCase()}
@@ -238,7 +239,7 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
                       >
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
                           {user?.avatar ? (
-                            <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                            <img src={getSafeAvatarUrl(user.avatar, user.name, user.handle)} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold">
                               {(s || "?")[0].toUpperCase()}

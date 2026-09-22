@@ -710,13 +710,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {effectiveBanner ? (
             <div className="absolute inset-0 w-full h-full bg-zinc-900 md:bg-zinc-900 relative overflow-hidden flex items-center justify-center group">
               <img
-                src={effectiveBanner}
+                src={getProxiedImageUrl(effectiveBanner)}
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-125"
                 referrerPolicy="no-referrer"
               />
               <img
-                src={effectiveBanner}
+                src={getProxiedImageUrl(effectiveBanner)}
                 alt="Banner"
                 className="relative z-10 w-full h-full object-cover p-0"
                 referrerPolicy="no-referrer"

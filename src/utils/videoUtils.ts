@@ -211,8 +211,14 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
       return trimmed;
     }
 
-    if (!isVideoFile && !isAvatarOrLogo && (trimmed.startsWith("http") || trimmed.startsWith("/uploads/") || trimmed.startsWith("/videos/"))) {
-      return trimmed;
+    if (!isVideoFile && !isAvatarOrLogo) {
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        if (trimmed.startsWith("/api/proxy-image")) return trimmed;
+        return `/api/proxy-image?url=${encodeURIComponent(trimmed)}`;
+      }
+      if (trimmed.startsWith("/uploads/") || trimmed.startsWith("/videos/") || trimmed.startsWith("/")) {
+        return trimmed;
+      }
     }
   }
 

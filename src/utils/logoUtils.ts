@@ -668,11 +668,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
-      if (url.startsWith("/api/proxy-image")) return url;
-      if (url.includes("framerusercontent.com") || url.includes("googleusercontent.com")) {
-        return `/api/proxy-image?url=${encodeURIComponent(url)}`;
-      }
-      return url;
+      return getProxiedImageUrl(url);
     }
   }
 
@@ -681,14 +677,14 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     return YOOUZ_LOGO_DATA_URI;
   }
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
-    return KNOWN_BRAND_LOGOS[cleanDomain];
+    return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
   if (cleanDomain && cleanDomain.includes(".")) {
     return `/api/favicon?domain=${cleanDomain}`;
   }
 
-  return url || null;
+  return url ? getProxiedImageUrl(url) : null;
 }
 
 export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): string | null {
@@ -703,11 +699,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     place.logoUrl !== "data:;" &&
     !place.logoUrl.startsWith("data:;")
   ) {
-    if (place.logoUrl.startsWith("/api/proxy-image")) return place.logoUrl;
-    if (place.logoUrl.includes("googleusercontent.com") || place.logoUrl.includes("framerusercontent.com")) {
-      return `/api/proxy-image?url=${encodeURIComponent(place.logoUrl)}`;
-    }
-    return place.logoUrl;
+    return getProxiedImageUrl(place.logoUrl);
   }
 
   let domain = place.brandDomain;
@@ -732,7 +724,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 
   // 2. Direct match for known high-quality brand vector logos
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
-    return KNOWN_BRAND_LOGOS[cleanDomain];
+    return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
   // 3. Authentic High-Resolution Social Favicon (Google 256px resolution directly from website icon/metadata)

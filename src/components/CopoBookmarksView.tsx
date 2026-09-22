@@ -12,7 +12,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { VideoReview, UserProfile, Place } from "../types";
-import { getDisplayUrlAsDomain, formatCityCountry, formatBusinessName, extractCleanDomain } from "../utils/placeUtils";
+import { getDisplayUrlAsDomain, formatCityCountry, formatBusinessName, extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
@@ -229,7 +229,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       </div>
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <img
-                          src={video.author.avatar || `/api/avatar?name=${encodeURIComponent(video.author.name || "User")}&background=1a73e8&color=fff`}
+                          src={getSafeAvatarUrl(video.author.avatar, video.author.name, video.author.handle)}
                           alt={video.author.name}
                           className="w-4.5 h-4.5 rounded-full border border-zinc-800"
                           onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
@@ -371,7 +371,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <img
-                      src={creator.avatar || `/api/avatar?name=${encodeURIComponent(creator.name)}&background=27272a&color=fff`}
+                      src={getSafeAvatarUrl(creator.avatar, creator.name, creator.handle)}
                       alt={creator.name}
                       className="w-11 h-11 rounded-full border border-zinc-800 shrink-0 object-cover"
                       onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}

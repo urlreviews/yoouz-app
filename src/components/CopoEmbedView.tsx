@@ -3,6 +3,7 @@ import { VideoReview, Place, VideoAuthor, UserProfile, NavSection } from "../typ
 import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor, getSafeAvatarUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoBrandLogo } from "./CopoBrandLogo";
+import { getProxiedImageUrl } from "../utils/logoUtils";
 import { Star, Play, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock } from "lucide-react";
 import { formatRecordedDate } from "../utils/dateUtils";
 
@@ -402,10 +403,12 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           ) : (
             <img
               src={
-                currentVideo?.thumbnailUrl ||
-                currentVideo?.bannerUrl ||
-                currentVideo?.ogImage ||
-                `https://rev1.b-cdn.net/videos/${currentVideo?.id}.jpg`
+                getProxiedImageUrl(
+                  currentVideo?.thumbnailUrl ||
+                  currentVideo?.bannerUrl ||
+                  currentVideo?.ogImage ||
+                  `https://rev1.b-cdn.net/videos/${currentVideo?.id}.jpg`
+                )
               }
               alt={currentVideo?.caption || currentVideo?.placeName || "Yoouz Review"}
               className="w-full h-full object-cover"

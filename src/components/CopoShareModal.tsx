@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
+import { getProxiedImageUrl } from "../utils/logoUtils";
 import { extractCleanDomain, formatBusinessName, getPlaceSlug } from "../utils/placeUtils";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { triggerHaptic } from "../utils/haptics";
@@ -554,7 +555,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
                 {/* Clean background thumbnail without duplicate image stacking */}
                 <img
-                  src={localPreviewBg || previewImageUrl}
+                  src={getProxiedImageUrl(localPreviewBg || previewImageUrl)}
                   alt={title}
                   className="absolute inset-0 w-full h-full object-cover filter brightness-95"
                 />
@@ -607,7 +608,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
                       {resolvedAvatarUrl ? (
                         <img
-                          src={resolvedAvatarUrl}
+                          src={getProxiedImageUrl(resolvedAvatarUrl)}
                           alt={resolvedAuthorName}
                           className="w-full h-full object-cover"
                           onError={(e) => {

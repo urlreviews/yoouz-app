@@ -258,7 +258,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     <div className="relative flex items-center justify-center">
                       {isProfileItem ? (
                         <img
-                          src={currentUser!.avatar}
+                          src={getSafeAvatarUrl(currentUser?.avatar, currentUser?.name, (currentUser as any)?.handle || currentUser?.email)}
                           alt={currentUser!.name || "Profile"}
                           className={`w-7 h-7 rounded-full object-cover shrink-0 ring-2 ${
                             isActive ? "ring-white" : "ring-white/40"

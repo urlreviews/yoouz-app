@@ -1,5 +1,5 @@
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "./logoUtils";
+import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImageUrl } from "./logoUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
@@ -1174,10 +1174,10 @@ export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null
 
   // Optimize Google User Content avatars by requesting a smaller size (128x128) if not already specified
   if (targetUrl.includes("googleusercontent.com") && !targetUrl.includes("=s")) {
-    return targetUrl + "=s128-c";
+    targetUrl = targetUrl + "=s128-c";
   }
 
-  return targetUrl;
+  return getProxiedImageUrl(targetUrl);
 }
 
 export function resolveSafeAuthor(

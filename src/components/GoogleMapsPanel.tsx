@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { formatBusinessName } from "../utils/placeUtils";
+import { getProxiedImageUrl } from "../utils/logoUtils";
 import { GoogleVideoReviewCard } from "./GoogleVideoReviewCard";
 
 interface GoogleMapsPanelProps {
@@ -110,7 +111,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
       {(place.bannerUrl || (place.photos && place.photos.length > 0)) && (
         <div className="relative h-48 w-full shrink-0 bg-zinc-950 overflow-hidden">
           <img
-            src={place.bannerUrl || place.photos?.[0] || undefined}
+            src={getProxiedImageUrl(place.bannerUrl || place.photos?.[0]) || undefined}
             alt={formatBusinessName(place.name)}
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
