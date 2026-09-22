@@ -180,6 +180,9 @@ function registerRealtimeListener(user: UserProfile, handler: RealtimeEventHandl
   };
 }
 
+// Client-side recent notification dispatch cache (10s anti-duplicate window)
+const recentDispatchedNotifKeys = new Map<string, number>();
+
 /**
  * Send a notification to a recipient (persists in Bunny Cloud Database & instantly broadcasts via SSE)
  */
@@ -221,7 +224,41 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     return;
   }
 
-  const notifId = params.customId || `notif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  // Anti-Double Message Guard: Check in-memory 10-second dispatch window
+  const dedupeKey = `${targetEmail || targetId}|${params.type}|${canonSenderEmail || senderName}|${params.videoId || ""}|${(params.text || "").trim().toLowerCase()}`;
+  const now = Date.now();
+  const lastDispatched = recentDispatchedNotifKeys.get(dedupeKey);
+  if (lastDispatched && now - lastDispatched < 10000) {
+    console.log(`[SocialSync] Throttled duplicate notification dispatch: ${dedupeKey}`);
+    return;
+  }
+  recentDispatchedNotifKeys.set(dedupeKey, now);
+
+  // Periodic cleanup of dispatch cache
+  if (recentDispatchedNotifKeys.size > 200) {
+    for (const [k, time] of recentDispatchedNotifKeys.entries()) {
+      if (now - time > 15000) recentDispatchedNotifKeys.delete(k);
+    }
+  }
+
+  // Deterministic ID generation fallback to guarantee single database record even across parallel requests
+  let notifId = params.customId;
+  if (!notifId) {
+    if (params.type === "comment" && params.videoId && params.text) {
+      const cleanSnippet = params.text.replace(/[^a-z0-9]/gi, "").slice(0, 20);
+      notifId = `notif_comment_${params.videoId}_${(targetEmail || targetId).replace(/[^a-z0-9]/gi, '_')}_${cleanSnippet}`;
+    } else if (params.type === "like" && params.videoId) {
+      notifId = `notif_like_${(canonSenderEmail || 'anon').replace(/[^a-z0-9]/gi, '_')}_${params.videoId}`;
+    } else if ((params.type === "repost" || params.type === "share") && params.videoId) {
+      notifId = `notif_share_${(canonSenderEmail || 'anon').replace(/[^a-z0-9]/gi, '_')}_${params.videoId}`;
+    } else if (params.type === "bookmark" && params.videoId) {
+      notifId = `notif_bookmark_${(canonSenderEmail || 'anon').replace(/[^a-z0-9]/gi, '_')}_${params.videoId}`;
+    } else if (params.type === "follow") {
+      notifId = `notif_follow_${(canonSenderEmail || 'anon').replace(/[^a-z0-9]/gi, '_')}_${(targetHandle || targetEmail || targetId).replace(/[^a-z0-9]/gi, '_')}`;
+    } else {
+      notifId = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    }
+  }
 
   // Sanitize videoThumbnail: ensure no video stream URL is passed as image thumbnail
   let sanitizedThumbnail = (params.videoThumbnail || "").trim();
@@ -593,14 +630,30 @@ export function subscribeToNotifications(
 
   const updateList = (newItems: CopoNotification[]) => {
     if (isDisposed) return;
-    cachedNotifs = newItems;
+    // Strict deduplication guard across memory, cache, and state
+    const deduped: CopoNotification[] = [];
+    const seen = new Set<string>();
+    for (const item of newItems) {
+      if (!item || !item.id) continue;
+      const rec = (item.recipientEmail || item.recipientId || "").toLowerCase().trim();
+      const type = (item.type || "").toLowerCase().trim();
+      const text = (item.text || "").toLowerCase().trim();
+      const vid = (item.videoId || "").trim();
+      const sender = (item.user?.name || item.user?.email || "").toLowerCase().trim();
+      const dedupeKey = `${rec}|${type}|${sender}|${vid}|${text}`;
+      if (!seen.has(dedupeKey)) {
+        seen.add(dedupeKey);
+        deduped.push(item);
+      }
+    }
+    cachedNotifs = deduped;
     try {
-      localStorage.setItem(cacheKey, JSON.stringify(newItems));
-      if (userEmail) localStorage.setItem(`copo_cached_notifs_${userEmail}`, JSON.stringify(newItems));
-      if (userId) localStorage.setItem(`copo_cached_notifs_${userId}`, JSON.stringify(newItems));
-      if ((currentUser as any)?.placeId) localStorage.setItem(`copo_cached_notifs_${(currentUser as any).placeId}`, JSON.stringify(newItems));
+      localStorage.setItem(cacheKey, JSON.stringify(deduped));
+      if (userEmail) localStorage.setItem(`copo_cached_notifs_${userEmail}`, JSON.stringify(deduped));
+      if (userId) localStorage.setItem(`copo_cached_notifs_${userId}`, JSON.stringify(deduped));
+      if ((currentUser as any)?.placeId) localStorage.setItem(`copo_cached_notifs_${(currentUser as any).placeId}`, JSON.stringify(deduped));
     } catch (e) {}
-    onUpdate(newItems);
+    onUpdate(deduped);
   };
 
   // 0. Immediate load from LocalStorage cache so notifications never disappear on refresh
@@ -625,8 +678,7 @@ export function subscribeToNotifications(
             return true;
           });
           if (cleaned.length > 0) {
-            cachedNotifs = cleaned;
-            onUpdate(cleaned);
+            updateList(cleaned);
             break;
           }
         }
@@ -695,11 +747,27 @@ export function subscribeToNotifications(
         const filtered = filterNotificationsForUser([notifData], currentUser);
         if (filtered.length > 0) {
           const freshItem = filtered[0];
-          const existingIdx = cachedNotifs.findIndex((n) => n.id === freshItem.id);
+          const freshSender = (freshItem.user?.name || freshItem.user?.email || "").toLowerCase().trim();
+          const freshType = (freshItem.type || "").toLowerCase().trim();
+          const freshText = (freshItem.text || "").toLowerCase().trim();
+          const freshVid = (freshItem.videoId || "").trim();
+          const freshRec = (freshItem.recipientEmail || freshItem.recipientId || "").toLowerCase().trim();
+          const freshDedupeKey = `${freshRec}|${freshType}|${freshSender}|${freshVid}|${freshText}`;
+
+          const existingIdx = cachedNotifs.findIndex((n) => {
+            if (n.id === freshItem.id) return true;
+            const nSender = (n.user?.name || n.user?.email || "").toLowerCase().trim();
+            const nType = (n.type || "").toLowerCase().trim();
+            const nText = (n.text || "").toLowerCase().trim();
+            const nVid = (n.videoId || "").trim();
+            const nRec = (n.recipientEmail || n.recipientId || "").toLowerCase().trim();
+            return `${nRec}|${nType}|${nSender}|${nVid}|${nText}` === freshDedupeKey;
+          });
+
           let nextList: CopoNotification[];
           if (existingIdx >= 0) {
             nextList = [...cachedNotifs];
-            nextList[existingIdx] = freshItem;
+            nextList[existingIdx] = { ...cachedNotifs[existingIdx], ...freshItem };
           } else {
             nextList = [freshItem, ...cachedNotifs];
           }

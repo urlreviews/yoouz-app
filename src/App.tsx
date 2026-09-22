@@ -3781,7 +3781,8 @@ export function App() {
           text: `liked your video review of ${targetVid.placeName || "a place"}`,
           videoId: targetVid.id,
           videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
-          placeName: targetVid.placeName
+          placeName: targetVid.placeName,
+          customId: `notif_like_${currentUser?.email || auth.currentUser?.uid || 'anon'}_${targetVid.id}`
         }).catch(() => {});
       }
     }
@@ -3932,7 +3933,8 @@ export function App() {
           text: `saved your video review of ${targetVid.placeName || "a place"}`,
           videoId: targetVid.id,
           videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
-          placeName: targetVid.placeName
+          placeName: targetVid.placeName,
+          customId: `notif_bookmark_${currentUser?.email || auth.currentUser?.uid || 'anon'}_${targetVid.id}`
         }).catch(() => {});
       }
     }
@@ -4022,7 +4024,8 @@ export function App() {
           text: `reposted your video review of ${targetVid.placeName || "a place"}`,
           videoId: targetVid.id,
           videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
-          placeName: targetVid.placeName
+          placeName: targetVid.placeName,
+          customId: `notif_share_${currentUser?.email || auth.currentUser?.uid || 'anon'}_${targetVid.id}`
         }).catch(() => {});
       }
     }
@@ -4236,7 +4239,8 @@ export function App() {
           avatar: currentUser.avatar,
           email: currentUser.email
         },
-        text: `started following your reviews`
+        text: `started following your reviews`,
+        customId: `notif_follow_${currentUser?.email || auth.currentUser?.uid || 'anon'}_${cleanAuthorHandle}`
       }).catch(() => {});
     }
   };
@@ -4467,7 +4471,8 @@ export function App() {
         text: `commented: "${text.slice(0, 50)}${text.length > 50 ? '...' : ''}" on your review of ${targetVid.placeName || "a place"}`,
         videoId: targetVid.id,
         videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
-        placeName: targetVid.placeName
+        placeName: targetVid.placeName,
+        customId: `notif_comment_${newCommentItem.id}`
       }).catch(() => {});
 
       // If replying to someone else's comment, also notify the comment author!
@@ -4497,7 +4502,8 @@ export function App() {
               text: `replied to your comment: "${text.slice(0, 50)}${text.length > 50 ? '...' : ''}"`,
               videoId: targetVid.id,
               videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
-              placeName: targetVid.placeName
+              placeName: targetVid.placeName,
+              customId: `notif_reply_${newCommentItem.id}`
             }).catch(() => {});
           }
         }

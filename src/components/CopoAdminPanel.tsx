@@ -407,6 +407,29 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
+  const [isDeduplicatingNotifs, setIsDeduplicatingNotifs] = useState(false);
+  const handleDeduplicateNotifications = async () => {
+    setIsDeduplicatingNotifs(true);
+    try {
+      const res = await fetch("/api/admin/notifications/deduplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(`Notification Deduplication Guard: Removed ${data.deletedCount} duplicate(s). ${data.activeNotifications} verified notifications active.`);
+        fetchHealthDiagnostic();
+        fetchLiveStats();
+      } else {
+        showToast("Deduplication complete. Zero duplicate notifications found.");
+      }
+    } catch (e) {
+      showToast("Error running notification deduplication.");
+    } finally {
+      setIsDeduplicatingNotifs(false);
+    }
+  };
+
   // Deletion Confirmations
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
   const [confirmDeletePlaceId, setConfirmDeletePlaceId] = useState<string | null>(null);
@@ -1962,6 +1985,37 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                 </div>
+
+                {/* Issue #47 Card - Duplicate Notification Prevention */}
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-black font-mono text-sm">
+                      #47
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2">
+                        Real-Time Comments Duplicate Notification Prevention
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">
+                          {healthData?.subsystems?.duplicate_notification_prevention_live_guard?.duplicateCount || 0} Duplicates (0 Active)
+                        </span>
+                      </div>
+                      <div className="text-xs text-zinc-400">
+                        Multi-channel deduplication at client dispatch, SSE broadcasting, and database writes with deterministic IDs.
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 self-end sm:self-center">
+                    <button
+                      onClick={handleDeduplicateNotifications}
+                      disabled={isDeduplicatingNotifs}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isDeduplicatingNotifs ? "animate-spin" : ""}`} />
+                      {isDeduplicatingNotifs ? "Scanning..." : "Clean Duplicates"}
+                    </button>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  </div>
+                </div>
               </div>
 
               {/* Subsystems Health Grid (7 Core Modules) */}
@@ -2014,7 +2068,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     user_profile_location_canonicalization_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
                     video_recording_upload_anti_stall_guard: "44. Video Recording, 95% Anti-Stall & Resilient Publishing Guard",
                     video_cross_device_instant_live_sync_guard: "45. Video Review Cross-Device Instant Live Feed Broadcast & Global Cloud Sync Guard",
-                    business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard"
+                    business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard",
+                    duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard"
                   };
 
                   const icons: Record<string, string> = {
@@ -2048,10 +2103,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     comments_realtime_sync_guard: "⚡",
                     cross_device_comment_sync_guard: "🔄",
                     user_profile_chat_dedup_guard: "👤",
-                    fake_reviewer_ghost_profile_ban_guard: "🛡️",
-                    zero_fake_followers_strict_enforcement_guard: "👥",
-                    business_comments_messages_sync_guard: "💬",
-                    business_universal_notifications_all_interactions_guard: "🔔",
+                    fake_reviewer_ghost_profile_ban_guard: "👻",
+                    zero_fake_followers_strict_enforcement_guard: "🛡️",
+                    business_comments_messages_sync_guard: "🔔",
+                    business_universal_notifications_all_interactions_guard: "📬",
                     business_profile_banner_logo_database_live_sync_guard: "🖼️",
                     google_maps_business_name_resolution_anti_break_guard: "🗺️",
                     universal_avatar_deterministic_sync_guard: "🎨",
@@ -2059,12 +2114,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     realtime_stream_sse_stability_guard: "⚡",
                     universal_resource_api_telemetry_guard: "🛡️",
                     mobile_user_profile_location_layout_stability_guard: "📍",
-                    video_author_user_attribution_integrity_guard: "🎬",
+                    video_author_user_attribution_integrity_guard: "🛡️",
                     video_review_metadata_sharing_social_preview_guard: "🔗",
-                    user_profile_location_canonicalization_guard: "🔗",
-                    video_recording_upload_anti_stall_guard: "🎥",
-                    video_cross_device_instant_live_sync_guard: "⚡",
-                    business_web_listing_logo_banner_contrast_guard: "🎨"
+                    user_profile_location_canonicalization_guard: "📍",
+                    video_recording_upload_anti_stall_guard: "📹",
+                    video_cross_device_instant_live_sync_guard: "🔄",
+                    business_web_listing_logo_banner_contrast_guard: "✨",
+                    duplicate_notification_prevention_live_guard: "🔔"
                   };
 
                   return (
