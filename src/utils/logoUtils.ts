@@ -1,5 +1,36 @@
 import { Place } from "../types";
 
+export function getProxiedImageUrl(url: string | null | undefined): string {
+  if (!url || typeof url !== "string") return "";
+  let clean = url.trim();
+  if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
+
+  while (clean.includes("/api/proxy-image?url=")) {
+    const parts = clean.split("/api/proxy-image?url=");
+    clean = decodeURIComponent(parts[parts.length - 1]);
+  }
+  clean = clean.trim();
+
+  if (
+    clean.startsWith("/") ||
+    clean.startsWith("data:") ||
+    clean.startsWith("blob:")
+  ) {
+    return clean;
+  }
+
+  // Upgrade http:// to https:// to prevent mixed content warnings
+  if (clean.startsWith("http://")) {
+    clean = "https://" + clean.slice(7);
+  }
+
+  if (clean.startsWith("https://")) {
+    return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
+  }
+
+  return clean;
+}
+
 export const YOOUZ_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" fill="none">
   <rect width="24" height="24" rx="6" fill="#09090b"/>
   <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" stroke-width="0.8"/>
@@ -484,9 +515,11 @@ export function prewarmBannerImage(url?: string | null): void {
 
 // Auto-prewarm all known brand banners in memory on app startup
 if (typeof window !== "undefined") {
-  Object.values(KNOWN_BRAND_BANNERS).forEach(u => {
-    if (u) prewarmBannerImage(u);
-  });
+  setTimeout(() => {
+    Object.values(KNOWN_BRAND_BANNERS).forEach(u => {
+      if (u) prewarmBannerImage(u);
+    });
+  }, 100);
 }
 
 /**
@@ -764,37 +797,6 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   return null;
-}
-
-export function getProxiedImageUrl(url: string | null | undefined): string {
-  if (!url || typeof url !== "string") return "";
-  let clean = url.trim();
-  if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
-
-  while (clean.includes("/api/proxy-image?url=")) {
-    const parts = clean.split("/api/proxy-image?url=");
-    clean = decodeURIComponent(parts[parts.length - 1]);
-  }
-  clean = clean.trim();
-
-  if (
-    clean.startsWith("/") ||
-    clean.startsWith("data:") ||
-    clean.startsWith("blob:")
-  ) {
-    return clean;
-  }
-
-  // Upgrade http:// to https:// to prevent mixed content warnings
-  if (clean.startsWith("http://")) {
-    clean = "https://" + clean.slice(7);
-  }
-
-  if (clean.startsWith("https://")) {
-    return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
-  }
-
-  return clean;
 }
 
 /**
