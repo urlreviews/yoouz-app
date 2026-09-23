@@ -56,6 +56,7 @@ import {
   subscribeToChats,
   sendChatMessageToBunnyDB,
   markChatThreadAsRead,
+  saveReadThreadTimestamp,
   deleteChatThreadFromBunnyDB,
   deduplicateChatHistory,
   getThreadPartnerKey,
@@ -1916,6 +1917,12 @@ export function App() {
     if ((activeSection as string) === "messages") {
       setInAppToast((cur) => (cur?.type === "message" || cur?.actionType === "message" ? null : cur));
       if (effectiveMessagingUser) {
+        messages.forEach((m) => {
+          if (m && m.id) {
+            saveReadThreadTimestamp(m.id, effectiveMessagingUser);
+            markChatThreadAsRead(m.id, effectiveMessagingUser);
+          }
+        });
         setMessages((prev) => prev.map((m) => ({ ...m, unreadCount: 0 })));
       }
     } else if ((activeSection as string) === "notifications") {

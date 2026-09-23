@@ -37,7 +37,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
-import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey } from "../lib/socialSync";
+import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, saveReadThreadTimestamp } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getSafeAvatarUrl, formatBusinessName, formatCityCountry } from "../utils/placeUtils";
@@ -282,6 +282,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
   const setSelectedThreadId = (id: string) => {
     setLocalSelectedThreadId(id);
+    if (id && currentUser) {
+      saveReadThreadTimestamp(id, currentUser);
+    }
     if (onSelectThreadId) {
       onSelectThreadId(id);
     }

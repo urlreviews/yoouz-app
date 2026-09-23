@@ -1083,6 +1083,32 @@ export function saveDeletedThreadsMap(map: Map<string, number>, currentUser?: Us
   } catch (e) {}
 }
 
+export function saveReadThreadTimestamp(threadId: string, currentUser?: UserProfile | null): void {
+  if (typeof window === "undefined" || !currentUser || !threadId) return;
+  try {
+    const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+    const readKey = `copo_read_threads_${userKey}`;
+    const existingRaw = localStorage.getItem(readKey);
+    const map = existingRaw ? JSON.parse(existingRaw) : {};
+    map[threadId] = Date.now();
+    localStorage.setItem(readKey, JSON.stringify(map));
+  } catch (e) {}
+}
+
+export function getReadThreadTimestamp(threadId: string, currentUser?: UserProfile | null): number {
+  if (typeof window === "undefined" || !currentUser || !threadId) return 0;
+  try {
+    const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+    const readKey = `copo_read_threads_${userKey}`;
+    const existingRaw = localStorage.getItem(readKey);
+    if (!existingRaw) return 0;
+    const map = JSON.parse(existingRaw);
+    return Number(map[threadId] || map[threadId.toLowerCase()] || 0);
+  } catch (e) {
+    return 0;
+  }
+}
+
 /**
  * Filter and format chat threads for the current user
  */
@@ -1488,6 +1514,21 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           (isBizRiv && (lastMsgSenderName.includes("biz") || lastMsgSenderEmail.includes("louis42111")))
         );
         if (isLastFromMe) {
+          unreadCount = 0;
+        }
+      }
+
+      // Check local read timestamp persistence so unread count never comes back on page refresh
+      const readTimestamp = Math.max(
+        getReadThreadTimestamp(threadId, currentUser),
+        partnerKey ? getReadThreadTimestamp(partnerKey, currentUser) : 0
+      );
+      if (readTimestamp > 0) {
+        const latestMsgTime = Math.max(
+          Number(data.updatedAt || data.createdAt || data.createdAtMs || 0),
+          ...(rawHistForUnread.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
+        );
+        if (latestMsgTime <= readTimestamp + 5000) {
           unreadCount = 0;
         }
       }
@@ -2340,12 +2381,13 @@ const recentlyMarkedReadMap = new Map<string, number>();
 export async function markChatThreadAsRead(threadId: string, currentUser: UserProfile): Promise<void> {
   if (!currentUser || !threadId) return;
 
+  saveReadThreadTimestamp(threadId, currentUser);
+
   const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
   const debounceKey = `${userKey}_${threadId}`;
   const now = Date.now();
   const lastMarked = recentlyMarkedReadMap.get(debounceKey) || 0;
-  if (now - lastMarked < 10000) {
-    // Skip redundant network POST if already marked read within 10 seconds
+  if (now - lastMarked < 300) {
     return;
   }
   recentlyMarkedReadMap.set(debounceKey, now);
