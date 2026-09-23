@@ -1975,7 +1975,31 @@ export function App() {
     return () => unsubscribe();
   }, [effectiveMessagingUser, currentUser]);
 
-  // Track user key to prevent clearing messages on section navigation or active thread changes
+  const calculateUnreadMessagesCount = (msgList: CopoMessage[], user: UserProfile | null) => {
+    if (!user) return 0;
+    const userEmail = (user.email || "").toLowerCase().trim();
+    const userId = (user.userId || (user as any).id || "").toLowerCase().trim();
+    const userName = (user.name || "").toLowerCase().trim();
+
+    return msgList.reduce((acc, m) => {
+      if (!m) return acc;
+      const hist = m.history || [];
+      const lastMsg = hist.length > 0 ? hist[hist.length - 1] : null;
+      if (lastMsg) {
+        const sEmail = (lastMsg.senderEmail || "").toLowerCase().trim();
+        const sId = (((lastMsg as any).senderId || "") as string).toLowerCase().trim();
+        const sName = (lastMsg.senderName || "").toLowerCase().trim();
+        const isLastMsgFromMe = Boolean(
+          lastMsg.isMe ||
+          (userEmail && (sEmail === userEmail || sId === userEmail)) ||
+          (userId && (sId === userId || sEmail === userId)) ||
+          (userName && sName === userName)
+        );
+        if (isLastMsgFromMe) return acc;
+      }
+      return acc + (Number(m.unreadCount) > 0 ? Number(m.unreadCount) : 0);
+    }, 0);
+  };
   const prevMessagingUserKeyRef = useRef<string>("");
 
   // Real-time BunnyDB sync for Direct Messages & Chats
@@ -5885,7 +5909,7 @@ export function App() {
             }
           }}
           unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
-          unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
+          unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
           onCloseEmbed={() => {
             setEmbedTargetId(null);
             setSelectedPlaceIdForDrawer(null);
@@ -6091,7 +6115,7 @@ export function App() {
           }}
           currentUser={currentUser}
           unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
-          unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
+          unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
           onOpenCreateModal={() => {
             setIsMobileNavDrawerOpen(false);
             setIsCreateModalOpen(true);
@@ -6314,7 +6338,7 @@ export function App() {
             setActiveSection(section);
           }}
           unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
-          unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
+          unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
           onOpenSearch={() => setIsSearchModalOpen(true)}
           onOpenCreateModal={() => {
             if (!currentUser || !isProfileComplete(currentUser)) {
@@ -7135,7 +7159,7 @@ export function App() {
         }}
         currentUser={currentUser}
         unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
-        unreadMessagesCount={currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0}
+        unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
         onOpenCreateModal={() => {
           if (!currentUser) {
             setAuthIntent('record');

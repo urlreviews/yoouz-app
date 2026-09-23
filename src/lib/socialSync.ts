@@ -1421,8 +1421,17 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
       // If the current user was the sender of the most recent message, this thread is read for them
       const lastHistMsg = processedHistory.length > 0 ? processedHistory[processedHistory.length - 1] : null;
-      if (lastHistMsg && lastHistMsg.isMe) {
-        unreadCount = 0;
+      if (lastHistMsg) {
+        const msgSenderEmail = (lastHistMsg.senderEmail || '').toLowerCase().trim();
+        const msgSenderName = (lastHistMsg.senderName || '').toLowerCase().trim();
+        const msgSenderId = (lastHistMsg.senderId || '').toLowerCase().trim();
+        const isMyLastMsg = lastHistMsg.isMe ||
+                            (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
+                            (userName && msgSenderName === userName) ||
+                            (userId && msgSenderId === userId);
+        if (isMyLastMsg) {
+          unreadCount = 0;
+        }
       }
 
       const cleanRawLastMsg = (data.lastMessage && data.lastMessage !== "Conversation started" && data.lastMessage !== "Direct conversation") ? data.lastMessage.trim() : "";
@@ -1603,8 +1612,16 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
 
       const lastMergedMsg = mergedHist.length > 0 ? mergedHist[mergedHist.length - 1] : null;
       let finalUnread = Math.max(existing.unreadCount || 0, raw.unreadCount || 0);
-      if (lastMergedMsg && lastMergedMsg.isMe) {
-        finalUnread = 0;
+      if (lastMergedMsg) {
+        const uEmail = (currentUserOverride?.email || "").toLowerCase().trim();
+        const uName = (currentUserOverride?.name || "").toLowerCase().trim();
+        const uId = (currentUserOverride?.userId || (currentUserOverride as any)?.id || "").toLowerCase().trim();
+        const mEmail = (lastMergedMsg.senderEmail || "").toLowerCase().trim();
+        const mName = (lastMergedMsg.senderName || "").toLowerCase().trim();
+        const mId = (lastMergedMsg.senderId || "").toLowerCase().trim();
+        if (lastMergedMsg.isMe || (uEmail && (mEmail === uEmail || mId === uEmail)) || (uName && mName === uName) || (uId && mId === uId)) {
+          finalUnread = 0;
+        }
       }
 
       result[existingIdx] = {
@@ -1622,8 +1639,16 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
     } else {
       const lastCleanMsg = cleanHist.length > 0 ? cleanHist[cleanHist.length - 1] : null;
       let newUnread = Number(raw.unreadCount) || 0;
-      if (lastCleanMsg && lastCleanMsg.isMe) {
-        newUnread = 0;
+      if (lastCleanMsg) {
+        const uEmail = (currentUserOverride?.email || "").toLowerCase().trim();
+        const uName = (currentUserOverride?.name || "").toLowerCase().trim();
+        const uId = (currentUserOverride?.userId || (currentUserOverride as any)?.id || "").toLowerCase().trim();
+        const mEmail = (lastCleanMsg.senderEmail || "").toLowerCase().trim();
+        const mName = (lastCleanMsg.senderName || "").toLowerCase().trim();
+        const mId = (lastCleanMsg.senderId || "").toLowerCase().trim();
+        if (lastCleanMsg.isMe || (uEmail && (mEmail === uEmail || mId === uEmail)) || (uName && mName === uName) || (uId && mId === uId)) {
+          newUnread = 0;
+        }
       }
 
       const newThread: CopoMessage = {

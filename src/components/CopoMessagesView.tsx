@@ -1433,7 +1433,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <AnimatePresence initial={false}>
                   {filteredThreads.map((thread) => {
                     const isActive = thread.id === selectedThreadId;
-                    const isUnread = thread.unreadCount > 0;
+                    const lastHistMsg = thread.history && thread.history.length > 0 ? (thread.history[thread.history.length - 1] as any) : null;
+                    const isLastMsgMe = Boolean(
+                      lastHistMsg?.isMe ||
+                      (currentUser?.email && (lastHistMsg?.senderEmail?.toLowerCase() === currentUser.email.toLowerCase() || lastHistMsg?.senderId?.toLowerCase() === currentUser.email.toLowerCase())) ||
+                      (currentUser?.userId && lastHistMsg?.senderId?.toLowerCase() === currentUser.userId.toLowerCase()) ||
+                      (currentUser?.name && lastHistMsg?.senderName?.toLowerCase() === currentUser.name.toLowerCase())
+                    );
+                    const isUnread = !isActive && !isLastMsgMe && Number(thread.unreadCount) > 0;
                     const threadBlocked = blockedUserIds.some((b) => {
                       const cb = (b || "").toLowerCase().replace(/^@/, "").trim();
                       const sId = (thread.senderId || "").toLowerCase().replace(/^@/, "").trim();
