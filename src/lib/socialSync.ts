@@ -1125,33 +1125,19 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const recipientEmail = (data.recipientEmail || "").toLowerCase().trim();
     const recipientId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
     const recipientName = (data.recipientName || "").toLowerCase().trim();
-    const partnerKey = getThreadPartnerKey(data);
+    const partnerKey = getThreadPartnerKey(data, currentUser);
 
-    // If user previously deleted this thread locally: check if any deletion key matches
-    const deletedTimestamp = deletedThreadsMap.get(threadId) ??
-                            (partnerKey ? deletedThreadsMap.get(partnerKey) : undefined) ??
-                            (senderName ? deletedThreadsMap.get(senderName) : undefined) ??
-                            (senderId ? deletedThreadsMap.get(senderId) : undefined) ??
-                            (senderEmail ? deletedThreadsMap.get(senderEmail) : undefined) ??
-                            (recipientName ? deletedThreadsMap.get(recipientName) : undefined) ??
-                            (recipientId ? deletedThreadsMap.get(recipientId) : undefined) ??
-                            (recipientEmail ? deletedThreadsMap.get(recipientEmail) : undefined);
+    // Check if user explicitly deleted this thread locally by threadId or partnerKey
+    const deletedTimestamp = deletedThreadsMap.get(threadId) ?? (partnerKey ? deletedThreadsMap.get(partnerKey) : undefined);
 
-    if (deletedTimestamp !== undefined) {
+    if (deletedTimestamp !== undefined && deletedTimestamp > 1) {
       const rawHistory = Array.isArray(data.history) ? data.history : [];
-      const hasNewIncomingMsg = rawHistory.some((m: any) => {
-        const msgTime = Number(m?.createdAt || m?.createdAtMs || 0);
-        if (msgTime <= deletedTimestamp + 1000) return false;
-        const msgSenderEmail = (m?.senderEmail || '').toLowerCase().trim();
-        const msgSenderName = (m?.senderName || '').toLowerCase().trim();
-        const msgSenderId = (m?.senderId || '').toLowerCase().trim();
-        const isMyMsg = (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
-                        (userName && (msgSenderName === userName || msgSenderId === userName)) ||
-                        (userId && msgSenderId === userId);
-        return !isMyMsg;
-      });
+      const latestMsgTime = Math.max(
+        Number(data.updatedAt || data.createdAt || 0),
+        ...(rawHistory.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
+      );
 
-      if (hasNewIncomingMsg) {
+      if (latestMsgTime > deletedTimestamp) {
         deletedThreadsMap.delete(threadId);
         if (partnerKey) deletedThreadsMap.delete(partnerKey);
         deletedThreadsModified = true;

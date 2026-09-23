@@ -1975,18 +1975,26 @@ export function App() {
     return () => unsubscribe();
   }, [effectiveMessagingUser, currentUser]);
 
+  // Track user key to prevent clearing messages on section navigation or active thread changes
+  const prevMessagingUserKeyRef = useRef<string>("");
+
   // Real-time BunnyDB sync for Direct Messages & Chats
   useEffect(() => {
     if (!effectiveMessagingUser) {
       setMessages([]);
       prevChatHistoryLengthRef.current.clear();
       isFirstChatLoadRef.current = true;
+      prevMessagingUserKeyRef.current = "";
       return;
     }
 
-    setMessages([]);
-    prevChatHistoryLengthRef.current.clear();
-    isFirstChatLoadRef.current = true;
+    const currentMsgUserKey = (effectiveMessagingUser.email || effectiveMessagingUser.userId || (effectiveMessagingUser as any).id || "anon").toLowerCase().trim();
+    if (prevMessagingUserKeyRef.current !== currentMsgUserKey) {
+      prevMessagingUserKeyRef.current = currentMsgUserKey;
+      setMessages([]);
+      prevChatHistoryLengthRef.current.clear();
+      isFirstChatLoadRef.current = true;
+    }
 
     const unsubscribe = subscribeToChats(effectiveMessagingUser, (threads) => {
       setMessages((prev) => {
@@ -2728,6 +2736,7 @@ export function App() {
       }
     }
 
+    const effUser = effectiveMessagingUser || currentUser;
     const targetPartnerKey = getThreadPartnerKey({
       senderId,
       senderName,
@@ -2735,14 +2744,14 @@ export function App() {
       recipientId: senderId,
       recipientName: senderName,
       recipientEmail: targetEmail
-    });
+    }, effUser);
 
     const existingThread = messages.find(
       (m) =>
         m.id === senderId ||
+        (targetPartnerKey && getThreadPartnerKey(m, effUser) === targetPartnerKey) ||
         m.senderId === senderId ||
         (m as any).recipientId === senderId ||
-        (targetPartnerKey && getThreadPartnerKey(m) === targetPartnerKey) ||
         (targetEmail && (m.senderId === targetEmail || m.senderEmail === targetEmail || (m as any).recipientEmail === targetEmail)) ||
         (m.senderName && senderName && m.senderName.toLowerCase() === senderName.toLowerCase()) ||
         ((m as any).recipientName && senderName && (m as any).recipientName.toLowerCase() === senderName.toLowerCase())
@@ -2757,7 +2766,6 @@ export function App() {
       return;
     }
 
-    const effUser = effectiveMessagingUser || currentUser;
     const userEmail = (effUser?.email || "").toLowerCase().trim();
     const userHandle = (effUser?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
     const curName = (effUser?.name || "").trim();

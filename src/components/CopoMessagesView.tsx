@@ -612,15 +612,25 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       }
     }
 
-    // Check if an existing thread exists
+    // Check if an existing thread exists by partner key or direct IDs
+    const targetPartnerKey = getThreadPartnerKey({
+      senderId: recipient.id,
+      senderName: recipient.name,
+      senderEmail: finalEmail || recipient.email,
+      recipientId: recipient.id,
+      recipientName: recipient.name,
+      recipientEmail: finalEmail || recipient.email
+    }, currentUser);
+
     const existing = messages.find(
       (m) =>
         m.id === recipient.id ||
+        (targetPartnerKey && getThreadPartnerKey(m, currentUser) === targetPartnerKey) ||
         m.senderId === recipient.id ||
         (m as any).recipientId === recipient.id ||
         (finalEmail && (m.senderId === finalEmail || m.senderEmail === finalEmail || (m as any).recipientEmail === finalEmail)) ||
-        (m.senderName && m.senderName.toLowerCase() === recipient.name.toLowerCase()) ||
-        ((m as any).recipientName && (m as any).recipientName.toLowerCase() === recipient.name.toLowerCase())
+        (m.senderName && recipient.name && m.senderName.toLowerCase() === recipient.name.toLowerCase()) ||
+        ((m as any).recipientName && recipient.name && (m as any).recipientName.toLowerCase() === recipient.name.toLowerCase())
     );
 
     if (existing) {
@@ -732,12 +742,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       if (!m) return false;
       const mId = String(m.id || "").trim();
       const mPartnerKey = getThreadPartnerKey(m, currentUser);
-      const mName = (m.senderName || "").toLowerCase().trim();
-      const mIdKey = (m.senderId || "").toLowerCase().trim();
       if (deletedThreadKeys.has(mId)) return false;
       if (mPartnerKey && deletedThreadKeys.has(mPartnerKey)) return false;
-      if (mName && deletedThreadKeys.has(mName)) return false;
-      if (mIdKey && deletedThreadKeys.has(mIdKey)) return false;
       return true;
     });
 
@@ -1618,6 +1624,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <button
                       onClick={() => {
                         setIsMobileThreadViewOpen(false);
+                        setLocalSelectedThreadId("");
                         if (onSelectThreadId) onSelectThreadId("");
                       }}
                       className="md:hidden w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-zinc-200 hover:text-white active:bg-zinc-800 active:scale-95 transition-all cursor-pointer shrink-0"
