@@ -2019,10 +2019,13 @@ export function App() {
         const isBiz = Boolean((effectiveMessagingUser as any).isBusiness);
 
         const serverIds = new Set(threads.map((t) => t.id));
+        const serverPartnerKeys = new Set(threads.map((t) => getThreadPartnerKey(t, effectiveMessagingUser)));
         const pendingLocal = prev.filter((m) => {
-          if (!m || serverIds.has(m.id)) return false;
-          if (m.id === activeThreadId) return true;
-          if (!m.history || m.history.length === 0) return false;
+          if (!m) return false;
+          const pKey = getThreadPartnerKey(m, effectiveMessagingUser);
+          if (serverIds.has(m.id) || (pKey && serverPartnerKeys.has(pKey))) return false;
+          if (m.id === activeThreadId || (pKey && pKey === activeThreadId)) return true;
+          if (m.lastMessage || (m.history && m.history.length > 0)) return true;
 
           const participants = Array.isArray(m.participants)
             ? m.participants.map(p => (p || "").toLowerCase().trim().replace(/^@/, ''))
@@ -2045,7 +2048,7 @@ export function App() {
           }
         });
 
-        return deduplicateChatThreads([...pendingLocal, ...mergedThreads]);
+        return deduplicateChatThreads([...pendingLocal, ...mergedThreads], effectiveMessagingUser);
       });
 
       if (isFirstChatLoadRef.current) {

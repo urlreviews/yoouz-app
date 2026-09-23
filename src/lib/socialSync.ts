@@ -1052,15 +1052,18 @@ export function getDeletedThreadsMap(currentUser?: UserProfile | null): Map<stri
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
         for (const item of parsed) {
-          if (typeof item === "string") {
-            map.set(item.trim(), Date.now());
+          if (typeof item === "string" && item.trim()) {
+            // Do NOT default to Date.now() on every execution for legacy string arrays
+            map.set(item.trim(), 1);
           } else if (item && typeof item === "object" && item.id) {
-            map.set(String(item.id).trim(), Number(item.deletedAt) || Date.now());
+            const val = Number(item.deletedAt);
+            map.set(String(item.id).trim(), !isNaN(val) && val > 0 ? val : 1);
           }
         }
       } else if (parsed && typeof parsed === "object") {
         for (const [k, v] of Object.entries(parsed)) {
-          map.set(k.trim(), Number(v) || Date.now());
+          const val = Number(v);
+          map.set(k.trim(), !isNaN(val) && val > 0 ? val : 1);
         }
       }
     }
@@ -1716,7 +1719,7 @@ export function subscribeToChats(
 
   const updateThreads = (newThreads: CopoMessage[]) => {
     if (isDisposed) return;
-    const deduped = deduplicateChatThreads(newThreads);
+    const deduped = deduplicateChatThreads(newThreads, currentUser);
     cachedThreads = deduped;
     try {
       localStorage.setItem(cacheKey, JSON.stringify(deduped));
@@ -1735,7 +1738,7 @@ export function subscribeToChats(
         const filteredParsed = parsed.filter((t: any) => {
           if (!t) return false;
           const tId = String(t.id || "").trim();
-          const pKey = getThreadPartnerKey(t);
+          const pKey = getThreadPartnerKey(t, currentUser);
           const delTime = deletedMap.get(tId) ?? (pKey ? deletedMap.get(pKey) : undefined);
           if (delTime !== undefined) {
             const latestMsg = Math.max(
@@ -1746,7 +1749,7 @@ export function subscribeToChats(
           }
           return true;
         });
-        const dedupedInitial = deduplicateChatThreads(filteredParsed);
+        const dedupedInitial = deduplicateChatThreads(filteredParsed, currentUser);
         cachedThreads = dedupedInitial;
         onUpdate(dedupedInitial);
       }
@@ -1766,10 +1769,10 @@ export function subscribeToChats(
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
         if (Array.isArray(items) && !isDisposed) {
           const processed = processChatThreadsForUser(items, currentUser);
-          const serverPartnerKeys = new Set(processed.map((t) => getThreadPartnerKey(t)));
+          const serverPartnerKeys = new Set(processed.map((t) => getThreadPartnerKey(t, currentUser)));
           const serverThreadIds = new Set(processed.map((t) => t.id));
-          const pendingThreads = cachedThreads.filter((t) => t && !serverThreadIds.has(t.id) && !serverPartnerKeys.has(getThreadPartnerKey(t)));
-          const merged = deduplicateChatThreads([...pendingThreads, ...processed]);
+          const pendingThreads = cachedThreads.filter((t) => t && !serverThreadIds.has(t.id) && !serverPartnerKeys.has(getThreadPartnerKey(t, currentUser)));
+          const merged = deduplicateChatThreads([...pendingThreads, ...processed], currentUser);
           updateThreads(merged);
         }
       }
@@ -1788,8 +1791,8 @@ export function subscribeToChats(
         const processed = processChatThreadsForUser([threadData], currentUser);
         if (processed.length > 0) {
           const freshThread = processed[0];
-          const freshPartnerKey = getThreadPartnerKey(freshThread);
-          const existingIdx = cachedThreads.findIndex((t) => t.id === freshThread.id || (freshPartnerKey && getThreadPartnerKey(t) === freshPartnerKey));
+          const freshPartnerKey = getThreadPartnerKey(freshThread, currentUser);
+          const existingIdx = cachedThreads.findIndex((t) => t.id === freshThread.id || (freshPartnerKey && getThreadPartnerKey(t, currentUser) === freshPartnerKey));
           let nextThreads: CopoMessage[];
           if (existingIdx >= 0) {
             const existingThread = cachedThreads[existingIdx];
@@ -1808,7 +1811,7 @@ export function subscribeToChats(
           } else {
             nextThreads = [freshThread, ...cachedThreads];
           }
-          const dedupedNext = deduplicateChatThreads(nextThreads);
+          const dedupedNext = deduplicateChatThreads(nextThreads, currentUser);
           updateThreads(dedupedNext);
         }
       }

@@ -899,6 +899,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
           ...messages
         ];
 
+    setDeletedThreadKeys((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set(prev);
+      if (activeThread.id) next.delete(activeThread.id);
+      if (activePartnerKey) next.delete(activePartnerKey);
+      if (activeThread.senderName) next.delete(activeThread.senderName.toLowerCase().trim());
+      if (activeThread.senderId) next.delete(activeThread.senderId.toLowerCase().trim());
+      return next;
+    });
+
     onUpdateMessages(updated);
     setDraftThread(null);
 
