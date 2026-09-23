@@ -2332,11 +2332,24 @@ export async function sendChatMessage(
   };
 }
 
+const recentlyMarkedReadMap = new Map<string, number>();
+
 /**
  * Mark a thread as read for current user
  */
 export async function markChatThreadAsRead(threadId: string, currentUser: UserProfile): Promise<void> {
   if (!currentUser || !threadId) return;
+
+  const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
+  const debounceKey = `${userKey}_${threadId}`;
+  const now = Date.now();
+  const lastMarked = recentlyMarkedReadMap.get(debounceKey) || 0;
+  if (now - lastMarked < 10000) {
+    // Skip redundant network POST if already marked read within 10 seconds
+    return;
+  }
+  recentlyMarkedReadMap.set(debounceKey, now);
+
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
   const userHandle = (currentUser.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");

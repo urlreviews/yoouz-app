@@ -219,13 +219,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     setIsMobileThreadViewOpen(true);
   };
 
-  // Automatically mark active thread as read whenever it is opened or selected
-  useEffect(() => {
-    if (selectedThreadId && onMarkThreadRead) {
-      onMarkThreadRead(selectedThreadId);
-    }
-  }, [selectedThreadId, onMarkThreadRead]);
-
   // On desktop, auto-select first thread if none selected and notify parent to keep in sync
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth >= 768) {
@@ -233,7 +226,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         const firstId = messages[0].id;
         setLocalSelectedThreadId(firstId);
         if (onSelectThreadId) onSelectThreadId(firstId);
-        if (onMarkThreadRead) onMarkThreadRead(firstId);
+        if (onMarkThreadRead && (messages[0].unreadCount || 0) > 0) {
+          onMarkThreadRead(firstId);
+        }
       }
     }
   }, [messages, localSelectedThreadId, propSelectedThreadId, onSelectThreadId, onMarkThreadRead]);
@@ -325,7 +320,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Mark selected thread as read only when actually viewing the thread
+  // Mark selected thread as read only when actually viewing the thread with unread messages
   useEffect(() => {
     if (!selectedThreadId) return;
     const isViewing = typeof window !== "undefined" && window.innerWidth >= 768 ? Boolean(localSelectedThreadId || propSelectedThreadId) : isMobileThreadViewOpen;
@@ -340,8 +335,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         m.id === selectedThreadId ? { ...m, unreadCount: 0 } : m
       );
       onUpdateMessages(updated);
-    } else if (selectedThreadId && onMarkThreadRead) {
-      onMarkThreadRead(selectedThreadId);
     }
   }, [selectedThreadId, isMobileThreadViewOpen, localSelectedThreadId, propSelectedThreadId]);
 

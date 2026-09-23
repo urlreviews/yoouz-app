@@ -2144,7 +2144,7 @@ export function App() {
 
             if (isUserInMessages) {
               setInAppToast((cur) => (cur?.type === "message" ? null : cur));
-              if (effectiveMessagingUser) {
+              if (effectiveMessagingUser && activeThreadId === t.id && (t.unreadCount || 0) > 0) {
                 markChatThreadAsRead(t.id, effectiveMessagingUser);
               }
             } else if (isFromOther && isLiveRecent) {
