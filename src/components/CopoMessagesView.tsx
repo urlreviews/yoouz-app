@@ -829,14 +829,20 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   // Clean, filtered messages for the active conversation
   const checkIsMessageFromMe = useCallback((msg: any): boolean => {
     if (!msg) return false;
-    const userEmail = (currentUser?.email || "").toLowerCase().trim();
-    const userName = (currentUser?.name || "").toLowerCase().trim();
-    const userId = (currentUser?.userId || (currentUser as any)?.id || "").toLowerCase().trim();
-    const userHandle = ((currentUser as any)?.handle || "").toLowerCase().trim().replace(/^@/, "");
 
     const msgSenderEmail = (msg.senderEmail || "").toLowerCase().trim();
     const msgSenderId = (msg.senderId || "").toLowerCase().trim().replace(/^@/, "");
     const msgSenderName = (msg.senderName || "").toLowerCase().trim();
+
+    // 1. Explicit outgoing flag or "You" label
+    if (msg.isMe === true || msg.isMe === "true" || msgSenderName === "you") {
+      return true;
+    }
+
+    const userEmail = (currentUser?.email || "").toLowerCase().trim();
+    const userName = (currentUser?.name || "").toLowerCase().trim();
+    const userId = (currentUser?.userId || (currentUser as any)?.id || "").toLowerCase().trim();
+    const userHandle = ((currentUser as any)?.handle || "").toLowerCase().trim().replace(/^@/, "");
 
     // Persona checks
     const isStevenViewing = userEmail.includes("avr6566gd") || userName.includes("steven") || userName.includes("avt");
@@ -851,22 +857,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       return false;
     }
 
-    // Check if message matches the active chat partner (the other person in this conversation)
-    const partnerName = (activeThread?.senderName || "").toLowerCase().trim();
-    const partnerEmail = (activeThread?.senderEmail || "").toLowerCase().trim();
-    const partnerId = (activeThread?.senderId || "").toLowerCase().trim().replace(/^@/, "");
-
-    const matchesPartner =
-      (partnerName && partnerName !== "you" && (msgSenderName === partnerName || (partnerName.length >= 3 && msgSenderName.includes(partnerName)))) ||
-      (partnerEmail && (msgSenderEmail === partnerEmail || msgSenderId === partnerEmail)) ||
-      (partnerId && (msgSenderId === partnerId || msgSenderEmail === partnerId));
-
-    if (matchesPartner) {
-      return false;
-    }
-
-    // Check if message matches current user
-    const matchesUser = Boolean(
+    // 2. Direct user match check (if message sender matches current user identity)
+    const directUserMatch = Boolean(
       (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
       (userName && msgSenderName === userName) ||
       (userId && (msgSenderId === userId || msgSenderEmail === userId)) ||
@@ -875,8 +867,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       (isBenViewing && (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderId.includes("ben")))
     );
 
-    return matchesUser;
-  }, [currentUser, activeThread]);
+    return directUserMatch;
+  }, [currentUser]);
 
   const activeThreadMessages = useMemo(() => {
     return deduplicateChatHistory(activeThread?.history || []).filter((m: any) => {
@@ -1353,7 +1345,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       return true;
     }
 
-    // 2. Business thread: verify against claimed/verified places
+    // 2. Business thread: verify against claimed/verified places ONLY
     if (checkIsBusinessThread(thread) || thread.isBusiness) {
       const matchingPlace = (places || []).find(
         (p) =>
@@ -1364,10 +1356,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       if (matchingPlace) {
         return Boolean(matchingPlace.isClaimed || matchingPlace.isVerified);
       }
-      return Boolean(thread.isBusiness);
+      return false;
     }
 
-    // 3. User / Creator: verify with allUsers or allVideos
+    // 3. User / Creator: verify ONLY if user explicitly has isVerified === true
     const matchUser = (allUsers || []).find(
       (u) =>
         (u.name && u.name.toLowerCase() === sName) ||
@@ -1375,21 +1367,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         (u.id && u.id.toLowerCase() === sId) ||
         (u.email && u.email.toLowerCase() === sEmail)
     );
-    if (matchUser && typeof matchUser.isVerified === "boolean") {
-      return matchUser.isVerified;
-    }
-
-    const matchVideo = (allVideos || []).find(
-      (v) =>
-        (v.author?.name && v.author.name.toLowerCase() === sName) ||
-        (v.author?.id && v.author.id.toLowerCase() === sId)
-    );
-    if (matchVideo?.author?.isVerified !== undefined) {
-      return Boolean(matchVideo.author.isVerified);
+    if (matchUser && matchUser.isVerified === true) {
+      return true;
     }
 
     return false;
-  }, [places, allUsers, allVideos]);
+  }, [places, allUsers]);
 
   const isPartnerVerified = useMemo(() => {
     if (!activeThread) return false;
@@ -1974,43 +1957,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   </div>
                 </div>
 
-                {/* Spot Inquiry Context Banner */}
-                {activeThreadPlace && (
-                  <div className="bg-zinc-900/90 border-b border-zinc-800 px-3.5 sm:px-4 py-2 flex items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-sm">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-zinc-800 overflow-hidden shrink-0 border border-zinc-700/80">
-                        <img
-                          src={activeThreadPlace.bannerUrl || activeThreadPlace.ogImage || (activeThreadPlace.photos && activeThreadPlace.photos[0]) || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&auto=format&fit=crop&q=80"}
-                          alt={activeThreadPlace.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&auto=format&fit=crop&q=80";
-                          }}
-                        />
-                      </div>
-                      <div className="truncate">
-                        <span className="text-zinc-400 font-medium">Inquiring about </span>
-                        <span className="text-white font-bold">{activeThreadPlace.name}</span>
-                        {activeThreadPlace.category && (
-                          <span className="text-zinc-400 font-normal"> · {activeThreadPlace.category}</span>
-                        )}
-                        {activeThreadPlace.city && (
-                          <span className="text-zinc-500 font-normal"> · {activeThreadPlace.city}</span>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenPlaceCard(activeThreadPlace.id)}
-                      className="px-2.5 py-1 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-[11px] shrink-0 transition-colors flex items-center gap-1 cursor-pointer active:scale-95"
-                    >
-                      <MapPin className="w-3 h-3 text-emerald-400" />
-                      <span>View Spot</span>
-                      <ChevronRight className="w-3 h-3 text-zinc-400" />
-                    </button>
-                  </div>
-                )}
-
                 {/* Blocked User Notice Banner */}
                 {isSenderBlocked && (
                   <div className="bg-red-950/50 border-b border-red-900/60 px-4 py-2.5 flex items-center justify-between text-xs text-red-300 animate-in fade-in">
@@ -2092,7 +2038,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             : activeThread.senderName);
                       const displayAvatar = isMe
                         ? (currentUser?.avatar || msg.senderAvatar)
-                        : (activeThread.senderAvatar || msg.senderAvatar);
+                        : (msg.senderAvatar || activeThread.senderAvatar);
 
                       return (
                         <div
@@ -2167,7 +2113,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             </button>
                             <div
                               className={`p-3 text-xs sm:text-sm shadow-2xs leading-relaxed rounded-2xl ${
-                                msg.videoThumbnail || msg.placeId || msg.placeName ? "w-[260px] sm:w-[290px]" : "w-fit max-w-full"
+                                msg.videoThumbnail ? "w-[240px] sm:w-[260px]" : "w-fit max-w-full"
                               } ${
                                 isMe
                                   ? "bg-zinc-800 text-white rounded-tr-none text-left font-medium"
@@ -2176,119 +2122,31 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             >
                             <p className="px-1">{msg.text}</p>
 
-                            {/* Render shared recommendation / video review or place card inside message bubble */}
-                            {(() => {
-                              if (msg.videoThumbnail) {
-                                const matchedVideo = (allVideos || []).find((v) => v.id === msg.videoId) || (userVideos || []).find((v) => v.id === msg.videoId);
-                                const videoPlaceName = matchedVideo?.placeName || msg.placeName;
-                                const videoRating = matchedVideo?.rating || msg.placeRating;
-
-                                return (
-                                  <div
-                                    onClick={() => handleOpenVideoCard(msg.videoId)}
-                                    className="mt-2.5 bg-zinc-950 rounded-2xl overflow-hidden shadow-sm cursor-pointer group/card border border-zinc-800 hover:border-zinc-700 transition-all w-full"
-                                  >
-                                    <div className="relative aspect-[4/5] bg-zinc-900 overflow-hidden">
-                                      <img
-                                        src={msg.videoThumbnail}
-                                        alt="Recommendation preview"
-                                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
-                                        referrerPolicy="no-referrer"
-                                        onError={(e) => {
-                                          const target = e.currentTarget as HTMLImageElement;
-                                          target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-                                        }}
-                                      />
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                      
-                                      {videoRating && (
-                                        <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-white font-bold text-[10px] flex items-center gap-1 shadow-sm">
-                                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                                          <span>{videoRating}</span>
-                                        </div>
-                                      )}
-
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-12 h-12 rounded-full bg-zinc-800/95 text-white flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
-                                          <Play className="w-5 h-5 fill-current translate-x-0.5" />
-                                        </div>
-                                      </div>
-
-                                      {videoPlaceName && (
-                                        <div className="absolute bottom-2.5 left-3 right-3 text-left">
-                                          <h6 className="text-xs font-black text-white truncate drop-shadow-sm">
-                                            {videoPlaceName}
-                                          </h6>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="px-3 py-2.5 bg-zinc-900/95 flex items-center justify-between gap-2 border-t border-zinc-800">
-                                      <div className="flex items-center gap-1.5 min-w-0">
-                                        <Film className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                                        <span className="text-[11px] font-bold text-white truncate">Watch Video Review</span>
-                                      </div>
-                                      <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover/card:translate-x-0.5 transition-transform shrink-0" />
+                            {/* Render simple video preview if thumbnail is present */}
+                            {msg.videoThumbnail ? (
+                              <div
+                                onClick={() => handleOpenVideoCard(msg.videoId)}
+                                className="mt-2 bg-zinc-950 rounded-xl overflow-hidden shadow-sm cursor-pointer border border-zinc-800 hover:border-zinc-700 transition-all w-full"
+                              >
+                                <div className="relative aspect-[16/10] bg-zinc-900 overflow-hidden">
+                                  <img
+                                    src={msg.videoThumbnail}
+                                    alt="Video preview"
+                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <div className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-xs">
+                                      <Play className="w-4 h-4 fill-current translate-x-0.5" />
                                     </div>
                                   </div>
-                                );
-                              }
-
-                              if (msg.placeId || msg.placeName) {
-                                const matchedPlace = (places || []).find(
-                                  (p) => p.id === msg.placeId || (p.name && msg.placeName && p.name.toLowerCase() === msg.placeName.toLowerCase())
-                                );
-                                const placeCover = msg.placeImage || matchedPlace?.bannerUrl || matchedPlace?.ogImage || (matchedPlace?.photos && matchedPlace.photos[0]) || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
-                                const placeTitle = msg.placeName || matchedPlace?.name || "Local Spot";
-                                const placeCat = msg.placeCategory || matchedPlace?.category || "Spot";
-                                const placeRat = msg.placeRating || matchedPlace?.rating || 4.8;
-                                const placeLoc = msg.placeAddress || matchedPlace?.address || matchedPlace?.city || "";
-
-                                return (
-                                  <div
-                                    onClick={() => handleOpenPlaceCard(msg.placeId || matchedPlace?.id)}
-                                    className="mt-2.5 bg-zinc-950 rounded-2xl overflow-hidden shadow-md cursor-pointer group/place border border-zinc-800 hover:border-zinc-700 transition-all w-full"
-                                  >
-                                    <div className="relative aspect-[16/9] bg-zinc-900 overflow-hidden">
-                                      <img
-                                        src={placeCover}
-                                        alt={placeTitle}
-                                        className="w-full h-full object-cover group-hover/place:scale-105 transition-transform duration-500"
-                                        referrerPolicy="no-referrer"
-                                        onError={(e) => {
-                                          const target = e.currentTarget as HTMLImageElement;
-                                          target.src = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
-                                        }}
-                                      />
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-                                      <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-white font-bold text-[10px] flex items-center gap-1 shadow-sm">
-                                        <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                                        <span>{placeRat}</span>
-                                      </div>
-                                      <div className="absolute bottom-2.5 left-3 right-3 text-left">
-                                        <span className="px-1.5 py-0.5 rounded bg-white/20 backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider">
-                                          {placeCat}
-                                        </span>
-                                        <h6 className="text-xs font-black text-white truncate drop-shadow-sm mt-0.5">
-                                          {placeTitle}
-                                        </h6>
-                                      </div>
-                                    </div>
-                                    <div className="px-3 py-2 bg-zinc-900/95 flex items-center justify-between gap-2 border-t border-zinc-800">
-                                      <div className="flex items-center gap-1.5 min-w-0">
-                                        <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                        <span className="text-[11px] text-zinc-300 font-medium truncate">{placeLoc || "View Spot Details"}</span>
-                                      </div>
-                                      <span className="text-[10px] font-bold text-white shrink-0 flex items-center gap-0.5 group-hover/place:underline">
-                                        <span>View Spot</span>
-                                        <ChevronRight className="w-3 h-3 text-zinc-400" />
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              }
-
-                              return null;
-                            })()}
+                                </div>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                       </div>
@@ -2350,157 +2208,72 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         </button>
                       </div>
 
-                      {/* Segment Tabs: Places & Spots vs Video Reviews */}
-                      <div className="flex items-center gap-1.5 p-1 bg-zinc-950 rounded-xl border border-zinc-800 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setRecommendTab("spots")}
-                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                            recommendTab === "spots"
-                              ? "bg-zinc-800 text-white shadow-xs"
-                              : "text-zinc-400 hover:text-white"
-                          }`}
-                        >
-                          <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Places & Spots</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRecommendTab("videos")}
-                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                            recommendTab === "videos"
-                              ? "bg-zinc-800 text-white shadow-xs"
-                              : "text-zinc-400 hover:text-white"
-                          }`}
-                        >
-                          <Film className="w-3.5 h-3.5 text-sky-400" />
-                          <span>Video Reviews</span>
-                        </button>
-                      </div>
-
                       {/* Search in tray */}
                       <div className="relative shrink-0">
                         <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-400" />
                         <input
                           type="text"
-                          placeholder={recommendTab === "spots" ? "Search places, categories, or cities..." : "Search video reviews or creators..."}
+                          placeholder="Search your video reviews..."
                           value={recommendSearch}
                           onChange={(e) => setRecommendSearch(e.target.value)}
                           className="w-full bg-zinc-950 text-xs text-white placeholder-zinc-500 pl-8 pr-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-white/50 font-medium"
                         />
                       </div>
 
-                      {/* Scrollable list of items to share */}
+                      {/* Scrollable list of user videos */}
                       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                        {recommendTab === "spots" ? (
-                          filteredPlacesForRecommend.length === 0 ? (
-                            <div className="p-6 text-center text-zinc-400 space-y-1.5">
-                              <MapPin className="w-7 h-7 mx-auto text-zinc-600" />
-                              <p className="text-xs font-bold text-white">No places found</p>
-                              <p className="text-[10px] text-zinc-400">
-                                Try searching for another restaurant, cafe, or venue.
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                              {filteredPlacesForRecommend.map((place) => {
-                                const cover = place.bannerUrl || place.ogImage || (place.photos && place.photos[0]) || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
-                                return (
-                                  <div
-                                    key={`rec-place-${place.id}`}
-                                    onClick={() => handleSendPlaceCard(place)}
-                                    className="p-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
-                                  >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
-                                        <img
-                                          src={cover}
-                                          alt={place.name}
-                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                          referrerPolicy="no-referrer"
-                                          onError={(e) => {
-                                            const target = e.currentTarget as HTMLImageElement;
-                                            target.src = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="min-w-0">
-                                        <h6 className="text-xs font-black text-white group-hover:text-white truncate">
-                                          {place.name}
-                                        </h6>
-                                        <p className="text-[10px] text-zinc-300 truncate flex items-center gap-1 mt-0.5">
-                                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
-                                          <span>{place.rating || 4.8} · {place.category || "Spot"}</span>
-                                        </p>
-                                        {(place.city || place.address) && (
-                                          <p className="text-[9px] text-zinc-500 truncate mt-0.5">
-                                            {place.city || place.address}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <span className="px-2.5 py-1 bg-zinc-800 text-white group-hover:bg-white group-hover:text-black transition-colors rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
-                                      Share
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )
+                        {filteredUserVideosForRecommend.length === 0 ? (
+                          <div className="p-6 text-center text-zinc-400 space-y-1.5">
+                            <Film className="w-7 h-7 mx-auto text-zinc-600" />
+                            <p className="text-xs font-bold text-white">No video reviews found</p>
+                            <p className="text-[10px] text-zinc-400">
+                              You haven't recorded any video reviews to share.
+                            </p>
+                          </div>
                         ) : (
-                          filteredUserVideosForRecommend.length === 0 ? (
-                            <div className="p-6 text-center text-zinc-400 space-y-1.5">
-                              <Film className="w-7 h-7 mx-auto text-zinc-600" />
-                              <p className="text-xs font-bold text-white">No video reviews found</p>
-                              <p className="text-[10px] text-zinc-400">
-                                Try searching for another place or creator.
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                              {filteredUserVideosForRecommend.map((vid) => (
-                                <div
-                                  key={`user-vid-rec-${vid.id}`}
-                                  onClick={() => handleSendVideoCard(vid)}
-                                  className="p-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
-                                >
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
-                                      <img
-                                        src={resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"}
-                                        alt={vid.placeName}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                        referrerPolicy="no-referrer"
-                                        onError={(e) => {
-                                          const target = e.currentTarget as HTMLImageElement;
-                                          if (vid.author?.avatar && target.src !== vid.author.avatar) {
-                                            target.src = vid.author.avatar;
-                                          } else {
-                                            target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-                                          }
-                                        }}
-                                      />
-                                      <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                                        <Play className="w-3.5 h-3.5 fill-white text-white" />
-                                      </div>
-                                    </div>
-                                    <div className="min-w-0">
-                                      <h6 className="text-xs font-black text-white group-hover:text-white truncate">
-                                        {vid.placeName}
-                                      </h6>
-                                      <p className="text-[10px] text-zinc-300 truncate flex items-center gap-1 mt-0.5">
-                                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
-                                        <span>{vid.rating || 5} · {vid.author?.name || "Verified Review"}</span>
-                                      </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {filteredUserVideosForRecommend.map((vid) => (
+                              <div
+                                key={`user-vid-rec-${vid.id}`}
+                                onClick={() => handleSendVideoCard(vid)}
+                                className="p-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
+                                    <img
+                                      src={resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"}
+                                      alt={vid.placeName}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                      referrerPolicy="no-referrer"
+                                      onError={(e) => {
+                                        const target = e.currentTarget as HTMLImageElement;
+                                        if (vid.author?.avatar && target.src !== vid.author.avatar) {
+                                          target.src = vid.author.avatar;
+                                        } else {
+                                          target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
+                                        }
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                      <Play className="w-3.5 h-3.5 fill-white text-white" />
                                     </div>
                                   </div>
-                                  <span className="px-2.5 py-1 bg-zinc-800 text-white group-hover:bg-white group-hover:text-black transition-colors rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
-                                    Share
-                                  </span>
+                                  <div className="min-w-0">
+                                    <h6 className="text-xs font-black text-white group-hover:text-white truncate">
+                                      {vid.placeName}
+                                    </h6>
+                                    <p className="text-[10px] text-zinc-300 truncate flex items-center gap-1 mt-0.5">
+                                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                                      <span>{vid.rating || 5} · Review</span>
+                                    </p>
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
-                          )
+                                <span className="px-2.5 py-1 bg-zinc-800 text-white group-hover:bg-white group-hover:text-black transition-colors rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
+                                  Share
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
                     </div>
