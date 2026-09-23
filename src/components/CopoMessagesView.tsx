@@ -89,6 +89,45 @@ interface CopoMessagesViewProps {
   onSuccessAuth?: (userData: { name: string; email: string; avatar: string }) => void;
 }
 
+export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | null) {
+  if (!thread) return { name: "User", avatar: "", email: "", id: "", handle: "", isBusiness: false };
+  const uEmail = (currentUser?.email || "").toLowerCase().trim();
+  const uId = (currentUser?.userId || (currentUser as any)?.id || (currentUser as any)?.uid || "").toLowerCase().trim().replace(/^@/, "");
+  const uName = (currentUser?.name || "").toLowerCase().trim();
+  const uHandle = ((currentUser as any)?.handle || "").toLowerCase().trim().replace(/^@/, "");
+
+  const tSenderEmail = (thread.senderEmail || "").toLowerCase().trim();
+  const tSenderId = (thread.senderId || "").toLowerCase().trim().replace(/^@/, "");
+  const tSenderName = (thread.senderName || "").toLowerCase().trim();
+
+  const isSenderMe = Boolean(
+    (uEmail && (tSenderEmail === uEmail || tSenderId === uEmail)) ||
+    (uId && (tSenderId === uId || tSenderEmail === uId)) ||
+    (uHandle && (tSenderId === uHandle || tSenderName === uHandle)) ||
+    (uName && tSenderName === uName && uName !== "member" && uName !== "user" && uName !== "reviewer")
+  );
+
+  if (isSenderMe) {
+    return {
+      name: thread.recipientName || thread.senderName || "User",
+      avatar: thread.recipientAvatar || thread.senderAvatar || "",
+      email: (thread.recipientEmail || "").toLowerCase().trim(),
+      id: (thread.recipientId || "").toLowerCase().trim().replace(/^@/, ""),
+      handle: ((thread as any).recipientHandle || "").toLowerCase().trim().replace(/^@/, ""),
+      isBusiness: Boolean(thread.isBusiness)
+    };
+  }
+
+  return {
+    name: thread.senderName || "User",
+    avatar: thread.senderAvatar || "",
+    email: tSenderEmail,
+    id: tSenderId,
+    handle: ((thread as any).senderHandle || "").toLowerCase().trim().replace(/^@/, ""),
+    isBusiness: Boolean(thread.isBusiness)
+  };
+}
+
 export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   messages,
   currentUser,
@@ -150,8 +189,18 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     if (onSelectThreadId) {
       onSelectThreadId(id);
     }
+    if (onMarkThreadRead && id) {
+      onMarkThreadRead(id);
+    }
     setIsMobileThreadViewOpen(true);
   };
+
+  // Automatically mark active thread as read whenever it is opened or selected
+  useEffect(() => {
+    if (selectedThreadId && onMarkThreadRead) {
+      onMarkThreadRead(selectedThreadId);
+    }
+  }, [selectedThreadId, onMarkThreadRead]);
 
   // On desktop, auto-select first thread if none selected and notify parent to keep in sync
   useEffect(() => {
@@ -201,9 +250,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
   const [replyText, setReplyText] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [showQuickRecommend, setShowQuickRecommend] = useState(false);
-  const [recommendTab, setRecommendTab] = useState<"spots" | "videos">("spots");
-  const [recommendSearch, setRecommendSearch] = useState("");
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [actionThread, setActionThread] = useState<CopoMessage | null>(null);
   const [showBlockConfirmModal, setShowBlockConfirmModal] = useState(false);
@@ -826,6 +872,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     }, 0);
   }, [filteredThreads, selectedThreadId]);
 
+  const partnerDetails = useMemo(() => {
+    return getThreadPartnerDetails(activeThread, currentUser);
+  }, [activeThread, currentUser]);
+
   // Clean, filtered messages for the active conversation
   const checkIsMessageFromMe = useCallback((msg: any): boolean => {
     if (!msg) return false;
@@ -833,42 +883,54 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const msgSenderEmail = (msg.senderEmail || "").toLowerCase().trim();
     const msgSenderId = (msg.senderId || "").toLowerCase().trim().replace(/^@/, "");
     const msgSenderName = (msg.senderName || "").toLowerCase().trim();
-
-    // 1. Explicit outgoing flag or "You" label
-    if (msg.isMe === true || msg.isMe === "true" || msgSenderName === "you") {
-      return true;
-    }
+    const msgSenderHandle = (msg.senderHandle || "").toLowerCase().trim().replace(/^@/, "");
 
     const userEmail = (currentUser?.email || "").toLowerCase().trim();
     const userName = (currentUser?.name || "").toLowerCase().trim();
-    const userId = (currentUser?.userId || (currentUser as any)?.id || "").toLowerCase().trim();
+    const userId = (currentUser?.userId || (currentUser as any)?.id || (currentUser as any)?.uid || "").toLowerCase().trim().replace(/^@/, "");
     const userHandle = ((currentUser as any)?.handle || "").toLowerCase().trim().replace(/^@/, "");
+
+    // 1. If message belongs to current user, it IS from me (render on right)
+    const isUserMsg = Boolean(
+      (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
+      (userId && (msgSenderId === userId || msgSenderEmail === userId)) ||
+      (userHandle && (msgSenderHandle === userHandle || msgSenderId === userHandle)) ||
+      msg.isMe === true || msg.isMe === "true" || msgSenderName === "you"
+    );
+    if (isUserMsg) return true;
+
+    // 2. If message belongs to active partner, it is NOT from me (render on left)
+    const pEmail = partnerDetails.email;
+    const pId = partnerDetails.id;
+    const pHandle = partnerDetails.handle;
+    const pName = partnerDetails.name.toLowerCase();
+
+    const isPartnerMsg = Boolean(
+      (pEmail && (msgSenderEmail === pEmail || msgSenderId === pEmail)) ||
+      (pId && (msgSenderId === pId || msgSenderEmail === pId)) ||
+      (pHandle && (msgSenderHandle === pHandle || msgSenderId === pHandle)) ||
+      (pName && msgSenderName === pName)
+    );
+    if (isPartnerMsg) return false;
 
     // Persona checks
     const isStevenViewing = userEmail.includes("avr6566gd") || userName.includes("steven") || userName.includes("avt");
     const isBenViewing = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("ben");
 
-    // If message is explicitly from Ben Blue, and Steven is viewing, it is NOT me!
     if (isStevenViewing && (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderId.includes("ben"))) {
       return false;
     }
-    // If message is explicitly from Steven Akan, and Ben is viewing, it is NOT me!
     if (isBenViewing && (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) {
       return false;
     }
 
-    // 2. Direct user match check (if message sender matches current user identity)
-    const directUserMatch = Boolean(
-      (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
-      (userName && msgSenderName === userName) ||
-      (userId && (msgSenderId === userId || msgSenderEmail === userId)) ||
-      (userHandle && (msgSenderId === userHandle || msgSenderName === userHandle)) ||
-      (isStevenViewing && (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) ||
-      (isBenViewing && (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderId.includes("ben")))
-    );
+    // 3. Name match fallback ONLY if partner name is NOT identical to current user name
+    if (userName && msgSenderName && userName === msgSenderName && msgSenderName !== pName) {
+      return true;
+    }
 
-    return directUserMatch;
-  }, [currentUser]);
+    return false;
+  }, [currentUser, partnerDetails]);
 
   const activeThreadMessages = useMemo(() => {
     return deduplicateChatHistory(activeThread?.history || []).filter((m: any) => {
@@ -878,31 +940,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     });
   }, [activeThread?.history]);
 
-  // Search places for recommendation
-  const filteredPlacesForRecommend = useMemo(() => {
-    if (!recommendSearch.trim()) return places.slice(0, 12);
-    const q = recommendSearch.toLowerCase();
-    return places.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.category && p.category.toLowerCase().includes(q)) ||
-        (p.address && p.address.toLowerCase().includes(q)) ||
-        (p.city && p.city.toLowerCase().includes(q))
-    );
-  }, [places, recommendSearch]);
 
-  // Search user & community videos for recommendation
-  const filteredUserVideosForRecommend = useMemo(() => {
-    const pool = (userVideos && userVideos.length > 0) ? userVideos : (allVideos || []);
-    if (!recommendSearch.trim()) return pool.slice(0, 12);
-    const q = recommendSearch.toLowerCase();
-    return pool.filter(
-      (v) =>
-        v.placeName.toLowerCase().includes(q) ||
-        (v.caption && v.caption.toLowerCase().includes(q)) ||
-        (v.author?.name && v.author.name.toLowerCase().includes(q))
-    ).slice(0, 20);
-  }, [userVideos, allVideos, recommendSearch]);
 
   const handleSendText = async (
     text: string,
@@ -1032,41 +1070,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     }
   };
 
-  const handleSendPlaceCard = (place: Place) => {
-    if (!place) return;
-    const coverImage = place.bannerUrl || place.ogImage || (place.photos && place.photos[0]) || "";
-    handleSendText(
-      `Check out ${place.name}! ⭐️ ${place.rating || 4.8}/5`,
-      undefined,
-      undefined,
-      {
-        placeId: place.id,
-        placeName: place.name,
-        placeAddress: place.address || place.city || "",
-        placeCategory: place.category || "Spot",
-        placeRating: place.rating || 4.8,
-        placeImage: coverImage
-      }
-    );
-    setShowQuickRecommend(false);
-  };
 
-  const handleSendVideoCard = (vid: VideoReview) => {
-    if (!vid) return;
-    const poster = resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-    handleSendText(
-      `Check out this video review for ${vid.placeName}! ⭐️ ${vid.rating || 5}/5`,
-      poster,
-      vid.id,
-      {
-        placeId: vid.placeId,
-        placeName: vid.placeName,
-        placeRating: vid.rating || 5,
-        placeImage: poster
-      }
-    );
-    setShowQuickRecommend(false);
-  };
 
   const handleSendForm = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1623,6 +1627,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <AnimatePresence initial={false}>
                   {filteredThreads.map((thread) => {
                     const isActive = thread.id === selectedThreadId;
+                    const threadPartner = getThreadPartnerDetails(thread, currentUser);
                     const lastHistMsg = thread.history && thread.history.length > 0 ? (thread.history[thread.history.length - 1] as any) : null;
                     const isLastMsgMe = Boolean(
                       lastHistMsg?.isMe ||
@@ -1633,8 +1638,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     const isUnread = !isActive && !isLastMsgMe && Number(thread.unreadCount) > 0;
                     const threadBlocked = blockedUserIds.some((b) => {
                       const cb = (b || "").toLowerCase().replace(/^@/, "").trim();
-                      const sId = (thread.senderId || "").toLowerCase().replace(/^@/, "").trim();
-                      const sName = (thread.senderName || "").toLowerCase().trim();
+                      const sId = (threadPartner.id || "").toLowerCase().replace(/^@/, "").trim();
+                      const sName = (threadPartner.name || "").toLowerCase().trim();
                       return cb === sId || cb === sName;
                     });
 
@@ -1702,25 +1707,25 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           <div
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar, undefined, thread.isBusiness);
+                              handleOpenAuthorProfile(threadPartner.name, threadPartner.id || threadPartner.email, threadPartner.avatar, undefined, threadPartner.isBusiness);
                             }}
                             className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                           >
-                            {checkIsBusinessThread(thread) ? (
+                            {threadPartner.isBusiness ? (
                               <CopoBrandLogo
-                                domain={thread.senderId}
-                                name={thread.senderName}
-                                logoUrl={thread.senderAvatar}
+                                domain={threadPartner.id}
+                                name={threadPartner.name}
+                                logoUrl={threadPartner.avatar}
                                 className="w-11 h-11 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
                                 imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
                                 fallbackTextClassName="font-extrabold text-xs text-zinc-950"
                               />
                             ) : (
                               <img
-                                src={getSafeAvatarUrl(thread.senderAvatar, thread.senderName, thread.senderId)}
-                                alt={thread.senderName}
+                                src={getSafeAvatarUrl(threadPartner.avatar, threadPartner.name, threadPartner.id)}
+                                alt={threadPartner.name}
                                 className="w-11 h-11 rounded-full object-cover border border-zinc-800"
-                                onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, thread.senderName, thread.senderId); }} 
+                                onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, threadPartner.name, threadPartner.id); }} 
                               />
                             )}
                             {threadBlocked ? (
@@ -1738,11 +1743,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar, undefined, thread.isBusiness);
+                                  handleOpenAuthorProfile(threadPartner.name, threadPartner.id || threadPartner.email, threadPartner.avatar, undefined, threadPartner.isBusiness);
                                 }}
                                 className={`text-xs font-black truncate flex items-center gap-1.5 hover:opacity-80 cursor-pointer text-left transition-opacity ${isActive ? "text-white" : "text-zinc-200"}`}
                               >
-                                <span>{thread.senderName}</span>
+                                <span>{threadPartner.name}</span>
                                 {checkIsThreadVerified(thread) && (
                                   <span title="Verified" className="inline-flex items-center">
                                     <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
@@ -1825,24 +1830,24 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness)}
+                      onClick={() => handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness)}
                       className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                     >
-                      {checkIsBusinessThread(activeThread) ? (
+                      {partnerDetails.isBusiness ? (
                         <CopoBrandLogo
-                          domain={activeThread.senderId}
-                          name={activeThread.senderName}
-                          logoUrl={activeThread.senderAvatar}
+                          domain={partnerDetails.id}
+                          name={partnerDetails.name}
+                          logoUrl={partnerDetails.avatar}
                           className="w-10 h-10 sm:w-10 sm:h-10 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
                           imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
                           fallbackTextClassName="font-extrabold text-xs text-zinc-950"
                         />
                       ) : (
                         <img
-                          src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
-                          alt={activeThread.senderName}
+                          src={getSafeAvatarUrl(partnerDetails.avatar, partnerDetails.name, partnerDetails.id)}
+                          alt={partnerDetails.name}
                           className="w-10 h-10 sm:w-10 sm:h-10 rounded-full object-cover border border-zinc-800"
-                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }} 
+                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, partnerDetails.name, partnerDetails.id); }} 
                         />
                       )}
                       <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
@@ -1851,10 +1856,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <div className="min-w-0">
                       <button
                         type="button"
-                        onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness)}
+                        onClick={() => handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness)}
                         className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-white hover:text-zinc-200 cursor-pointer text-left transition-colors"
                       >
-                        <span className="truncate">{activeThread.senderName}</span>
+                        <span className="truncate">{partnerDetails.name}</span>
                         {isPartnerVerified && (
                           <span title="Verified" className="inline-flex items-center">
                             <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
@@ -1963,7 +1968,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <div className="flex items-center gap-2">
                       <ShieldAlert className="w-4 h-4 text-red-500 shrink-0" />
                       <span className="font-semibold">
-                        You blocked {activeThread.senderName}. New messages from this user are blocked.
+                        You blocked {partnerDetails.name}. New messages from this user are blocked.
                       </span>
                     </div>
                     <button
@@ -1982,23 +1987,23 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <div className="flex flex-col items-center justify-center text-center py-12 px-4 space-y-3.5 my-auto animate-in fade-in duration-300">
                       <div 
                         className="relative cursor-pointer hover:opacity-85 transition-opacity"
-                        onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness)}
+                        onClick={() => handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness)}
                       >
-                        {checkIsBusinessThread(activeThread) ? (
+                        {partnerDetails.isBusiness ? (
                           <CopoBrandLogo
-                            domain={activeThread.senderId}
-                            name={activeThread.senderName}
-                            logoUrl={activeThread.senderAvatar}
+                            domain={partnerDetails.id}
+                            name={partnerDetails.name}
+                            logoUrl={partnerDetails.avatar}
                             className="w-20 h-20 rounded-2xl bg-white p-2 border-2 border-zinc-700 shadow-xl flex items-center justify-center overflow-hidden"
                             imageClassName="w-full h-full object-contain rounded-lg"
                             fallbackTextClassName="font-extrabold text-base text-zinc-950"
                           />
                         ) : (
                           <img
-                            src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
-                            alt={activeThread.senderName}
+                            src={getSafeAvatarUrl(partnerDetails.avatar, partnerDetails.name, partnerDetails.id)}
+                            alt={partnerDetails.name}
                             className="w-20 h-20 rounded-full object-cover border-2 border-zinc-700 shadow-xl"
-                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }}
+                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, partnerDetails.name, partnerDetails.id); }}
                           />
                         )}
                         <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-zinc-950" />
@@ -2007,10 +2012,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       <div className="space-y-1 max-w-sm">
                         <button
                           type="button"
-                          onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness)}
+                          onClick={() => handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness)}
                           className="flex items-center justify-center gap-1.5 font-bold text-base text-white hover:text-zinc-200 cursor-pointer transition-colors mx-auto"
                         >
-                          <span>{activeThread.senderName}</span>
+                          <span>{partnerDetails.name}</span>
                           {isPartnerVerified && (
                             <span title="Verified" className="inline-flex items-center">
                               <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
@@ -2028,17 +2033,17 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   ) : (
                     activeThreadMessages.map((msg) => {
                       const isMe = checkIsMessageFromMe(msg);
-                      const isBiz = checkIsBusinessThread(activeThread);
+                      const isBiz = Boolean(partnerDetails.isBusiness);
                       const currentUserName = (currentUser?.name || "").toLowerCase().trim();
                       const rawSenderName = (msg.senderName || "").trim();
                       const displaySenderName = isMe
                         ? "You"
                         : (rawSenderName && rawSenderName.toLowerCase() !== currentUserName && rawSenderName.toLowerCase() !== "you"
                             ? rawSenderName 
-                            : activeThread.senderName);
+                            : partnerDetails.name);
                       const displayAvatar = isMe
                         ? (currentUser?.avatar || msg.senderAvatar)
-                        : (msg.senderAvatar || activeThread.senderAvatar);
+                        : (msg.senderAvatar || partnerDetails.avatar);
 
                       return (
                         <div
@@ -2051,7 +2056,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               if (isMe && currentUser) {
                                 handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
                               } else {
-                                handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness);
+                                handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness);
                               }
                             }}
                             className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
@@ -2071,8 +2076,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               if (isBiz) {
                                 return (
                                   <CopoBrandLogo
-                                    domain={activeThread.senderId}
-                                    name={activeThread.senderName}
+                                    domain={partnerDetails.id}
+                                    name={partnerDetails.name}
                                     logoUrl={displayAvatar}
                                     className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white p-0.5 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
                                     imageClassName="w-full h-full object-contain rounded-sm"
@@ -2083,7 +2088,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                               return (
                                 <img
-                                  src={getSafeAvatarUrl(displayAvatar, displaySenderName, msg.senderId || activeThread.senderId)}
+                                  src={getSafeAvatarUrl(displayAvatar, displaySenderName, msg.senderId || partnerDetails.id)}
                                   alt={displaySenderName}
                                   className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
                                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, displaySenderName, msg.senderId); }}
@@ -2098,7 +2103,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                 if (isMe && currentUser) {
                                   handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
                                 } else {
-                                  handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness);
+                                  handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness);
                                 }
                               }}
                               className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors flex items-center gap-1"
@@ -2112,172 +2117,21 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               <span>· {formatChatMessageTime(msg.timestamp, msg.createdAtMs)}</span>
                             </button>
                             <div
-                              className={`p-3 text-xs sm:text-sm shadow-2xs leading-relaxed rounded-2xl ${
-                                msg.videoThumbnail ? "w-[240px] sm:w-[260px]" : "w-fit max-w-full"
-                              } ${
+                              className={`p-3 text-xs sm:text-sm shadow-2xs leading-relaxed rounded-2xl w-fit max-w-full ${
                                 isMe
                                   ? "bg-zinc-800 text-white rounded-tr-none text-left font-medium"
                                   : "bg-zinc-900 text-zinc-200 rounded-tl-none text-left border border-zinc-800"
                               }`}
                             >
-                            <p className="px-1">{msg.text}</p>
-
-                            {/* Render simple video preview if thumbnail is present */}
-                            {msg.videoThumbnail ? (
-                              <div
-                                onClick={() => handleOpenVideoCard(msg.videoId)}
-                                className="mt-2 bg-zinc-950 rounded-xl overflow-hidden shadow-sm cursor-pointer border border-zinc-800 hover:border-zinc-700 transition-all w-full"
-                              >
-                                <div className="relative aspect-[16/10] bg-zinc-900 overflow-hidden">
-                                  <img
-                                    src={msg.videoThumbnail}
-                                    alt="Video preview"
-                                    className="w-full h-full object-cover"
-                                    referrerPolicy="no-referrer"
-                                    onError={(e) => {
-                                      const target = e.currentTarget as HTMLImageElement;
-                                      target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-                                    }}
-                                  />
-                                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                    <div className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-xs">
-                                      <Play className="w-4 h-4 fill-current translate-x-0.5" />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : null}
+                              <p className="px-1">{msg.text}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
-
-                  {/* Render shared video preview if it is configured at the thread level */}
-                  {activeThread.videoPreviewUrl && (!activeThread.history || activeThread.history.length === 0) ? (
-                    <div className="ml-10 max-w-xs rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 shadow-2xs">
-                      <div className="relative aspect-[16/10]">
-                        <img
-                          src={activeThread.videoPreviewUrl}
-                          alt="Shared video"
-                          className="w-full h-full object-cover"
-                        />
-                        <div
-                          onClick={() => handleOpenVideoCard()}
-                          className="absolute inset-0 m-auto w-11 h-11 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-zinc-800 hover:scale-105 cursor-pointer transition-all shadow-sm"
-                        >
-                          <Play className="w-4 h-4 fill-white translate-x-0.5" />
-                        </div>
-                      </div>
-                      <div className="p-3 bg-zinc-950 text-[11px] text-zinc-200 font-bold flex items-center justify-between border-t border-zinc-800">
-                        <span className="flex items-center gap-1.5 text-white">
-                          <Video className="w-4 h-4 text-zinc-200" />
-                          <span>Video Recommendation</span>
-                        </span>
-                        <button
-                          onClick={() => handleOpenVideoCard()}
-                          className="text-zinc-200 hover:text-white hover:underline flex items-center gap-0.5 cursor-pointer"
-                        >
-                          <span>Play</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
+                      );
+                    })
+                  )}
 
                   <div ref={messagesEndRef} />
-                </div>
-
-                {/* Enhanced "Recommend a Local Spot / Video" Tray */}
-                <div className="px-3 sm:px-4 shrink-0 relative">
-                  {showQuickRecommend && (
-                    <div className="absolute bottom-2 left-3 right-3 sm:left-4 sm:right-4 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 shadow-2xl animate-in slide-in-from-bottom duration-200 z-20 space-y-3.5 max-h-[380px] flex flex-col">
-                      <div className="flex items-center justify-between shrink-0">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-white" />
-                          <h5 className="text-xs font-black text-white">
-                            Share a Recommendation with {activeThread.senderName}
-                          </h5>
-                        </div>
-                        <button
-                          onClick={() => setShowQuickRecommend(false)}
-                          className="p-1 rounded-full hover:bg-zinc-800 text-zinc-200 hover:text-white font-bold cursor-pointer"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Search in tray */}
-                      <div className="relative shrink-0">
-                        <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-400" />
-                        <input
-                          type="text"
-                          placeholder="Search your video reviews..."
-                          value={recommendSearch}
-                          onChange={(e) => setRecommendSearch(e.target.value)}
-                          className="w-full bg-zinc-950 text-xs text-white placeholder-zinc-500 pl-8 pr-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-white/50 font-medium"
-                        />
-                      </div>
-
-                      {/* Scrollable list of user videos */}
-                      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                        {filteredUserVideosForRecommend.length === 0 ? (
-                          <div className="p-6 text-center text-zinc-400 space-y-1.5">
-                            <Film className="w-7 h-7 mx-auto text-zinc-600" />
-                            <p className="text-xs font-bold text-white">No video reviews found</p>
-                            <p className="text-[10px] text-zinc-400">
-                              You haven't recorded any video reviews to share.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            {filteredUserVideosForRecommend.map((vid) => (
-                              <div
-                                key={`user-vid-rec-${vid.id}`}
-                                onClick={() => handleSendVideoCard(vid)}
-                                className="p-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
-                                    <img
-                                      src={resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"}
-                                      alt={vid.placeName}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                      referrerPolicy="no-referrer"
-                                      onError={(e) => {
-                                        const target = e.currentTarget as HTMLImageElement;
-                                        if (vid.author?.avatar && target.src !== vid.author.avatar) {
-                                          target.src = vid.author.avatar;
-                                        } else {
-                                          target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-                                        }
-                                      }}
-                                    />
-                                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                                      <Play className="w-3.5 h-3.5 fill-white text-white" />
-                                    </div>
-                                  </div>
-                                  <div className="min-w-0">
-                                    <h6 className="text-xs font-black text-white group-hover:text-white truncate">
-                                      {vid.placeName}
-                                    </h6>
-                                    <p className="text-[10px] text-zinc-300 truncate flex items-center gap-1 mt-0.5">
-                                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
-                                      <span>{vid.rating || 5} · Review</span>
-                                    </p>
-                                  </div>
-                                </div>
-                                <span className="px-2.5 py-1 bg-zinc-800 text-white group-hover:bg-white group-hover:text-black transition-colors rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
-                                  Share
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Message input area with native physical app styling & iOS auto-zoom prevention */}
@@ -2288,19 +2142,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     paddingBottom: keyboardHeight > 0 ? `${keyboardHeight + 8}px` : "max(12px, env(safe-area-inset-bottom, 12px))"
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setShowQuickRecommend(!showQuickRecommend)}
-                    title="Recommend a Place or Video Review"
-                    className={`w-11 h-11 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 transition-all active:scale-95 cursor-pointer ${
-                      showQuickRecommend
-                        ? "bg-white text-black font-bold shadow-md"
-                        : "bg-zinc-900 sm:bg-zinc-800 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 sm:border-zinc-700"
-                    }`}
-                  >
-                    <MapPin className="w-5 h-5 sm:w-4 sm:h-4" />
-                  </button>
-
                   <input
                     ref={inputRef}
                     type="text"

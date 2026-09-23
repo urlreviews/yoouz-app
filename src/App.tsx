@@ -1951,22 +1951,31 @@ export function App() {
         else if (newIncoming.type === "message") title = "1 new message";
         else if (newIncoming.type === "repost") title = "1 new share";
 
+        const targetThreadId = (newIncoming as any).threadId || (newIncoming as any).chatId;
+
         setInAppToast({
           id: newIncoming.id,
           type: newIncoming.type === "message" ? "message" : "notification",
           actionType: newIncoming.type,
           title: title,
-          subtitle: newIncoming.text ? `${newIncoming.user.name} ${newIncoming.text}` : `${newIncoming.user.name} interacted with you`,
+          subtitle: newIncoming.text ? `${newIncoming.user.name}: ${newIncoming.text}` : `${newIncoming.user.name} interacted with you`,
           avatar: newIncoming.user.avatar,
           userName: newIncoming.user.name,
+          threadId: targetThreadId,
           onAction: () => {
+            markNotificationAsRead(newIncoming.id, effectiveMessagingUser);
             if (newIncoming.type === "message") {
               setActiveSection("messages");
+              if (targetThreadId) {
+                setActiveThreadId(targetThreadId);
+                markChatThreadAsRead(targetThreadId, effectiveMessagingUser);
+              }
             } else if (newIncoming.videoId) {
               handleSelectVideoById(newIncoming.videoId);
             } else {
               setActiveSection("notifications");
             }
+            setInAppToast(null);
           }
         });
       }
