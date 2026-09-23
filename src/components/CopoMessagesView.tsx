@@ -727,11 +727,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
   // Filter threads based on search with deduplication and instant local deleted filter
   const filteredThreads = useMemo(() => {
-    const deduped = deduplicateChatThreads(messages);
+    const deduped = deduplicateChatThreads(messages, currentUser);
     const visible = deduped.filter((m) => {
       if (!m) return false;
       const mId = String(m.id || "").trim();
-      const mPartnerKey = getThreadPartnerKey(m);
+      const mPartnerKey = getThreadPartnerKey(m, currentUser);
       const mName = (m.senderName || "").toLowerCase().trim();
       const mIdKey = (m.senderId || "").toLowerCase().trim();
       if (deletedThreadKeys.has(mId)) return false;
@@ -747,23 +747,26 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       m.senderName.toLowerCase().includes(q) ||
       (m.lastMessage && m.lastMessage !== "Conversation started" && m.lastMessage.toLowerCase().includes(q))
     );
-  }, [messages, searchTerm, deletedThreadKeys]);
+  }, [messages, searchTerm, deletedThreadKeys, currentUser]);
 
   const activeThread = useMemo(() => {
-    if (draftThread && (draftThread.id === selectedThreadId || draftThread.senderId === selectedThreadId || getThreadPartnerKey(draftThread) === selectedThreadId)) {
-      return filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId) ||
-             messages.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId) ||
-             draftThread;
+    if (draftThread) {
+      const draftKey = getThreadPartnerKey(draftThread, currentUser);
+      if (draftThread.id === selectedThreadId || draftThread.senderId === selectedThreadId || (draftKey && draftKey === selectedThreadId)) {
+        return filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId) ||
+               messages.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId) ||
+               draftThread;
+      }
     }
     if (selectedThreadId) {
-      const foundInFiltered = filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId);
+      const foundInFiltered = filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId || m.recipientId === selectedThreadId || m.senderEmail === selectedThreadId || m.recipientEmail === selectedThreadId);
       if (foundInFiltered) return foundInFiltered;
-      const found = messages.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId);
+      const found = messages.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId || m.recipientId === selectedThreadId || m.senderEmail === selectedThreadId || m.recipientEmail === selectedThreadId);
       if (found) return found;
     }
     if (draftThread) return draftThread;
     return filteredThreads[0] || messages[0];
-  }, [messages, filteredThreads, selectedThreadId, draftThread]);
+  }, [messages, filteredThreads, selectedThreadId, draftThread, currentUser]);
 
   const isSenderBlocked = useMemo(() => {
     if (!activeThread) return false;
@@ -867,10 +870,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const threadHistory = activeThread.history || [];
     const updatedHistory = deduplicateChatHistory([...threadHistory, newMessage]);
 
-    const threadExistsInList = messages.some((m) => m.id === activeThread.id);
+    const activePartnerKey = getThreadPartnerKey(activeThread, currentUser);
+    const threadExistsInList = messages.some(
+      (m) => m.id === activeThread.id || (activePartnerKey && getThreadPartnerKey(m, currentUser) === activePartnerKey)
+    );
     const updated = threadExistsInList
       ? messages.map((m) =>
-          m.id === activeThread.id
+          m.id === activeThread.id || (activePartnerKey && getThreadPartnerKey(m, currentUser) === activePartnerKey)
             ? {
                 ...m,
                 lastMessage: text.trim(),

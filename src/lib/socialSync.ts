@@ -1084,6 +1084,9 @@ export function saveDeletedThreadsMap(map: Map<string, number>, currentUser?: Us
  * Filter and format chat threads for the current user
  */
 function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): CopoMessage[] {
+  if (currentUser) {
+    activeCurrentUser = currentUser;
+  }
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
   const userHandle = (currentUser.name || currentUser.handle || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
@@ -1463,55 +1466,103 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 /**
  * Returns a normalized canonical partner key for chat thread deduplication.
  */
-export function getThreadPartnerKey(thread: any): string {
+export function getThreadPartnerKey(thread: any, currentUserOverride?: UserProfile | null): string {
   if (!thread) return "";
-  const sName = (thread.senderName || "").toLowerCase().trim();
-  const sId = (thread.senderId || "").toLowerCase().trim();
-  const sEmail = (thread.senderEmail || (thread as any).recipientEmail || "").toLowerCase().trim();
-  const rName = (thread.recipientName || "").toLowerCase().trim();
-  const rId = (thread.recipientId || "").toLowerCase().trim();
 
-  // If business / place
+  // 1. If explicit business / place thread
   if (thread.isBusiness || (thread.placeId && thread.placeId !== "yoouz" && thread.placeId !== "yoouz.com")) {
     const pId = (thread.placeId || thread.senderId || "").toLowerCase().trim();
-    if (pId) return `biz_${pId}`;
+    if (pId && pId !== "yoouz" && pId !== "yoouz.com") return `biz_${pId}`;
   }
-  if (sName === "yoouz" || sId === "yoouz" || sId === "yoouz.com" || sEmail.includes("info@yoouz.com") || sEmail.endsWith("@yoouz.com")) {
+
+  const sName = (thread.senderName || "").toLowerCase().trim();
+  const sId = (thread.senderId || "").toLowerCase().trim().replace(/^@/, "");
+  const sEmail = (thread.senderEmail || "").toLowerCase().trim();
+
+  const rName = (thread.recipientName || "").toLowerCase().trim();
+  const rId = (thread.recipientId || "").toLowerCase().trim().replace(/^@/, "");
+  const rEmail = (thread.recipientEmail || "").toLowerCase().trim();
+
+  if (
+    sName === "yoouz" || sId === "yoouz" || sId === "yoouz.com" || sEmail.includes("info@yoouz.com") || sEmail.endsWith("@yoouz.com") ||
+    rName === "yoouz" || rId === "yoouz" || rId === "yoouz.com" || rEmail.includes("info@yoouz.com") || rEmail.endsWith("@yoouz.com")
+  ) {
     return "biz_yoouz";
   }
 
-  // Canonical user key for sender
-  const senderKey = getCanonicalUserKey({
+  const user = currentUserOverride || activeCurrentUser;
+  const userEmail = (user?.email || "").toLowerCase().trim();
+  const userName = (user?.name || "").toLowerCase().trim();
+  const userHandle = (user?.handle || user?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+  const userId = (user?.userId || (user as any)?.id || "").toLowerCase().trim();
+  const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
+
+  // 2. Resolve canonical user identity clusters for both sides
+  const senderCanonicalKey = getCanonicalUserKey({
     email: sEmail,
     name: sName,
     handle: sId,
     id: sId
   });
-  if (senderKey) return senderKey;
 
-  const recipientKey = getCanonicalUserKey({
-    email: (thread.recipientEmail || "").toLowerCase().trim(),
+  const recipientCanonicalKey = getCanonicalUserKey({
+    email: rEmail,
     name: rName,
     handle: rId,
     id: rId
   });
-  if (recipientKey) return recipientKey;
 
-  // Fallback
-  return (sEmail || sId || sName || rId || rName || String(thread.id || "")).toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+  // 3. Evaluate relative to active/current user if available
+  if (user && (userEmail || userName || userId)) {
+    const isSenderMe = Boolean(
+      (userEmail && (sEmail === userEmail || sId === userEmail)) ||
+      (emailPrefix && emailPrefix.length >= 3 && (sEmail.startsWith(emailPrefix) || sId === emailPrefix)) ||
+      (userHandle && userHandle.length >= 3 && (sId === userHandle || sName === userHandle)) ||
+      (userName && userName.length >= 3 && sName === userName) ||
+      (userId && (sId === userId || sEmail === userId))
+    );
+
+    const isRecipientMe = Boolean(
+      (userEmail && (rEmail === userEmail || rId === userEmail)) ||
+      (emailPrefix && emailPrefix.length >= 3 && (rEmail.startsWith(emailPrefix) || rId === emailPrefix)) ||
+      (userHandle && userHandle.length >= 3 && (rId === userHandle || rName === userHandle)) ||
+      (userName && userName.length >= 3 && rName === userName) ||
+      (userId && (rId === userId || rEmail === userId))
+    );
+
+    if (isSenderMe && !isRecipientMe) {
+      return recipientCanonicalKey || (rEmail || rId || rName || "partner").toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+    }
+    if (isRecipientMe && !isSenderMe) {
+      return senderCanonicalKey || (sEmail || sId || sName || "partner").toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+    }
+  }
+
+  // 4. If thread object was pre-processed by processChatThreadsForUser, thread.senderName/senderId represents OTHER partner
+  if (sId && sId !== userEmail && sId !== userId && sId !== userHandle) {
+    if (senderCanonicalKey) return senderCanonicalKey;
+  }
+
+  // 5. Symmetric fallback
+  if (senderCanonicalKey && recipientCanonicalKey && senderCanonicalKey !== recipientCanonicalKey) {
+    const pair = [senderCanonicalKey, recipientCanonicalKey].sort();
+    return `pair_${pair[0]}_${pair[1]}`;
+  }
+
+  return senderCanonicalKey || recipientCanonicalKey || (sEmail || sId || sName || rEmail || rId || rName || String(thread.id || "")).toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
 }
 
 /**
  * Deduplicates and merges multiple thread objects pointing to the same conversation partner.
  */
-export function deduplicateChatThreads(threads: CopoMessage[]): CopoMessage[] {
+export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverride?: UserProfile | null): CopoMessage[] {
   if (!Array.isArray(threads)) return [];
   const result: CopoMessage[] = [];
   const partnerIndexMap = new Map<string, number>();
 
   for (const raw of threads) {
     if (!raw) continue;
-    const partnerKey = getThreadPartnerKey(raw);
+    const partnerKey = getThreadPartnerKey(raw, currentUserOverride);
     const existingIdx = partnerKey ? partnerIndexMap.get(partnerKey) : undefined;
 
     const rawHist = Array.isArray(raw.history) ? raw.history : [];
