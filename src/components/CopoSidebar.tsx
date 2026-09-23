@@ -264,7 +264,11 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                             isActive ? "ring-white" : "ring-white/40"
                           }`}
                           referrerPolicy="no-referrer"
-                         onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.src = getSafeAvatarUrl(null, currentUser?.name, (currentUser as any)?.handle || currentUser?.email);
+                          }}
+                        />
                       ) : (
                         <Icon
                           className={`w-[22px] h-[22px] shrink-0 transition-colors ${

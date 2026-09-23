@@ -1,5 +1,6 @@
 import { CopoNotification, CopoMessage, UserProfile } from "../types";
 import { getCanonicalUserKey } from "./userCanonicalization";
+import { generateGoogleLetterAvatarSvg } from "./avatar";
 
 export interface CreateNotificationParams {
   recipientEmail?: string;
@@ -277,7 +278,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     type: params.type,
     user: {
       name: params.user.name || "Yoouz Member",
-      avatar: params.user.avatar || `/api/avatar?name=${encodeURIComponent(params.user.name || "User")}&background=27272a&color=fff`,
+      avatar: params.user.avatar || generateGoogleLetterAvatarSvg(params.user.name || "User", 128, senderEmail || params.user.name || "User"),
       email: senderEmail
     },
     text: params.text,
@@ -543,7 +544,7 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       type: data.type || "like",
       user: {
         name: data.user?.name || parsedInner.user?.name || "Yoouz Member",
-        avatar: data.user?.avatar || parsedInner.user?.avatar || `/api/avatar?name=${encodeURIComponent(data.user?.name || parsedInner.user?.name || "User")}&background=27272a&color=fff`,
+        avatar: data.user?.avatar || parsedInner.user?.avatar || generateGoogleLetterAvatarSvg(data.user?.name || parsedInner.user?.name || "User", 128, senderEmail || data.user?.name || parsedInner.user?.name || "User"),
         email: data.user?.email || parsedInner.user?.email || senderEmail
       },
       text: data.text || parsedInner.text || "",
@@ -1323,8 +1324,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
     if (isParticipant) {
       let otherName = data.senderName || data.recipientName || "Yoouz Member";
-      let otherAvatar = data.senderAvatar || data.recipientAvatar || `/api/avatar?name=${encodeURIComponent(otherName)}&background=27272a&color=fff`;
       let otherId = data.senderId || data.recipientId || String(data.id);
+      let otherAvatar = data.senderAvatar || data.recipientAvatar || generateGoogleLetterAvatarSvg(otherName, 128, otherId || otherName);
 
       if (data.participantProfiles && typeof data.participantProfiles === "object") {
         const otherKey = Object.keys(data.participantProfiles).find((k) => {
@@ -1411,7 +1412,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           return {
             id: m.id || `msg_${Date.now()}_${Math.random()}`,
             senderName: m.senderName || "Member",
-            senderAvatar: m.senderAvatar || `/api/avatar?name=${encodeURIComponent(m.senderName || "User")}&background=27272a&color=fff`,
+            senderAvatar: m.senderAvatar || generateGoogleLetterAvatarSvg(m.senderName || "User", 128, msgSenderId || msgSenderEmail || m.senderName || "User"),
             text: m.text || "",
             timestamp: m.timestamp || "Just now",
             createdAtMs: m.createdAt,
@@ -1847,7 +1848,7 @@ export async function sendChatMessage(
     senderId: userEmail || currentUser.name,
     senderEmail: userEmail,
     senderName: currentUser.name || "Reviewer",
-    senderAvatar: currentUser.avatar || `/api/avatar?name=${encodeURIComponent(currentUser.name || "User")}&background=27272a&color=fff`,
+    senderAvatar: currentUser.avatar || generateGoogleLetterAvatarSvg(currentUser.name || "User", 128, userEmail || currentUser.name || "User"),
     text: messageText.trim(),
     timestamp: "Just now",
     createdAt: msgTime,

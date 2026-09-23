@@ -1261,21 +1261,26 @@ export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null
   }
 
   // Handle SVG data URIs (e.g. legacy letter avatars stored in database, localStorage or currentUser)
-  if (avatarUrl.includes("data:image/svg+xml")) {
-    // If it's a letter avatar SVG or contains rx rounded corners / text, regenerate a clean full-square SVG
+  if (candidateAvatar.includes("data:image/svg+xml")) {
+    // If it's a letter avatar SVG or contains rx rounded corners / text / legacy red color, regenerate a clean full-square SVG
     if (
-      avatarUrl.includes("rx%3D") ||
-      avatarUrl.includes("rx=") ||
-      avatarUrl.includes("%3Ctext") ||
-      avatarUrl.includes("<text") ||
-      avatarUrl.includes("letter") ||
-      avatarUrl.includes("%20rx")
+      candidateAvatar.includes("rx%3D") ||
+      candidateAvatar.includes("rx=") ||
+      candidateAvatar.includes("%3Ctext") ||
+      candidateAvatar.includes("<text") ||
+      candidateAvatar.includes("letter") ||
+      candidateAvatar.includes("%20rx") ||
+      candidateAvatar.includes("E53935") ||
+      candidateAvatar.includes("%23E53935") ||
+      candidateAvatar.includes("dominant-baseline") ||
+      candidateAvatar.includes("text-anchor") ||
+      candidateAvatar.includes("font-family")
     ) {
       return generateGoogleLetterAvatarSvg(name || "User", 128, handle || name || "User");
     }
 
     // Otherwise strip any rx attribute from raw SVG data URIs
-    return avatarUrl
+    return candidateAvatar
       .replace(/rx%3D%22\d+%22/gi, "")
       .replace(/rx%3D%27\d+%27/gi, "")
       .replace(/rx%3D\d+/gi, "")
@@ -1284,11 +1289,11 @@ export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null
   }
 
   // If it's another base64 image or photo
-  if (avatarUrl.startsWith("data:image/")) {
-    return avatarUrl;
+  if (candidateAvatar.startsWith("data:image/")) {
+    return candidateAvatar;
   }
 
-  let targetUrl = avatarUrl;
+  let targetUrl = candidateAvatar;
   if (targetUrl.startsWith("/api/proxy-image?url=")) {
     try {
       targetUrl = decodeURIComponent(targetUrl.replace("/api/proxy-image?url=", ""));

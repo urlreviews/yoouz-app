@@ -232,7 +232,10 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                           src={getSafeAvatarUrl(video.author.avatar, video.author.name, video.author.handle)}
                           alt={video.author.name}
                           className="w-4.5 h-4.5 rounded-full border border-zinc-800"
-                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.src = getSafeAvatarUrl(null, video.author.name, video.author.handle);
+                          }}
                         /> 
                         <span className="text-[10px] text-zinc-400 font-semibold">
                           {t("video.recommendedBy", "Recommended by")} <span className="text-zinc-200 hover:underline">{video.author.name}</span>
@@ -374,7 +377,10 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       src={getSafeAvatarUrl(creator.avatar, creator.name, creator.handle)}
                       alt={creator.name}
                       className="w-11 h-11 rounded-full border border-zinc-800 shrink-0 object-cover"
-                      onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }}
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.src = getSafeAvatarUrl(null, creator.name, creator.handle);
+                      }}
                     />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">

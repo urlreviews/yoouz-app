@@ -18,6 +18,7 @@ import {
 import { VideoReview, UserProfile, VideoAuthor } from "../types";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
+import { getSafeAvatarUrl } from "../utils/placeUtils";
 
 export interface ReportTarget {
   type: "video" | "user" | "place";
@@ -369,10 +370,14 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                   />
                 ) : target.author?.avatar ? (
                   <img
-                    src={target.author.avatar}
+                    src={getSafeAvatarUrl(target.author.avatar, target.author.name, target.author.handle)}
                     alt="Author avatar"
                     className="w-10 h-10 rounded-full object-cover shrink-0 border border-zinc-800"
-                   onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} />
+                    onError={(e) => {
+                      const tgt = e.currentTarget as HTMLImageElement;
+                      tgt.src = getSafeAvatarUrl(null, target.author?.name, target.author?.handle);
+                    }}
+                  />
                 ) : (
                   <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
                     <Flag className="w-4 h-4 text-zinc-200" />

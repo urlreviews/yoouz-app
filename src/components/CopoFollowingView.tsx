@@ -886,17 +886,17 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                     <div
                       key={`follower-${follower.name}`}
                       id={`card-follower-${follower.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
-                      onClick={() => onOpenCreator({ name: follower.name, avatar: follower.avatar } as any)}
+                      onClick={() => onOpenCreator({ name: follower.name, handle: (follower as any).handle, avatar: getSafeAvatarUrl(follower.avatar, follower.name, (follower as any).handle || follower.name) } as any)}
                       className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                     >
                       <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                         <img
-                          src={getSafeAvatarUrl(follower.avatar, follower.name)}
+                          src={getSafeAvatarUrl(follower.avatar, follower.name, (follower as any).handle || follower.name)}
                           alt={follower.name}
                           className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform mt-0.5 sm:mt-0"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
-                            target.src = getSafeAvatarUrl(null, follower.name);
+                            target.src = getSafeAvatarUrl(null, follower.name, (follower as any).handle || follower.name);
                           }}
                         />
                         <div className="min-w-0 flex-1 text-left">

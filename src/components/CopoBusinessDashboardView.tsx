@@ -1087,7 +1087,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
       list.push({
         name: matchingUser?.name || matchingVid?.author?.name || clean,
-        avatar: matchingUser?.avatar || matchingVid?.author?.avatar || `/api/avatar?name=${encodeURIComponent(clean)}&background=27272a&color=fff`,
+        avatar: getSafeAvatarUrl(matchingUser?.avatar || matchingVid?.author?.avatar, matchingUser?.name || matchingVid?.author?.name || clean, matchingUser?.handle || matchingVid?.author?.handle || clean),
         bio: matchingUser?.bio || "Community reviewer",
         location: matchingUser?.location || matchingVid?.placeCity || "Local Contributor",
         isFollowed: true,
@@ -1168,7 +1168,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             );
             map.set(key, {
               name,
-              avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
+              avatar: getSafeAvatarUrl(u.avatar, name, handle),
               bio: u.bio || "Community reviewer",
               location: u.location || 'Local Contributor',
               isFollowed,
@@ -1190,7 +1190,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               );
               map.set(key, {
                 name,
-                avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
+                avatar: getSafeAvatarUrl(v.author.avatar, name, handle),
                 bio: "Community reviewer",
                 location: v.placeCity || 'Local Contributor',
                 isFollowed,
@@ -1377,7 +1377,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             id: u.id || u.uid || key,
             name,
             handle: handle || 'user',
-            avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
+            avatar: getSafeAvatarUrl(u.avatar, name, handle),
             isReviewer: true,
             reviewCount: u.videoCount || 0,
             location: u.location || 'Local Contributor',
@@ -1404,7 +1404,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               id: key,
               name,
               handle,
-              avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
+              avatar: getSafeAvatarUrl(v.author.avatar, name, handle),
               isReviewer: true,
               reviewCount: 1,
               location: v.placeCity || 'Local Contributor',
@@ -2885,11 +2885,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           title={`View ${video.author?.name || 'Customer'}'s Profile`}
                         >
                           <img
-                            src={video.author?.avatar}
+                            src={getSafeAvatarUrl(video.author?.avatar, video.author?.name, video.author?.handle)}
                             alt={video.author?.name}
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
                             referrerPolicy="no-referrer"
-                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} 
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.src = getSafeAvatarUrl(null, video.author?.name, video.author?.handle);
+                            }} 
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -2963,11 +2966,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 title="Click to play review"
                               >
                                 <img
-                                  src={video.thumbnailUrl || video.author?.avatar}
+                                  src={video.thumbnailUrl || getSafeAvatarUrl(video.author?.avatar, video.author?.name, video.author?.handle)}
                                   alt={video.dishOrItem || 'Video Review'}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   referrerPolicy="no-referrer"
-                                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} 
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.src = getSafeAvatarUrl(null, video.author?.name, video.author?.handle);
+                                  }} 
                                 /> 
                                 {/* Video Badges & Play Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-2.5 sm:p-3 text-white">
@@ -3175,11 +3181,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                       video.comments.map((comment) => (
                                         <div key={comment.id} className="flex items-start gap-3 bg-zinc-950 p-3 rounded-xl border border-zinc-800 shadow-2xs">
                                           <img
-                                            src={comment.authorAvatar || `/api/avatar?name=${encodeURIComponent(comment.authorName)}&background=random`}
+                                            src={getSafeAvatarUrl(comment.authorAvatar, comment.authorName, comment.authorHandle || comment.authorName)}
                                             alt={comment.authorName}
                                             className="w-8 h-8 rounded-full object-cover shrink-0"
                                             referrerPolicy="no-referrer"
-                                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} 
+                                            onError={(e) => {
+                                              const target = e.currentTarget as HTMLImageElement;
+                                              target.src = getSafeAvatarUrl(null, comment.authorName, comment.authorHandle || comment.authorName);
+                                            }} 
                                           />
                                           <div className="flex-1 min-w-0 space-y-1">
                                             <div className="flex items-center justify-between">
@@ -3334,11 +3343,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             >
                               <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                                 <img
-                                  src={author.avatar}
+                                  src={getSafeAvatarUrl(author.avatar, author.name, (author as any).handle || author.name)}
                                   alt={author.name}
                                   className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
                                   onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(author.name)}&background=27272a&color=fff`;
+                                    (e.currentTarget as HTMLImageElement).src = getSafeAvatarUrl(null, author.name, (author as any).handle || author.name);
                                   }}
                                 />
                                 <div className="min-w-0 flex-1 text-left">
@@ -3444,20 +3453,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         return (
                           <div
                             key={`follower-${follower.id || follower.name}`}
-                            onClick={() => onOpenCreator?.({ name: follower.name, avatar: follower.avatar, id: follower.id } as any)}
+                            onClick={() => onOpenCreator?.({ name: follower.name, avatar: getSafeAvatarUrl(follower.avatar, follower.name, (follower as any).handle || follower.name), id: follower.id } as any)}
                             className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                           >
                             <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                               <div className="relative shrink-0">
                                 <img
-                                  src={follower.avatar}
+                                  src={getSafeAvatarUrl(follower.avatar, follower.name, (follower as any).handle || follower.name)}
                                   alt={follower.name}
                                   className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
                                   onError={(e) => {
                                     const target = e.currentTarget as HTMLImageElement;
-                                    if (!target.src.includes("/api/avatar")) {
-                                      target.src = `/api/avatar?name=${encodeURIComponent(follower.name || "User")}&background=27272a&color=fff`;
-                                    }
+                                    target.src = getSafeAvatarUrl(null, follower.name, (follower as any).handle || follower.name);
                                   }}
                                 />
                                 {follower.isReviewer && (
@@ -5051,7 +5058,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           }}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-zinc-800 transition-colors cursor-pointer group"
                         >
-                          <img src={getSafeAvatarUrl(v.author?.avatar, v.author?.name, v.author?.handle)} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-zinc-200"  onError={(e) => { const target = e.currentTarget as HTMLImageElement; if (!target.src.includes('/api/avatar')) { target.src = '/api/avatar?name=User&background=27272a&color=fff'; } }} /> 
+                          <img
+                            src={getSafeAvatarUrl(v.author?.avatar, v.author?.name, v.author?.handle)}
+                            alt=""
+                            className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-zinc-200"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.src = getSafeAvatarUrl(null, v.author?.name, v.author?.handle);
+                            }}
+                          /> 
  <div className="min-w-0 flex-1">
                             <div className="text-xs font-bold text-white truncate">{v.author?.name}</div>
                             <div className="text-[10px] text-zinc-200 truncate">{v.caption}</div>

@@ -693,7 +693,7 @@ export function App() {
               const ku = KNOWN_COMMUNITY_USERS[rawClean] || KNOWN_COMMUNITY_USERS[rawSlug] || KNOWN_COMMUNITY_USERS[rawCompact];
               setSelectedAuthorForDrawer({
                 name: ku.name,
-                avatar: ku.avatar || `/api/avatar?name=${encodeURIComponent(ku.name)}&background=27272a&color=fff&bold=true&size=128`,
+                avatar: getSafeAvatarUrl(ku.avatar, ku.name, ku.name),
                 bio: ku.bio || "Verified video reviewer on Yoouz.",
                 location: ku.location || "",
                 isVerified: true,
@@ -723,7 +723,7 @@ export function App() {
                     if (matched && matched.name && matched.name.toLowerCase() !== "reviewer") {
                       setSelectedAuthorForDrawer({
                         name: matched.name,
-                        avatar: matched.avatar || `/api/avatar?name=${encodeURIComponent(matched.name)}&background=27272a&color=fff&bold=true&size=128`,
+                        avatar: getSafeAvatarUrl(matched.avatar, matched.name, matched.handle || matched.email || matched.name),
                         bio: matched.bio || "",
                         banner: matched.banner || "",
                         location: matched.location || "",
@@ -4688,8 +4688,8 @@ export function App() {
         : "";
 
     const authorAvatar = options?.commentItem?.authorAvatar || (options?.postAsOwner
-      ? (placeLogo || `/api/avatar?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`)
-      : (validCurrentAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`));
+      ? (placeLogo || getSafeAvatarUrl(null, placeName, placeName))
+      : getSafeAvatarUrl(validCurrentAvatar, authorName, (currentUser as any)?.handle || currentUser?.email || authorName));
 
     const newCommentItem: ReviewComment = options?.commentItem ? {
       ...options.commentItem,
@@ -5300,7 +5300,7 @@ export function App() {
           type: "comment",
           user: {
             name: `${placeName} (Owner)`,
-            avatar: targetVid.placeLogoUrl || `/api/avatar?name=${encodeURIComponent(placeName)}&background=27272a&color=fff&bold=true`,
+            avatar: targetVid.placeLogoUrl || getSafeAvatarUrl(null, placeName, placeName),
             email: currentUser?.email || "owner@yoouz.com"
           },
           text: `responded to your review: "${cleanText.slice(0, 50)}${cleanText.length > 50 ? '...' : ''}"`,
@@ -5596,7 +5596,7 @@ export function App() {
         authorMap.set(uLower, {
           name: u.name,
           handle: u.handle || `@${u.name.toLowerCase().replace(/\s+/g, '')}`,
-          avatar: u.avatar || existing?.avatar || `/api/avatar?name=${encodeURIComponent(u.name)}&background=27272a&color=fff`,
+          avatar: getSafeAvatarUrl(u.avatar || existing?.avatar, u.name, u.handle || u.name),
           bio: u.bio || existing?.bio,
           location: uLoc || existing?.location,
           city: u.city || existing?.city,
@@ -5630,7 +5630,7 @@ export function App() {
       const loc = existing?.location || regUser?.location || known?.location || (isCurrent ? currentLoc : '') || '';
       const city = existing?.city || regUser?.city || (isCurrent ? currentCity : '') || '';
       const country = existing?.country || regUser?.country || (isCurrent ? currentCountry : '') || '';
-      const avatar = (isCurrent ? currentUser?.avatar : undefined) || regUser?.avatar || existing?.avatar || known?.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`;
+      const avatar = getSafeAvatarUrl((isCurrent ? currentUser?.avatar : undefined) || regUser?.avatar || existing?.avatar || known?.avatar, name, regUser?.handle || known?.handle || name);
       const isVerified = (isCurrent ? currentUser?.isVerified : undefined) ?? regUser?.isVerified ?? existing?.isVerified ?? (known as any)?.isVerified;
 
       return {
@@ -5728,7 +5728,7 @@ export function App() {
     if (!cleanName || cleanName.includes("yoouz") || cleanName.includes("owner") || cleanName.includes("business")) {
       return "/favicon.svg";
     }
-    return getPlaceLogoUrl({ name, website: activeCommentPlace?.website || activeCommentVideo.placeWebsite, category: activeCommentPlace?.category || activeCommentVideo.placeCategory }) || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff&bold=true`;
+    return getPlaceLogoUrl({ name, website: activeCommentPlace?.website || activeCommentVideo.placeWebsite, category: activeCommentPlace?.category || activeCommentVideo.placeCategory }) || getSafeAvatarUrl(null, name, name);
   }, [activeCommentVideo, activeCommentPlace]);
 
   const activeCommentPlaceName = useMemo(() => {
@@ -5937,7 +5937,7 @@ export function App() {
               setActiveCommentVideo(null);
               handleOpenCreatorDrawer({
                 name: name || handle,
-                avatar: avatar || `/api/avatar?name=${encodeURIComponent(name || handle || "User")}&background=27272a&color=fff&bold=true&size=128`,
+                avatar: getSafeAvatarUrl(avatar, name || handle, handle || name),
                 isVerified: false,
                 isFollowed: false
               });
@@ -6985,7 +6985,7 @@ export function App() {
           handleOpenCreatorDrawer({
             name: name || handle,
             //handle: handle,
-            avatar: avatar || `/api/avatar?name=${encodeURIComponent(name || handle || "User")}&background=27272a&color=fff&bold=true&size=128`,
+            avatar: getSafeAvatarUrl(avatar, name || handle, handle || name),
             isVerified: false,
             isFollowed: false
           });
