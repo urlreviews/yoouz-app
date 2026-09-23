@@ -1030,7 +1030,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 id="btn-chat-creator"
                 onClick={() => {
                   triggerHaptic("light");
-                  onStartChat(author.name, author.name, effectiveAvatar);
+                  const targetChatId = author.handle ? author.handle.replace(/^@+/, '') : (author.id || author.name);
+                  onStartChat(targetChatId, author.name, effectiveAvatar);
                 }}
                 className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
                 title={`${t("profile.chatWith", "Chat with")} ${author.name}`}

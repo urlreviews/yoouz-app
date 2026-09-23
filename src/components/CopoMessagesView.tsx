@@ -147,6 +147,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   // Sync mobile view state when thread ID changes externally
   useEffect(() => {
     if (propSelectedThreadId) {
+      setLocalSelectedThreadId(propSelectedThreadId);
       setIsMobileThreadViewOpen(true);
     }
   }, [propSelectedThreadId]);
@@ -637,32 +638,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       (recipient.name && recipient.name.toLowerCase().trim() === "yoouz")
     );
 
-    const newThread: CopoMessage = {
-      id: newId,
-      senderId: recipient.id || finalEmail || `usr_${Date.now()}`,
-      senderName: recipient.name,
-      senderAvatar: recipient.avatar,
-      senderEmail: finalEmail,
-      recipientId: recipient.id,
-      recipientName: recipient.name,
-      recipientAvatar: recipient.avatar,
-      recipientEmail: finalEmail,
-      isBusiness: isBizRecipient,
-      placeId: isBizRecipient && recipient.id !== "yoouz" && recipient.id !== "yoouz.com" ? (recipient.id as any) : undefined,
-      lastMessage: "",
-      timestamp: "Just now",
-      createdAtMs: Date.now(),
-      unreadCount: 0,
-      history: []
-    };
-
-    setDraftThread(newThread);
-    onUpdateMessages([newThread, ...messages]);
-    setSelectedThreadId(newId);
-    setIsMobileThreadViewOpen(true);
-    setShowNewChatModal(false);
-
-    // Persist thread container shell to Bunny DB immediately
     const userEmail = (currentUser?.email || "").toLowerCase().trim();
     const userHandle = (currentUser?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
     const userName = (currentUser?.name || "").trim();
@@ -685,6 +660,32 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         ...(rName.includes("aouisesmee") || finalEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee"] : [])
       ].filter(Boolean))
     );
+
+    const newThread: CopoMessage = {
+      id: newId,
+      senderId: recipient.id || finalEmail || `usr_${Date.now()}`,
+      senderName: recipient.name,
+      senderAvatar: recipient.avatar,
+      senderEmail: finalEmail,
+      recipientId: recipient.id,
+      recipientName: recipient.name,
+      recipientAvatar: recipient.avatar,
+      recipientEmail: finalEmail,
+      isBusiness: isBizRecipient,
+      placeId: isBizRecipient && recipient.id !== "yoouz" && recipient.id !== "yoouz.com" ? (recipient.id as any) : undefined,
+      participants,
+      lastMessage: "",
+      timestamp: "Just now",
+      createdAtMs: Date.now(),
+      unreadCount: 0,
+      history: []
+    };
+
+    setDraftThread(newThread);
+    onUpdateMessages([newThread, ...messages]);
+    setSelectedThreadId(newId);
+    setIsMobileThreadViewOpen(true);
+    setShowNewChatModal(false);
 
     const initialPayload = {
       id: newId,
@@ -749,13 +750,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   }, [messages, searchTerm, deletedThreadKeys]);
 
   const activeThread = useMemo(() => {
-    if (draftThread && draftThread.id === selectedThreadId) {
-      return filteredThreads.find((m) => m.id === selectedThreadId) || messages.find((m) => m.id === selectedThreadId) || draftThread;
+    if (draftThread && (draftThread.id === selectedThreadId || draftThread.senderId === selectedThreadId || getThreadPartnerKey(draftThread) === selectedThreadId)) {
+      return filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId) ||
+             messages.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId) ||
+             draftThread;
     }
     if (selectedThreadId) {
       const foundInFiltered = filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId);
       if (foundInFiltered) return foundInFiltered;
-      const found = messages.find((m) => m.id === selectedThreadId);
+      const found = messages.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId);
       if (found) return found;
     }
     if (draftThread) return draftThread;

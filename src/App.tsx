@@ -2021,7 +2021,8 @@ export function App() {
         const serverIds = new Set(threads.map((t) => t.id));
         const pendingLocal = prev.filter((m) => {
           if (!m || serverIds.has(m.id)) return false;
-          if (m.id !== activeThreadId && (!m.history || m.history.length === 0)) return false;
+          if (m.id === activeThreadId) return true;
+          if (!m.history || m.history.length === 0) return false;
 
           const participants = Array.isArray(m.participants)
             ? m.participants.map(p => (p || "").toLowerCase().trim().replace(/^@/, ''))
@@ -2724,11 +2725,21 @@ export function App() {
       }
     }
 
+    const targetPartnerKey = getThreadPartnerKey({
+      senderId,
+      senderName,
+      senderEmail: targetEmail,
+      recipientId: senderId,
+      recipientName: senderName,
+      recipientEmail: targetEmail
+    });
+
     const existingThread = messages.find(
       (m) =>
         m.id === senderId ||
         m.senderId === senderId ||
         (m as any).recipientId === senderId ||
+        (targetPartnerKey && getThreadPartnerKey(m) === targetPartnerKey) ||
         (targetEmail && (m.senderId === targetEmail || m.senderEmail === targetEmail || (m as any).recipientEmail === targetEmail)) ||
         (m.senderName && senderName && m.senderName.toLowerCase() === senderName.toLowerCase()) ||
         ((m as any).recipientName && senderName && (m as any).recipientName.toLowerCase() === senderName.toLowerCase())
@@ -2743,25 +2754,6 @@ export function App() {
       return;
     }
 
-    const newThreadId = `thread_${Date.now()}`;
-    const newThread: CopoMessage = {
-      id: newThreadId,
-      senderId,
-      senderName,
-      senderAvatar,
-      senderEmail: targetEmail,
-      lastMessage: "",
-      timestamp: "Just now",
-      createdAtMs: Date.now(),
-      unreadCount: 0,
-      history: []
-    };
-
-    const updated = [newThread, ...messages];
-    setMessages(updated);
-    setActiveThreadId(newThreadId);
-
-    // Persist thread container shell to Bunny DB immediately
     const effUser = effectiveMessagingUser || currentUser;
     const userEmail = (effUser?.email || "").toLowerCase().trim();
     const userHandle = (effUser?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
@@ -2777,6 +2769,7 @@ export function App() {
         targetEmail,
         targetEmail ? targetEmail.split("@")[0] : "",
         senderId,
+        senderId.toLowerCase(),
         senderName.toLowerCase(),
         ...(sName === "yoouz" || senderId === "yoouz.com" || targetEmail === "info@yoouz.com" ? ["yoouz.com", "yoouz", "info@yoouz.com"] : []),
         ...(sName === "avt ertuop" || targetEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop"] : []),
@@ -2784,6 +2777,29 @@ export function App() {
         ...(sName.includes("aouisesmee") || targetEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee"] : [])
       ].filter(Boolean))
     );
+
+    const newThreadId = `thread_${Date.now()}`;
+    const newThread: CopoMessage = {
+      id: newThreadId,
+      senderId,
+      senderName,
+      senderAvatar,
+      senderEmail: targetEmail,
+      recipientId: effUser?.userId || userEmail || "user",
+      recipientName: curName || "User",
+      recipientEmail: userEmail,
+      recipientAvatar: currentUser?.avatar || "",
+      participants,
+      lastMessage: "",
+      timestamp: "Just now",
+      createdAtMs: Date.now(),
+      unreadCount: 0,
+      history: []
+    };
+
+    const updated = [newThread, ...messages];
+    setMessages(updated);
+    setActiveThreadId(newThreadId);
 
     const initialPayload = {
       id: newThreadId,
