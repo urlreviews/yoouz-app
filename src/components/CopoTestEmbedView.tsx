@@ -51,7 +51,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
   };
 
   const iframeSrc = `/embed/${encodeURIComponent(testSlug)}`;
-  const fullEmbedSnippet = `<iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="520" style="max-width:400px;border-radius:24px;border:none;box-shadow:0 20px 40px rgba(0,0,0,0.5);overflow:hidden;" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" title="Yoouz Authentic Video Reviews"></iframe>`;
+  const fullEmbedSnippet = `<iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Yoouz Authentic Video Reviews"></iframe>`;
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(fullEmbedSnippet);

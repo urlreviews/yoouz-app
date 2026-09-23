@@ -193,7 +193,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : getPlaceSlug(propDomain || propTitle || "yoouz.com");
   const embedUrl = `${appOrigin}/embed/${encodeURIComponent(embedSlug)}`;
 
-  const iframeEmbedCode = `<iframe src="${embedUrl}" width="100%" height="640" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" style="border-radius:20px; border:none; width:100%; max-width:400px;"></iframe>`;
+  const iframeEmbedCode = `<iframe src="${embedUrl}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Yoouz Authentic Video Reviews"></iframe>`;
 
   // Record share interaction to Bunny.net backend storage
   const recordShareAction = (platform: string = "general") => {
