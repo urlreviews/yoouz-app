@@ -1,5 +1,5 @@
 import { CopoNotification, CopoMessage, UserProfile } from "../types";
-import { getCanonicalUserKey } from "./userCanonicalization";
+import { getCanonicalUserKey, isGenericUsername } from "./userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "./avatar";
 
 export interface CreateNotificationParams {
@@ -1449,7 +1449,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     saveDeletedThreadsMap(deletedThreadsMap, currentUser);
   }
 
-  return deduplicateChatThreads(threads);
+  return deduplicateChatThreads(threads, currentUser);
 }
 
 /**
@@ -1457,6 +1457,12 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
  */
 export function getThreadPartnerKey(thread: any, currentUserOverride?: UserProfile | null): string {
   if (!thread) return "";
+
+  const user = currentUserOverride || activeCurrentUser;
+  const userEmail = (user?.email || "").toLowerCase().trim();
+  const userName = (user?.name || "").toLowerCase().trim();
+  const userHandle = (user?.handle || user?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+  const userId = (user?.userId || (user as any)?.id || "").toLowerCase().trim();
 
   // 1. If explicit business / place thread
   if (thread.isBusiness || (thread.placeId && thread.placeId !== "yoouz" && thread.placeId !== "yoouz.com")) {
@@ -1479,13 +1485,6 @@ export function getThreadPartnerKey(thread: any, currentUserOverride?: UserProfi
     return "biz_yoouz";
   }
 
-  const user = currentUserOverride || activeCurrentUser;
-  const userEmail = (user?.email || "").toLowerCase().trim();
-  const userName = (user?.name || "").toLowerCase().trim();
-  const userHandle = (user?.handle || user?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
-  const userId = (user?.userId || (user as any)?.id || "").toLowerCase().trim();
-  const emailPrefix = userEmail ? userEmail.split("@")[0].toLowerCase() : "";
-
   // 2. Resolve canonical user identity clusters for both sides
   const senderCanonicalKey = getCanonicalUserKey({
     email: sEmail,
@@ -1501,19 +1500,21 @@ export function getThreadPartnerKey(thread: any, currentUserOverride?: UserProfi
     id: rId
   });
 
+  const myCanonicalKey = user ? getCanonicalUserKey({ email: userEmail, name: userName, handle: userHandle, id: userId }) : "";
+
   // 3. Evaluate relative to active/current user if available
-  if (user && (userEmail || userName || userId)) {
+  if (user && (userEmail || userName || userId || myCanonicalKey)) {
     const isSenderMe = Boolean(
+      (myCanonicalKey && senderCanonicalKey === myCanonicalKey) ||
       (userEmail && (sEmail === userEmail || sId === userEmail)) ||
-      (emailPrefix && emailPrefix.length >= 3 && (sEmail.startsWith(emailPrefix) || sId === emailPrefix)) ||
       (userHandle && userHandle.length >= 3 && (sId === userHandle || sName === userHandle)) ||
       (userName && userName.length >= 3 && sName === userName) ||
       (userId && (sId === userId || sEmail === userId))
     );
 
     const isRecipientMe = Boolean(
+      (myCanonicalKey && recipientCanonicalKey === myCanonicalKey) ||
       (userEmail && (rEmail === userEmail || rId === userEmail)) ||
-      (emailPrefix && emailPrefix.length >= 3 && (rEmail.startsWith(emailPrefix) || rId === emailPrefix)) ||
       (userHandle && userHandle.length >= 3 && (rId === userHandle || rName === userHandle)) ||
       (userName && userName.length >= 3 && rName === userName) ||
       (userId && (rId === userId || rEmail === userId))
@@ -1527,15 +1528,12 @@ export function getThreadPartnerKey(thread: any, currentUserOverride?: UserProfi
     }
   }
 
-  // 4. If thread object was pre-processed by processChatThreadsForUser, thread.senderName/senderId represents OTHER partner
-  if (sId && sId !== userEmail && sId !== userId && sId !== userHandle) {
-    if (senderCanonicalKey) return senderCanonicalKey;
+  // 4. Fallback: return the non-me canonical key or the cleanest canonical partner identity
+  if (senderCanonicalKey && myCanonicalKey && senderCanonicalKey !== myCanonicalKey) {
+    return senderCanonicalKey;
   }
-
-  // 5. Symmetric fallback
-  if (senderCanonicalKey && recipientCanonicalKey && senderCanonicalKey !== recipientCanonicalKey) {
-    const pair = [senderCanonicalKey, recipientCanonicalKey].sort();
-    return `pair_${pair[0]}_${pair[1]}`;
+  if (recipientCanonicalKey && myCanonicalKey && recipientCanonicalKey !== myCanonicalKey) {
+    return recipientCanonicalKey;
   }
 
   return senderCanonicalKey || recipientCanonicalKey || (sEmail || sId || sName || rEmail || rId || rName || String(thread.id || "")).toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
@@ -1552,7 +1550,32 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
   for (const raw of threads) {
     if (!raw) continue;
     const partnerKey = getThreadPartnerKey(raw, currentUserOverride);
-    const existingIdx = partnerKey ? partnerIndexMap.get(partnerKey) : undefined;
+    let existingIdx = partnerKey ? partnerIndexMap.get(partnerKey) : undefined;
+
+    if (existingIdx === undefined) {
+      const rawSenderName = (raw.senderName || "").toLowerCase().trim();
+      const rawSenderEmail = (raw.senderEmail || "").toLowerCase().trim();
+      const rawSenderId = (raw.senderId || "").toLowerCase().trim();
+      const rawCanonicalKey = getCanonicalUserKey({ email: rawSenderEmail, name: rawSenderName, handle: rawSenderId, id: rawSenderId });
+
+      const matchedIdx = result.findIndex((res) => {
+        const resPartnerKey = getThreadPartnerKey(res, currentUserOverride);
+        if (partnerKey && resPartnerKey && partnerKey === resPartnerKey) return true;
+
+        const resSenderName = (res.senderName || "").toLowerCase().trim();
+        const resSenderEmail = (res.senderEmail || "").toLowerCase().trim();
+        const resSenderId = (res.senderId || "").toLowerCase().trim();
+        const resCanonicalKey = getCanonicalUserKey({ email: resSenderEmail, name: resSenderName, handle: resSenderId, id: resSenderId });
+
+        if (rawCanonicalKey && resCanonicalKey && rawCanonicalKey === resCanonicalKey) return true;
+        if (rawSenderName && resSenderName && rawSenderName === resSenderName && !isGenericUsername(rawSenderName)) return true;
+        return false;
+      });
+
+      if (matchedIdx >= 0) {
+        existingIdx = matchedIdx;
+      }
+    }
 
     const rawHist = Array.isArray(raw.history) ? raw.history : [];
     const cleanHist = deduplicateChatHistory(rawHist).filter((m: any) => {
