@@ -1479,7 +1479,9 @@ export function deduplicateChatThreads(threads: CopoMessage[]): CopoMessage[] {
         lastMessage: finalLastMsg,
         createdAtMs: newestTime || Date.now(),
         unreadCount: Math.max(existing.unreadCount || 0, raw.unreadCount || 0),
-        videoPreviewUrl: raw.videoPreviewUrl || existing.videoPreviewUrl
+        videoPreviewUrl: raw.videoPreviewUrl || existing.videoPreviewUrl,
+        isBusiness: Boolean(existing.isBusiness || raw.isBusiness),
+        placeId: existing.placeId || raw.placeId
       };
     } else {
       const newThread: CopoMessage = {

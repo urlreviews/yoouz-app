@@ -3936,8 +3936,6 @@ export function App() {
       const pSlug = pName.replace(/[^a-z0-9]/g, "");
       const aSlug = authorIdentifier.replace(/[^a-z0-9]/g, "");
 
-      if (pId === "yoouz.com" || pName === "yoouz" || pDomain === "yoouz.com") return false;
-
       return (
         pId === authorIdentifier ||
         pId === `${authorIdentifier}.com` ||
@@ -3956,27 +3954,11 @@ export function App() {
       authorLower === "yoouz.com" ||
       authorLower === "yoouz beta" ||
       authorIdentifier === "yoouz" ||
-      authorIdentifier === "yoouz.com";
+      authorIdentifier === "yoouz.com" ||
+      (author.email && author.email.toLowerCase().trim() === "info@yoouz.com");
 
     if (isYoouzOfficial) {
-      if (!selectedPlaceIdForDrawer && !selectedAuthorForDrawer) {
-        savedHomeVideoIndexRef.current = currentVideoIndex;
-        previousSectionRef.current = activeSection;
-      }
-      setFullscreenFeedContext(null);
-      setSelectedPlaceIdForDrawer(null);
-      setSelectedAuthorForDrawer({
-        name: "Yoouz",
-        handle: "@yoouz",
-        email: "info@yoouz.com",
-        id: "yoouz",
-        userId: "yoouz",
-        avatar: "/favicon.svg",
-        bio: "Official Yoouz Support & Community Platform",
-        location: "Global Platform",
-        isVerified: true,
-        followersCount: 10000,
-      });
+      handleOpenPlaceDrawer("yoouz.com");
       return;
     }
 

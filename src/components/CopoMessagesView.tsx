@@ -1165,34 +1165,27 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   ) => {
     const cleanId = (id || "").toLowerCase().trim();
     const cleanName = (name || "").toLowerCase().trim();
+    const cleanExplicit = (explicitPlaceId || "").toLowerCase().trim();
 
-    // Check if clicking Official Yoouz Support / Platform
-    const isYoouzOfficial =
+    // 1. Check if clicking Yoouz (Official platform business page)
+    const isYoouzBusiness =
       cleanName === "yoouz" ||
       cleanName === "yoouz.com" ||
       cleanName === "yoouz beta" ||
       cleanId === "yoouz" ||
-      cleanId === "yoouz.com";
+      cleanId === "yoouz.com" ||
+      cleanId === "info@yoouz.com" ||
+      cleanExplicit === "yoouz.com" ||
+      cleanExplicit === "yoouz";
 
-    if (isYoouzOfficial) {
-      if (onOpenCreator) {
-        onOpenCreator({
-          name: "Yoouz",
-          handle: "@yoouz",
-          email: "info@yoouz.com",
-          id: "yoouz",
-          userId: "yoouz",
-          avatar: "/favicon.svg",
-          bio: "Official Yoouz Support & Community Platform",
-          location: "Global Platform",
-          isVerified: true,
-          followersCount: 10000,
-        });
+    if (isYoouzBusiness) {
+      if (onSelectPlace) {
+        onSelectPlace("yoouz.com");
         return;
       }
     }
 
-    const targetExplicit = (explicitPlaceId || "").toLowerCase().trim();
+    // 2. Check if matching any registered place in `places`
     const matchingPlace = (places || []).find((p) => {
       const pId = (p.id || "").toLowerCase().trim();
       const pName = (p.name || "").toLowerCase().trim();
@@ -1205,10 +1198,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const pSlug = pName.replace(/[^a-z0-9]/g, "");
       const nSlug = cleanName.replace(/[^a-z0-9]/g, "");
 
-      if (pId === "yoouz.com" || pName === "yoouz" || pDomain === "yoouz.com") return false;
-
       return (
-        (targetExplicit && (pId === targetExplicit || pDomain === targetExplicit)) ||
+        (cleanExplicit && (pId === cleanExplicit || pDomain === cleanExplicit)) ||
         (cleanId && (pId === cleanId || pDomain === cleanId || pId === `${cleanId}.com` || pDomain === `${cleanId}.com`)) ||
         pId === cleanName ||
         pId === `${cleanName}.com` ||
@@ -1226,14 +1217,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       }
     }
 
+    // 3. If explicitly marked as business or is domain/place ID format
     if (explicitPlaceId || isBiz || (cleanId && (cleanId.includes(".") || cleanId.startsWith("place-")))) {
       const targetPlaceId = explicitPlaceId || (cleanId.includes(".") ? cleanId : `${cleanId}.com`);
-      if (onSelectPlace && targetPlaceId && targetPlaceId !== "yoouz.com") {
+      if (onSelectPlace && targetPlaceId) {
         onSelectPlace(targetPlaceId);
         return;
       }
     }
 
+    // 4. Otherwise, resolve as a regular creator profile
     const author = resolveAuthor(name, id, avatar);
     if (author && onOpenCreator) {
       onOpenCreator(author);
